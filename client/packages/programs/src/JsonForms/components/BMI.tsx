@@ -47,12 +47,17 @@ const useHeight = (
   // fetch current encounter
   const encounterId = useEncounter.utils.idFromUrl();
   const { data: currentEncounter } = useEncounter.document.byId(encounterId);
+  const encounterDatetime = currentEncounter?.startDatetime
+    ? new Date(currentEncounter.startDatetime)
+    : new Date(1);
 
   const formDataExists = ObjUtils.isObject(formData);
   const shouldFetchEvent =
     formDataExists && !formData['height'] && !!formData['weight'];
   const { data: events } = useProgramEvents.document.list(
     {
+      // always take previous recorded height
+      at: new Date(encounterDatetime.getTime() - 1),
       filter: {
         patientId: { equalTo: currentEncounter?.patient?.id ?? '' },
         type: {
@@ -90,11 +95,11 @@ const UIComponent = (props: ControlProps) => {
   const { height, source } = useHeight(data, options?.eventType);
 
   useEffect(() => {
-    if (!height || !weight) return;
-
-    const w = NumUtils.parseString(weight);
-
-    if (!handleChange || !w) return;
+    const w = NumUtils.parseString(weight ?? '');
+    if (!height || !w) {
+      handleChange(composePaths(path, 'bodyMassIndex'), undefined);
+      return;
+    }
 
     const bmi = round(w / height ** 2);
     handleChange(composePaths(path, 'bodyMassIndex'), bmi);

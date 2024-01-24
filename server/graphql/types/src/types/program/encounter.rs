@@ -21,8 +21,8 @@ use crate::types::ClinicianNode;
 
 use super::{
     document::DocumentNode,
-    patient::PatientNode,
-    program_enrolment::ProgramEnrolmentNode,
+    patient::{PatientFilterInput, PatientNode},
+    program_enrolment::{ProgramEnrolmentFilterInput, ProgramEnrolmentNode},
     program_event::{
         ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
     },
@@ -101,25 +101,31 @@ pub struct EncounterFilterInput {
     pub clinician_id: Option<EqualFilterStringInput>,
     pub document_name: Option<EqualFilterStringInput>,
     pub document_data: Option<StringFilterInput>,
+    pub patient: Option<PatientFilterInput>,
+    pub program_enrolment: Option<ProgramEnrolmentFilterInput>,
+    /// Only if this filter is set encounters with status DELETED are returned
+    pub include_deleted: Option<bool>,
 }
 
-impl EncounterFilterInput {
-    pub fn to_domain_filter(self) -> EncounterFilter {
+impl From<EncounterFilterInput> for EncounterFilter {
+    fn from(f: EncounterFilterInput) -> Self {
         EncounterFilter {
-            id: self.id.map(EqualFilter::from),
-            patient_id: self.patient_id.map(EqualFilter::from),
-            program_id: self.program_id.map(EqualFilter::from),
-            created_datetime: self.created_datetime.map(DatetimeFilter::from),
-            start_datetime: self.start_datetime.map(DatetimeFilter::from),
-            status: self
+            id: f.id.map(EqualFilter::from),
+            patient_id: f.patient_id.map(EqualFilter::from),
+            program_id: f.program_id.map(EqualFilter::from),
+            created_datetime: f.created_datetime.map(DatetimeFilter::from),
+            start_datetime: f.start_datetime.map(DatetimeFilter::from),
+            status: f
                 .status
                 .map(|s| map_filter!(s, EncounterNodeStatus::to_domain)),
-            end_datetime: self.end_datetime.map(DatetimeFilter::from),
-            clinician_id: self.clinician_id.map(EqualFilter::from),
-            document_type: self.r#type.map(EqualFilter::from),
-            document_name: self.document_name.map(EqualFilter::from),
-            document_data: self.document_data.map(StringFilter::from),
+            end_datetime: f.end_datetime.map(DatetimeFilter::from),
+            clinician_id: f.clinician_id.map(EqualFilter::from),
+            document_type: f.r#type.map(EqualFilter::from),
+            document_name: f.document_name.map(EqualFilter::from),
+            document_data: f.document_data.map(StringFilter::from),
             program_context_id: None,
+            patient: f.patient.map(PatientFilterInput::into),
+            program_enrolment: f.program_enrolment.map(ProgramEnrolmentFilterInput::into),
         }
     }
 }
@@ -130,6 +136,7 @@ pub enum EncounterNodeStatus {
     Pending,
     Visited,
     Cancelled,
+    Deleted,
 }
 
 impl EncounterNodeStatus {
@@ -138,6 +145,7 @@ impl EncounterNodeStatus {
             EncounterNodeStatus::Pending => EncounterStatus::Pending,
             EncounterNodeStatus::Visited => EncounterStatus::Visited,
             EncounterNodeStatus::Cancelled => EncounterStatus::Cancelled,
+            EncounterNodeStatus::Deleted => EncounterStatus::Deleted,
         }
     }
 
@@ -146,6 +154,7 @@ impl EncounterNodeStatus {
             EncounterStatus::Pending => EncounterNodeStatus::Pending,
             EncounterStatus::Visited => EncounterNodeStatus::Visited,
             EncounterStatus::Cancelled => EncounterNodeStatus::Cancelled,
+            EncounterStatus::Deleted => EncounterNodeStatus::Deleted,
         }
     }
 }
@@ -255,7 +264,7 @@ impl EncounterNode {
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
         let Some(clinician_id) = self.encounter.0.clinician_id.as_ref() else {
-            return Ok(None)
+            return Ok(None);
         };
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
 

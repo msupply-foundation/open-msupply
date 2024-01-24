@@ -33,6 +33,7 @@ pub enum LegacyTemperatureBreachType {
     HotConsecutive,
     ColdCumulative,
     HotCumulative,
+    Excursion,
 }
 
 #[allow(non_snake_case)]
@@ -74,6 +75,9 @@ pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "om_start_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub start_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "om_comment")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub comment: Option<String>,
 }
 
 pub(crate) struct TemperatureBreachTranslation {}
@@ -116,6 +120,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             threshold_duration_milliseconds,
             end_datetime,
             start_datetime,
+            comment,
         } = data;
 
         let r#type = from_legacy_breach_type(&r#type);
@@ -127,13 +132,14 @@ impl SyncTranslation for TemperatureBreachTranslation {
             location_id,
             store_id,
             end_datetime: end_datetime.or(end_date.map(|date| NaiveDateTime::new(date, end_time))),
-            acknowledged,
+            unacknowledged: !acknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
             start_datetime: start_datetime
                 .or(start_date.map(|date| NaiveDateTime::new(date, start_time)))
                 .unwrap(),
+            comment,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -159,10 +165,11 @@ impl SyncTranslation for TemperatureBreachTranslation {
             store_id,
             start_datetime,
             end_datetime,
-            acknowledged,
+            unacknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
+            comment,
         } = TemperatureBreachRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -185,12 +192,13 @@ impl SyncTranslation for TemperatureBreachTranslation {
             end_time: end_datetime
                 .map(|datetime| datetime.time())
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
-            acknowledged,
+            acknowledged: !unacknowledged,
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
             start_datetime: Some(start_datetime),
             end_datetime,
+            comment,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,
@@ -206,6 +214,7 @@ pub fn from_legacy_breach_type(t: &LegacyTemperatureBreachType) -> TemperatureBr
         LegacyTemperatureBreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
         LegacyTemperatureBreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
         LegacyTemperatureBreachType::HotCumulative => TemperatureBreachRowType::HotCumulative,
+        LegacyTemperatureBreachType::Excursion => TemperatureBreachRowType::Excursion,
     }
 }
 
@@ -215,6 +224,7 @@ pub fn to_legacy_breach_type(t: &TemperatureBreachRowType) -> LegacyTemperatureB
         TemperatureBreachRowType::HotConsecutive => LegacyTemperatureBreachType::HotConsecutive,
         TemperatureBreachRowType::ColdCumulative => LegacyTemperatureBreachType::ColdCumulative,
         TemperatureBreachRowType::HotCumulative => LegacyTemperatureBreachType::HotCumulative,
+        TemperatureBreachRowType::Excursion => LegacyTemperatureBreachType::Excursion,
     }
 }
 

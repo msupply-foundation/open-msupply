@@ -20,7 +20,8 @@ const MASTER_LIST_1: (&'static str, &'static str) = (
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
-    "isSupplierHubCatalog": false
+    "isSupplierHubCatalog": false,
+    "inactive": false
 }"#,
 );
 
@@ -39,7 +40,8 @@ const MASTER_LIST_2: (&'static str, &'static str) = (
     "code": "",
     "isPatientList": false,
     "is_hiv": false,
-    "isSupplierHubCatalog": false
+    "isSupplierHubCatalog": false,
+    "inactive": false
 }"#,
 );
 
@@ -53,6 +55,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "District Store".to_owned(),
                 code: "".to_owned(),
                 description: "note 1".to_owned(),
+                is_active: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -63,6 +66,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "District Store 2".to_owned(),
                 code: "".to_owned(),
                 description: "note 2".to_owned(),
+                is_active: true,
             }),
         ),
     ]

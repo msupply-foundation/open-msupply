@@ -5,7 +5,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::encounter::{EncounterFilterInput, EncounterNode, EncounterSortInput};
-use repository::PaginationOption;
+use repository::{EncounterFilter, PaginationOption};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     programs::encounter::encounter_fields::{EncounterFields, EncounterFieldsResult},
@@ -77,7 +77,7 @@ pub fn encounter_fields(
                 fields: input.fields,
             },
             page.map(PaginationOption::from),
-            filter.map(|f| f.to_domain_filter()),
+            filter.map(EncounterFilter::from),
             sort.map(EncounterSortInput::to_domain),
             allowed_ctx.clone(),
         )

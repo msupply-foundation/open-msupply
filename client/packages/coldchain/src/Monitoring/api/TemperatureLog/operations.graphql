@@ -1,7 +1,7 @@
 fragment TemperatureBreachRow on TemperatureBreachNode {
   __typename
   id
-  acknowledged
+  unacknowledged
   startDatetime
   endDatetime
   startDatetime
@@ -23,6 +23,7 @@ fragment TemperatureLog on TemperatureLogNode {
   }
 
   location {
+    code
     name
   }
 

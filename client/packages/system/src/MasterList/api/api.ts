@@ -35,6 +35,10 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.masterLists;
     },
+    byItemId: async (itemId: string) => {
+      const result = await sdk.masterListsByItemId({ itemId, storeId });
+      return result?.masterLists;
+    },
     listAll: async ({
       sortBy,
       filter,

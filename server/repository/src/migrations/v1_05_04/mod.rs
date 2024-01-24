@@ -10,7 +10,7 @@ impl Migration for V1_05_04 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // Update integartion_datetime on facility/store type name records in sync_buffer
+        // Update integration_datetime on facility/store type name records in sync_buffer
         // when server start, or on next sync these will be re-integrated
         sql!(
             connection,

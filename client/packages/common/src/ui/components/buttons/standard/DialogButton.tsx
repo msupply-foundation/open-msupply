@@ -3,12 +3,13 @@ import { LocaleKey, useTranslation } from '@common/intl';
 import {
   ArrowRightIcon,
   CheckIcon,
+  CopyIcon,
   SaveIcon,
   XCircleIcon,
 } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
-type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'save';
+type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'save' | 'copy';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -19,6 +20,7 @@ interface DialogButtonProps {
   ) => void;
   variant: DialogButtonVariant;
   autoFocus?: boolean;
+  color?: 'primary';
 }
 
 const getButtonProps = (
@@ -53,6 +55,12 @@ const getButtonProps = (
         labelKey: 'button.save',
         variant: 'contained',
       };
+    case 'copy':
+      return {
+        icon: <CopyIcon />,
+        labelKey: 'link.copy-to-clipboard',
+        variant: 'contained',
+      };
   }
 };
 
@@ -61,6 +69,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   variant,
   disabled = false,
   autoFocus = false,
+  color,
 }) => {
   const t = useTranslation('common');
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
@@ -68,7 +77,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   return (
     <ButtonWithIcon
       autoFocus={autoFocus}
-      color="secondary"
+      color={color ?? 'secondary'}
       disabled={disabled}
       onClick={onClick}
       Icon={icon}

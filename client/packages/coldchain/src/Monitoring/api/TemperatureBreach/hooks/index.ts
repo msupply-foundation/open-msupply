@@ -4,7 +4,7 @@ import { Utils } from './utils';
 export const useTemperatureBreach = {
   document: {
     list: Document.useTemperatureBreaches,
-    notifications: Document.useTemperatureBreachNotifications,
+    update: Document.useUpdateTemperatureBreach,
   },
   utils: {
     api: Utils.useTemperatureBreachApi,

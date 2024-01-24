@@ -10,7 +10,7 @@ use repository::{
     TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
 };
 use repository::{EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField};
-use service::temperature_breach::query::get_temperature_breaches;
+use service::temperature_breach::query::temperature_breaches;
 use service::temperature_log::query::get_temperature_logs;
 use service::{usize_to_u32, ListResult};
 
@@ -79,8 +79,12 @@ impl SensorNode {
         &self.row().name
     }
 
-    pub async fn serial(&self) -> &str {
-        &self.row().serial
+    pub async fn serial(&self) -> String {
+        // the serial is stored as `| SENSOR_MANUFACTURER` in the database
+        // and the front end does not want to know about the manufacturer
+        let re = regex::Regex::new(r"\| .+$").unwrap();
+
+        re.replace(&self.row().serial, "").to_string()
     }
 
     pub async fn r#type(&self) -> SensorNodeType {
@@ -148,7 +152,7 @@ impl SensorNode {
             .end_datetime(DatetimeFilter::is_null(true))
             .sensor(SensorFilter::new().id(EqualFilter::equal_to(&self.row().id)));
 
-        let breach = get_temperature_breaches(
+        let breach = temperature_breaches(
             &ctx.get_connection_manager().connection()?,
             Some(PaginationOption {
                 limit: Some(1),

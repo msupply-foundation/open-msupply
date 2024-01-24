@@ -1,3 +1,4 @@
+pub mod mutations;
 use async_graphql::*;
 use graphql_core::{
     pagination::PaginationInput,
@@ -42,7 +43,7 @@ impl TemperatureBreachQueries {
 
         let temperature_breaches = service_provider
             .temperature_breach_service
-            .get_temperature_breaches(
+            .temperature_breaches(
                 &service_context.connection,
                 page.map(PaginationOption::from),
                 Some(filter),
@@ -55,6 +56,21 @@ impl TemperatureBreachQueries {
         Ok(TemperatureBreachesResponse::Response(
             TemperatureBreachConnector::from_domain(temperature_breaches),
         ))
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct TemperatureBreachMutations;
+
+#[Object]
+impl TemperatureBreachMutations {
+    async fn update_temperature_breach(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: mutations::UpdateInput,
+    ) -> Result<mutations::UpdateResponse> {
+        mutations::update(ctx, &store_id, input)
     }
 }
 
@@ -91,7 +107,7 @@ mod test {
     pub struct TestService(pub Box<GetTemperatureBreaches>);
 
     impl TemperatureBreachServiceTrait for TestService {
-        fn get_temperature_breaches(
+        fn temperature_breaches(
             &self,
             _: &StorageConnection,
             pagination: Option<PaginationOption>,
@@ -128,7 +144,7 @@ mod test {
                 nodes {
                   id
                   sensorId
-                  acknowledged
+                  unacknowledged
                 }
                 totalCount
               }
@@ -143,7 +159,7 @@ mod test {
                     temperature_breach_row: TemperatureBreachRow {
                         id: "acknowledged_temperature_breach".to_owned(),
                         duration_milliseconds: 3600,
-                        acknowledged: true,
+                        unacknowledged: false,
                         r#type: TemperatureBreachRowType::ColdConsecutive,
                         store_id: "store_a".to_string(),
                         location_id: None,
@@ -163,6 +179,7 @@ mod test {
                                 + Duration::seconds(50646),
                         ),
                         threshold_duration_milliseconds: 3600,
+                        comment: None,
                     },
                 }],
                 count: 1,
@@ -175,7 +192,7 @@ mod test {
                       {
                           "id": "acknowledged_temperature_breach",
                           "sensorId": "sensor_1",
-                          "acknowledged": true,
+                          "unacknowledged": false,
                       },
                   ],
                   "totalCount": 1

@@ -58,6 +58,7 @@ const PatientListComponent: FC = () => {
   const queryParams = {
     filterBy,
     offset,
+    first,
     sortBy,
   };
 
@@ -65,6 +66,7 @@ const PatientListComponent: FC = () => {
 
   const { data, isError, isLoading } = usePatient.document.list(queryParams);
   const pagination = { page, first, offset };
+
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
 

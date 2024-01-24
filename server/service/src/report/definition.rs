@@ -11,6 +11,15 @@ pub struct GraphQlQuery {
     pub variables: Option<Value>,
 }
 
+/// This struct is used to sort report data by a key and in descending or ascending order
+#[derive(Clone)]
+pub struct PrintReportSort {
+    /// Key to sort by
+    pub key: String,
+    /// Whether to sort in descending order
+    pub desc: Option<bool>,
+}
+
 impl GraphQlQuery {
     /// Create query variables for the query
     pub fn query_variables(
@@ -18,6 +27,7 @@ impl GraphQlQuery {
         store_id: &str,
         data_id: Option<String>,
         arguments: Option<Value>,
+        sort: Option<PrintReportSort>,
     ) -> Value {
         let mut variables = match &self.variables {
             Some(variables) => {
@@ -41,6 +51,14 @@ impl GraphQlQuery {
                 variables[key] = value;
             }
         };
+
+        if let Some(sort) = sort {
+            variables["sort"] = serde_json::json!({
+                "key": sort.key,
+                "desc": sort.desc
+            });
+        }
+
         variables["storeId"] = Value::String(store_id.to_string());
         variables["now"] = Value::String(Utc::now().to_rfc3339());
 
