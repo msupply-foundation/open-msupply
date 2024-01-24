@@ -38,7 +38,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             PullUpsertRecord::Currency(CurrencyRow {
                 id: CURRENCY_1.0.to_string(),
                 rate: 1.0,
-                currency_code: "NZD".to_string(),
+                code: "NZD".to_string(),
                 is_home_currency: true,
                 date_updated: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
                 is_active: true,
@@ -50,7 +50,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             PullUpsertRecord::Currency(CurrencyRow {
                 id: CURRENCY_2.0.to_string(),
                 rate: 1.2,
-                currency_code: "AUD".to_string(),
+                code: "AUD".to_string(),
                 is_home_currency: false,
                 date_updated: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                 is_active: true,
@@ -67,7 +67,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyCurrencyRow {
                 id: CURRENCY_1.0.to_string(),
                 rate: 1.0,
-                currency_code: "NZD".to_string(),
+                code: "NZD".to_string(),
                 is_home_currency: true,
                 date_updated: NaiveDate::from_ymd_opt(2020, 1, 1),
                 is_active: true,
@@ -79,7 +79,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyCurrencyRow {
                 id: CURRENCY_2.0.to_string(),
                 rate: 1.2,
-                currency_code: "AUD".to_string(),
+                code: "AUD".to_string(),
                 is_home_currency: false,
                 date_updated: NaiveDate::from_ymd_opt(2022, 1, 1),
                 is_active: true,

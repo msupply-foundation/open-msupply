@@ -9,7 +9,7 @@ table! {
     currency (id) {
         id -> Text,
         rate -> Double,
-        currency_code -> Text,
+        code -> Text,
         is_home_currency -> Bool,
         date_updated -> Nullable<Date>,
         is_active -> Bool,
@@ -22,7 +22,7 @@ table! {
 pub struct CurrencyRow {
     pub id: String,
     pub rate: f64,
-    pub currency_code: String,
+    pub code: String,
     pub is_home_currency: bool,
     pub date_updated: Option<NaiveDate>,
     pub is_active: bool,
