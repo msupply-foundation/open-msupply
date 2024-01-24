@@ -16,14 +16,13 @@ pub struct Currency {
     pub currency_row: CurrencyRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone)]
 pub struct CurrencyFilter {
     pub id: Option<EqualFilter<String>>,
     pub is_home_currency: Option<bool>,
     pub is_active: Option<bool>,
 }
 
-#[derive(PartialEq, Debug)]
 pub enum CurrencySortField {
     Id,
     CurrencyCode,
