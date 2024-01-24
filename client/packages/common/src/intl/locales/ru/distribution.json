@@ -6,5 +6,7 @@
   "button.add-from-master-list": "Добавить из главного списка",
   "heading.service-charges": "Сервисные сборы",
   "button.new-outbound-shipment": "Новая Исходящая Доставка",
-  "label.add-batch": "Добавить партию"
+  "label.add-batch": "Добавить партию",
+  "button.new-shipment": "Новая Поставка",
+  "button.create-shipment": "Создать Поставку"
 }
