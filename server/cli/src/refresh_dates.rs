@@ -95,6 +95,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("stocktake_line", "expiry_date"),
         ("period", "start_date"),
         ("period", "end_date"),
+        ("currency", "date_updated"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
