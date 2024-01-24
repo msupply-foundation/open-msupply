@@ -68,22 +68,22 @@ impl SyncRecordTester for ReportTester {
             central_upsert: json!({
                 "report": [report_json1,report_json2,report_json3,report_json4],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(report_row1.clone()),
                 IntegrationOperation::upsert(report_row2),
                 IntegrationOperation::upsert(report_row3),
                 IntegrationOperation::upsert(report_row4),
             ],
+            ..Default::default()
         });
 
         // STEP 2 - deletes
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({ "report": [report_row1.id] }),
             integration_records: vec![IntegrationOperation::delete(ReportRowDelete(
                 report_row1.id,
             ))],
+            ..Default::default()
         });
         result
     }
