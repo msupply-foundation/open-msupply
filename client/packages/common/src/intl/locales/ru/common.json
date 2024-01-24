@@ -28,5 +28,22 @@
   "label.batch": "Партия",
   "label.supplier": "Поставщик",
   "label.finalised": "Завершено",
-  "label.suggested": "Рекомендуемое"
+  "label.suggested": "Рекомендуемое",
+  "app.initialise": "Инициализировать",
+  "approval-status.approved": "Утверждено",
+  "approval-status.denied": "Отклонено",
+  "approval-status.none": "Ничего",
+  "approval-status.pending": "В ожидании",
+  "breadcrumb.item": "#{{id}}",
+  "button.import-fridge-tag": "Импортировать Фридж-тэг",
+  "button.initialise": "Инициализировать",
+  "button.language": "Язык",
+  "button.more": "Ещё",
+  "button.new-inbound-shipment": "Новая Входящая Поставка",
+  "button.save-and-confirm-status": "Подтвердить {{status}}",
+  "button.scan": "Отсканировать",
+  "button.view": "Просмотреть",
+  "description-last-reading-datetime": "Дата и время последнего считывания",
+  "description.average-monthly-consumption": "Среднемесячное Потребление",
+  "description.breach-type": "Тип продолжающегося нарушения"
 }
