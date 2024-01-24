@@ -26,6 +26,7 @@ pub struct CurrencySortInput {
 pub struct CurrencyFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub is_home_currency: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 impl CurrencyFilterInput {
@@ -33,11 +34,13 @@ impl CurrencyFilterInput {
         let CurrencyFilterInput {
             id,
             is_home_currency,
+            is_active,
         } = self;
 
         CurrencyFilter {
             id: id.map(EqualFilter::from),
             is_home_currency,
+            is_active,
         }
     }
 }
@@ -59,8 +62,8 @@ impl CurrencyNode {
         &self.row().id
     }
 
-    pub async fn currency_code(&self) -> &str {
-        &self.row().currency_code
+    pub async fn code(&self) -> &str {
+        &self.row().code
     }
 
     pub async fn rate(&self) -> f64 {
