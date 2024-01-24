@@ -1,10 +1,28 @@
-import { useLayoutEffect, useEffect, useRef } from 'react';
+import { useEffect, useRef, useInsertionEffect } from 'react';
 
+type ArgsType = (number | string | object)[]; // Avoid `any` type
 export type Callback = () => void;
+export type EventCallback = (...args: ArgsType) => void;
 export type Delay = number | null;
 
-export const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+/**
+ * Hook that lets you extract non-reactive logic into an effect event.
+ * This is a kind of polyfill for the `useEffectEvent` hook that is still
+ * in the experimental phase.
+ * @param callback An event callback function
+ * @returns A function that can be called to execute the callback
+ */
+const useEffectEvent = (callback: EventCallback) => {
+  const savedCallback = useRef<EventCallback>(callback);
+
+  useInsertionEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  return (...args: ArgsType) => {
+    savedCallback.current(...args);
+  };
+};
 
 /**
  * Custom hook for setInterval declarative usage in functional components with support for server-side rendering.
@@ -14,21 +32,14 @@ export const useIsomorphicLayoutEffect =
  * @param delay Delay in milliseconds between each execution of the callback
  */
 export const useInterval = (callback: Callback, delay: Delay) => {
-  const savedCallback = useRef<Callback>(callback);
-
-  // Remember the latest callback
-  useIsomorphicLayoutEffect(() => {
-    savedCallback.current = callback;
-  }, [callback]);
+  const onTick = useEffectEvent(callback);
 
   // Set up the interval
   useEffect(() => {
-    const tick = () => savedCallback.current();
-
     // Don't schedule if no delay is specified
-    if (delay !== null) {
-      const id = setInterval(tick, delay);
-      return () => clearInterval(id); // Cleanup the interval on component unmount
-    }
-  }, [delay]);
+    if (delay === null) return;
+
+    const id = setInterval(onTick, delay);
+    return () => clearInterval(id); // Cleanup the interval on component unmount
+  }, [delay, onTick]);
 };
