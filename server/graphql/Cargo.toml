@@ -22,6 +22,7 @@ graphql_sensor = { path = "sensor" }
 graphql_temperature_breach = { path = "temperature_breach" }
 graphql_temperature_log = { path = "temperature_log" }
 graphql_temperature_notification = { path = "temperature_notification" }
+graphql_currency = { path = "currency" }
 
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
