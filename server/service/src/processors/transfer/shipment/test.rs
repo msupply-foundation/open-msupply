@@ -217,7 +217,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line1.pack_size;
             r.number_of_packs = 2.0;
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.item_name = item1.name.clone();
             r.item_code = item1.code.clone();
             r.cost_price_per_pack = 20.0;
@@ -246,7 +246,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line2.pack_size;
             r.number_of_packs = 6.0;
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
             r.cost_price_per_pack = 15.0;
@@ -263,7 +263,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::UnallocatedStock;
             r.pack_size = 1;
             r.number_of_packs = 10.0;
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
         });
@@ -639,7 +639,7 @@ fn check_line(
         .query_one(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_shipment_id))
-                .item_id(EqualFilter::equal_to(&outbound_line.item_id)),
+                .item_id(EqualFilter::equal_to(&outbound_line.item_link_id)),
         )
         .unwrap();
 

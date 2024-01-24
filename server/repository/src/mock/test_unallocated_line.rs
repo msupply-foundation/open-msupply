@@ -38,7 +38,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "unallocated_line_new_invoice_line_1".to_owned(),
         invoice_id: "unallocated_line_new_invoice".to_owned(),
-        item_id: "item_a".to_owned(),
+        item_link_id: "item_a".to_owned(),
         item_name: "Item A".to_owned(),
         item_code: "item_a_code".to_owned(),
         stock_line_id: None,
@@ -79,7 +79,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "unallocated_line_new_invoice2_line_1".to_owned(),
         invoice_id: "unallocated_line_new_invoice2".to_owned(),
-        item_id: "item_b".to_owned(),
+        item_link_id: "item_b".to_owned(),
         item_name: "Item B".to_owned(),
         item_code: "item_b_code".to_owned(),
         stock_line_id: None,

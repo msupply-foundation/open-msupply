@@ -116,7 +116,11 @@ mod test_update {
             )
             .unwrap();
 
-        invoice_lines.sort_by(|a, b| a.invoice_line_row.item_id.cmp(&b.invoice_line_row.item_id));
+        invoice_lines.sort_by(|a, b| {
+            a.invoice_line_row
+                .item_link_id
+                .cmp(&b.invoice_line_row.item_link_id)
+        });
 
         assert_eq!(invoice_lines.len(), 2);
 
@@ -170,7 +174,11 @@ mod test_update {
             )
             .unwrap();
 
-        invoice_lines.sort_by(|a, b| a.invoice_line_row.item_id.cmp(&b.invoice_line_row.item_id));
+        invoice_lines.sort_by(|a, b| {
+            a.invoice_line_row
+                .item_link_id
+                .cmp(&b.invoice_line_row.item_link_id)
+        });
 
         assert_eq!(invoice_lines.len(), 1);
 

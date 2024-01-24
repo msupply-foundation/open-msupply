@@ -35,7 +35,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.id = invoice_line_a_id;
                     r.stock_line_id = Some(stock_line_a_id.clone());
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = String::from("item_a");
+                    r.item_link_id = String::from("item_a");
                     r.item_name = String::from("Item A");
                     r.item_code = String::from("item_a_code");
                     r.pack_size = 4;
@@ -63,7 +63,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                     r.id = invoice_line_b_id;
                     r.stock_line_id = Some(stock_line_b_id.clone());
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = String::from("item_a");
+                    r.item_link_id = String::from("item_a");
                     r.item_name = String::from("Item A");
                     r.item_code = String::from("item_a_code");
                     r.pack_size = 2;

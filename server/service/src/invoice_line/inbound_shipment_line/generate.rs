@@ -27,7 +27,7 @@ pub fn generate_batch(
     store_id: &str,
     InvoiceLineRow {
         stock_line_id,
-        item_id,
+        item_link_id,
         pack_size,
         batch,
         expiry_date,
@@ -49,7 +49,7 @@ pub fn generate_batch(
 
     StockLineRow {
         id: stock_line_id,
-        item_id,
+        item_id: item_link_id,
         store_id: store_id.to_string(),
         location_id,
         batch,

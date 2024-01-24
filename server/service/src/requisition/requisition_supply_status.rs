@@ -46,7 +46,7 @@ pub fn get_requisitions_supply_statuses(
 
         let status = if let Some(status) = statuses.get_mut(&RequisitionAndItemId {
             requisition_id: requisition_id.clone(),
-            item_id: line.invoice_line_row.item_id.clone(),
+            item_id: line.item_row.id.clone(),
         }) {
             status
         } else {
