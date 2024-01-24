@@ -156,6 +156,7 @@ mod test {
 
         let master_list1 = MasterListRow {
             id: "master_list1".to_string(),
+            is_active: true,
             ..Default::default()
         };
         let context1 = ContextRow {
@@ -171,6 +172,7 @@ mod test {
 
         let master_list2 = MasterListRow {
             id: "master_list2".to_string(),
+            is_active: true,
             ..Default::default()
         };
 
@@ -294,11 +296,12 @@ mod test {
             .upsert_one(&name_store_join3)
             .unwrap();
 
-        let result = repo.query(&store3.id, filter);
+        let mut result = repo.query(&store3.id, filter).unwrap();
+        result.sort_by(|a, b| a.supplier.name_row.id.cmp(&b.supplier.name_row.id));
 
         assert_eq!(
             result,
-            Ok(vec![
+            vec![
                 ProgramSupplier {
                     supplier: Name {
                         name_row: store_name1.clone(),
@@ -315,7 +318,7 @@ mod test {
                     },
                     program: program2.clone()
                 }
-            ])
+            ]
         );
     }
 }

@@ -11,6 +11,7 @@ use graphql_types::types::contact_trace::ContactTraceSortInput;
 use graphql_types::types::document::DocumentNode;
 use graphql_types::types::encounter::EncounterFilterInput;
 use graphql_types::types::encounter::EncounterSortInput;
+use graphql_types::types::patient::PatientFilterInput;
 use graphql_types::types::patient::PatientNode;
 use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
 use graphql_types::types::program_enrolment::ProgramEnrolmentResponse;
@@ -27,9 +28,6 @@ use mutations::contact_trace::insert::InsertContactTraceResponse;
 use mutations::contact_trace::update::update_contact_trace;
 use mutations::contact_trace::update::UpdateContactTraceInput;
 use mutations::contact_trace::update::UpdateContactTraceResponse;
-use mutations::delete_document::delete_document;
-use mutations::delete_document::DeleteDocumentInput;
-use mutations::delete_document::DeleteDocumentResponse;
 use mutations::encounter::insert::insert_encounter;
 use mutations::encounter::insert::InsertEncounterInput;
 use mutations::encounter::insert::InsertEncounterResponse;
@@ -53,9 +51,6 @@ use mutations::program_patient::insert::*;
 use mutations::program_patient::update::update_program_patient;
 use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
-use mutations::undelete_document::undelete_document;
-use mutations::undelete_document::UndeleteDocumentInput;
-use mutations::undelete_document::UndeleteDocumentResponse;
 use mutations::update_document::*;
 use queries::contact_trace::contact_traces;
 use service::auth::Resource;
@@ -248,24 +243,6 @@ impl ProgramsMutations {
         input: UpdateDocumentInput,
     ) -> Result<UpdateDocumentResponse> {
         update_document(ctx, store_id, input)
-    }
-
-    async fn delete_document(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: DeleteDocumentInput,
-    ) -> Result<DeleteDocumentResponse> {
-        delete_document(ctx, store_id, input)
-    }
-
-    async fn undelete_document(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: UndeleteDocumentInput,
-    ) -> Result<UndeleteDocumentResponse> {
-        undelete_document(ctx, store_id, input)
     }
 
     async fn insert_document_registry(

@@ -12,7 +12,7 @@ import {
   DetailTabs,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { LogList } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -44,7 +44,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

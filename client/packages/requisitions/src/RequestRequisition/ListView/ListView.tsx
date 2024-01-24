@@ -42,9 +42,17 @@ export const RequestRequisitionListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset },
-  } = useUrlQueryParams({ filters: [{ key: 'otherPartyName' }] });
-  const { data, isError, isLoading } = useRequest.document.list();
+  } = useUrlQueryParams({
+    initialSort: { key: 'createdDatetime', dir: 'desc' },
+    filters: [
+      { key: 'otherPartyName' },
+      { key: 'status', condition: 'equalTo' },
+    ],
+  });
+  const queryParams = { ...filter, sortBy, first, offset };
   const pagination = { page, first, offset };
+
+  const { data, isError, isLoading } = useRequest.document.list(queryParams);
   useDisableRequestRows(data?.nodes);
   const { requireSupplierAuthorisation } = useRequest.utils.preferences();
 
@@ -53,9 +61,9 @@ export const RequestRequisitionListView: FC = () => {
     {
       key: 'requisitionNumber',
       label: 'label.number',
-      width: 100,
+      width: 75,
     },
-    'createdDatetime',
+    ['createdDatetime', { width: 150 }],
     {
       key: 'programName',
       accessor: ({ rowData }) => {
@@ -64,6 +72,7 @@ export const RequestRequisitionListView: FC = () => {
       label: 'label.program',
       description: 'description.program',
       sortable: true,
+      width: 150,
     },
     {
       key: 'orderType',
@@ -85,6 +94,7 @@ export const RequestRequisitionListView: FC = () => {
     [
       'status',
       {
+        width: 100,
         formatter: currentStatus =>
           getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
       },

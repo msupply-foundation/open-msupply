@@ -30,7 +30,7 @@ pub struct TemperatureBreachFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub start_datetime: Option<DatetimeFilter>,
     pub end_datetime: Option<DatetimeFilter>,
-    pub acknowledged: Option<bool>,
+    pub unacknowledged: Option<bool>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
 }
@@ -60,7 +60,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<TemperatureBreachFilter>) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(filter)?;
+        let query = Self::create_filtered_query(filter);
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -77,7 +77,7 @@ impl<'a> TemperatureBreachRepository<'a> {
         filter: Option<TemperatureBreachFilter>,
         sort: Option<TemperatureBreachSort>,
     ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-        let mut query = Self::create_filtered_query(filter)?;
+        let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureBreachSortField::Id => {
@@ -104,14 +104,14 @@ impl<'a> TemperatureBreachRepository<'a> {
 
     pub fn create_filtered_query(
         filter: Option<TemperatureBreachFilter>,
-    ) -> Result<BoxedTemperatureBreachQuery, RepositoryError> {
+    ) -> BoxedTemperatureBreachQuery {
         let mut query = temperature_breach_dsl::temperature_breach.into_boxed();
 
         if let Some(f) = filter {
             let TemperatureBreachFilter {
                 id,
                 store_id,
-                acknowledged,
+                unacknowledged,
                 start_datetime,
                 end_datetime,
                 r#type,
@@ -129,8 +129,8 @@ impl<'a> TemperatureBreachRepository<'a> {
             );
             apply_date_time_filter!(query, end_datetime, temperature_breach_dsl::end_datetime);
 
-            if let Some(value) = acknowledged {
-                query = query.filter(temperature_breach_dsl::acknowledged.eq(value));
+            if let Some(value) = unacknowledged {
+                query = query.filter(temperature_breach_dsl::unacknowledged.eq(value));
             }
 
             if sensor.is_some() {
@@ -146,7 +146,7 @@ impl<'a> TemperatureBreachRepository<'a> {
             }
         }
 
-        Ok(query)
+        query
     }
 }
 
@@ -177,7 +177,7 @@ impl TemperatureBreachFilter {
         TemperatureBreachFilter {
             id: None,
             store_id: None,
-            acknowledged: None,
+            unacknowledged: None,
             start_datetime: None,
             end_datetime: None,
             r#type: None,
@@ -196,8 +196,8 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn acknowledged(mut self, filter: bool) -> Self {
-        self.acknowledged = Some(filter);
+    pub fn unacknowledged(mut self, filter: bool) -> Self {
+        self.unacknowledged = Some(filter);
         self
     }
 

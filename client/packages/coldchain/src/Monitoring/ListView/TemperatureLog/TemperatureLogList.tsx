@@ -16,28 +16,30 @@ import {
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
 
+const temperatureLogFilterAndSort = {
+  initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
+  filters: [
+    { key: 'datetime', condition: 'between' },
+    {
+      key: 'sensor.name',
+    },
+    {
+      key: 'location.name',
+    },
+    {
+      key: 'temperatureBreach.type',
+      condition: 'equalTo',
+    },
+  ],
+};
+
 const ListView: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'asc' },
-    filters: [
-      { key: 'datetime', condition: 'between' },
-      {
-        key: 'sensor.name',
-      },
-      {
-        key: 'location.name',
-      },
-      {
-        key: 'temperatureBreach.type',
-        condition: 'equalTo',
-      },
-    ],
-  });
+  } = useUrlQueryParams(temperatureLogFilterAndSort);
   const queryParams = {
     filterBy,
     offset,
@@ -66,9 +68,9 @@ const ListView: FC = () => {
         sortable: false,
       },
       {
-        key: 'locationName',
+        key: 'location',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
         sortable: false,
       },
       {
@@ -80,7 +82,7 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${rowData.temperature}${t('label.temperature-unit')}`;
+          return `${rowData.temperature} ${t('label.temperature-unit')}`;
         },
       },
       {

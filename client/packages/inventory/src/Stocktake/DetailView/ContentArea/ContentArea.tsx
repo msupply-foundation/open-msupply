@@ -112,6 +112,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
             buttonText={t('button.add-item')}
           />
         }
+        enableColumnSelection
       />
     </Box>
   );

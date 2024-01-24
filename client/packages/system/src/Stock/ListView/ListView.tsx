@@ -14,26 +14,48 @@ import {
   useToggle,
   StockIcon,
   ColumnAlign,
+  ColumnDescription,
+  usePluginColumns,
   TooltipTextCell,
 } from '@openmsupply-client/common';
-import { RepackModal, StockLineEditModal, Toolbar } from '../Components';
+import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
 
 const StockListComponent: FC = () => {
   const {
     filter,
     updatePaginationQuery,
     updateSortQuery,
-    queryParams: { sortBy, page, first, offset },
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: { key: 'expiryDate', dir: 'asc' },
-    filters: [{ key: 'itemCodeOrName' }],
+    filters: [
+      { key: 'itemCodeOrName' },
+      {
+        key: 'location.name',
+      },
+      {
+        key: 'expiryDate',
+        condition: 'between',
+      },
+    ],
   });
+  const queryParams = {
+    filterBy,
+    offset,
+    sortBy,
+    first,
+  };
+
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
-  const { data, isLoading, isError } = useStock.line.list();
+  const { data, isLoading, isError } = useStock.line.list(queryParams);
   const [repackId, setRepackId] = React.useState<string | null>(null);
+  const pluginColumns = usePluginColumns<StockLineRowFragment>({
+    type: 'Stock',
+  });
   const EditStockLineCell = <T extends StockLineRowFragment>({
     rowData,
     isDisabled,
@@ -59,71 +81,95 @@ const StockListComponent: FC = () => {
     />
   );
 
-  const columns = useColumns<StockLineRowFragment>(
+  const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
+    {
+      key: 'edit',
+      label: 'label.repack',
+      Cell: EditStockLineCell,
+      width: 75,
+      sortable: false,
+      align: ColumnAlign.Center,
+    },
     [
+      'itemCode',
       {
-        key: 'edit',
-        label: 'label.repack',
-        Cell: EditStockLineCell,
-        maxWidth: 75,
-        sortable: false,
-        align: ColumnAlign.Center,
-      },
-      ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
-      [
-        'itemName',
-        {
-          accessor: ({ rowData }) => rowData.item.name,
-          Cell: TooltipTextCell,
-          maxWidth: 350,
-        },
-      ],
-      'batch',
-      [
-        'expiryDate',
-        {
-          accessor: ({ rowData }) =>
-            DateUtils.getDateOrNull(rowData.expiryDate),
-        },
-      ],
-      ['locationName', { sortable: false }],
-      [
-        'itemUnit',
-        { accessor: ({ rowData }) => rowData.item.unitName, sortable: false },
-      ],
-      'packSize',
-      [
-        'numberOfPacks',
-        {
-          accessor: ({ rowData }) => rowData.totalNumberOfPacks,
-          width: 150,
-        },
-      ],
-      [
-        'stockOnHand',
-        {
-          accessor: ({ rowData }) =>
-            rowData.totalNumberOfPacks * rowData.packSize,
-          label: 'label.soh',
-          description: 'description.soh',
-          sortable: false,
-          width: 125,
-        },
-      ],
-      {
-        key: 'supplierName',
-        label: 'label.supplier',
-        accessor: ({ rowData }) =>
-          rowData.supplierName
-            ? rowData.supplierName
-            : t('message.no-supplier'),
+        accessor: ({ rowData }) => rowData.item.code,
+        Cell: TooltipTextCell,
+        width: 100,
       },
     ],
+    [
+      'itemName',
+      {
+        accessor: ({ rowData }) => rowData.item.name,
+        Cell: TooltipTextCell,
+        width: 350,
+      },
+    ],
+    ['batch', { Cell: TooltipTextCell, width: 100 }],
+    [
+      'expiryDate',
+      {
+        accessor: ({ rowData }) => DateUtils.getDateOrNull(rowData.expiryDate),
+        width: 110,
+      },
+    ],
+    [
+      'location',
+      {
+        Cell: TooltipTextCell,
+        width: 100,
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
+    [
+      'itemUnit',
+      {
+        accessor: ({ rowData }) => rowData.item.unitName,
+        sortable: false,
+        Cell: TooltipTextCell,
+        width: 75,
+      },
+    ],
+    ['packSize', { Cell: TooltipTextCell, width: 125 }],
+    [
+      'numberOfPacks',
+      {
+        accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        Cell: TooltipTextCell,
+        width: 150,
+      },
+    ],
+    [
+      'stockOnHand',
+      {
+        accessor: ({ rowData }) =>
+          rowData.totalNumberOfPacks * rowData.packSize,
+        label: 'label.soh',
+        description: 'description.soh',
+        sortable: false,
+        Cell: TooltipTextCell,
+        width: 125,
+      },
+    ],
+    {
+      key: 'supplierName',
+      label: 'label.supplier',
+      accessor: ({ rowData }) =>
+        rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
+      Cell: TooltipTextCell,
+      width: 190,
+    },
+    ...pluginColumns,
+  ];
+
+  const columns = useColumns<StockLineRowFragment>(
+    columnDefinitions,
     {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
-    [sortBy]
+    [sortBy, pluginColumns]
   );
 
   const { isOpen, entity, onClose, onOpen } =

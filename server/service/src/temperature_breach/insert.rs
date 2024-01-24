@@ -22,10 +22,11 @@ pub struct InsertTemperatureBreach {
     pub location_id: Option<String>,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
-    pub acknowledged: bool,
+    pub unacknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
 }
 
 pub fn insert_temperature_breach(
@@ -67,10 +68,11 @@ pub fn generate(
         location_id,
         start_datetime,
         end_datetime,
-        acknowledged,
+        unacknowledged,
         threshold_minimum,
         threshold_maximum,
         threshold_duration_milliseconds,
+        comment,
     }: InsertTemperatureBreach,
 ) -> TemperatureBreachRow {
     TemperatureBreachRow {
@@ -82,10 +84,11 @@ pub fn generate(
         r#type,
         start_datetime,
         end_datetime,
-        acknowledged,
+        unacknowledged,
         threshold_minimum,
         threshold_maximum,
         threshold_duration_milliseconds,
+        comment,
     }
 }
 

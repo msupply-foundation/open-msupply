@@ -883,6 +883,7 @@ mod test {
                 line: mock_stocktake_line_a(),
                 stock_line: Some(stock_line),
                 location: None,
+                item: Some(mock_item_a()),
             }])
         );
 

@@ -6,6 +6,13 @@ export const NumUtils = {
   isPositive: (num: number): boolean => {
     return num > 0;
   },
+  /**
+   * Parses a string into a number, constraining it to the given min and max values.
+   *
+   * With the default `min` and `max` parameters this method will return a number >= 0.
+   *
+   * If the input `str` can't be parsed the min value is returned.
+   */
   parseString(str: string, min = 0, max = Number.MAX_SAFE_INTEGER): number {
     const parsed = Number(str);
     if (Number.isNaN(parsed)) return min;

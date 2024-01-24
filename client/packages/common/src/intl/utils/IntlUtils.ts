@@ -1,9 +1,36 @@
-import { useTranslation as useTranslationNext } from 'react-i18next';
+import React from 'react';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
+import { IntlContext } from '../context';
 
-export { useTranslationNext };
+// importing individually to reduce bundle size
+// the date-fns methods are tree shaking correctly
+// but the locales are not. when adding, please add as below
+import enGB from 'date-fns/locale/en-GB';
+import enUS from 'date-fns/locale/en-US';
+import fr from 'date-fns/locale/fr';
+import ar from 'date-fns/locale/ar';
+import es from 'date-fns/locale/es';
+import ru from 'date-fns/locale/ru';
+
+// Map locale string (from i18n) to locale object (from date-fns)
+const getLocaleObj = { fr, ar, es, ru };
+
+export const getLocale = (language: SupportedLocales) => {
+  switch (language) {
+    case 'en':
+      return navigator.language === 'en-US' ? enUS : enGB;
+    case 'tet':
+      return enGB;
+    case 'fr-DJ':
+      return fr;
+    default:
+      return getLocaleObj[language];
+  }
+};
+
+export const useIntl = () => React.useContext(IntlContext);
 
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
@@ -32,14 +59,16 @@ export type SupportedLocales = (typeof locales)[number];
 type StringOrEmpty = string | null | undefined;
 
 export const useIntlUtils = () => {
-  const { i18n } = useTranslationNext();
-  const { language } = i18n;
+  const { i18n } = useIntl();
+  const { language: i18nLanguage } = i18n;
+  const [language, setLanguage] = React.useState<string>(i18nLanguage);
 
   const changeLanguage = (languageCode?: string) => {
     if (!languageCode) return;
     if (!locales.some(locale => languageCode === locale)) return;
 
     i18n.changeLanguage(languageCode);
+    setLanguage(languageCode);
   };
 
   const isRtl = rtlLocales.includes(language);
@@ -51,12 +80,12 @@ export const useIntlUtils = () => {
     }
 
     // Handle languages such as en-US or fr-FR
-    const baseLanguage = supportedLanguage.split('-')[0] as SupportedLocales;
+    const baseLanguage = supportedLanguage?.split('-')[0] as SupportedLocales;
     if (locales.includes(baseLanguage)) {
       return baseLanguage;
     }
 
-    if (!EnvUtils.isProduction()) {
+    if (!EnvUtils.isProduction() && !!language) {
       throw new Error(`Language '${language}' not supported`);
     }
     return 'en';
@@ -91,6 +120,7 @@ export const useIntlUtils = () => {
     languageOptions,
     changeLanguage,
     getLocaleCode,
+    getLocale: () => getLocale(currentLanguage),
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,

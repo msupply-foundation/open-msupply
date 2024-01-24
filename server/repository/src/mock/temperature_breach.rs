@@ -6,7 +6,7 @@ use chrono::{Duration, NaiveDate};
 pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
     TemperatureBreachRow {
         id: "temperature_breach_1".to_owned(),
-        acknowledged: false,
+        unacknowledged: true,
         r#type: TemperatureBreachRowType::HotConsecutive,
         store_id: "store_a".to_string(),
         threshold_minimum: 8.0,
@@ -27,6 +27,7 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
                 .unwrap()
                 + Duration::seconds(53046),
         ),
+        comment: None,
     }
 }
 
@@ -34,7 +35,7 @@ pub fn mock_temperature_breach_1() -> TemperatureBreachRow {
 pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
     TemperatureBreachRow {
         id: "temperature_breach_acknowledged".to_owned(),
-        acknowledged: true,
+        unacknowledged: false,
         r#type: TemperatureBreachRowType::HotConsecutive,
         store_id: "store_a".to_string(),
         threshold_minimum: 8.0,
@@ -55,6 +56,7 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
                 .unwrap()
                 + Duration::seconds(48246),
         ),
+        comment: None,
     }
 }
 
@@ -62,7 +64,7 @@ pub fn mock_temperature_breach_acknowledged() -> TemperatureBreachRow {
 pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
     TemperatureBreachRow {
         id: "temperature_breach_2".to_owned(),
-        acknowledged: false,
+        unacknowledged: true,
         r#type: TemperatureBreachRowType::ColdConsecutive,
         store_id: "store_b".to_string(),
         threshold_minimum: -273.0,
@@ -83,6 +85,7 @@ pub fn mock_temperature_breach_2() -> TemperatureBreachRow {
                 .unwrap()
                 + Duration::seconds(54246),
         ),
+        comment: None,
     }
 }
 

@@ -14,21 +14,40 @@ import {
   useEncounterFragmentWithStatus,
 } from '../utils';
 import { useEncounter } from '@openmsupply-client/programs';
+import { Toolbar } from './Toolbar';
 
 const EncounterListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
-    queryParams: { sortBy, page, first, offset },
+    filter,
+    queryParams: { sortBy, page, first, offset, filterBy },
   } = useUrlQueryParams({
     initialSort: {
       key: EncounterSortFieldInput.StartDatetime,
       dir: 'desc',
     },
+    filters: [
+      {
+        key: 'patient.lastName',
+      },
+      {
+        key: 'programEnrolment.programName',
+      },
+      {
+        key: 'startDatetime',
+        condition: 'between',
+      },
+      {
+        key: 'status',
+        condition: 'equalTo',
+      },
+    ],
   });
   const { data, isError, isLoading } = useEncounter.document.list({
     pagination: { first, offset },
     sortBy,
+    filterBy: filterBy ?? undefined,
   });
   const navigate = useNavigate();
   const columns = useEncounterListColumns({
@@ -40,19 +59,22 @@ const EncounterListComponent: FC = () => {
     useEncounterFragmentWithStatus(data?.nodes);
 
   return (
-    <DataTable
-      id="name-list"
-      pagination={{ page, first, offset, total: data?.totalCount }}
-      onChangePage={updatePaginationQuery}
-      columns={columns}
-      data={dataWithStatus}
-      isLoading={isLoading}
-      isError={isError}
-      onRowClick={row => {
-        navigate(String(row.id));
-      }}
-      noDataElement={<NothingHere />}
-    />
+    <>
+      <Toolbar filter={filter} />
+      <DataTable
+        id="name-list"
+        pagination={{ page, first, offset, total: data?.totalCount }}
+        onChangePage={updatePaginationQuery}
+        columns={columns}
+        data={dataWithStatus}
+        isLoading={isLoading}
+        isError={isError}
+        onRowClick={row => {
+          navigate(String(row.id));
+        }}
+        noDataElement={<NothingHere />}
+      />
+    </>
   );
 };
 

@@ -20,10 +20,11 @@ table! {
         store_id -> Text,
         start_datetime -> Timestamp,
         end_datetime -> Nullable<Timestamp>,
-        acknowledged -> Bool,
+        unacknowledged -> Bool,
         threshold_minimum -> Double,
         threshold_maximum -> Double,
         threshold_duration_milliseconds -> Integer,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -48,6 +49,7 @@ pub enum TemperatureBreachRowType {
     #[default]
     HotConsecutive,
     HotCumulative,
+    Excursion,
 }
 
 #[derive(
@@ -65,10 +67,11 @@ pub struct TemperatureBreachRow {
     pub store_id: String,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
-    pub acknowledged: bool,
+    pub unacknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
 }
 
 pub struct TemperatureBreachRowRepository<'a> {

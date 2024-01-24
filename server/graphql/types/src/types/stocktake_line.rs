@@ -1,11 +1,13 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
-use repository::{location::Location, StocktakeLine};
+use repository::StocktakeLine;
 use service::{i32_to_u32, usize_to_u32};
 
 use graphql_core::{
-    loader::{InventoryAdjustmentReasonByIdLoader, ItemLoader, StockLineByIdLoader},
+    loader::{
+        InventoryAdjustmentReasonByIdLoader, ItemLoader, LocationByIdLoader, StockLineByIdLoader,
+    },
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
@@ -42,11 +44,16 @@ impl StocktakeLineNode {
         }
     }
 
-    pub async fn location(&self) -> Option<LocationNode> {
-        // TODO should be loader, no custruction of domain object oustide of repo
-        self.line.location.clone().map(|location_row| LocationNode {
-            location: Location { location_row },
-        })
+    pub async fn location(&self, ctx: &Context<'_>) -> Option<LocationNode> {
+        let location_id = self.line.line.location_id.clone().unwrap_or_default();
+        let loader = ctx.get_loader::<DataLoader<LocationByIdLoader>>();
+        let location_option: Option<repository::location::Location> =
+            loader.load_one(location_id.clone()).await.ok().flatten();
+
+        match location_option {
+            Some(location) => Some(LocationNode::from_domain(location)),
+            None => None,
+        }
     }
 
     pub async fn comment(&self) -> Option<String> {
@@ -126,8 +133,8 @@ impl StocktakeLineNode {
 
 #[derive(SimpleObject)]
 pub struct StocktakeLineConnector {
-    total_count: u32,
-    nodes: Vec<StocktakeLineNode>,
+    pub total_count: u32,
+    pub nodes: Vec<StocktakeLineNode>,
 }
 
 impl StocktakeLineConnector {

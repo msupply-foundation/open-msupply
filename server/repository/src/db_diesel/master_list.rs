@@ -1,4 +1,5 @@
 use super::{
+    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
     master_list_row::{master_list, master_list::dsl as master_list_dsl},
     name_row::name::dsl as name_dsl,
@@ -32,6 +33,7 @@ pub struct MasterListFilter {
     pub exists_for_name_id: Option<EqualFilter<String>>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
     pub is_program: Option<bool>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 pub enum MasterListSortField {
@@ -63,6 +65,8 @@ impl<'a> MasterListRepository<'a> {
 
     pub fn create_filtered_query(filter: Option<MasterListFilter>) -> BoxedMasterListQuery {
         let mut query = master_list_dsl::master_list.into_boxed();
+        // Filter out inactive master lists by default
+        query = query.filter(master_list_dsl::is_active.eq(true));
 
         if let Some(f) = filter {
             apply_equal_filter!(query, f.id, master_list_dsl::id);
@@ -101,6 +105,21 @@ impl<'a> MasterListRepository<'a> {
                 } else {
                     query = query.filter(master_list_dsl::id.ne_all(program_join_query));
                 }
+            }
+
+            if f.item_id.is_some() {
+                let mut master_list_line_query = master_list_line_dsl::master_list_line
+                    .select(master_list_line_dsl::master_list_id)
+                    .distinct()
+                    .into_boxed::<DBType>();
+
+                apply_equal_filter!(
+                    master_list_line_query,
+                    f.item_id,
+                    master_list_line_dsl::item_id
+                );
+
+                query = query.filter(master_list_dsl::id.eq_any(master_list_line_query));
             }
         }
 
@@ -154,6 +173,7 @@ impl MasterListFilter {
             exists_for_name_id: None,
             exists_for_store_id: None,
             is_program: None,
+            item_id: None,
         }
     }
 
@@ -194,6 +214,11 @@ impl MasterListFilter {
 
     pub fn is_program(mut self, filter: bool) -> Self {
         self.is_program = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
 }

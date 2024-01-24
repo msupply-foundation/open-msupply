@@ -60,7 +60,6 @@ pub fn upsert_program_patient(
                     Some(store_id.to_string()),
                     &doc_timestamp,
                     patient,
-                    false,
                 )?;
                 create_patient_name_store_join(&ctx.connection, store_id, &patient_id)?;
             }

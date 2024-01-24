@@ -59,7 +59,7 @@ pub struct TemperatureBreachFilterInput {
     pub start_datetime: Option<DatetimeFilterInput>,
     pub end_datetime: Option<DatetimeFilterInput>,
     pub r#type: Option<EqualFilterTemperatureBreachRowTypeInput>,
-    pub acknowledged: Option<bool>,
+    pub unacknowledged: Option<bool>,
     pub sensor: Option<SensorFilterInput>,
     pub location: Option<LocationFilterInput>,
 }
@@ -67,7 +67,7 @@ pub struct TemperatureBreachFilterInput {
 impl From<TemperatureBreachFilterInput> for TemperatureBreachFilter {
     fn from(f: TemperatureBreachFilterInput) -> Self {
         TemperatureBreachFilter {
-            acknowledged: f.acknowledged,
+            unacknowledged: f.unacknowledged,
             r#type: f
                 .r#type
                 .map(|t| map_filter!(t, TemperatureBreachNodeType::to_domain)),
@@ -121,8 +121,8 @@ impl TemperatureBreachNode {
             .map(|t| DateTime::<Utc>::from_utc(t, Utc))
     }
 
-    pub async fn acknowledged(&self) -> bool {
-        self.row().acknowledged
+    pub async fn unacknowledged(&self) -> bool {
+        self.row().unacknowledged
     }
 
     pub async fn duration_milliseconds(&self) -> i32 {
@@ -153,6 +153,10 @@ impl TemperatureBreachNode {
             &self.row().id,
         )?)
     }
+
+    pub async fn comment(&self) -> Option<String> {
+        self.row().comment.clone()
+    }
 }
 
 impl TemperatureBreachNodeType {
@@ -165,6 +169,9 @@ impl TemperatureBreachNodeType {
             from::ColdCumulative => to::ColdCumulative,
             from::HotConsecutive => to::HotConsecutive,
             from::HotCumulative => to::HotCumulative,
+            from::Excursion => {
+                panic!("Excursion is not a valid type for TemperatureBreachNodeType")
+            }
         }
     }
 

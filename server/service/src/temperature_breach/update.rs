@@ -12,9 +12,11 @@ pub enum UpdateTemperatureBreachError {
     TemperatureBreachDoesNotBelongToCurrentStore,
     UpdatedRecordNotFound,
     LocationIsOnHold,
+    CommentNotProvided,
     DatabaseError(RepositoryError),
 }
 
+#[derive(Debug)]
 pub struct UpdateTemperatureBreach {
     pub id: String,
     pub duration_milliseconds: i32,
@@ -23,10 +25,57 @@ pub struct UpdateTemperatureBreach {
     pub location_id: Option<String>,
     pub start_datetime: NaiveDateTime,
     pub end_datetime: Option<NaiveDateTime>,
-    pub acknowledged: bool,
+    pub unacknowledged: bool,
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct UpdateTemperatureBreachAcknowledgement {
+    pub id: String,
+    pub unacknowledged: bool,
+    pub comment: Option<String>,
+}
+
+pub fn update_temperature_breach_acknowledgement(
+    ctx: &ServiceContext,
+    input: UpdateTemperatureBreachAcknowledgement,
+) -> Result<TemperatureBreach, UpdateTemperatureBreachError> {
+    validate_acknowledgement_input(&input)?;
+
+    let temperature_breach = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let temperature_breach_row = validate(connection, &ctx.store_id, &input.id)?;
+            let updated_temperature_breach_row =
+                generate_acknowledgement(input, temperature_breach_row);
+            TemperatureBreachRowRepository::new(&connection)
+                .upsert_one(&updated_temperature_breach_row)?;
+
+            get_temperature_breach(ctx, updated_temperature_breach_row.id)
+                .map_err(UpdateTemperatureBreachError::from)
+        })
+        .map_err(|error| error.to_inner_error())?;
+
+    Ok(temperature_breach)
+}
+
+fn validate_acknowledgement_input(
+    input: &UpdateTemperatureBreachAcknowledgement,
+) -> Result<(), UpdateTemperatureBreachError> {
+    match input.comment.clone() {
+        Some(comment) => {
+            if comment.is_empty() {
+                return Err(UpdateTemperatureBreachError::CommentNotProvided);
+            }
+        }
+        None => {
+            return Err(UpdateTemperatureBreachError::CommentNotProvided);
+        }
+    }
+    Ok({})
 }
 
 pub fn update_temperature_breach(
@@ -36,7 +85,7 @@ pub fn update_temperature_breach(
     let temperature_breach = ctx
         .connection
         .transaction_sync(|connection| {
-            let temperature_breach_row = validate(connection, &ctx.store_id, &input)?;
+            let temperature_breach_row = validate(connection, &ctx.store_id, &input.id)?;
             let updated_temperature_breach_row = generate(input, temperature_breach_row);
             TemperatureBreachRowRepository::new(&connection)
                 .upsert_one(&updated_temperature_breach_row)?;
@@ -51,9 +100,9 @@ pub fn update_temperature_breach(
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
-    input: &UpdateTemperatureBreach,
+    id: &str,
 ) -> Result<TemperatureBreachRow, UpdateTemperatureBreachError> {
-    let temperature_breach_row = match check_temperature_breach_exists(&input.id, connection)? {
+    let temperature_breach_row = match check_temperature_breach_exists(id, connection)? {
         Some(temperature_breach_row) => temperature_breach_row,
         None => return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotExist),
     };
@@ -73,10 +122,11 @@ pub fn generate(
         location_id,
         start_datetime,
         end_datetime,
-        acknowledged,
+        unacknowledged,
         threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,
+        comment,
     }: UpdateTemperatureBreach,
     existing_row: TemperatureBreachRow,
 ) -> TemperatureBreachRow {
@@ -87,10 +137,26 @@ pub fn generate(
         location_id,
         start_datetime,
         end_datetime,
-        acknowledged,
+        unacknowledged,
         threshold_duration_milliseconds,
         threshold_maximum,
         threshold_minimum,
+        comment,
+        ..existing_row
+    }
+}
+
+pub fn generate_acknowledgement(
+    UpdateTemperatureBreachAcknowledgement {
+        id: _,
+        unacknowledged,
+        comment,
+    }: UpdateTemperatureBreachAcknowledgement,
+    existing_row: TemperatureBreachRow,
+) -> TemperatureBreachRow {
+    TemperatureBreachRow {
+        unacknowledged,
+        comment,
         ..existing_row
     }
 }

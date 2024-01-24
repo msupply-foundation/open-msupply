@@ -19,6 +19,7 @@ table! {
       gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
       date_of_birth -> Nullable<Date>,
       store_id -> Nullable<Text>,
+      relationship -> Nullable<Text>,
     }
 }
 
@@ -47,6 +48,7 @@ pub struct ContactTraceRow {
     pub gender: Option<Gender>,
     pub date_of_birth: Option<NaiveDate>,
     pub store_id: Option<String>,
+    pub relationship: Option<String>,
 }
 
 pub struct ContactTraceRowRepository<'a> {
