@@ -30,7 +30,7 @@ pub struct LegacyCurrencyRow {
     pub id: String,
     pub rate: f64,
     #[serde(rename = "currency")]
-    pub currency_code: String,
+    pub code: String,
     pub is_home_currency: bool,
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
@@ -61,7 +61,7 @@ impl SyncTranslation for CurrencyTranslation {
         let result = CurrencyRow {
             id: data.id.to_string(),
             rate: data.rate,
-            currency_code: data.currency_code,
+            code: data.code,
             is_home_currency: data.is_home_currency,
             date_updated: data.date_updated,
             is_active: data.is_active,
@@ -84,7 +84,7 @@ impl SyncTranslation for CurrencyTranslation {
         let CurrencyRow {
             id,
             rate,
-            currency_code,
+            code,
             is_home_currency,
             date_updated,
             is_active,
@@ -98,7 +98,7 @@ impl SyncTranslation for CurrencyTranslation {
         let legacy_row = LegacyCurrencyRow {
             id,
             rate,
-            currency_code,
+            code,
             is_home_currency,
             date_updated,
             is_active,
