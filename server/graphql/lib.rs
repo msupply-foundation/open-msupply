@@ -15,6 +15,7 @@ use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
+use graphql_currency::CurrencyQueries;
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
     DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
@@ -72,6 +73,7 @@ pub struct Queries(
     pub FormSchemaQueries,
     pub ClinicianQueries,
     pub PluginQueries,
+    pub CurrencyQueries,
 );
 
 impl Queries {
@@ -95,6 +97,7 @@ impl Queries {
             FormSchemaQueries,
             ClinicianQueries,
             PluginQueries,
+            CurrencyQueries,
         )
     }
 }
