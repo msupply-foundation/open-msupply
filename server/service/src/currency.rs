@@ -1,6 +1,5 @@
 use repository::{
-    Currency, CurrencyFilter, CurrencyRepository, CurrencySort, EqualFilter, Pagination,
-    RepositoryError,
+    Currency, CurrencyFilter, CurrencyRepository, CurrencySort, EqualFilter, RepositoryError,
 };
 
 use crate::{i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
@@ -24,11 +23,10 @@ pub trait CurrencyServiceTrait: Sync + Send {
         filter: Option<CurrencyFilter>,
         sort: Option<CurrencySort>,
     ) -> Result<ListResult<Currency>, ListError> {
-        let pagination = Pagination::all();
         let repository = CurrencyRepository::new(&ctx.connection);
 
         Ok(ListResult {
-            rows: repository.query(pagination, filter.clone(), sort)?,
+            rows: repository.query(filter.clone(), sort)?,
             count: i64_to_u32(repository.count(None)?),
         })
     }
