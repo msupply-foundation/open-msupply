@@ -154,24 +154,24 @@ impl<'a> ChangelogRepository<'a> {
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
     pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
-        let result = changelog::dsl::changelog
-            .select(diesel::dsl::max(changelog::dsl::cursor))
+        let result = changelog::table
+            .select(diesel::dsl::max(changelog::cursor))
             .first::<Option<i64>>(&self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     // Drop all change logs (for tests), can't set test flag as it's used in another crate
     pub fn drop_all(&self) -> Result<(), RepositoryError> {
-        diesel::delete(changelog::dsl::changelog).execute(&self.connection.connection)?;
+        diesel::delete(changelog::table).execute(&self.connection.connection)?;
         Ok(())
     }
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
-        diesel::update(changelog::dsl::changelog)
-            .set(changelog::dsl::is_sync_update.eq(false))
-            .filter(changelog::dsl::cursor.gt(from_cursor as i64))
+        diesel::update(changelog::table)
+            .set(changelog::is_sync_update.eq(false))
+            .filter(changelog::cursor.gt(from_cursor as i64))
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -184,9 +184,9 @@ fn create_filtered_query<'a>(
     earliest: u64,
     filter: Option<ChangelogFilter>,
 ) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::dsl::changelog_deduped
+    let mut query = changelog_deduped::table
         .left_join(name_link::table)
-        .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
+        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -199,16 +199,12 @@ fn create_filtered_query<'a>(
             action,
         } = f;
 
-        apply_equal_filter!(query, table_name, changelog_deduped::dsl::table_name);
-        apply_equal_filter!(query, name_id, changelog_deduped::dsl::name_id);
-        apply_equal_filter!(query, store_id, changelog_deduped::dsl::store_id);
-        apply_equal_filter!(query, record_id, changelog_deduped::dsl::record_id);
-        apply_equal_filter!(
-            query,
-            is_sync_update,
-            changelog_deduped::dsl::is_sync_update
-        );
-        apply_equal_filter!(query, action, changelog_deduped::dsl::row_action);
+        apply_equal_filter!(query, table_name, changelog_deduped::table_name);
+        apply_equal_filter!(query, name_id, changelog_deduped::name_id);
+        apply_equal_filter!(query, store_id, changelog_deduped::store_id);
+        apply_equal_filter!(query, record_id, changelog_deduped::record_id);
+        apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
+        apply_equal_filter!(query, action, changelog_deduped::row_action);
     }
 
     query
