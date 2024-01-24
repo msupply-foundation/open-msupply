@@ -1,32 +1,153 @@
 use async_graphql::*;
+use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::{NodeError, NodeErrorInterface},
-    standard_graphql_error::StandardGraphqlError,
-    ContextExt,
-};
-use graphql_types::types::{
-    CurrenciesResponse, CurrencyConnector, CurrencyFilterInput, CurrencyNode, CurrencyResponse,
-    CurrencySortInput,
+    generic_filters::EqualFilterStringInput, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
 };
 
-pub fn get_currency(ctx: &Context<'_>, currency_id: &str) -> Result<CurrencyResponse> {
-    let service_provider = ctx.service_provider();
-    let service_context = service_provider.basic_context()?;
-    let currency_service = &service_provider.currency_service;
+use repository::{
+    Currency, CurrencyFilter, CurrencyRow, CurrencySort, CurrencySortField, EqualFilter,
+};
 
-    let currency_option = currency_service.get_currency(&service_context, &currency_id)?;
+use service::{usize_to_u32, ListResult};
 
-    let response = match currency_option {
-        Some(currency) => CurrencyResponse::Response(CurrencyNode::from_domain(currency)),
-        None => CurrencyResponse::Error(NodeError {
-            error: NodeErrorInterface::record_not_found(),
-        }),
-    };
-
-    Ok(response)
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum CurrencySortFieldInput {
+    Id,
+    CurrencyCode,
+}
+#[derive(InputObject)]
+pub struct CurrencySortInput {
+    /// Sort query result by `key`
+    key: CurrencySortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
 }
 
-pub fn get_currencies(
+#[derive(InputObject, Clone)]
+pub struct CurrencyFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub is_home_currency: Option<bool>,
+    pub is_active: Option<bool>,
+}
+
+impl CurrencyFilterInput {
+    pub fn to_domain(self) -> CurrencyFilter {
+        let CurrencyFilterInput {
+            id,
+            is_home_currency,
+            is_active,
+        } = self;
+
+        CurrencyFilter {
+            id: id.map(EqualFilter::from),
+            is_home_currency,
+            is_active,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct CurrencyNode {
+    pub currency: Currency,
+}
+
+#[derive(SimpleObject)]
+pub struct CurrencyConnector {
+    total_count: u32,
+    nodes: Vec<CurrencyNode>,
+}
+
+#[Object]
+impl CurrencyNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn code(&self) -> &str {
+        &self.row().code
+    }
+
+    pub async fn rate(&self) -> f64 {
+        self.row().rate
+    }
+
+    pub async fn is_home_currency(&self) -> bool {
+        self.row().is_home_currency
+    }
+
+    pub async fn date_updated(&self) -> Option<NaiveDate> {
+        self.row().date_updated
+    }
+
+    pub async fn is_active(&self) -> bool {
+        self.row().is_active
+    }
+}
+
+#[derive(Union)]
+pub enum CurrenciesResponse {
+    Response(CurrencyConnector),
+}
+
+#[derive(Union)]
+pub enum CurrencyResponse {
+    Error(NodeError),
+    Response(CurrencyNode),
+}
+
+impl CurrencyNode {
+    pub fn from_domain(currency: Currency) -> CurrencyNode {
+        CurrencyNode { currency }
+    }
+
+    pub fn row(&self) -> &CurrencyRow {
+        &self.currency.currency_row
+    }
+}
+
+impl CurrencyConnector {
+    pub fn from_domain(currencies: ListResult<Currency>) -> CurrencyConnector {
+        CurrencyConnector {
+            total_count: currencies.count,
+            nodes: currencies
+                .rows
+                .into_iter()
+                .map(CurrencyNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(currencies: Vec<Currency>) -> CurrencyConnector {
+        CurrencyConnector {
+            total_count: usize_to_u32(currencies.len()),
+            nodes: currencies
+                .into_iter()
+                .map(CurrencyNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
+impl CurrencySortInput {
+    pub fn to_domain(self) -> CurrencySort {
+        use CurrencySortField as to;
+        use CurrencySortFieldInput as from;
+        let key = match self.key {
+            from::Id => to::Id,
+            from::CurrencyCode => to::CurrencyCode,
+        };
+
+        CurrencySort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+pub fn currencies(
     ctx: &Context<'_>,
     filter: Option<CurrencyFilterInput>,
     sort: Option<Vec<CurrencySortInput>>,
