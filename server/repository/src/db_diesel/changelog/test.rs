@@ -198,7 +198,7 @@ async fn test_changelog_filter() {
     // But remove any names and name_links from change log so
     // the cursors below don't conflict.
     let changelog_repo = ChangelogRepository::new(&connection);
-    changelog_repo.drop_all().unwrap();
+    changelog_repo.delete(0).unwrap();
 
     let log1 = ChangelogRow {
         cursor: 1,
