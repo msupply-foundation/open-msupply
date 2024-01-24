@@ -39,11 +39,14 @@ export const Login = () => {
     error?.timeoutRemaining ?? 0
   );
 
-  useInterval(() => {
-    setTimeoutRemaining(prevTimeoutRemaining =>
-      prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
-    );
-  }, 1000);
+  useInterval(
+    () => {
+      setTimeoutRemaining(prevTimeoutRemaining =>
+        prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
+      );
+    },
+    timeoutRemaining > 0 ? 1000 : null
+  );
 
   useEffect(() => {
     if (error && error.message === 'AccountBlocked') {
@@ -65,7 +68,7 @@ export const Login = () => {
       }`;
     }
     return t('error.login');
-  }, [error, timeoutRemaining]);
+  }, [error, timeoutRemaining, t]);
 
   useEffect(() => {
     if (!displaySettings) return;
