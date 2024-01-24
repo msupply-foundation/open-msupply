@@ -9,10 +9,7 @@ use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
 
 use crate::store_preference::store_preferences;
-use graphql_types::types::{
-    CurrenciesResponse, CurrencyFilterInput, CurrencyResponse, CurrencySortInput,
-    StorePreferenceNode, TemperatureLogFilterInput,
-};
+use graphql_types::types::{StorePreferenceNode, TemperatureLogFilterInput};
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
@@ -26,7 +23,7 @@ use mutations::{
     update_user,
 };
 use queries::{
-    currency::{get_currencies, get_currency},
+    currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
@@ -300,14 +297,6 @@ impl GeneralQueries {
         )
     }
 
-    pub async fn currency(
-        &self,
-        ctx: &Context<'_>,
-        currency_id: String,
-    ) -> Result<CurrencyResponse> {
-        get_currency(ctx, &currency_id)
-    }
-
     pub async fn currencies(
         &self,
         ctx: &Context<'_>,
@@ -315,7 +304,7 @@ impl GeneralQueries {
         #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
         sort: Option<Vec<CurrencySortInput>>,
     ) -> Result<CurrenciesResponse> {
-        get_currencies(ctx, filter, sort)
+        currencies(ctx, filter, sort)
     }
 }
 
