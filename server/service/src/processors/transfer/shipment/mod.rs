@@ -16,7 +16,7 @@ use crate::{
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
     EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueStoreRepository, KeyValueType,
-    RepositoryError, Requisition, StorageConnection,
+    NameLinkRowRepository, RepositoryError, Requisition, StorageConnection,
 };
 use thiserror::Error;
 
@@ -102,13 +102,22 @@ pub(crate) fn process_shipment_transfers(
     let active_stores =
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
+    let name_ids = active_stores.name_ids();
+    let name_link_repo = NameLinkRowRepository::new(&ctx.connection);
+    let name_link_ids: Vec<String> = name_link_repo
+        .find_many_by_name_ids(name_ids.as_slice())
+        .unwrap() // MERGE: handle error
+        .iter()
+        .map(|r| r.id.clone())
+        .collect();
+
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Invoice.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()));
+        .name_id(EqualFilter::equal_any(name_link_ids.clone()));
 
     loop {
         let cursor = key_value_store_repo
@@ -125,7 +134,7 @@ pub(crate) fn process_shipment_transfers(
 
         for log in logs {
             let name_id = log
-                .name_id
+                .name_id // MERGE: Actually name_link_id
                 .as_ref()
                 .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
 
@@ -143,6 +152,8 @@ pub(crate) fn process_shipment_transfers(
                     .get_store_id_for_name_id(name_id)
                     .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
             };
+
+            // MERGE: Ignore if invoice name_link_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
 
             // Try record against all of the processors
             for processor in processors.iter() {
