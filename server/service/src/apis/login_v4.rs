@@ -28,6 +28,13 @@ pub enum LoginStatusV4 {
     Unknown,
 }
 
+#[derive(Deserialize)]
+pub struct LoginResponseErrorV4 {
+    status: String,
+    #[serde(rename = "timeoutRemaining")]
+    timeout_remaining: Option<u64>,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct LoginInputV4 {
     pub username: String,
@@ -147,26 +154,34 @@ impl LoginApiV4 {
             .map_err(|e| LoginV4Error::ConnectionError(e))?;
 
         let status = response.status();
-        let body = response.json::<serde_json::Value>().await.unwrap();
 
         if status == reqwest::StatusCode::UNAUTHORIZED {
             return Err(LoginV4Error::Unauthorised);
         }
 
-        // handle account blocked error (i.e. too many failed login attempts)
-        if status == reqwest::StatusCode::FORBIDDEN {
-            if !body["timeoutRemaining"].is_null()
-                && !body["status"].is_null()
-                && body["status"] == "user_login_timeout"
-            {
-                let timeout_remaining = body["timeoutRemaining"].as_u64().unwrap();
-                return Err(LoginV4Error::AccountBlocked(timeout_remaining));
+        let body = response.json::<serde_json::Value>().await;
+
+        match body {
+            Ok(body) => {
+                if status == reqwest::StatusCode::FORBIDDEN {
+                    // Handle account blocked error (i.e. too many failed login attempts)
+                    if let Ok(error_body) =
+                        serde_json::from_value::<LoginResponseErrorV4>(body.clone())
+                    {
+                        if error_body.status == "user_login_timeout" {
+                            if let Some(timeout_remaining) = error_body.timeout_remaining {
+                                return Err(LoginV4Error::AccountBlocked(timeout_remaining));
+                            }
+                        }
+                    }
+                }
+
+                let response = serde_json::from_value::<LoginResponseV4>(body)
+                    .map_err(|e| LoginV4Error::ParseError(e))?;
+
+                Ok(response)
             }
+            Err(e) => Err(LoginV4Error::ConnectionError(e)),
         }
-
-        let response = serde_json::from_value::<LoginResponseV4>(body)
-            .map_err(|e| LoginV4Error::ParseError(e))?;
-
-        Ok(response)
     }
 }
