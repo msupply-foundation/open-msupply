@@ -87,7 +87,7 @@ export const Login = () => {
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
     LocalStorage.removeItem('/error/auth');
-  }, []);
+  }, [setPageTitle, t]);
 
   return (
     <LoginLayout
