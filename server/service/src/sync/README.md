@@ -133,7 +133,9 @@ From [TMF internal docs](https://app.diagrams.net/#G1vVZQF_o0JiABBs1jpI0TneFfRon
 
 ## Central Sync API
 
-A postman collection and environment for Central Sync API is available [here](https://github.com/msupply-foundation/msupply/tree/master/Postman) 
+A postman collection and environment for Original Central Sync API is available [here](https://github.com/msupply-foundation/msupply/tree/master/Postman) 
+
+And for Open mSupply central server [here](https://github.com/msupply-foundation/open-msupply/blob/562be1cffb6f655f584e1a543416d6428dc91d96/server/postman/Open%20mSupply%20REST.postman_collection.json)
 
 ## Versioning
 
