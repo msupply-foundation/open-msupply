@@ -7,6 +7,7 @@ import {
   useHostContext,
   LocalStorage,
   ErrorWithDetails,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
@@ -38,6 +39,7 @@ export const Login = () => {
   const [timeoutRemaining, setTimeoutRemaining] = useState(
     error?.timeoutRemaining ?? 0
   );
+  const { customDate } = useFormatDateTime();
 
   useInterval(
     () => {
@@ -59,16 +61,14 @@ export const Login = () => {
     if (error.message === 'AccountBlocked') {
       if (timeoutRemaining < 1000) return '';
 
-      const milliseconds = timeoutRemaining;
-      const seconds = Math.floor((milliseconds / 1000) % 60);
-      const minutes = Math.floor((milliseconds / 1000 / 60) % 60);
-
-      return `${t('error.account-blocked')} ${minutes}:${
-        seconds < 10 ? `0${seconds}` : seconds
-      }`;
+      const formattedTime = customDate(
+        new Date(0, 0, 0, 0, 0, 0, timeoutRemaining),
+        'm:ss'
+      );
+      return `${t('error.account-blocked')} ${formattedTime}`;
     }
     return t('error.login');
-  }, [error, timeoutRemaining, t]);
+  }, [error, timeoutRemaining, customDate, t]);
 
   useEffect(() => {
     if (!displaySettings) return;
