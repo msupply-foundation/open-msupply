@@ -35,7 +35,6 @@ pub struct LegacyCurrencyRow {
     #[serde(deserialize_with = "zero_date_as_option")]
     #[serde(serialize_with = "date_option_to_isostring")]
     pub date_updated: Option<NaiveDate>,
-    pub is_active: bool,
 }
 
 pub(crate) struct CurrencyTranslation {}
@@ -64,7 +63,6 @@ impl SyncTranslation for CurrencyTranslation {
             code: data.code,
             is_home_currency: data.is_home_currency,
             date_updated: data.date_updated,
-            is_active: data.is_active,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -87,7 +85,6 @@ impl SyncTranslation for CurrencyTranslation {
             code,
             is_home_currency,
             date_updated,
-            is_active,
         } = CurrencyRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -101,7 +98,6 @@ impl SyncTranslation for CurrencyTranslation {
             code,
             is_home_currency,
             date_updated,
-            is_active,
         };
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
             changelog,

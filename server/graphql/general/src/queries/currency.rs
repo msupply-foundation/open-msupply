@@ -16,6 +16,7 @@ use service::{usize_to_u32, ListResult};
 pub enum CurrencySortFieldInput {
     Id,
     CurrencyCode,
+    IsHomeCurrency,
 }
 #[derive(InputObject)]
 pub struct CurrencySortInput {
@@ -30,7 +31,6 @@ pub struct CurrencySortInput {
 pub struct CurrencyFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub is_home_currency: Option<bool>,
-    pub is_active: Option<bool>,
 }
 
 impl CurrencyFilterInput {
@@ -38,13 +38,11 @@ impl CurrencyFilterInput {
         let CurrencyFilterInput {
             id,
             is_home_currency,
-            is_active,
         } = self;
 
         CurrencyFilter {
             id: id.map(EqualFilter::from),
             is_home_currency,
-            is_active,
         }
     }
 }
@@ -80,10 +78,6 @@ impl CurrencyNode {
 
     pub async fn date_updated(&self) -> Option<NaiveDate> {
         self.row().date_updated
-    }
-
-    pub async fn is_active(&self) -> bool {
-        self.row().is_active
     }
 }
 
@@ -138,6 +132,7 @@ impl CurrencySortInput {
         let key = match self.key {
             from::Id => to::Id,
             from::CurrencyCode => to::CurrencyCode,
+            from::IsHomeCurrency => to::IsHomeCurrency,
         };
 
         CurrencySort {
