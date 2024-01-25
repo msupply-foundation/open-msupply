@@ -12,8 +12,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             rate {DOUBLE} NOT NULL,
             code TEXT NOT NULL,
             is_home_currency BOOLEAN NOT NULL DEFAULT FALSE,
-            date_updated {DATE},
-            is_active BOOLEAN NOT NULL DEFAULT TRUE
+            date_updated {DATE}
         );
 
         "#,

@@ -12,7 +12,6 @@ table! {
         code -> Text,
         is_home_currency -> Bool,
         date_updated -> Nullable<Date>,
-        is_active -> Bool,
     }
 }
 
@@ -25,7 +24,6 @@ pub struct CurrencyRow {
     pub code: String,
     pub is_home_currency: bool,
     pub date_updated: Option<NaiveDate>,
-    pub is_active: bool,
 }
 
 pub struct CurrencyRowRepository<'a> {

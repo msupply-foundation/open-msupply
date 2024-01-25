@@ -20,12 +20,12 @@ pub struct Currency {
 pub struct CurrencyFilter {
     pub id: Option<EqualFilter<String>>,
     pub is_home_currency: Option<bool>,
-    pub is_active: Option<bool>,
 }
 
 pub enum CurrencySortField {
     Id,
     CurrencyCode,
+    IsHomeCurrency,
 }
 
 pub type CurrencySort = Sort<CurrencySortField>;
@@ -65,6 +65,9 @@ impl<'a> CurrencyRepository<'a> {
                 CurrencySortField::CurrencyCode => {
                     apply_sort_no_case!(query, sort, currency_dsl::code)
                 }
+                CurrencySortField::IsHomeCurrency => {
+                    apply_sort_no_case!(query, sort, currency_dsl::is_home_currency)
+                }
             }
         } else {
             query = query.order(currency_dsl::code.asc())
@@ -89,12 +92,6 @@ fn create_filtered_query(filter: Option<CurrencyFilter>) -> BoxedLogQuery {
             Some(false) => query.filter(currency_dsl::is_home_currency.eq(false)),
             None => query,
         };
-
-        query = match filter.is_active {
-            Some(true) => query.filter(currency_dsl::is_active.eq(true)),
-            Some(false) => query.filter(currency_dsl::is_active.eq(false)),
-            None => query,
-        };
     }
     query
 }
@@ -108,7 +105,6 @@ impl CurrencyFilter {
         CurrencyFilter {
             id: None,
             is_home_currency: None,
-            is_active: None,
         }
     }
 
@@ -119,11 +115,6 @@ impl CurrencyFilter {
 
     pub fn is_home_currency(mut self, filter: bool) -> Self {
         self.is_home_currency = Some(filter);
-        self
-    }
-
-    pub fn is_active(mut self, filter: bool) -> Self {
-        self.is_active = Some(filter);
         self
     }
 }
