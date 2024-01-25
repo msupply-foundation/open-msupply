@@ -1,5 +1,5 @@
 use super::{item_row::item, StorageConnection};
-use crate::repository_error::RepositoryError;
+use crate::{name_link, repository_error::RepositoryError};
 
 use self::item_link::dsl as item_link_dsl;
 use diesel::prelude::*;
@@ -12,6 +12,7 @@ table! {
 }
 
 joinable!(item_link -> item (item_id));
+allow_tables_to_appear_in_same_query!(item_link, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "item_link"]
