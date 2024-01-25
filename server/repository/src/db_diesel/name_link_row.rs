@@ -89,14 +89,4 @@ impl<'a> NameLinkRowRepository<'a> {
             .load::<NameLinkRow>(&self.connection.connection)?;
         Ok(result)
     }
-
-    pub fn find_many_by_name_ids(
-        &self,
-        name_ids: &[String],
-    ) -> Result<Vec<NameLinkRow>, RepositoryError> {
-        let result = name_link
-            .filter(name_id.eq_any(name_ids))
-            .load(&self.connection.connection)?;
-        Ok(result)
-    }
 }
