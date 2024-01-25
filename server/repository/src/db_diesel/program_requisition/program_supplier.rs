@@ -193,17 +193,17 @@ mod test {
 
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_id: name1.id.clone(),
+            name_link_id: name1.id.clone(),
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_id: store_name1.id.clone(),
+            name_link_id: store_name1.id.clone(),
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_id: store_name2.id.clone(),
+            name_link_id: store_name2.id.clone(),
             master_list_id: master_list2.id.clone(),
         };
 
