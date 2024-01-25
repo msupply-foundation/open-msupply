@@ -6,7 +6,7 @@ use crate::{
 use chrono::Utc;
 use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, NumberRowType, RequisitionRow, StorageConnection,
+    ItemRowRepository, NumberRowType, Requisition, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -14,16 +14,16 @@ pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
     user_id: &str,
-    requisition_row: RequisitionRow,
+    requisition: Requisition,
     fullfilments: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
-    let other_party = get_other_party(connection, store_id, &requisition_row.name_id)?
+    let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
-
+    let requisition_row = requisition.requisition_row;
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
-        name_link_id: requisition_row.name_id,
+        name_link_id: requisition_row.name_link_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, &store_id)?,

@@ -1,5 +1,5 @@
 use crate::{
-    requisition::common::{check_requisition_exists, get_lines_for_requisition},
+    requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
 };
 use repository::EqualFilter;
@@ -63,7 +63,7 @@ fn validate(
     store_id: &str,
     input: &AddFromMasterList,
 ) -> Result<RequisitionRow, OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.request_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {

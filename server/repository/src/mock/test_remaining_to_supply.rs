@@ -11,7 +11,7 @@ use super::{
 pub fn requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
         r.id = "test_loader".to_string();
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Response;
     })
