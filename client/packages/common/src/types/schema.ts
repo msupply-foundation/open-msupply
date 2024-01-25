@@ -619,6 +619,44 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
+export type CurrenciesResponse = CurrencyConnector;
+
+export type CurrencyConnector = {
+  __typename: 'CurrencyConnector';
+  nodes: Array<CurrencyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CurrencyFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isHomeCurrency?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type CurrencyNode = {
+  __typename: 'CurrencyNode';
+  code: Scalars['String']['output'];
+  dateUpdated?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  isHomeCurrency: Scalars['Boolean']['output'];
+  rate: Scalars['Float']['output'];
+};
+
+export enum CurrencySortFieldInput {
+  CurrencyCode = 'currencyCode',
+  Id = 'id',
+  IsHomeCurrency = 'isHomeCurrency'
+}
+
+export type CurrencySortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: CurrencySortFieldInput;
+};
+
 export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
@@ -3699,6 +3737,7 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
+  currencies: CurrenciesResponse;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -3835,6 +3874,12 @@ export type QueriesContactTracesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ContactTraceSortInput>;
   storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesCurrenciesArgs = {
+  filter?: InputMaybe<CurrencyFilterInput>;
+  sort?: InputMaybe<Array<CurrencySortInput>>;
 };
 
 
@@ -4929,6 +4974,7 @@ export type StoreNodeNameArgs = {
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String']['output'];
+  issueInForeignCurrency: Scalars['Boolean']['output'];
   omProgramModule: Scalars['Boolean']['output'];
   packToOne: Scalars['Boolean']['output'];
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
@@ -5922,6 +5968,7 @@ export type UserStoreConnector = {
 export type UserStoreNode = {
   __typename: 'UserStoreNode';
   code: Scalars['String']['output'];
+  homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   preferences: StorePreferenceNode;
