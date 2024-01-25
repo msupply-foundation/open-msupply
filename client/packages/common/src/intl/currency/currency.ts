@@ -1,5 +1,5 @@
 import currency from 'currency.js';
-import { useIntlUtils } from '../utils';
+import { useAuthContext } from '../../authentication';
 
 const trimCents = (centsString: string) => {
   const trimmed = Number(`.${centsString}`);
@@ -67,80 +67,121 @@ export const format: currency.Format = (
   return replacePattern.replace('!', symbol).replace('#', moneyString);
 };
 
-const currencyOptions = {
-  en: {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  fr: {
-    symbol: '€',
-    separator: '.',
-    decimal: ',',
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
-  'fr-DJ': {
-    symbol: 'DJF',
-    separator: '.',
-    decimal: ',',
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
-  ar: {
-    symbol: 'ر.ق.',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  es: {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  tet: {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  ru: {
-    symbol: '₽',
-    separator: '.',
-    decimal: ',',
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
+export type Currencies =
+  | 'USD'
+  | 'EUR'
+  | 'NZD'
+  | 'AUD'
+  | 'DJF'
+  | 'QAR'
+  | 'RUB'
+  | 'SSP'
+  | 'PGK'
+  | 'COP';
+
+export const currencyOptions = (code?: Currencies) => {
+  switch (code) {
+    case 'USD':
+    case 'NZD':
+      return {
+        symbol: '$',
+        separator: ',',
+        decimal: '.',
+        precision: 2,
+        pattern: '!#',
+        negativePattern: '-!#',
+        format,
+      };
+    case 'EUR':
+      return {
+        symbol: '€',
+        separator: '.',
+        decimal: ',',
+        precision: 2,
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+      };
+    case 'DJF':
+      return {
+        symbol: 'DJF',
+        separator: ',',
+        decimal: '.',
+        precision: 2,
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+      };
+    case 'QAR':
+      return {
+        symbol: 'ر.ق.',
+        separator: ',',
+        decimal: '.',
+        precision: 2,
+        pattern: '!#',
+        negativePattern: '-!#',
+        format,
+      };
+    case 'RUB':
+      return {
+        symbol: '₽',
+        separator: '.',
+        decimal: ',',
+        precision: 2,
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+      };
+    case 'SSP': {
+      return {
+        symbol: 'SSP',
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+      };
+    }
+    case 'PGK': {
+      return {
+        symbol: 'K',
+        separator: '.',
+        decimal: ',',
+        precision: 2,
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+      };
+    }
+    case 'COP': {
+      return {
+        symbol: '$',
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+      };
+    }
+    default:
+      return {
+        symbol: '$',
+        separator: ',',
+        decimal: '.',
+        precision: 2,
+        pattern: '!#',
+        negativePattern: '-!#',
+        format,
+      };
+  }
 };
 
-export const useCurrency = (dp?: number) => {
-  const { currentLanguage: language } = useIntlUtils();
-  const options = currencyOptions[language];
+export const useCurrency = (dp?: number, code?: Currencies) => {
+  const { store } = useAuthContext();
+  const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
+
+  const options = currencyOptions(currencyCode);
   const precision = dp ?? options.precision;
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
     options,
-    language,
+    currencyCode,
   };
 };
 
