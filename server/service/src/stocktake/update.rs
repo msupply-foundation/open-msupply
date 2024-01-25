@@ -580,7 +580,7 @@ fn generate(
         r#type: InvoiceRowType::InventoryAddition,
         // Same for addition and reduction
         user_id: Some(user_id.to_string()),
-        name_id: inventory_adjustment_name.id,
+        name_link_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
         status: InvoiceRowStatus::Verified,
         verified_datetime: Some(now),
@@ -599,7 +599,7 @@ fn generate(
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
-        clinician_id: None,
+        clinician_link_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

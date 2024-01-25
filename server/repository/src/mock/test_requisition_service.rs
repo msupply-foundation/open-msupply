@@ -357,7 +357,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
             r.requisition_id = Some(mock_new_response_requisition_test().requisition.id);

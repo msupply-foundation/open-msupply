@@ -181,7 +181,7 @@ impl ShipmentTransferTester {
 
         let outbound_shipment = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_id = inbound_store.name_id.clone();
+            r.name_link_id = inbound_store.name_id.clone();
             r.store_id = outbound_store.id.clone();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::OutboundShipment;
@@ -388,7 +388,7 @@ impl ShipmentTransferTester {
 
         assert_eq!(inbound_shipment.r#type, InvoiceRowType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
-        assert_eq!(inbound_shipment.name_id, self.outbound_store.name_id);
+        assert_eq!(inbound_shipment.name_link_id, self.outbound_store.name_id);
         assert_eq!(
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())

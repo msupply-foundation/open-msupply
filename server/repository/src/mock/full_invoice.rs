@@ -19,7 +19,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = String::from("name_store_b");
+            r.name_link_id = String::from("name_store_b");
             r.store_id = String::from("store_c");
             r.invoice_number = 10;
             r.r#type = InvoiceRowType::OutboundShipment;
@@ -95,7 +95,7 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = String::from("name_store_a");
+            r.name_link_id = String::from("name_store_a");
             r.store_id = String::from("store_a");
             r.invoice_number = 11;
             r.r#type = InvoiceRowType::InboundShipment;
@@ -116,7 +116,7 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = String::from("name_store_a");
+            r.name_link_id = String::from("name_store_a");
             r.store_id = String::from("store_c");
             r.invoice_number = 11;
             r.r#type = InvoiceRowType::OutboundShipment;
