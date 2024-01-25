@@ -1,7 +1,7 @@
-# Sync - Syncrhonisation
+# Sync - Synchronisation
 
 Open mSupply is often used in environments with intermittent and low bandwidth internet and therefore needs to be accessible in offline mode. 
-A mechanism that allows for this to happen is called **Sync** (or **Syncrhonisation**).
+A mechanism that allows for this to happen is called **Sync** (or **Synchronisation**).
 
 ## Glossary
 
@@ -32,7 +32,7 @@ Records are treated differently by central server and remote sites based on data
 `patient record/data`: Editable and accessible on any site where the patient is visible. Visibility in this case is determined by name store join. Prescribers, patients and patient documents are examples of patient record.
 
 
-## Phases/Stages of Sychronisation:
+## Phases/Stages of Synchronisation:
 
 `initialisation`: After the site is configured, it will first need to be initialised. This is where all relevant central and remote records are queued and sent to a remote site. Remote site is not ‘usable’ until initialisation stage is completed and all records are received
 
