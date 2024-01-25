@@ -147,17 +147,17 @@ mod item_count_service_test {
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -228,17 +228,17 @@ mod item_count_service_test {
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -376,17 +376,17 @@ mod item_count_service_test {
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
