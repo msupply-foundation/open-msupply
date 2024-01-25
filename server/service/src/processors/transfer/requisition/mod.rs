@@ -9,8 +9,8 @@ pub(crate) mod test;
 
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, KeyValueStoreRepository, KeyValueType, NameLinkRowRepository, RepositoryError,
-    Requisition, StorageConnection,
+    EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, Requisition,
+    StorageConnection,
 };
 use thiserror::Error;
 
@@ -75,22 +75,13 @@ pub(crate) fn process_requisition_transfers(
     let active_stores =
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
-    let name_ids = active_stores.name_ids();
-    let name_link_repo = NameLinkRowRepository::new(&ctx.connection);
-    let name_link_ids: Vec<String> = name_link_repo
-        .find_many_by_name_ids(name_ids.as_slice())
-        .unwrap() // MERGE: handle error
-        .iter()
-        .map(|r| r.id.clone())
-        .collect();
-
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
     let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Requisition.equal_to())
-        .name_id(EqualFilter::equal_any(name_link_ids.clone()))
+        .name_id(EqualFilter::equal_any(active_stores.name_ids()))
         // Filter out deletes
         .action(ChangelogAction::Upsert.equal_to());
 

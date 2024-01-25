@@ -200,7 +200,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
-        apply_equal_filter!(query, name_id, changelog_deduped::name_id);
+        apply_equal_filter!(query, name_id, name_link::name_id);
         apply_equal_filter!(query, store_id, changelog_deduped::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::record_id);
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
