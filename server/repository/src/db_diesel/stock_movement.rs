@@ -155,7 +155,7 @@ mod test {
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineRowType::StockOut;
                     r.pack_size = 1;
                 })];

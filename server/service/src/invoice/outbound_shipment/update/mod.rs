@@ -220,7 +220,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = String::from("outbound_shipment_no_stock_line_a");
                 r.invoice_id = String::from("outbound_shipment_no_stock");
-                r.item_id = String::from("item_a");
+                r.item_link_id = String::from("item_a");
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.batch = None;
@@ -340,7 +340,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.pack_size = 1;
                 r.number_of_packs = 0.0;
@@ -564,7 +564,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.stock_line_id = Some(stock_line().id);
                 r.number_of_packs = 2.0;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::StockOut;
             })
         }

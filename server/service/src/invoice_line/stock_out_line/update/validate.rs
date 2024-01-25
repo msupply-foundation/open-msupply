@@ -1,4 +1,6 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StorageConnection};
+use repository::{
+    InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StorageConnection,
+};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
@@ -24,12 +26,14 @@ pub fn validate(
     use UpdateStockOutLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
-    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let line_row = &line.invoice_line_row;
+    let invoice =
+        check_invoice_exists(&line_row.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
     let unique_stock = check_unique_stock_line(
-        &line.id.clone(),
+        &line_row.id.clone(),
         &invoice.id,
         input.stock_line_id.clone(),
         connection,
@@ -48,8 +52,8 @@ pub fn validate(
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
-    if !check_line_belongs_to_invoice(&line, &invoice) {
-        return Err(NotThisInvoiceLine(line.invoice_id));
+    if !check_line_belongs_to_invoice(line_row, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
     if invoice.status != InvoiceRowStatus::New
         && !check_number_of_packs(input.number_of_packs.clone())
@@ -57,7 +61,7 @@ pub fn validate(
         return Err(NumberOfPacksBelowOne);
     }
 
-    let batch_pair = check_batch_exists_option(&input, &line, connection)?;
+    let batch_pair = check_batch_exists_option(&input, line_row, connection)?;
     let item = check_item_option(input.item_id.clone(), &line, connection)?;
 
     if !check_item_matches_batch(&batch_pair.main_batch, &item) {
@@ -70,9 +74,9 @@ pub fn validate(
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
         LocationIsOnHoldError::LocationNotFound => LocationNotFound,
     })?;
-    check_reduction_below_zero(&input, &line, &batch_pair)?;
+    check_reduction_below_zero(&input, line_row, &batch_pair)?;
 
-    Ok((line, item, batch_pair, invoice))
+    Ok((line.invoice_line_row, item, batch_pair, invoice))
 }
 
 fn check_reduction_below_zero(
@@ -96,7 +100,7 @@ fn check_reduction_below_zero(
 
 fn check_item_option(
     item_id: Option<String>,
-    invoice_line: &InvoiceLineRow,
+    invoice_line: &InvoiceLine,
     connection: &StorageConnection,
 ) -> Result<ItemRow, UpdateStockOutLineError> {
     if let Some(item_id) = item_id {
@@ -105,7 +109,7 @@ fn check_item_option(
                 .ok_or(UpdateStockOutLineError::ItemNotFound)?,
         )
     } else {
-        Ok(check_item_exists(connection, &invoice_line.item_id)?
+        Ok(check_item_exists(connection, &invoice_line.item_row.id)?
             .ok_or(UpdateStockOutLineError::ItemNotFound)?)
     }
 }

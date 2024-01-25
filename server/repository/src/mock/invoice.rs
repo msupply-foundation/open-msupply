@@ -370,7 +370,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = String::from("outbound_shipment_line_a");
         r.invoice_id = String::from("outbound_shipment_c");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.item_name = String::from("Item A");
         r.item_code = String::from("a");
         r.pack_size = 1;
