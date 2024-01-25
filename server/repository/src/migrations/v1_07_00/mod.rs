@@ -5,6 +5,7 @@ use super::{version::Version, Migration};
 use crate::{ChangelogRepository, StorageConnection};
 
 mod barcode_add_manufacturer_link_id;
+mod changelog_add_name_link_id;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
 mod contact_trace_link_id;
@@ -30,6 +31,18 @@ mod stocktake_line_add_item_link_id;
 
 mod item_link_create_table;
 pub(crate) struct V1_07_00;
+
+impl Migration for V1_07_00 {
+    fn version(&self) -> Version {
+        Version::from_str("1.7.0")
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        migrate_merge_feature(connection)?;
+
+        Ok(())
+    }
+}
 
 /// For testing, it returns the change_log cursors as if the changelog would have been updated.
 fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
@@ -63,6 +76,7 @@ fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> 
 
         // Name link migrations
         name_link::migrate(connection)?;
+        changelog_add_name_link_id::migrate(connection)?;
         invoice_add_name_link_id::migrate(connection)?;
         name_store_join_add_name_link_id::migrate(connection)?;
         master_list_name_join_add_name_link_id::migrate(connection)?;
@@ -87,18 +101,6 @@ fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> 
 
         Ok(())
     })
-}
-
-impl Migration for V1_07_00 {
-    fn version(&self) -> Version {
-        Version::from_str("1.7.0")
-    }
-
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        migrate_merge_feature(connection)?;
-
-        Ok(())
-    }
 }
 
 #[cfg(test)]

@@ -18,7 +18,7 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_id -> Nullable<Text>,
+        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
     }
@@ -30,12 +30,12 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_id -> Nullable<Text>,
+        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
     }
 }
-joinable!(changelog_deduped -> name_link (name_id));
+joinable!(changelog_deduped -> name_link (name_link_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -78,6 +78,7 @@ pub struct ChangelogRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: ChangelogAction,
+    #[column_name = "name_link_id"]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
@@ -199,7 +200,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
-        apply_equal_filter!(query, name_id, changelog_deduped::name_id);
+        apply_equal_filter!(query, name_id, changelog_deduped::name_link_id);
         apply_equal_filter!(query, store_id, changelog_deduped::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::record_id);
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);

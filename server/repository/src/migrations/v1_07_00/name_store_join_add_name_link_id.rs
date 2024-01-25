@@ -17,11 +17,13 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             RETURNS trigger AS
             $$
                 BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
                     VALUES ('name_store_join', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
                     RETURN NULL;
                 END;
             $$ LANGUAGE 'plpgsql';
+            
+            ALTER TABLE name_store_join ENABLE TRIGGER ALL;
        "#,
     )?;
     #[cfg(not(feature = "postgres"))]

@@ -17,7 +17,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             RETURNS trigger AS
             $$
                 BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
                     VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
                     RETURN NULL;
                 END;
@@ -27,7 +27,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             RETURNS trigger AS
             $$
                 BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
                     VALUES ('requisition', OLD.id, 'DELETE', OLD.store_id, OLD.name_link_id, OLD.is_sync_update);
                     RETURN NULL;
                 END;
@@ -37,7 +37,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             RETURNS trigger AS
             $$
                 BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
                     SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
                     RETURN NULL;
                 END;    
@@ -47,11 +47,14 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             RETURNS trigger AS
             $$
                 BEGIN
-                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+                    INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
                     SELECT 'requisition_line', OLD.id, 'DELETE', store_id, name_link_id, OLD.is_sync_update FROM requisition WHERE id = OLD.requisition_id;
                     RETURN NULL;
                 END;
             $$ LANGUAGE 'plpgsql';
+
+            ALTER TABLE requisition ENABLE TRIGGER ALL;
+            ALTER TABLE requisition_line ENABLE TRIGGER ALL;
        "#,
     )?;
 
@@ -65,47 +68,41 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             UPDATE requisition SET name_link_id = name_id;
             PRAGMA foreign_keys = ON;
 
-            DROP TRIGGER requisition_insert_trigger;
-            DROP TRIGGER requisition_update_trigger;
-            DROP TRIGGER requisition_delete_trigger;
-            
+            -- requisition triggers
             CREATE TRIGGER requisition_insert_trigger AFTER INSERT ON requisition
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
             VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
             END;
             
             CREATE TRIGGER requisition_update_trigger AFTER UPDATE ON requisition
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
             VALUES ('requisition', NEW.id, 'UPSERT', NEW.store_id, NEW.name_link_id, NEW.is_sync_update);
             END;
             
             CREATE TRIGGER requisition_delete_trigger AFTER DELETE ON requisition
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
             VALUES ('requisition', OLD.id, 'DELETE', OLD.store_id, OLD.name_link_id, OLD.is_sync_update);
             END;
-            
-            DROP TRIGGER requisition_line_insert_trigger;
-            DROP TRIGGER requisition_line_update_trigger;
-            DROP TRIGGER requisition_line_delete_trigger;
-            
+
+            -- requisition_line triggers
             CREATE TRIGGER requisition_line_insert_trigger AFTER INSERT ON requisition_line
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
             SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
             END;
             
             CREATE TRIGGER requisition_line_update_trigger AFTER UPDATE ON requisition_line
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
             SELECT 'requisition_line', NEW.id, 'UPSERT', store_id, name_link_id, NEW.is_sync_update FROM requisition WHERE id = NEW.requisition_id;
             END;
             
             CREATE TRIGGER requisition_line_delete_trigger AFTER DELETE ON requisition_line
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_id, is_sync_update)
+            INSERT INTO changelog (table_name, record_id, row_action, store_id, name_link_id, is_sync_update)
             SELECT 'requisition_line', OLD.id, 'DELETE', store_id, name_link_id, OLD.is_sync_update FROM requisition WHERE id = OLD.requisition_id;
             END;
         "#,
