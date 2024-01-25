@@ -71,7 +71,6 @@ export type Currencies =
   | 'USD'
   | 'EUR'
   | 'NZD'
-  | 'AUD'
   | 'DJF'
   | 'QAR'
   | 'RUB'
