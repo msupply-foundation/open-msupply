@@ -36,6 +36,7 @@ table! {
     }
 }
 joinable!(changelog_deduped -> name_link (name_id));
+allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
