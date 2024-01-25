@@ -213,7 +213,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_supplier_join".to_string();
-                r.name_id = not_a_supplier().id;
+                r.name_link_id = not_a_supplier().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = false;
             })
@@ -337,7 +337,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "supplier_join".to_string();
-                r.name_id = supplier().id;
+                r.name_link_id = supplier().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = true;
             })
@@ -616,7 +616,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(mock_name_linked_to_store_join().name_id.clone());
+                    r.other_party_id = Some(mock_name_linked_to_store_join().name_link_id.clone());
                 }),
             )
             .unwrap();
@@ -639,7 +639,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(mock_name_not_linked_to_store_join().name_id.clone());
+                    r.other_party_id =
+                        Some(mock_name_not_linked_to_store_join().name_link_id.clone());
                 }),
             )
             .unwrap();
