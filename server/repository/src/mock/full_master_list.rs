@@ -26,7 +26,7 @@ pub fn mock_master_list_item_query_test1() -> FullMockMasterList {
         }],
         lines: vec![MasterListLineRow {
             id: "item_query_test1".to_owned(),
-            item_id: "item_query_test1".to_owned(),
+            item_link_id: "item_query_test1".to_owned(),
             master_list_id: "item_query_test1".to_owned(),
         }],
     }
@@ -73,7 +73,7 @@ pub fn mock_master_list_program() -> FullMockMasterList {
         ],
         lines: vec![MasterListLineRow {
             id: "program_item".to_owned(),
-            item_id: "item_query_test1".to_owned(),
+            item_link_id: "item_query_test1".to_owned(),
             master_list_id: "master_list_program".to_owned(),
         }],
     }
@@ -92,12 +92,12 @@ pub fn mock_master_list_master_list_line_filter_test() -> FullMockMasterList {
         lines: vec![
             MasterListLineRow {
                 id: "master_list_line_filter_test_1".to_owned(),
-                item_id: "item_a".to_owned(),
+                item_link_id: "item_a".to_owned(),
                 master_list_id: "master_list_master_list_line_filter_test".to_owned(),
             },
             MasterListLineRow {
                 id: "master_list_line_filter_test_2".to_owned(),
-                item_id: "item_b".to_owned(),
+                item_link_id: "item_b".to_owned(),
                 master_list_id: "master_list_master_list_line_filter_test".to_owned(),
             },
         ],

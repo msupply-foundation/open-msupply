@@ -229,22 +229,22 @@ mod test {
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_id: mock_item_a().id,
+                        item_link_id: mock_item_a().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_id: mock_item_b().id,
+                        item_link_id: mock_item_b().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_id: mock_item_c().id,
+                        item_link_id: mock_item_c().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line4.clone(),
-                        item_id: mock_item_d().id,
+                        item_link_id: mock_item_d().id,
                         master_list_id: id.clone(),
                     },
                 ],
