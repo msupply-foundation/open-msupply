@@ -40,9 +40,9 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   value,
   ...restOfProps
 }) => {
-  const { c, options, language } = useCurrency();
-  const prefix = language !== 'fr' ? options.symbol : '';
-  const suffix = language === 'fr' ? options.symbol : '';
+  const { c, options, currencyCode } = useCurrency();
+  const prefix = currencyCode !== 'EUR' ? options.symbol : '';
+  const suffix = currencyCode === 'EUR' ? options.symbol : '';
   const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
