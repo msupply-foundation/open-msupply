@@ -90,8 +90,6 @@ impl SyncApiV6 {
             sync_v5_settings: sync_v5_settings.clone(),
         };
 
-        println!("{}", serde_json::to_string_pretty(&request).unwrap());
-
         let result = Client::new().post(url.clone()).json(&request).send().await;
 
         let error = match response_or_err(result).await {

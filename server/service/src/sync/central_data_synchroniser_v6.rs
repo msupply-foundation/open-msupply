@@ -9,7 +9,6 @@ use super::{
     sync_status::logger::{SyncLogger, SyncLoggerError},
 };
 
-use log::info;
 use repository::{
     CursorController, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
@@ -50,8 +49,6 @@ impl CentralDataSynchroniserV6 {
         // TODO protection from infinite loop
         loop {
             let cursor = cursor_controller.get(&connection)?;
-
-            info!("cursor {}", cursor);
 
             let SyncBatchV6 {
                 end_cursor,
