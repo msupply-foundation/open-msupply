@@ -100,7 +100,13 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub prescriber_ID: Option<String>,
+    #[serde(rename = "prescriber_ID")]
+    pub clinician_id: Option<String>,
+    #[serde(rename = "currency_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub currency_id: Option<String>,
+    pub currency_rate: Option<f64>,
+    pub foreign_currency_total: Option<f64>,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
@@ -233,7 +239,10 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            clinician_id: data.prescriber_ID,
+            clinician_id: data.clinician_id,
+            currency_id: data.currency_id,
+            currency_rate: data.currency_rate,
+            foreign_currency_total: data.foreign_currency_total,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -307,6 +316,9 @@ impl SyncTranslation for InvoiceTranslation {
             transport_reference,
             tax,
             clinician_id,
+            currency_id,
+            currency_rate,
+            foreign_currency_total,
         } = invoice_row;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -354,7 +366,10 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            prescriber_ID: clinician_id,
+            clinician_id,
+            currency_id,
+            currency_rate,
+            foreign_currency_total,
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;
