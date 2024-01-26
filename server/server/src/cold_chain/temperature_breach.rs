@@ -24,7 +24,7 @@ use super::validate_request;
 #[serde(rename_all = "camelCase")]
 pub struct TemperatureBreach {
     id: String,
-    acknowledged: bool,
+    // acknowledged: bool,
     #[serde(rename = "endTimestamp")]
     end_unix_timestamp: Option<i64>,
     sensor_id: String,
@@ -140,8 +140,10 @@ fn upsert_temperature_breach(
         None => None,
     };
 
+    // acknowledgement is the concern of open mSupply - to allow entry of comments
+    // therefore ignore the acknowledgement status of the incoming breach
     let result = match service.get_temperature_breach(&ctx, id.clone()) {
-        Ok(_) => {
+        Ok(existing_breach) => {
             let breach = UpdateTemperatureBreach {
                 id: id.clone(),
                 location_id: sensor.sensor_row.location_id,
@@ -150,11 +152,13 @@ fn upsert_temperature_breach(
                 r#type: breach.r#type,
                 start_datetime,
                 end_datetime,
-                unacknowledged: !breach.acknowledged,
+                // ignore the acknowledgement status of the breach when updating
+                unacknowledged: existing_breach.temperature_breach_row.unacknowledged,
                 threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
-                comment: breach.comment,
+                // updating the comment is not supported by the API
+                comment: existing_breach.temperature_breach_row.comment,
             };
             service
                 .update_temperature_breach(&ctx, breach)
@@ -169,7 +173,7 @@ fn upsert_temperature_breach(
                 r#type: breach.r#type,
                 start_datetime,
                 end_datetime,
-                unacknowledged: !breach.acknowledged,
+                unacknowledged: true, // new breaches are always unacknowledged
                 threshold_duration_milliseconds: breach.threshold_duration_milliseconds,
                 threshold_maximum: breach.threshold_maximum,
                 threshold_minimum: breach.threshold_minimum,
