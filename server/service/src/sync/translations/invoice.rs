@@ -189,7 +189,12 @@ impl SyncTranslation for InvoiceTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::TRANSACT,
-            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
+            dependencies: vec![
+                LegacyTableName::NAME,
+                LegacyTableName::STORE,
+                LegacyTableName::CLINICIAN,
+                LegacyTableName::CURRENCY,
+            ],
         }
     }
 
