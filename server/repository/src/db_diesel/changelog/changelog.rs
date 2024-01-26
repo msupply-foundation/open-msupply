@@ -2,7 +2,6 @@ use crate::{
     diesel_macros::apply_equal_filter, DBType, EqualFilter, RepositoryError, StorageConnection,
 };
 use diesel::{helper_types::IntoBoxed, prelude::*};
-use serde::Serialize;
 use std::convert::TryInto;
 use util::inline_init;
 
@@ -39,8 +38,7 @@ pub enum ChangelogAction {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Serialize, Eq)]
-#[serde(rename_all = "snake_case")]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,

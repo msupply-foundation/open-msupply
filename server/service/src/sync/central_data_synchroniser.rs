@@ -3,7 +3,6 @@ use super::{
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
 use crate::sync::api::CentralSyncBatchV5;
-use log::info;
 use repository::{
     CursorController, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
@@ -39,8 +38,6 @@ impl CentralDataSynchroniser {
 
         loop {
             let mut cursor = cursor_controller.get(&connection)?;
-
-            info!("cursor {}", cursor);
 
             let CentralSyncBatchV5 { max_cursor, data } = self
                 .sync_api_v5
