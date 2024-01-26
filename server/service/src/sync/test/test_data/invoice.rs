@@ -30,8 +30,8 @@ const TRANSACT_1: (&'static str, &'static str) = (
       "confirm_date": "2021-07-30",
       "confirm_time": 47046,
       "contact_id": "",
-      "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
-      "currency_rate": 1,
+      "currency_ID": "NEW_ZEALAND_DOLLARS",
+      "currency_rate": 1.32,
       "custom_data": null,
       "diagnosis_ID": "",
       "donor_default_id": "",
@@ -133,6 +133,9 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_id: None,
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            currency_rate: Some(1.32),
+            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -182,7 +185,10 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::InboundShipment),
             om_colour: None,
             tax: Some(0.0),
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            currency_rate: Some(1.32),
+            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -205,7 +211,7 @@ const TRANSACT_2: (&'static str, &'static str) = (
         "confirm_date": "0000-00-00",
         "confirm_time": 44806,
         "contact_id": "",
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "AUSTRALIAN_DOLLARS",
         "currency_rate": 1,
         "custom_data": null,
         "diagnosis_ID": "",
@@ -296,6 +302,9 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_id: None,
+            currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -340,7 +349,10 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::OutboundShipment),
             om_colour: None,
             tax: Some(0.0),
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -363,7 +375,7 @@ const TRANSACT_OM_FIELDS: (&'static str, &'static str) = (
         "confirm_date": "0000-00-00",
         "confirm_time": 44806,
         "contact_id": "",
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "",
         "currency_rate": 1,
         "custom_data": null,
         "diagnosis_ID": "",
@@ -488,6 +500,9 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -557,7 +572,10 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
             tax: Some(0.0),
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -599,7 +617,7 @@ const INVENTORY_ADDITION: (&'static str, &'static str) = (
         "category_ID": "",
         "confirm_time": 0,
         "foreign_currency_total": 0,
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "",
         "hold": false,
         "currency_rate": 1,
         "supplier_charge_fc": 0,
@@ -687,6 +705,9 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             colour: None,
             clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -737,7 +758,10 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
-            prescriber_ID: None
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -779,7 +803,7 @@ const INVENTORY_REDUCTION: (&'static str, &'static str) = (
         "category_ID": "",
         "confirm_time": 0,
         "foreign_currency_total": 0,
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "",
         "hold": false,
         "currency_rate": 1,
         "supplier_charge_fc": 0,
@@ -867,6 +891,9 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             colour: None,
             clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -917,7 +944,10 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -940,7 +970,7 @@ const PRESCRIPTION_1: (&'static str, &'static str) = (
       "confirm_date": "2021-07-30",
       "confirm_time": 47046,
       "contact_id": "",
-      "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+      "currency_ID": "",
       "currency_rate": 1,
       "custom_data": null,
       "diagnosis_ID": "",
@@ -1043,6 +1073,9 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -1092,7 +1125,10 @@ fn prescription_1_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::Prescription),
             om_colour: None,
             tax: Some(0.0),
-            prescriber_ID: None
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: Some(1.0),
+            foreign_currency_total: Some(0.0)
         }),
     }
 }

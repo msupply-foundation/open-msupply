@@ -178,6 +178,9 @@ fn generate_inbound_shipment(
         delivered_datetime: None,
         verified_datetime: None,
         clinician_id: None,
+        currency_id: None,
+        currency_rate: None,
+        foreign_currency_total: None,
     };
 
     Ok(result)

@@ -41,6 +41,9 @@ pub fn generate(
         linked_invoice_id: None,
         requisition_id: None,
         clinician_id: None,
+        currency_id: None,
+        currency_rate: None,
+        foreign_currency_total: None,
     };
 
     Ok(result)
