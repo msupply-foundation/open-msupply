@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { useUrlQuery } from '@common/hooks';
 import { Select } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
+import { FilterLabelSx } from './styleConstants';
 
 export interface EnumFilterDefinition extends FilterDefinitionCommon {
   type: 'enum';
@@ -39,17 +40,7 @@ export const EnumFilter: FC<{
           width: FILTER_WIDTH,
         },
       }}
-      sx={{
-        '& .MuiInputLabel-root': {
-          zIndex: 100,
-          top: '4px',
-          left: '8px',
-          color: 'gray.main',
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: 'secondary.main',
-        },
-      }}
+      sx={FilterLabelSx}
       label={name}
       value={value ?? ''}
       onChange={e => handleChange(e.target.value)}
