@@ -1,7 +1,5 @@
-import React from 'react';
 import {
   useColumns,
-  NumberInputCell,
   ColumnAlign,
   ExpiryDateCell,
   CheckCell,
@@ -9,6 +7,7 @@ import {
   Column,
   useCurrency,
   LocationCell,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -62,7 +61,7 @@ export const useOutboundLineEditColumns = ({
         width: 80,
       },
       {
-        Cell: props => <NumberInputCell {...props} min={1} />,
+        Cell: NumberCell,
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,
@@ -70,7 +69,7 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       {
-        Cell: props => <NumberInputCell {...props} min={1} />,
+        Cell: NumberCell,
         label: 'label.available-packs',
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,

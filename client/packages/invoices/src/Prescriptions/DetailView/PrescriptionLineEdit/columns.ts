@@ -4,7 +4,7 @@ import {
   ColumnAlign,
   ExpiryDateCell,
   LocationCell,
-  NumberInputCell,
+  NumberCell,
   useColumns,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
@@ -50,7 +50,7 @@ export const usePrescriptionLineEditColumns = ({
         width: 80,
       },
       {
-        Cell: NumberInputCell,
+        Cell: NumberCell,
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,
@@ -58,7 +58,7 @@ export const usePrescriptionLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       {
-        Cell: NumberInputCell,
+        Cell: NumberCell,
         label: 'label.available-packs',
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,
