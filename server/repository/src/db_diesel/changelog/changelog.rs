@@ -35,7 +35,9 @@ table! {
         is_sync_update -> Bool,
     }
 }
+
 joinable!(changelog_deduped -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -200,7 +202,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
-        apply_equal_filter!(query, name_id, changelog_deduped::name_link_id);
+        apply_equal_filter!(query, name_id, name_link::name_id);
         apply_equal_filter!(query, store_id, changelog_deduped::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::record_id);
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);

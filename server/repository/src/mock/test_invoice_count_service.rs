@@ -8,7 +8,7 @@ use super::MockData;
 pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_invoice_count_a");
-        r.name_id = String::from("name_store_b");
+        r.name_link_id = String::from("name_store_b");
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -25,7 +25,7 @@ pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
 pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_invoice_count_b");
-        r.name_id = String::from("name_store_b");
+        r.name_link_id = String::from("name_store_b");
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
         r.r#type = InvoiceRowType::InboundShipment;

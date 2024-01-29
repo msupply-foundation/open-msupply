@@ -1,11 +1,11 @@
 {
   "error.master-list-not-found": "Главный список не найден",
-  "error.no-items": "Нет товаров для отображения",
+  "error.no-items": "Нет товаров для отображения.",
   "label.doses": "Дозы",
   "label.name": "Наименование",
   "label.months": "Месяцы",
   "error.item-not-found": "Товар не найден",
-  "error.no-master-lists": "Нет Главных Списков для отображения",
+  "error.no-master-lists": "Нет Главных Списков для отображения.",
   "label.code": "Код",
   "label.is-vaccine": "Вакцина",
   "title.categories": "Категории",
@@ -22,5 +22,9 @@
   "messages.click-to-return-to-item-list": "Не удалось найти товар с этим идентификатором. Нажмите OК, чтобы вернуться к списку товаров.",
   "messages.click-to-return-to-master-lists": "Не удалось найти главный список с этим идентификатором. Нажмите OК, чтобы вернуться к списку главных списков",
   "label.universal-code": "Универсальный код",
-  "label.universal-name": "Универсальное наименование"
+  "label.universal-name": "Универсальное наименование",
+  "label.outer-pack-size": "Размер внешней упаковки",
+  "label.strength": "Прочность",
+  "label.volume-per-outer-pack": "Объем на одну внешнюю упаковку",
+  "label.volume-per-pack": "Объем на одну упаковку"
 }

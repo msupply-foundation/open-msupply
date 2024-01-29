@@ -79,8 +79,7 @@ pub enum InvoiceRowStatus {
 #[table_name = "invoice"]
 pub struct InvoiceRow {
     pub id: String,
-    #[column_name = "name_link_id"]
-    pub name_id: String,
+    pub name_link_id: String,
     pub name_store_id: Option<String>,
     pub store_id: String,
     pub user_id: Option<String>,
@@ -102,8 +101,7 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
-    #[column_name = "clinician_link_id"]
-    pub clinician_id: Option<String>,
+    pub clinician_link_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -115,7 +113,7 @@ impl Default for InvoiceRow {
             // Defaults
             id: Default::default(),
             user_id: Default::default(),
-            name_id: Default::default(),
+            name_link_id: Default::default(),
             name_store_id: Default::default(),
             store_id: Default::default(),
             invoice_number: Default::default(),
@@ -132,7 +130,7 @@ impl Default for InvoiceRow {
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
             tax: Default::default(),
-            clinician_id: Default::default(),
+            clinician_link_id: Default::default(),
         }
     }
 }

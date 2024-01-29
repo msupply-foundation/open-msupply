@@ -1,6 +1,6 @@
 use crate::{
     requisition::common::{
-        check_approval_status, check_requisition_exists, generate_requisition_user_id_update,
+        check_approval_status, check_requisition_row_exists, generate_requisition_user_id_update,
     },
     requisition_line::{common::check_requisition_line_exists, query::get_requisition_line},
     service_provider::ServiceContext,
@@ -71,7 +71,7 @@ fn validate(
         .requisition_line_row;
 
     let requisition_row =
-        check_requisition_exists(connection, &requisition_line_row.requisition_id)?
+        check_requisition_row_exists(connection, &requisition_line_row.requisition_id)?
             .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if check_approval_status(&requisition_row) {

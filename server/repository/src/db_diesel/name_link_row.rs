@@ -1,9 +1,6 @@
-use super::{
-    clinician_link_row::clinician_link, item_link_row::item_link, name_link_row::name_link::dsl::*,
-    name_row::name,
-};
+use super::{name_link_row::name_link::dsl::*, name_row::name};
 
-use crate::{changelog_deduped, RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection};
 
 use diesel::prelude::*;
 
@@ -14,9 +11,6 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
-allow_tables_to_appear_in_same_query!(name_link, item_link);
-allow_tables_to_appear_in_same_query!(name_link, changelog_deduped);
-allow_tables_to_appear_in_same_query!(name_link, clinician_link);
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[table_name = "name_link"]
@@ -93,16 +87,6 @@ impl<'a> NameLinkRowRepository<'a> {
         let result = name_link
             .filter(name_id.eq(name))
             .load::<NameLinkRow>(&self.connection.connection)?;
-        Ok(result)
-    }
-
-    pub fn find_many_by_name_ids(
-        &self,
-        name_ids: &[String],
-    ) -> Result<Vec<NameLinkRow>, RepositoryError> {
-        let result = name_link
-            .filter(name_id.eq_any(name_ids))
-            .load(&self.connection.connection)?;
         Ok(result)
     }
 }

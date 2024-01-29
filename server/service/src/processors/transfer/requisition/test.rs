@@ -150,7 +150,7 @@ async fn stock_on_deleted_requisitions() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_id: store.name_id.clone(),
+        name_link_id: store.name_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionRowType::Request,
         ..RequisitionRow::default()
@@ -213,7 +213,7 @@ impl RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
             r.requisition_number = 3;
-            r.name_id = response_store.name_id.clone();
+            r.name_link_id = response_store.name_id.clone();
             r.store_id = request_store.id.clone();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
@@ -324,7 +324,10 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.r#type, RequisitionRowType::Response);
         assert_eq!(response_requisition.status, RequisitionRowStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
-        assert_eq!(response_requisition.name_id, self.request_store.name_id);
+        assert_eq!(
+            response_requisition.name_link_id,
+            self.request_store.name_id
+        );
         assert_eq!(
             response_requisition.their_reference,
             Some("From internal order 3 (some reference)".to_string())

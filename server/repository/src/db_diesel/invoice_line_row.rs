@@ -65,8 +65,7 @@ impl Default for InvoiceLineRowType {
 pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
-    #[column_name = "item_link_id"]
-    pub item_id: String,
+    pub item_link_id: String,
     pub item_name: String,
     pub item_code: String,
     pub stock_line_id: Option<String>,

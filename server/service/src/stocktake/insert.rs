@@ -576,7 +576,7 @@ mod test {
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
             id: "master_list_line_b".to_string(),
             master_list_id: master_list_id.clone(),
-            item_id: "item_d".to_string(),
+            item_link_id: "item_d".to_string(),
         });
 
         service

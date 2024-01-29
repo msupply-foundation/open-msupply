@@ -1,5 +1,5 @@
 use crate::{
-    requisition::common::{check_requisition_exists, get_lines_for_requisition},
+    requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
 };
 use repository::EqualFilter;
@@ -63,7 +63,7 @@ fn validate(
     store_id: &str,
     input: &AddFromMasterList,
 ) -> Result<RequisitionRow, OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.request_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
@@ -259,22 +259,22 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_a().id,
+                    name_link_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_id: mock_item_a().id,
+                        item_link_id: mock_item_a().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_id: test_item_stats::item().id,
+                        item_link_id: test_item_stats::item().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_id: test_item_stats::item2().id,
+                        item_link_id: test_item_stats::item2().id,
                         master_list_id: id.clone(),
                     },
                 ],

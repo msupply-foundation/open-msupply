@@ -1,7 +1,7 @@
 use crate::{
     item::check_item_exists,
     requisition::{
-        common::check_requisition_exists, request_requisition::generate_requisition_lines,
+        common::check_requisition_row_exists, request_requisition::generate_requisition_lines,
     },
     requisition_line::{
         common::{check_item_exists_in_requisition, check_requisition_line_exists},
@@ -74,7 +74,7 @@ fn validate(
         return Err(OutError::RequisitionLineAlreadyExists);
     }
 
-    let requisition_row = check_requisition_exists(connection, &input.requisition_id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.program_id.is_some() {
