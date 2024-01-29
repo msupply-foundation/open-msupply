@@ -59,7 +59,6 @@ pub fn check_batch_on_hold(batch: &StockLine) -> bool {
 
 pub enum LocationIsOnHoldError {
     LocationIsOnHold,
-    LocationNotFound,
 }
 
 pub fn check_location_on_hold(
