@@ -125,7 +125,7 @@ pub(crate) fn process_shipment_transfers(
 
         for log in logs {
             let name_id = log
-                .name_id // MERGE: Actually name_link_id
+                .name_id
                 .as_ref()
                 .ok_or_else(|| Error::NameIdIsMissingFromChangelog(log.clone()))?;
 
