@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   useColumns,
   getRowExpandColumn,
@@ -165,7 +164,7 @@ export const useOutboundColumns = ({
       [
         'numberOfPacks',
         {
-          Cell: props => <NumberInputCell {...props} min={1} />,
+          Cell: NumberInputCell,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;

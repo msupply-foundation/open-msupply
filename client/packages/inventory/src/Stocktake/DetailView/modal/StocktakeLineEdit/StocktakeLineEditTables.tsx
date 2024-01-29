@@ -174,7 +174,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.pack-size',
       width: 100,
       getIsDisabled: rowData => !!rowData.stockLine,
-      Cell: props => <NumberInputCell {...props} min={1} />,
+      Cell: NumberInputCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
     {

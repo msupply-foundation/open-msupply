@@ -1,4 +1,3 @@
-import React from 'react';
 import { getCheckboxSelectionColumn } from '../columns/CheckboxSelectionColumn';
 import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
@@ -67,7 +66,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     description: 'description.pack-quantity',
     label: 'label.pack-quantity',
     width: 100,
-    Cell: props => <NumberInputCell {...props} min={1} />,
+    Cell: NumberInputCell,
   },
   expiryDate: {
     key: 'expiryDate',

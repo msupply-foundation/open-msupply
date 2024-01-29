@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   getRowExpandColumn,
   GenericColumnKey,
@@ -167,7 +166,7 @@ export const useStocktakeColumns = ({
         label: 'label.snapshot-num-of-packs',
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
-        Cell: props => <NumberInputCell {...props} min={1} />,
+        Cell: NumberInputCell,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
@@ -204,7 +203,7 @@ export const useStocktakeColumns = ({
         label: 'label.counted-num-of-packs',
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
-        Cell: props => <NumberInputCell {...props} min={1} />,
+        Cell: NumberInputCell,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
