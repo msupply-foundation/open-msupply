@@ -61,10 +61,7 @@ pub enum LocationIsOnHoldError {
     LocationIsOnHold,
 }
 
-pub fn check_location_on_hold(
-    batch: &StockLine,
-    connection: &StorageConnection,
-) -> Result<(), LocationIsOnHoldError> {
+pub fn check_location_on_hold(batch: &StockLine) -> Result<(), LocationIsOnHoldError> {
     use LocationIsOnHoldError::*;
 
     match &batch.location_row {

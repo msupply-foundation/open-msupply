@@ -1,6 +1,6 @@
 use repository::{
     InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLine,
-    StockLineRow, StockLineRowRepository,
+    StockLineRowRepository,
 };
 
 use crate::{
