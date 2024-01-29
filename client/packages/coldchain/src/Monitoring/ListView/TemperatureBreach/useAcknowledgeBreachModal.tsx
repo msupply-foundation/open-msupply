@@ -1,8 +1,12 @@
 import React, { FC, useState } from 'react';
-import { BasicTextInput, DialogButton, Typography } from '@common/components';
+import {
+  BasicTextInput,
+  DialogButton,
+  ErrorWithDetails,
+  Typography,
+} from '@common/components';
 import { ModalProps, useDialog, useNotification } from '@common/hooks';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
-// import { alpha, useTheme } from '@common/styles';
 import {
   Box,
   TextWithLabelRow,
@@ -136,19 +140,28 @@ const BreachModal = ({
             </Box>
           </>
         )}
-        <Box paddingTop={3}>
-          <Typography sx={{ fontWeight: 'bold' }}>
-            {t('label.comment')}
-          </Typography>
-          <BasicTextInput
-            fullWidth
-            multiline
-            rows={3}
-            onChange={event => setComment(event.target.value)}
-            value={comment}
-            helperText={t('message.acknowledge-breach-helptext')}
-          />
-        </Box>
+        {!breach?.endDatetime ? (
+          <Box paddingTop={3}>
+            <ErrorWithDetails
+              error={t('message.breach-ongoing')}
+              details={''}
+            />
+          </Box>
+        ) : (
+          <Box paddingTop={3}>
+            <Typography sx={{ fontWeight: 'bold' }}>
+              {t('label.comment')}
+            </Typography>
+            <BasicTextInput
+              fullWidth
+              multiline
+              rows={3}
+              onChange={event => setComment(event.target.value)}
+              value={comment}
+              helperText={t('message.acknowledge-breach-helptext')}
+            />
+          </Box>
+        )}
       </Box>
     </Modal>
   );

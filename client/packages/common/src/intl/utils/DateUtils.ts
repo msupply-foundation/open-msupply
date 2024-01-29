@@ -32,6 +32,7 @@ import {
   formatRFC3339,
   previousMonday,
   endOfWeek,
+  setMilliseconds,
 } from 'date-fns';
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
@@ -83,13 +84,14 @@ export const DateUtils = {
   addCurrentTime,
   getDateOrNull: (
     date?: Date | string | null,
-    format?: string
+    format?: string,
+    options?: Parameters<typeof parse>[3]
   ): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
     const maybeDate =
       format && typeof date === 'string'
-        ? parse(date, format, new Date())
+        ? parse(date, format, new Date(), options)
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
@@ -130,6 +132,7 @@ export const DateUtils = {
   startOfYear,
   previousMonday,
   endOfWeek,
+  setMilliseconds,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
