@@ -76,7 +76,8 @@ export type Currencies =
   | 'RUB'
   | 'SSP'
   | 'PGK'
-  | 'COP';
+  | 'COP'
+  | 'SBD';
 
 export const currencyOptions = (code?: Currencies) => {
   switch (code) {
@@ -124,6 +125,7 @@ export const currencyOptions = (code?: Currencies) => {
       return {
         symbol: 'SSP',
         pattern: '# !',
+        separator: ',',
         negativePattern: '-# !',
         format,
       };
@@ -144,7 +146,19 @@ export const currencyOptions = (code?: Currencies) => {
         symbol: '$',
         pattern: '# !',
         negativePattern: '-# !',
+        separator: ',',
         format,
+      };
+    }
+    case 'SBD': {
+      return {
+        symbol: 'SI$',
+        pattern: '# !',
+        negativePattern: '-# !',
+        format,
+        separator: ',',
+        decimal: '.',
+        precision: 2,
       };
     }
     case 'USD':
