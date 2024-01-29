@@ -19,7 +19,7 @@ use super::{
     SyncTranslation,
 };
 
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANSACT;
+const LEGACY_TABLE_NAME: &str = LegacyTableName::TRANSACT;
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LEGACY_TABLE_NAME
@@ -224,7 +224,7 @@ impl SyncTranslation for InvoiceTranslation {
             id: data.ID,
             user_id: data.user_id,
             store_id: data.store_ID,
-            name_id: data.name_ID,
+            name_link_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
@@ -233,7 +233,7 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            clinician_id: data.prescriber_ID,
+            clinician_link_id: data.prescriber_ID,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -276,11 +276,11 @@ impl SyncTranslation for InvoiceTranslation {
             return Ok(None);
         }
 
-        let Some(invoice) = InvoiceRepository::new(connection).query_by_filter(
-            InvoiceFilter::new()
-                .id(EqualFilter::equal_to(&changelog.record_id))
-        )?.pop() else {
-            return Err(anyhow::anyhow!("Invoice not found"))
+        let Some(invoice) = InvoiceRepository::new(connection)
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Invoice not found"));
         };
 
         // log::info!("Translating invoice row: {:#?}", invoice_row);
@@ -292,7 +292,7 @@ impl SyncTranslation for InvoiceTranslation {
                 InvoiceRow {
                     id,
                     user_id,
-                    name_id: _,
+                    name_link_id: _,
                     name_store_id: _,
                     store_id,
                     invoice_number,
@@ -312,9 +312,10 @@ impl SyncTranslation for InvoiceTranslation {
                     linked_invoice_id,
                     transport_reference,
                     tax,
-                    clinician_id,
+                    clinician_link_id: _,
                 },
             name_row,
+            clinician_row,
             ..
         } = invoice;
 
@@ -363,7 +364,7 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            prescriber_ID: clinician_id,
+            prescriber_ID: clinician_row.map(|row| row.id),
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;

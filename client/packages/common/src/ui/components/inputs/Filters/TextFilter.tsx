@@ -6,6 +6,7 @@ import {
   FILTER_WIDTH,
   FilterDefinitionCommon,
 } from './FilterMenu';
+import { FilterLabelSx } from './styleConstants';
 
 export interface TextFilterDefinition extends FilterDefinitionCommon {
   type: 'text';
@@ -29,8 +30,7 @@ export const TextFilter: FC<{
 
   const handleChange = (newValue: string) => {
     setValue(newValue);
-    if (newValue === '') updateQuery({ [filterDefinition.urlParameter]: '' });
-    else debouncedOnChange(newValue);
+    debouncedOnChange(newValue);
   };
 
   return (
@@ -49,17 +49,7 @@ export const TextFilter: FC<{
       onChange={e => handleChange(e.target.value)}
       label={filterDefinition.name}
       placeholder={filterDefinition.placeholder ?? ''}
-      sx={{
-        '& .MuiInputLabel-root': {
-          zIndex: 100,
-          top: '4px',
-          left: '8px',
-          color: 'gray.main',
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: 'secondary.main',
-        },
-      }}
+      sx={FilterLabelSx}
     />
   );
 };

@@ -92,7 +92,7 @@ mod repository_test {
         pub fn master_list_line_1() -> MasterListLineRow {
             MasterListLineRow {
                 id: "masterlistline1".to_string(),
-                item_id: item_1().id.to_string(),
+                item_link_id: item_1().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
             }
         }
@@ -100,7 +100,7 @@ mod repository_test {
         pub fn master_list_line_upsert_1() -> MasterListLineRow {
             MasterListLineRow {
                 id: "masterlistline1".to_string(),
-                item_id: item_2().id.to_string(),
+                item_link_id: item_2().id.to_string(),
                 master_list_id: master_list_1().id.to_string(),
             }
         }
@@ -109,14 +109,14 @@ mod repository_test {
             MasterListNameJoinRow {
                 id: "masterlistnamejoin1".to_string(),
                 master_list_id: master_list_1().id.to_string(),
-                name_id: name_1().id.to_string(),
+                name_link_id: name_1().id.to_string(),
             }
         }
 
         pub fn invoice_1() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice1".to_string();
-                r.name_id = name_1().id.to_string();
+                r.name_link_id = name_1().id.to_string();
                 r.store_id = store_1().id.to_string();
                 r.invoice_number = 12;
                 r.r#type = InvoiceRowType::InboundShipment;
@@ -131,7 +131,7 @@ mod repository_test {
         pub fn invoice_2() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = name_1().id.to_string();
+                r.name_link_id = name_1().id.to_string();
                 r.store_id = store_1().id.to_string();
                 r.invoice_number = 12;
                 r.r#type = InvoiceRowType::OutboundShipment;
@@ -145,7 +145,7 @@ mod repository_test {
         pub fn invoice_line_1() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test1".to_string(),
-                item_id: item_1().id.to_string(),
+                item_link_id: item_1().id.to_string(),
                 item_name: item_1().name.to_string(),
                 item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -168,7 +168,7 @@ mod repository_test {
         pub fn invoice_line_2() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test2-with-optional".to_string(),
-                item_id: item_1().id.to_string(),
+                item_link_id: item_1().id.to_string(),
                 item_name: item_1().name.to_string(),
                 item_code: item_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -192,7 +192,7 @@ mod repository_test {
         pub fn invoice_line_3() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test3".to_string(),
-                item_id: item_2().id.to_string(),
+                item_link_id: item_2().id.to_string(),
                 item_name: item_2().name.to_string(),
                 item_code: item_2().code.to_string(),
                 invoice_id: invoice_2().id.to_string(),
@@ -216,7 +216,7 @@ mod repository_test {
         pub fn invoice_line_service() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "test_service_item".to_string(),
-                item_id: item_service_1().id.to_string(),
+                item_link_id: item_service_1().id.to_string(),
                 item_name: item_service_1().name.to_string(),
                 item_code: item_service_1().code.to_string(),
                 invoice_id: invoice_1().id.to_string(),
@@ -615,7 +615,7 @@ mod repository_test {
             .query_by_filter(
                 InvoiceFilter::new()
                     .r#type(InvoiceRowType::OutboundShipment.equal_to())
-                    .name_id(EqualFilter::equal_to(&item1.name_id)),
+                    .name_id(EqualFilter::equal_to(&item1.name_link_id)),
             )
             .unwrap();
         assert_eq!(1, loaded_item.len());

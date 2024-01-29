@@ -18,8 +18,7 @@ table! {
 #[table_name = "name_tag_join"]
 pub struct NameTagJoinRow {
     pub id: String,
-    #[column_name = "name_link_id"]
-    pub name_id: String,
+    pub name_link_id: String,
     pub name_tag_id: String,
 }
 
@@ -110,7 +109,7 @@ mod test_name_tag_row {
         // Check we can insert a name tag join
         let name_tag_join_row = NameTagJoinRow {
             id: "name_tag_join_id".to_string(),
-            name_id: "name1".to_string(),
+            name_link_id: "name1".to_string(),
             name_tag_id: name_tag_row.id.clone(),
         };
         repo.upsert_one(&name_tag_join_row).unwrap();

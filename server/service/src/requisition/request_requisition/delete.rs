@@ -1,6 +1,6 @@
 use crate::{
     activity_log::activity_log_entry,
-    requisition::common::check_requisition_exists,
+    requisition::common::check_requisition_row_exists,
     requisition_line::request_requisition_line::{
         delete_request_requisition_line, DeleteRequestRequisitionLine,
         DeleteRequestRequisitionLineError,
@@ -87,7 +87,7 @@ fn validate(
     store_id: &str,
     input: &DeleteRequestRequisition,
 ) -> Result<(), OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {

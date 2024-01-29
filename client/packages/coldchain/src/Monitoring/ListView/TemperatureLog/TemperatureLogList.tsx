@@ -82,7 +82,7 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${rowData.temperature}${t('label.temperature-unit')}`;
+          return `${rowData.temperature} ${t('label.temperature-unit')}`;
         },
       },
       {

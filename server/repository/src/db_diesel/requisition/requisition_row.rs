@@ -91,8 +91,7 @@ pub enum RequisitionRowApprovalStatus {
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
-    #[column_name = "name_link_id"]
-    pub name_id: String,
+    pub name_link_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
     #[column_name = "type_"]
@@ -124,7 +123,7 @@ impl Default for RequisitionRow {
             id: Default::default(),
             user_id: Default::default(),
             requisition_number: Default::default(),
-            name_id: Default::default(),
+            name_link_id: Default::default(),
             store_id: Default::default(),
             sent_datetime: Default::default(),
             finalised_datetime: Default::default(),
