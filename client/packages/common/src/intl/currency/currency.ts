@@ -80,17 +80,6 @@ export type Currencies =
 
 export const currencyOptions = (code?: Currencies) => {
   switch (code) {
-    case 'USD':
-    case 'NZD':
-      return {
-        symbol: '$',
-        separator: ',',
-        decimal: '.',
-        precision: 2,
-        pattern: '!#',
-        negativePattern: '-!#',
-        format,
-      };
     case 'EUR':
       return {
         symbol: '€',
@@ -158,6 +147,8 @@ export const currencyOptions = (code?: Currencies) => {
         format,
       };
     }
+    case 'USD':
+    case 'NZD':
     default:
       return {
         symbol: '$',
@@ -171,12 +162,12 @@ export const currencyOptions = (code?: Currencies) => {
   }
 };
 
-export const useCurrency = (dp?: number, code?: Currencies) => {
+export const useCurrency = (code?: Currencies) => {
   const { store } = useAuthContext();
   const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
 
   const options = currencyOptions(currencyCode);
-  const precision = dp ?? options.precision;
+  const precision = options.precision;
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
     options,
@@ -184,7 +175,7 @@ export const useCurrency = (dp?: number, code?: Currencies) => {
   };
 };
 
-export const useFormatCurrency = (dp?: number) => {
-  const { c } = useCurrency(dp);
+export const useFormatCurrency = () => {
+  const { c } = useCurrency();
   return (value: currency.Any) => c(value).format();
 };
