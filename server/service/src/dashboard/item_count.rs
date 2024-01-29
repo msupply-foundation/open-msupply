@@ -246,7 +246,7 @@ mod item_count_service_test {
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line1".to_string(),
-                        item_id: "item1".to_string(),
+                        item_link_id: "item1".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 5.0,
                         pack_size: 1,
@@ -254,7 +254,7 @@ mod item_count_service_test {
                     },
                     StockLineRow {
                         id: "stock_line2".to_string(),
-                        item_id: "item2".to_string(),
+                        item_link_id: "item2".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 0.0,
                         pack_size: 1,
@@ -293,7 +293,7 @@ mod item_count_service_test {
         stock_line_repository
             .upsert_one(&StockLineRow {
                 id: "stock_line3".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 available_number_of_packs: 0.0,
                 store_id: mock_store_b().id,
                 ..StockLineRow::default()
@@ -302,7 +302,7 @@ mod item_count_service_test {
         stock_line_repository
             .upsert_one(&StockLineRow {
                 id: "stock_line4".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 available_number_of_packs: 0.0,
                 store_id: mock_store_b().id,
                 ..StockLineRow::default()
@@ -311,7 +311,7 @@ mod item_count_service_test {
         stock_line_repository
             .upsert_one(&StockLineRow {
                 id: "stock_line5".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 available_number_of_packs: 0.0,
                 store_id: mock_store_b().id,
                 ..StockLineRow::default()
@@ -394,7 +394,7 @@ mod item_count_service_test {
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line1".to_string(),
-                        item_id: "item1".to_string(),
+                        item_link_id: "item1".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 5.0,
                         pack_size: 1,
@@ -402,7 +402,7 @@ mod item_count_service_test {
                     },
                     StockLineRow {
                         id: "stock_line2".to_string(),
-                        item_id: "item2".to_string(),
+                        item_link_id: "item2".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 40.0,
                         pack_size: 1,

@@ -61,7 +61,7 @@ pub fn validate(
         return Err(NumberOfPacksBelowOne);
     }
 
-    let batch_pair = check_batch_exists_option(&input, line_row, connection)?;
+    let batch_pair = check_batch_exists_option(store_id, &input, line_row, connection)?;
     let item = check_item_option(input.item_id.clone(), &line, connection)?;
 
     if !check_item_matches_batch(&batch_pair.main_batch, &item) {
@@ -88,9 +88,14 @@ fn check_reduction_below_zero(
     // - check full number of pack in invoice
     let reduction = batch_pair.get_main_batch_reduction(input, line);
 
-    if batch_pair.main_batch.available_number_of_packs < reduction {
+    if batch_pair
+        .main_batch
+        .stock_line_row
+        .available_number_of_packs
+        < reduction
+    {
         Err(UpdateStockOutLineError::ReductionBelowZero {
-            stock_line_id: batch_pair.main_batch.id.clone(),
+            stock_line_id: batch_pair.main_batch.stock_line_row.id.clone(),
             line_id: line.id.clone(),
         })
     } else {
@@ -115,6 +120,7 @@ fn check_item_option(
 }
 
 fn check_batch_exists_option(
+    store_id: &str,
     input: &UpdateStockOutLine,
     existing_line: &InvoiceLineRow,
     connection: &StorageConnection,
@@ -123,16 +129,17 @@ fn check_batch_exists_option(
 
     let previous_batch = if let Some(batch_id) = &existing_line.stock_line_id {
         // Should always be found due to contraints on database
-        check_batch_exists(batch_id, connection)?.ok_or(StockLineNotFound)?
+        check_batch_exists(store_id, batch_id, connection)?.ok_or(StockLineNotFound)?
     } else {
         // This should never happen, but still need to cover
         return Err(LineDoesNotReferenceStockLine);
     };
 
     let result = match &input.stock_line_id {
-        Some(batch_id) if batch_id != &previous_batch.id => BatchPair {
+        Some(batch_id) if batch_id != &previous_batch.stock_line_row.id => BatchPair {
             // stock_line changed
-            main_batch: check_batch_exists(batch_id, connection)?.ok_or(StockLineNotFound)?,
+            main_batch: check_batch_exists(store_id, batch_id, connection)?
+                .ok_or(StockLineNotFound)?,
             previous_batch_option: Some(previous_batch),
         },
         _ => {

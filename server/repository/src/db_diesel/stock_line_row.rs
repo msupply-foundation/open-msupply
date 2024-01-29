@@ -42,8 +42,7 @@ allow_tables_to_appear_in_same_query!(stock_line, name_link);
 #[table_name = "stock_line"]
 pub struct StockLineRow {
     pub id: String,
-    #[column_name = "item_link_id"]
-    pub item_id: String,
+    pub item_link_id: String,
     pub store_id: String,
     pub location_id: Option<String>,
     pub batch: Option<String>,

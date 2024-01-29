@@ -554,7 +554,7 @@ mod test {
                 r.available_number_of_packs = 8.0;
                 r.total_number_of_packs = 10.0;
                 r.pack_size = 1;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
             })
         }
 

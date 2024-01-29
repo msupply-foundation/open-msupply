@@ -104,7 +104,7 @@ fn check_stock_line_xor_item(
 
     // extract item_id
     if let Some(stock_line) = stock_line {
-        return Some(stock_line.stock_line_row.item_id.clone());
+        return Some(stock_line.item_row.id.clone());
     }
     input.item_id.clone()
 }
@@ -330,7 +330,7 @@ mod stocktake_line_test {
         fn mock_stock_line_c() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "mock_stock_line_c".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 50.0;
                 r.pack_size = 1;
@@ -344,7 +344,7 @@ mod stocktake_line_test {
         fn mock_stock_line_d() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "mock_stock_line_d".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
                 r.pack_size = 1;
@@ -640,7 +640,7 @@ mod stocktake_line_test {
                 r.counted_number_of_packs = Some(50.0);
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
-                r.item_id = stock_line.item_id;
+                r.item_id = stock_line.item_link_id;
                 r.inventory_adjustment_reason_id = Some(positive_reason().id);
             }),
         );
@@ -706,7 +706,7 @@ mod stocktake_line_test {
                 r.stocktake_id = stocktake_a.id;
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
-                r.item_id = stock_line.item_id;
+                r.item_id = stock_line.item_link_id;
                 r.comment = Some("Some comment".to_string());
             })
         );
