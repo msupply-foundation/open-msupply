@@ -11,8 +11,8 @@ import {
   alpha,
   QueryParamsProvider,
   createQueryParamsStore,
-  NumberInputCell,
   CellProps,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -61,11 +61,10 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   rowData,
   ...props
 }) => (
-  <NumberInputCell
+  <NumberCell
     {...props}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}
-    min={1}
   />
 );
 
@@ -91,7 +90,7 @@ export const QuantityTableComponent: FC<TableProps> = ({
       [
         'packSize',
         {
-          Cell: props => <NumberInputCell {...props} min={1} />,
+          Cell: NumberCell,
           setter: updateDraftLine,
         },
       ],
