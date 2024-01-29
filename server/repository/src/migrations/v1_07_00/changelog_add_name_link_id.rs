@@ -13,6 +13,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"        
+        -- Triggers need to be disabled for these tables to avoid setting them off before
+        -- their functions referring to the old changelog.name_id field is updated to changelog.name_link_id.
+        -- They are enabled again in each tables' migration in for merging where the functions are updated.
         ALTER TABLE invoice DISABLE TRIGGER ALL;
         ALTER TABLE invoice_line DISABLE TRIGGER ALL;
         ALTER TABLE requisition DISABLE TRIGGER ALL;
