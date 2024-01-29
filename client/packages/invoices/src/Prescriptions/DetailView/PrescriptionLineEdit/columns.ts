@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   CheckCell,
   Column,
@@ -51,7 +50,7 @@ export const usePrescriptionLineEditColumns = ({
         width: 80,
       },
       {
-        Cell: props => <NumberInputCell {...props} min={1} />,
+        Cell: NumberInputCell,
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,
@@ -59,7 +58,7 @@ export const usePrescriptionLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       {
-        Cell: props => <NumberInputCell {...props} min={1} />,
+        Cell: NumberInputCell,
         label: 'label.available-packs',
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,

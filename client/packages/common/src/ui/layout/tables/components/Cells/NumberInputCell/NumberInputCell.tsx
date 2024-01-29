@@ -29,6 +29,9 @@ export const NumberInputCell = <T extends RecordWithId>({
         setBuffer(newValue);
         updater({ ...rowData, [column.key]: Number(newValue) });
       }}
+      // Make the default min=1 as this is the typical implementation
+      // in Data Tables
+      min={1}
       {...props}
     />
   );
