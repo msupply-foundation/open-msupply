@@ -3,7 +3,7 @@ use std::{fs, path::Path, sync::Mutex};
 use diesel::r2d2::{ConnectionManager, Pool};
 
 use crate::{
-    database_settings::{DatabaseSettings, SqliteConnectionOptions},
+    database_settings::{self, DatabaseSettings, SqliteConnectionOptions},
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     DBBackendConnection, StorageConnectionManager,
@@ -25,6 +25,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
 }
 
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
+    // println!("working here");
     setup_with_version(db_settings, None, MockDataInserts::none())
         .await
         .0
@@ -123,7 +124,7 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
     println!("3 $+######################");
 
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
+        ConnectionManager::<DBBackendConnection>::new(&db_settings.database_path());
     const SQLITE_LOCKWAIT_MS: u32 = 10 * 1000; // 10 second wait for test lock timeout
     let pool = Pool::builder()
         .min_idle(Some(1))
@@ -150,6 +151,18 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         println!("prefix ###################: {:?}", prefix.clone());
         fs::create_dir_all(prefix).unwrap();
     }
+
+    // create db dir if specified
+    // match &db_settings.database_path {
+    //     Some(db_prefix) => fs::create_dir_all(db_prefix),
+    //     None => (),
+    // };
+    if let Some(path) = &db_settings.database_path {
+        println!("creating path");
+        fs::create_dir_all(path);
+    }
+
+    println!("data base path: {:?}", db_path);
 
     let connection_manager = connection_manager(db_settings);
     let connection = connection_manager

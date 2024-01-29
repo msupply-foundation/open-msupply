@@ -51,29 +51,19 @@ impl DatabaseSettings {
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        let sqlite_suffix = |s: String| -> bool {
-            let split = s.char_indices().nth_back(6).unwrap().0;
-            if &s[split..] == ".sqlite" {
-                return true;
-            }
-            return false;
-        };
-        println!("########{:?}", self.database_path);
-        match sqlite_suffix(self.database_name.clone()) {
-            true => self.database_name.clone(),
-            false => format!("{}.sqlite", self.database_name.clone()),
-        }
+        self.database_name.clone()
     }
 
     pub fn database_path(&self) -> String {
-        match &self.database_path {
+        let result = match &self.database_path {
             Some(path) => format!("{}/{}", path, self.connection_string()),
             None => self.connection_string(),
-        }
+        };
+        return result;
     }
 
     pub fn connection_string_without_db(&self) -> String {
-        self.connection_string()
+        self.database_path()
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
@@ -172,15 +162,17 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
-    info!("Connecting to database '{}'", settings.database_name);
+    info!("Connecting to database '{}'", settings.database_path());
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
+        ConnectionManager::<DBBackendConnection>::new(&settings.database_path());
+    println!("working here");
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
         }))
         .build(connection_manager)
         .expect("Failed to connect to database");
+    println!("working after get_storage_connection_manager");
     StorageConnectionManager::new(pool)
 }
 
