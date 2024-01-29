@@ -1,7 +1,6 @@
-use super::{
-    clinician_link_row::clinician_link, item_link_row::item_link, name_link_row::name_link::dsl::*,
-    name_row::name, RepositoryError, StorageConnection,
-};
+use super::{name_link_row::name_link::dsl::*, name_row::name};
+
+use crate::{RepositoryError, StorageConnection};
 
 use diesel::prelude::*;
 
@@ -12,10 +11,8 @@ table! {
     }
 }
 joinable!(name_link -> name (name_id));
-allow_tables_to_appear_in_same_query!(name_link, item_link);
-allow_tables_to_appear_in_same_query!(name_link, clinician_link);
 
-#[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[table_name = "name_link"]
 pub struct NameLinkRow {
     pub id: String,

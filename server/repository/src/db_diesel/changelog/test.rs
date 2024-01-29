@@ -190,7 +190,15 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    let (_, connection, _, _) = setup_all("test_changelog_filter", MockDataInserts::none()).await;
+    // changelog repository gets changelog.name_id from the related
+    // name_link.name_id so we need to add names and name_links into the DB.
+    let (_, connection, _, _) =
+        setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
+
+    // But remove any names and name_links from change log so
+    // the cursors below don't conflict.
+    let changelog_repo = ChangelogRepository::new(&connection);
+    changelog_repo.delete(0).unwrap();
 
     let log1 = ChangelogRow {
         cursor: 1,
@@ -239,49 +247,47 @@ async fn test_changelog_filter() {
             .unwrap();
     }
 
-    let repo = ChangelogRepository::new(&connection);
-
     // Filter by table name
-
     assert_eq!(
-        repo.changelogs(
-            0,
-            20,
-            Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to()))
-        )
-        .unwrap(),
+        changelog_repo
+            .changelogs(
+                0,
+                20,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to()))
+            )
+            .unwrap(),
         vec![log2.clone()]
     );
 
     // Filter by name_id in
-
     assert_eq!(
-        repo.changelogs(
-            0,
-            20,
-            Some(ChangelogFilter::new().name_id(EqualFilter::equal_any(vec![
-                "name1".to_string(),
-                "name3".to_string()
-            ])))
-        )
-        .unwrap(),
+        changelog_repo
+            .changelogs(
+                0,
+                20,
+                Some(ChangelogFilter::new().name_id(EqualFilter::equal_any(vec![
+                    "name1".to_string(),
+                    "name3".to_string()
+                ])))
+            )
+            .unwrap(),
         vec![log1.clone(), log3.clone()]
     );
 
     // Filter by store_id in or null
-
     assert_eq!(
-        repo.changelogs(
-            0,
-            20,
-            Some(
-                ChangelogFilter::new().store_id(EqualFilter::equal_any_or_null(vec![
-                    "store1".to_string(),
-                    "store2".to_string()
-                ]))
+        changelog_repo
+            .changelogs(
+                0,
+                20,
+                Some(
+                    ChangelogFilter::new().store_id(EqualFilter::equal_any_or_null(vec![
+                        "store1".to_string(),
+                        "store2".to_string()
+                    ]))
+                )
             )
-        )
-        .unwrap(),
+            .unwrap(),
         vec![log1.clone(), log2.clone(), log4.clone()]
     );
 }
