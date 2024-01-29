@@ -66,7 +66,6 @@ pub fn validate(
         return Err(BatchIsOnHold);
     }
     check_location_on_hold(&batch, connection).map_err(|e| match e {
-        LocationIsOnHoldError::LocationNotFound => LocationNotFound,
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
     check_reduction_below_zero(&input, &batch)?;
