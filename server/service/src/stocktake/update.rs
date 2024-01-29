@@ -600,6 +600,9 @@ fn generate(
         linked_invoice_id: None,
         tax: None,
         clinician_id: None,
+        currency_id: None,
+        currency_rate: None,
+        foreign_currency_total: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

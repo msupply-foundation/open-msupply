@@ -1,6 +1,6 @@
 use super::{
-    clinician_row::clinician, invoice_row::invoice::dsl::*, name_row::name, store_row::store,
-    user_row::user_account, StorageConnection,
+    clinician_row::clinician, currency_row::currency, invoice_row::invoice::dsl::*, name_row::name,
+    store_row::store, user_row::user_account, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -37,6 +37,9 @@ table! {
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
         clinician_id -> Nullable<Text>,
+        currency_id -> Nullable<Text>,
+        currency_rate -> Nullable<Double>,
+        foreign_currency_total -> Nullable<Double>,
     }
 }
 
@@ -44,6 +47,7 @@ joinable!(invoice -> name (name_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
 joinable!(invoice -> clinician (clinician_id));
+joinable!(invoice -> currency (currency_id));
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -100,6 +104,9 @@ pub struct InvoiceRow {
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
     pub clinician_id: Option<String>,
+    pub currency_id: Option<String>,
+    pub currency_rate: Option<f64>,
+    pub foreign_currency_total: Option<f64>,
 }
 
 impl Default for InvoiceRow {
@@ -129,6 +136,9 @@ impl Default for InvoiceRow {
             linked_invoice_id: Default::default(),
             tax: Default::default(),
             clinician_id: Default::default(),
+            currency_id: Default::default(),
+            currency_rate: Default::default(),
+            foreign_currency_total: Default::default(),
         }
     }
 }
