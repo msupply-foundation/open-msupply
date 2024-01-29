@@ -74,7 +74,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 2;
                 r.available_number_of_packs = 30.0;
             })
@@ -85,7 +85,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_b().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 2;
                 r.available_number_of_packs = 30.0;
             })
@@ -96,7 +96,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.pack_size = 2;
                 r.available_number_of_packs = 30.0;
             })
@@ -174,7 +174,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 10.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap());
@@ -185,7 +185,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
@@ -196,7 +196,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 2.0;
                 r.expiry_date = None;
@@ -309,7 +309,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = id.to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 1.0;
             })
@@ -457,7 +457,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 30.0;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
@@ -480,7 +480,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line2".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 5.0;
             })
@@ -502,7 +502,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line3".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 100.0;
             })
@@ -589,7 +589,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 3.0;
             })

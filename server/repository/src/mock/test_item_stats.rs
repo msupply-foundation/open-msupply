@@ -112,7 +112,7 @@ pub fn stock_line1() -> StockLineRow {
     let id = "stock_line1".to_string();
     inline_init(|r: &mut StockLineRow| {
         r.id = id.clone();
-        r.item_id = item().id;
+        r.item_link_id = item().id;
         r.store_id = mock_store_a().id;
         r.pack_size = 10;
         r.available_number_of_packs = 1.0;
@@ -125,7 +125,7 @@ pub fn stock_line2() -> StockLineRow {
     let id = "stock_line2".to_string();
     inline_init(|r: &mut StockLineRow| {
         r.id = id.clone();
-        r.item_id = item().id;
+        r.item_link_id = item().id;
         r.store_id = mock_store_a().id;
         r.available_number_of_packs = 20.0;
         r.pack_size = 10;
@@ -138,7 +138,7 @@ pub fn stock_line3() -> StockLineRow {
     let id = "stock_line3".to_string();
     inline_init(|r: &mut StockLineRow| {
         r.id = id.clone();
-        r.item_id = item().id;
+        r.item_link_id = item().id;
         r.store_id = mock_store_a().id;
         r.available_number_of_packs = 10.0;
         r.pack_size = 1;
@@ -155,7 +155,7 @@ pub fn stock_line_1_store_b() -> StockLineRow {
     let id = "stock_line_1_store_b".to_string();
     inline_init(|r: &mut StockLineRow| {
         r.id = id.clone();
-        r.item_id = item().id;
+        r.item_link_id = item().id;
         r.store_id = mock_store_b().id;
         r.available_number_of_packs = 1.0;
         r.pack_size = 10;
@@ -182,7 +182,7 @@ pub fn stock_line1_item2() -> StockLineRow {
     let id = "stock_line1_item2".to_string();
     inline_init(|r: &mut StockLineRow| {
         r.id = id.clone();
-        r.item_id = item2().id;
+        r.item_link_id = item2().id;
         r.store_id = mock_store_a().id;
         r.available_number_of_packs = 11.0;
         r.pack_size = 2;

@@ -201,9 +201,8 @@ impl ShipmentTransferTester {
 
         let stock_line1 = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
-            r.item_id = uuid();
             r.store_id = outbound_store.id.clone();
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.batch = Some(uuid());
             r.expiry_date = Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap());
             r.pack_size = 10;
@@ -230,9 +229,8 @@ impl ShipmentTransferTester {
 
         let stock_line2 = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
-            r.item_id = uuid();
             r.store_id = outbound_store.id.clone();
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.batch = Some(uuid());
             r.pack_size = 10;
             r.total_number_of_packs = 200.0;

@@ -6,7 +6,7 @@ use crate::StockLineRow;
 pub fn mock_stock_line_a() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_a_line_a");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.store_id = String::from("store_a");
         r.available_number_of_packs = 30.0;
         r.pack_size = 1;
@@ -18,7 +18,7 @@ pub fn mock_stock_line_a() -> StockLineRow {
 pub fn mock_stock_line_b() -> StockLineRow {
     inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_a_line_b");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_batch_b"));
         r.available_number_of_packs = 20.0;
@@ -39,7 +39,7 @@ pub fn mock_item_a_lines() -> Vec<StockLineRow> {
 pub fn mock_item_b_lines() -> Vec<StockLineRow> {
     let mock_item_b_line_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_b_line_a");
-        r.item_id = String::from("item_b");
+        r.item_link_id = String::from("item_b");
         r.store_id = String::from("store_b");
         r.batch = Some(String::from("item_b_batch_a"));
         r.available_number_of_packs = 3.0;
@@ -50,7 +50,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
 
     let mock_item_b_line_b: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_b_line_b");
-        r.item_id = String::from("item_b");
+        r.item_link_id = String::from("item_b");
         r.store_id = String::from("store_b");
         r.batch = Some(String::from("item_b_batch_b"));
         r.available_number_of_packs = 4.0;
@@ -65,7 +65,7 @@ pub fn mock_item_b_lines() -> Vec<StockLineRow> {
 pub fn mock_item_c_lines() -> Vec<StockLineRow> {
     let mock_item_c_line_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_c_line_a");
-        r.item_id = String::from("item_c");
+        r.item_link_id = String::from("item_c");
         r.store_id = String::from("store_c");
         r.batch = Some(String::from("item_c_batch_a"));
         r.available_number_of_packs = 5.0;
@@ -79,7 +79,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
 
     let mock_item_c_line_b: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("item_c_line_b");
-        r.item_id = String::from("item_c");
+        r.item_link_id = String::from("item_c");
         r.store_id = String::from("store_c");
         r.batch = Some(String::from("item_c_batch_b"));
         r.available_number_of_packs = 6.0;
@@ -94,7 +94,7 @@ pub fn mock_item_c_lines() -> Vec<StockLineRow> {
 pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
     let mock_stock_line_si_d_siline_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_si_d_siline_a");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_si_d_siline_a"));
         r.available_number_of_packs = 7.0;
@@ -107,7 +107,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
 
     let mock_stock_line_si_d_siline_b: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_si_d_siline_b");
-        r.item_id = String::from("item_b");
+        r.item_link_id = String::from("item_b");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_b_si_c_siline_d"));
         r.available_number_of_packs = 2.0;
@@ -125,7 +125,7 @@ pub fn mock_stock_line_si_d() -> Vec<StockLineRow> {
 pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
     let mock_stock_line_ci_c_siline_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_ci_c_siline_a");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_ci_c_siline_a"));
         r.available_number_of_packs = 5.0;
@@ -139,7 +139,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
 
     let mock_stock_line_ci_c_siline_b: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_ci_c_siline_b");
-        r.item_id = String::from("item_b");
+        r.item_link_id = String::from("item_b");
         r.store_id = String::from("store_a");
         r.available_number_of_packs = 20.0;
         r.pack_size = 7;
@@ -156,7 +156,7 @@ pub fn mock_stock_line_ci_c() -> Vec<StockLineRow> {
 pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
     let mock_stock_line_ci_d_siline_a: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = String::from("stock_line_ci_d_siline_a");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.store_id = String::from("store_a");
         r.batch = Some(String::from("item_a_ci_d_siline_a"));
         r.available_number_of_packs = 10.0;
@@ -174,7 +174,7 @@ pub fn mock_stock_line_ci_d() -> Vec<StockLineRow> {
 pub fn mock_item_query_test1() -> Vec<StockLineRow> {
     let mock_item_query_test1: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = "item_query_test1".to_owned();
-        r.item_id = "item_query_test1".to_owned();
+        r.item_link_id = "item_query_test1".to_owned();
         r.store_id = "store_a".to_owned();
         r.available_number_of_packs = 3.0;
         r.pack_size = 12;
@@ -190,7 +190,7 @@ pub fn mock_item_query_test1() -> Vec<StockLineRow> {
 pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
     let mock_stock_line_on_hold: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = "stock_line_on_hold".to_owned();
-        r.item_id = "item_c".to_owned();
+        r.item_link_id = "item_c".to_owned();
         r.store_id = "store_a".to_owned();
         r.available_number_of_packs = 100.0;
         r.pack_size = 1;
@@ -205,7 +205,7 @@ pub fn mock_stock_line_on_hold() -> Vec<StockLineRow> {
 pub fn mock_stock_line_location_is_on_hold() -> Vec<StockLineRow> {
     let mock_stock_line_location_is_on_hold: StockLineRow = inline_init(|r: &mut StockLineRow| {
         r.id = "stock_line_location_is_on_hold".to_owned();
-        r.item_id = "item_c".to_owned();
+        r.item_link_id = "item_c".to_owned();
         r.location_id = Some("location_on_hold".to_owned());
         r.store_id = "store_a".to_owned();
         r.available_number_of_packs = 100.0;

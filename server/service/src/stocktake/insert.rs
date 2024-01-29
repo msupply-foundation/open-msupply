@@ -198,7 +198,7 @@ fn generate_lines_from_master_list(
             stock_lines.into_iter().for_each(|line| {
                 let StockLineRow {
                     id: stock_line_id,
-                    item_id,
+                    item_link_id,
                     location_id,
                     batch,
                     pack_size,
@@ -218,7 +218,7 @@ fn generate_lines_from_master_list(
                     id: uuid(),
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_id,
+                    item_id: item_link_id,
                     location_id,
                     batch,
                     expiry_date,
@@ -257,7 +257,7 @@ fn generate_lines_from_location(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id,
                 location_id,
                 batch,
                 pack_size,
@@ -277,7 +277,7 @@ fn generate_lines_from_location(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id,
+                item_id: item_link_id,
                 location_id,
                 batch,
                 expiry_date,
@@ -312,7 +312,7 @@ pub fn generate_lines_with_stock(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id,
                 location_id,
                 batch,
                 pack_size,
@@ -332,7 +332,7 @@ pub fn generate_lines_with_stock(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id,
+                item_id: item_link_id,
                 location_id,
                 batch,
                 expiry_date,
@@ -525,7 +525,7 @@ mod test {
             &inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line_row_1".to_string();
                 r.store_id = mock_store_b().id;
-                r.item_id = item_query_test1().id;
+                r.item_link_id = item_query_test1().id;
             })
         });
 
@@ -660,7 +660,7 @@ mod test {
             &inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line_row_1".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.location_id = Some(location_id.clone());
                 r.total_number_of_packs = 100.0;
             })
@@ -708,7 +708,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_1".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_a().id;
+                s.item_link_id = mock_item_a().id;
                 s.total_number_of_packs = 100.0;
             })
         }
@@ -717,7 +717,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_3".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_b().id;
+                s.item_link_id = mock_item_b().id;
                 s.total_number_of_packs = 10.0;
             })
         }
@@ -726,7 +726,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_2".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_b().id;
+                s.item_link_id = mock_item_b().id;
                 s.total_number_of_packs = 0.0;
             })
         }
