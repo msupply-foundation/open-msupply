@@ -514,22 +514,22 @@ mod tests {
         let master_list_line_rows = vec![
             MasterListLineRow {
                 id: "id1".to_owned(),
-                item_id: "item1".to_owned(),
+                item_link_id: "item1".to_owned(),
                 master_list_id: "master_list1".to_owned(),
             },
             MasterListLineRow {
                 id: "id2".to_owned(),
-                item_id: "item2".to_owned(),
+                item_link_id: "item2".to_owned(),
                 master_list_id: "master_list1".to_owned(),
             },
             MasterListLineRow {
                 id: "id3".to_owned(),
-                item_id: "item3".to_owned(),
+                item_link_id: "item3".to_owned(),
                 master_list_id: "master_list2".to_owned(),
             },
             MasterListLineRow {
                 id: "id4".to_owned(),
-                item_id: "item4".to_owned(),
+                item_link_id: "item4".to_owned(),
                 master_list_id: "master_list2".to_owned(),
             },
         ];
@@ -549,7 +549,7 @@ mod tests {
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_owned(),
-            name_id: "name1".to_owned(),
+            name_link_id: "name1".to_owned(),
             master_list_id: "master_list1".to_owned(),
         };
 

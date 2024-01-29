@@ -272,7 +272,7 @@ mod test {
             InvoiceLineRow {
                 id: in_line.id.clone(),
                 invoice_id: invoice.id.clone(),
-                item_id: "item_a".to_string(),
+                item_link_id: "item_a".to_string(),
                 item_name: "Item A".to_string(),
                 item_code: "item_a_code".to_string(),
                 stock_line_id: Some(new_stock.id.clone()),
@@ -294,7 +294,7 @@ mod test {
             InvoiceLineRow {
                 id: out_line.id.clone(),
                 invoice_id: invoice.id.clone(),
-                item_id: mock_stock_line_a().item_id,
+                item_link_id: mock_stock_line_a().item_id,
                 item_name: "Item A".to_string(),
                 item_code: "item_a_code".to_string(),
                 stock_line_id: Some(mock_stock_line_a().id),

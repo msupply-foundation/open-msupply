@@ -17,21 +17,21 @@ fn consumption_points() -> MockData {
         r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
             r.store_id = mock_store_a().id;
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.r#type = InvoiceRowType::OutboundShipment;
         })];
         r.invoice_lines = vec![
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = format!("{}line1", invoice_id);
                 r.invoice_id = invoice_id.clone();
-                r.item_id = item().id;
+                r.item_link_id = item().id;
                 r.r#type = InvoiceLineRowType::StockOut;
                 r.pack_size = 1;
             }),
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = format!("{}line2", invoice_id);
                 r.invoice_id = invoice_id.clone();
-                r.item_id = item2().id;
+                r.item_link_id = item2().id;
                 r.r#type = InvoiceLineRowType::StockOut;
                 r.pack_size = 1;
             }),

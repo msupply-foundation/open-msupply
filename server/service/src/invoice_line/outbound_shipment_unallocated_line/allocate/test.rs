@@ -54,7 +54,7 @@ mod test {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
         }
@@ -63,7 +63,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
@@ -154,7 +154,7 @@ mod test {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
         }
@@ -163,7 +163,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 50.0;
                 r.pack_size = 1;
@@ -177,7 +177,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 10.0;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 01, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 1, 1).unwrap());
             })
         }
 
@@ -188,7 +188,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 3;
                 r.available_number_of_packs = 2.0;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 02, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
             })
         }
 
@@ -289,7 +289,7 @@ mod test {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
         }
@@ -298,7 +298,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 3.0;
                 r.pack_size = 1;
@@ -317,7 +317,7 @@ mod test {
 
         fn stock_line_expired() -> StockLineRow {
             inline_edit(&base_stock_line("stock_line_expired"), |mut u| {
-                u.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                u.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
                 u
             })
         }
@@ -437,7 +437,7 @@ mod test {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
         }
@@ -446,7 +446,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 50.0;
                 r.pack_size = 1;
@@ -460,7 +460,7 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.available_number_of_packs = 30.0;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 02, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(3021, 2, 1).unwrap());
             })
         }
 
@@ -468,7 +468,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "allocated_line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line().id);
                 r.r#type = InvoiceLineRowType::StockOut;
                 r.number_of_packs = 2.0;
@@ -490,7 +490,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "allocated_line2".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line2().id);
                 r.r#type = InvoiceLineRowType::StockOut;
                 r.number_of_packs = 10.0;
@@ -569,7 +569,7 @@ mod test {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
         }
@@ -578,7 +578,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.number_of_packs = 1.0;
                 r.pack_size = 1;

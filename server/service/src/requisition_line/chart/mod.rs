@@ -254,7 +254,7 @@ mod test {
             inline_init(|r: &mut RequisitionRow| {
                 r.id = "requisition".to_string();
                 r.store_id = store().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.expected_delivery_date = Some(date_now());
                 r.r#type = RequisitionRowType::Request;
             })
@@ -281,13 +281,13 @@ mod test {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
-                    r.name_id = mock_name_a().id;
+                    r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineRowType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
                     r.pack_size = 1;
@@ -498,7 +498,7 @@ mod test {
             inline_init(|r: &mut RequisitionRow| {
                 r.id = "requisition".to_string();
                 r.store_id = store().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap());
                 r.r#type = RequisitionRowType::Request;
             })
@@ -527,13 +527,13 @@ mod test {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
-                    r.name_id = mock_name_a().id;
+                    r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineRowType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
                     r.pack_size = 1;

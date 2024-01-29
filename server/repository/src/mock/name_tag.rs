@@ -26,7 +26,7 @@ pub fn mock_name_tag_3() -> NameTagRow {
 pub fn mock_name_tag_join_1() -> NameTagJoinRow {
     NameTagJoinRow {
         id: "master_list_name_tag".to_string(),
-        name_id: mock_program_master_list_test().id,
+        name_link_id: mock_program_master_list_test().id,
         name_tag_id: mock_name_tag_1().id,
     }
 }

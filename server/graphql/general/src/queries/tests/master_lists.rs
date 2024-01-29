@@ -108,7 +108,7 @@ mod graphql {
                 json!({
                     "id": line.id,
                     "item": {
-                        "id": line.item_id
+                        "id": line.item_link_id
                     }
                 })
             })

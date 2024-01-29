@@ -268,7 +268,7 @@ fn generate_stock_line_update(
             id: uuid(),
             r#type,
             invoice_id,
-            item_id: stock_line.item_id.clone(),
+            item_link_id: stock_line.item_id.clone(),
             item_name: item.name,
             item_code: item.code,
             stock_line_id: Some(stock_line.id.clone()),
@@ -365,7 +365,7 @@ fn generate_new_stock_line(
             id: uuid(),
             r#type: InvoiceLineRowType::StockIn,
             invoice_id: inventory_addition_id.to_string(),
-            item_id,
+            item_link_id: item.id,
             item_name: item.name,
             item_code: item.code,
             stock_line_id: Some(new_line.id.clone()),
@@ -580,7 +580,7 @@ fn generate(
         r#type: InvoiceRowType::InventoryAddition,
         // Same for addition and reduction
         user_id: Some(user_id.to_string()),
-        name_id: inventory_adjustment_name.id,
+        name_link_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
         status: InvoiceRowStatus::Verified,
         verified_datetime: Some(now),
@@ -599,7 +599,7 @@ fn generate(
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
-        clinician_id: None,
+        clinician_link_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {
@@ -1043,7 +1043,7 @@ mod test {
                     comment: Some("comment_1".to_string()),
                     description: Some("description_1".to_string()),
                     status: None,
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2019, 03, 20).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap()),
                     is_locked: Some(false),
                 },
             )
@@ -1054,7 +1054,7 @@ mod test {
             inline_edit(&stocktake, |mut i: StocktakeRow| {
                 i.comment = Some("comment_1".to_string());
                 i.description = Some("description_1".to_string());
-                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 03, 20).unwrap());
+                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap());
                 i.is_locked = false;
                 i
             }),
