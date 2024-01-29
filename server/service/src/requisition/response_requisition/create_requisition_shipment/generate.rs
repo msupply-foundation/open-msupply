@@ -46,6 +46,9 @@ pub fn generate(
         linked_invoice_id: None,
         tax: None,
         clinician_id: None,
+        currency_id: None,
+        currency_rate: None,
+        foreign_currency_total: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fullfilments)?;
