@@ -2178,7 +2178,7 @@ end
 <OverwriteCtrlPanel>1</OverwriteCtrlPanel>
 <OverwriteSC>1</OverwriteSC>
 <CreateCPEntry>1</CreateCPEntry>
-<RegKeyName>%ProductName%%ProductVer%</RegKeyName>
+<RegKeyName>%ProductName%</RegKeyName>
 <CPDesc>%ProductName%</CPDesc>
 <UseCustomCPIcon>0</UseCustomCPIcon>
 <CustCPIconFN/>
@@ -3287,6 +3287,11 @@ if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone") th
 	omSupplyStandalonePath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Standalone", "Path", true);
 	if File.DoesExist(omSupplyStandalonePath) then
 		hasOmsupplyStandaloneInstalled = true;
+		local index = String.ReverseFind(omSupplyStandalonePath, "\\");
+		if index ~= -1 then
+			omSupplyStandalonePath = String.Left(omSupplyStandalonePath, index-1)
+			SessionVar.Set("%AppFolder%", omSupplyStandalonePath);
+		end
 	end
 end
 
@@ -3492,7 +3497,7 @@ g_HandleSystemReboot();
 </SessionVar>
 <SessionVar>
 <Name>%omsupply_db_name%</Name>
-<Value>open-msupply-database</Value>
+<Value>open-msupply</Value>
 <Type>10</Type>
 </SessionVar>
 <SessionVar>
