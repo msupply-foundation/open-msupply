@@ -32,6 +32,12 @@ export type Scalars = {
   NaiveDate: { input: string; output: string; }
 };
 
+export type AccountBlocked = AuthTokenErrorInterface & {
+  __typename: 'AccountBlocked';
+  description: Scalars['String']['output'];
+  timeoutRemaining: Scalars['Int']['output'];
+};
+
 export type ActiveEncounterEventFilterInput = {
   data?: InputMaybe<StringFilterInput>;
   /**

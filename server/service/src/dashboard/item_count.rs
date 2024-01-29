@@ -142,22 +142,22 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -223,22 +223,22 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -371,22 +371,22 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -411,7 +411,7 @@ mod item_count_service_test {
                 ],
                 invoices: vec![InvoiceRow {
                     id: "invoice1".to_string(),
-                    name_id: "name_store_a".to_string(),
+                    name_link_id: "name_store_a".to_string(),
                     name_store_id: Some("store_a".to_string()),
                     store_id: mock_store_b().id,
                     picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
@@ -421,7 +421,7 @@ mod item_count_service_test {
                 invoice_lines: vec![InvoiceLineRow {
                     id: "invoice_line1".to_string(),
                     invoice_id: "invoice1".to_string(),
-                    item_id: "item2".to_string(),
+                    item_link_id: "item2".to_string(),
                     number_of_packs: 5.0,
                     pack_size: 1,
                     r#type: InvoiceLineRowType::StockOut,
@@ -445,7 +445,7 @@ mod item_count_service_test {
         invoice_repository
             .upsert_one(&inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = "name_store_a".to_string();
+                r.name_link_id = "name_store_a".to_string();
                 r.name_store_id = Some("store_a".to_string());
                 r.store_id = "store_b".to_string();
                 r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));
@@ -457,7 +457,7 @@ mod item_count_service_test {
             .upsert_one(&inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line_row_2".to_string();
                 r.invoice_id = "invoice2".to_string();
-                r.item_id = "item1".to_string();
+                r.item_link_id = "item1".to_string();
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
                 r.r#type = InvoiceLineRowType::StockOut;

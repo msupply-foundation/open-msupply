@@ -23,7 +23,8 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/theme/logohash': string;
   '/mru/credentials': AuthenticationCredentials | AuthenticationCredentials[];
-  '/auth/error': AuthError | undefined;
+  '/error/auth': AuthError | undefined;
+  '/error/server': string;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
 };

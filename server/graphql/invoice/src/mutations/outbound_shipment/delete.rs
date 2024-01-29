@@ -117,7 +117,7 @@ mod graphql {
         fn shipped_outbound_shipment() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "shipped_outbound_shipment".to_string();
-                r.name_id = String::from("name_store_a");
+                r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
                 r.invoice_number = 3;
                 r.r#type = InvoiceRowType::OutboundShipment;
@@ -140,7 +140,7 @@ mod graphql {
         fn outbound_shipment_no_lines() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = String::from("outbound_shipment_no_lines_test");
-                r.name_id = String::from("name_store_a");
+                r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Picked;

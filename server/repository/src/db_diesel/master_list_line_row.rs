@@ -24,8 +24,7 @@ allow_tables_to_appear_in_same_query!(master_list_line, name_link);
 #[table_name = "master_list_line"]
 pub struct MasterListLineRow {
     pub id: String,
-    #[column_name = "item_link_id"]
-    pub item_id: String,
+    pub item_link_id: String,
     pub master_list_id: String,
 }
 

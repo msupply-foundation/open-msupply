@@ -363,7 +363,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice1".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
                     .unwrap()
@@ -375,7 +375,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.created_datetime = NaiveDate::from_ymd_opt(2021, 02, 01)
                     .unwrap()

@@ -336,7 +336,7 @@ impl ShipmentTransferTester {
     ) -> ShipmentTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
-            r.name_id = outbound_store.name_id.clone();
+            r.name_link_id = outbound_store.name_id.clone();
             r.store_id = inbound_store.id.clone();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
@@ -344,7 +344,7 @@ impl ShipmentTransferTester {
 
         let outbound_shipment = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_id = inbound_name.id.clone();
+            r.name_link_id = inbound_store.name_id.clone();
             r.store_id = outbound_store.id.clone();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::OutboundShipment;
@@ -380,7 +380,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line1.pack_size;
             r.number_of_packs = 2.0;
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.item_name = item1.name.clone();
             r.item_code = item1.code.clone();
             r.cost_price_per_pack = 20.0;
@@ -409,7 +409,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line2.pack_size;
             r.number_of_packs = 6.0;
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
             r.cost_price_per_pack = 15.0;
@@ -426,7 +426,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::UnallocatedStock;
             r.pack_size = 1;
             r.number_of_packs = 10.0;
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
         });
@@ -550,7 +550,7 @@ impl ShipmentTransferTester {
 
         assert_eq!(inbound_shipment.r#type, InvoiceRowType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
-        assert_eq!(inbound_shipment.name_id, self.outbound_store.name_id);
+        assert_eq!(inbound_shipment.name_link_id, self.outbound_store.name_id);
         assert_eq!(
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
@@ -803,7 +803,7 @@ fn check_line(
         .query_one(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_shipment_id))
-                .item_id(EqualFilter::equal_to(&outbound_line.item_id)),
+                .item_id(EqualFilter::equal_to(&outbound_line.item_link_id)),
         )
         .unwrap();
 

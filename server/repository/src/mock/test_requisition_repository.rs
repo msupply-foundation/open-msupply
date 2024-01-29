@@ -20,7 +20,7 @@ pub fn mock_request_draft_requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
         r.id = "mock_request_draft_requisition".to_owned();
         r.requisition_number = 1;
-        r.name_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
@@ -37,7 +37,7 @@ pub fn mock_request_draft_requisition2() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
         r.id = "mock_request_draft_requisition2".to_owned();
         r.requisition_number = 2;
-        r.name_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
@@ -54,7 +54,7 @@ pub fn mock_request_draft_requisition3() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
         r.id = "mock_request_draft_requisition3".to_owned();
         r.requisition_number = 2;
-        r.name_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_owned();
         r.store_id = "store_b".to_owned();
     })
 }
@@ -63,7 +63,7 @@ pub fn mock_program_request_draft_requisition() -> RequisitionRow {
     inline_init(|r: &mut RequisitionRow| {
         r.id = "mock_program_request_draft_requisition".to_owned();
         r.requisition_number = 1;
-        r.name_id = "name_a".to_owned();
+        r.name_link_id = "name_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;

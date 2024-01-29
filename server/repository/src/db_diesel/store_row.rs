@@ -35,6 +35,8 @@ allow_tables_to_appear_in_same_query!(store, item_link);
 #[table_name = "store"]
 pub struct StoreRow {
     pub id: String,
+    /// The store's name will never change, for this reason use the actual name_id instead of a
+    /// name_link_id
     pub name_id: String,
     pub code: String,
     pub site_id: i32,
