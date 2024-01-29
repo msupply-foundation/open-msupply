@@ -18,7 +18,7 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_id -> Nullable<Text>,
+        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
     }
@@ -30,12 +30,13 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_id -> Nullable<Text>,
+        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
     }
 }
-joinable!(changelog_deduped -> name_link (name_id));
+
+joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
@@ -79,6 +80,7 @@ pub struct ChangelogRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: ChangelogAction,
+    #[column_name = "name_link_id"]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,

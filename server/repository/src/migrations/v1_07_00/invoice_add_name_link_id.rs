@@ -22,7 +22,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE OR REPLACE FUNCTION upsert_invoice_changelog()
         RETURNS trigger AS
         $$ BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
             VALUES ('invoice', NEW.id, 'UPSERT', NEW.name_link_id, NEW.store_id);
             RETURN NULL;
         END; $$
@@ -31,7 +31,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE OR REPLACE FUNCTION delete_invoice_changelog()
         RETURNS trigger AS
         $$ BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
             VALUES ('invoice', OLD.id, 'DELETE', OLD.name_link_id, OLD.store_id);
             RETURN NULL;
         END; $$
@@ -40,7 +40,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE OR REPLACE FUNCTION upsert_invoice_line_changelog()
         RETURNS trigger AS
         $$ BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
             SELECT 'invoice_line', NEW.id, 'UPSERT', name_link_id, store_id FROM invoice WHERE id = NEW.invoice_id;
             RETURN NULL;
         END; $$
@@ -49,11 +49,14 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE OR REPLACE FUNCTION delete_invoice_line_changelog()
         RETURNS trigger AS
         $$ BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
             SELECT 'invoice_line', OLD.id, 'DELETE', name_link_id, store_id FROM invoice WHERE id = OLD.invoice_id;
             RETURN NULL;
         END; $$
         LANGUAGE plpgsql;
+
+        ALTER TABLE invoice ENABLE TRIGGER ALL;
+        ALTER TABLE invoice_line ENABLE TRIGGER ALL;
 
         DROP INDEX index_invoice_name_id_fkey;
         ALTER TABLE invoice DROP COLUMN name_id;
@@ -77,58 +80,49 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         PRAGMA foreign_keys = ON;
 
         CREATE INDEX "index_invoice_name_link_id_fkey" ON "invoice" ("name_link_id");
-     "#,
-    )?;
-    sql!(
-        connection,
-        r#"
-        DROP TRIGGER invoice_insert_trigger;
-        DROP TRIGGER invoice_update_trigger;
-        DROP TRIGGER invoice_delete_trigger;
-
+     
+        -- invoice triggers
         CREATE TRIGGER invoice_insert_trigger
           AFTER INSERT ON invoice
           BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
               VALUES ('invoice', NEW.id, 'UPSERT', NEW.name_link_id, NEW.store_id);
           END;
 
         CREATE TRIGGER invoice_update_trigger
             AFTER UPDATE ON invoice
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+                INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
                 VALUES ('invoice', NEW.id, 'UPSERT', NEW.name_link_id, NEW.store_id);
             END;
 
         CREATE TRIGGER invoice_delete_trigger
             AFTER DELETE ON invoice
             BEGIN
-                INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+                INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
                 VALUES ('invoice', OLD.id, 'DELETE', OLD.name_link_id, OLD.store_id);
             END;
 
-        DROP TRIGGER invoice_line_insert_trigger;
-        DROP TRIGGER invoice_line_update_trigger;
-        DROP TRIGGER invoice_line_delete_trigger;
-
         CREATE TRIGGER invoice_line_insert_trigger
+        
+        -- invoice_line triggers
         AFTER INSERT ON invoice_line
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
                 SELECT "invoice_line", NEW.id, "UPSERT", name_link_id, store_id FROM invoice WHERE id = NEW.invoice_id;
             END;
 
         CREATE TRIGGER invoice_line_update_trigger
         AFTER UPDATE ON invoice_line
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
                 SELECT "invoice_line", NEW.id, "UPSERT", name_link_id, store_id FROM invoice WHERE id = NEW.invoice_id;
             END;
 
         CREATE TRIGGER invoice_line_delete_trigger
         AFTER DELETE ON invoice_line
             BEGIN
-            INSERT INTO changelog (table_name, record_id, row_action, name_id, store_id)
+            INSERT INTO changelog (table_name, record_id, row_action, name_link_id, store_id)
                 SELECT "invoice_line", OLD.id, "DELETE", name_link_id, store_id FROM invoice WHERE id = OLD.invoice_id;
             END;    
 
