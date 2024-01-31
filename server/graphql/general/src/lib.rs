@@ -7,6 +7,7 @@ use self::queries::*;
 
 use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
+use util::is_central_server;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{StorePreferenceNode, TemperatureLogFilterInput};
@@ -62,6 +63,10 @@ impl GeneralQueries {
 
     pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse> {
         me(ctx)
+    }
+
+    pub async fn is_central_server(&self) -> bool {
+        is_central_server()
     }
 
     /// Query omSupply "name" entries
