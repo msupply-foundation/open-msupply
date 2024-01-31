@@ -110,7 +110,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         clinician_id,
         program_row,
         encounter_start_time,
-        existing_encounter.map(|(existing, _, _)| existing.start_datetime),
+        existing_encounter.map(|encounter| encounter.row.start_datetime),
         None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
