@@ -247,7 +247,7 @@ fn generate(
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
-        item_id: item_id.to_string(),
+        item_link_id: item_id.to_string(),
         batch,
         expiry_date,
         pack_size: pack_size.map(u32_to_i32),
@@ -640,7 +640,7 @@ mod stocktake_line_test {
                 r.counted_number_of_packs = Some(50.0);
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
-                r.item_id = stock_line.item_link_id;
+                r.item_link_id = stock_line.item_link_id;
                 r.inventory_adjustment_reason_id = Some(positive_reason().id);
             }),
         );
@@ -706,7 +706,7 @@ mod stocktake_line_test {
                 r.stocktake_id = stocktake_a.id;
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
-                r.item_id = stock_line.item_link_id;
+                r.item_link_id = stock_line.item_link_id;
                 r.comment = Some("Some comment".to_string());
             })
         );

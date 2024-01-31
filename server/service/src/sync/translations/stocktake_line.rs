@@ -94,7 +94,7 @@ impl SyncTranslation for StocktakeLineTranslation {
             comment: data.comment,
             snapshot_number_of_packs: data.snapshot_qty,
             counted_number_of_packs,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             batch: data.Batch,
             expiry_date: data.expiry,
             pack_size: Some(data.snapshot_packsize),
@@ -122,9 +122,10 @@ impl SyncTranslation for StocktakeLineTranslation {
             .query_by_filter(
                 StocktakeLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
             )?
-            .pop() else {
-                return Err(anyhow::anyhow!("Stocktake row not found"))
-            };
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Stocktake row not found"));
+        };
 
         let StocktakeLine {
             line:
@@ -136,7 +137,7 @@ impl SyncTranslation for StocktakeLineTranslation {
                     comment,
                     snapshot_number_of_packs,
                     counted_number_of_packs,
-                    item_id: _item_id, // item_id is ACTUALLY the item_link_id, we need to use the item.id instead
+                    item_link_id: _,
                     batch,
                     expiry_date,
                     pack_size,
