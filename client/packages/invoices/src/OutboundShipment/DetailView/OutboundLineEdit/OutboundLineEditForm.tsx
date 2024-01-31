@@ -13,7 +13,7 @@ import {
   Typography,
   useFormatNumber,
   useDebounceCallback,
-  FnUtils,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -125,14 +125,15 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity(allocatedQuantity);
   };
 
-  const memoizedCallback = useCallback(
-    FnUtils.debounce((quantity, packSize) => {
+  const debouncedAllocate = useDebouncedValueCallback(
+    (quantity, packSize) => {
       allocate(quantity, packSize);
       setOkDisabled(false);
-    }, 500),
+    },
+    [],
+    500,
     [draftStockOutLines]
   );
-  const debouncedAllocate = useCallback(memoizedCallback, [memoizedCallback]);
 
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
