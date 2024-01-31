@@ -125,6 +125,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity(allocatedQuantity);
   };
 
+  // using a debounced value for the allocation. In the scenario where
+  // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
+  // e.g. 10, 12, 100.. then the allocation rounds the 1 up immediately to the available
+  // pack size which stops you entering the required quantity.
+  // See https://github.com/msupply-foundation/open-msupply/issues/2727
   const debouncedAllocate = useDebouncedValueCallback(
     (quantity, packSize) => {
       allocate(quantity, packSize);
@@ -132,7 +137,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     },
     [],
     500,
-    [draftStockOutLines]
+    [draftStockOutLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
   const handleIssueQuantityChange = (quantity: number) => {
