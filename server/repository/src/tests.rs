@@ -52,7 +52,7 @@ mod repository_test {
         pub fn stock_line_1() -> StockLineRow {
             StockLineRow {
                 id: "StockLine1".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 store_id: "store1".to_string(),
                 batch: Some("batch1".to_string()),
                 available_number_of_packs: 6.0,

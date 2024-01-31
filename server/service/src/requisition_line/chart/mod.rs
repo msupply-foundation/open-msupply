@@ -295,7 +295,7 @@ mod test {
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.pack_size = 1;
                 })];
             })
@@ -541,7 +541,7 @@ mod test {
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.pack_size = 1;
                 })];
             })

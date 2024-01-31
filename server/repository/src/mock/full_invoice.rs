@@ -49,7 +49,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
                     r.id = stock_line_a_id;
-                    r.item_id = String::from("item_a");
+                    r.item_link_id = String::from("item_a");
                     r.store_id = String::from("store_c");
                     r.available_number_of_packs = 20.0;
                     r.pack_size = 4;
@@ -76,7 +76,7 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 }),
                 stock_line: inline_init(|r: &mut StockLineRow| {
                     r.id = stock_line_b_id;
-                    r.item_id = String::from("item_a");
+                    r.item_link_id = String::from("item_a");
                     r.store_id = String::from("store_c");
                     r.available_number_of_packs = 10.0;
                     r.pack_size = 2;

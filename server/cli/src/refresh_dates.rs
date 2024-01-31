@@ -393,7 +393,7 @@ mod tests {
         fn stock_line1() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line1".to_string();
-                r.item_id = mock_item_link_from_item(&mock_item_a()).id;
+                r.item_link_id = mock_item_link_from_item(&mock_item_a()).id;
                 r.store_id = mock_store_a().id;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 02, 01).unwrap());
             })

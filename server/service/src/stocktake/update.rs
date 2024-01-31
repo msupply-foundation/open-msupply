@@ -3,11 +3,11 @@ use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
     InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, LocationMovementRow, LocationMovementRowRepository, NameRowRepository,
-    NumberRowType, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
-    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
-    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
-    StocktakeStatus, StorageConnection,
+    ItemLinkRowRepository, ItemRowRepository, LocationMovementRow, LocationMovementRowRepository,
+    NameRowRepository, NumberRowType, RepositoryError, StockLine, StockLineFilter,
+    StockLineRepository, StockLineRow, StockLineRowRepository, Stocktake, StocktakeLine,
+    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
+    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -213,9 +213,18 @@ fn generate_stock_line_update(
         .counted_number_of_packs
         .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
     let delta = counted_number_of_packs - stocktake_line.line.snapshot_number_of_packs;
+
+    let stock_line_item_id = ItemLinkRowRepository::new(connection)
+        .find_one_by_id(&stock_line.item_link_id)?
+        .ok_or(UpdateStocktakeError::InternalError(format!(
+            "Item link ({}) not found",
+            stock_line.item_link_id
+        )))?
+        .item_id;
+
     let updated_line = StockLineRow {
         id: stock_line.id.clone(),
-        item_id: stock_line.item_id.clone(),
+        item_link_id: stock_line_item_id.clone(),
         store_id: stock_line.store_id.clone(),
         location_id: stocktake_line.line.location_id.clone(),
         batch: stocktake_line.line.batch.clone(),
@@ -241,15 +250,16 @@ fn generate_stock_line_update(
         barcode_id: stock_line.barcode_id.clone(),
     };
 
-    let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
-        Some(item) => item,
-        None => {
-            return Err(UpdateStocktakeError::InternalError(format!(
-                "Can't find item {} for existing stocktake line {}!",
-                &stock_line.item_id, stocktake_line.line.id
-            )))
-        }
-    };
+    let stock_line_item =
+        match ItemRowRepository::new(connection).find_one_by_id(&stock_line_item_id)? {
+            Some(item) => item,
+            None => {
+                return Err(UpdateStocktakeError::InternalError(format!(
+                    "Can't find item {} for existing stocktake line {}!",
+                    &stock_line_item_id, stocktake_line.line.id
+                )))
+            }
+        };
 
     let quantity_change = f64::abs(delta);
     let shipment_line = if quantity_change > 0.0 {
@@ -268,9 +278,9 @@ fn generate_stock_line_update(
             id: uuid(),
             r#type,
             invoice_id,
-            item_link_id: stock_line.item_id.clone(),
-            item_name: item.name,
-            item_code: item.code,
+            item_link_id: stock_line_item_id,
+            item_name: stock_line_item.name,
+            item_code: stock_line_item.code,
             stock_line_id: Some(stock_line.id.clone()),
             location_id: stock_line.location_id.clone(),
             batch: stock_line.batch.clone(),
@@ -335,7 +345,7 @@ fn generate_new_stock_line(
     let item_id = row.item_id;
     let new_line = StockLineRow {
         id: stock_line_id,
-        item_id: item_id.clone(),
+        item_link_id: item_id.clone(),
         store_id: store_id.to_string(),
         location_id: row.location_id.clone(),
         batch: row.batch.clone(),
@@ -781,7 +791,7 @@ mod test {
         fn mock_existing_stock_line() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "existing_stock_a".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
                 r.pack_size = 1;

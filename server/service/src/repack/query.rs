@@ -146,7 +146,7 @@ mod test {
 
         let invoice_line_a_stock_line_a = StockLineRow {
             id: "line_a_stock_line_a".to_string(),
-            item_id: mock_item_a().id,
+            item_link_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
             pack_size: 5,
             cost_price_per_pack: 0.20,
@@ -179,7 +179,7 @@ mod test {
 
         let original_stock_line = StockLineRow {
             id: "original_stock_line".to_string(),
-            item_id: mock_item_a().id,
+            item_link_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
             pack_size: 10,
             cost_price_per_pack: 0.10,
