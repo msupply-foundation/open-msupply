@@ -231,7 +231,7 @@ impl RequisitionTransferTester {
         let request_requisition_line1 = inline_init(|r: &mut RequisitionLineRow| {
             r.id = uuid();
             r.requisition_id = request_requisition.id.clone();
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.requested_quantity = 2;
             r.suggested_quantity = 3;
             r.comment = Some("line comment".to_string());
@@ -248,7 +248,7 @@ impl RequisitionTransferTester {
         let request_requisition_line2 = inline_init(|r: &mut RequisitionLineRow| {
             r.id = uuid();
             r.requisition_id = request_requisition.id.clone();
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.requested_quantity = 10;
             r.suggested_quantity = 20;
             r.available_stock_on_hand = 30;
@@ -438,7 +438,7 @@ fn check_line(
         .query_one(
             RequisitionLineFilter::new()
                 .requisition_id(EqualFilter::equal_to(response_requisition_id))
-                .item_id(EqualFilter::equal_to(&request_line.item_id)),
+                .item_id(EqualFilter::equal_to(&request_line.item_link_id)),
         )
         .unwrap();
 

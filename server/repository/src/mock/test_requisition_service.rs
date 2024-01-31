@@ -118,7 +118,7 @@ pub fn mock_sent_request_requisition_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
         r.id = "mock_sent_request_requisition_line".to_owned();
         r.requisition_id = mock_sent_request_requisition().id;
-        r.item_id = mock_item_a().id;
+        r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10;
         r.suggested_quantity = 5;
         r.available_stock_on_hand = 1;
@@ -147,7 +147,7 @@ pub fn mock_finalised_request_requisition_line() -> RequisitionLineRow {
     inline_init(|r: &mut RequisitionLineRow| {
         r.id = "mock_finalised_request_requisition_line".to_owned();
         r.requisition_id = mock_finalised_response_requisition().id;
-        r.item_id = mock_item_a().id;
+        r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10;
         r.suggested_quantity = 5;
         r.available_stock_on_hand = 1;
@@ -193,7 +193,7 @@ pub fn mock_new_response_requisition_for_update_test_line() -> RequisitionLineRo
     inline_init(|r: &mut RequisitionLineRow| {
         r.id = "mock_new_response_requisition_for_update_test_line".to_owned();
         r.requisition_id = mock_new_response_requisition_for_update_test().id;
-        r.item_id = mock_item_a().id;
+        r.item_link_id = mock_item_a().id;
         r.requested_quantity = 10;
         r.suggested_quantity = 5;
         r.available_stock_on_hand = 1;
@@ -220,7 +220,7 @@ pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisi
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
             r.id = "mock_full_draft_response_requisition_for_update_test_line".to_owned();
             r.requisition_id = "mock_full_draft_response_requisition_for_update_test".to_string();
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
             r.requested_quantity = 10;
             r.suggested_quantity = 5;
             r.available_stock_on_hand = 1;
@@ -254,7 +254,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 5;
                 r.available_stock_on_hand = 1;
@@ -263,7 +263,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 5;
                 r.available_stock_on_hand = 1;
@@ -271,7 +271,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line3_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_c().id;
+                r.item_link_id = mock_item_c().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 5;
                 r.available_stock_on_hand = 6;
@@ -280,7 +280,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line4_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_d().id;
+                r.item_link_id = mock_item_d().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 200;
                 r.available_stock_on_hand = 20;
@@ -329,7 +329,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 5;
                 r.supply_quantity = 50;
@@ -339,7 +339,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 11;
                 r.suggested_quantity = 5;
                 r.supply_quantity = 100;
@@ -462,7 +462,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
             r.id = line1_id;
             r.requisition_id = requisition_id;
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
             r.requested_quantity = 10;
             r.suggested_quantity = 10;
             r.supply_quantity = 100;
