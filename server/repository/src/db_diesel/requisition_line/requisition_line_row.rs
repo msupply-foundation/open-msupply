@@ -41,8 +41,7 @@ allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,
-    #[column_name = "item_link_id"]
-    pub item_id: String,
+    pub item_link_id: String,
     pub requested_quantity: i32,
     pub suggested_quantity: i32,
     pub supply_quantity: i32,

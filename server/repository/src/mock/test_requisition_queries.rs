@@ -91,7 +91,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 3;
                 r.available_stock_on_hand = 1;
@@ -100,7 +100,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 15;
                 r.suggested_quantity = 3;
                 r.available_stock_on_hand = 1;
@@ -147,7 +147,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
             r.id = line1_id;
             r.requisition_id = requisition_id.clone();
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
             r.requested_quantity = 10;
             r.suggested_quantity = 15;
             r.available_stock_on_hand = 1;

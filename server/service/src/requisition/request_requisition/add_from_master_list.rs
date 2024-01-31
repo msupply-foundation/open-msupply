@@ -95,7 +95,7 @@ fn generate(
 
     let item_ids_in_requisition: Vec<String> = requisition_lines
         .into_iter()
-        .map(|requisition_line| requisition_line.requisition_line_row.item_id)
+        .map(|requisition_line| requisition_line.item_row.id)
         .collect();
 
     let master_list_lines_not_in_requisition = MasterListLineRepository::new(&ctx.connection)
@@ -321,7 +321,7 @@ mod test {
         let mut item_ids: Vec<String> = lines
             .clone()
             .into_iter()
-            .map(|requisition_line| requisition_line.requisition_line_row.item_id)
+            .map(|requisition_line| requisition_line.item_row.id)
             .collect();
         item_ids.sort_by(|a, b| a.cmp(&b));
 
@@ -338,7 +338,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_id == test_item_stats::item().id)
+            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item().id)
             .unwrap();
 
         assert_eq!(
@@ -358,7 +358,7 @@ mod test {
 
         let line = lines
             .iter()
-            .find(|line| line.requisition_line_row.item_id == test_item_stats::item2().id)
+            .find(|line| line.requisition_line_row.item_link_id == test_item_stats::item2().id)
             .unwrap();
 
         assert_eq!(
