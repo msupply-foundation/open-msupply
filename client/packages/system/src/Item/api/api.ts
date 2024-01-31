@@ -193,7 +193,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       input: packVariantParsers.toInsert(input),
     });
 
-    return result.insertPackVariant;
+    return result.centralServer.packVariant.insertPackVariant;
   },
   updatePackVariant: async (input: VariantFragment) => {
     const result = await sdk.updatePackVariant({
@@ -201,7 +201,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
       input: packVariantParsers.toUpdate(input),
     });
 
-    return result.updatePackVariant;
+    return result.centralServer.packVariant.updatePackVariant;
   },
   deletePackVariant: async (input: VariantFragment) =>
     await sdk.deletePackVariant({
