@@ -246,6 +246,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           hasOnHold={hasOnHold}
           hasExpired={hasExpired}
           setOkDisabled={setOkDisabled}
+          draftStockOutLines={draftStockOutLines}
         />
 
         <TableWrapper
