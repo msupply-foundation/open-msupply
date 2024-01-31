@@ -203,7 +203,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding older document shouldn't update the patient entry
@@ -245,7 +245,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding newer document should update the patient entry
@@ -287,7 +287,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name2");
     }
 }
