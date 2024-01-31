@@ -459,6 +459,11 @@ export type CentralPatientSearchInput = {
 
 export type CentralPatientSearchResponse = CentralPatientSearchConnector | CentralPatientSearchError;
 
+export type CentralServerMutationNode = {
+  __typename: 'CentralServerMutationNode';
+  packVariant: PackVariantMutations;
+};
+
 export type ClinicianConnector = {
   __typename: 'ClinicianConnector';
   nodes: Array<ClinicianNode>;
@@ -1374,6 +1379,7 @@ export type FullSyncStatusNode = {
   prepareInitial?: Maybe<SyncStatusNode>;
   pullCentral?: Maybe<SyncStatusWithProgressNode>;
   pullRemote?: Maybe<SyncStatusWithProgressNode>;
+  pullV6?: Maybe<SyncStatusWithProgressNode>;
   push?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
 };
@@ -2550,6 +2556,7 @@ export type Mutations = {
   batchPrescription: BatchPrescriptionResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
+  centralServer: CentralServerMutationNode;
   /**
    * Create shipment for response requisition
    * Will create Outbound Shipment with placeholder lines for each requisition line
@@ -2565,7 +2572,6 @@ export type Mutations = {
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
   deleteOutboundShipmentUnallocatedLine: DeleteOutboundShipmentUnallocatedLineResponse;
-  deletePackVariant: DeletePackVariantResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
@@ -2586,7 +2592,6 @@ export type Mutations = {
   insertOutboundShipmentLine: InsertOutboundShipmentLineResponse;
   insertOutboundShipmentServiceLine: InsertOutboundShipmentServiceLineResponse;
   insertOutboundShipmentUnallocatedLine: InsertOutboundShipmentUnallocatedLineResponse;
-  insertPackVariant: InsertPackVariantResponse;
   /** Inserts a new patient (without document data) */
   insertPatient: InsertPatientResponse;
   insertPluginData: InsertPluginDataResponse;
@@ -2627,7 +2632,6 @@ export type Mutations = {
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
   updateOutboundShipmentServiceLine: UpdateOutboundShipmentServiceLineResponse;
   updateOutboundShipmentUnallocatedLine: UpdateOutboundShipmentUnallocatedLineResponse;
-  updatePackVariant: UpdatePackVariantResponse;
   /** Updates a new patient (without document data) */
   updatePatient: UpdatePatientResponse;
   updatePluginData: UpdatePluginDataResponse;
@@ -2770,12 +2774,6 @@ export type MutationsDeleteOutboundShipmentUnallocatedLineArgs = {
 };
 
 
-export type MutationsDeletePackVariantArgs = {
-  input: DeletePackVariantInput;
-  storeId: Scalars['String']['input'];
-};
-
-
 export type MutationsDeletePrescriptionArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -2889,12 +2887,6 @@ export type MutationsInsertOutboundShipmentServiceLineArgs = {
 
 export type MutationsInsertOutboundShipmentUnallocatedLineArgs = {
   input: InsertOutboundShipmentUnallocatedLineInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsInsertPackVariantArgs = {
-  input: InsertPackVariantInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3062,12 +3054,6 @@ export type MutationsUpdateOutboundShipmentServiceLineArgs = {
 
 export type MutationsUpdateOutboundShipmentUnallocatedLineArgs = {
   input: UpdateOutboundShipmentUnallocatedLineInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsUpdatePackVariantArgs = {
-  input: UpdatePackVariantInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3361,6 +3347,31 @@ export type OutboundInvoiceCounts = {
   created: InvoiceCountsSummary;
   /** Number of outbound shipments not shipped yet */
   notShipped: Scalars['Int']['output'];
+};
+
+export type PackVariantMutations = {
+  __typename: 'PackVariantMutations';
+  deletePackVariant: DeletePackVariantResponse;
+  insertPackVariant: InsertPackVariantResponse;
+  updatePackVariant: UpdatePackVariantResponse;
+};
+
+
+export type PackVariantMutationsDeletePackVariantArgs = {
+  input: DeletePackVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type PackVariantMutationsInsertPackVariantArgs = {
+  input: InsertPackVariantInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type PackVariantMutationsUpdatePackVariantArgs = {
+  input: UpdatePackVariantInput;
+  storeId: Scalars['String']['input'];
 };
 
 /**
@@ -3785,6 +3796,7 @@ export type Queries = {
   invoiceCounts: InvoiceCounts;
   invoiceLines: InvoiceLinesResponse;
   invoices: InvoicesResponse;
+  isCentralServer: Scalars['Boolean']['output'];
   itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
   items: ItemsResponse;

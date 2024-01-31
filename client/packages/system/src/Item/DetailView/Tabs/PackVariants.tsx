@@ -18,6 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
+  useIsCentralServerOrWarning,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 import { PackVariantEditModal } from '../../Components/PackVariantEditModal';
@@ -36,6 +37,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   );
   const variants = variantsControl?.variants ?? [];
   const onDelete = usePackVariantDeleteSelected(variants);
+  const isCentralServerOrWarning = useIsCentralServerOrWarning();
 
   const columns = useColumns<VariantFragment>([
     'packSize',
@@ -67,14 +69,23 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
       )}
       <Box display="flex" justifyContent="space-between" paddingBottom={2}>
         <DropdownMenu label="Select">
-          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+          <DropdownMenuItem
+            IconComponent={DeleteIcon}
+            onClick={
+              hasPermission ? isCentralServerOrWarning(onDelete) : warningSnack
+            }
+          >
             {t('button.delete-lines')}
           </DropdownMenuItem>
         </DropdownMenu>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-pack-variant')}
-          onClick={hasPermission ? () => onOpen() : () => warningSnack()}
+          onClick={
+            hasPermission
+              ? isCentralServerOrWarning(() => onOpen())
+              : warningSnack
+          }
         />
       </Box>
       <DataTable
@@ -82,7 +93,9 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
         data={variants}
         columns={columns}
         noDataElement={<NothingHere body={t('error.no-pack-variants')} />}
-        onRowClick={hasPermission ? onOpen : warningSnack}
+        onRowClick={
+          hasPermission ? isCentralServerOrWarning(onOpen) : warningSnack
+        }
       />
     </>
   );

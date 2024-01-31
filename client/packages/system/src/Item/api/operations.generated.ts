@@ -93,7 +93,7 @@ export type InsertPackVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertPackVariantMutation = { __typename: 'Mutations', insertPackVariant: { __typename: 'InsertPackVariantError', error: { __typename: 'CannotAddPackSizeOfZero', description: string } | { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } | { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+export type InsertPackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', insertPackVariant: { __typename: 'InsertPackVariantError', error: { __typename: 'CannotAddPackSizeOfZero', description: string } | { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } | { __typename: 'VariantWithPackSizeAlreadyExists', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } } } };
 
 export type UpdatePackVariantMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -101,7 +101,7 @@ export type UpdatePackVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdatePackVariantMutation = { __typename: 'Mutations', updatePackVariant: { __typename: 'UpdatePackVariantError', error: { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } };
+export type UpdatePackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', updatePackVariant: { __typename: 'UpdatePackVariantError', error: { __typename: 'CannotAddWithNoAbbreviationAndName', description: string } } | { __typename: 'VariantNode', id: string, itemId: string, longName: string, packSize: number, shortName: string } } } };
 
 export type DeletePackVariantMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -109,7 +109,7 @@ export type DeletePackVariantMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeletePackVariantMutation = { __typename: 'Mutations', deletePackVariant: { __typename: 'DeleteResponse', id: string } };
+export type DeletePackVariantMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', packVariant: { __typename: 'PackVariantMutations', deletePackVariant: { __typename: 'DeleteResponse', id: string } } } };
 
 export const ServiceItemRowFragmentDoc = gql`
     fragment ServiceItemRow on ItemNode {
@@ -365,15 +365,19 @@ export const PackVariantsDocument = gql`
     ${PackVariantFragmentDoc}`;
 export const InsertPackVariantDocument = gql`
     mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
-  insertPackVariant(storeId: $storeId, input: $input) {
-    __typename
-    ... on VariantNode {
-      ...Variant
-    }
-    ... on InsertPackVariantError {
-      error {
+  centralServer {
+    packVariant {
+      insertPackVariant(storeId: $storeId, input: $input) {
         __typename
-        description
+        ... on VariantNode {
+          ...Variant
+        }
+        ... on InsertPackVariantError {
+          error {
+            __typename
+            description
+          }
+        }
       }
     }
   }
@@ -381,15 +385,19 @@ export const InsertPackVariantDocument = gql`
     ${VariantFragmentDoc}`;
 export const UpdatePackVariantDocument = gql`
     mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
-  updatePackVariant(storeId: $storeId, input: $input) {
-    __typename
-    ... on VariantNode {
-      ...Variant
-    }
-    ... on UpdatePackVariantError {
-      error {
+  centralServer {
+    packVariant {
+      updatePackVariant(storeId: $storeId, input: $input) {
         __typename
-        description
+        ... on VariantNode {
+          ...Variant
+        }
+        ... on UpdatePackVariantError {
+          error {
+            __typename
+            description
+          }
+        }
       }
     }
   }
@@ -397,10 +405,14 @@ export const UpdatePackVariantDocument = gql`
     ${VariantFragmentDoc}`;
 export const DeletePackVariantDocument = gql`
     mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
-  deletePackVariant(storeId: $storeId, input: $input) {
-    ... on DeleteResponse {
-      __typename
-      id
+  centralServer {
+    packVariant {
+      deletePackVariant(storeId: $storeId, input: $input) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
     }
   }
 }
@@ -553,7 +565,7 @@ export const mockPackVariantsQuery = (resolver: ResponseResolver<GraphQLRequest<
  * mockInsertPackVariantMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
- *     ctx.data({ insertPackVariant })
+ *     ctx.data({ centralServer })
  *   )
  * })
  */
@@ -570,7 +582,7 @@ export const mockInsertPackVariantMutation = (resolver: ResponseResolver<GraphQL
  * mockUpdatePackVariantMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
- *     ctx.data({ updatePackVariant })
+ *     ctx.data({ centralServer })
  *   )
  * })
  */
@@ -587,7 +599,7 @@ export const mockUpdatePackVariantMutation = (resolver: ResponseResolver<GraphQL
  * mockDeletePackVariantMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
- *     ctx.data({ deletePackVariant })
+ *     ctx.data({ centralServer })
  *   )
  * })
  */

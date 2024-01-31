@@ -260,40 +260,52 @@ query packVariants($storeId: String!) {
 }
 
 mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
-  insertPackVariant(storeId: $storeId, input: $input) {
-    __typename
-    ... on VariantNode {
-      ...Variant
-    }
-    ... on InsertPackVariantError {
-      error {
+  centralServer {
+    packVariant {
+      insertPackVariant(storeId: $storeId, input: $input) {
         __typename
-        description
+        ... on VariantNode {
+          ...Variant
+        }
+        ... on InsertPackVariantError {
+          error {
+            __typename
+            description
+          }
+        }
       }
     }
   }
 }
 
 mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
-  updatePackVariant(storeId: $storeId, input: $input) {
-    __typename
-    ... on VariantNode {
-      ...Variant
-    }
-    ... on UpdatePackVariantError {
-      error {
+  centralServer {
+    packVariant {
+      updatePackVariant(storeId: $storeId, input: $input) {
         __typename
-        description
+        ... on VariantNode {
+          ...Variant
+        }
+        ... on UpdatePackVariantError {
+          error {
+            __typename
+            description
+          }
+        }
       }
     }
   }
 }
 
 mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
-  deletePackVariant(storeId: $storeId, input: $input) {
+  centralServer {
+    packVariant {
+      deletePackVariant(storeId: $storeId, input: $input) {
         ... on DeleteResponse {
-      __typename
-      id
+          __typename
+          id
+        }
+      }
     }
   }
 }
