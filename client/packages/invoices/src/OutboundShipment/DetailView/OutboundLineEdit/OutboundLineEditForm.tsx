@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -13,7 +13,7 @@ import {
   Typography,
   useFormatNumber,
   useDebounceCallback,
-  useDebouncedValueCallback,
+  FnUtils,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -48,6 +48,7 @@ interface OutboundLineEditFormProps {
   hasOnHold: boolean;
   hasExpired: boolean;
   setOkDisabled: (disabled: boolean) => void;
+  draftStockOutLines: DraftStockOutLine[];
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -64,6 +65,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   hasOnHold,
   hasExpired,
   setOkDisabled,
+  draftStockOutLines,
 }) => {
   const t = useTranslation('distribution');
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
@@ -82,13 +84,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
   const unit = item?.unitName ?? t('label.unit');
 
-  const updateIssueQuantity = (quantity: number) => {
-    setIssueQuantity(
-      Math.round(
-        quantity / Math.abs(Number(packSizeController.selected?.value || 1))
-      )
-    );
-  };
+  const updateIssueQuantity = useCallback(
+    (quantity: number) => {
+      setIssueQuantity(
+        Math.round(
+          quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+        )
+      );
+    },
+    [packSizeController.selected?.value]
+  );
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -120,14 +125,15 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity(allocatedQuantity);
   };
 
-  const debouncedAllocate = useDebouncedValueCallback(
-    (quantity, packSize) => {
+  const memoizedCallback = useCallback(
+    FnUtils.debounce((quantity, packSize) => {
       allocate(quantity, packSize);
       setOkDisabled(false);
-    },
-    [issueQuantity],
-    500
+    }, 500),
+    [draftStockOutLines]
   );
+  const debouncedAllocate = useCallback(memoizedCallback, [memoizedCallback]);
+
   const handleIssueQuantityChange = (quantity: number) => {
     setIssueQuantity(quantity);
     setOkDisabled(true);
@@ -136,7 +142,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
   useEffect(() => {
     if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
-  }, [packSizeController.selected?.value, allocatedQuantity]);
+  }, [
+    packSizeController.selected?.value,
+    allocatedQuantity,
+    isAutoAllocated,
+    updateIssueQuantity,
+  ]);
 
   return (
     <Grid container gap="4px">
