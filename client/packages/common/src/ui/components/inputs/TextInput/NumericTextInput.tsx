@@ -22,8 +22,8 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       onChange,
       defaultValue,
       allowNegative,
-      min = allowNegative ? -Infinity : 0,
-      max = Infinity,
+      min = allowNegative ? -NumUtils.MAX_SAFE_API_INTEGER : 0,
+      max = NumUtils.MAX_SAFE_API_INTEGER,
       precision = 0,
       ...props
     },
