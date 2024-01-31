@@ -197,7 +197,10 @@ impl Synchroniser {
         // PULL V6
         if !is_central_server() {
             logger.start_step(SyncStep::PullCentralV6)?;
-            self.central_v6.pull(&ctx.connection, 20, logger).await?;
+            if let Err(error) = self.central_v6.pull(&ctx.connection, 20, logger).await {
+                // Log but ignore error for now, to allow omSupply to run without omSupply server
+                let _ = logger.error(&error.into());
+            }
             logger.done_step(SyncStep::PullCentralV6)?;
         }
 
