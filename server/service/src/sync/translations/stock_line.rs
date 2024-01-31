@@ -78,7 +78,7 @@ impl SyncTranslation for StockLineTranslation {
         let result = StockLineRow {
             id: data.ID,
             store_id: data.store_ID,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             location_id: data.location_ID,
             batch: data.batch,
             pack_size: data.pack_size,
@@ -112,15 +112,16 @@ impl SyncTranslation for StockLineTranslation {
                 StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
                 None,
             )?
-            .pop() else {
-                return Err(anyhow::anyhow!("Stock_line row not found"))
-            };
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Stock_line row not found"));
+        };
 
         let StockLine {
             stock_line_row:
                 StockLineRow {
                     id,
-                    item_id: _item_id, // StockLineRow item_id is ACTUALLY the item_link_id, we need to use the item_row.id instead
+                    item_link_id: _,
                     store_id,
                     location_id,
                     batch,

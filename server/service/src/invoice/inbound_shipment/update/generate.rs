@@ -242,7 +242,7 @@ pub fn generate_lines_and_stock_lines(
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
                 id: stock_line_id,
-                item_id: item_link_id,
+                item_link_id,
                 store_id: store_id.to_string(),
                 location_id,
                 batch,

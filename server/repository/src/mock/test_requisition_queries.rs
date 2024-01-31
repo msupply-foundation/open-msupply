@@ -200,7 +200,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                 },
                 stock_line: StockLineRow {
                     id: line1_id.clone(),
-                    item_id: mock_item_a().id,
+                    item_link_id: mock_item_a().id,
                     store_id: String::from("store_a"),
                     location_id: None,
                     batch: None,
@@ -240,7 +240,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                 },
                 stock_line: StockLineRow {
                     id: line2_id.clone(),
-                    item_id: mock_item_b().id,
+                    item_link_id: mock_item_b().id,
                     store_id: String::from("store_a"),
                     location_id: None,
                     batch: None,
@@ -302,7 +302,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
-                item_id: mock_item_b().id,
+                item_link_id: mock_item_b().id,
                 store_id: String::from("store_a"),
                 location_id: None,
                 batch: None,
@@ -363,7 +363,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 store_id: String::from("store_a"),
                 location_id: None,
                 batch: None,
