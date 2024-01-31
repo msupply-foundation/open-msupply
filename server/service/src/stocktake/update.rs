@@ -342,7 +342,7 @@ fn generate_new_stock_line(
         None
     };
 
-    let item_id = row.item_id;
+    let item_id = stocktake_line.item.id;
     let new_line = StockLineRow {
         id: stock_line_id,
         item_link_id: item_id.clone(),
@@ -782,7 +782,7 @@ mod test {
                 r.stock_line_id = Some(mock_existing_stock_line().id);
                 r.counted_number_of_packs = Some(20.0);
                 r.snapshot_number_of_packs = 20.0;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.cost_price_per_pack = Some(1.0);
                 r.sell_price_per_pack = Some(2.0);
             })

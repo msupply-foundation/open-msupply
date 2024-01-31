@@ -55,8 +55,7 @@ pub struct StocktakeLineRow {
     pub counted_number_of_packs: Option<f64>,
 
     // stock line related fields:
-    #[column_name = "item_link_id"]
-    pub item_id: String,
+    pub item_link_id: String,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<i32>,
