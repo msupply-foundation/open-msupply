@@ -366,7 +366,12 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         } catch (Exception ex) {
             Log.e(OM_SUPPLY, ex.toString());
         }
-        return serviceInfo.getHost().getHostAddress();
+        InetAddress host = serviceInfo.getHost();
+        // this will happen if there is no network interface available
+        if (host == null) {
+            return "127.0.0.1";
+        }
+        return host.getHostAddress();
     }
 
     private JSObject serviceInfoToObject(NsdServiceInfo serviceInfo) {
@@ -513,7 +518,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
          * e.g. https://127.0.0.1:8000
          */
         public String getUrl() {
-            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
+            String host = data.getBool("isLocal") ? "localhost" : data.getString("ip");
+            return data.getString("protocol") + "://" + host + ":" + data.getString("port");
         }
 
         /**
