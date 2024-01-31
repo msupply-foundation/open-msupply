@@ -5,10 +5,13 @@ import { useTranslation } from '@common/intl';
 
 export const useIsCentralServerApi = () => {
   const api = useAuthApi();
-  // api.keys.isCentralServer should guarantee that this is called just once
-  // on page load
-  const { data } = useQuery(api.keys.isCentralServer, () =>
-    api.get.isCentralServer()
+  // api.keys.isCentralServer and "refetchOnMount: false" should guarantee that this is called just once, on page load
+  const { data } = useQuery(
+    api.keys.isCentralServer,
+    () => api.get.isCentralServer(),
+    {
+      refetchOnMount: false,
+    }
   );
   return !!data;
 };
