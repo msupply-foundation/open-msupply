@@ -52,9 +52,10 @@ const Template: Story = () => (
 );
 
 const NumericTemplate: Story = () => {
-  const [nonNegative, setNonNegative] = useState<number | undefined>(0);
-  const [positive, setPositive] = useState<number | undefined>(1);
+  const [positive, setPositive] = useState<number | undefined>();
+  const [negative, setNegative] = useState<number | undefined>();
   const [decimal, setDecimal] = useState<number | undefined>();
+  const [rangeVal, setRangeVal] = useState<number | undefined>();
 
   return (
     <Grid>
@@ -62,32 +63,42 @@ const NumericTemplate: Story = () => {
         <Grid container spacing={1}>
           <Grid item xs>
             <StyledPaper>
-              <Typography>NumericTextInput</Typography>
-              <NumericTextInput
-                value={decimal}
-                onChange={setDecimal}
-                decimalLimit={2}
-                allowNegative={true}
-              />
+              <Typography>Numeric text input, default options</Typography>
+              <NumericTextInput value={positive} onChange={setPositive} />
             </StyledPaper>
             <StyledPaper>
               <Typography>Disabled</Typography>
               <NumericTextInput value={25} disabled />
             </StyledPaper>
             <StyledPaper>
-              <Typography>Non Negative</Typography>
+              <Typography>Negative values allowed</Typography>
               <NumericTextInput
-                value={nonNegative}
-                onChange={setNonNegative}
-                decimalLimit={2}
+                value={negative}
+                onChange={setNegative}
+                allowNegative
               />
             </StyledPaper>
             <StyledPaper>
-              <Typography>Positive Integer</Typography>
+              <Typography>Decimals allowed (2dp), default 5, min 1</Typography>
               <NumericTextInput
-                value={positive}
-                onChange={setPositive}
+                value={decimal}
+                defaultValue={5}
+                decimalLimit={2}
+                onChange={setDecimal}
                 min={1}
+              />
+            </StyledPaper>
+            <StyledPaper>
+              <Typography>
+                Range -20 to 20, step increment 2, multiplier 5
+              </Typography>
+              <NumericTextInput
+                value={rangeVal}
+                onChange={setRangeVal}
+                min={-20}
+                max={20}
+                step={2}
+                multiplier={5}
               />
             </StyledPaper>
           </Grid>
