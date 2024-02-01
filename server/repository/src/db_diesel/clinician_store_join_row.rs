@@ -29,8 +29,7 @@ allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 pub struct ClinicianStoreJoinRow {
     pub id: String,
     pub store_id: String,
-    #[column_name = "clinician_link_id"]
-    pub clinician_id: String,
+    pub clinician_link_id: String,
 }
 
 pub struct ClinicianStoreJoinRowRepository<'a> {
@@ -147,7 +146,7 @@ mod test {
         let repo = ClinicianStoreJoinRowRepository::new(&connection);
 
         let base_row = ClinicianStoreJoinRow {
-            clinician_id: clinician.id,
+            clinician_link_id: clinician.id,
             store_id: mock_store_a().id,
             ..Default::default()
         };

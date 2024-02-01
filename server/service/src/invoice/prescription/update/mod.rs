@@ -300,7 +300,7 @@ mod test {
             ClinicianStoreJoinRow {
                 id: "test_clinician_store_join".to_string(),
                 store_id: mock_store_a().id,
-                clinician_id: clinician().id,
+                clinician_link_id: clinician().id,
             }
         }
 

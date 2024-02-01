@@ -276,7 +276,7 @@ mod tests {
             .upsert_one(&ClinicianStoreJoinRow {
                 id: "JoinId1".to_string(),
                 store_id: mock_store_a().id,
-                clinician_id: "clinician_store_a".to_string(),
+                clinician_link_id: "clinician_store_a".to_string(),
             })
             .unwrap();
 
