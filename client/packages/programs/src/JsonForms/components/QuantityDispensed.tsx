@@ -172,7 +172,7 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled || baseTime === undefined}
             error={error}
             helperText={errors}
-            value={localData ?? ''}
+            value={localData}
           />
         }
       />

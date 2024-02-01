@@ -14,7 +14,7 @@ export interface NumericTextInputProps
   precision?: number;
   step?: number;
   multiplier?: number;
-  value: number | undefined;
+  value?: number | undefined;
 }
 
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
