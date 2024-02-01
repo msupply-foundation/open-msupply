@@ -27,7 +27,7 @@ pub fn get_requisitions_supply_statuses(
                             .requisition_line_row
                             .requisition_id
                             .clone(),
-                        item_id: requisition_line.requisition_line_row.item_id.clone(),
+                        item_id: requisition_line.item_row.id.clone(),
                     },
                     RequisitionLineSupplyStatus {
                         requisition_line,
@@ -90,7 +90,7 @@ impl RequisitionLineSupplyStatus {
     }
 
     pub fn item_id(&self) -> &str {
-        &self.requisition_line.requisition_line_row.item_id
+        &self.requisition_line.item_row.id
     }
 
     pub fn lines_remaining_to_supply(
