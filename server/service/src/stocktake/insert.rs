@@ -181,7 +181,7 @@ fn generate_lines_from_master_list(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: 0.0,
-                item_id: item_id.to_string(),
+                item_link_id: item_id.to_string(),
                 location_id: None,
                 batch: None,
                 expiry_date: None,
@@ -198,7 +198,7 @@ fn generate_lines_from_master_list(
             stock_lines.into_iter().for_each(|line| {
                 let StockLineRow {
                     id: stock_line_id,
-                    item_link_id,
+                    item_link_id: _,
                     location_id,
                     batch,
                     pack_size,
@@ -218,7 +218,7 @@ fn generate_lines_from_master_list(
                     id: uuid(),
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_id: item_link_id,
+                    item_link_id: line.item_row.id,
                     location_id,
                     batch,
                     expiry_date,
@@ -257,7 +257,7 @@ fn generate_lines_from_location(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_link_id,
+                item_link_id: _,
                 location_id,
                 batch,
                 pack_size,
@@ -277,7 +277,7 @@ fn generate_lines_from_location(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id: item_link_id,
+                item_link_id: line.item_row.id,
                 location_id,
                 batch,
                 expiry_date,
@@ -312,7 +312,7 @@ pub fn generate_lines_with_stock(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_link_id,
+                item_link_id: _,
                 location_id,
                 batch,
                 pack_size,
@@ -332,7 +332,7 @@ pub fn generate_lines_with_stock(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id: item_link_id,
+                item_link_id: line.item_row.id,
                 location_id,
                 batch,
                 expiry_date,
@@ -606,7 +606,7 @@ mod test {
         assert_eq!(
             stocktake_rows
                 .iter()
-                .find(|r| r.line.item_id == "item_d")
+                .find(|r| r.line.item_link_id == "item_d")
                 .unwrap()
                 .line
                 .stock_line_id,
