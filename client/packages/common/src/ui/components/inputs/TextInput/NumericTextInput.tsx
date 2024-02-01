@@ -11,7 +11,7 @@ export interface NumericTextInputProps
   allowNegative?: boolean;
   min?: number;
   max?: number;
-  precision?: number;
+  decimalLimit?: number;
   step?: number;
   multiplier?: number;
   value?: number | undefined;
@@ -28,7 +28,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       allowNegative,
       min = allowNegative ? -NumUtils.MAX_SAFE_API_INTEGER : 0,
       max = NumUtils.MAX_SAFE_API_INTEGER,
-      precision = 0,
+      decimalLimit = 0,
       step = 1,
       multiplier = 10,
       value,
@@ -67,7 +67,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
             // Remove negative if not allowed
             .replace(min < 0 ? '' : '-', '')
             // Remove decimal if not allowed
-            .replace(precision === 0 ? decimal : '', '');
+            .replace(decimalLimit === 0 ? decimal : '', '');
 
           if (input === '') {
             onChange(undefined);
@@ -84,7 +84,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           if (Number.isNaN(parsed)) return;
 
-          const constrained = constrain(parsed, precision, min, max);
+          const constrained = constrain(parsed, decimalLimit, min, max);
 
           if (constrained === value) setTextValue(format(constrained));
           else onChange(constrained);
@@ -99,7 +99,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           const newNum = constrain(
             (value ?? Math.max(min, 0)) + change,
-            precision,
+            decimalLimit,
             min,
             max
           );
