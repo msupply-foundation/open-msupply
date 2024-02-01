@@ -184,11 +184,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'StockLineReducedBelowZero',
-      Cell: NumberInputCell,
+      Cell: props => <NumberInputCell {...props} precision={2} />,
       setter: patch => {
-        // If counted number of packs was changed to result in no adjustment
-        // we should remove inventoryAdjustmentReason, otherwise could have a reason
-        // on a line with no adjustments
+        // If counted number of packs was changed to result in no adjustment we
+        // should remove inventoryAdjustmentReason, otherwise could have a
+        // reason on a line with no adjustments
         const inventoryAdjustmentReason =
           !patch.countedNumberOfPacks ||
           patch.snapshotNumberOfPacks == patch.countedNumberOfPacks
