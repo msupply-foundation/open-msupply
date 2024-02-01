@@ -37,7 +37,7 @@ export const BasicExample = () => {
   );
 };
 
-export const NonNegativeNumberInputModalExample = () => {
+export const NumberInputModalExample = () => {
   const modalController = useToggle();
   const [val, setVal] = useState<number>();
 
