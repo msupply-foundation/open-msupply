@@ -1,3 +1,4 @@
+import { RegexUtils } from '../../utils/regex';
 import { useCurrency } from '../currency';
 import { SupportedLocales, useIntlUtils } from '../utils';
 
@@ -25,7 +26,7 @@ export const useFormatNumber = () => {
     parse: (numberString: string, decimalChar: string = decimal) => {
       const negative = numberString.startsWith('-') ? -1 : 1;
       const separatorRegex = new RegExp(
-        `[${decimalChar === '.' ? '\\.' : decimalChar}](\\d+)$`
+        `[${RegexUtils.escapeChars(decimalChar)}](\\d+)$`
       );
 
       const num = numberString
