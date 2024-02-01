@@ -390,6 +390,7 @@
   "messages.click-to-expand": "Click to expand",
   "messages.confirm-cancel-generic": "You will lose any changes you have made to this form",
   "messages.confirm-delete-generic": "This will permanently remove data",
+  "messages.cannot-delete-multiple-lines": "One or more lines cannot be deleted",
   "messages.confirm-delete-shipment": "This will permanently remove Shipment #{{number}}",
   "messages.confirm-remove-item": "Are you sure?",
   "messages.confirm-save-generic": "Are you ready to save changes?",

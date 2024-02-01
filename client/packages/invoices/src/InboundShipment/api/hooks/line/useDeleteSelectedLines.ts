@@ -24,11 +24,19 @@ export const useDeleteSelectedLines = (): (() => void) => {
             .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) || [];
-
   const onDelete = async () => {
-    await mutateAsync(selectedRows).catch(err => {
+    const result = await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
+    const errorsOnDelete =
+      result.batchInboundShipment.deleteInboundShipmentLines?.filter(
+        line => 'error' in line.response
+      );
+    if (errorsOnDelete && errorsOnDelete?.length > 0) {
+      const err = { message: t('messages.cannot-delete-multiple-lines') };
+      throw err;
+    }
+    return;
   };
 
   const confirmAndDelete = useDeleteConfirmation({
