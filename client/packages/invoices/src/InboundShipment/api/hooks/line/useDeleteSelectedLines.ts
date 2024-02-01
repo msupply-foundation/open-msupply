@@ -33,7 +33,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
         line => 'error' in line.response
       );
     if (errorsOnDelete && errorsOnDelete?.length > 0) {
-      const err = { message: t('messages.cannot-delete-multiple-lines') };
+      const err = { message: t('messages.cant-delete-generic') };
       throw err;
     }
     return;
