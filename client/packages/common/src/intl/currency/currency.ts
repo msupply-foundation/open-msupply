@@ -67,10 +67,11 @@ export const format: currency.Format = (
   return replacePattern.replace('!', symbol).replace('#', moneyString);
 };
 
-// Gets the canonical characters for number separator and decimal. This is not
-// always obvious (the " " used in French formatting, for example, is actual a
-// "NARROW NO-BREAK SPACE" (CharCode 8239) even though it looks like a regular
-// space (CharCode 32)), so for consistency this should be the source of truth.
+// Gets the canonical characters for number separator and decimal from
+// Intl.NumberFormat. This is not always obvious (the " " used in French
+// formatting, for example, is actual a "NARROW NO-BREAK SPACE" (CharCode 8239)
+// even though it looks like a regular space (CharCode 32)), so for consistency
+// this should be the source of truth.
 const getSeparatorAndDecimal = (locale: string) => {
   const parts = new Intl.NumberFormat(locale).formatToParts(1000.1);
   const separator = parts.find(({ type }) => type === 'group')?.value ?? ',';
@@ -134,8 +135,8 @@ const currencyOptions = {
     format,
   },
   ru: {
-    // separator: "." decimal = ","
     symbol: '₽',
+    // separator: "." decimal = ","
     ...getSeparatorAndDecimal('ru'),
     precision: 2,
     pattern: '# !',
