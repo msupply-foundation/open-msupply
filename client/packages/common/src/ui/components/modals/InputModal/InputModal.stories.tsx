@@ -55,7 +55,7 @@ export const NonNegativeNumberInputModalExample = () => {
             onChange={num => setVal(num)}
             max={100}
             value={val}
-            precision={2}
+            decimalLimit={2}
           />
         }
         onChange={async () => {

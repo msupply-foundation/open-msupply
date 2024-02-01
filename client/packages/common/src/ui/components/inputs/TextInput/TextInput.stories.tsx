@@ -66,7 +66,7 @@ const NumericTemplate: Story = () => {
               <NumericTextInput
                 value={decimal}
                 onChange={setDecimal}
-                precision={2}
+                decimalLimit={2}
                 allowNegative={true}
               />
             </StyledPaper>
@@ -79,7 +79,7 @@ const NumericTemplate: Story = () => {
               <NumericTextInput
                 value={nonNegative}
                 onChange={setNonNegative}
-                precision={2}
+                decimalLimit={2}
               />
             </StyledPaper>
             <StyledPaper>

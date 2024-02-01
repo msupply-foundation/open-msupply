@@ -34,7 +34,7 @@ export const TaxEdit = ({ disabled = false, tax, update }: TaxEditProps) => {
           onClose={modalController.toggleOff}
           Input={
             <NumericTextInput
-              precision={2}
+              decimalLimit={2}
               max={100}
               value={val}
               onChange={setVal}
