@@ -1,5 +1,5 @@
 import { useCurrency } from '../currency';
-import { useIntlUtils } from '../utils';
+import { SupportedLocales, useIntlUtils } from '../utils';
 
 export const useFormatNumber = () => {
   const { currentLanguage } = useIntlUtils();
@@ -9,9 +9,10 @@ export const useFormatNumber = () => {
 
   return {
     format: (
-      value: number,
-      options?: Intl.NumberFormatOptions & { locale?: string }
+      value: number | undefined,
+      options?: Intl.NumberFormatOptions & { locale?: SupportedLocales }
     ) => {
+      if (value === undefined) return '';
       const locale = options?.locale ?? currentLanguage;
       return new Intl.NumberFormat(locale, options).format(value);
     },

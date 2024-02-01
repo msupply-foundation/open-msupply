@@ -1,7 +1,7 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { StandardTextFieldProps } from '@common/components';
 import { BasicTextInput } from './BasicTextInput';
-import { NumUtils } from '@common/utils';
+import { NumUtils, RegexUtils } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
 export interface NumericTextInputProps
   extends Omit<StandardTextFieldProps, 'onChange'> {
@@ -40,12 +40,14 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     const {
       options: { separator, decimal },
     } = useCurrency();
-    const [textValue, setTextValue] = useState<string>(
-      format((value as number) ?? defaultValue ?? '')
-    );
+    const [textValue, setTextValue] = useState(format(value ?? defaultValue));
+
+    useEffect(() => {
+      setTextValue(format(value));
+    }, [value]);
 
     const inputRegex = new RegExp(
-      `^-?\\d*${decimal === '.' ? '\\.' : decimal}?\\d*$`
+      `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
     );
 
     return (
@@ -58,13 +60,16 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         InputProps={InputProps}
         onChange={e => {
           const input = e.target.value
-            // Remove separators
-            .replace(separator, '')
+            // Remove separators -- using split/join as .replaceAll() not
+            // supported
+            .split(separator)
+            .join('')
             // Remove negative if not allowed
-            .replace(min <= 0 ? '-' : '', '');
+            .replace(min < 0 ? '' : '-', '')
+            // Remove decimal if not allowed
+            .replace(precision === 0 ? decimal : '', '');
 
           if (input === '') {
-            setTextValue('');
             onChange(undefined);
             return;
           }
@@ -81,8 +86,8 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           const constrained = constrain(parsed, precision, min, max);
 
-          setTextValue(format(constrained));
-          onChange(constrained);
+          if (constrained === value) setTextValue(format(constrained));
+          else onChange(constrained);
         }}
         onKeyDown={e => {
           if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
@@ -98,7 +103,6 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
             min,
             max
           );
-          setTextValue(format(newNum));
           onChange(newNum);
         }}
         onFocus={e => e.target.select()}
