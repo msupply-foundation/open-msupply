@@ -31,7 +31,9 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const urlValue = urlQuery[urlParameter] as number;
-  const [value, setValue] = useState(getNumberFromUrl(urlValue, range));
+  const [value, setValue] = useState(
+    getNumberFromUrl(urlValue, range) as number | undefined
+  );
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {

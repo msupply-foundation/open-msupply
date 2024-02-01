@@ -22,8 +22,6 @@ export const NumberInputCell = <T extends RecordWithId>({
       disabled={isDisabled}
       autoFocus={autoFocus}
       InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
-      type="number"
-      value={buffer}
       onChange={num => {
         const newValue = num;
         setBuffer(newValue);
@@ -33,6 +31,7 @@ export const NumberInputCell = <T extends RecordWithId>({
       // in Data Tables
       min={1}
       {...props}
+      value={buffer as number | undefined}
     />
   );
 };

@@ -26,7 +26,6 @@ const UIComponent = (props: ControlProps) => {
   const inputProps: NumericTextInputProps & {
     onChange: (newValue: number) => void;
   } = {
-    type: 'number',
     InputProps: {
       sx: { '& .MuiInput-input': { textAlign: 'right' } },
     },
@@ -37,7 +36,7 @@ const UIComponent = (props: ControlProps) => {
     disabled: !props.enabled,
     error: error,
     helperText: errors,
-    value: localData ?? '',
+    value: localData,
   };
   return (
     <DetailInputWithLabelRow

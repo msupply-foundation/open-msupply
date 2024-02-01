@@ -46,7 +46,12 @@ export const GeneralTab = () => {
           <DetailInputWithLabelRow
             label={t('label.ddd')}
             inputProps={{ disabled: isDisabled }}
-            Input={<NumericTextInput value={data?.ddd} disabled={isDisabled} />}
+            Input={
+              <NumericTextInput
+                value={Number(data?.ddd)}
+                disabled={isDisabled}
+              />
+            }
             DisabledInput={<NumericTextDisplay value={data?.ddd} />}
           />
           <DetailInputWithLabelRow
