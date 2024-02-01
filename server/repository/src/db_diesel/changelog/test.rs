@@ -379,7 +379,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line".to_string();
             r.requisition_id = requisition().id;
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
         })
     }
 

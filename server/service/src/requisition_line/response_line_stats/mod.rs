@@ -137,7 +137,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line_one_a".to_string();
             r.requisition_id = "requisition_one".to_string();
-            r.item_id = "item_d".to_string();
+            r.item_link_id = "item_d".to_string();
             r.requested_quantity = 20;
         })
     }
@@ -146,7 +146,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line_one_b".to_string();
             r.requisition_id = "requisition_one".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 15;
             r.available_stock_on_hand = 10;
             r.average_monthly_consumption = 50;
@@ -171,7 +171,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line_two_a".to_string();
             r.requisition_id = "requisition_two".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 20;
         })
     }
@@ -193,7 +193,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "request_requisition_a_line_a".to_string();
             r.requisition_id = "request_requisition_a".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 100;
         })
     }
@@ -215,7 +215,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "request_requisition_b_line_a".to_string();
             r.requisition_id = "request_requisition_b".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 100;
         })
     }

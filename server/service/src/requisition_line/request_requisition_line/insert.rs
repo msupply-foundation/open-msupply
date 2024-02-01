@@ -195,7 +195,7 @@ mod test {
                         .id;
                     r.id = "new requisition line id".to_owned();
                     r.item_id = mock_request_draft_requisition_calculation_test().lines[0]
-                        .item_id
+                        .item_link_id
                         .clone();
                 }),
             ),

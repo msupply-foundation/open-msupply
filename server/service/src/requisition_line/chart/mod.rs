@@ -72,17 +72,17 @@ pub fn get_requisition_line_chart(
     };
 
     let RequisitionLineRow {
-        item_id,
         available_stock_on_hand,
         average_monthly_consumption,
         requested_quantity,
         ..
     } = requisition_line.requisition_line_row;
+    let item_id = &requisition_line.item_row.id;
 
     let mut consumption_history = get_historic_consumption_for_item(
         &ctx.connection,
         &ctx.store_id,
-        &item_id,
+        item_id,
         requisition_line_datetime.date(),
         consumption_history_options,
     )?;
@@ -102,7 +102,7 @@ pub fn get_requisition_line_chart(
     } = get_stock_evolution_for_item(
         &ctx.connection,
         &ctx.store_id,
-        &item_id,
+        item_id,
         *requisition_line_datetime,
         available_stock_on_hand as u32,
         *expected_delivery_date,
@@ -264,7 +264,7 @@ mod test {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = "requisition_line".to_string();
                 r.requisition_id = requisition().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.snapshot_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 01, 02)
                         .unwrap()
@@ -508,7 +508,7 @@ mod test {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = "requisition_line".to_string();
                 r.requisition_id = requisition().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.snapshot_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()

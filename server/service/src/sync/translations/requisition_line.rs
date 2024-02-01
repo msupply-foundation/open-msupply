@@ -81,7 +81,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: data.requisition_ID,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             requested_quantity: data.Cust_stock_order,
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
@@ -127,7 +127,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let RequisitionLineRow {
             id,
             requisition_id,
-            item_id,
+            item_link_id,
             requested_quantity,
             suggested_quantity,
             supply_quantity,
@@ -146,9 +146,9 @@ impl SyncTranslation for RequisitionLineTranslation {
 
         // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
         let item_id = ItemLinkRowRepository::new(connection)
-            .find_one_by_id(&item_id)?
+            .find_one_by_id(&item_link_id)?
             .ok_or(anyhow::anyhow!(
-                "Item ({item_id}) not found in requisition line ({id})"
+                "Item link ({item_link_id}) not found in requisition line ({id})"
             ))?
             .item_id;
 
