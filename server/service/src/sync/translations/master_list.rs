@@ -42,7 +42,8 @@ impl SyncTranslation for MasterListTranslation {
             name: data.description,
             code: data.code,
             description: data.note,
-            is_active: !data.inactive.unwrap_or(false),
+            // By default if inactive = null, or missing, it should mean is_active = true
+            is_active: !data.inactive.unwrap_or(true),
         };
         Ok(PullTranslateResult::upsert(result))
     }

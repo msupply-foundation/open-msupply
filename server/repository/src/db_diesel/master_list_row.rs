@@ -75,7 +75,7 @@ impl Upsert for MasterListRow {
         MasterListRowRepository::new(con).upsert_one(self)
     }
 
-    // Test only    #[cfg(test)]
+    // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             MasterListRowRepository::new(con).find_one_by_id(&self.id),
