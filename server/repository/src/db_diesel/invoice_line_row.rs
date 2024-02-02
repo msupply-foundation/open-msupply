@@ -32,6 +32,7 @@ table! {
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
+        foreign_currency_price_before_tax -> Nullable<Double>,
     }
 }
 
@@ -82,6 +83,7 @@ pub struct InvoiceLineRow {
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub foreign_currency_price_before_tax: Option<f64>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {

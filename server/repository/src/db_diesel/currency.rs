@@ -5,7 +5,7 @@ use super::{
 use diesel::prelude::*;
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort, apply_sort_no_case},
     repository_error::RepositoryError,
 };
 
@@ -66,7 +66,7 @@ impl<'a> CurrencyRepository<'a> {
                     apply_sort_no_case!(query, sort, currency_dsl::code)
                 }
                 CurrencySortField::IsHomeCurrency => {
-                    apply_sort_no_case!(query, sort, currency_dsl::is_home_currency)
+                    apply_sort!(query, sort, currency_dsl::is_home_currency)
                 }
             }
         } else {
