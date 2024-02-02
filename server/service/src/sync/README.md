@@ -23,7 +23,7 @@ Records are treated differently by central server and remote sites based on data
  
 `central record/data`: This record is only editable on central server, and only travels in one direction, from central server to all remote sites. All central data will sync to all remote sites. Items and units are examples of central records.
 
-`central-remote record/data`: Similar in editability to central data, but will only sync to remote sites where these records are relevant. For example, master_list or name_store_join.
+`central-remote record/data`: These records are editable in the same way as central data, but it will only sync to remote sites where these records are relevant. For example, master_list or name_store_join.
 
 `transfer record/data`: This is remote record but for a store that is not active on current site, this record is visible but not editable. For example, request requisition in response site.
 
