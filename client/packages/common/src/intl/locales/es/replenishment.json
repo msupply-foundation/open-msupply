@@ -104,5 +104,21 @@
   "messages.confirm-delete-requisition": "Esto eliminará permanentemente la Orden Interna n.º{{number}}",
   "label.not-set": "No establecido",
   "label.current": "Actual",
-  "label.min-months-of-stock": "MOS punto de reorden"
+  "label.min-months-of-stock": "MOS punto de reorden",
+  "messages.deleted-shipments_few": "Se eliminaron {{count}} envíos",
+  "messages.deleted-shipments_many": "Se eliminaron {{count}} envíos",
+  "label.number-months_few": "{{count}} Meses",
+  "label.number-months_many": "{{count}} Meses",
+  "messages.confirm-delete-invoice-lines_few": "Esto eliminará permanentemente {{count}} líneas de esta factura",
+  "messages.confirm-delete-invoice-lines_many": "Esto eliminará permanentemente {{count}} líneas de esta factura",
+  "messages.confirm-delete-requisition-lines_few": "Esto eliminará permanentemente {{count}} líneas de esta orden",
+  "messages.confirm-delete-requisition-lines_many": "Esto eliminará permanentemente {{count}} líneas de esta orden",
+  "messages.confirm-delete-shipments_few": "Esto eliminará permanentemente {{count}} envíos",
+  "messages.confirm-delete-shipments_many": "Esto eliminará permanentemente {{count}} envíos",
+  "messages.confirm-delete-requisitions_few": "Esto eliminará permanentemente {{count}} ordenes internas",
+  "messages.confirm-delete-requisitions_many": "Esto eliminará permanentemente {{count}} ordenes internas",
+  "messages.confirm-delete-shipment-lines_few": "Esto eliminará permanentemente {{count}} líneas del envío",
+  "messages.confirm-delete-shipment-lines_many": "Esto eliminará permanentemente {{count}} líneas del envío",
+  "messages.deleted-requisitions_few": "Se eliminaron {{count}} ordenes",
+  "messages.deleted-requisitions_many": "Se eliminaron {{count}} ordenes"
 }
