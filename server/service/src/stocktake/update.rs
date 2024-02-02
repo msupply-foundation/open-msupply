@@ -287,6 +287,7 @@ fn generate_stock_line_update(
                 .line
                 .inventory_adjustment_reason_id
                 .clone(),
+            foreign_currency_price_before_tax: None,
         })
     } else {
         None
@@ -381,6 +382,7 @@ fn generate_new_stock_line(
             number_of_packs: counted_number_of_packs,
             note: row.note,
             inventory_adjustment_reason_id: row.inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax: None,
         })
     } else {
         None
@@ -602,7 +604,6 @@ fn generate(
         clinician_id: None,
         currency_id: None,
         currency_rate: None,
-        foreign_currency_total: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {

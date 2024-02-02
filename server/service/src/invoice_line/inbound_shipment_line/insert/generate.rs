@@ -1,5 +1,8 @@
 use crate::{
-    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice::common::{
+        calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_invoice_user_id_update,
+    },
     invoice_line::{
         generate_batch,
         inbound_shipment_line::generate::{
@@ -78,10 +81,15 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    InvoiceRow { tax, .. }: InvoiceRow,
+    InvoiceRow {
+        tax, currency_rate, ..
+    }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+    let foreign_currency_price_before_tax =
+        calculate_foreign_currency_total(total_before_tax, currency_rate);
+
     InvoiceLineRow {
         id,
         invoice_id,
@@ -102,5 +110,6 @@ fn generate_line(
         tax,
         note: None,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax,
     }
 }
