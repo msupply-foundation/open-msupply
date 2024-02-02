@@ -135,7 +135,6 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             clinician_id: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: Some(1.32),
-            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -187,8 +186,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             tax: Some(0.0),
             clinician_id: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
-            currency_rate: Some(1.32),
-            foreign_currency_total: Some(0.0)
+            currency_rate: Some(1.32)
         }),
     }
 }
@@ -304,7 +302,6 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             clinician_id: None,
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -352,7 +349,6 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             clinician_id: None,
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -502,7 +498,6 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -575,7 +570,6 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -707,7 +701,6 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -760,8 +753,7 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             linked_transaction_id: None,
             clinician_id: None,
             currency_id: None,
-            currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0)
+            currency_rate: Some(1.0)
         }),
     }
 }
@@ -893,7 +885,6 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -947,7 +938,6 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0)
         }),
     }
 }
@@ -1075,7 +1065,6 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0),
         }),
     )
 }
@@ -1128,7 +1117,6 @@ fn prescription_1_push_record() -> TestSyncPushRecord {
             clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
-            foreign_currency_total: Some(0.0)
         }),
     }
 }
