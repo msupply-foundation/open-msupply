@@ -126,7 +126,7 @@ impl Upsert for ActivityLogRow {
 pub struct ActivityLogRowDelete(pub String);
 impl Delete for ActivityLogRowDelete {
     fn delete(&self, _: &StorageConnection) -> Result<(), RepositoryError> {
-        // Not deletiing in tests, just want to check asserted_deleted
+        // Not deleting in tests, just want to check asserted_deleted
         Ok(())
     }
     // Test only
