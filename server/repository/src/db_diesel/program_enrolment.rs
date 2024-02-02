@@ -96,7 +96,14 @@ pub enum ProgramEnrolmentSortField {
     Status,
 }
 
-pub type ProgramEnrolment = (ProgramEnrolmentRow, ProgramRow, (NameLinkRow, NameRow));
+type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, (NameLinkRow, NameRow));
+
+#[derive(Clone)]
+pub struct ProgramEnrolment {
+    pub row: ProgramEnrolmentRow,
+    pub program_row: ProgramRow,
+    pub patient_row: NameRow,
+}
 
 pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 
@@ -164,7 +171,15 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEnrolment>(&self.connection.connection)?;
+            .load::<ProgramEnrolmentJoin>(&self.connection.connection)?;
+        let result = result
+            .into_iter()
+            .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {
+                row,
+                program_row,
+                patient_row,
+            })
+            .collect();
 
         Ok(result)
     }
