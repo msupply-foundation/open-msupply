@@ -84,27 +84,27 @@ fn update_encounter_row(
     };
 
     let repo = EncounterRepository::new(con);
-    let row = repo
+    let encounter = repo
         .query_by_filter(EncounterFilter::new().document_name(EqualFilter::equal_to(&doc.name)))?
         .pop();
     // Documents are identified by a human readable name. Thus, use hash(name) as an ID.
     // For example, an ID works better in an web URL.
     // This also makes sure the table row gets the same ID when the whole site is re-synced.
-    let id = match row {
-        Some(row) => row.0.id,
+    let id = match encounter {
+        Some(encounter) => encounter.row.id,
         None => sha256(&doc.name),
     };
     let row = EncounterRow {
         id,
         document_type: doc.r#type.clone(),
         document_name: doc.name.clone(),
-        patient_id: patient_id.to_string(),
+        patient_link_id: patient_id.to_string(),
         program_id: program_row.id,
         created_datetime: validated_encounter.created_datetime,
         start_datetime: validated_encounter.start_datetime,
         end_datetime: validated_encounter.end_datetime,
         status,
-        clinician_id,
+        clinician_link_id: clinician_id,
         store_id: validated_encounter
             .encounter
             .location
