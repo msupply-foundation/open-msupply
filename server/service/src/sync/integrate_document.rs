@@ -24,7 +24,12 @@ impl Upsert for DocumentUpsert {
         sync_upsert_document(con, &self.0)
     }
 
-    fn assert_upserted(&self, _: &StorageConnection) {}
+    fn assert_upserted(&self, con: &StorageConnection) {
+      assert_eq!(
+          DocumentRepository::new(con).find_one_by_id(&self.0.id),
+          Ok(Some(self.0.clone()))
+      );
+    }
 }
 
 fn sync_upsert_document(
