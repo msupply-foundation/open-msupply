@@ -39,8 +39,7 @@ pub struct ProgramEnrolmentRow {
     /// Reference to program id
     pub program_id: String,
     /// The patient this program belongs to
-    #[column_name = "patient_link_id"]
-    pub patient_id: String,
+    pub patient_link_id: String,
     /// Time when the patient has been enrolled to this program
     pub enrolment_datetime: NaiveDateTime,
     /// Program specific patient id

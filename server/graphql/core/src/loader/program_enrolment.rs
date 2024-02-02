@@ -73,7 +73,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
                 for program_enrolment in entries.into_iter() {
                     out.insert(
                         ProgramEnrolmentLoaderInput::new(
-                            &program_enrolment.0.patient_id,
+                            &program_enrolment.patient_row.id,
                             &program,
                             allowed_ctx.clone(),
                         ),
