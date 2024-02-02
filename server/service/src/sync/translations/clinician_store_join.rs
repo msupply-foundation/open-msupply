@@ -52,7 +52,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
         let result = ClinicianStoreJoinRow {
             id,
             store_id,
-            clinician_id: prescriber_id,
+            clinician_link_id: prescriber_id,
         };
         Ok(Some(IntegrationRecords::from_upsert(
             PullUpsertRecord::ClinicianStoreJoin(result),
@@ -71,7 +71,7 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
         let ClinicianStoreJoinRow {
             id,
             store_id,
-            clinician_id: clinician_link_join,
+            clinician_link_id,
         } = ClinicianStoreJoinRowRepository::new(connection)
             .find_one_by_id_option(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -80,11 +80,11 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             )))?;
 
         let clinician_link_row = ClinicianLinkRowRepository::new(connection)
-            .find_one_by_id(&clinician_link_join)?
+            .find_one_by_id(&clinician_link_id)?
             .ok_or_else(|| {
                 anyhow::anyhow!(format!(
                     "Clinician link row ({}) not found",
-                    clinician_link_join
+                    clinician_link_id
                 ))
             })?;
 
