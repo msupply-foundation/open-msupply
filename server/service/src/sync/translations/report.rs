@@ -38,7 +38,6 @@ pub enum LegacyReportContext {
     #[serde(other)]
     Others,
 }
-// https://github.com/msupply-foundation/open-msupply/pull/2152
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
