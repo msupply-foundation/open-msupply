@@ -54,8 +54,7 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
-    #[column_name = "supplier_link_id"]
-    pub supplier_id: Option<String>,
+    pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
 }
 
