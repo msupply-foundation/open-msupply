@@ -108,5 +108,19 @@
   "messages.saved": "Guardado",
   "messages.confirm-not-fully-supplied": "No todos los elementos de esta requisición se han suministrado al cliente. Si finalizas, no podrás suministrar más elementos al cliente desde esta requisición. ¿Aún deseas continuar?",
   "messages.stock-on-hold": "Algunas líneas de stock están en espera y no se pueden asignar.",
-  "messages.stock-expired": "Algunas líneas de stock han caducado y no se pueden asignar."
+  "messages.stock-expired": "Algunas líneas de stock han caducado y no se pueden asignar.",
+  "messages.deleted-shipments_few": "Se eliminaron {{count}} envíos",
+  "messages.confirm-delete-shipments_few": "Esto eliminará permanentemente {{count}} envíos",
+  "messages.allocated-lines_few": "{{count}} líneas asignadas",
+  "messages.allocated-lines-partial_many": "{{count}} líneas parcialmente asignadas",
+  "messages.confirm-delete-lines_many": "Esto eliminará permanentemente {{count}} líneas de esta factura",
+  "messages.deleted-shipments_many": "Se eliminaron {{count}} envíos",
+  "messages.allocated-lines_many": "{{count}} líneas asignadas",
+  "messages.allocated-lines-failed_few": "{{count}} líneas asignadas",
+  "messages.allocated-lines-failed_many": "{{count}} líneas asignadas",
+  "messages.allocated-lines-partial_few": "{{count}} líneas parcialmente asignadas",
+  "messages.confirm-delete-shipments_many": "Esto eliminará permanentemente {{count}} envíos",
+  "messages.confirm-delete-lines_few": "Esto eliminará permanentemente {{count}} líneas de esta factura",
+  "messages.deleted-requisitions_few": "{{count}} requisiciones eliminadas",
+  "messages.deleted-requisitions_many": "{{count}} requisiciones eliminadas"
 }
