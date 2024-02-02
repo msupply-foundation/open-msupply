@@ -4,10 +4,11 @@ use repository::{
     ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
     InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
     ItemLinkRowRepository, ItemRowRepository, LocationMovementRow, LocationMovementRowRepository,
-    NameRowRepository, NumberRowType, RepositoryError, StockLine, StockLineFilter,
-    StockLineRepository, StockLineRow, StockLineRowRepository, Stocktake, StocktakeLine,
-    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    NameLinkRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository, StockLineRow, StockLineRowRepository, Stocktake,
+    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
+    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
+    StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -221,6 +222,19 @@ fn generate_stock_line_update(
             stock_line.item_link_id
         )))?
         .item_id;
+    let stock_line_supplier_id = if let Some(supplier_link_id) = &stock_line.supplier_link_id {
+        Some(
+            NameLinkRowRepository::new(connection)
+                .find_one_by_id(supplier_link_id)?
+                .ok_or(UpdateStocktakeError::InternalError(format!(
+                    "Name link ({}) not found",
+                    supplier_link_id
+                )))?
+                .name_id,
+        )
+    } else {
+        None
+    };
 
     let updated_line = StockLineRow {
         id: stock_line.id.clone(),
@@ -246,7 +260,7 @@ fn generate_stock_line_update(
         expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
-        supplier_id: stock_line.supplier_id.clone(),
+        supplier_link_id: stock_line_supplier_id,
         barcode_id: stock_line.barcode_id.clone(),
     };
 
@@ -336,8 +350,20 @@ fn generate_new_stock_line(
         l
     });
 
-    let supplier_id = if let Some(stock_line) = stocktake_line.stock_line {
-        stock_line.supplier_id
+    let supplier_id = if let Some(supplier_link_id) = stocktake_line
+        .stock_line
+        .as_ref()
+        .and_then(|it| it.supplier_link_id.clone())
+    {
+        Some(
+            NameLinkRowRepository::new(connection)
+                .find_one_by_id(&supplier_link_id)?
+                .ok_or(UpdateStocktakeError::InternalError(format!(
+                    "Name link ({}) not found",
+                    supplier_link_id
+                )))?
+                .name_id,
+        )
     } else {
         None
     };
@@ -357,7 +383,7 @@ fn generate_new_stock_line(
         expiry_date: row.expiry_date,
         on_hold: false,
         note: row.note.clone(),
-        supplier_id,
+        supplier_link_id: supplier_id,
         barcode_id: None,
     };
 
@@ -799,7 +825,7 @@ mod test {
                 r.sell_price_per_pack = 0.0;
                 r.total_number_of_packs = 20.0;
                 r.on_hold = false;
-                r.supplier_id = Some("name_store_b".to_string());
+                r.supplier_link_id = Some("name_store_b".to_string());
             })
         }
 
@@ -1102,7 +1128,7 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
-        assert_eq!(stock_line.supplier_id, None);
+        assert_eq!(stock_line.supplier_link_id, None);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
@@ -1127,6 +1153,9 @@ mod test {
             )
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
-        assert_eq!(stock_line.supplier_id, mock_stock_line_b().supplier_id);
+        assert_eq!(
+            stock_line.supplier_link_id,
+            mock_stock_line_b().supplier_link_id
+        );
     }
 }

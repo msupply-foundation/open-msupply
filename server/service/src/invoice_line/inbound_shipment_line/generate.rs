@@ -61,7 +61,7 @@ pub fn generate_batch(
         expiry_date,
         on_hold: false,
         note,
-        supplier_id: Some(supplier_link_id.to_string()),
+        supplier_link_id: Some(supplier_link_id.to_string()),
         barcode_id: None,
     }
 }

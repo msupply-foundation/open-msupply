@@ -89,7 +89,7 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date: data.expiry_date,
             on_hold: data.hold,
             note: data.note,
-            supplier_id: data.supplier_id,
+            supplier_link_id: data.supplier_id,
             barcode_id: data.barcode_id,
         };
 
@@ -133,7 +133,7 @@ impl SyncTranslation for StockLineTranslation {
                     expiry_date,
                     on_hold,
                     note,
-                    supplier_id: _,
+                    supplier_link_id: _,
                     barcode_id,
                 },
             item_row,
