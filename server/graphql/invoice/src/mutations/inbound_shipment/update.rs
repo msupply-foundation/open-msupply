@@ -1,4 +1,6 @@
-use crate::mutations::outbound_shipment::error::CannotChangeStatusOfInvoiceOnHold;
+use crate::mutations::outbound_shipment::error::{
+    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency,
+};
 use async_graphql::*;
 
 use graphql_core::generic_inputs::TaxInput;
@@ -28,6 +30,8 @@ pub struct UpdateInput {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub tax: Option<TaxInput>,
+    pub currency_id: Option<String>,
+    pub currency_rate: Option<f64>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -78,6 +82,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
+    CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
 }
 
 impl UpdateInput {
@@ -91,6 +96,8 @@ impl UpdateInput {
             their_reference,
             colour,
             tax,
+            currency_id,
+            currency_rate,
         } = self;
 
         ServiceInput {
@@ -106,6 +113,8 @@ impl UpdateInput {
                     percentage: tax.percentage,
                 })
             }),
+            currency_id,
+            currency_rate,
         }
     }
 }
@@ -152,6 +161,11 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::OtherPartyNotVisible => {
             return Ok(UpdateErrorInterface::OtherPartyNotVisible(
                 OtherPartyNotVisible,
+            ))
+        }
+        ServiceError::CannotIssueInForeignCurrency => {
+            return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
+                CannotIssueInForeignCurrency,
             ))
         }
         // Standard Graphql Errors
@@ -485,6 +499,8 @@ mod test {
                     their_reference: Some("their reference input".to_string()),
                     colour: Some("colour input".to_string()),
                     tax: None,
+                    currency_id: None,
+                    currency_rate: None
                 }
             );
             Ok(Invoice {

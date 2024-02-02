@@ -243,6 +243,7 @@ impl InvoiceNode {
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
             tax_percentage: self.row().tax,
+            foreign_currency_total_after_tax: None,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;
@@ -339,10 +340,6 @@ impl InvoiceNode {
     pub async fn currency_rate(&self) -> &Option<f64> {
         &self.row().currency_rate
     }
-
-    pub async fn foreign_currency_total(&self) -> &Option<f64> {
-        &self.row().foreign_currency_total
-    }
 }
 
 impl InvoiceNode {
@@ -369,6 +366,10 @@ impl PricingNode {
 
     pub async fn total_after_tax(&self) -> f64 {
         self.invoice_pricing.total_after_tax
+    }
+
+    pub async fn foreign_currency_total_after_tax(&self) -> &Option<f64> {
+        &self.invoice_pricing.foreign_currency_total_after_tax
     }
 
     // stock

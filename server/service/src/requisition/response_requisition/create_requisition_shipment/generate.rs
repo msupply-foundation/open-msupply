@@ -48,7 +48,6 @@ pub fn generate(
         clinician_id: None,
         currency_id: None,
         currency_rate: None,
-        foreign_currency_total: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fullfilments)?;
@@ -89,6 +88,7 @@ pub fn generate_invoice_lines(
             cost_price_per_pack: 0.0,
             stock_line_id: None,
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: None,
         });
     }
 
