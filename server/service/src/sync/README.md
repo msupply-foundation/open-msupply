@@ -126,9 +126,7 @@ AND
 
 ## Diagrams
 
-From [TMF internal docs](https://app.diagrams.net/#G1vVZQF_o0JiABBs1jpI0TneFfRonVqySD)
-
-![omSupply Remote Site Sync](./doc/omSupply_sync_remote.png)
+![omSupply Remote Site Sync](./doc/omSupply_sync_remote.drawio.svg)
 
 
 ## Central Sync API
