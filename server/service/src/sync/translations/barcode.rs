@@ -74,7 +74,7 @@ impl SyncTranslation for BarcodeTranslation {
             id,
             gtin,
             item_id,
-            manufacturer_id,
+            manufacturer_link_id: manufacturer_id,
             pack_size,
             parent_id,
         };
@@ -99,7 +99,7 @@ impl SyncTranslation for BarcodeTranslation {
                     id,
                     gtin,
                     item_id,
-                    manufacturer_id: _,
+                    manufacturer_link_id: _,
                     pack_size,
                     parent_id,
                 },
