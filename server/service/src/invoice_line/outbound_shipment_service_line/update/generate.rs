@@ -1,6 +1,6 @@
 use repository::{InvoiceLineRow, ItemRow};
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{UpdateOutboundShipmentServiceLine, UpdateOutboundShipmentServiceLineError};
 
@@ -20,6 +20,7 @@ pub fn generate(
         code: item_code,
         ..
     }: ItemRow,
+    currency_rate: Option<f64>,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentServiceLineError> {
     // 1) Use name from input (if specified)
     // 2) else: if item has been updated use name from the updated item name
@@ -58,6 +59,9 @@ pub fn generate(
     update_line.total_after_tax =
         calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
+    update_line.foreign_currency_price_before_tax =
+        calculate_foreign_currency_total(update_line.total_before_tax, currency_rate);
+
     Ok(update_line)
 }
 
@@ -91,6 +95,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1.clone(),
+            None,
         )
         .unwrap();
         assert_eq!(result.item_name, item1.name);
@@ -107,6 +112,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1,
+            None,
         )
         .unwrap();
         assert_eq!(result.item_name, "input name");
@@ -123,6 +129,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
+            None,
         )
         .unwrap();
         assert_eq!(result.item_name, "input name 2");
@@ -139,6 +146,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
+            None,
         )
         .unwrap();
         assert_eq!(result.item_name, item2.name);
