@@ -83,6 +83,8 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_adjustment_reason_id: Option<String>,
+    #[serde(rename = "foreign_currency_price")]
+    pub foreign_currency_price_before_tax: Option<f64>,
 }
 
 pub(crate) struct InvoiceLineTranslation {}
@@ -129,6 +131,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_before_tax,
             total_after_tax,
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -221,6 +224,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -273,6 +277,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
 
         let legacy_row = LegacyTransLineRow {
@@ -295,6 +300,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_before_tax: Some(total_before_tax),
             total_after_tax: Some(total_after_tax),
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         };
 
         Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
