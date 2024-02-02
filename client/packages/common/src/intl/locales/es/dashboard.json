@@ -25,5 +25,15 @@
   "label.new": "Nuevo",
   "label.more-than-six-months-stock-items_one": "Artículo con más de 6 meses de stock",
   "label.more-than-six-months-stock-items_other": "Artículos con más de 6 meses de stock",
-  "label.not-sent": "No enviado"
+  "label.not-sent": "No enviado",
+  "label.expired_few": "Lotes expirados",
+  "label.items-no-stock_few": "Artículos sin stock",
+  "label.more-than-six-months-stock-items_few": "Artículos con más de 6 meses de stock",
+  "label.expired_many": "Lotes expirados",
+  "label.items-no-stock_many": "Artículos sin stock",
+  "label.low-stock-items_few": "Artículos con menos de 3 meses de stock",
+  "label.low-stock-items_many": "Artículos con menos de 3 meses de stock",
+  "label.more-than-six-months-stock-items_many": "Artículos con más de 6 meses de stock",
+  "label.total-items_few": "Artículos totales",
+  "label.total-items_many": "Artículos totales"
 }
