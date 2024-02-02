@@ -2,7 +2,7 @@ use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
 };
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
@@ -64,10 +64,14 @@ fn generate_line(
         note: _,
         ..
     }: StockLineRow,
-    InvoiceRow { tax, .. }: InvoiceRow,
+    InvoiceRow {
+        tax, currency_rate, ..
+    }: InvoiceRow,
 ) -> InvoiceLineRow {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+    let foreign_currency_price_before_tax =
+        calculate_foreign_currency_total(total_before_tax, currency_rate);
 
     InvoiceLineRow {
         id,
@@ -89,5 +93,6 @@ fn generate_line(
         tax,
         note,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax,
     }
 }

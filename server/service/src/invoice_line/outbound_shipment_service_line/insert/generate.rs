@@ -1,6 +1,6 @@
 use repository::{InvoiceLineRow, InvoiceLineRowType, ItemRow};
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{InsertOutboundShipmentServiceLine, InsertOutboundShipmentServiceLineError};
 
@@ -15,6 +15,7 @@ pub fn generate(
         note,
     }: InsertOutboundShipmentServiceLine,
     item: ItemRow,
+    currency_rate: Option<f64>,
 ) -> Result<InvoiceLineRow, InsertOutboundShipmentServiceLineError> {
     Ok(InvoiceLineRow {
         id,
@@ -27,6 +28,10 @@ pub fn generate(
         item_id: item.id,
         item_name: name.unwrap_or(item.name),
         r#type: InvoiceLineRowType::Service,
+        foreign_currency_price_before_tax: calculate_foreign_currency_total(
+            total_before_tax,
+            currency_rate,
+        ),
         // Default
         stock_line_id: None,
         location_id: None,
