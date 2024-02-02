@@ -28,11 +28,14 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 // NOTE Translator should be removed when central server configures these properties on name_store_join
 pub(super) struct NameToNameStoreJoinTranslation;
 impl SyncTranslation for NameToNameStoreJoinTranslation {
-    // TODO would this even work ? (would it not have a dependnecy to ?)
     fn table_name(&self) -> &'static str {
         NameTranslation.table_name()
     }
 
+    // Even though we are making changes to name_store_joins, no dependencies required
+    // this translator is special translator to update existing names_store_joins when
+    // name.is_customer or name.is_supplier are toggled
+    // Btw, when name_store_joins are upserted, we check name for is_customer,is_supplier
     fn pull_dependencies(&self) -> Vec<&'static str> {
         vec![]
     }
