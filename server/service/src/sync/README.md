@@ -1,11 +1,11 @@
 # Sync - Synchronisation
 
-Open mSupply is often used in environments with intermittent and low bandwidth internet and therefore needs to be accessible in offline mode. 
-A mechanism that allows for this to happen is called **Sync** (or **Synchronisation**).
+Open mSupply is often used in environments with intermittent and/or low bandwidth internet access and therefore needs to be accessible in an offline mode. 
+A mechanism that allows for this to happen is called **Synchronisation**, or **Sync** for short.
 
 ## Glossary
 
-`site`: An instance of Open mSupply app with one or more active store
+`site`: An instance of Open mSupply with one or more active stores
 
 `remote site`: This is the same as a site, but we quite often refer to it as ‘remote site’ to emphasise that it’s not always accessible via the internet, and even though it’s part of the same system, it’s not always directly connected to the system.
 
@@ -36,13 +36,13 @@ Records are treated differently by central server and remote sites based on data
 
 `initialisation`: After the site is configured, it will first need to be initialised. This is where all relevant central and remote records are queued and sent to a remote site. Remote site is not ‘usable’ until initialisation stage is completed and all records are received
 
-`operational`: Once initialised the site will be in operational synchronisation phase, any changes to remote data will be sent to central server, and any changes to central data will travel on remote site from central server.
+`operational`: Once initialised the site will be in an operational synchronisation phase, any changes to remote data will be sent to central server, and any changes to central data will travel to the remote site from the central server.
 
-We also consider central server as `backup service` for remote sites, in case of data loss at remote site, it can be re-initialised (usually by clearing app data, and switching site back to initialisation phase). Central server protects multiple instances of mSupply syncing for the same site by recording hardware id during each sync API request, if hardware id does not match previously stored hardware id an error will be returned.
+We also consider central server as `backup service` for remote sites, in case of data loss at remote site, it can be re-initialised (usually by clearing app data, and switching site back to initialisation phase). Central server protects multiple instances of Open mSupply syncing for the same site by recording a device identifier ( hardware id ) during each sync API request, if the hardware id does not match the previously stored hardware id then an error will be returned.
 
 ## How does a remote site work ?
 
-A worked thread called [SynchroniserDriver](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/synchroniser_driver.rs#L11) will run synchroniser every [interval_seconds](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/configuration/example.yaml#L20). [SynchroniserDriver](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/synchroniser.rs#L88) will also listen to a message that can trigger sync manually at any time.
+A worker thread called [SynchroniserDriver](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/synchroniser_driver.rs#L11) will run synchroniser every [interval_seconds](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/configuration/example.yaml#L20). [SynchroniserDriver](https://github.com/msupply-foundation/open-msupply/blob/bc83acbb3cd51fe3375ac01135c6eb880a793936/server/service/src/sync/synchroniser.rs#L88) will also listen to a message that can trigger sync manually at any time.
 
 In the initialisation stage Synchroniser will first try to ask central server to begin initialisation, wait for initialisation to complete then pull central records, pull remote records, then translate and integrate all received records.
 
