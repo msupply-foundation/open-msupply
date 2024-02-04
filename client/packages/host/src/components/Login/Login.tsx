@@ -51,8 +51,7 @@ export const Login = () => {
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
     LocalStorage.removeItem('/error/auth');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setPageTitle, t]);
 
   return (
     <LoginLayout
