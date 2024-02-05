@@ -60,10 +60,8 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
         InputProps={InputProps}
         onChange={e => {
           const input = e.target.value
-            // Remove separators -- using split/join as .replaceAll() not
-            // supported
-            .split(separator)
-            .join('')
+            // Remove separators
+            .replace(new RegExp(`\\${separator}`, 'g'), '')
             // Remove negative if not allowed
             .replace(min < 0 ? '' : '-', '')
             // Remove decimal if not allowed

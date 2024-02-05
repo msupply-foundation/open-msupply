@@ -119,8 +119,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
   const handleIssueQuantityChange = (quantity?: number) => {
     setIssueQuantity(quantity);
-    if (quantity !== undefined)
-      allocate(quantity, Number(packSizeController.selected?.value));
+    allocate(quantity ?? 0, Number(packSizeController.selected?.value));
   };
 
   useEffect(() => {
