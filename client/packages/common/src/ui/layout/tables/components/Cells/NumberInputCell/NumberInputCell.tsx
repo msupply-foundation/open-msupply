@@ -10,6 +10,7 @@ export const NumberInputCell = <T extends RecordWithId>({
   rowIndex,
   columnIndex,
   isDisabled = false,
+  min,
   ...props
 }: CellProps<T> & NumericTextInputProps): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
@@ -29,9 +30,9 @@ export const NumberInputCell = <T extends RecordWithId>({
       }}
       // Make the default min=1 as this is the typical implementation
       // in Data Tables
-      min={1}
-      {...props}
+      min={min ?? 1}
       value={buffer as number | undefined}
+      {...props}
     />
   );
 };

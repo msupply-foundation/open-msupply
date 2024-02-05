@@ -36,13 +36,11 @@ export const TaxEdit = ({ disabled = false, tax, onChange }: TaxEditProps) => {
             <NumericTextInput
               decimalLimit={2}
               max={100}
-              value={val}
+              value={val ?? 0}
               onChange={setVal}
             />
           }
-          onChange={() => {
-            if (val) onChange(val);
-          }}
+          onChange={() => onChange(val ?? 0)}
           title={t('heading.edit-tax-rate')}
         />
       )}
