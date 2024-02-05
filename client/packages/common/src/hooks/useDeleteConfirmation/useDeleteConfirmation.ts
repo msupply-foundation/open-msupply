@@ -34,10 +34,7 @@ export const useDeleteConfirmation = <T>({
   const { success, info } = useNotification();
 
   const cannotDeleteSnack = (errorMessage?: string) => {
-    const emitSnack = info(
-      errorMessage ?? (cantDelete || t('messages.cant-delete-generic'))
-    );
-    emitSnack();
+    info(errorMessage ?? (cantDelete || t('messages.cant-delete-generic')))();
   };
   const showConfirmation = useConfirmationModal({
     onConfirm: async () => {
