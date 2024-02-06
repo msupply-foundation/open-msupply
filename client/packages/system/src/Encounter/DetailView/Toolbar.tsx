@@ -6,7 +6,6 @@ import {
   Grid,
   useTranslation,
   BasicTextInput,
-  DatePickerInput,
   DateUtils,
   TimePickerInput,
   UserIcon,
@@ -31,7 +30,12 @@ import {
   ClinicianSearchInput,
 } from '../../Clinician';
 import { Clinician } from '../../Clinician/utils';
-import { IconButton, Select, useConfirmationModal } from '@common/components';
+import {
+  DateTimePickerInput,
+  IconButton,
+  Select,
+  useConfirmationModal,
+} from '@common/components';
 import { encounterStatusTranslation } from '../utils';
 
 const encounterStatusOption = (
@@ -221,7 +225,7 @@ export const Toolbar: FC<ToolbarProps> = ({
               <Row
                 label={t('label.visit-date')}
                 Input={
-                  <DatePickerInput
+                  <DateTimePickerInput
                     value={DateUtils.getDateOrNull(startDatetime ?? null)}
                     onChange={date => {
                       const startDatetime = DateUtils.formatRFC3339(date);

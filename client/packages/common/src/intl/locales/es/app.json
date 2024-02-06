@@ -55,6 +55,7 @@
   "error.integration-timeout-reached": "El tiempo límite para la integración con el servidor central ha expirado",
   "error.invalid-url": "url Invalida",
   "error.login": "Nombre de usuario o contraseña no válidos",
+  "error.account-blocked": "Cuenta está bloqueada hasta el bloqueo el periodo ha expirado",
   "error.server-failed-to-start": "¡Error! El servidor no se pudo iniciar",
   "error.site-auth-timeout": "El tiempo de autenticación del sitio ha expirado, por favor inténtelo de nuevo más tarde",
   "error.site-has-no-store": "El sitio no tiene almacén",

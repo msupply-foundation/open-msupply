@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -51,7 +53,25 @@ impl DatabaseSettings {
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        self.database_name.clone()
+        if self.database_name.ends_with(".sqlite") {
+            // just use DB if name ends in .sqlite
+            self.database_name.clone()
+        } else {
+            // first check if database exists on disk. If it does, we will use db filename as is without appending .sqlite
+            // Note, using `try_exists()` because we want to be able to store the sqlite file on a different partition or disc.
+            // If the disc is a network drive and the drive is temporarily offline it might happen that exists() returns false but doesn't
+            // say that there was a network error (not 100% if this really is how exists() work but try_exists seems safer). Then if the drive
+            // goes online, creating a new database will run as normal and return two files. This might result in data loss if
+            // data from the old file hasn't been synced yet. There are a number of feasible cases where this might occur, for example when mSupply
+            // automatically starts after a machine boots up a network drive might also be in the process of being mounted.
+            let exists = Path::new(&self.database_name.clone())
+                .try_exists()
+                .expect("Can't check existence of database file");
+            match exists {
+                true => self.database_name.clone(),
+                false => format!("{}.sqlite", self.database_name.clone()),
+            }
+        }
     }
 
     pub fn database_path(&self) -> String {
