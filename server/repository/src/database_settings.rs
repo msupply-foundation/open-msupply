@@ -56,7 +56,10 @@ impl DatabaseSettings {
 
     pub fn database_path(&self) -> String {
         let result = match &self.database_path {
-            Some(path) => format!("{}/{}", path, self.connection_string()),
+            Some(path) => {
+                std::fs::create_dir_all(path).expect("failed to create database dir");
+                format!("{}/{}", path, self.connection_string())
+            }
             None => self.connection_string(),
         };
         return result;
