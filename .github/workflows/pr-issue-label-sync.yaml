@@ -1,8 +1,6 @@
 name: Sync labels from linked issue to PR
 on:
-  pull_request:
-    branches: 
-      - '**'
+  pull_request_target:
     types: [opened, reopened, edited]
 jobs:
   build:
