@@ -170,6 +170,8 @@ fn generate_inbound_shipment(
         transport_reference: outbound_shipment_row.transport_reference.clone(),
         comment: Some(formatted_comment),
         tax: outbound_shipment_row.tax,
+        currency_id: outbound_shipment_row.currency_id.clone(),
+        currency_rate: outbound_shipment_row.currency_rate,
         // Default
         colour: None,
         user_id: None,
@@ -178,9 +180,6 @@ fn generate_inbound_shipment(
         delivered_datetime: None,
         verified_datetime: None,
         clinician_id: None,
-        currency_id: None,
-        currency_rate: None,
-        foreign_currency_total: None,
     };
 
     Ok(result)
