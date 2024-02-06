@@ -162,8 +162,6 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         fs::create_dir_all(path);
     }
 
-    println!("data base path: {:?}", db_path);
-
     let connection_manager = connection_manager(db_settings);
     let connection = connection_manager
         .connection()
