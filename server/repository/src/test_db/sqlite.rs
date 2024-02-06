@@ -142,10 +142,9 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         // remove existing db file
         fs::remove_file(&db_path).ok();
         // create parent dirs
-        // no longer required because parent dirs are always created in database_path() function
-        // let path = Path::new(&db_path);
-        // let prefix = path.parent().unwrap();
-        // fs::create_dir_all(prefix).unwrap();
+        let path = Path::new(&db_path);
+        let prefix = path.parent().unwrap();
+        fs::create_dir_all(prefix).unwrap();
     }
 
     let connection_manager = connection_manager(db_settings);
