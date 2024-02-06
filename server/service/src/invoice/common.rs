@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, MasterList, MasterListFilter,
-    MasterListRepository, RepositoryError, StockLineRow, StorageConnection,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
+    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError, StockLineRow,
+    StorageConnection,
 };
 use util::inline_edit;
 
