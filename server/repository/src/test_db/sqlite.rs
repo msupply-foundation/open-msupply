@@ -37,15 +37,18 @@ pub(crate) async fn setup_with_version(
     version: Option<Version>,
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
-    let db_path = db_settings.database_path();
+    let db_path = db_settings.connection_string();
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
+        println!("runnign in memory mode");
         let connection_manager = create_db(&db_settings, version.clone());
         let connection = connection_manager.connection().unwrap();
         let collection = insert_all_mock_data(&connection, inserts).await;
         (connection_manager, collection)
     } else {
         // cache db template
+        println!("runnign in cache mode");
+
         let cache_all_mock_data = inserts == MockDataInserts::all();
         let template_name = if cache_all_mock_data {
             format!(
@@ -95,7 +98,6 @@ pub(crate) async fn setup_with_version(
         drop(guard);
 
         // copy template
-        println!("2 $+######################");
 
         // remove existing db file
         fs::remove_file(&db_path).ok();
@@ -120,7 +122,7 @@ pub(crate) async fn setup_with_version(
 
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&db_settings.database_path());
+        ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
     const SQLITE_LOCKWAIT_MS: u32 = 10 * 1000; // 10 second wait for test lock timeout
     let pool = Pool::builder()
         .min_idle(Some(1))
@@ -133,8 +135,7 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
 }
 
 fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
-    //
-    let db_path = db_settings.database_path();
+    let db_path = db_settings.connection_string();
 
     // If not in-memory mode clean up and create test directory
     // (in in-memory mode the db_path starts with "file:")
