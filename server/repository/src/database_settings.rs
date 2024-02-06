@@ -193,7 +193,6 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
         }))
         .build(connection_manager)
         .expect("Failed to connect to database");
-    println!("working after get_storage_connection_manager");
     StorageConnectionManager::new(pool)
 }
 
@@ -210,7 +209,7 @@ mod database_setting_test {
             host: "".to_string(),
             database_name: "".to_string(),
             init_sql,
-            database_path: Some("".to_string()),
+            database_path: None,
         }
     }
 
