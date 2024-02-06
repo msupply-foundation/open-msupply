@@ -31,6 +31,12 @@ const permissionExceptions = [
   'requisitionCounts',
   'temperatureNotifications',
 ];
+
+// these queries are not considered to be part of the user's activity
+// they occur in the background and should not be used to determine
+// if the user has remained active
+const ignoredQueries = ['refreshToken', 'syncInfo', 'temperatureNotifications'];
+
 interface ResponseError {
   message?: string;
   path?: string[];
@@ -64,8 +70,6 @@ const handleResponseError = (errors: ResponseError[]) => {
   const { details } = extensions || {};
   throw new Error(details || error?.message || 'Unknown error');
 };
-
-const ignoredQueries = ['refreshToken', 'syncInfo'];
 
 const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
   const operationNode = definitionNode as OperationDefinitionNode;
