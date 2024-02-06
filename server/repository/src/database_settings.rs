@@ -187,7 +187,6 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
     info!("Connecting to database '{}'", settings.database_path());
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&settings.database_path());
-    println!("working here");
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
