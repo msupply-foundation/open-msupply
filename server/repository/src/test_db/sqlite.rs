@@ -3,7 +3,7 @@ use std::{fs, path::Path, sync::Mutex};
 use diesel::r2d2::{ConnectionManager, Pool};
 
 use crate::{
-    database_settings::{self, DatabaseSettings, SqliteConnectionOptions},
+    database_settings::{DatabaseSettings, SqliteConnectionOptions},
     migrations::{migrate, Version},
     mock::{all_mock_data, insert_all_mock_data, MockDataCollection, MockDataInserts},
     DBBackendConnection, StorageConnectionManager,
@@ -38,6 +38,7 @@ pub(crate) async fn setup_with_version(
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
     let db_path = db_settings.connection_string();
+
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
         let connection_manager = create_db(&db_settings, version.clone());
@@ -46,7 +47,6 @@ pub(crate) async fn setup_with_version(
         (connection_manager, collection)
     } else {
         // cache db template
-
         let cache_all_mock_data = inserts == MockDataInserts::all();
         let template_name = if cache_all_mock_data {
             format!(
