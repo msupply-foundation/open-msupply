@@ -20,7 +20,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         // put DB test files into a test directory (also works for in-memory)
         database_name: format!("{}/{}.sqlite", TEST_OUTPUT_DIR, db_name),
         init_sql: None,
-        database_path: Some("".to_string()),
+        database_path: None,
     }
 }
 
@@ -40,14 +40,12 @@ pub(crate) async fn setup_with_version(
     let db_path = db_settings.connection_string();
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
-        println!("runnign in memory mode");
         let connection_manager = create_db(&db_settings, version.clone());
         let connection = connection_manager.connection().unwrap();
         let collection = insert_all_mock_data(&connection, inserts).await;
         (connection_manager, collection)
     } else {
         // cache db template
-        println!("runnign in cache mode");
 
         let cache_all_mock_data = inserts == MockDataInserts::all();
         let template_name = if cache_all_mock_data {

@@ -71,7 +71,6 @@ pub async fn start_server(
     if let Some(init_sql) = &settings.database.full_init_sql() {
         connection_manager.execute(init_sql).unwrap();
     }
-
     info!("Run DB migrations...");
     let version = migrate(&connection_manager.connection().unwrap(), None)
         .context("Failed to run DB migrations")
