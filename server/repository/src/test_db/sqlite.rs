@@ -25,7 +25,6 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
 }
 
 pub async fn setup(db_settings: &DatabaseSettings) -> StorageConnectionManager {
-    // println!("working here");
     setup_with_version(db_settings, None, MockDataInserts::none())
         .await
         .0
@@ -39,7 +38,6 @@ pub(crate) async fn setup_with_version(
     inserts: MockDataInserts,
 ) -> (StorageConnectionManager, MockDataCollection) {
     let db_path = db_settings.database_path();
-    println!("1 $+######################");
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
         let connection_manager = create_db(&db_settings, version.clone());
