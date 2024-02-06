@@ -60,9 +60,17 @@ Remote server data is configured through mSupply central server, when the app fi
 - In Special > Synchronisation
   - Open (or create) the site for our Open mSupply instance
   - Does it have a hardware ID already? If so, refresh the hardware ID so it doesn't have one.
-- In your Open mSupply repo, under `server/configuration` copy the `example.yaml` to `local.yaml`, and uncomment the contents of the file. Under the `sync` config, ensure the `username` is set to the site name from mSupply (i.e. `remote`)
-- From the `server` root, run `cargo run`
-- This should sync with your mSupply instance, and make the omSupply server available for local use
+- Initialise your omSupply instance - you can do this two ways:
+
+  - Via YAML configuration:
+    - In your Open mSupply repo, under `server/configuration` copy the `example.yaml` to `local.yaml`, and uncomment the contents of the file. Under the `sync` config, ensure the `username` is set to the site name from mSupply (i.e. `remote`)
+    - Start the server: from the `server` root, run `cargo run`
+    - This should sync with your mSupply instance, and make the omSupply server available for local use
+  - Via the UI (this may be the easier option when you are switching between different APIs):
+    - Start the server: from the `server` root, run `cargo run`
+    - Start the UI: from the `client` root, run `yarn start-local`
+    - You should see an initialisation screen - enter the site details from mSupply
+
 - After this initial sync, you generally shouldn't need mSupply running to run omSupply
 
 ### OR: Run without mSupply central
