@@ -21,7 +21,6 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
-    // add optional database path
     pub database_path: Option<String>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,

@@ -121,8 +121,6 @@ pub(crate) async fn setup_with_version(
 }
 
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
-    println!("3 $+######################");
-
     let connection_manager =
         ConnectionManager::<DBBackendConnection>::new(&db_settings.database_path());
     const SQLITE_LOCKWAIT_MS: u32 = 10 * 1000; // 10 second wait for test lock timeout
@@ -137,8 +135,8 @@ fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManage
 }
 
 fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> StorageConnectionManager {
+    //
     let db_path = db_settings.database_path();
-    println!("4 $+######################");
 
     // If not in-memory mode clean up and create test directory
     // (in in-memory mode the db_path starts with "file:")
@@ -146,20 +144,10 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
         // remove existing db file
         fs::remove_file(&db_path).ok();
         // create parent dirs
-        let path = Path::new(&db_path);
-        let prefix = path.parent().unwrap();
-        println!("prefix ###################: {:?}", prefix.clone());
-        fs::create_dir_all(prefix).unwrap();
-    }
-
-    // create db dir if specified
-    // match &db_settings.database_path {
-    //     Some(db_prefix) => fs::create_dir_all(db_prefix),
-    //     None => (),
-    // };
-    if let Some(path) = &db_settings.database_path {
-        println!("creating path");
-        fs::create_dir_all(path);
+        // no longer required because parent dirs are always created in database_path() function
+        // let path = Path::new(&db_path);
+        // let prefix = path.parent().unwrap();
+        // fs::create_dir_all(prefix).unwrap();
     }
 
     let connection_manager = connection_manager(db_settings);
