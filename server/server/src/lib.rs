@@ -67,7 +67,6 @@ pub async fn start_server(
     );
 
     // INITIALISE DATABASE AND CONNECTION
-    println!("working at initialise");
     let connection_manager = get_storage_connection_manager(&settings.database);
     if let Some(init_sql) = &settings.database.full_init_sql() {
         connection_manager.execute(init_sql).unwrap();
