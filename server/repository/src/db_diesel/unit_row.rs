@@ -1,5 +1,5 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -66,5 +66,35 @@ impl<'a> UnitRowRepository<'a> {
     pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(unit.filter(id.eq(unit_id))).execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UnitRowDelete(pub String);
+// TODO soft delete
+impl Delete for UnitRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UnitRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UnitRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for UnitRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UnitRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UnitRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

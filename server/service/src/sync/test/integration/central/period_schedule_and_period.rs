@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::{PeriodRow, PeriodScheduleRow};
 
@@ -74,12 +74,12 @@ impl SyncRecordTester for PeriodScheduleAndPeriodTester {
                 "period": [period_1_json, period_2_json]
             }),
             central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::PeriodSchedule(period_schedule_1.clone()),
-                PullUpsertRecord::PeriodSchedule(period_schedule_2),
-                PullUpsertRecord::Period(period_1.clone()),
-                PullUpsertRecord::Period(period_2),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(period_schedule_1),
+                IntegrationOperation::upsert(period_schedule_2),
+                IntegrationOperation::upsert(period_1),
+                IntegrationOperation::upsert(period_2),
+            ],
         });
 
         result

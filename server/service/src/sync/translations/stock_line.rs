@@ -1,6 +1,9 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    translations::{
+        item::ItemTranslation, location::LocationTranslation, name::NameTranslation,
+        store::StoreTranslation,
+    },
 };
 use chrono::NaiveDate;
 use repository::{
@@ -9,18 +12,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::ITEM_LINE;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::StockLine
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -49,30 +41,36 @@ pub struct LegacyStockLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string", rename = "barcodeID")]
     pub barcode_id: Option<String>,
 }
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(StockLineTranslation)
+}
 
-pub(crate) struct StockLineTranslation {}
+pub(super) struct StockLineTranslation;
 impl SyncTranslation for StockLineTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::ITEM_LINE,
-            dependencies: vec![
-                LegacyTableName::ITEM,
-                LegacyTableName::STORE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::NAME,
-            ],
-        }
+    fn table_name(&self) -> &'static str {
+        "item_line"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            ItemTranslation.table_name(),
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            LocationTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::StockLine)
     }
 
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
         let result = StockLineRow {
@@ -93,20 +91,14 @@ impl SyncTranslation for StockLineTranslation {
             barcode_id: data.barcode_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::StockLine(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
     fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let StockLineRow {
             id,
             item_id,
@@ -143,22 +135,19 @@ impl SyncTranslation for StockLineTranslation {
             barcode_id,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
     fn try_translate_push_delete(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -176,6 +165,7 @@ mod tests {
             setup_all("test_stock_line_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.match_pull(&record.sync_buffer_row));
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
                 .unwrap();

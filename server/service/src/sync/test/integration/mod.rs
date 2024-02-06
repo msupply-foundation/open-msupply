@@ -9,9 +9,7 @@ use self::central_server_configurations::NewSiteProperties;
 use crate::{
     service_provider::ServiceProvider,
     sync::{
-        settings::SyncSettings,
-        synchroniser::Synchroniser,
-        translations::{IntegrationRecords, PullDeleteRecord},
+        settings::SyncSettings, synchroniser::Synchroniser, translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
@@ -66,16 +64,7 @@ async fn init_test_context(
 struct TestStepData {
     central_upsert: serde_json::Value,
     central_delete: serde_json::Value,
-    integration_records: IntegrationRecords,
-}
-
-impl IntegrationRecords {
-    fn from_deletes(rows: Vec<PullDeleteRecord>) -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: Vec::new(),
-            deletes: rows,
-        }
-    }
+    integration_records: Vec<IntegrationOperation>,
 }
 
 trait SyncRecordTester {

@@ -1,6 +1,6 @@
 use super::{clinician_row::clinician, StorageConnection};
 
-use crate::RepositoryError;
+use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
@@ -107,6 +107,22 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+pub struct ClinicianStoreJoinRowDelete(pub String);
+
+impl Upsert for ClinicianStoreJoinRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ClinicianStoreJoinRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

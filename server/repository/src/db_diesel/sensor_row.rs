@@ -3,7 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -22,14 +22,6 @@ table! {
         is_active -> Bool,
         last_connection_datetime -> Nullable<Timestamp>,
         #[sql_name = "type"] type_ -> crate::db_diesel::sensor_row::SensorTypeMapping,
-    }
-}
-
-table! {
-    #[sql_name = "sensor"]
-    sensor_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
     }
 }
 
@@ -133,5 +125,19 @@ impl<'a> SensorRowRepository<'a> {
         Ok(sensor_dsl::sensor
             .filter(sensor_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)
+    }
+}
+
+impl Upsert for SensorRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        SensorRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            SensorRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

@@ -1,9 +1,8 @@
 use repository::MasterListRow;
 
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
-};
+use crate::sync::test::TestSyncPullRecord;
+
+const TABLE_NAME: &'static str = "list_master";
 
 const MASTER_LIST_1: (&'static str, &'static str) = (
     "87027C44835B48E6989376F42A58F7EA",
@@ -21,7 +20,7 @@ const MASTER_LIST_1: (&'static str, &'static str) = (
     "isPatientList": false,
     "is_hiv": false,
     "isSupplierHubCatalog": false,
-    "inactive": false
+    "inactive": true
 }"#,
 );
 
@@ -48,26 +47,26 @@ const MASTER_LIST_2: (&'static str, &'static str) = (
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::LIST_MASTER,
+            TABLE_NAME,
             MASTER_LIST_1,
-            PullUpsertRecord::MasterList(MasterListRow {
+            MasterListRow {
                 id: MASTER_LIST_1.0.to_owned(),
                 name: "District Store".to_owned(),
                 code: "".to_owned(),
                 description: "note 1".to_owned(),
-                is_active: true,
-            }),
+                is_active: false,
+            },
         ),
         TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::LIST_MASTER,
+            TABLE_NAME,
             MASTER_LIST_2,
-            PullUpsertRecord::MasterList(MasterListRow {
+            MasterListRow {
                 id: MASTER_LIST_2.0.to_owned(),
                 name: "District Store 2".to_owned(),
                 code: "".to_owned(),
                 description: "note 2".to_owned(),
                 is_active: true,
-            }),
+            },
         ),
     ]
 }

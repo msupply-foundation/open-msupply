@@ -1,7 +1,7 @@
 use repository::{
     Document, DocumentRegistryCategory, DocumentRegistryFilter, DocumentRegistryRepository,
     DocumentRepository, EncounterFilter, EncounterRepository, EqualFilter, ProgramFilter,
-    ProgramRepository, RepositoryError, StorageConnection,
+    ProgramRepository, RepositoryError, StorageConnection, Upsert,
 };
 
 use crate::{
@@ -16,8 +16,23 @@ use crate::{
         program_enrolment::program_schema::SchemaProgramEnrolment,
     },
 };
+#[derive(Debug)]
+pub(crate) struct DocumentUpsert(pub(crate) Document);
 
-pub(crate) fn sync_upsert_document(
+impl Upsert for DocumentUpsert {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        sync_upsert_document(con, &self.0)
+    }
+
+    fn assert_upserted(&self, con: &StorageConnection) {
+      assert_eq!(
+          DocumentRepository::new(con).find_one_by_id(&self.0.id),
+          Ok(Some(self.0.clone()))
+      );
+    }
+}
+
+fn sync_upsert_document(
     con: &StorageConnection,
     document: &Document,
 ) -> Result<(), RepositoryError> {
