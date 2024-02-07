@@ -53,21 +53,21 @@ sudo apt install make gcc pkg-config libavahi-compat-libdnssd-dev libpq-dev
 
 Remote server data is configured through mSupply central server, when the app first starts it's expected to initialise from mSupply.
 
-### Set up omSupply remote site in mSupply
+### Set up Open mSupply remote site in mSupply
 
 - Ensure you have mSupply set up locally
 - In Admin > Preferences > General, ensure `Synchronisation is active` is selected
 - In Special > Synchronisation
   - Open (or create) the site for our Open mSupply instance
   - Does it have a hardware ID already? If so, refresh the hardware ID so it doesn't have one.
-- Initialise your omSupply instance - you can do this two ways:
+- Initialise your Open mSupply instance - you can do this two ways:
   - Via the UI (this may be the easier option when you are switching between different APIs):
     - After starting the server & client, you should see an initialisation screen
     - Enter the site details from mSupply
   - Via YAML configuration:
     - In your Open mSupply repo, under `server/configuration` copy the `example.yaml` to `local.yaml`, and uncomment the contents of the file. Under the `sync` config, ensure the `username` is set to the site name from mSupply (i.e. `remote`)
-    - Your omSupply instance should sync with mSupply automatically when you start the server
-- After the initial sync, you generally shouldn't need mSupply running to run omSupply
+    - Your Open mSupply instance should sync with mSupply automatically when you start the server
+- After the initial sync, you generally shouldn't need mSupply running to run Open mSupply
 
 ### OR: Run without mSupply central
 
@@ -241,7 +241,7 @@ By default remote-server limits Cross-Origin Resource Sharing to the origins con
 This is a security mechanism to reduce the risk of a malicious site accessing an authenticated connection with mSupply.
 Rust enforces the allowed origins in requests, even if the browser doesn't, by returning a 400 error when the Origin isn't specified in a request, or if doesn't match one of origins configured in cors_origins.
 
-Set the cors_origins section of the yaml to include any URLs you want to access omSupply's GraphQL API from this includes the url for the omsupply-client you are using.
+Set the cors_origins section of the yaml to include any URLs you want to access Open mSupply's GraphQL API from this includes the url for the omsupply-client you are using.
 e.g. local.yaml
 
 ```
