@@ -100,44 +100,42 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
   }, [addEventListener, removeEventListener]);
 
   return (
-    <>
-      <Modal
-        width={700}
-        height={575}
-        slideAnimation={false}
-        title={t('title.stock-line-details')}
-        okButton={
-          <DialogButton
-            variant="ok"
-            disabled={ObjUtils.isEqual(draft, stockLine) && !hasChanged}
-            onClick={() =>
-              getConfirmation({
-                onConfirm: async () => {
-                  await onSave();
-                  dispatchEvent('onSaveStockEditForm', new Event(draft.id));
-                  onClose();
-                },
-              })
-            }
-          />
-        }
-        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+    <Modal
+      width={700}
+      height={575}
+      slideAnimation={false}
+      title={t('title.stock-line-details')}
+      okButton={
+        <DialogButton
+          variant="ok"
+          disabled={ObjUtils.isEqual(draft, stockLine) && !hasChanged}
+          onClick={() =>
+            getConfirmation({
+              onConfirm: async () => {
+                await onSave();
+                dispatchEvent('onSaveStockEditForm', new Event(draft.id));
+                onClose();
+              },
+            })
+          }
+        />
+      }
+      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
+    >
+      <Grid
+        container
+        paddingBottom={4}
+        alignItems="center"
+        flexDirection="column"
       >
-        <Grid
-          container
-          paddingBottom={4}
-          alignItems="center"
-          flexDirection="column"
-        >
-          <Typography sx={{ fontWeight: 'bold' }} variant="h6">
-            {stockLine.item.name}
-          </Typography>
-          <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-            {`${t('label.code')} : ${stockLine.item.code}`}
-          </Typography>
-          <ModalTabs tabs={tabs} />
-        </Grid>
-      </Modal>
-    </>
+        <Typography sx={{ fontWeight: 'bold' }} variant="h6">
+          {stockLine.item.name}
+        </Typography>
+        <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+          {`${t('label.code')} : ${stockLine.item.code}`}
+        </Typography>
+        <ModalTabs tabs={tabs} />
+      </Grid>
+    </Modal>
   );
 };
