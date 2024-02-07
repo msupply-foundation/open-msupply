@@ -96,13 +96,15 @@ export const useUrlQueryParams = ({
     filters.reduce<FilterByWithBoolean>((prev, filter) => {
       const filterValue = getFilterValue(urlQuery, filter.key);
       if (filterValue === undefined) return prev;
+      // create a new object to prevent mutating the existing filter
+      const f = { ...filter };
 
-      const [key, nestedKey] = filter.key.split(NESTED_SPLIT_CHAR);
-      if (filter.key.includes(NESTED_SPLIT_CHAR)) {
-        filter.key = key ?? '';
+      const [key, nestedKey] = f.key.split(NESTED_SPLIT_CHAR);
+      if (f.key.includes(NESTED_SPLIT_CHAR)) {
+        f.key = key ?? '';
       }
 
-      prev[filter.key] = getFilterEntry(filter, filterValue, nestedKey);
+      prev[f.key] = getFilterEntry(f, filterValue, nestedKey);
       return prev;
     }, {});
 
