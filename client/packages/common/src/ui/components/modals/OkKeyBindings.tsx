@@ -2,14 +2,17 @@ import React, { useEffect } from 'react';
 
 interface OkKeyBindingsProps {
   onOk: () => void;
-  onNext: () => void;
   okDisabled: boolean;
-  nextDisabled: boolean;
+  onNext?: () => void;
+  nextDisabled?: boolean;
 }
-
-// adds a key down event listener to the current window
-// - [Enter] calls the onNext callback
-// - key combination of [CTRL+Enter] calls the onOk callback
+/**
+ * Adds a key down event listener to the current window
+ * - [Enter] calls the onNext callback
+ * - key combination of [CTRL+Enter] calls the onOk callback
+ *
+ * If onNext is not provided, the onOk callback is called on [Enter]
+ */
 export function OkKeyBindings({
   nextDisabled,
   okDisabled,
@@ -19,12 +22,22 @@ export function OkKeyBindings({
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
-        if (e.ctrlKey && !okDisabled) {
-          e.preventDefault();
-          onOk();
-        } else if (!nextDisabled) {
-          e.preventDefault();
-          onNext();
+        // if there is no onNext callback, the onOk callback is called on Enter
+        if (!onNext) {
+          if (!okDisabled) {
+            e.preventDefault();
+            onOk();
+          }
+          // if there is an onNext callback, the onOk callback is called on [CTRL+Enter]
+        } else {
+          if (e.ctrlKey && !okDisabled) {
+            e.preventDefault();
+            onOk();
+            // and the onNext callback is called on Enter
+          } else if (!nextDisabled) {
+            e.preventDefault();
+            onNext();
+          }
         }
       }
     };
