@@ -7,6 +7,7 @@ use anyhow::Context;
 use chrono::NaiveDateTime;
 use log::error;
 use mime_guess::mime;
+use openssl::error;
 use repository::RepositoryError;
 use service::{
     auth_data::AuthData,
@@ -51,8 +52,18 @@ pub async fn put_logs(
 
     let results = match upsert_temperature_logs(service_provider, store_id, logs).await {
         Ok(response) => response,
-        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        Err(error) => {
+            error!("Error inserting temperature logs {:#?}", error);
+            return HttpResponse::InternalServerError().body(format!("{:#?}", error));
+        }
     };
+
+    for result in &results {
+        if let Err(e) = result {
+            error!("Error inserting temperature log {:#?}", e);
+            // TODO: Should we return an HTTP error here?
+        }
+    }
 
     HttpResponse::Ok()
         .append_header(header::ContentType(mime::APPLICATION_JSON))
