@@ -31,12 +31,12 @@ impl SyncRecordTester for MasterListTester {
         let master_list_name_join_row1 = MasterListNameJoinRow {
             id: uuid(),
             master_list_id: master_list_row1.id.clone(),
-            name_id: new_site_properties.name_id.clone(),
+            name_link_id: new_site_properties.name_id.clone(),
         };
         let master_list_name_join_json1 = json!({
             "ID": master_list_name_join_row1.id,
             "list_master_ID":  master_list_name_join_row1.master_list_id,
-            "name_ID": master_list_name_join_row1.name_id,
+            "name_ID": master_list_name_join_row1.name_link_id,
         });
 
         let master_list_row2 = MasterListRow {
@@ -56,24 +56,24 @@ impl SyncRecordTester for MasterListTester {
         let master_list_name_join_row2 = MasterListNameJoinRow {
             id: uuid(),
             master_list_id: master_list_row2.id.clone(),
-            name_id: new_site_properties.name_id.clone(),
+            name_link_id: new_site_properties.name_id.clone(),
         };
         let master_list_name_join_json2 = json!({
             "ID": master_list_name_join_row2.id,
             "list_master_ID":  master_list_name_join_row2.master_list_id,
-            "name_ID": master_list_name_join_row2.name_id,
+            "name_ID": master_list_name_join_row2.name_link_id,
         });
 
         let item_id = uuid();
         let master_list_line_row = MasterListLineRow {
             id: uuid(),
-            item_id: item_id.clone(),
+            item_link_id: item_id.clone(),
             master_list_id: master_list_row1.id.clone(),
         };
         let master_list_line_json = json!({
             "ID": master_list_line_row.id,
             "item_master_ID": master_list_line_row.master_list_id,
-            "item_ID":  master_list_line_row.item_id,
+            "item_ID":  master_list_line_row.item_link_id,
         });
 
         result.push(TestStepData {
