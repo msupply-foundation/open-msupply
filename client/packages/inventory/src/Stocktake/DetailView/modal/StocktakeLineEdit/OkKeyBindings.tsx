@@ -8,8 +8,8 @@ interface OkKeybindingsProps {
 }
 
 // adds a key down event listener to the current window
-// - key combination of [CTRL+Enter] calls the onNext callback
-// - key combination of [CTRL+Shift+Enter] calls the onOk callback
+// - [Enter] calls the onNext callback
+// - key combination of [CTRL+Enter] calls the onOk callback
 export function OkKeybindings({
   nextDisabled,
   okDisabled,
@@ -18,8 +18,8 @@ export function OkKeybindings({
 }: OkKeybindingsProps) {
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === 'Enter') {
-        if (!okDisabled && e.shiftKey) {
+      if (e.key === 'Enter') {
+        if (e.ctrlKey && !okDisabled) {
           e.preventDefault();
           onOk();
         } else if (!nextDisabled) {
