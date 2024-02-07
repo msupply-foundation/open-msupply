@@ -24,6 +24,7 @@ export function OkKeyBindings({
 
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
+      // TODO: this isn't working because open is set to false before keybindings is called (but we can't useCapture bc we need cancel buttons to run first!)
       // if confirmation modal is open, do not call any callbacks
       if (confirmationModalOpen) return;
       if (e.key === 'Enter') {
@@ -48,8 +49,8 @@ export function OkKeyBindings({
       }
     };
 
-    window.addEventListener('keydown', keybindings, true); // true runs the handler in the capture phase - before any other event handlers (usually using bubbling phase)
-    return () => window.removeEventListener('keydown', keybindings, true);
+    window.addEventListener('keydown', keybindings);
+    return () => window.removeEventListener('keydown', keybindings);
   }, [onNext, onOk, nextDisabled, okDisabled, confirmationModalOpen]);
 
   return <></>;

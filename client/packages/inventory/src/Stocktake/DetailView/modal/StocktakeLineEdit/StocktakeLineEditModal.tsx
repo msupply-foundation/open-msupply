@@ -5,7 +5,6 @@ import {
   ModalMode,
   DialogButton,
   useKeyboardHeightAdjustment,
-  OkKeyBindings,
 } from '@openmsupply-client/common';
 
 interface StocktakeLineEditModalProps {
@@ -47,16 +46,9 @@ export const StocktakeLineEditModal: FC<
       }
       height={height}
       width={1024}
+      enableOkKeyBindings
     >
-      <>
-        <OkKeyBindings
-          onOk={onOk}
-          onNext={onNext}
-          okDisabled={!isValid}
-          nextDisabled={nextDisabled}
-        />
-        {children}
-      </>
+      <>{children}</>
     </Modal>
   );
 };
