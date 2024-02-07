@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 
-interface OkKeyBindingsProps {
-  onOk: () => void;
-  okDisabled: boolean;
+export interface OkKeyBindingsProps {
+  onOk?: () => void;
+  okDisabled?: boolean;
   onNext?: () => void;
   nextDisabled?: boolean;
 }
@@ -22,15 +22,16 @@ export function OkKeyBindings({
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
-        // if there is no onNext callback, the onOk callback is called on Enter
+        // if there is no onNext callback
         if (!onNext) {
-          if (!okDisabled) {
+          // and there is an onOk callback, onOk is called on Enter
+          if (!!onOk && !okDisabled) {
             e.preventDefault();
             onOk();
           }
-          // if there is an onNext callback, the onOk callback is called on [CTRL+Enter]
+          // if there is an onNext callback, the onOk callback (if present) is called on [CTRL+Enter]
         } else {
-          if (e.ctrlKey && !okDisabled) {
+          if (e.ctrlKey && !!onOk && !okDisabled) {
             e.preventDefault();
             onOk();
             // and the onNext callback is called on Enter
