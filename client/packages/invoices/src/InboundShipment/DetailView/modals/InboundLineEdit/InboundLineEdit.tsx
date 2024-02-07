@@ -163,6 +163,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         }
         height={height}
         width={1024}
+        enableOkKeyBindings
       >
         {isLoading ? (
           <BasicSpinner messageKey="saving" />

@@ -9,7 +9,6 @@ import {
   Fade,
   NothingHere,
   useUrlQueryParams,
-  OkKeyBindings,
 } from '@openmsupply-client/common';
 import { TransitionProps } from '@mui/material/transitions';
 import { DetailModal } from '../DetailModal';
@@ -78,11 +77,9 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         slideAnimation={false}
         Transition={Transition}
+        enableOkKeyBindings
       >
-        <>
-          <OkKeyBindings onOk={hideDialog} okDisabled={false} />
-          <DetailModal nameId={selectedId} />
-        </>
+        <DetailModal nameId={selectedId} />
       </Modal>
     </>
   );

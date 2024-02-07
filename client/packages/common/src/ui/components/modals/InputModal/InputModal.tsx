@@ -44,6 +44,7 @@ export const InputModal = ({
           }}
         />
       }
+      enableOkKeyBindings
     >
       <Box flex={1} display="flex" justifyContent="center" marginTop="30px">
         {!loading ? (
