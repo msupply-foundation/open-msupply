@@ -13,3 +13,4 @@ export * from './Encounter';
 export * from './Clinician';
 export * from './ContactTrace';
 export * from './Log';
+export * from './Currency';
