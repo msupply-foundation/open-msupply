@@ -1,27 +1,27 @@
 import React, { FC, useState } from 'react';
-import { useIsMediumScreen } from '@common/hooks';
-import {
-  TabContext,
-  TabKeybindings,
-  TabList,
-  ButtonWithIcon,
-} from '@common/components';
-import { PlusCircleIcon } from '@common/icons';
 import {
   Box,
   Tab,
   TableContainer,
+  PlusCircleIcon,
   useTranslation,
+  TabContext,
+  TabKeybindings,
+  TabList,
+  ButtonWithIcon,
+  useIsMediumScreen,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
+import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
   draftLines: DraftInboundLine[];
   isDisabled: boolean;
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  currency?: CurrencyRowFragment | null;
 }
 
 enum Tabs {
@@ -35,6 +35,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
   draftLines,
   isDisabled,
   updateDraftLine,
+  currency,
 }) => {
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
@@ -111,6 +112,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
+            currency={currency}
           />
         </InboundLineEditPanel>
 

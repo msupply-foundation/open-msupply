@@ -47,7 +47,7 @@ export const useOutboundLineEditColumns = ({
       [
         'sellPricePerPack',
         {
-          Cell: CurrencyCell,
+          Cell: CurrencyCell({}),
           formatter: sellPrice => c(Number(sellPrice)).format(),
           width: 120,
         },
