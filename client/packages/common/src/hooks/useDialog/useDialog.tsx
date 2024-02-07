@@ -3,7 +3,12 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
-import { BasicModal, ModalTitle } from '@common/components';
+import {
+  BasicModal,
+  ModalTitle,
+  OkKeyBindings,
+  OkKeyBindingsProps,
+} from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
 
@@ -21,6 +26,7 @@ export interface ModalProps {
   height?: number;
   nextButton?: React.ReactElement<{
     onClick: () => Promise<boolean>;
+    disabled?: boolean;
   }>;
   slideAnimation?: boolean;
   Transition?: React.ForwardRefExoticComponent<
@@ -35,6 +41,7 @@ export interface ModalProps {
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
+  enableOkKeyBindings?: boolean;
 }
 
 export interface DialogProps {
@@ -140,6 +147,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     contentProps,
     slideAnimation = true,
     Transition,
+    enableOkKeyBindings,
     sx = {},
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -149,9 +157,14 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
 
+    const okKeyBindingsProps: OkKeyBindingsProps = {};
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
+
     if (nextButton) {
-      const { onClick, ...restOfNextButtonProps } = nextButton.props;
+      const { onClick, disabled, ...restOfNextButtonProps } = nextButton.props;
+
+      okKeyBindingsProps.onNext = onClick;
+      okKeyBindingsProps.nextDisabled = disabled;
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
@@ -163,8 +176,16 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
               return result;
             }
           : onClick,
+        disabled,
         ...restOfNextButtonProps,
       });
+    }
+
+    if (okButton) {
+      const { onClick, disabled } = okButton.props;
+
+      okKeyBindingsProps.onOk = onClick;
+      okKeyBindingsProps.okDisabled = disabled;
     }
 
     const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
@@ -203,6 +224,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             marginTop: '30px',
           }}
         >
+          {enableOkKeyBindings && <OkKeyBindings {...okKeyBindingsProps} />}
           {cancelButton}
           {saveButton}
           {copyButton}
