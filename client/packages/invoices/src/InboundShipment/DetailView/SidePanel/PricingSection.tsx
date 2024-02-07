@@ -13,23 +13,32 @@ import {
   Formatter,
   PricingUtils,
   InvoiceLineNodeType,
+  Currencies,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { InboundServiceLineEdit, TaxEdit } from '../modals';
+import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const PricingSectionComponent = () => {
   const t = useTranslation('replenishment');
   const isDisabled = useInbound.utils.isDisabled();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
+  const { store } = useAuthContext();
 
-  const { pricing, lines, taxPercentage, update } = useInbound.document.fields([
-    'pricing',
-    'lines',
-    'taxPercentage',
-  ]);
+  const { pricing, lines, taxPercentage, currency, update } =
+    useInbound.document.fields([
+      'pricing',
+      'lines',
+      'taxPercentage',
+      'currency',
+    ]);
   const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
+  const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
+  const storeIssuesInForeignCurrency =
+    store?.preferences.issueInForeignCurrency;
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -122,6 +131,39 @@ export const PricingSectionComponent = () => {
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>
           <PanelField>{c(pricing.serviceTotalAfterTax).format()}</PanelField>
+        </PanelRow>
+        <PanelRow style={{ marginTop: 12 }}>
+          <PanelLabel fontWeight="bold">
+            {t('heading.foreign-currency')}
+          </PanelLabel>
+          <PanelField>
+            <CurrencyModal
+              onChange={value => {
+                update({
+                  currency: value,
+                  currencyRate: value?.rate,
+                });
+              }}
+              isDisabled={!storeIssuesInForeignCurrency}
+              currency={currency as CurrencyRowFragment}
+            />
+          </PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.code')}</PanelLabel>
+          <PanelField>{currency?.code ?? 1}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.rate')}</PanelLabel>
+          <PanelField>{currency?.rate ?? 1}</PanelField>
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('heading.total')}</PanelLabel>
+          <PanelField>
+            {foreignCurrency(
+              pricing.foreignCurrencyTotalAfterTax ?? 0
+            ).format()}
+          </PanelField>
         </PanelRow>
         <PanelRow style={{ marginTop: 12 }}>
           <PanelLabel fontWeight="bold">{t('heading.grand-total')}</PanelLabel>
