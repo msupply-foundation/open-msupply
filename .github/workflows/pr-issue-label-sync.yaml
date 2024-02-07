@@ -1,0 +1,126 @@
+name: Sync labels from linked issue to PR
+on:
+  pull_request_target:
+    types: [opened, reopened, edited]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.debug(`where the PR? ${context.repo.repo} ${context.repo.owner} ${context.issue.number}`);
+            let x = 1
+            const pullRequestResult = await github.graphql(`
+              query($owner: String!, $repo: String!, $number: Int!) {
+                repository(name: $repo, owner: $owner) {
+                  pullRequest(number: $number) {
+                    id
+                    body
+                    labels (first: 100){
+                      nodes {
+                        id
+                      }
+                    }
+                    closingIssuesReferences(first: 1) {
+                      nodes {
+                        labels(first: 100) {
+                          nodes {
+                            id
+                          }
+                        }
+                        milestone {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              number: context.issue.number
+            })
+
+            core.debug(pullRequestResult)
+
+            const pullRequest = pullRequestResult.repository.pullRequest
+
+            let issue = pullRequest.closingIssuesReferences.nodes[0]
+
+            if (!issue) {
+              const regex = new RegExp(/#(\d+)/);
+              const issueNumber = Number(pullRequest.body.match(regex)[1])
+
+              if  (!issueNumber) {
+                throw new Error('No associated issue found for this pull request. Not even in the body!')
+              }
+
+              const issueResult = await github.graphql(`
+                query ($repo: String!, $owner: String!, $number: Int!) {
+                  repository(name: $repo, owner: $owner) {
+                    issue(number: $number) {
+                      labels(first: 100) {
+                        nodes {
+                          id
+                        }
+                      }
+                      milestone {
+                        id
+                      }
+                    }
+                  }
+                }
+              `, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                number: issueNumber
+              })
+
+              core.debug(issueResult)
+              issue = issueResult.repository.issue
+
+              if (!issue) {
+                throw new Error('No associated issue found for this pull request. There was a match in the description, but not to an issue: ${issueNumber}')
+              }
+            }
+
+            core.debug(issue)
+
+            core.debug(x++)
+            const pullRequestId = pullRequest.id
+            core.debug(x++)
+            const pullRequestLabelIds = pullRequest.labels.nodes.map(label => label.id)
+            core.debug(x++)
+            const issueLabelIds = issue.labels.nodes.map(label => label.id)
+            core.debug(x++)
+            const labelIds = issueLabelIds.concat(pullRequestLabelIds)
+            core.debug(x++)
+            const milestoneId = issue.milestone && issue.milestone.id // Linked issue might not have a milestone
+            core.debug(x++)
+
+            const mutationResult = await github.graphql(`
+              mutation($labelIds: [ID!] = "", $pullRequestId: ID!, $milestoneId: ID = "") {
+                updatePullRequest(
+                  input: {pullRequestId: $pullRequestId, labelIds: $labelIds, milestoneId: $milestoneId}
+                ) {
+                  clientMutationId
+                  # pullRequest {
+                  #   labels(first: 100) {
+                  #     nodes {
+                  #       name
+                  #     }
+                  #   }
+                  #   milestone {
+                  #     title
+                  #   }
+                  # }
+                }
+              }
+            `, {
+              pullRequestId,
+              labelIds,
+              milestoneId
+            })
