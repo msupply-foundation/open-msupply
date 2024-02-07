@@ -61,7 +61,7 @@ pub async fn put_logs(
     for result in &results {
         if let Err(e) = result {
             error!("Error inserting temperature log {:#?}", e);
-            // TODO: Should we return an HTTP error here?
+            return HttpResponse::InternalServerError().body(format!("{:#?}", e));
         }
     }
 
