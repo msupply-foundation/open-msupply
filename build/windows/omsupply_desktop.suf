@@ -2027,7 +2027,7 @@ end
 <OverwriteCtrlPanel>1</OverwriteCtrlPanel>
 <OverwriteSC>1</OverwriteSC>
 <CreateCPEntry>1</CreateCPEntry>
-<RegKeyName>%ProductName%%ProductVer%</RegKeyName>
+<RegKeyName>%ProductName%</RegKeyName>
 <CPDesc>%ProductName%</CPDesc>
 <UseCustomCPIcon>0</UseCustomCPIcon>
 <CustCPIconFN/>
@@ -3088,6 +3088,11 @@ if Registry.DoesKeyExist(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop") then
 	omSupplyDesktopPath = Registry.GetValue(HKEY_LOCAL_MACHINE, "Software\\omSupply Desktop", "Path", true);
 	if File.DoesExist(omSupplyDesktopPath) then
 		hasOmsupplyDesktopInstalled = true;
+		local index = String.ReverseFind(omSupplyDesktopPath, "\\");
+		if index ~= -1 then
+			omSupplyDesktopPath = String.Left(omSupplyDesktopPath, index-1)
+			SessionVar.Set("%AppFolder%", omSupplyDesktopPath);
+		end
 	end
 end
 

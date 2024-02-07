@@ -34,6 +34,7 @@ const CONNECTION_TIMEOUT_SEC: u64 = 10;
 #[derive(Debug)]
 pub enum FetchUserError {
     Unauthenticated,
+    AccountBlocked(u64),
     ConnectionError(String),
     InternalError(String),
 }
@@ -46,9 +47,17 @@ pub enum UpdateUserError {
 pub struct LoginService {}
 
 #[derive(Debug)]
+pub enum LoginFailure {
+    /// Either user does not exit or wrong password
+    InvalidCredentials,
+    /// User account is blocked due to too many failed login attempts
+    AccountBlocked(u64),
+}
+
+#[derive(Debug)]
 pub enum LoginError {
     /// Either user does not exit or wrong password
-    LoginFailure,
+    LoginFailure(LoginFailure),
     FailedToGenerateToken(JWTIssuingError),
     FetchUserError(FetchUserError),
     UpdateUserError(UpdateUserError),
@@ -113,7 +122,14 @@ impl LoginService {
                     .map_err(|e| LoginError::UpdateUserError(e))?;
             }
             Err(err) => match err {
-                FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
+                FetchUserError::Unauthenticated => {
+                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                }
+                FetchUserError::AccountBlocked(timeout_remaining) => {
+                    return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
+                        timeout_remaining,
+                    )))
+                }
                 FetchUserError::ConnectionError(_) => info!("{:?}", err),
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
@@ -124,8 +140,12 @@ impl LoginService {
             Ok(user) => user,
             Err(err) => {
                 return Err(match err {
-                    VerifyPasswordError::UsernameDoesNotExist => LoginError::LoginFailure,
-                    VerifyPasswordError::InvalidCredentials => LoginError::LoginFailure,
+                    VerifyPasswordError::UsernameDoesNotExist => {
+                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                    }
+                    VerifyPasswordError::InvalidCredentials => {
+                        LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                    }
                     VerifyPasswordError::InvalidCredentialsBackend(_) => {
                         LoginError::InternalError("Failed to read credentials".to_string())
                     }
@@ -193,9 +213,18 @@ impl LoginService {
                 LoginV4Error::Unauthorised => {
                     return Err(FetchUserError::Unauthenticated);
                 }
+                LoginV4Error::AccountBlocked(timeout_remaining) => {
+                    return Err(FetchUserError::AccountBlocked(timeout_remaining));
+                }
                 LoginV4Error::ConnectionError(_) => {
                     return Err(FetchUserError::ConnectionError(format!(
                         "Failed to reach the central server to fetch data for {}: {:?}",
+                        username, err
+                    )))
+                }
+                LoginV4Error::ParseError(_) => {
+                    return Err(FetchUserError::InternalError(format!(
+                        "Failed to parse central server response for {}: {:?}",
                         username, err
                     )))
                 }
@@ -428,7 +457,7 @@ mod test {
     use crate::{
         apis::login_v4::LoginResponseV4,
         auth_data::AuthData,
-        login::{LoginError, LoginInput},
+        login::{LoginError, LoginFailure, LoginInput},
         login_mock_data::LOGIN_V4_RESPONSE_1,
         service_provider::ServiceProvider,
         token_bucket::TokenBucket,
@@ -517,7 +546,10 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::LoginFailure));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
         // Old password should still work in offline mode or if central return an error
         {
@@ -565,7 +597,10 @@ mod test {
             )
             .await;
 
-            assert_matches!(result, Err(LoginError::LoginFailure));
+            assert_matches!(
+                result,
+                Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+            );
         }
         // If central server is not accessible after trying to login with old password, make sure old password does not work
         // Issue #1101 in remote-server: Extra login protection when user password has changed
