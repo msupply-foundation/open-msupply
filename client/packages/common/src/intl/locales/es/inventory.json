@@ -5,7 +5,7 @@
   "label.location": "Ubicación",
   "label.suggested": "Sugerido",
   "label.supplier": "Proveedor",
-  "placeholder.enter-an-item-code-or-name": "Entre el código o el nombre del artículo",
+  "placeholder.enter-an-item-code-or-name": "Ingrese el código o el nombre del artículo",
   "messages.confirm-save-stock-line": "¿Desea guardar los cambios en esta línea de inventario? Todos los cambios se registrarán y podrán revisarse posteriormente desde esta pantalla.",
   "error.no-locations": "No hay ubicaciones para mostrar.",
   "error.no-stock": "No hay existencias para mostrar.",
