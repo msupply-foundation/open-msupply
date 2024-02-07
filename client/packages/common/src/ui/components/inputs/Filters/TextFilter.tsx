@@ -30,8 +30,7 @@ export const TextFilter: FC<{
 
   const handleChange = (newValue: string) => {
     setValue(newValue);
-    if (newValue === '') updateQuery({ [filterDefinition.urlParameter]: '' });
-    else debouncedOnChange(newValue);
+    debouncedOnChange(newValue);
   };
 
   return (
