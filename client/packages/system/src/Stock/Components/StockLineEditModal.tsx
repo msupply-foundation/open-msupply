@@ -11,6 +11,7 @@ import {
   usePluginEvents,
   usePluginElements,
   PluginEventListener,
+  OkKeyBindings,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useStock } from '../api';
 import { ActivityLogList } from '../../ActivityLog';
@@ -99,43 +100,46 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
     return () => removeEventListener(listener);
   }, [addEventListener, removeEventListener]);
 
+  const onOk = () =>
+    getConfirmation({
+      onConfirm: async () => {
+        await onSave();
+        dispatchEvent('onSaveStockEditForm', new Event(draft.id));
+        onClose();
+      },
+      onCancel: () => onClose(),
+    });
+
+  const okDisabled = ObjUtils.isEqual(draft, stockLine) && !hasChanged;
+
   return (
-    <Modal
-      width={700}
-      height={575}
-      slideAnimation={false}
-      title={t('title.stock-line-details')}
-      okButton={
-        <DialogButton
-          variant="ok"
-          disabled={ObjUtils.isEqual(draft, stockLine) && !hasChanged}
-          onClick={() =>
-            getConfirmation({
-              onConfirm: async () => {
-                await onSave();
-                dispatchEvent('onSaveStockEditForm', new Event(draft.id));
-                onClose();
-              },
-            })
-          }
-        />
-      }
-      cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-    >
-      <Grid
-        container
-        paddingBottom={4}
-        alignItems="center"
-        flexDirection="column"
+    <>
+      <OkKeyBindings onOk={onOk} okDisabled={okDisabled} />
+      <Modal
+        width={700}
+        height={575}
+        slideAnimation={false}
+        title={t('title.stock-line-details')}
+        okButton={
+          <DialogButton variant="ok" disabled={okDisabled} onClick={onOk} />
+        }
+        cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
       >
-        <Typography sx={{ fontWeight: 'bold' }} variant="h6">
-          {stockLine.item.name}
-        </Typography>
-        <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
-          {`${t('label.code')} : ${stockLine.item.code}`}
-        </Typography>
-        <ModalTabs tabs={tabs} />
-      </Grid>
-    </Modal>
+        <Grid
+          container
+          paddingBottom={4}
+          alignItems="center"
+          flexDirection="column"
+        >
+          <Typography sx={{ fontWeight: 'bold' }} variant="h6">
+            {stockLine.item.name}
+          </Typography>
+          <Typography sx={{ fontWeight: 'bold', marginBottom: 3 }}>
+            {`${t('label.code')} : ${stockLine.item.code}`}
+          </Typography>
+          <ModalTabs tabs={tabs} />
+        </Grid>
+      </Modal>
+    </>
   );
 };
