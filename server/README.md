@@ -61,17 +61,13 @@ Remote server data is configured through mSupply central server, when the app fi
   - Open (or create) the site for our Open mSupply instance
   - Does it have a hardware ID already? If so, refresh the hardware ID so it doesn't have one.
 - Initialise your omSupply instance - you can do this two ways:
-
+  - Via the UI (this may be the easier option when you are switching between different APIs):
+    - After starting the server & client, you should see an initialisation screen
+    - Enter the site details from mSupply
   - Via YAML configuration:
     - In your Open mSupply repo, under `server/configuration` copy the `example.yaml` to `local.yaml`, and uncomment the contents of the file. Under the `sync` config, ensure the `username` is set to the site name from mSupply (i.e. `remote`)
-    - Start the server: from the `server` root, run `cargo run`
-    - This should sync with your mSupply instance, and make the omSupply server available for local use
-  - Via the UI (this may be the easier option when you are switching between different APIs):
-    - Start the server: from the `server` root, run `cargo run`
-    - Start the UI: from the `client` root, run `yarn start-local`
-    - You should see an initialisation screen - enter the site details from mSupply
-
-- After this initial sync, you generally shouldn't need mSupply running to run omSupply
+    - Your omSupply instance should sync with mSupply automatically when you start the server
+- After the initial sync, you generally shouldn't need mSupply running to run omSupply
 
 ### OR: Run without mSupply central
 
@@ -90,13 +86,15 @@ cargo run --bin remote_server_cli -- initialise-from-export -n reference1
 
 Above will create sqlite database in root folder with the name specified in `configuration/*.yaml` and will populate it with data. Towards the end of console output of the cli command user:password list is presented (those users can be used to log in vi client/api)
 
+## Start the server
+
 Now we can start server with
 
 ```
 cargo run
 ```
 
-`NOTE` make sure that sync configurations in configuration/\*.yaml file is commented out, otherwise may get an error that database and yaml sync configurations differ (in which case remote server will try to contact central server)
+> NOTE: make sure that sync configurations in `configuration/*.yaml` files are commented out if running without mSupply Central, otherwise you may get an error stating that the database and yaml sync configurations differ (in which case, the remote server will try to contact central server)
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
 
