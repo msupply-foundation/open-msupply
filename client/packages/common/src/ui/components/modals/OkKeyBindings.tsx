@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 
-interface OkKeybindingsProps {
+interface OkKeyBindingsProps {
   onOk: () => void;
-  onNext: () => void; // TODO: needs to be optional?
+  onNext: () => void;
   okDisabled: boolean;
   nextDisabled: boolean;
 }
@@ -10,12 +10,12 @@ interface OkKeybindingsProps {
 // adds a key down event listener to the current window
 // - [Enter] calls the onNext callback
 // - key combination of [CTRL+Enter] calls the onOk callback
-export function OkKeybindings({
+export function OkKeyBindings({
   nextDisabled,
   okDisabled,
   onNext,
   onOk,
-}: OkKeybindingsProps) {
+}: OkKeyBindingsProps) {
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
