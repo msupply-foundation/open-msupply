@@ -28,8 +28,6 @@ export const StocktakeLineEditModal: FC<
   const t = useTranslation('inventory');
   const height = useKeyboardHeightAdjustment(600);
 
-  const nextDisabled = !isValid || (!hasNext && mode === ModalMode.Update);
-
   return (
     <Modal
       title={
@@ -39,7 +37,11 @@ export const StocktakeLineEditModal: FC<
       }
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
-        <DialogButton variant="next" onClick={onNext} disabled={nextDisabled} />
+        <DialogButton
+          variant="next"
+          onClick={onNext}
+          disabled={!isValid || (!hasNext && mode === ModalMode.Update)}
+        />
       }
       okButton={
         <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
