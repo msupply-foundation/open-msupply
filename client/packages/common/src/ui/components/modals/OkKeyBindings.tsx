@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { ConfirmationModalContext } from './ConfirmationModal';
 
 export interface OkKeyBindingsProps {
   onOk?: () => void;
@@ -19,8 +20,12 @@ export function OkKeyBindings({
   onNext,
   onOk,
 }: OkKeyBindingsProps) {
+  const { open: confirmationModalOpen } = useContext(ConfirmationModalContext);
+
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
+      // if confirmation modal is open, do not call any callbacks
+      if (confirmationModalOpen) return;
       if (e.key === 'Enter') {
         // if there is no onNext callback
         if (!onNext) {
@@ -43,9 +48,9 @@ export function OkKeyBindings({
       }
     };
 
-    window.addEventListener('keydown', keybindings);
-    return () => window.removeEventListener('keydown', keybindings);
-  }, [onNext, onOk, nextDisabled, okDisabled]);
+    window.addEventListener('keydown', keybindings, true); // true runs the handler in the capture phase - before any other event handlers (usually using bubbling phase)
+    return () => window.removeEventListener('keydown', keybindings, true);
+  }, [onNext, onOk, nextDisabled, okDisabled, confirmationModalOpen]);
 
   return <></>;
 }
