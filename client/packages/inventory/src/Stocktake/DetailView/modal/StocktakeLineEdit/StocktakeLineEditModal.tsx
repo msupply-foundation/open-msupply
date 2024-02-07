@@ -6,6 +6,7 @@ import {
   DialogButton,
   useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
+import { OkKeybindings } from './OkKeyBindings';
 
 interface StocktakeLineEditModalProps {
   isOpen: boolean;
@@ -28,6 +29,8 @@ export const StocktakeLineEditModal: FC<
   const t = useTranslation('inventory');
   const height = useKeyboardHeightAdjustment(600);
 
+  const nextDisabled = !isValid || (!hasNext && mode === ModalMode.Update);
+
   return (
     <Modal
       title={
@@ -37,11 +40,7 @@ export const StocktakeLineEditModal: FC<
       }
       cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
       nextButton={
-        <DialogButton
-          variant="next"
-          onClick={onNext}
-          disabled={(!hasNext && mode === ModalMode.Update) || !isValid}
-        />
+        <DialogButton variant="next" onClick={onNext} disabled={nextDisabled} />
       }
       okButton={
         <DialogButton variant="ok" onClick={onOk} disabled={!isValid} />
@@ -49,7 +48,15 @@ export const StocktakeLineEditModal: FC<
       height={height}
       width={1024}
     >
-      <>{children}</>
+      <>
+        <OkKeybindings
+          onOk={onOk}
+          onNext={onNext}
+          okDisabled={!isValid}
+          nextDisabled={nextDisabled}
+        />
+        {children}
+      </>
     </Modal>
   );
 };
