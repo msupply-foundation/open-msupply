@@ -93,10 +93,10 @@ For each step:
 - Upsert central data specified in TestData
 - Delete central data specified in TestData
 - Sync
-- Upsert/Delete (on remote server) ItegrationRecords in TestData
+- Upsert/Delete (on remote server) IntegrationRecords in TestData
 - Sync
 - Completely Re Sync
-- Check IntegratonRecords in TestData against database
+- Check IntegrationRecords in TestData against database
 
 # How do they work (Transfers)
 

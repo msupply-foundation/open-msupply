@@ -188,7 +188,7 @@ pub(crate) async fn check_records_against_database(
         use PullUpsertRecord::*;
         match upsert {
             UserPermission(record) => {
-                check_record_by_id!(UserPermissionRowRepository, con, record, "UserPermisson")
+                check_record_by_id!(UserPermissionRowRepository, con, record, "UserPermission")
             }
             Sensor(record) => {
                 check_record_by_id!(SensorRowRepository, con, record, "Sensor");
