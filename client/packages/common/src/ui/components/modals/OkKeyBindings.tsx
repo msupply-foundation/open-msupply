@@ -1,5 +1,4 @@
-import React, { useContext, useEffect } from 'react';
-import { ConfirmationModalContext } from './ConfirmationModal';
+import React, { useEffect } from 'react';
 
 export interface OkKeyBindingsProps {
   onOk?: () => void;
@@ -20,13 +19,8 @@ export function OkKeyBindings({
   onNext,
   onOk,
 }: OkKeyBindingsProps) {
-  const { open: confirmationModalOpen } = useContext(ConfirmationModalContext);
-
   useEffect(() => {
     const keybindings = (e: KeyboardEvent) => {
-      // TODO: this isn't working because open is set to false before keybindings is called (but we can't useCapture bc we need cancel buttons to run first!)
-      // if confirmation modal is open, do not call any callbacks
-      if (confirmationModalOpen) return;
       if (e.key === 'Enter') {
         // if there is no onNext callback
         if (!onNext) {
@@ -51,7 +45,7 @@ export function OkKeyBindings({
 
     window.addEventListener('keydown', keybindings);
     return () => window.removeEventListener('keydown', keybindings);
-  }, [onNext, onOk, nextDisabled, okDisabled, confirmationModalOpen]);
+  }, [onNext, onOk, nextDisabled, okDisabled]);
 
   return <></>;
 }
