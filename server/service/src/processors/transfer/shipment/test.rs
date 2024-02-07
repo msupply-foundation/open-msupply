@@ -103,7 +103,7 @@ async fn invoice_transfers() {
             let mut tester = ShipmentTransferTester::new(
                 &outbound_store,
                 &inbound_store,
-                &inbound_store_name,
+                Some(&inbound_store_name),
                 &item1,
                 &item2,
             );
@@ -139,7 +139,7 @@ async fn invoice_transfers() {
             let mut tester = ShipmentTransferTester::new(
                 &outbound_store,
                 &inbound_store,
-                &inbound_store_name,
+                Some(&inbound_store_name),
                 &item1,
                 &item2,
             );
@@ -257,7 +257,7 @@ async fn invoice_transfers_with_merged_name() {
             let mut tester = ShipmentTransferTester::new(
                 &outbound_store,
                 &inbound_store,
-                &merge_name,
+                Some(&merge_name),
                 &item1,
                 &item2,
             );
@@ -291,7 +291,7 @@ async fn invoice_transfers_with_merged_name() {
             let mut tester = ShipmentTransferTester::new(
                 &outbound_store,
                 &inbound_store,
-                &merge_name,
+                Some(&merge_name),
                 &item1,
                 &item2,
             );
@@ -330,7 +330,7 @@ impl ShipmentTransferTester {
     pub(crate) fn new(
         outbound_store: &StoreRow,
         inbound_store: &StoreRow,
-        inbound_name: &NameRow,
+        inbound_name: Option<&NameRow>,
         item1: &ItemRow,
         item2: &ItemRow,
     ) -> ShipmentTransferTester {
@@ -344,7 +344,7 @@ impl ShipmentTransferTester {
 
         let outbound_shipment = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_link_id = inbound_name.id.clone();
+            r.name_link_id = inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone());
             r.store_id = outbound_store.id.clone();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::OutboundShipment;
