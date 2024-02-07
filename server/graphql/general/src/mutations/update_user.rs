@@ -7,7 +7,7 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    login::{FetchUserError, LoginError},
+    login::{FetchUserError, LoginError, LoginFailure},
     sync::sync_user::SyncUser,
 };
 
@@ -50,7 +50,8 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                 }
                 LoginError::FetchUserError(_)
                 | LoginError::UpdateUserError(_)
-                | LoginError::LoginFailure
+                | LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                | LoginError::LoginFailure(LoginFailure::AccountBlocked(_))
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FailedToGenerateToken(_) => {

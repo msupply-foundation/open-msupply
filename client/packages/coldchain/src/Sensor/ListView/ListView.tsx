@@ -10,6 +10,7 @@ import {
   Formatter,
   useEditModal,
   useUrlQuery,
+  SensorNodeType,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
@@ -84,7 +85,9 @@ export const SensorListView: FC = () => {
         key: 'type',
         label: 'label.sensor-type',
         accessor: ({ rowData }) => {
-          return Formatter.enumCase(rowData?.type);
+          return rowData?.type === SensorNodeType.BlueMaestro
+            ? t('label.rtmd')
+            : Formatter.enumCase(rowData?.type);
         },
         sortable: false,
       },
