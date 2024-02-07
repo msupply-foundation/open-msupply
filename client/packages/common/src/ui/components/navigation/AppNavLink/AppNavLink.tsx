@@ -25,7 +25,8 @@ const useSelectedNavMenuItem = (
   // If the drawer is closed, highlight the higher level elements.
   const highlightLowerLevels = isOpen ? !end || to.endsWith('*') : false;
   // If we need to highlight the higher levels append a wildcard to the match path.
-  const path = highlightLowerLevels ? to : `${to}/*`;
+  // Note: remove the search query to enable a match
+  const path = highlightLowerLevels ? to : `${to.split('?')[0]}/*`;
   const selected = useMatch({ path });
   return !!selected;
 };
