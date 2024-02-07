@@ -151,7 +151,7 @@ export const PricingSectionComponent = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('label.code')}</PanelLabel>
-          <PanelField>{currency?.code ?? 1}</PanelField>
+          <PanelField>{currency?.code ?? ''}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.rate')}</PanelLabel>
