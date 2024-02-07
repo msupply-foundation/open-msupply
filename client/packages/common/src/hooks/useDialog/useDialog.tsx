@@ -3,14 +3,10 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
 import { Slide } from '../../ui/animations';
-import {
-  BasicModal,
-  ModalTitle,
-  OkKeyBindings,
-  OkKeyBindingsProps,
-} from '@common/components';
+import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
+import { OkKeyBindingsInput, makeOkKeyBindingsHandler } from './okKeyBindings';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -157,14 +153,14 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
 
-    const okKeyBindingsProps: OkKeyBindingsProps = {};
+    const okKeyBindingsInput: OkKeyBindingsInput = {};
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
 
     if (nextButton) {
       const { onClick, disabled, ...restOfNextButtonProps } = nextButton.props;
 
-      okKeyBindingsProps.onNext = onClick;
-      okKeyBindingsProps.nextDisabled = disabled;
+      okKeyBindingsInput.onNext = onClick;
+      okKeyBindingsInput.nextDisabled = disabled;
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
@@ -184,8 +180,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     if (okButton) {
       const { onClick, disabled } = okButton.props;
 
-      okKeyBindingsProps.onOk = onClick;
-      okKeyBindingsProps.okDisabled = disabled;
+      okKeyBindingsInput.onOk = onClick;
+      okKeyBindingsInput.okDisabled = disabled;
     }
 
     const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
@@ -203,6 +199,11 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
+        onKeyDown={
+          enableOkKeyBindings
+            ? makeOkKeyBindingsHandler(okKeyBindingsInput)
+            : undefined
+        }
       >
         {title ? <ModalTitle title={title} /> : null}
         <DialogContent
@@ -224,7 +225,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             marginTop: '30px',
           }}
         >
-          {enableOkKeyBindings && <OkKeyBindings {...okKeyBindingsProps} />}
+          {/* {enableOkKeyBindings && <OkKeyBindings {...okKeyBindingsProps} />} */}
           {cancelButton}
           {saveButton}
           {copyButton}

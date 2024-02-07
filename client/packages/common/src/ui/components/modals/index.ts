@@ -4,4 +4,3 @@ export * from './ModalTitle';
 export * from './ConfirmationModal';
 export * from './AlertModal';
 export * from './InputModal';
-export * from './OkKeyBindings';
