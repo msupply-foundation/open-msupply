@@ -84,10 +84,6 @@ impl DatabaseSettings {
         return result;
     }
 
-    pub fn connection_string_without_db(&self) -> String {
-        self.database_path()
-    }
-
     pub fn full_init_sql(&self) -> Option<String> {
         //For SQLite we want to enable the Write Head Log on server startup
         match &self.init_sql {
@@ -102,10 +98,6 @@ impl DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!("file:{}?mode=memory&cache=shared", self.database_name)
-    }
-
-    pub fn connection_string_without_db(&self) -> String {
-        self.connection_string()
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
