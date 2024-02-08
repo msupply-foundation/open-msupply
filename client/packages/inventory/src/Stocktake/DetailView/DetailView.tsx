@@ -24,14 +24,14 @@ import { AppRoute } from '@openmsupply-client/config';
 import { StocktakeLineFragment, useStocktake } from '../api';
 import { StocktakeLineErrorProvider } from '../context';
 
-export const DetailView: FC = () => {
+const StocktakeTabs = ({
+  id,
+  onOpen,
+}: {
+  id: string;
+  onOpen: (item?: ItemRowFragment | null | undefined) => void;
+}) => {
   const isDisabled = useStocktake.utils.isDisabled();
-  const { isOpen, entity, onOpen, onClose, mode } =
-    useEditModal<ItemRowFragment>();
-  const { data, isLoading } = useStocktake.document.get();
-  const navigate = useNavigate();
-  const t = useTranslation('inventory');
-  const { HighlightStyles } = useRowHighlight();
 
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
@@ -39,8 +39,6 @@ export const DetailView: FC = () => {
     },
     [onOpen]
   );
-
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
@@ -53,10 +51,21 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={id} />,
       value: 'Log',
     },
   ];
+  return <DetailTabs tabs={tabs} />;
+};
+
+export const DetailView: FC = () => {
+  const { isOpen, entity, onOpen, onClose, mode } =
+    useEditModal<ItemRowFragment>();
+  const { data, isLoading } = useStocktake.document.get();
+  const navigate = useNavigate();
+  const t = useTranslation('inventory');
+  const { HighlightStyles } = useRowHighlight();
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   return !!data ? (
     <TableProvider createStore={createTableStore}>
@@ -65,7 +74,7 @@ export const DetailView: FC = () => {
         <AppBarButtons onAddItem={() => onOpen()} />
         <Toolbar />
 
-        <DetailTabs tabs={tabs} />
+        <StocktakeTabs id={data?.id ?? ''} onOpen={onOpen} />
 
         <Footer />
         <SidePanel />
