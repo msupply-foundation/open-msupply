@@ -7,7 +7,9 @@ export const useSearchPatient = () => {
   const { mutate, isLoading, data, isSuccess } = usePatient.utils.search();
 
   const debounced = useDebouncedValueCallback(
-    value => mutate({ nameOrCode: value }),
+    value => {
+      if (searchText.length > 0) mutate({ nameOrCode: value });
+    },
     [searchText],
     500
   );
