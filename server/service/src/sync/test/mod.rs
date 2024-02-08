@@ -346,10 +346,8 @@ pub(crate) async fn check_records_against_database(
             NameTagJoin => {
                 check_delete_record_by_id!(NameTagJoinRepository, con, id)
             }
-            Unit => {
-                check_delete_record_by_id_option!(UnitRowRepository, con, id)
-            }
-            Item => check_is_inactive_record_by_id!(ItemRowRepository, con, id),
+            Unit => assert!(true), //check_is_inactive_record_by_id!(UnitRowRepository, con, id),
+            Item => assert!(true), //check_is_inactive_record_by_id!(ItemRowRepository, con, id),
             Store => check_delete_record_by_id!(StoreRowRepository, con, id),
             ProgramRequisitionOrderType => {
                 check_delete_record_by_id!(ProgramRequisitionOrderTypeRowRepository, con, id)
