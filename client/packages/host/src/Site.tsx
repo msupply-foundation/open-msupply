@@ -40,8 +40,14 @@ const NotifyOnLogin = () => {
   const { store, storeId } = useAuthContext();
   const { name } = store || {};
   const t = useTranslation('app');
+  const storeChangedNotification = success(
+    t('login.store-changed', { store: name })
+  );
+
   useEffect(() => {
-    if (!!name) success(t('login.store-changed', { store: name }))();
+    if (!!name) storeChangedNotification();
+    // only notify if the store has changed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
   return <></>;
@@ -51,10 +57,11 @@ export const Site: FC = () => {
   const location = useLocation();
   const getPageTitle = useGetPageTitle();
   const { setPageTitle } = useHostContext();
+  const pageTitle = getPageTitle(location.pathname);
 
   useEffect(() => {
-    setPageTitle(getPageTitle(location.pathname));
-  }, [location]);
+    setPageTitle(pageTitle);
+  }, [location, pageTitle, setPageTitle]);
 
   return (
     <RequireAuthentication>
