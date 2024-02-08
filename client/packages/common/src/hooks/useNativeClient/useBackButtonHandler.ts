@@ -16,14 +16,16 @@ export const useBackButtonHandler = ({
 
       App.addListener('backButton', ({ canGoBack }) => {
         if (canGoBack && isNavigateEnabled) navigate(-1);
-        else App.exitApp();
+        else {
+          App.minimizeApp();
+        }
       });
     }
 
-    return () => {
-      if (Capacitor.isNativePlatform()) {
+    if (Capacitor.isNativePlatform()) {
+      return () => {
         App.removeAllListeners();
-      }
-    };
+      };
+    }
   }, [isNavigateEnabled, navigate]);
 };
