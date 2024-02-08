@@ -85,7 +85,7 @@
   "messages.error-saving-prescription": "Error saving prescription 🥺",
   "messages.recorded-on": "Recorded on {{datetime}}",
   "messages.results-found": "{{totalCount}} results found",
-  "messages.results-over-limit": "Showing the first 100 results only - please refine your search",
+  "messages.results-over-limit": "Showing the first {{limit}} results only - please refine your search",
   "messages.save-encounter-as-visited": "Save encounter as Visited?",
   "messages.no-stock-available": "There is no stock available",
   "messages.stock-on-hold": "Some stock lines are hold and cannot be allocated.",
