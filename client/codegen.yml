@@ -1,5 +1,5 @@
 overwrite: true
-schema: [ '../server/schema.graphql' ]
+schema: ['../server/schema.graphql']
 generates:
   ./packages/common/src/types/schema.ts:
     plugins:
@@ -10,6 +10,10 @@ generates:
         DateTime: string
         NaiveDate: string
         NaiveDateTime: string
+  ./packages/common/src/types/types.ts: # oddly enough this doesn't get created, but it does resolve the fragment imports between operation files
+    preset: import-types
+    presetConfig:
+      typesPath: ~@openmsupply-client/common/src/types/schema.ts
   packages/:
     documents:
       - ./**/*.graphql
