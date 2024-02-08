@@ -28,7 +28,6 @@ pub enum TemperatureBreachNodeType {
     ColdCumulative,
     HotConsecutive,
     HotCumulative,
-    Excursion,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -170,7 +169,9 @@ impl TemperatureBreachNodeType {
             from::ColdCumulative => to::ColdCumulative,
             from::HotConsecutive => to::HotConsecutive,
             from::HotCumulative => to::HotCumulative,
-            from::Excursion => to::Excursion,
+            from::Excursion => {
+                panic!("Excursion is not a valid type for TemperatureBreachNodeType")
+            }
         }
     }
 
@@ -183,7 +184,6 @@ impl TemperatureBreachNodeType {
             from::ColdCumulative => to::ColdCumulative,
             from::HotConsecutive => to::HotConsecutive,
             from::HotCumulative => to::HotCumulative,
-            from::Excursion => to::Excursion,
         }
     }
 }
