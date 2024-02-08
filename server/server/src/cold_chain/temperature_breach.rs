@@ -66,7 +66,7 @@ pub async fn put_breaches(
 
     for result in &results {
         if let Err(e) = result {
-            error!("Error inserting temperature breach {:#?}", e);
+            error!("Error inserting temperature breaches {:#?}", e);
             return HttpResponse::InternalServerError().body(format!("{:#?}", e));
         }
     }
