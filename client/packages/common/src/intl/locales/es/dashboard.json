@@ -18,7 +18,7 @@
   "label.total-items_one": "Total de artículos",
   "label.total-items_other": "Cantidad total de artículos",
   "label.items-no-stock_other": "Artículos sin inventario",
-  "heading.shipments": "Envíos",
+  "heading.shipments": "Salidas",
   "inventory-management": "Gestión de inventario",
   "label.have-not-shipped": "No han sido enviados",
   "label.inbound-not-delivered": "Entradas no entregadas",
