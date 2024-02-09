@@ -22,7 +22,7 @@ rand = { workspace = true }
 jsonschema = "0.16.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
-reqwest = { version = "0.11.10", features = ["json"] }
+reqwest = { workspace = true }
 url = "2.2"
 serde = "1.0.126"
 serde_json = "1.0.66"
