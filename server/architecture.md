@@ -1,6 +1,6 @@
 # Layers
 
-Most of the source code in this repository is split into tree layers.
+Most of the source code in this repository is split into three layers.
 These layers are the repository layer, the service layer, and the API layer.
 There are a couple of advantages to maintain these three layers.
 For example, the repository layer decouples the business logic from database details.
