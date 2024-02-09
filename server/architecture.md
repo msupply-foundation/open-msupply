@@ -57,7 +57,7 @@ The `ServiceProvider` should be used in higher layer, e.g. in GraphQl endpoint t
 
 The `ServiceProvider` allows us to configure which services are used.
 This is mainly used for testing purposes where services can easily be swapped out for a mock service.
-For example, when testing GraphQL related logic such as data mapping a mock service can be configured to always return the required data for a specific test.
+For example, when testing GraphQL related logic such as data mapping, a mock service can be configured to always return the required data for a specific test.
 
 ## API Layer
 
