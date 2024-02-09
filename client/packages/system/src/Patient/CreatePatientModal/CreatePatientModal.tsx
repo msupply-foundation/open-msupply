@@ -131,6 +131,7 @@ export const CreatePatientModal: FC<CreatePatientModal> = ({ onClose }) => {
         />
       }
       slideAnimation={false}
+      enableOkKeyBindings
     >
       <DetailContainer>
         <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
