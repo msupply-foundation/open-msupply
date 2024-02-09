@@ -166,6 +166,7 @@ export const CreateStocktakeButton: React.FC<{
               }}
             />
           }
+          enableOkKeyBindings
         >
           <Box flex={1} display="flex" justifyContent="center">
             {!isSaving ? (

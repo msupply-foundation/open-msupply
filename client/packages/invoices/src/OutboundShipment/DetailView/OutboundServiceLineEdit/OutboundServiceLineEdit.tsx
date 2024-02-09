@@ -57,6 +57,7 @@ const OutboundServiceLineEditComponent = ({
           }}
         />
       }
+      enableOkKeyBindings
     >
       {isLoading ? (
         <BasicSpinner messageKey="loading" />
