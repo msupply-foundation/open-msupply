@@ -49,8 +49,7 @@ pub type MyEntity = MyDieselRow;
 
 ## Service Layer
 
-The service layer contains the main business logic.
-The service layer uses the repository layer to query or mutate data while enforcing invariants.
+The service layer contains the main business logic and uses the repository layer to query or mutate data while enforcing invariants.
 
 Services are implementing a service trait.
 The [`ServiceProvider`](service/src/service_provider.rs) struct contains all available services.
