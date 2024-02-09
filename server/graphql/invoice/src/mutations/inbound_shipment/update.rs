@@ -1,5 +1,5 @@
 use crate::mutations::outbound_shipment::error::{
-    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency,
+    CannotChangeForeignCurrency, CannotChangeStatusOfInvoiceOnHold,
 };
 use async_graphql::*;
 
@@ -82,7 +82,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
-    CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
+    CannotChangeCurrencyForInternalSuppliers(CannotChangeForeignCurrency),
 }
 
 impl UpdateInput {
@@ -163,10 +163,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
-        ServiceError::CannotIssueInForeignCurrency => {
-            return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
-                CannotIssueInForeignCurrency,
-            ))
+        ServiceError::CannotChangeCurrencyForInternalSuppliers => {
+            return Ok(
+                UpdateErrorInterface::CannotChangeCurrencyForInternalSuppliers(
+                    CannotChangeForeignCurrency,
+                ),
+            )
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
