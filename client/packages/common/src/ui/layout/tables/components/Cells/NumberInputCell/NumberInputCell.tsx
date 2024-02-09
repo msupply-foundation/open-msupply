@@ -1,6 +1,10 @@
 import React from 'react';
 import { CellProps } from '../../../columns';
-import { NumericTextInput, NumericTextInputProps } from '@common/components';
+import {
+  NumericInputProps,
+  NumericTextInput,
+  StandardTextFieldProps,
+} from '@common/components';
 import { RecordWithId } from '@common/types';
 import { useBufferState, useDebounceCallback } from '@common/hooks';
 
@@ -11,8 +15,20 @@ export const NumberInputCell = <T extends RecordWithId>({
   columnIndex,
   isDisabled = false,
   min,
+  max,
+  decimalLimit,
+  step,
+  multiplier,
+  defaultValue,
+  allowNegative,
+  id,
+  TextInputProps,
   ...props
-}: CellProps<T> & NumericTextInputProps): React.ReactElement<CellProps<T>> => {
+}: CellProps<T> &
+  NumericInputProps & {
+    id?: string;
+    TextInputProps?: StandardTextFieldProps;
+  }): React.ReactElement<CellProps<T>> => {
   const [buffer, setBuffer] = useBufferState(column.accessor({ rowData }));
   const updater = useDebounceCallback(column.setter, [column.setter], 250);
 
@@ -20,9 +36,14 @@ export const NumberInputCell = <T extends RecordWithId>({
 
   return (
     <NumericTextInput
+      id={id}
       disabled={isDisabled}
       autoFocus={autoFocus}
-      InputProps={{ sx: { '& .MuiInput-input': { textAlign: 'right' } } }}
+      {...TextInputProps}
+      InputProps={{
+        sx: { '& .MuiInput-input': { textAlign: 'right' } },
+        ...TextInputProps?.InputProps,
+      }}
       onChange={num => {
         const newValue = num;
         setBuffer(newValue);
@@ -31,6 +52,12 @@ export const NumberInputCell = <T extends RecordWithId>({
       // Make the default min=1 as this is the typical implementation
       // in Data Tables
       min={min ?? 1}
+      max={max}
+      decimalLimit={decimalLimit}
+      step={step}
+      multiplier={multiplier}
+      allowNegative={allowNegative}
+      defaultValue={defaultValue}
       value={buffer as number | undefined}
       {...props}
     />
