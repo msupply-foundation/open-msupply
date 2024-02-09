@@ -30,7 +30,7 @@ struct MyDieselRow {
 }
 ```
 
-the domain object should only contains the information used in the business logic, i.e. the `name_id` instead of the internal `name_link_id`:
+the domain object should only contain the information used in the business logic, i.e. the `name_id` instead of the internal `name_link_id`:
 
 ```rust
 pub struct MyEntity {
