@@ -46,7 +46,7 @@
   "description.remaining-to-supply": "La cantidad restante por suministrar es igual a la cantidad de suministro menos la cantidad de este artículo que ya ha sido enviado en cualquier salida vinculada",
   "description.requested-quantity": "Cantidad solicitada por el cliente",
   "description.snapshot-num-of-packs": "Número de paquetes",
-  "description.soh": "Existencias Disponibles",
+  "description.soh": "Inventario disponible",
   "description.stock-on-hand": "Existencias Disponibles (Estimado restante)",
   "description.supply-quantity": "La cantidad que será suministrada por este almacén",
   "description.total": "Valor Total",
