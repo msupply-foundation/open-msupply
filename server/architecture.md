@@ -51,7 +51,7 @@ pub type MyEntity = MyDieselRow;
 
 The service layer contains the main business logic and uses the repository layer to query or mutate data while enforcing invariants.
 
-Services are implementing a service trait.
+Services implement a service trait.
 The [`ServiceProvider`](service/src/service_provider.rs) struct contains all available services.
 The `ServiceProvider` should be used in higher layer, e.g. in GraphQl endpoint to get a service instance.
 
