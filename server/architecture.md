@@ -3,13 +3,13 @@
 Most of the source code in this repository is split into three layers.
 These layers are the repository layer, the service layer, and the API layer.
 There are a couple of advantages to maintain these three layers.
-For example, the repository layer decouples the business logic from database details.
-Similarly, the business logic in the service layer is independent of the API layer, e.g. a single service can be used for Graphql or Rest endpoints.
+For example, the repository layer decouples the business logic from the database details.
+Similarly, the business logic in the service layer is independent of the API layer, e.g. a single service can be used for GraphQL or REST endpoints.
 This architecture is very similar to the so-called "clean architecture" in domain driven design.
 
 The three layers should not have any circular dependencies.
 For example, the repository layer can be used by the service layer or the API layer while the service layer can only be used by the API layer.
-This is enforced by putting the layers in separate Rust crates which can't have circular dependencies either.
+This is enforced by having the layers in separate Rust crates which can't have circular dependencies either.
 
 ## Repository Layer
 
@@ -65,8 +65,8 @@ The API layer can use one or more services to query or mutate data.
 While we mainly use GraphQL for our endpoints it would easily be possible to provide REST endpoints by reusing the existing services.
 
 Before doing the service call the API layer calls an auth service to verify that a user is allowed to call the current endpoint.
-Note, this auth check could be further moved into service layer.
-However, this would either make a service very specific to particular endpoint, i.e. service becomes hard to reuse, or another endpoint specific service would need to be introduced.
+Note, this auth check could be moved into service layer.
+However, this would either make a service very specific to particular endpoint, i.e. service becomes hard to reuse, or another endpoint specific auth-service would need to be introduced.
 
 # Horizontal and Vertical Layers
 
