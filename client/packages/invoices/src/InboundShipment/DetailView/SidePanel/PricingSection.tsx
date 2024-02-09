@@ -14,7 +14,6 @@ import {
   PricingUtils,
   InvoiceLineNodeType,
   Currencies,
-  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { InboundServiceLineEdit, TaxEdit } from '../modals';
@@ -25,20 +24,18 @@ export const PricingSectionComponent = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
-  const { store } = useAuthContext();
 
-  const { pricing, lines, taxPercentage, currency, update } =
+  const { pricing, lines, taxPercentage, currency, update, otherParty } =
     useInbound.document.fields([
       'pricing',
       'lines',
       'taxPercentage',
       'currency',
+      'otherParty',
     ]);
   const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
-  const storeIssuesInForeignCurrency =
-    store?.preferences.issueInForeignCurrency;
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -144,7 +141,7 @@ export const PricingSectionComponent = () => {
                   currencyRate: value?.rate,
                 });
               }}
-              isDisabled={!storeIssuesInForeignCurrency}
+              isDisabled={!!otherParty.store}
               currency={currency as CurrencyRowFragment}
             />
           </PanelField>

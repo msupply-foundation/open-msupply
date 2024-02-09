@@ -13,7 +13,6 @@ import {
   createQueryParamsStore,
   NonNegativeIntegerCell,
   CellProps,
-  useAuthContext,
   CurrencyCell,
   ColumnAlign,
 } from '@openmsupply-client/common';
@@ -29,6 +28,7 @@ interface TableProps {
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -123,9 +123,8 @@ export const PricingTableComponent: FC<TableProps> = ({
   updateDraftLine,
   isDisabled = false,
   currency,
+  isExternalSupplier,
 }) => {
-  const { store } = useAuthContext();
-
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -145,7 +144,7 @@ export const PricingTableComponent: FC<TableProps> = ({
     ],
   ];
 
-  if (!!store?.preferences.issueInForeignCurrency) {
+  if (isExternalSupplier) {
     columnDefinitions.push({
       key: 'foreignCurrencySellPricePerPack',
       label: 'label.fc-sell-price',
@@ -171,7 +170,7 @@ export const PricingTableComponent: FC<TableProps> = ({
     },
   ]);
 
-  if (!!store?.preferences.issueInForeignCurrency) {
+  if (isExternalSupplier) {
     columnDefinitions.push({
       key: 'foreignCurrencyCostPricePerPack',
       label: 'label.fc-cost-price',
@@ -204,7 +203,7 @@ export const PricingTableComponent: FC<TableProps> = ({
     ]
   );
 
-  if (!!store?.preferences.issueInForeignCurrency) {
+  if (isExternalSupplier) {
     columnDefinitions.push({
       key: 'foreignCurrencyLineTotal',
       label: 'label.fc-line-total',
