@@ -119,6 +119,6 @@
   "messages.confirm-delete-requisitions_many": "Esto eliminará permanentemente {{count}} ordenes internas",
   "messages.confirm-delete-shipment-lines_few": "Esto eliminará permanentemente {{count}} líneas del envío",
   "messages.confirm-delete-shipment-lines_many": "Esto eliminará permanentemente {{count}} líneas del envío",
-  "messages.deleted-requisitions_few": "Se eliminaron {{count}} ordenes",
-  "messages.deleted-requisitions_many": "Se eliminaron {{count}} ordenes"
+  "messages.deleted-requisitions_few": "{{count}} Ordenes eliminadas",
+  "messages.deleted-requisitions_many": "{{count}} ordenes eliminadas"
 }
