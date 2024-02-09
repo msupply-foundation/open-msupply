@@ -39,8 +39,7 @@ pub struct MyEntity {
 }
 ```
 
-However, currently this pattern is only followed in a few places.
-The reason for this is that for most entities the database object looks exactly like the domain object and for this reason the database object is used as the domain object, i.e. to avoid trivial object mapping.
+However, currently this pattern is only followed in a few places because for most entities the database object looks exactly like the domain object, so the database object is used as the domain object to avoid trivial object mapping.
 In this case a simple type def should be used, keeping the internal database struct private:
 
 ```rust
