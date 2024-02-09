@@ -125,7 +125,7 @@ pub enum UpdateInboundShipmentError {
     CannotReverseInvoiceStatus,
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
-    CannotIssueInForeignCurrency,
+    CannotChangeCurrencyForInternalSuppliers,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
