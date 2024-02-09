@@ -3,9 +3,8 @@ import { StandardTextFieldProps } from '@common/components';
 import { BasicTextInput } from './BasicTextInput';
 import { NumUtils, RegexUtils } from '@common/utils';
 import { useFormatNumber, useCurrency } from '@common/intl';
-export interface NumericTextInputProps
-  extends Omit<StandardTextFieldProps, 'onChange'> {
-  onChange?: (value: number | undefined) => void;
+
+export interface NumericInputProps {
   width?: number | string;
   defaultValue?: number;
   allowNegative?: boolean;
@@ -16,6 +15,10 @@ export interface NumericTextInputProps
   multiplier?: number;
   value?: number | undefined;
 }
+export type NumericTextInputProps = NumericInputProps &
+  Omit<StandardTextFieldProps, 'onChange'> & {
+    onChange?: (value: number | undefined) => void;
+  };
 
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
   (
