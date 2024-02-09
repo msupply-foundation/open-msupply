@@ -60,7 +60,7 @@ For example, when testing GraphQL related logic such as data mapping, a mock ser
 
 ## API Layer
 
-The API layer provides an interface for the server, e.g. GraphQL or REST endpoints used by the browser UI or other users.
+The API layer provides an interface for the server through the GraphQL or REST endpoints used by the browser UI or other users.
 The API layer can use one or more services to query or mutate data.
 While we mainly use GraphQL for our endpoints it would easily be possible to provide REST endpoints by reusing the existing services.
 
