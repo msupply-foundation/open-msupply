@@ -20,13 +20,17 @@ pub async fn get_database(
     auth_data: Data<AuthData>,
     settings: Data<Settings>,
 ) -> Result<HttpResponse, Error> {
+    use super::validate_request;
     use actix_files as fs;
     use actix_web::http::header::ContentDisposition;
     use actix_web::http::header::DispositionParam;
     use actix_web::http::header::DispositionType;
     use std::path::Path;
 
-    // TODO Authentication and Permissions Check!
+    let auth_result = validate_request(request.clone(), &service_provider, &auth_data);
+    if auth_result.is_err() {
+        return Ok(HttpResponse::Unauthorized().body("Access Denied"));
+    }
 
     let db_path = settings.database.connection_string(); // TODO: Merge https://github.com/msupply-foundation/open-msupply/pull/2899    database_path(&self)
     let path = Path::new(&db_path);

@@ -1,10 +1,19 @@
+use std::fmt::format;
+
+use actix_web::cookie::Cookie;
+use actix_web::http::header::COOKIE;
 use actix_web::web::{self};
-// use service::{
-//     auth::{validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest},
-//     auth_data::AuthData,
-//     service_provider::{ServiceContext, ServiceProvider},
-//     user_account::UserAccountService,
-// };
+use actix_web::{Error, HttpRequest};
+use service::token::TokenService;
+use service::{
+    auth::{
+        validate_auth, AuthDeniedKind, AuthError, Resource, ResourceAccessRequest, ValidatedUser,
+    },
+    auth_data::AuthData,
+    service_provider::{ServiceContext, ServiceProvider},
+    settings::is_develop,
+    user_account::UserAccountService,
+};
 
 mod database;
 use database::get_database;
@@ -18,58 +27,90 @@ pub fn config_support(cfg: &mut web::ServiceConfig) {
     );
 }
 
-// fn validate_request(
-//     request: HttpRequest,
-//     service_provider: &ServiceProvider,
-//     auth_data: &AuthData,
-// ) -> Result<(String, String), AuthError> {
-//     let service_context = service_provider
-//         .basic_context()
-//         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
-//     let token = match request.cookie(COOKIE_NAME) {
-//         Some(cookie) => Some(cookie.value().to_string()),
-//         None => None,
-//     };
+fn validate_request(
+    request: HttpRequest,
+    service_provider: &ServiceProvider,
+    auth_data: &AuthData,
+) -> Result<ValidatedUser, AuthError> {
+    let service_context = service_provider
+        .basic_context()
+        .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
 
-//     validate_access(&service_provider, &service_context, &auth_data, token)
-// }
+    // We use the refresh token to get the user's access token here, as the actual access token isn't easily to pass as a header in a download link
 
-// /// Validates current user is authenticated and authorized
-// pub fn validate_access(
-//     service_provider: &ServiceProvider,
-//     service_context: &ServiceContext,
-//     auth_data: &AuthData,
-//     token: Option<String>,
-// ) -> Result<(String, String), AuthError> {
-//     let user_service = UserAccountService::new(&service_context.connection);
-//     let validated_user = validate_auth(auth_data, &token)?;
-//     let store_id = match user_service.find_user(&validated_user.user_id)? {
-//         Some(user) => {
-//             let store_id = match user.default_store() {
-//                 Some(store) => store.store_row.id.clone(),
-//                 None => return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-//                     "No default store found for user, or default store is not active on current site".to_string(),
-//                 ))),
-//             };
-//             store_id
-//         }
-//         None => {
-//             return Err(AuthError::InternalError(
-//                 "User not found in database".to_string(),
-//             ))
-//         }
-//     };
+    // retrieve refresh token (from cookie)
+    // Lots of code copied from graphql/core/src/lib.rs refactor opportunity!
+    let refresh_token = request.headers().get(COOKIE).and_then(|header_value| {
+        header_value
+            .to_str()
+            .ok()
+            .and_then(|header| {
+                let cookies = header.split(" ").collect::<Vec<&str>>();
+                cookies
+                    .into_iter()
+                    .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
+                    .find(|cookie_option| match &cookie_option {
+                        Some(cookie) => cookie.name() == "refresh_token",
+                        None => false,
+                    })
+                    .flatten()
+            })
+            .map(|cookie| cookie.value().to_owned())
+    });
 
-//     let access_request = ResourceAccessRequest {
-//         resource: Resource::ColdChainApi,
-//         store_id: Some(store_id.clone()),
-//     };
+    let refresh_token = match refresh_token {
+        Some(token) => token,
+        None => {
+            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+                "No refresh token found".to_string(),
+            )));
+        }
+    };
 
-//     let validated_user = service_provider.validation_service.validate(
-//         service_context,
-//         auth_data,
-//         &token,
-//         &access_request,
-//     )?;
-//     Ok((validated_user.user_id, store_id))
-// }
+    let mut service = TokenService::new(
+        &auth_data.token_bucket,
+        auth_data.auth_token_secret.as_bytes(),
+        !is_develop(),
+    );
+    let max_age_token = chrono::Duration::minutes(60).num_seconds() as usize;
+    let max_age_refresh = chrono::Duration::hours(6).num_seconds() as usize;
+    let pair = match service.refresh_token(&refresh_token, max_age_token, max_age_refresh, None) {
+        Ok(pair) => pair,
+        Err(err) => {
+            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+                format!("Error refreshing token: {:?}", err),
+            )));
+        }
+    };
+
+    validate_access(
+        &service_provider,
+        &service_context,
+        &auth_data,
+        Some(pair.token),
+    )
+}
+
+/// Validates current user is authenticated and authorized
+pub fn validate_access(
+    service_provider: &ServiceProvider,
+    service_context: &ServiceContext,
+    auth_data: &AuthData,
+    token: Option<String>,
+) -> Result<ValidatedUser, AuthError> {
+    let user_service = UserAccountService::new(&service_context.connection);
+    let validated_user = validate_auth(auth_data, &token)?;
+
+    let access_request = ResourceAccessRequest {
+        resource: Resource::ServerAdmin,
+        store_id: None,
+    };
+
+    let validated_user = service_provider.validation_service.validate(
+        service_context,
+        auth_data,
+        &token,
+        &access_request,
+    )?;
+    Ok(validated_user)
+}

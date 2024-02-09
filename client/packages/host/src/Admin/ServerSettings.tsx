@@ -12,9 +12,10 @@ import {
   removePreference,
   useNavigate,
   useTranslation,
+  DownloadIcon,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
 import { AndroidLogFileModal } from './AndroidLogFileModal';
@@ -91,6 +92,21 @@ export const ServerSettings = () => {
           <>
             <WebAppLogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
+          </>
+        }
+      />
+      <Setting
+        title={t('label.download-database')}
+        component={
+          <>
+            <BaseButton
+              startIcon={<DownloadIcon />}
+              onClick={() => {
+                open(`${Environment.API_HOST}/support/database`, '_blank');
+              }}
+            >
+              {t('button.download')}
+            </BaseButton>
           </>
         }
       />
