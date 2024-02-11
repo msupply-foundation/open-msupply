@@ -210,6 +210,11 @@ impl<'a> PatientRepository<'a> {
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
 
+            if name_or_code.is_some() {
+                apply_string_filter!(query, name_or_code.clone(), name_dsl::name_);
+                apply_string_or_filter!(query, name_or_code.clone(), name_dsl::code);
+            }
+
             if program_enrolment_name.is_some() {
                 let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
                     ProgramEnrolmentFilter {
@@ -222,11 +227,6 @@ impl<'a> PatientRepository<'a> {
                 .select(program_enrolment_dsl::patient_id);
 
                 query = query.filter(name_dsl::id.eq_any(sub_query))
-            }
-
-            if name_or_code.is_some() {
-                apply_string_filter!(query, name_or_code.clone(), name_dsl::name_);
-                apply_string_or_filter!(query, name_or_code.clone(), name_dsl::code);
             }
 
             apply_equal_filter!(query, id, name_dsl::id);
