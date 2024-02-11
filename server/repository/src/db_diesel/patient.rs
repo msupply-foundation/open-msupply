@@ -221,7 +221,7 @@ impl<'a> PatientRepository<'a> {
                 ))
                 .select(program_enrolment_dsl::patient_id);
 
-                query = query.or_filter(name_dsl::id.eq_any(sub_query))
+                query = query.filter(name_dsl::id.eq_any(sub_query))
             }
 
             if name_or_code.is_some() {
