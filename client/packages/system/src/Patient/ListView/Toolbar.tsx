@@ -56,7 +56,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
     filters.push({
       type: 'text',
       name: t('label.program-enrolment'),
-      urlParameter: 'programEnrolment',
+      urlParameter: 'programEnrolmentName',
     });
   }
 
