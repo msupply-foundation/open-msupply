@@ -25,14 +25,22 @@ export const PricingSectionComponent = () => {
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
 
-  const { pricing, lines, taxPercentage, currency, update, otherParty } =
-    useInbound.document.fields([
-      'pricing',
-      'lines',
-      'taxPercentage',
-      'currency',
-      'otherParty',
-    ]);
+  const {
+    pricing,
+    lines,
+    taxPercentage,
+    currency,
+    update,
+    otherParty,
+    currencyRate,
+  } = useInbound.document.fields([
+    'pricing',
+    'lines',
+    'taxPercentage',
+    'currency',
+    'otherParty',
+    'currencyRate',
+  ]);
   const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
@@ -143,6 +151,7 @@ export const PricingSectionComponent = () => {
               }}
               isDisabled={!!otherParty.store}
               currency={currency as CurrencyRowFragment}
+              currencyRate={currencyRate ?? 1}
             />
           </PanelField>
         </PanelRow>
@@ -152,7 +161,7 @@ export const PricingSectionComponent = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.rate')}</PanelLabel>
-          <PanelField>{currency?.rate ?? 1}</PanelField>
+          <PanelField>{currencyRate ?? 1}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>

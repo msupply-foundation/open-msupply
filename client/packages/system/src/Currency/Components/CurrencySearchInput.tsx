@@ -6,7 +6,7 @@ import {
   Box,
   DefaultAutocompleteItemOption,
   InputWithLabelRow,
-  TextWithLabelRow,
+  NonNegativeNumberInput,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -16,6 +16,7 @@ interface CurrencySearchInputProps {
   width?: number;
   disabled?: boolean;
   onChange: (currency: CurrencyRowFragment | null) => void;
+  currencyRate?: number;
 }
 
 export const getCurrencyOptionRenderer =
@@ -39,6 +40,7 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
   width,
   disabled = false,
   onChange,
+  currencyRate,
 }) => {
   const { data, isLoading } = useCurrency.document.list();
   const homeCurrency = data?.nodes.find(
@@ -46,6 +48,7 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
   ) as CurrencyRowFragment;
   const t = useTranslation();
   const currencyOptionRenderer = getCurrencyOptionRenderer();
+  const [rate, setRate] = React.useState(currencyRate);
 
   if (!data) {
     return null;
@@ -58,7 +61,6 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
         labelWidth="100%"
         Input={
           <Autocomplete
-            disabled={disabled}
             clearable={false}
             value={
               value
@@ -67,6 +69,7 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
             }
             loading={isLoading}
             onChange={(_, currency) => {
+              setRate(currency?.rate);
               onChange(currency);
             }}
             filterOptionConfig={currencyConfigOption}
@@ -78,13 +81,25 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
           />
         }
       />
-      <TextWithLabelRow
+      <InputWithLabelRow
         label={t('heading.rate')}
-        text={String(value?.rate ?? 1)}
-        textProps={{
-          marginLeft: 10,
-        }}
-        labelProps={{ sx: { width: 0 } }}
+        labelWidth="100%"
+        Input={
+          <NonNegativeNumberInput
+            disabled={disabled}
+            value={String(rate ?? 1)}
+            sx={{
+              width: `${width}px`,
+            }}
+            onChange={e => {
+              setRate(Number(e));
+              onChange({
+                ...value,
+                rate: e,
+              } as CurrencyRowFragment);
+            }}
+          />
+        }
       />
     </Box>
   );
