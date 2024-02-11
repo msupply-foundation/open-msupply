@@ -12,6 +12,7 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  ArrowLeftIcon,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
@@ -42,6 +43,7 @@ export const Toolbar: FC = () => {
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
 
+  const onReturn = useInbound.lines.returnSelected();
   const onDelete = useInbound.lines.deleteSelected();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
@@ -112,6 +114,9 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
+            <DropdownMenuItem IconComponent={ArrowLeftIcon} onClick={onReturn}>
+              {t('button.return-lines')}
+            </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
