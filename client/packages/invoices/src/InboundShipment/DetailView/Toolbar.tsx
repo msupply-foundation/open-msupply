@@ -38,12 +38,13 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-export const Toolbar: FC = () => {
+export const Toolbar: FC<{
+  onReturnLines: () => void;
+}> = ({ onReturnLines }) => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
 
-  const onReturn = useInbound.lines.returnSelected();
   const onDelete = useInbound.lines.deleteSelected();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
@@ -114,7 +115,10 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem IconComponent={ArrowLeftIcon} onClick={onReturn}>
+            <DropdownMenuItem
+              IconComponent={ArrowLeftIcon}
+              onClick={onReturnLines}
+            >
               {t('button.return-lines')}
             </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
