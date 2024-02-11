@@ -47,6 +47,9 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
     useEffect(() => {
       setTextValue(format(value));
+      // Excluding `format` from deps array, despite warning, as its not
+      // necessary (static method) and causes problems resulting in the text
+      // value not being updated correctly
     }, [value]);
 
     const inputRegex = new RegExp(
