@@ -25,6 +25,7 @@ export const useInbound = {
 
     delete: Lines.useDeleteInboundLines,
     deleteSelected: Lines.useDeleteSelectedLines,
+    returnSelected: Lines.useReturnSelectedLines,
     save: Lines.useSaveInboundLines,
   },
   utils: {
