@@ -52,7 +52,7 @@ const PatientListComponent: FC = () => {
       { key: 'firstName' },
       { key: 'identifier' },
       { key: 'lastName' },
-      { key: 'programEnrolment' },
+      { key: 'programEnrolmentName' },
     ],
   });
   const { store } = useAuthContext();
