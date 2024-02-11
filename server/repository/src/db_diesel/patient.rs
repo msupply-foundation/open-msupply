@@ -43,6 +43,7 @@ pub struct PatientFilter {
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
+    pub program_enrolment: Option<StringFilter>,
     // Filter for name and code
     pub name_or_code: Option<StringFilter>,
 }
@@ -184,6 +185,7 @@ impl<'a> PatientRepository<'a> {
                 email,
                 identifier,
                 name_or_code,
+                program_enrolment,
             } = f;
 
             // or filters need to be applied first
@@ -198,6 +200,20 @@ impl<'a> PatientRepository<'a> {
                 let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
                     ProgramEnrolmentFilter {
                         program_enrolment_id: identifier,
+                        program_context_id: allowed_ctx
+                            .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
+                        ..Default::default()
+                    },
+                ))
+                .select(program_enrolment_dsl::patient_id);
+
+                query = query.or_filter(name_dsl::id.eq_any(sub_query))
+            }
+
+            if program_enrolment.is_some() {
+                let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
+                    ProgramEnrolmentFilter {
+                        program_name: program_enrolment,
                         program_context_id: allowed_ctx
                             .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
                         ..Default::default()
@@ -332,6 +348,11 @@ impl PatientFilter {
 
     pub fn name_or_code(mut self, filter: StringFilter) -> Self {
         self.name_or_code = Some(filter);
+        self
+    }
+
+    pub fn program_enrolment(mut self, filter: StringFilter) -> Self {
+        self.program_enrolment = Some(filter);
         self
     }
 }
