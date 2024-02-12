@@ -168,11 +168,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         {isLoading ? (
           <BasicSpinner messageKey="saving" />
         ) : (
-          // <form
-          //   autoComplete={
-          //     'on'
-          //   }
-          // >
           <>
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
@@ -187,7 +182,6 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               isDisabled={isDisabled}
             />
           </>
-          // </form>
         )}
       </Modal>
     </TableProvider>

@@ -6,7 +6,6 @@ import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
-import { OkKeyBindingsInput, makeOkKeyBindingsHandler } from './okKeyBindings';
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -31,14 +30,16 @@ export interface ModalProps {
       children: React.ReactElement;
     } & React.RefAttributes<unknown>
   >;
-  okButton?: JSX.Element;
+  okButton?: React.ReactElement<{
+    type?: 'submit' | 'button' | 'reset';
+  }>;
   reportSelector?: React.ReactElement;
   copyButton?: JSX.Element;
   saveButton?: JSX.Element;
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
-  disableOkKeyBindings?: boolean;
+  disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
 }
 
@@ -145,7 +146,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     contentProps,
     slideAnimation = true,
     Transition,
-    disableOkKeyBindings,
+    disableOkKeyBinding,
     enableAutocomplete,
     sx = {},
   }) => {
@@ -156,14 +157,12 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
 
-    const okKeyBindingsInput: OkKeyBindingsInput = {};
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
+    let WrappedOkButton: ModalProps['okButton'] = undefined;
 
     if (nextButton) {
-      const { onClick, disabled, ...restOfNextButtonProps } = nextButton.props;
-
-      okKeyBindingsInput.onNext = onClick;
-      okKeyBindingsInput.nextDisabled = disabled;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { onClick, type, ...restOfNextButtonProps } = nextButton.props;
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
@@ -175,17 +174,23 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
               return result;
             }
           : onClick,
-        disabled,
-        type: 'submit',
+        type: !disableOkKeyBinding ? 'submit' : 'button',
         ...restOfNextButtonProps,
       });
     }
 
     if (okButton) {
-      const { onClick, disabled } = okButton.props;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { type, ...restOfOkButtonProps } = okButton.props;
 
-      okKeyBindingsInput.onOk = onClick;
-      okKeyBindingsInput.okDisabled = disabled;
+      WrappedOkButton = React.cloneElement(okButton, {
+        // If the next button is not present/disabled, the ok button should be a submit button (allow firing on enter key press)
+        type:
+          !disableOkKeyBinding && (!nextButton || nextButton.props.disabled)
+            ? 'submit'
+            : 'button',
+        ...restOfOkButtonProps,
+      });
     }
 
     const formProps = enableAutocomplete ? { autoComplete: 'on' } : {};
@@ -204,11 +209,6 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         sx={sx}
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
-        onKeyDown={
-          !disableOkKeyBindings
-            ? makeOkKeyBindingsHandler(okKeyBindingsInput)
-            : undefined
-        }
       >
         {title ? <ModalTitle title={title} /> : null}
         <form {...formProps}>
@@ -234,7 +234,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             {cancelButton}
             {saveButton}
             {copyButton}
-            {okButton}
+            {WrappedOkButton}
             {WrappedNextButton}
             {reportSelector}
           </DialogActions>
