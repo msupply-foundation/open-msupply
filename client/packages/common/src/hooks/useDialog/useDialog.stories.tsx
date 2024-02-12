@@ -32,9 +32,7 @@ const Template: Story = () => {
         nextButton={<DialogButton variant="next" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onOk} />}
       >
-        <div>
-          <p>This is an example dialog. There&apos;s nothing much to see</p>
-        </div>
+        <div>This is an example dialog. There&apos;s nothing much to see</div>
       </Modal>
       <div>
         <b>Button clicked:</b> {result}
