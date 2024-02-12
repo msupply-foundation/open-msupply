@@ -87,7 +87,7 @@ const UIComponent = (props: ControlProps) => {
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
           <BaseDatePickerInput
             // undefined is displayed as "now" and null as unset
-            value={formatDateTime.getLocalStartOfDayFromDateOrNull(dob)}
+            value={formatDateTime.getLocalDate(dob)}
             onChange={onChangeDoB}
             format="P"
             width={135}
