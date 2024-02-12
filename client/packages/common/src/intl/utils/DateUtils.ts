@@ -33,13 +33,17 @@ import {
   previousMonday,
   endOfWeek,
   setMilliseconds,
+  addMilliseconds,
 } from 'date-fns';
+import { getTimezoneOffset } from 'date-fns-tz';
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
 
 const dateInputHandler = (date: Date | string | number): Date => {
+  // console.log('date input handler', date);
+  // TODO this is being called for every patient in list (it shouldn't)
   // Assume a string is an ISO date-time string
-  if (typeof date === 'string') return parseISO(date);
+  if (typeof date === 'string') parseISO(date);
   // Assume a number is a UNIX timestamp
   if (typeof date === 'number') return fromUnixTime(date);
   return date as Date;
@@ -95,6 +99,7 @@ export const DateUtils = {
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
+
   minDate: (...dates: (Date | null)[]) => {
     const maybeDate = fromUnixTime(
       Math.min(
@@ -195,6 +200,25 @@ export const useFormatDateTime = () => {
       : '';
   };
 
+  // this function acts in the same way as getDateOrNull, but will also convert date to start of the
+  // local datetime rather than local utc.
+  const getLocalStartOfDayFromDateOrNull = (
+    date?: Date | string | null,
+    format?: string,
+    options?: Parameters<typeof parse>[3]
+  ): Date | null => {
+    // eslint-disable-next-line new-cap
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
+    const offset = UTCDateWithoutTime
+      ? getTimezoneOffset(tz, UTCDateWithoutTime)
+      : 0;
+    // return UTCDate;
+    return UTCDateWithoutTime
+      ? addMilliseconds(UTCDateWithoutTime, -offset)
+      : null;
+  };
+
   return {
     urlQueryDate,
     urlQueryDateTime,
@@ -207,5 +231,6 @@ export const useFormatDateTime = () => {
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
+    getLocalStartOfDayFromDateOrNull,
   };
 };
