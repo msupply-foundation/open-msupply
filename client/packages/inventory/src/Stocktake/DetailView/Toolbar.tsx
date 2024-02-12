@@ -18,31 +18,17 @@ import {
   Alert,
   useIsGrouped,
 } from '@openmsupply-client/common';
-import { StocktakeLineFragment, useStocktake } from '../api';
-import { StocktakeSummaryItem } from '../../types';
+import { useStocktake } from '../api';
 
-type ToolbarProps = {
-  itemFilter: string;
-  items: StocktakeSummaryItem[];
-  lines: StocktakeLineFragment[];
-  setItemFilter: (filter: string) => void;
-};
-
-export const Toolbar = ({
-  itemFilter,
-  items,
-  lines,
-  setItemFilter,
-}: ToolbarProps) => {
+export const Toolbar = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const [localIsGrouped, setLocalIsGrouped] = React.useState(isGrouped);
-
+  const { itemFilter, setItemFilter } = useStocktake.line.rows();
   const t = useTranslation('inventory');
   const isDisabled = useStocktake.utils.isDisabled();
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
-  const onDelete = useStocktake.line.deleteSelected(items, lines);
-  // const { itemFilter, setItemFilter } = useStocktake.line.rows();
+  const onDelete = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')

@@ -25,18 +25,15 @@ import {
   StyledTabPanel,
   Tabs,
 } from './StocktakeLineEditTabs';
-import { StocktakeLineFragment, useStocktake } from '../../../api';
+import { useStocktake } from '../../../api';
 import {
   LocationTable,
   BatchTable,
   PricingTable,
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
-import { StocktakeSummaryItem } from 'packages/inventory/src/types';
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
-  items: StocktakeSummaryItem[];
-  lines: StocktakeLineFragment[];
   mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
@@ -44,8 +41,6 @@ interface StocktakeLineEditProps {
 
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   item,
-  items,
-  lines,
   mode,
   onClose,
   isOpen,
@@ -53,8 +48,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const isDisabled = useStocktake.utils.isDisabled();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
+  const { items } = useStocktake.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
-    useStocktakeLineEdit(items, lines, currentItem);
+    useStocktakeLineEdit(currentItem);
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const { isGrouped } = useIsGrouped('stocktake');

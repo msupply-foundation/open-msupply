@@ -3,16 +3,14 @@ import {
   ArrayUtils,
   ItemNode,
   SortUtils,
-  // useIsGrouped,
+  useIsGrouped,
   useItemUtils,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from '../../../DetailView';
-import {
-  StocktakeFragment,
-  StocktakeLineFragment,
-} from '../../operations.generated';
+import { StocktakeLineFragment } from '../../operations.generated';
 import { StocktakeSummaryItem } from '../../../../types';
+import { useStocktake } from '..';
 
 const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
@@ -23,11 +21,12 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
     } as StocktakeSummaryItem;
   });
 
-export const useStocktakeRows = (stocktake: StocktakeFragment | undefined) => {
+export const useStocktakeRows = () => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  const { data: stocktake } = useStocktake.document.get();
   const lines = stocktake?.lines.nodes; // ?.slice(0, 20);
   const items = getStocktakeItems(lines ?? []);
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
@@ -35,8 +34,7 @@ export const useStocktakeRows = (stocktake: StocktakeFragment | undefined) => {
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  // const { isGrouped } = useIsGrouped('stocktake');
-  // const isGrouped = true;
+  const { isGrouped } = useIsGrouped('stocktake');
 
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -66,14 +64,14 @@ export const useStocktakeRows = (stocktake: StocktakeFragment | undefined) => {
       ?.sort(sorter);
   }, [lines, sortBy.isDesc, sortBy.key, itemFilter]);
 
-  // const rows = isGrouped ? sortedItems : sortedLines;
+  const rows = isGrouped ? sortedItems : sortedLines;
 
   return {
     itemFilter,
     items: sortedItems,
     lines: sortedLines,
     onChangeSortBy: updateSortQuery,
-    // rows,
+    rows,
     setItemFilter,
     sortBy,
   };

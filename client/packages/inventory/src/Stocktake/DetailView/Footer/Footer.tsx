@@ -7,7 +7,7 @@ import {
   StocktakeNodeStatus,
 } from '@openmsupply-client/common';
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
-import { StocktakeFragment } from '../../api';
+import { StocktakeFragment, useStocktake } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { StocktakeLockButton } from './StocktakeLockButton';
 
@@ -18,12 +18,9 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
   };
 };
 
-export const Footer = ({
-  stocktake,
-}: {
-  stocktake: StocktakeFragment | undefined;
-}) => {
+export const Footer = () => {
   const t = useTranslation('inventory');
+  const { data: stocktake } = useStocktake.document.get();
 
   return (
     <AppFooterPortal
