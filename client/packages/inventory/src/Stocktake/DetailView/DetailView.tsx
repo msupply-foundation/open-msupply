@@ -28,26 +28,20 @@ import { StocktakeLineErrorProvider } from '../context';
 
 const StocktakeTabs = ({
   id,
-  onOpen,
-  // rows,
-  onChangeSortBy,
-  sortBy,
   items,
   lines,
-  setItemFilter,
-  itemFilter,
+  onChangeSortBy,
+  onOpen,
+  sortBy,
 }: {
   id: string | undefined;
+  items: StocktakeSummaryItem[];
+  lines: StocktakeLineFragment[];
   onChangeSortBy: (
     column: Column<StocktakeLineFragment | StocktakeSummaryItem>
   ) => void;
   onOpen: (item?: ItemRowFragment | null | undefined) => void;
-  // rows: StocktakeLineFragment[] | StocktakeSummaryItem[] | undefined;
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
-  itemFilter: string;
-  items: StocktakeSummaryItem[];
-  lines: StocktakeLineFragment[];
-  setItemFilter: (filter: string) => void;
 }) => {
   const isDisabled = useStocktake.utils.isDisabled();
 
@@ -64,13 +58,10 @@ const StocktakeTabs = ({
         <ContentArea
           onRowClick={!isDisabled ? onRowClick : null}
           onAddItem={() => onOpen()}
-          // rows={rows}
           onChangeSortBy={onChangeSortBy}
           sortBy={sortBy}
           items={items}
           lines={lines}
-          itemFilter={itemFilter}
-          setItemFilter={setItemFilter}
         />
       ),
       value: 'Details',
@@ -80,17 +71,7 @@ const StocktakeTabs = ({
       value: 'Log',
     },
   ];
-  return (
-    <TableProvider createStore={createTableStore}>
-      <Toolbar
-        items={items}
-        lines={lines}
-        itemFilter={itemFilter}
-        setItemFilter={setItemFilter}
-      />
-      <DetailTabs tabs={tabs} />
-    </TableProvider>
-  );
+  return <DetailTabs tabs={tabs} />;
 };
 let now = new Date().getTime();
 export const DetailView = () => {
@@ -116,28 +97,34 @@ export const DetailView = () => {
 
       <Footer stocktake={stocktake} />
       <SidePanel stocktake={stocktake} />
-
-      <StocktakeTabs
-        id={stocktake?.id}
-        onOpen={onOpen}
-        sortBy={sortBy}
-        onChangeSortBy={onChangeSortBy}
-        items={items}
-        lines={lines}
-        itemFilter={itemFilter}
-        setItemFilter={setItemFilter}
-      />
-
-      {isOpen && (
-        <StocktakeLineEdit
-          isOpen={isOpen}
-          onClose={onClose}
-          mode={mode}
-          item={entity}
+      <TableProvider createStore={createTableStore}>
+        <Toolbar
           items={items}
-          lines={lines.filter(line => line.item.id === entity?.id)}
+          lines={lines}
+          itemFilter={itemFilter}
+          setItemFilter={setItemFilter}
         />
-      )}
+
+        <StocktakeTabs
+          id={stocktake?.id}
+          onOpen={onOpen}
+          sortBy={sortBy}
+          onChangeSortBy={onChangeSortBy}
+          items={items}
+          lines={lines}
+        />
+
+        {isOpen && (
+          <StocktakeLineEdit
+            isOpen={isOpen}
+            onClose={onClose}
+            mode={mode}
+            item={entity}
+            items={items}
+            lines={lines.filter(line => line.item.id === entity?.id)}
+          />
+        )}
+      </TableProvider>
     </StocktakeLineErrorProvider>
   ) : (
     <AlertModal
