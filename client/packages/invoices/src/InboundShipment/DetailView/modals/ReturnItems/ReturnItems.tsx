@@ -7,6 +7,7 @@ import {
   TableProvider,
   createTableStore,
   useKeyboardHeightAdjustment,
+  HorizontalStepper,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../../api';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
@@ -51,12 +52,26 @@ export const ReturnItemsModal = ({
       <Modal
         title={t('heading.return-items')}
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
-        // is ok & next confusing here bc its actually just next?
-        nextButton={<DialogButton onClick={onClose} variant="next" />}
+        nextButton={
+          <DialogButton
+            onClick={() => {
+              /* TODO */
+            }}
+            variant="next"
+          />
+        }
         height={height}
         width={1024}
       >
-        <QuantityToReturnTable lines={data ?? []} updateLine={() => {}} />
+        <>
+          <HorizontalStepper
+            steps={[
+              { label: t('label.select-quantity') },
+              { label: t('label.reason') },
+            ]}
+          />
+          <QuantityToReturnTable lines={data ?? []} updateLine={() => {}} />
+        </>
       </Modal>
     </TableProvider>
   );
