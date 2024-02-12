@@ -28,7 +28,6 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   onChangeItem,
 }) => {
   const t = useTranslation('inventory');
-  // const { items } = useStocktake.line.rows();
   const disabled = mode === ModalMode.Update;
 
   return (
