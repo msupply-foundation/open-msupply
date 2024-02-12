@@ -38,6 +38,14 @@ export type InboundByNumberQueryVariables = Types.Exact<{
 
 export type InboundByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
+export type NewSupplierReturnLinesQueryVariables = Types.Exact<{
+  inboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type NewSupplierReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
+
 export type UpdateInboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateInboundShipmentInput;
@@ -299,6 +307,24 @@ export const InboundByNumberDocument = gql`
   }
 }
     ${InboundFragmentDoc}`;
+export const NewSupplierReturnLinesDocument = gql`
+    query newSupplierReturnLines($inboundShipmentLineIds: [String!], $storeId: String!) {
+  newSupplierReturn(
+    input: {inboundShipmentLineIds: $inboundShipmentLineIds}
+    storeId: $storeId
+  ) {
+    availableNumberOfPacks
+    batch
+    expiryDate
+    id
+    itemCode
+    itemName
+    numberOfPacksToReturn
+    packSize
+    stockLineId
+  }
+}
+    `;
 export const UpdateInboundShipmentDocument = gql`
     mutation updateInboundShipment($storeId: String!, $input: UpdateInboundShipmentInput!) {
   updateInboundShipment(storeId: $storeId, input: $input) {
@@ -721,6 +747,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     inboundByNumber(variables: InboundByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InboundByNumberQuery>(InboundByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundByNumber', 'query');
     },
+    newSupplierReturnLines(variables: NewSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NewSupplierReturnLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<NewSupplierReturnLinesQuery>(NewSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'newSupplierReturnLines', 'query');
+    },
     updateInboundShipment(variables: UpdateInboundShipmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateInboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundShipmentMutation>(UpdateInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundShipment', 'mutation');
     },
@@ -791,6 +820,23 @@ export const mockInvoiceQuery = (resolver: ResponseResolver<GraphQLRequest<Invoi
 export const mockInboundByNumberQuery = (resolver: ResponseResolver<GraphQLRequest<InboundByNumberQueryVariables>, GraphQLContext<InboundByNumberQuery>, any>) =>
   graphql.query<InboundByNumberQuery, InboundByNumberQueryVariables>(
     'inboundByNumber',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockNewSupplierReturnLinesQuery((req, res, ctx) => {
+ *   const { inboundShipmentLineIds, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ newSupplierReturn })
+ *   )
+ * })
+ */
+export const mockNewSupplierReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<NewSupplierReturnLinesQueryVariables>, GraphQLContext<NewSupplierReturnLinesQuery>, any>) =>
+  graphql.query<NewSupplierReturnLinesQuery, NewSupplierReturnLinesQueryVariables>(
+    'newSupplierReturnLines',
     resolver
   )
 
