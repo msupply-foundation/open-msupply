@@ -23,6 +23,7 @@ export interface ModalProps {
   nextButton?: React.ReactElement<{
     onClick: () => Promise<boolean>;
     disabled?: boolean;
+    type?: 'submit' | 'button' | 'reset';
   }>;
   slideAnimation?: boolean;
   Transition?: React.ForwardRefExoticComponent<
@@ -38,6 +39,7 @@ export interface ModalProps {
   sx?: SxProps<Theme>;
   title: string;
   disableOkKeyBindings?: boolean;
+  enableAutocomplete?: boolean;
 }
 
 export interface DialogProps {
@@ -144,6 +146,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     slideAnimation = true,
     Transition,
     disableOkKeyBindings,
+    enableAutocomplete,
     sx = {},
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -173,6 +176,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             }
           : onClick,
         disabled,
+        type: 'submit',
         ...restOfNextButtonProps,
       });
     }
@@ -184,6 +188,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       okKeyBindingsInput.okDisabled = disabled;
     }
 
+    const formProps = enableAutocomplete ? { autoComplete: 'on' } : {};
     const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
     const dimensions = {
       height: height ? Math.min(window.innerHeight - 50, height) : undefined,
@@ -201,37 +206,39 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         disableEscapeKeyDown={false}
         onKeyDown={
           !disableOkKeyBindings
-             makeOkKeyBindingsHandler(okKeyBindingsInput)
+            ? makeOkKeyBindingsHandler(okKeyBindingsInput)
             : undefined
         }
       >
         {title ? <ModalTitle title={title} /> : null}
-        <DialogContent
-          {...restOfContentProps}
-          sx={{ overflowX: 'hidden', ...contentSX }}
-        >
-          {slideAnimation ? (
-            <Slide in={slideConfig.in} direction={slideConfig.direction}>
-              <div>{slideConfig.in && children}</div>
-            </Slide>
-          ) : (
-            <div>{children}</div>
-          )}
-        </DialogContent>
-        <DialogActions
-          sx={{
-            justifyContent: 'center',
-            marginBottom: '30px',
-            marginTop: '30px',
-          }}
-        >
-          {cancelButton}
-          {saveButton}
-          {copyButton}
-          {okButton}
-          {WrappedNextButton}
-          {reportSelector}
-        </DialogActions>
+        <form {...formProps}>
+          <DialogContent
+            {...restOfContentProps}
+            sx={{ overflowX: 'hidden', ...contentSX }}
+          >
+            {slideAnimation ? (
+              <Slide in={slideConfig.in} direction={slideConfig.direction}>
+                <div>{slideConfig.in && children}</div>
+              </Slide>
+            ) : (
+              <div>{children}</div>
+            )}
+          </DialogContent>
+          <DialogActions
+            sx={{
+              justifyContent: 'center',
+              marginBottom: '30px',
+              marginTop: '30px',
+            }}
+          >
+            {cancelButton}
+            {saveButton}
+            {copyButton}
+            {okButton}
+            {WrappedNextButton}
+            {reportSelector}
+          </DialogActions>
+        </form>
       </BasicModal>
     );
   };
