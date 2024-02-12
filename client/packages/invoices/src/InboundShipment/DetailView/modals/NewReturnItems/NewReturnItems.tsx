@@ -53,7 +53,6 @@ export const NewReturnItemsModal = ({
               { label: t('label.reason') },
             ]}
           />
-          {/* TODO: updateLine */}
           <QuantityToReturnTable
             lines={lines}
             updateLine={line => {
