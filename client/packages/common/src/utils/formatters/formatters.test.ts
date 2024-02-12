@@ -1,4 +1,6 @@
 import { Formatter } from './formatters';
+import * as df from 'date-fns';
+import * as dateFnsTz from 'date-fns-tz';
 
 describe('Formatter', () => {
   it('is defined', () => {
@@ -48,12 +50,40 @@ describe('Formatter', () => {
   });
 
   it('naiveDateTime', () => {
-    expect(Formatter.toIsoString(null)).toBe(null);
-    expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(
-      '1984-03-12T12:00:00.000Z'
+    // While toIsoString is naive to the timezone, the timezone will still change.
+    // so when converting to GMT from the local timezone, the reference string will
+    // be wrong depending on the timezone.
+    // I've refactored to subtract timezone from naive string for. This will test both
+    // the naive interpretation and the timezone modification in the same test.
+
+    // eslint-disable-next-line new-cap
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localalisedStartOfDay = new Date('1984/3/13');
+    // now subtract timezone which is daylight saving dependent
+    const utcStartOfDay = df.addMilliseconds(
+      localalisedStartOfDay,
+      dateFnsTz.getTimezoneOffset(timeZone, localalisedStartOfDay)
     );
+    expect(Formatter.toIsoString(utcStartOfDay)).toBe(
+      '1984-03-13T00:00:00.000Z'
+    );
+    expect(Formatter.toIsoString(null)).toBe(null);
+
+    const offsetInHours =
+      dateFnsTz.getTimezoneOffset(timeZone, new Date()) / 1000 / 60 / 60;
+    let dateString =
+      offsetInHours > 0
+        ? `1984-03-12T${24 - offsetInHours}:00:00.000Z`
+        : `1984-03-13T${-offsetInHours}:00:00.000Z`;
+    expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(dateString);
+
+    // note there are +13 and +14 hour timezones, but nothing below -11;
+    dateString =
+      offsetInHours > 11
+        ? `1984-03-12T${24 - offsetInHours + 11}:12:13.000Z`
+        : `1984-03-13T${11 - offsetInHours}:12:13.000Z`;
     expect(Formatter.toIsoString(new Date('1984/3/13 11:12:13'))).toBe(
-      '1984-03-12T23:12:13.000Z'
+      dateString
     );
   });
 
