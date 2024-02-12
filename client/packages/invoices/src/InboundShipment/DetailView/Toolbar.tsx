@@ -13,6 +13,8 @@ import {
   InvoiceNodeStatus,
   Alert,
   ArrowLeftIcon,
+  useTableStore,
+  useNotification,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
@@ -44,6 +46,7 @@ export const Toolbar: FC<{
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
+  const { info } = useNotification();
 
   const onDelete = useInbound.lines.deleteSelected();
   const { otherParty, theirReference, update } = useInbound.document.fields([
@@ -52,6 +55,18 @@ export const Toolbar: FC<{
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
+
+  const linesAreSelected = useTableStore(state =>
+    Object.values(state.rowState).some(row => row.isSelected)
+  );
+
+  const onReturn = () => {
+    if (!linesAreSelected) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    } else onReturnLines();
+  };
+
   const isTransfer = !!shipment?.linkedShipment?.id;
 
   if (!data) return null;
@@ -115,10 +130,7 @@ export const Toolbar: FC<{
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={ArrowLeftIcon}
-              onClick={onReturnLines}
-            >
+            <DropdownMenuItem IconComponent={ArrowLeftIcon} onClick={onReturn}>
               {t('button.return-lines')}
             </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>

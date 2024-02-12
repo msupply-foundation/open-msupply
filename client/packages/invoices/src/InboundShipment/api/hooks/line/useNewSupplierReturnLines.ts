@@ -7,7 +7,7 @@ export const useNewSupplierReturnLines = () => {
 
   const { items, lines } = useInboundRows();
 
-  const selectedRows =
+  const selectedIds =
     useTableStore(state => {
       const { isGrouped } = state;
 
@@ -17,15 +17,9 @@ export const useNewSupplierReturnLines = () => {
             .map(({ lines }) => lines.flat())
             .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) || [];
+    })?.map(({ id }) => id) || [];
 
-  // TODO: also show please select lines
-  if (!selectedRows.length) {
-  }
-
-  const lineIds = selectedRows.map(({ id }) => id);
-
-  return useQuery(api.keys.newReturns(lineIds), () =>
-    api.get.newSupplierReturnLines(lineIds)
+  return useQuery(api.keys.newReturns(selectedIds), () =>
+    api.get.newSupplierReturnLines(selectedIds)
   );
 };
