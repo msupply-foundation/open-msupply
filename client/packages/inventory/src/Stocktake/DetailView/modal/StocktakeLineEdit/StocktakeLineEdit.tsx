@@ -45,10 +45,9 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
 }) => {
-  const isDisabled = useStocktake.utils.isDisabled();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
-  const { items } = useStocktake.line.rows();
+  const { isDisabled, items } = useStocktake.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
   const { highlightRows } = useRowHighlight();

@@ -22,16 +22,17 @@ import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
 import { StocktakeFragment, StocktakeLineFragment, useStocktake } from '../api';
 import { StocktakeLineErrorProvider } from '../context';
+import { isStocktakeDisabled } from '../../utils';
 
 const StocktakeTabs = ({
   id,
+  isDisabled,
   onOpen,
 }: {
   id: string | undefined;
+  isDisabled: boolean;
   onOpen: (item?: ItemRowFragment | null | undefined) => void;
 }) => {
-  const isDisabled = useStocktake.utils.isDisabled();
-
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
       if (item.item) onOpen(item.item);
@@ -59,9 +60,11 @@ const StocktakeTabs = ({
 
 const DetailViewComponent = ({
   stocktake,
+  isDisabled,
   onOpen,
 }: {
   stocktake: StocktakeFragment;
+  isDisabled: boolean;
   onOpen: () => void;
 }) => {
   const { HighlightStyles } = useRowHighlight();
@@ -76,13 +79,18 @@ const DetailViewComponent = ({
 
       <Toolbar />
 
-      <StocktakeTabs id={stocktake?.id} onOpen={onOpen} />
+      <StocktakeTabs
+        id={stocktake?.id}
+        onOpen={onOpen}
+        isDisabled={isDisabled}
+      />
     </>
   );
 };
 
 export const DetailView = () => {
   const { data: stocktake, isLoading } = useStocktake.document.get();
+  const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
   const t = useTranslation('inventory');
   const navigate = useNavigate();
   const { isOpen, entity, onOpen, onClose, mode } =
@@ -109,7 +117,11 @@ export const DetailView = () => {
   return (
     <StocktakeLineErrorProvider>
       <TableProvider createStore={createTableStore}>
-        <DetailViewComponent stocktake={stocktake} onOpen={onOpen} />;
+        <DetailViewComponent
+          stocktake={stocktake}
+          onOpen={onOpen}
+          isDisabled={isDisabled}
+        />
         {isOpen && (
           <StocktakeLineEdit
             isOpen={isOpen}

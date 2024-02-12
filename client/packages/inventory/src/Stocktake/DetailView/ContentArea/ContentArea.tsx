@@ -88,9 +88,8 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation('inventory');
-  const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows();
+  const { isDisabled, rows, onChangeSortBy, sortBy } = useStocktake.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
-  const isDisabled = useStocktake.utils.isDisabled();
 
   useHighlightUncountedRows(rows);
 
