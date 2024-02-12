@@ -180,7 +180,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
       WrappedNextButton = React.cloneElement(nextButton, {
         onClick: slideAnimation
-          ? async (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+          ? async (e?: OkClickEvent) => {
               const result = await handler(e);
               if (!!result) onTriggerSlide();
               return result;
