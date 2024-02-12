@@ -50,7 +50,7 @@ const UIComponent = (props: ControlProps) => {
       Input={
         <BaseDatePickerInput
           // undefined is displayed as "now" and null as unset
-          value={formatDateTime.getLocalStartOfDayFromDateOrNull(data)}
+          value={formatDateTime.getLocalDate(data)}
           onChange={e => {
             handleChange(
               path,

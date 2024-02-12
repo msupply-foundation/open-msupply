@@ -197,9 +197,17 @@ export const useFormatDateTime = () => {
       : '';
   };
 
-  // this function acts in the same way as getDateOrNull, but will also convert date to start of the
-  // local datetime rather than local utc.
-  const getLocalStartOfDayFromDateOrNull = (
+  /**
+   * While getDateOrNull is naive to the timezone, the timezone will still change.
+   * When converting from the assumed naive zone of GMT to the local timezone, the
+   * dateTime will be wrong if the timezone is behind GMT. This function acts in
+   * the same way as getDateOrNull, but will create a datetime of start of day local
+   * time rather than start of day GMT.
+   * You can use this function anytime you need a datetime for mui date picker to
+   * be created from a date only string. This includes date of birth, date of death
+   * or any other date which is time and timezone agnostic.
+   */
+  const getLocalDate = (
     date?: Date | string | null,
     format?: string,
     options?: Parameters<typeof parse>[3]
@@ -226,6 +234,6 @@ export const useFormatDateTime = () => {
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
-    getLocalStartOfDayFromDateOrNull,
+    getLocalDate,
   };
 };
