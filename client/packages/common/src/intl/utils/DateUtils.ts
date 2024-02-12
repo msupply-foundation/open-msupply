@@ -40,10 +40,8 @@ import { getTimezoneOffset } from 'date-fns-tz';
 export const MINIMUM_EXPIRY_MONTHS = 3;
 
 const dateInputHandler = (date: Date | string | number): Date => {
-  // console.log('date input handler', date);
-  // TODO this is being called for every patient in list (it shouldn't)
   // Assume a string is an ISO date-time string
-  if (typeof date === 'string') parseISO(date);
+  if (typeof date === 'string') return parseISO(date);
   // Assume a number is a UNIX timestamp
   if (typeof date === 'number') return fromUnixTime(date);
   return date as Date;
@@ -99,7 +97,6 @@ export const DateUtils = {
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
-
   minDate: (...dates: (Date | null)[]) => {
     const maybeDate = fromUnixTime(
       Math.min(
@@ -213,7 +210,6 @@ export const useFormatDateTime = () => {
     const offset = UTCDateWithoutTime
       ? getTimezoneOffset(tz, UTCDateWithoutTime)
       : 0;
-    // return UTCDate;
     return UTCDateWithoutTime
       ? addMilliseconds(UTCDateWithoutTime, -offset)
       : null;
