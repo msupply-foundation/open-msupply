@@ -13,23 +13,27 @@ import {
   useNavigate,
   useTranslation,
   DownloadIcon,
+  useNativeClient,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { AppRoute, Environment } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
 import { AndroidLogFileModal } from './AndroidLogFileModal';
+// import { AndroidDatabaseDownloadModal } from './AndroidDatabaseDownloadModal';
 import { WebAppLogFileModal } from './WebAppLogFileModal';
 
 export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const navigate = useNavigate();
+  const { saveDatabase } = useNativeClient();
   const t = useTranslation('common');
   const {
     isOn: isLogShown,
     toggleOn: showLog,
     toggleOff: hideLog,
   } = useToggle();
+  // const { isOn: isDbShown, toggleOn: showDb, toggleOff: hideDB } = useToggle();
   const toggleNativeMode = () => {
     const mode =
       nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
@@ -40,6 +44,7 @@ export const ServerSettings = () => {
       navigate(RouteBuilder.create(AppRoute.Android).build());
     })();
   };
+
   useEffect(() => {
     getPreference('mode', 'none').then(setNativeMode);
   }, []);
@@ -77,6 +82,21 @@ export const ServerSettings = () => {
           <>
             <AndroidLogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
+          </>
+        }
+      />
+      <Setting
+        title={t('label.download-database')}
+        component={
+          <>
+            <BaseButton
+              startIcon={<DownloadIcon />}
+              onClick={async () => {
+                await saveDatabase();
+              }}
+            >
+              {t('button.download')}
+            </BaseButton>
           </>
         }
       />

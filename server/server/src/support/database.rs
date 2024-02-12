@@ -32,6 +32,9 @@ pub async fn get_database(
         return Ok(HttpResponse::Unauthorized().body("Access Denied"));
     }
 
+    // Vacuum the database first
+    let _result = service_provider.connection_manager.execute("VACUUM");
+
     let db_path = settings.database.connection_string(); // TODO: Merge https://github.com/msupply-foundation/open-msupply/pull/2899    database_path(&self)
     let path = Path::new(&db_path);
 
