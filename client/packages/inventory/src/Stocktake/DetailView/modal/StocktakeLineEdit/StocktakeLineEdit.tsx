@@ -25,15 +25,18 @@ import {
   StyledTabPanel,
   Tabs,
 } from './StocktakeLineEditTabs';
-import { useStocktake } from '../../../api';
+import { StocktakeLineFragment, useStocktake } from '../../../api';
 import {
   LocationTable,
   BatchTable,
   PricingTable,
 } from './StocktakeLineEditTables';
 import { StocktakeLineEditModal } from './StocktakeLineEditModal';
+import { StocktakeSummaryItem } from 'packages/inventory/src/types';
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
+  items: StocktakeSummaryItem[];
+  lines: StocktakeLineFragment[];
   mode: ModalMode | null;
   onClose: () => void;
   isOpen: boolean;
@@ -41,6 +44,8 @@ interface StocktakeLineEditProps {
 
 export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   item,
+  items,
+  lines,
   mode,
   onClose,
   isOpen,
@@ -49,10 +54,11 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
-    useStocktakeLineEdit(currentItem);
+    useStocktakeLineEdit(items, lines, currentItem);
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const { isGrouped } = useIsGrouped('stocktake');
+
   // Order by newly added batch since new batches are now
   // added to the top of the stocktake list instead of the bottom
   const reversedDraftLines = [...draftLines].reverse();
@@ -121,6 +127,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
             <>
               <StocktakeLineEditForm
                 item={currentItem}
+                items={items}
                 onChangeItem={setCurrentItem}
                 mode={mode}
               />

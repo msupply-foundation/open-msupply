@@ -5,12 +5,13 @@ import {
 import { StocktakeSummaryItem } from '../../../../types';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { useTranslation } from '@common/intl';
-import { useStocktakeRows } from './useStocktakeRows';
 import { useStocktakeDeleteLines } from './useStocktakeDeleteLines';
 import { useStocktake } from '..';
 
-export const useStocktakeDeleteSelectedLines = (): (() => void) => {
-  const { items, lines } = useStocktakeRows();
+export const useStocktakeDeleteSelectedLines = (
+  items: StocktakeSummaryItem[],
+  lines: StocktakeLineFragment[]
+): (() => void) => {
   const { mutateAsync } = useStocktakeDeleteLines();
   const t = useTranslation('inventory');
   const isDisabled = useStocktake.utils.isDisabled();

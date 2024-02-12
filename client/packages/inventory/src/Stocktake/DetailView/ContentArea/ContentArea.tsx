@@ -3,12 +3,14 @@ import {
   DataTable,
   useTranslation,
   Box,
-  useIsGrouped,
   MiniTable,
   createQueryParamsStore,
   NothingHere,
   useRowStyle,
   placeholderRowStyle,
+  Column,
+  SortBy,
+  useIsGrouped,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktake } from '../../api';
@@ -41,6 +43,14 @@ interface ContentAreaProps {
     | null
     | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
   onAddItem: () => void;
+  onChangeSortBy: (
+    column: Column<StocktakeLineFragment | StocktakeSummaryItem>
+  ) => void;
+  sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
+  items: StocktakeSummaryItem[];
+  lines: StocktakeLineFragment[];
+  itemFilter: string;
+  setItemFilter: (filter: string) => void;
 }
 
 const isUncounted = (line: StocktakeLineFragment): boolean =>
@@ -87,10 +97,15 @@ const useHighlightUncountedRows = (
 export const ContentArea: FC<ContentAreaProps> = ({
   onAddItem,
   onRowClick,
+
+  onChangeSortBy,
+  sortBy,
+  items,
+  lines,
 }) => {
-  const t = useTranslation('inventory');
   const { isGrouped } = useIsGrouped('stocktake');
-  const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows(isGrouped);
+  const rows = isGrouped ? items : lines;
+  const t = useTranslation('inventory');
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const isDisabled = useStocktake.utils.isDisabled();
 
@@ -98,6 +113,12 @@ export const ContentArea: FC<ContentAreaProps> = ({
 
   return (
     <Box flexDirection="column" flex={1}>
+      {/* <Toolbar
+        items={items}
+        lines={lines}
+        itemFilter={itemFilter}
+        setItemFilter={setItemFilter}
+      /> */}
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
