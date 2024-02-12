@@ -193,6 +193,14 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
 
       throw new Error('Could not find invoice!');
     },
+    newSupplierReturnLines: async (lineIds: string[]) => {
+      const result = await sdk.newSupplierReturnLines({
+        inboundShipmentLineIds: lineIds,
+        storeId,
+      });
+
+      return result?.newSupplierReturn;
+    },
   },
   delete: async (invoices: InboundRowFragment[]): Promise<string[]> => {
     const result =
