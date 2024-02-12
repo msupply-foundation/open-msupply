@@ -8,5 +8,7 @@
   "button.new-outbound-shipment": "Новая Исходящая Доставка",
   "label.add-batch": "Добавить партию",
   "button.new-shipment": "Новая Поставка",
-  "button.create-shipment": "Создать Поставку"
+  "button.create-shipment": "Создать Поставку",
+  "button.add-item": "Добавить товар",
+  "button.allocate-lines": "Распределить метки-заполнители"
 }
