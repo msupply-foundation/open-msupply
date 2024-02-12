@@ -266,13 +266,13 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   numberOfPacksToReturn: {
     label: 'label.quantity-to-return',
     key: 'numberOfPacksToReturn',
-    width: 100,
+    width: 125,
     align: ColumnAlign.Right,
   },
   availableNumberOfPacks: {
     label: 'label.available-quantity-for-return',
     key: 'availableNumberOfPacks',
-    width: 100,
+    width: 125,
     align: ColumnAlign.Right,
   },
 });
