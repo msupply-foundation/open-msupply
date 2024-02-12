@@ -40,7 +40,7 @@ export const StocktakeLineEditModal: FC<
         <DialogButton
           variant="next"
           onClick={onNext}
-          disabled={!isValid || (!hasNext && mode === ModalMode.Update)}
+          disabled={(!hasNext && mode === ModalMode.Update) || !isValid}
         />
       }
       okButton={
