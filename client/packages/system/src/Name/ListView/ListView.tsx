@@ -77,7 +77,6 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
         okButton={<DialogButton variant="ok" onClick={hideDialog} />}
         slideAnimation={false}
         Transition={Transition}
-        enableOkKeyBindings
       >
         <DetailModal nameId={selectedId} />
       </Modal>

@@ -100,7 +100,6 @@ export const RequestLineEdit = ({
       }
       height={height}
       width={1024}
-      enableOkKeyBindings
     >
       {!isLoading ? (
         <>

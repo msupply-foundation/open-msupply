@@ -37,7 +37,7 @@ export interface ModalProps {
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
-  enableOkKeyBindings?: boolean;
+  disableOkKeyBindings?: boolean;
 }
 
 export interface DialogProps {
@@ -143,7 +143,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     contentProps,
     slideAnimation = true,
     Transition,
-    enableOkKeyBindings,
+    disableOkKeyBindings,
     sx = {},
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
@@ -200,8 +200,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         TransitionComponent={Transition}
         disableEscapeKeyDown={false}
         onKeyDown={
-          enableOkKeyBindings
-            ? makeOkKeyBindingsHandler(okKeyBindingsInput)
+          !disableOkKeyBindings
+             makeOkKeyBindingsHandler(okKeyBindingsInput)
             : undefined
         }
       >
@@ -225,7 +225,6 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             marginTop: '30px',
           }}
         >
-          {/* {enableOkKeyBindings && <OkKeyBindings {...okKeyBindingsProps} />} */}
           {cancelButton}
           {saveButton}
           {copyButton}

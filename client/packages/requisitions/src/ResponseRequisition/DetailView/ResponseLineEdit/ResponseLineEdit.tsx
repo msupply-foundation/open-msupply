@@ -89,7 +89,6 @@ export const ResponseLineEdit = ({
       }
       height={600}
       width={1024}
-      enableOkKeyBindings
     >
       {!isLoading ? (
         <>

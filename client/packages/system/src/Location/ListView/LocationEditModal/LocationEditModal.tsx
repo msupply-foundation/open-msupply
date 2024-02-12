@@ -121,7 +121,6 @@ export const LocationEditModal: FC<LocationEditModalProps> = ({
           ? t('label.create-location')
           : t('label.edit-location')
       }
-      enableOkKeyBindings
     >
       {!isLoading ? (
         <Grid flexDirection="column" display="flex" gap={2}>

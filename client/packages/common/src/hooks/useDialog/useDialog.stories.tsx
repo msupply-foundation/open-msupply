@@ -31,14 +31,9 @@ const Template: Story = () => {
         cancelButton={<DialogButton variant="cancel" onClick={onCancel} />}
         nextButton={<DialogButton variant="next" onClick={onOkNext} />}
         okButton={<DialogButton variant="ok" onClick={onOk} />}
-        enableOkKeyBindings
       >
         <div>
           <p>This is an example dialog. There&apos;s nothing much to see</p>
-          <p>
-            With okKeyBindings enabled, you can use [Ctrl+Shift+Enter] for Ok,
-            or [Ctrl+Enter] for Ok & Next
-          </p>
         </div>
       </Modal>
       <div>
