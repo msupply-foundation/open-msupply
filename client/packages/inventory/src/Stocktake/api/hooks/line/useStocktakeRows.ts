@@ -27,7 +27,7 @@ export const useStocktakeRows = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { data: stocktake } = useStocktake.document.get();
-  const lines = stocktake?.lines.nodes; // ?.slice(0, 20);
+  const lines = stocktake?.lines.nodes;
   const items = getStocktakeItems(lines ?? []);
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const columns = useStocktakeColumns({
