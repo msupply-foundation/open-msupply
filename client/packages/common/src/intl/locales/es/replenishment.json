@@ -71,7 +71,7 @@
   "messages.select-rows-to-delete-them": "Selecciona filas para eliminarlas",
   "messages.shipment-saved": "Envío guardado 🥳",
   "error.soh-and-suggested-quantity-are-zero": "No hay valores de inventario a la mano o de cantidad sugerida",
-  "messages.deleted-requisitions_other": "Se eliminaron {{count}} ordenes",
+  "messages.deleted-requisitions_other": "{{count}} ordenes eliminadas",
   "info.automatic-shipment": "Este envío fue creado automáticamente como resultado de una salida en otro almacén.",
   "label.suggested-order-quantity": "Cantidad de pedido sugerida",
   "messages.internal-order-created-on": "Orden Interna creada el {{date}}",
@@ -119,6 +119,6 @@
   "messages.confirm-delete-requisitions_many": "Esto eliminará permanentemente {{count}} ordenes internas",
   "messages.confirm-delete-shipment-lines_few": "Esto eliminará permanentemente {{count}} líneas del envío",
   "messages.confirm-delete-shipment-lines_many": "Esto eliminará permanentemente {{count}} líneas del envío",
-  "messages.deleted-requisitions_few": "{{count}} Ordenes eliminadas",
+  "messages.deleted-requisitions_few": "{{count}} ordenes eliminadas",
   "messages.deleted-requisitions_many": "{{count}} ordenes eliminadas"
 }
