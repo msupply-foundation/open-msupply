@@ -99,7 +99,6 @@ export const ContentArea: FC<ContentAreaProps> = ({
   const pagination = { page, first, offset };
 
   useHighlightUncountedRows(rows);
-  console.log('---> content area');
   return (
     <Box flexDirection="column" flex={1}>
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
