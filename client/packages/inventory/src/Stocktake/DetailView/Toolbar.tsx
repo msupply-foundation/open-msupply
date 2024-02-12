@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   AppBarContentPortal,
   Grid,
@@ -12,26 +12,48 @@ import {
   DatePickerInput,
   Formatter,
   SearchBar,
-  useIsGrouped,
   Box,
   Switch,
   DateUtils,
   Alert,
+  useIsGrouped,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
+import { StocktakeLineFragment, useStocktake } from '../api';
+import { StocktakeSummaryItem } from '../../types';
 
-export const Toolbar: FC = () => {
+type ToolbarProps = {
+  itemFilter: string;
+  items: StocktakeSummaryItem[];
+  lines: StocktakeLineFragment[];
+  setItemFilter: (filter: string) => void;
+};
+
+export const Toolbar = ({
+  itemFilter,
+  items,
+  lines,
+  setItemFilter,
+}: ToolbarProps) => {
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
+  const [localIsGrouped, setLocalIsGrouped] = React.useState(isGrouped);
+
   const t = useTranslation('inventory');
   const isDisabled = useStocktake.utils.isDisabled();
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
-  const onDelete = useStocktake.line.deleteSelected();
-  const { itemFilter, setItemFilter } = useStocktake.line.rows();
+  const onDelete = useStocktake.line.deleteSelected(items, lines);
+  // const { itemFilter, setItemFilter } = useStocktake.line.rows();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
+  const onChangeIsGrouped = () => {
+    setLocalIsGrouped(!localIsGrouped);
+    // when the render of the dependent component is slow
+    // separate the render of the switch change from the wider state change
+    // otherwise the switch doesn't render until the slow component completes
+    setTimeout(toggleIsGrouped, 100);
+  };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -92,8 +114,8 @@ export const Toolbar: FC = () => {
           <Box sx={{ marginRight: 2 }}>
             <Switch
               label={t('label.group-by-item')}
-              onChange={toggleIsGrouped}
-              checked={isGrouped}
+              onChange={onChangeIsGrouped}
+              checked={localIsGrouped}
               size="small"
               color="secondary"
             />

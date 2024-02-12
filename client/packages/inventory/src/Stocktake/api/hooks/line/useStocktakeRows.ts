@@ -1,26 +1,42 @@
 import { useMemo } from 'react';
 import {
+  ArrayUtils,
   ItemNode,
   SortUtils,
+  // useIsGrouped,
   useItemUtils,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns } from '../../../DetailView';
-import { useStocktakeLines } from './useStocktakeLines';
-import { useStocktakeItems } from './useStocktakeItems';
+import {
+  StocktakeFragment,
+  StocktakeLineFragment,
+} from '../../operations.generated';
+import { StocktakeSummaryItem } from '../../../../types';
 
-export const useStocktakeRows = (isGrouped = true) => {
+const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
+  Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
+    return {
+      id: itemId,
+      item: lines[0]?.item,
+      lines,
+    } as StocktakeSummaryItem;
+  });
+
+export const useStocktakeRows = (stocktake: StocktakeFragment | undefined) => {
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { data: lines } = useStocktakeLines();
-  const { data: items } = useStocktakeItems();
+  const lines = stocktake?.lines.nodes; // ?.slice(0, 20);
+  const items = getStocktakeItems(lines ?? []);
   const { itemFilter, setItemFilter, matchItem } = useItemUtils();
   const columns = useStocktakeColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
+  // const { isGrouped } = useIsGrouped('stocktake');
+  // const isGrouped = true;
 
   const sortedItems = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -34,7 +50,7 @@ export const useStocktakeRows = (isGrouped = true) => {
         return matchItem(itemFilter, item.item as ItemNode);
       })
       ?.sort(sorter);
-  }, [items, sortBy.key, sortBy.isDesc, itemFilter]);
+  }, [lines, sortBy.isDesc, sortBy.key, itemFilter]);
 
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
@@ -48,17 +64,17 @@ export const useStocktakeRows = (isGrouped = true) => {
         return matchItem(itemFilter, line.item);
       })
       ?.sort(sorter);
-  }, [lines, sortBy.key, sortBy.isDesc, itemFilter]);
+  }, [lines, sortBy.isDesc, sortBy.key, itemFilter]);
 
-  const rows = isGrouped ? sortedItems : sortedLines;
+  // const rows = isGrouped ? sortedItems : sortedLines;
 
   return {
-    rows,
-    lines: sortedLines,
-    items: sortedItems,
-    onChangeSortBy: updateSortQuery,
-    sortBy,
     itemFilter,
+    items: sortedItems,
+    lines: sortedLines,
+    onChangeSortBy: updateSortQuery,
+    // rows,
     setItemFilter,
+    sortBy,
   };
 };

@@ -11,7 +11,7 @@ import {
   PrinterIcon,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { useStocktake } from '../api';
+import { StocktakeFragment, useStocktake } from '../api';
 import {
   ReportRowFragment,
   ReportSelector,
@@ -21,15 +21,16 @@ import { JsonData } from '@openmsupply-client/programs';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
+  stocktake: StocktakeFragment | undefined;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
+  stocktake,
 }) => {
   const isDisabled = useStocktake.utils.isDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { data } = useStocktake.document.get();
   const { print, isPrinting } = useReport.utils.print();
 
   const {
@@ -40,10 +41,10 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     report: ReportRowFragment,
     args: JsonData | undefined
   ) => {
-    if (!data) return;
+    if (!stocktake) return;
     print({
       reportId: report.id,
-      dataId: data?.id,
+      dataId: stocktake?.id,
       args,
       sort: { key: sortBy.key, desc: sortBy.isDesc },
     });

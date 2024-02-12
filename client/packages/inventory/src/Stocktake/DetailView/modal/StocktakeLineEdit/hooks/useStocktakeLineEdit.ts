@@ -11,6 +11,7 @@ import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
 import { useStocktakeLineErrorContext } from '../../../../context/stocktakeLineError';
+import { StocktakeSummaryItem } from 'packages/inventory/src/types';
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<StocktakeLineFragment>) => void;
@@ -21,12 +22,15 @@ interface useStocktakeLineEditController {
 }
 
 export const useStocktakeLineEdit = (
+  items: StocktakeSummaryItem[],
+  lines: StocktakeLineFragment[],
   item: ItemRowFragment | null
 ): useStocktakeLineEditController => {
   const t = useTranslation('inventory');
   const { id } = useStocktake.document.fields('id');
-  const nextItem = useNextItem(item?.id);
-  const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
+  const filtereredItems = items.filter(item => item.item?.id === item?.id);
+  const nextItem = useNextItem(filtereredItems, item?.id);
+  const [draftLines, setDraftLines] = useDraftStocktakeLines(item, lines);
   const { mutateAsync: upsertLines, isLoading: isSaving } =
     useStocktake.line.save();
   const errorsContext = useStocktakeLineErrorContext();

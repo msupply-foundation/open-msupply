@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   StatusCrumbs,
@@ -7,7 +7,7 @@ import {
   StocktakeNodeStatus,
 } from '@openmsupply-client/common';
 import { stocktakeStatuses, getStocktakeTranslator } from '../../../utils';
-import { StocktakeFragment, useStocktake } from '../../api';
+import { StocktakeFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { StocktakeLockButton } from './StocktakeLockButton';
 
@@ -18,14 +18,17 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
   };
 };
 
-export const Footer: FC = () => {
+export const Footer = ({
+  stocktake,
+}: {
+  stocktake: StocktakeFragment | undefined;
+}) => {
   const t = useTranslation('inventory');
-  const { data } = useStocktake.document.get();
 
   return (
     <AppFooterPortal
       Content={
-        data && (
+        stocktake && (
           <Box
             gap={2}
             display="flex"
@@ -36,7 +39,7 @@ export const Footer: FC = () => {
             <StocktakeLockButton />
             <StatusCrumbs
               statuses={stocktakeStatuses}
-              statusLog={createStatusLog(data)}
+              statusLog={createStatusLog(stocktake)}
               statusFormatter={getStocktakeTranslator(t)}
             />
 
