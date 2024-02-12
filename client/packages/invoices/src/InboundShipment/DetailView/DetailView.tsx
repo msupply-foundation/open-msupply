@@ -34,8 +34,8 @@ export const DetailView: FC = () => {
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<InboundLineItem>();
   const {
-    onOpen: returnsOnOpen,
-    onClose: returnsOnClose,
+    onOpen: onOpenReturns,
+    onClose: onCloseReturns,
     isOpen: returnsIsOpen,
   } = useEditModal();
   const navigate = useNavigate();
@@ -83,7 +83,7 @@ export const DetailView: FC = () => {
         >
           <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar onReturnLines={() => returnsOnOpen()} />
+          <Toolbar onReturnLines={() => onOpenReturns()} />
 
           <DetailTabs tabs={tabs} />
 
@@ -101,7 +101,7 @@ export const DetailView: FC = () => {
           )}
 
           {returnsIsOpen && (
-            <ReturnItemsModal isOpen={returnsIsOpen} onClose={returnsOnClose} />
+            <ReturnItemsModal isOpen={returnsIsOpen} onClose={onCloseReturns} />
           )}
         </TableProvider>
       ) : (
