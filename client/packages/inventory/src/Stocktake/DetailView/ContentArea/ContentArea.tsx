@@ -39,18 +39,16 @@ const Expando = ({
 };
 
 interface ContentAreaProps {
-  onRowClick:
-    | null
-    | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
+  items: StocktakeSummaryItem[];
+  lines: StocktakeLineFragment[];
+  sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
   onAddItem: () => void;
   onChangeSortBy: (
     column: Column<StocktakeLineFragment | StocktakeSummaryItem>
   ) => void;
-  sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
-  items: StocktakeSummaryItem[];
-  lines: StocktakeLineFragment[];
-  itemFilter: string;
-  setItemFilter: (filter: string) => void;
+  onRowClick:
+    | null
+    | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
 }
 
 const isUncounted = (line: StocktakeLineFragment): boolean =>
@@ -95,13 +93,12 @@ const useHighlightUncountedRows = (
 };
 
 export const ContentArea: FC<ContentAreaProps> = ({
-  onAddItem,
-  onRowClick,
-
-  onChangeSortBy,
-  sortBy,
   items,
   lines,
+  sortBy,
+  onAddItem,
+  onChangeSortBy,
+  onRowClick,
 }) => {
   const { isGrouped } = useIsGrouped('stocktake');
   const rows = isGrouped ? items : lines;
@@ -113,12 +110,6 @@ export const ContentArea: FC<ContentAreaProps> = ({
 
   return (
     <Box flexDirection="column" flex={1}>
-      {/* <Toolbar
-        items={items}
-        lines={lines}
-        itemFilter={itemFilter}
-        setItemFilter={setItemFilter}
-      /> */}
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
