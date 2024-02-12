@@ -50,16 +50,8 @@ describe('Formatter', () => {
   });
 
   it('naiveDateTime', () => {
-    // While toIsoString is naive to the timezone, the timezone will still change.
-    // so when converting to GMT from the local timezone, the reference string will
-    // be wrong depending on the timezone.
-    // I've refactored to subtract timezone from naive string for. This will test both
-    // the naive interpretation and the timezone modification in the same test.
-
-    // eslint-disable-next-line new-cap
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
     const localalisedStartOfDay = new Date('1984/3/13');
-    // now subtract timezone which is daylight saving dependent
     const utcStartOfDay = df.addMilliseconds(
       localalisedStartOfDay,
       dateFnsTz.getTimezoneOffset(timeZone, localalisedStartOfDay)
@@ -76,7 +68,6 @@ describe('Formatter', () => {
         ? `1984-03-12T${24 - offsetInHours}:00:00.000Z`
         : `1984-03-13T${-offsetInHours}:00:00.000Z`;
     expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(dateString);
-
     // note there are +13 and +14 hour timezones, but nothing below -11;
     dateString =
       offsetInHours > 11
