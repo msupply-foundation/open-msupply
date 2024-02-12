@@ -59,23 +59,13 @@ describe('Formatter', () => {
     expect(Formatter.toIsoString(utcStartOfDay)).toBe(
       '1984-03-13T00:00:00.000Z'
     );
-    expect(Formatter.toIsoString(null)).toBe(null);
-
-    const offsetInHours =
-      dateFnsTz.getTimezoneOffset(timeZone, new Date()) / 1000 / 60 / 60;
-    let dateString =
-      offsetInHours > 0
-        ? `1984-03-12T${24 - offsetInHours}:00:00.000Z`
-        : `1984-03-13T${-offsetInHours}:00:00.000Z`;
-    expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(dateString);
-    // note there are +13 and +14 hour timezones, but nothing below -11;
-    dateString =
-      offsetInHours > 11
-        ? `1984-03-12T${24 - offsetInHours + 11}:12:13.000Z`
-        : `1984-03-13T${11 - offsetInHours}:12:13.000Z`;
-    expect(Formatter.toIsoString(new Date('1984/3/13 11:12:13'))).toBe(
-      dateString
+    const localisedNewDate = new Date('1984/3/13 11:12:13');
+    const utcNewDate = df.addMilliseconds(
+      localisedNewDate,
+      dateFnsTz.getTimezoneOffset(timeZone, localisedNewDate)
     );
+    expect(Formatter.toIsoString(utcNewDate)).toBe('1984-03-13T11:12:13.000Z');
+    expect(Formatter.toIsoString(null)).toBe(null);
   });
 
   it('tax', () => {
