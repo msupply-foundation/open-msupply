@@ -45,7 +45,9 @@ export type ColumnKey =
   | 'requestedQuantity'
   | 'supplyQuantity'
   | 'stockOnHand'
-  | 'theirReference';
+  | 'theirReference'
+  | 'availableNumberOfPacks'
+  | 'numberOfPacksToReturn';
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -260,6 +262,18 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.reference',
     key: 'theirReference',
     width: 100,
+  },
+  numberOfPacksToReturn: {
+    label: 'label.quantity-to-return',
+    key: 'numberOfPacksToReturn',
+    width: 100,
+    align: ColumnAlign.Right,
+  },
+  availableNumberOfPacks: {
+    label: 'label.available-quantity-for-return',
+    key: 'availableNumberOfPacks',
+    width: 100,
+    align: ColumnAlign.Right,
   },
 });
 

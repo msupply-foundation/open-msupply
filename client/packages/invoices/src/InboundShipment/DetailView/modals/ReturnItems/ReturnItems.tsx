@@ -4,8 +4,12 @@ import {
   useDialog,
   DialogButton,
   useTableStore,
+  TableProvider,
+  createTableStore,
+  useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../api';
+import { useInbound } from '../../../api';
+import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 
 interface ReturnItemsModalProps {
   isOpen: boolean;
@@ -18,9 +22,8 @@ export const ReturnItemsModal = ({
 }: ReturnItemsModalProps) => {
   const t = useTranslation('replenishment');
 
-  // TODO: query for return items
-
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+  const height = useKeyboardHeightAdjustment(600);
 
   // TODO: what this from? is it relevant // should this be checked before modal opens?
   // TODO: also show please select lines
@@ -42,27 +45,19 @@ export const ReturnItemsModal = ({
   const ids = selectedRows.map(({ id }) => id);
 
   const { data } = useInbound.lines.newReturnLines(ids);
-  console.log(data);
 
   return (
-    <Modal
-      title={t('heading.return-items')}
-      cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
-      // is ok & next confusing here bc its actually just next?
-      nextButton={<DialogButton onClick={onClose} variant="next" />}
-    >
-      <>
-        TODO: list here (will need new table provider){' '}
-        {selectedRows.map(({ id }) => id).join(', ')}
-      </>
-    </Modal>
+    <TableProvider createStore={createTableStore}>
+      <Modal
+        title={t('heading.return-items')}
+        cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
+        // is ok & next confusing here bc its actually just next?
+        nextButton={<DialogButton onClick={onClose} variant="next" />}
+        height={height}
+        width={1024}
+      >
+        <QuantityToReturnTable lines={data ?? []} updateLine={() => {}} />
+      </Modal>
+    </TableProvider>
   );
 };
-
-/**
- * Next steps:
- * - bring in the table provider
- * - bring in the table
- * - add the stepper
- * - make the quantity editable
- */
