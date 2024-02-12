@@ -7,6 +7,8 @@ import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
 
+type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
+
 export interface ButtonProps {
   icon?: React.ReactElement;
   label?: string;
@@ -20,7 +22,7 @@ export interface ModalProps {
   cancelButton?: JSX.Element;
   height?: number;
   nextButton?: React.ReactElement<{
-    onClick: () => Promise<boolean>;
+    onClick: (e?: OkClickEvent) => Promise<boolean>;
     disabled?: boolean;
     type?: 'submit' | 'button' | 'reset';
   }>;
@@ -31,6 +33,7 @@ export interface ModalProps {
     } & React.RefAttributes<unknown>
   >;
   okButton?: React.ReactElement<{
+    onClick: (e?: OkClickEvent) => Promise<boolean>;
     type?: 'submit' | 'button' | 'reset';
   }>;
   reportSelector?: React.ReactElement;
@@ -157,6 +160,13 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
 
+    const defaultPreventedOnClick =
+      (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
+      (e?: OkClickEvent) => {
+        e && e.preventDefault();
+        return onClick(e);
+      };
+
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
     let WrappedOkButton: ModalProps['okButton'] = undefined;
 
@@ -164,16 +174,18 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { onClick, type, ...restOfNextButtonProps } = nextButton.props;
 
+      const handler = defaultPreventedOnClick(onClick);
+
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
       WrappedNextButton = React.cloneElement(nextButton, {
         onClick: slideAnimation
-          ? async () => {
-              const result = await onClick();
+          ? async (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+              const result = await handler(e);
               if (!!result) onTriggerSlide();
               return result;
             }
-          : onClick,
+          : handler,
         type: !disableOkKeyBinding ? 'submit' : 'button',
         ...restOfNextButtonProps,
       });
@@ -181,9 +193,10 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
 
     if (okButton) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { type, ...restOfOkButtonProps } = okButton.props;
+      const { onClick, type, ...restOfOkButtonProps } = okButton.props;
 
       WrappedOkButton = React.cloneElement(okButton, {
+        onClick: defaultPreventedOnClick(onClick),
         // If the next button is not present/disabled, the ok button should be a submit button (allow firing on enter key press)
         type:
           !disableOkKeyBinding && (!nextButton || nextButton.props.disabled)
