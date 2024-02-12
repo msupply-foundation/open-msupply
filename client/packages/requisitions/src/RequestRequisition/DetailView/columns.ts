@@ -118,7 +118,6 @@ export const useRequestColumns = () => {
       label: 'label.requested-packs',
       description: 'label.requested-number-packs',
       align: ColumnAlign.Right,
-      // width: 150,
       accessor: ({ rowData }) =>
         formatNumber.round(
           rowData.requestedQuantity / rowData.item.defaultPackSize,

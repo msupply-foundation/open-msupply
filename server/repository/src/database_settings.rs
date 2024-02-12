@@ -1,3 +1,4 @@
+#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 use std::path::Path;
 
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
