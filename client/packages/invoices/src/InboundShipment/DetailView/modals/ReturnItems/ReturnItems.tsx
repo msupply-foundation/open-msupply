@@ -7,17 +7,19 @@ import {
   createTableStore,
   useKeyboardHeightAdjustment,
   HorizontalStepper,
+  SupplierReturnLine,
 } from '@openmsupply-client/common';
-import { useInbound } from '../../../api';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 
 interface ReturnItemsModalProps {
   isOpen: boolean;
+  newReturns: SupplierReturnLine[];
   onClose: () => void;
 }
 
 export const ReturnItemsModal = ({
   isOpen,
+  newReturns,
   onClose,
 }: ReturnItemsModalProps) => {
   const t = useTranslation('replenishment');
@@ -25,7 +27,7 @@ export const ReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { data } = useInbound.lines.newReturnLines();
+  // TODO: draft with newREturns!
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -52,7 +54,7 @@ export const ReturnItemsModal = ({
           />
           {/* TODO: updateLine */}
           <QuantityToReturnTable
-            lines={data ?? []}
+            lines={newReturns}
             updateLine={line => {
               console.log(line);
             }}
