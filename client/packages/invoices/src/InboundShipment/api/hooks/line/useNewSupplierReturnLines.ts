@@ -9,7 +9,7 @@ import { useInboundRows } from './useInboundRows';
 
 export const useNewSupplierReturnLines = () => {
   const t = useTranslation('replenishment');
-  const { info } = useNotification();
+  const { info, error } = useNotification();
 
   const api = useInboundApi();
 
@@ -38,9 +38,14 @@ export const useNewSupplierReturnLines = () => {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
     } else {
-      const { data } = await refetch();
-      return data;
-      // tODO: handle error
+      try {
+        const { data } = await refetch();
+        return data;
+      } catch (e) {
+        const cannotReturnSnack = error(t('error.unable-to-load-data'));
+        cannotReturnSnack();
+        console.error(e instanceof Error ? e.message : e);
+      }
     }
   };
 };
