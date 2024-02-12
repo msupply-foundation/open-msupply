@@ -204,8 +204,7 @@ export const useFormatDateTime = () => {
     format?: string,
     options?: Parameters<typeof parse>[3]
   ): Date | null => {
-    // eslint-disable-next-line new-cap
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const tz = new Intl.DateTimeFormat().resolvedOptions().timeZone;
     const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
     const offset = UTCDateWithoutTime
       ? getTimezoneOffset(tz, UTCDateWithoutTime)
