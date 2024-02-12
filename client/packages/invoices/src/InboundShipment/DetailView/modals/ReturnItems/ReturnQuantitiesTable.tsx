@@ -7,25 +7,16 @@ import {
 } from 'packages/common/src';
 import React from 'react';
 
-const QuantityToReturnCell = ({
-  rowData,
-  ...props
-}: CellProps<SupplierReturnLine>) => (
-  <NonNegativeIntegerCell
-    {...props}
-    isRequired // TODO?
-    rowData={rowData}
-  />
+const QuantityToReturnCell = (props: CellProps<SupplierReturnLine>) => (
+  <NonNegativeIntegerCell {...props} isRequired />
 );
 
 export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
-  isDisabled = false,
 }: {
   lines: SupplierReturnLine[];
   updateLine: (line: Partial<SupplierReturnLine> & { id: string }) => void;
-  isDisabled?: boolean;
 }) => {
   const columns = useColumns<SupplierReturnLine>(
     [
@@ -48,10 +39,8 @@ export const QuantityToReturnTableComponent = ({
   return (
     <DataTable
       id="supplier-return-line-quantity"
-      isDisabled={isDisabled}
       columns={columns}
       data={lines}
-      noDataMessage="Add a new line" // TODO
       dense
     />
   );
