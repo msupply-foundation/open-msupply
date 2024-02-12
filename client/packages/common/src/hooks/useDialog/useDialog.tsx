@@ -224,7 +224,10 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         disableEscapeKeyDown={false}
       >
         {title ? <ModalTitle title={title} /> : null}
-        <form {...formProps}>
+        <form
+          style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto' }}
+          {...formProps}
+        >
           <DialogContent
             {...restOfContentProps}
             sx={{ overflowX: 'hidden', ...contentSX }}
