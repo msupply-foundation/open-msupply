@@ -10,6 +10,7 @@ import {
   SupplierReturnLine,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
+import { useDraftNewReturnLines } from './useDraftNewReturnLines';
 
 interface NewReturnItemsModalProps {
   isOpen: boolean;
@@ -27,7 +28,7 @@ export const NewReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  // TODO: draft with newREturns!
+  const { lines, update } = useDraftNewReturnLines(newReturns);
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -37,7 +38,7 @@ export const NewReturnItemsModal = ({
         nextButton={
           <DialogButton
             onClick={() => {
-              /* TODO */
+              /* TODO  - next page */
             }}
             variant="next"
           />
@@ -54,9 +55,9 @@ export const NewReturnItemsModal = ({
           />
           {/* TODO: updateLine */}
           <QuantityToReturnTable
-            lines={newReturns}
+            lines={lines}
             updateLine={line => {
-              console.log(line);
+              update(line);
             }}
           />
         </>
