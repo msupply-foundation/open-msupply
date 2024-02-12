@@ -121,7 +121,6 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
         />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
-      enableOkKeyBindings
     >
       <Grid
         container

@@ -206,7 +206,6 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
       }
       height={height}
       width={1000}
-      enableOkKeyBindings
     >
       <Grid container gap={0.5}>
         <PrescriptionLineEditForm

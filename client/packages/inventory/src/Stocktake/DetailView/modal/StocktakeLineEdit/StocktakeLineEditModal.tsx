@@ -48,7 +48,6 @@ export const StocktakeLineEditModal: FC<
       }
       height={height}
       width={1024}
-      enableOkKeyBindings
     >
       <>{children}</>
     </Modal>
