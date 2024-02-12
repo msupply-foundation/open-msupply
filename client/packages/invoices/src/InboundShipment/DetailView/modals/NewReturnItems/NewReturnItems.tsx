@@ -11,17 +11,17 @@ import {
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 
-interface ReturnItemsModalProps {
+interface NewReturnItemsModalProps {
   isOpen: boolean;
   newReturns: SupplierReturnLine[];
   onClose: () => void;
 }
 
-export const ReturnItemsModal = ({
+export const NewReturnItemsModal = ({
   isOpen,
   newReturns,
   onClose,
-}: ReturnItemsModalProps) => {
+}: NewReturnItemsModalProps) => {
   const t = useTranslation('replenishment');
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
