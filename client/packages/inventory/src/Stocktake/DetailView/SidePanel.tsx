@@ -16,7 +16,7 @@ import {
   DeleteIcon,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { StocktakeFragment, useStocktake } from '../api';
+import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
 
 const AdditionalInfoSection: FC = () => {
@@ -52,14 +52,11 @@ const AdditionalInfoSection: FC = () => {
   );
 };
 
-export const SidePanel = ({
-  stocktake,
-}: {
-  stocktake: StocktakeFragment | undefined;
-}) => {
+export const SidePanel = () => {
   const { success } = useNotification();
   const t = useTranslation('inventory');
   const { mutateAsync } = useStocktake.document.delete();
+  const { data: stocktake } = useStocktake.document.get();
   const canDelete = stocktake ? canDeleteStocktake(stocktake) : false;
 
   const copyToClipboard = () => {

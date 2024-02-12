@@ -8,9 +8,6 @@ import {
   NothingHere,
   useRowStyle,
   placeholderRowStyle,
-  Column,
-  SortBy,
-  useIsGrouped,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktake } from '../../api';
@@ -39,13 +36,7 @@ const Expando = ({
 };
 
 interface ContentAreaProps {
-  items: StocktakeSummaryItem[];
-  lines: StocktakeLineFragment[];
-  sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
   onAddItem: () => void;
-  onChangeSortBy: (
-    column: Column<StocktakeLineFragment | StocktakeSummaryItem>
-  ) => void;
   onRowClick:
     | null
     | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
@@ -93,16 +84,11 @@ const useHighlightUncountedRows = (
 };
 
 export const ContentArea: FC<ContentAreaProps> = ({
-  items,
-  lines,
-  sortBy,
   onAddItem,
-  onChangeSortBy,
   onRowClick,
 }) => {
-  const { isGrouped } = useIsGrouped('stocktake');
-  const rows = isGrouped ? items : lines;
   const t = useTranslation('inventory');
+  const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const isDisabled = useStocktake.utils.isDisabled();
 
