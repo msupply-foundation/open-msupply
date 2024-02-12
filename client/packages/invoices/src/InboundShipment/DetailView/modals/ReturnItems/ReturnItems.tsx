@@ -3,7 +3,6 @@ import {
   useTranslation,
   useDialog,
   DialogButton,
-  useTableStore,
   TableProvider,
   createTableStore,
   useKeyboardHeightAdjustment,
@@ -26,26 +25,7 @@ export const ReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  // TODO: what this from? is it relevant // should this be checked before modal opens?
-  // TODO: also show please select lines
-  // const isDisabled = useInbound.utils.isDisabled();
-  const { items, lines } = useInbound.lines.rows();
-
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) || [];
-
-  const ids = selectedRows.map(({ id }) => id);
-
-  const { data } = useInbound.lines.newReturnLines(ids);
+  const { data } = useInbound.lines.newReturnLines();
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -70,7 +50,13 @@ export const ReturnItemsModal = ({
               { label: t('label.reason') },
             ]}
           />
-          <QuantityToReturnTable lines={data ?? []} updateLine={() => {}} />
+          {/* TODO: updateLine */}
+          <QuantityToReturnTable
+            lines={data ?? []}
+            updateLine={line => {
+              console.log(line);
+            }}
+          />
         </>
       </Modal>
     </TableProvider>
