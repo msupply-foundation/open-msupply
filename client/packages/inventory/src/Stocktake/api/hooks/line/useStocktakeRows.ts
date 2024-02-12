@@ -11,6 +11,7 @@ import { useStocktakeColumns } from '../../../DetailView';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { StocktakeSummaryItem } from '../../../../types';
 import { useStocktake } from '..';
+import { isStocktakeDisabled } from '../../../../utils';
 
 const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
@@ -65,8 +66,10 @@ export const useStocktakeRows = () => {
   }, [lines, sortBy.isDesc, sortBy.key, itemFilter]);
 
   const rows = isGrouped ? sortedItems : sortedLines;
+  const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
 
   return {
+    isDisabled,
     itemFilter,
     items: sortedItems,
     lines: sortedLines,

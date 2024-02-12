@@ -23,9 +23,8 @@ import { useStocktake } from '../api';
 export const Toolbar = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const [localIsGrouped, setLocalIsGrouped] = React.useState(isGrouped);
-  const { itemFilter, setItemFilter } = useStocktake.line.rows();
+  const { itemFilter, isDisabled, setItemFilter } = useStocktake.line.rows();
   const t = useTranslation('inventory');
-  const isDisabled = useStocktake.utils.isDisabled();
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
