@@ -17,13 +17,14 @@ import {
   DateUtils,
   Alert,
   useIsGrouped,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 
 export const Toolbar = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const [localIsGrouped, setLocalIsGrouped] = React.useState(isGrouped);
-  const { itemFilter, isDisabled, setItemFilter } = useStocktake.line.rows();
+  const isDisabled = useStocktake.utils.isDisabled();
   const t = useTranslation('inventory');
   const { isLocked, stocktakeDate, description, update } =
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
@@ -39,6 +40,12 @@ export const Toolbar = () => {
     // otherwise the switch doesn't render until the slow component completes
     setTimeout(toggleIsGrouped, 100);
   };
+  const { urlQuery, updateQuery } = useUrlQuery({
+    skipParse: ['itemCodeOrName'],
+  });
+  const itemFilter = (urlQuery['itemCodeOrName'] as string) ?? '';
+  const setItemFilter = (itemFilter: string) =>
+    updateQuery({ itemCodeOrName: itemFilter });
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -94,7 +101,6 @@ export const Toolbar = () => {
             onChange={newValue => {
               setItemFilter(newValue);
             }}
-            debounceTime={0}
           />
           <Box sx={{ marginRight: 2 }}>
             <Switch

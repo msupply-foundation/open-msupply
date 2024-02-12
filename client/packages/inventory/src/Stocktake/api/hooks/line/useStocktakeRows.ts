@@ -1,17 +1,10 @@
-import { useMemo } from 'react';
-import {
-  ArrayUtils,
-  ItemNode,
-  SortUtils,
-  useIsGrouped,
-  useItemUtils,
-  useUrlQueryParams,
-} from '@openmsupply-client/common';
-import { useStocktakeColumns } from '../../../DetailView';
+import { ArrayUtils, useIsGrouped } from '@openmsupply-client/common';
 import { StocktakeLineFragment } from '../../operations.generated';
 import { StocktakeSummaryItem } from '../../../../types';
 import { useStocktake } from '..';
 import { isStocktakeDisabled } from '../../../../utils';
+import { useStocktakeLines } from './useStocktakeLines';
+import { useMemo } from 'react';
 
 const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   Object.entries(ArrayUtils.groupBy(lines, 'itemId')).map(([itemId, lines]) => {
@@ -23,59 +16,20 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
   });
 
 export const useStocktakeRows = () => {
-  const {
-    updateSortQuery,
-    queryParams: { sortBy },
-  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { data: stocktake } = useStocktake.document.get();
-  const lines = stocktake?.lines.nodes;
-  const items = getStocktakeItems(lines ?? []);
-  const { itemFilter, setItemFilter, matchItem } = useItemUtils();
-  const columns = useStocktakeColumns({
-    onChangeSortBy: updateSortQuery,
-    sortBy,
-  });
+  const { data: lineData } = useStocktakeLines(stocktake?.id ?? '');
+  const lines = lineData?.nodes;
+  const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
+  const totalLineCount = lineData?.totalCount ?? 0;
   const { isGrouped } = useIsGrouped('stocktake');
-
-  const sortedItems = useMemo(() => {
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return items;
-    const sorter = SortUtils.getColumnSorter(
-      currentColumn?.getSortValue,
-      !!sortBy.isDesc
-    );
-    return items
-      ?.filter(item => {
-        return matchItem(itemFilter, item.item as ItemNode);
-      })
-      ?.sort(sorter);
-  }, [lines, sortBy.isDesc, sortBy.key, itemFilter]);
-
-  const sortedLines = useMemo(() => {
-    const currentColumn = columns.find(({ key }) => key === sortBy.key);
-    if (!currentColumn?.getSortValue) return lines;
-    const sorter = SortUtils.getColumnSorter(
-      currentColumn?.getSortValue,
-      !!sortBy.isDesc
-    );
-    return lines
-      ?.filter(line => {
-        return matchItem(itemFilter, line.item);
-      })
-      ?.sort(sorter);
-  }, [lines, sortBy.isDesc, sortBy.key, itemFilter]);
-
-  const rows = isGrouped ? sortedItems : sortedLines;
+  const rows = isGrouped ? items : lines;
   const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
 
   return {
     isDisabled,
-    itemFilter,
-    items: sortedItems,
-    lines: sortedLines,
-    onChangeSortBy: updateSortQuery,
+    items,
+    lines,
     rows,
-    setItemFilter,
-    sortBy,
+    totalLineCount,
   };
 };

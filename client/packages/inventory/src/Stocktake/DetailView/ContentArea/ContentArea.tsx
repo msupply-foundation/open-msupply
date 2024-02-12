@@ -8,6 +8,7 @@ import {
   NothingHere,
   useRowStyle,
   placeholderRowStyle,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktake } from '../../api';
@@ -88,11 +89,17 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation('inventory');
-  const { isDisabled, rows, onChangeSortBy, sortBy } = useStocktake.line.rows();
+  const {
+    updateSortQuery: onChangeSortBy,
+    updatePaginationQuery,
+    queryParams: { page, first, offset, sortBy },
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  const { isDisabled, rows, totalLineCount } = useStocktake.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
+  const pagination = { page, first, offset };
 
   useHighlightUncountedRows(rows);
-
+  console.log('---> content area');
   return (
     <Box flexDirection="column" flex={1}>
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
@@ -110,6 +117,8 @@ export const ContentArea: FC<ContentAreaProps> = ({
           />
         }
         enableColumnSelection
+        pagination={{ ...pagination, total: totalLineCount }}
+        onChangePage={updatePaginationQuery}
       />
     </Box>
   );
