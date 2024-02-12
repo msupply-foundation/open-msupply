@@ -39,10 +39,17 @@ export const ReturnItemsModal = ({
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) || [];
 
+  const ids = selectedRows.map(({ id }) => id);
+
+  const { data } = useInbound.lines.newReturnLines(ids);
+  console.log(data);
+
   return (
     <Modal
       title={t('heading.return-items')}
       cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
+      // is ok & next confusing here bc its actually just next?
+      nextButton={<DialogButton onClick={onClose} variant="next" />}
     >
       <>
         TODO: list here (will need new table provider){' '}
@@ -51,3 +58,11 @@ export const ReturnItemsModal = ({
     </Modal>
   );
 };
+
+/**
+ * Next steps:
+ * - bring in the table provider
+ * - bring in the table
+ * - add the stepper
+ * - make the quantity editable
+ */
