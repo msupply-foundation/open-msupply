@@ -2,12 +2,12 @@ import {
   CellProps,
   DataTable,
   NumberInputCell,
-  SupplierReturnLine,
   useColumns,
 } from 'packages/common/src';
 import React from 'react';
+import { DraftReturnLine } from './useDraftNewReturnLines';
 
-const QuantityToReturnCell = (props: CellProps<SupplierReturnLine>) => (
+const QuantityToReturnCell = (props: CellProps<DraftReturnLine>) => (
   <NumberInputCell
     {...props}
     isRequired
@@ -20,10 +20,10 @@ export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
 }: {
-  lines: SupplierReturnLine[];
-  updateLine: (line: Partial<SupplierReturnLine> & { id: string }) => void;
+  lines: DraftReturnLine[];
+  updateLine: (line: Partial<DraftReturnLine> & { id: string }) => void;
 }) => {
-  const columns = useColumns<SupplierReturnLine>(
+  const columns = useColumns<DraftReturnLine>(
     [
       'itemCode',
       'itemName',

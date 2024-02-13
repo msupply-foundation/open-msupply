@@ -1,21 +1,22 @@
 import {
   CellProps,
   DataTable,
-  SupplierReturnLine,
   TextInputCell,
   useColumns,
 } from 'packages/common/src';
 import { ReturnReasonSearchInput } from 'packages/system/src';
 import React from 'react';
+import { DraftReturnLine } from './useDraftNewReturnLines';
 
 const ReturnReasonCell = ({
-  // rowData,
+  rowData,
   rowIndex,
-}: CellProps<SupplierReturnLine>): JSX.Element => (
+  column,
+}: CellProps<DraftReturnLine>): JSX.Element => (
   <ReturnReasonSearchInput
     autoFocus={rowIndex === 0}
-    value={{ reason: 'dog ate', id: 'idk', __typename: 'ReturnReasonNode' }}
-    onChange={() => {}}
+    selectedReasonId={rowData.reasonId}
+    onChange={id => column.setter({ ...rowData, reasonId: id })}
   />
 );
 
@@ -23,10 +24,10 @@ export const ReturnReasonsComponent = ({
   lines,
   updateLine,
 }: {
-  lines: SupplierReturnLine[];
-  updateLine: (line: Partial<SupplierReturnLine> & { id: string }) => void;
+  lines: DraftReturnLine[];
+  updateLine: (line: Partial<DraftReturnLine> & { id: string }) => void;
 }) => {
-  const columns = useColumns<SupplierReturnLine>(
+  const columns = useColumns<DraftReturnLine>(
     [
       'itemCode',
       'itemName',
