@@ -9,6 +9,7 @@ import {
   useRowStyle,
   placeholderRowStyle,
   useUrlQueryParams,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktake } from '../../api';
@@ -94,12 +95,16 @@ export const ContentArea: FC<ContentAreaProps> = ({
     updatePaginationQuery,
     queryParams: { page, first, offset, sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { isDisabled, rows, totalLineCount } = useStocktake.line.rows();
+  const { isDisabled, isLoading, rows, totalLineCount } =
+    useStocktake.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
   const pagination = { page, first, offset };
 
   useHighlightUncountedRows(rows);
-  return (
+
+  return isLoading ? (
+    <BasicSpinner />
+  ) : (
     <Box flexDirection="column" flex={1}>
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}

@@ -17,7 +17,7 @@ const getStocktakeItems = (lines: StocktakeLineFragment[]) =>
 
 export const useStocktakeRows = () => {
   const { data: stocktake } = useStocktake.document.get();
-  const { data: lineData } = useStocktakeLines(stocktake?.id ?? '');
+  const { data: lineData, isLoading } = useStocktakeLines(stocktake?.id ?? '');
   const lines = lineData?.nodes;
   const items = useMemo(() => getStocktakeItems(lines ?? []), [lines]);
   const totalLineCount = lineData?.totalCount ?? 0;
@@ -27,6 +27,7 @@ export const useStocktakeRows = () => {
 
   return {
     isDisabled,
+    isLoading,
     items,
     lines,
     rows,

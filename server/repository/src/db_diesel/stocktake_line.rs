@@ -210,7 +210,7 @@ fn apply_item_filter(
             item_filter.is_visible = Some(true);
             let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))
-                .unwrap();
+                .unwrap_or(Vec::new()); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
             return query.filter(stocktake_line_dsl::item_id.eq_any(item_ids));
