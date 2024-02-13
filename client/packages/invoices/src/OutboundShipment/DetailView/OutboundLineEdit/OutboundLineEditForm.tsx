@@ -7,12 +7,12 @@ import {
   Select,
   useTranslation,
   InputLabel,
-  NonNegativeIntegerInput,
   Divider,
   Box,
   Typography,
   useFormatNumber,
   useDebounceCallback,
+  NumericTextInput,
   useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
@@ -69,7 +69,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 }) => {
   const t = useTranslation('distribution');
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueQuantity, setIssueQuantity] = useState(0);
+  const [issueQuantity, setIssueQuantity] = useState<number>();
   const { format } = useFormatNumber();
   const { items } = useOutbound.line.rows();
 
@@ -140,10 +140,13 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     [draftStockOutLines] // this is needed to prevent a captured enclosure of onChangeQuantity
   );
 
-  const handleIssueQuantityChange = (quantity: number) => {
-    setIssueQuantity(quantity);
+  const handleIssueQuantityChange = (quantity: number | undefined) => {
+    setIssueQuantity(quantity ?? 0);
     setOkDisabled(true);
-    debouncedAllocate(quantity, Number(packSizeController.selected?.value));
+    debouncedAllocate(
+      quantity ?? 0,
+      Number(packSizeController.selected?.value)
+    );
   };
 
   useEffect(() => {
@@ -211,13 +214,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <NonNegativeIntegerInput
+            <NumericTextInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
-              defaultValue={0}
             />
-
             <Box marginLeft={1} />
 
             {packSizeController.options.length ? (
