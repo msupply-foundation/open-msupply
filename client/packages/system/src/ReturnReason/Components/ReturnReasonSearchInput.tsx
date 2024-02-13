@@ -10,7 +10,6 @@ import { ReturnReasonFragment, useReturnReason } from '../api';
 
 interface ReturnReasonSearchInputProps {
   value: ReturnReasonFragment | null;
-  width?: number | string;
   onChange: (returnReason: ReturnReasonFragment | null) => void;
   autoFocus?: boolean;
   isError?: boolean;
@@ -18,7 +17,6 @@ interface ReturnReasonSearchInputProps {
 
 export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
   value,
-  width,
   onChange,
   autoFocus = false,
   isError,
@@ -27,10 +25,10 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
   const reasons = data ?? [];
 
   return (
-    <Box display="flex" flexDirection="row" width={120}>
+    <Box display="flex" flexDirection="row">
       <Autocomplete
+        fullWidth
         autoFocus={autoFocus}
-        width={`${width}px`}
         clearable={false}
         value={
           value
@@ -53,7 +51,6 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
               style: props.disabled ? { paddingLeft: 0 } : {},
               ...props.InputProps,
             }}
-            sx={{ width }}
             error={isError}
             required={true}
           />
