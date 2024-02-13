@@ -212,7 +212,10 @@ export const useFormatDateTime = () => {
     format?: string,
     options?: Parameters<typeof parse>[3]
   ): Date | null => {
-    const tz = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // tz passed as props options for testing purposes
+    const tz =
+      options?.locale?.code ??
+      new Intl.DateTimeFormat().resolvedOptions().timeZone;
     const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
     const offset = UTCDateWithoutTime
       ? getTimezoneOffset(tz, UTCDateWithoutTime)
