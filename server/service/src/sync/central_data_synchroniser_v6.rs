@@ -58,7 +58,7 @@ impl CentralDataSynchroniserV6 {
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
-            let is_emtpy = records.is_empty();
+            let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
                 // Would ideally have  mapping method for this
@@ -74,7 +74,7 @@ impl CentralDataSynchroniserV6 {
 
             cursor_controller.update(&connection, end_cursor + 1)?;
 
-            if is_emtpy && total_records == 0 {
+            if is_empty && total_records == 0 {
                 break;
             }
         }
