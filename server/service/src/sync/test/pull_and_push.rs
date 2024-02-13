@@ -6,7 +6,9 @@ use crate::sync::{
         test_data::{get_all_omsupply_central_push_records, get_all_push_test_records},
         TestSyncPushRecord,
     },
-    translations::{translate_changelogs_to_push_records, PushSyncRecord, PushTranslationType},
+    translations::{
+        translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
+    },
 };
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
@@ -86,16 +88,16 @@ async fn test_sync_pull_and_push() {
         .unwrap();
     // Translate
     let mut translated = vec![
-        translate_changelogs_to_push_records(
+        translate_changelogs_to_sync_records(
             &connection,
             changelogs.clone(),
-            PushTranslationType::Legacy,
+            ToSyncRecordTranslationType::PushToLegacyCentral,
         )
         .unwrap(),
-        translate_changelogs_to_push_records(
+        translate_changelogs_to_sync_records(
             &connection,
             changelogs.clone(),
-            PushTranslationType::OmSupplyCentralSitePush,
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral,
         )
         .unwrap(),
     ]

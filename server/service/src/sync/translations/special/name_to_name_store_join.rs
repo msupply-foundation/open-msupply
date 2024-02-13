@@ -37,7 +37,7 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
         vec![]
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -85,9 +85,9 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             record.insert_extra_data(&connection).await;
 
-            assert!(translator.match_pull(&record.sync_buffer_row));
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -147,7 +147,7 @@ impl SyncTranslation for NameTranslation {
         Some(ChangelogTableName::Name)
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -236,7 +236,7 @@ impl SyncTranslation for NameTranslation {
     }
 
     // TODO soft delete
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -246,7 +246,7 @@ impl SyncTranslation for NameTranslation {
         )))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
@@ -336,7 +336,7 @@ impl SyncTranslation for NameTranslation {
     }
 
     // TODO soft delete
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
@@ -359,19 +359,19 @@ mod tests {
             setup_all("test_name_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
-            assert!(translator.match_pull(&record.sync_buffer_row));
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             // TODO add match record here
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
-            assert!(translator.match_pull(&record.sync_buffer_row));
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

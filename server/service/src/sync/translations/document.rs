@@ -73,7 +73,7 @@ impl SyncTranslation for DocumentTranslation {
         Some(ChangelogTableName::Document)
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -110,7 +110,7 @@ impl SyncTranslation for DocumentTranslation {
         Ok(PullTranslateResult::upsert(DocumentUpsert(result)))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,

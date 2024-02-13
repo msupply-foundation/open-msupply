@@ -12,8 +12,8 @@ use super::{
     api::*,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
-        translate_changelogs_to_push_records, PushSyncRecord, PushTranslationError,
-        PushTranslationType,
+        translate_changelogs_to_sync_records, PushSyncRecord, PushTranslationError,
+        ToSyncRecordTranslationType,
     },
 };
 
@@ -182,10 +182,10 @@ impl RemoteDataSynchroniser {
 
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
 
-            let records = translate_changelogs_to_push_records(
+            let records = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
-                PushTranslationType::Legacy,
+                ToSyncRecordTranslationType::PushToLegacyCentral,
             )?
             .into_iter()
             .map(RemoteSyncRecordV5::from)
