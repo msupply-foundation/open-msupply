@@ -54,10 +54,10 @@ export const Toolbar: FC<{
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
 
-  const getNewReturnLines = useInbound.lines.newReturnLines();
+  const generateNewReturnLines = useInbound.lines.newReturnLines();
 
   const onReturn = async () => {
-    const lines = await getNewReturnLines();
+    const lines = await generateNewReturnLines();
     if (lines) onReturnLines(lines);
   };
 
