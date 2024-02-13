@@ -40,6 +40,9 @@ export const useNewSupplierReturnLines = () => {
     } else {
       try {
         const { data } = await refetch();
+
+        if (!data || !data.length) throw new Error('No data returned');
+
         return data;
       } catch (e) {
         const cannotReturnSnack = error(t('error.unable-to-load-data'));
