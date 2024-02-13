@@ -30,7 +30,7 @@ impl SyncTranslation for FormSchemaTranslation {
         vec![]
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,

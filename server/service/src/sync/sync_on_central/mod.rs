@@ -4,12 +4,12 @@ use util::{format_error, is_central_server};
 
 use crate::{
     service_provider::ServiceProvider,
-    sync::{api::SyncApiV5, translations::PushTranslationType},
+    sync::{api::SyncApiV5, translations::ToSyncRecordTranslationType},
 };
 
 use super::{
     api_v6::{SyncBatchV6, SyncParsedErrorV6, SyncRecordV6, SyncRequestV6},
-    translations::translate_changelogs_to_push_records,
+    translations::translate_changelogs_to_sync_records,
 };
 
 fn create_filter() -> ChangelogFilter {
@@ -97,10 +97,10 @@ pub async fn pull(
         .map(|log| log.cursor as u64)
         .unwrap_or(max_cursor);
 
-    let records = translate_changelogs_to_push_records(
+    let records = translate_changelogs_to_sync_records(
         &ctx.connection,
         changelogs,
-        PushTranslationType::OmSupplyCentralSitePush,
+        ToSyncRecordTranslationType::PullFromOmSupplyCentral,
     )
     .map_err(|e| Error::OtherServerError(format_error(&e)))?
     .into_iter()

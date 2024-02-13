@@ -61,7 +61,7 @@ impl SyncTranslation for ClinicianTranslation {
         Some(ChangelogTableName::Clinician)
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -102,7 +102,7 @@ impl SyncTranslation for ClinicianTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
@@ -157,7 +157,7 @@ impl SyncTranslation for ClinicianTranslation {
 
     // TODO should not be deleting clinicians
     // TODO soft delete
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
