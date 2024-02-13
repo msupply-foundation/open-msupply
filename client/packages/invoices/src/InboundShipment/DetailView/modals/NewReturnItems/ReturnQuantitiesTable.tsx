@@ -22,8 +22,8 @@ export const QuantityToReturnTableComponent = ({
     [
       'itemCode',
       'itemName',
-      'itemUnit',
-      'location',
+      // 'itemUnit', // not implemented for now
+      // 'location',
       'batch',
       'expiryDate',
       'availableNumberOfPacks',
