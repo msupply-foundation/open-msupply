@@ -13,9 +13,9 @@ pub use self::core::*;
 use super::{
     api::{
         CommonSyncRecord, ParsedError, ParsingResponseError, SyncApiError, SyncApiErrorVariantV5,
+        SyncApiSettings,
     },
     translations::PushSyncRecord,
-    SyncApiSettings,
 };
 
 #[derive(Deserialize, Debug, Error, Serialize)]

@@ -1,4 +1,4 @@
-use crate::sync::{api::ParsingResponseError, SyncApiSettings};
+use crate::sync::api::{ParsingResponseError, SyncApiSettings};
 use reqwest::{Client, Response};
 use thiserror::Error;
 use url::{ParseError, Url};
