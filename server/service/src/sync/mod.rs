@@ -23,7 +23,7 @@ use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
-use serde::{Deserialize, Serialize};
+
 use thiserror::Error;
 
 pub(crate) struct ActiveStoresOnSite {
@@ -85,16 +85,4 @@ impl ActiveStoresOnSite {
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SyncApiSettings {
-    pub server_url: String,
-    pub username: String,
-    pub password_sha256: String,
-    pub site_uuid: String,
-    pub app_version: String,
-    pub app_name: String,
-    pub sync_version: String,
 }
