@@ -190,7 +190,7 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    // changelog repository gets changelog.name_id from the related
+    // changelog repository gets changelog.name_id from the related name_link
     // name_link.name_id so we need to add names and name_links into the DB.
     let (_, connection, _, _) =
         setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
