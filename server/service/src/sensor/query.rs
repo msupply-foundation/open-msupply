@@ -67,8 +67,7 @@ pub fn get_sensor_logs_for_breach(
                 TemperatureBreachRowType::ColdCumulative
                 | TemperatureBreachRowType::HotCumulative => {
                     // Cumulative breach can include any time on the same day (can only be at most one of hot/cold starting per day)
-                    let zero_time = NaiveTime::parse_from_str("00:00", "%H:%M").unwrap(); // hard-coded -> should always work!
-                    let start_breach = NaiveDateTime::new(breach_record.start_datetime.date(), zero_time); // set to start of day
+                    let start_breach = breach_record.start_datetime.date().and_hms_opt(0,0,0).unwrap(); // set to start of day
                     let mut end_breach = end_datetime;
                     if end_datetime.date() == start_breach.date() { 
                         // If ending on the same day, then extend to midnight
