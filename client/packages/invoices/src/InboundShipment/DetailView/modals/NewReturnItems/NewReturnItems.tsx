@@ -6,8 +6,9 @@ import {
   TableProvider,
   createTableStore,
   useKeyboardHeightAdjustment,
-  HorizontalStepper,
   SupplierReturnLine,
+  WizardStepper,
+  Box,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftNewReturnLines } from './useDraftNewReturnLines';
@@ -47,12 +48,15 @@ export const NewReturnItemsModal = ({
         width={1024}
       >
         <>
-          <HorizontalStepper
-            steps={[
-              { label: t('label.select-quantity') },
-              { label: t('label.reason') },
-            ]}
-          />
+          <Box padding={'10px'}>
+            <WizardStepper
+              activeStep={0}
+              steps={[
+                { label: t('label.select-quantity'), description: '' },
+                { label: t('label.reason'), description: '' },
+              ]}
+            />
+          </Box>
           <QuantityToReturnTable
             lines={lines}
             updateLine={line => {
