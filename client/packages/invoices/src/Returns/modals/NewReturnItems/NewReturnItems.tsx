@@ -56,10 +56,17 @@ export const NewReturnItemsModal = ({
         title={t('heading.return-items')}
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
         nextButton={
-          <DialogButton
-            onClick={() => onChangeTab(Tabs.Reason)}
-            variant="next"
-          />
+          currentTab === Tabs.Quantity ? (
+            <DialogButton
+              onClick={() => onChangeTab(Tabs.Reason)}
+              variant="next"
+            />
+          ) : undefined
+        }
+        okButton={
+          currentTab === Tabs.Reason ? (
+            <DialogButton onClick={() => console.log(lines)} variant="ok" />
+          ) : undefined
         }
         height={height}
         width={1024}
