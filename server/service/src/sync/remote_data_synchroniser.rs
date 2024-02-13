@@ -1,8 +1,11 @@
 use std::time::{Duration, SystemTime};
 
-use crate::sync::{
-    get_sync_push_changelogs_filter, sync_status::logger::SyncStepProgress,
-    GetActiveStoresOnSiteError,
+use crate::{
+    cursor_controller::CursorController,
+    sync::{
+        get_sync_push_changelogs_filter, sync_status::logger::SyncStepProgress,
+        GetActiveStoresOnSiteError,
+    },
 };
 
 use super::{
@@ -16,8 +19,7 @@ use super::{
 
 use log::info;
 use repository::{
-    ChangelogRepository, CursorController, KeyValueType, RepositoryError, StorageConnection,
-    SyncBufferRowRepository,
+    ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRowRepository,
 };
 
 use thiserror::Error;
@@ -91,7 +93,7 @@ impl RemoteDataSynchroniser {
 
         if should_post_initialise {
             let Err(error) = self.sync_api_v5.post_initialise().await else {
-                return Ok(())
+                return Ok(());
             };
             // Ignore connection or unknown error. There is high chance of connection error
             // on post_initialise end point (since it's blocking and can take awhile).
