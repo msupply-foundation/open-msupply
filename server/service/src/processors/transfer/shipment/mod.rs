@@ -1,4 +1,5 @@
 use crate::{
+    cursor_controller::CursorController,
     processors::transfer::{
         get_requisition_and_linked_requisition,
         shipment::{
@@ -15,8 +16,8 @@ use crate::{
 };
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    CursorController, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueType,
-    RepositoryError, Requisition, StorageConnection,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueType, RepositoryError,
+    Requisition, StorageConnection,
 };
 use thiserror::Error;
 

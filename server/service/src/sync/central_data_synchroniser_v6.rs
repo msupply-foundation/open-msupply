@@ -1,6 +1,9 @@
-use crate::sync::{
-    api_v6::{SyncBatchV6, SyncRecordV6},
-    sync_status::logger::SyncStepProgress,
+use crate::{
+    cursor_controller::CursorController,
+    sync::{
+        api_v6::{SyncBatchV6, SyncRecordV6},
+        sync_status::logger::SyncStepProgress,
+    },
 };
 
 use super::{
@@ -10,8 +13,7 @@ use super::{
 };
 
 use repository::{
-    CursorController, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
-    SyncBufferRowRepository,
+    KeyValueType, RepositoryError, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
 };
 use thiserror::Error;
 

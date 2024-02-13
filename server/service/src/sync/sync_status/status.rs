@@ -1,11 +1,12 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, CursorController, DatetimeFilter, EqualFilter, KeyValueType, Pagination,
-    RepositoryError, Sort, SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
+    ChangelogRepository, DatetimeFilter, EqualFilter, KeyValueType, Pagination, RepositoryError,
+    Sort, SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 use util::Defaults;
 
 use crate::{
+    cursor_controller::CursorController,
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
@@ -196,8 +197,8 @@ fn get_initialisation_status(
         .pop();
 
     let Some(sync_log) = latest_log_sorted_by_finished_datetime else {
-            return Ok(InitialisationStatus::PreInitialisation)
-        };
+        return Ok(InitialisationStatus::PreInitialisation);
+    };
 
     if sync_log.sync_log_row.finished_datetime == None {
         return Ok(InitialisationStatus::Initialising);
