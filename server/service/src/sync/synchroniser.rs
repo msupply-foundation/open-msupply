@@ -23,7 +23,7 @@ use super::{
 };
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
-const INTEGRATION_TIMEOUT_SECONDS: u64 = 15;
+const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 
 pub struct Synchroniser {
     settings: SyncSettings,
