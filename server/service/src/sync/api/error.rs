@@ -31,7 +31,7 @@ pub enum SyncApiErrorVariantV5 {
     },
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
-    #[error("Could not parse respose")]
+    #[error("Could not parse response")]
     ResponseParsingError(#[from] ParsingResponseError),
     #[error("Could not parse url")]
     FailToParseUrl(#[from] ParseError),

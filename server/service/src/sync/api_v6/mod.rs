@@ -72,9 +72,9 @@ pub(crate) struct SyncApiErrorV6 {
 pub(crate) enum SyncApiErrorVariantV6 {
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
-    #[error("Could not parse respose")]
+    #[error("Could not parse response")]
     ParsedError(#[from] SyncParsedErrorV6),
-    #[error("Could not parse respose")]
+    #[error("Could not parse response")]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
     Other(#[source] anyhow::Error),
