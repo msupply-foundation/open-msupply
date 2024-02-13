@@ -13,6 +13,7 @@ export const useInbound = {
     insert: Document.useInsertInbound,
     update: Document.useUpdateInbound,
     updateTax: Document.useUpdateInboundServiceTax,
+    insertSupplierReturn: Document.useInsertSupplierReturn,
 
     fields: Document.useInboundFields,
     next: Document.useNextItem,

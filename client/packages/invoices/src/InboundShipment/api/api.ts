@@ -13,6 +13,7 @@ import {
   Formatter,
   UpdateInboundShipmentStatusInput,
   setNullableInput,
+  SupplierReturnInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -358,5 +359,12 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not add from master list');
+  },
+  insertSupplierReturn: async (input: SupplierReturnInput) => {
+    const result = await sdk.insertSupplierReturn({
+      input,
+    });
+
+    return result.insertSupplierReturn;
   },
 });
