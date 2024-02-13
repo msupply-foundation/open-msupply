@@ -88,7 +88,6 @@ export const useResponseColumns = () => {
     label: 'label.remaining-to-supply',
     description: 'description.remaining-to-supply',
     key: 'remainingToSupply',
-    width: 100,
     align: ColumnAlign.Right,
     accessor: ({ rowData }) => rowData.remainingQuantityToSupply,
     getSortValue: rowData => rowData.remainingQuantityToSupply,

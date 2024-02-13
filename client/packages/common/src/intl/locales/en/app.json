@@ -42,7 +42,7 @@
   "error.sync-api-incompatible": "Sync api version is not compatible",
   "error.authentication-error": "The server has returned an error",
   "error.connection-error": "Unable to connect to server",
-  "error.integration-timeout-reached": "Central server integration timeout reached",
+  "error.integration-timeout-reached": "The central server took too long integrating pushed records. Please retry later.",
   "error.invalid-url": "Invalid url",
   "error.login": "Invalid username or password",
   "error.account-blocked": "Account is blocked until the lockout period has expired",
