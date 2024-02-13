@@ -303,6 +303,10 @@ impl GeneralQueries {
     ) -> Result<Vec<SupplierReturnLine>> {
         new_supplier_return(store_id, input)
     }
+
+    pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
+        return_reasons()
+    }
 }
 
 #[derive(Default, Clone)]
