@@ -87,7 +87,7 @@ pub(crate) struct SyncRecordV6 {
 }
 #[derive(Deserialize, Debug, Serialize)]
 pub struct SyncBatchV6 {
-    // Latest chnagelog cursor in the 'records'
+    // Latest changelog cursor in the 'records'
     // being pushed/pulled
     pub(crate) end_cursor: u64,
     // Number of records in changelog to pull/push
