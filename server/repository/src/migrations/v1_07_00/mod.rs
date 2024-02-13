@@ -28,6 +28,7 @@ mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
+mod unit_add_is_active;
 
 mod item_link_create_table;
 pub(crate) struct V1_07_00;
@@ -66,6 +67,7 @@ fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> 
     // We don't want merge-migration updates to sync back.
     run_without_change_log_updates(connection, || {
         item_add_is_active::migrate(connection)?;
+        unit_add_is_active::migrate(connection)?;
         // Item link migrations
         item_link_create_table::migrate(connection)?;
         stocktake_line_add_item_link_id::migrate(connection)?;

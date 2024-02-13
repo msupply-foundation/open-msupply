@@ -23,6 +23,7 @@ impl SyncRecordTester for UnitAndItemTester {
             name: uuid(),
             description: None,
             index: 1,
+            is_active: true,
         };
         let unit_json1 = json!({
             "ID": unit_row1.id,
@@ -36,6 +37,7 @@ impl SyncRecordTester for UnitAndItemTester {
             name: uuid(),
             description: Some("test description".to_string()),
             index: 2,
+            is_active: true,
         };
         let unit_json2 = json!({
             "ID": unit_row2.id,
