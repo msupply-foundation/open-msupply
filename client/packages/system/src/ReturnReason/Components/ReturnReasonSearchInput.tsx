@@ -6,23 +6,25 @@ import {
   defaultOptionMapper,
   getDefaultOptionRenderer,
 } from '@openmsupply-client/common';
-import { ReturnReasonFragment, useReturnReason } from '../api';
+import { useReturnReason } from '../api';
 
 interface ReturnReasonSearchInputProps {
-  value: ReturnReasonFragment | null;
-  onChange: (returnReason: ReturnReasonFragment | null) => void;
+  selectedReasonId: string | null;
+  onChange: (reasonId: string) => void;
   autoFocus?: boolean;
   isError?: boolean;
 }
 
 export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
-  value,
+  selectedReasonId,
   onChange,
   autoFocus = false,
   isError,
 }) => {
   const { data, isLoading } = useReturnReason.document.listAllActive();
   const reasons = data ?? [];
+
+  const value = reasons.find(reason => reason.id === selectedReasonId);
 
   return (
     <Box display="flex" flexDirection="row">
@@ -40,7 +42,7 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
         }
         loading={isLoading}
         onChange={(_, reason) => {
-          onChange(reason);
+          onChange(reason?.id ?? '');
         }}
         renderInput={props => (
           <BasicTextInput
