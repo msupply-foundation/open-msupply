@@ -131,7 +131,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records
 }
 
-pub(crate) fn get_all_omsupply_ceantral_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn get_all_omsupply_central_push_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut pack_variant::test_omsupply_central_push_records());
 
