@@ -8,14 +8,23 @@ import {
   useKeyboardHeightAdjustment,
   WizardStepper,
   Box,
+  useTabs,
+  TabPanel,
+  TabContext,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftNewReturnLines } from './useDraftNewReturnLines';
+import { ReturnReasonsTable } from './ReturnReasonsTable';
 
 interface NewReturnItemsModalProps {
   isOpen: boolean;
   stockLineIds: string[];
   onClose: () => void;
+}
+
+enum Tabs {
+  Quantity = 'Quantity',
+  Reason = 'Reason',
 }
 
 export const NewReturnItemsModal = ({
@@ -24,6 +33,17 @@ export const NewReturnItemsModal = ({
   onClose,
 }: NewReturnItemsModalProps) => {
   const t = useTranslation('replenishment');
+  const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+
+  const returnsSteps = [
+    { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
+    { tab: Tabs.Reason, label: t('label.reason'), description: '' },
+  ];
+
+  const getActiveStep = () => {
+    const step = returnsSteps.find(step => step.tab === currentTab);
+    return step ? returnsSteps.indexOf(step) : 0;
+  };
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -37,9 +57,7 @@ export const NewReturnItemsModal = ({
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
         nextButton={
           <DialogButton
-            onClick={() => {
-              /* TODO  - next page */
-            }}
+            onClick={() => onChangeTab(Tabs.Reason)}
             variant="next"
           />
         }
@@ -48,20 +66,22 @@ export const NewReturnItemsModal = ({
       >
         <>
           <Box paddingTop={'10px'}>
-            <WizardStepper
-              activeStep={0}
-              steps={[
-                { label: t('label.select-quantity'), description: '' },
-                { label: t('label.reason'), description: '' },
-              ]}
-            />
+            <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
           </Box>
-          <QuantityToReturnTable
-            lines={lines}
-            updateLine={line => {
-              update(line);
-            }}
-          />
+          <TabContext value={currentTab}>
+            <TabPanel value={Tabs.Quantity}>
+              <QuantityToReturnTable
+                lines={lines}
+                updateLine={line => update(line)}
+              />
+            </TabPanel>
+            <TabPanel value={Tabs.Reason}>
+              <ReturnReasonsTable
+                lines={lines}
+                updateLine={line => update(line)}
+              />
+            </TabPanel>
+          </TabContext>
         </>
       </Modal>
     </TableProvider>
