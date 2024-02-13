@@ -43,7 +43,6 @@ export const ReplenishmentNav: FC = () => {
               .build()}
             text={t('internal-order')}
           />
-
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)

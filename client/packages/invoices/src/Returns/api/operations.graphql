@@ -1,0 +1,21 @@
+query invoiceByNumber {
+  invoiceByNumber(
+    invoiceNumber: 10
+    storeId: "\"abc\""
+    type: SUPPLIER_RETURN
+  ) {
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+      lines {
+        nodes {
+          id
+        }
+      }
+      otherPartyName
+      otherPartyStore {
+        code
+      }
+    }
+  }
+}

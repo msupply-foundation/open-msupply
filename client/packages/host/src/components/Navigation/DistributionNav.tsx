@@ -49,6 +49,13 @@ export const DistributionNav: FC = () => {
               .build()}
             text={t('customers')}
           />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.Returns)
+              .build()}
+            text={t('returns')}
+          />
         </List>
       </Collapse>
     </AppNavSection>
