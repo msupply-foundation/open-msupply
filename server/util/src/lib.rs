@@ -32,6 +32,6 @@ pub use file::*;
 
 pub fn is_central_server() -> bool {
     env::var("IS_CENTRAL_SERVER")
-        .map(|is_cetral_server| is_cetral_server.to_lowercase() == "true")
+        .map(|is_central_server| is_central_server.to_lowercase() == "true")
         .unwrap_or(false)
 }
