@@ -48,7 +48,7 @@ export const NewReturnItemsModal = ({
         width={1024}
       >
         <>
-          <Box padding={'10px'}>
+          <Box paddingTop={'10px'}>
             <WizardStepper
               activeStep={0}
               steps={[
