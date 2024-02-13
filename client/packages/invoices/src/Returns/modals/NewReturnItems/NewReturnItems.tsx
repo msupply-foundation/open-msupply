@@ -49,6 +49,7 @@ export const NewReturnItemsModal = ({
   const height = useKeyboardHeightAdjustment(600);
 
   const { lines, update } = useDraftNewReturnLines(stockLineIds);
+  // const { mutateAsync } = useInbound.document.insertSupplierReturn();
 
   return (
     <TableProvider createStore={createTableStore}>
