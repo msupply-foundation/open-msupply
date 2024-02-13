@@ -346,8 +346,8 @@ pub(crate) async fn check_records_against_database(
             NameTagJoin => {
                 check_delete_record_by_id!(NameTagJoinRepository, con, id)
             }
-            Unit => assert!(true), //check_is_inactive_record_by_id!(UnitRowRepository, con, id),
-            Item => assert!(true), //check_is_inactive_record_by_id!(ItemRowRepository, con, id),
+            Unit => assert!(true), // TODO: Test is failing because the test suite does a rerun with fresh initialisation. In this case, the central server has hard deleted the record so it doesn't come through sync. Need to restructure things to test the two different circumstances //check_is_inactive_record_by_id!(UnitRowRepository, con, id),
+            Item => assert!(true), // TODO: Test is failing because the test suite does a rerun with fresh initialisation. In this case, the central server has hard deleted the record so it doesn't come through sync. Need to restructure things to test the two different circumstances //check_is_inactive_record_by_id!(ItemRowRepository, con, id),
             Store => check_delete_record_by_id!(StoreRowRepository, con, id),
             ProgramRequisitionOrderType => {
                 check_delete_record_by_id!(ProgramRequisitionOrderTypeRowRepository, con, id)
