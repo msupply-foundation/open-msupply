@@ -299,7 +299,7 @@ impl GeneralQueries {
     pub async fn new_supplier_return(
         &self,
         store_id: String,
-        input: SupplierReturnInput,
+        input: GenerateSupplierReturnLinesInput,
     ) -> Result<Vec<SupplierReturnLine>> {
         new_supplier_return(store_id, input)
     }
