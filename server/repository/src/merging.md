@@ -1,7 +1,7 @@
 # Merging of Entities (e.g. Names or Items)
 
 Two or more entities such as items or names may be merged after they have been created, e.g. because there are duplicates.
-When merging two entities one entity is soft deleted while the second entity is stays in the system and is not considered the "merged" entity.
+When merging two entities one entity is soft deleted while the second entity stays in the system and is not considered the "merged" entity.
 Merging multiple entities can be achieved by recursively merging two entities till all entities are merged.
 
 <!-- Links -->
