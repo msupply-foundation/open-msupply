@@ -1395,6 +1395,10 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
+export type GenerateSupplierReturnLinesInput = {
+  inboundShipmentLineIds: Array<Scalars['String']['input']>;
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
@@ -1919,6 +1923,17 @@ export type InsertStocktakeResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertStocktakeResponse;
 };
+
+export type InsertSupplierResponseErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertSupplierReturnError = {
+  __typename: 'InsertSupplierReturnError';
+  error: InsertSupplierResponseErrorInterface;
+};
+
+export type InsertSupplierReturnResponse = InsertSupplierReturnError | InvoiceNode;
 
 export type InternalError = InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
@@ -2565,6 +2580,7 @@ export type Mutations = {
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
+  insertSupplierReturn: InsertSupplierReturnResponse;
   /** Links a patient to a store and thus effectively to a site */
   linkPatientToStore: LinkPatientToStoreResponse;
   manualSync: Scalars['String']['output'];
@@ -2912,6 +2928,11 @@ export type MutationsInsertStocktakeArgs = {
 export type MutationsInsertStocktakeLineArgs = {
   input: InsertStocktakeLineInput;
   storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertSupplierReturnArgs = {
+  input: SupplierReturnInput;
 };
 
 
@@ -3284,12 +3305,12 @@ export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & UpdatePre
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierResponseErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierResponseErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -3997,7 +4018,7 @@ export type QueriesNamesArgs = {
 
 
 export type QueriesNewSupplierReturnArgs = {
-  input: SupplierReturnInput;
+  input: GenerateSupplierReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4995,7 +5016,9 @@ export type SuggestedQuantityCalculationNode = {
 };
 
 export type SupplierReturnInput = {
-  inboundShipmentLineIds: Array<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  supplierId: Scalars['String']['input'];
+  supplierReturnLines: Array<SupplierReturnLineInput>;
 };
 
 export type SupplierReturnLine = {
@@ -5009,6 +5032,14 @@ export type SupplierReturnLine = {
   numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   stockLineId: Scalars['String']['output'];
+};
+
+export type SupplierReturnLineInput = {
+  comment: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  reasonId: Scalars['String']['input'];
+  returnNumberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
 };
 
 export type SupplyRequestedQuantityError = {
