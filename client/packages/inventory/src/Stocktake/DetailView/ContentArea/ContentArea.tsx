@@ -105,7 +105,7 @@ export const ContentArea: FC<ContentAreaProps> = ({
   return isLoading ? (
     <BasicSpinner />
   ) : (
-    <Box flexDirection="column" flex={1}>
+    <Box flexDirection="column" flex={1} display="flex">
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
