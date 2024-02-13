@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailView, OutboundShipmentListView } from './OutboundShipment';
+import { DetailView as ReturnsDetailView } from './Returns';
 import {
   ListView as InboundShipmentListView,
   DetailView as InboundShipmentDetailView,
@@ -31,6 +32,12 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .build();
 
+  // const supplierReturnsRoute = RouteBuilder.create(AppRoute.Returns).build();
+
+  const supplierReturnRoute = RouteBuilder.create(AppRoute.OutboundShipment)
+    .addPart(':invoiceNumber')
+    .build();
+
   return (
     <Routes>
       <Route
@@ -48,6 +55,8 @@ const InvoiceService: FC = () => {
       />
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
+      {/* <Route path={supplierReturnsRoute} element={<PrescriptionListView />} /> */}
+      <Route path={supplierReturnRoute} element={<ReturnsDetailView />} />
     </Routes>
   );
 };

@@ -25,6 +25,7 @@ export enum AppRoute {
   InboundShipment = 'inbound-shipment',
   InternalOrder = 'internal-order',
   Suppliers = 'suppliers',
+  Returns = 'returns',
 
   Inventory = 'inventory',
   Stock = 'stock',
