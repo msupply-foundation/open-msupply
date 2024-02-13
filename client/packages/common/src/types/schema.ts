@@ -3773,6 +3773,7 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
+  returnReasons: Array<ReturnReasonNode>;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -4592,6 +4593,13 @@ export type ResponseStoreStatsNode = {
   requestedQuantity: Scalars['Int']['output'];
   stockOnHand: Scalars['Float']['output'];
   stockOnOrder: Scalars['Int']['output'];
+};
+
+export type ReturnReasonNode = {
+  __typename: 'ReturnReasonNode';
+  id: Scalars['String']['output'];
+  isActive: Scalars['Boolean']['output'];
+  reason: Scalars['String']['output'];
 };
 
 export type SensorAxisNode = {
