@@ -12,22 +12,22 @@ pub struct ReturnReasonNode {
 pub fn return_reasons() -> Result<Vec<ReturnReasonNode>> {
     Ok(vec![
         ReturnReasonNode {
-            id: "return_reason_id".to_string(),
+            id: "damaged_reason_id".to_string(),
             reason: "Damaged".to_string(),
             is_active: true,
         },
         ReturnReasonNode {
-            id: "return_reason_id".to_string(),
+            id: "expired_reason_id".to_string(),
             reason: "Expired".to_string(),
             is_active: true,
         },
         ReturnReasonNode {
-            id: "return_reason_id".to_string(),
+            id: "wrong_reason_id".to_string(),
             reason: "Wrong item".to_string(),
             is_active: true,
         },
         ReturnReasonNode {
-            id: "return_reason_id".to_string(),
+            id: "other_reason_id".to_string(),
             reason: "Other".to_string(),
             is_active: true,
         },
