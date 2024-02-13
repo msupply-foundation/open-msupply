@@ -84,7 +84,6 @@ pub async fn pull(
     // TODO Versioning ?
 
     let ctx = service_provider.basic_context()?;
-    // To push or not ?
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     let filter = Some(create_filter());
