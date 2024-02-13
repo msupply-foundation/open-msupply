@@ -32,7 +32,7 @@ export const ReturnReasonsComponent = ({
       'itemName',
       'itemUnit',
       ['returnReason', { Cell: ReturnReasonCell, setter: updateLine }],
-      ['comment', { Cell: TextInputCell, setter: updateLine }],
+      ['comment', { Cell: TextInputCell, width: 200, setter: updateLine }],
     ],
     {},
     [updateLine, lines]

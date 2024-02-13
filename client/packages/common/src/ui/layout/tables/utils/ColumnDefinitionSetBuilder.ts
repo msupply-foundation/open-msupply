@@ -279,7 +279,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   returnReason: {
     label: 'label.reason',
     key: 'returnReason',
-    width: 250,
+    width: 200,
   },
 });
 
