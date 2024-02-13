@@ -8,7 +8,7 @@ import {
   TextInputCell,
   CurrencyInputCell,
   ColumnAlign,
-  NonNegativeDecimalCell,
+  NumberInputCell,
   useFormatCurrency,
   CellProps,
 } from '@openmsupply-client/common';
@@ -19,7 +19,7 @@ import {
 import { DraftInboundLine } from './../../../../types';
 
 const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
-  <NonNegativeDecimalCell max={100} {...props} />
+  <NumberInputCell {...props} max={100} decimalLimit={2} />
 );
 
 export const useServiceLineColumns = (
