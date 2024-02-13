@@ -28,10 +28,12 @@ export const StyledTabContainer = styled(Box)(() => ({
   display: 'flex',
 }));
 
-export const StocktakeLineEditTabs: FC<PropsWithChildren<{
-  onAddLine: () => void;
-  isDisabled: boolean;
-}>> = ({ children, onAddLine, isDisabled }) => {
+export const StocktakeLineEditTabs: FC<
+  PropsWithChildren<{
+    onAddLine: () => void;
+    isDisabled: boolean;
+  }>
+> = ({ children, onAddLine, isDisabled }) => {
   const t = useTranslation('inventory');
   const [currentTab, setCurrentTab] = useState(Tabs.Batch);
 

@@ -418,7 +418,7 @@
   "messages.no-scanners-found": "No scanners found",
   "messages.not-applicable": "N/A",
   "messages.not-initialised": "[ Not configured ]",
-  "messages.over-allocated": "Due to the pack sizes available a total quantity of {{allocatedQuantity}} has been allocated rather than {{requestedQuantity}}",
+  "messages.over-allocated": "Due to the pack sizes available a total quantity of {{quantity}} has been allocated rather than {{issueQuantity}}",
   "messages.placeholder-allocated": "Not enough stock is available to allocate the requested quantity. A placeholder has been added for  {{placeholderQuantity}} units.",
   "messages.saved": "Saved",
   "messages.scanner-connected": "Connected",

@@ -1,3 +1,4 @@
+#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 use std::path::Path;
 
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
@@ -21,6 +22,7 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    pub database_path: Option<String>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
 }
@@ -72,8 +74,15 @@ impl DatabaseSettings {
         }
     }
 
-    pub fn connection_string_without_db(&self) -> String {
-        self.connection_string()
+    pub fn database_path(&self) -> String {
+        let result = match &self.database_path {
+            Some(path) => {
+                std::fs::create_dir_all(path).expect("failed to create database dir");
+                format!("{}/{}", path, self.connection_string())
+            }
+            None => self.connection_string(),
+        };
+        return result;
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
@@ -90,10 +99,6 @@ impl DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!("file:{}?mode=memory&cache=shared", self.database_name)
-    }
-
-    pub fn connection_string_without_db(&self) -> String {
-        self.connection_string()
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
@@ -172,9 +177,9 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
-    info!("Connecting to database '{}'", settings.database_name);
+    info!("Connecting to database '{}'", settings.database_path());
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
+        ConnectionManager::<DBBackendConnection>::new(&settings.database_path());
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
@@ -197,6 +202,7 @@ mod database_setting_test {
             host: "".to_string(),
             database_name: "".to_string(),
             init_sql,
+            database_path: None,
         }
     }
 
