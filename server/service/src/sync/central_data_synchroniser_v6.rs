@@ -63,7 +63,6 @@ impl CentralDataSynchroniserV6 {
             let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
-                // Would ideally have  mapping method for this
                 let buffer_row = record.to_buffer_row()?;
 
                 insert_one_and_update_cursor(
