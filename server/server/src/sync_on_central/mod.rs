@@ -16,7 +16,7 @@ pub fn config_sync_on_central(cfg: &mut web::ServiceConfig) {
     cfg.service(pull);
 }
 
-#[post("/sync/pull")]
+#[post("central/sync/pull")]
 async fn pull(
     request: Json<SyncRequestV6>,
     service_provider: Data<ServiceProvider>,

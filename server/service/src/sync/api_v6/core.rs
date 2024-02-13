@@ -67,7 +67,7 @@ impl SyncApiV6 {
             SyncApiV6CreatingError::CannotParseSyncUrl(sync_v5_settings.server_url.clone(), error)
         })?;
 
-        url = url.join("sync/").unwrap();
+        url = url.join("central/sync/").unwrap();
 
         Ok(Self {
             url,
