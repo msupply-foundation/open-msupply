@@ -52,6 +52,7 @@ pub enum DeleteInboundShipmentLineError {
     CannotEditFinalised,
     BatchIsReserved,
     NotThisInvoiceLine(String),
+    LineUsedInStocktake,
 }
 
 impl From<RepositoryError> for DeleteInboundShipmentLineError {
