@@ -8,6 +8,7 @@ export const useReturns = {
   },
   lines: {
     supplierReturnLines: Lines.useNewSupplierReturnLines,
+    inboundReturnLines: Lines.useInboundReturnLines,
   },
   utils: {
     api: Utils.useReturnsApi,
