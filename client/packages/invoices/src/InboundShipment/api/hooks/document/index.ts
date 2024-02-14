@@ -8,7 +8,6 @@ import { useNextItem } from './useNextItem';
 import { useUpdateInbound } from './useUpdateInbound';
 import { useUpdateInboundServiceTax } from './useInboundUpdateServiceTax';
 import { useInboundDelete } from './useInboundDelete';
-import { useInsertSupplierReturn } from './useInsertSupplierReturn';
 
 export const Document = {
   useInboundDeleteRows,
@@ -21,5 +20,4 @@ export const Document = {
   useNextItem,
   useUpdateInbound,
   useUpdateInboundServiceTax,
-  useInsertSupplierReturn,
 };

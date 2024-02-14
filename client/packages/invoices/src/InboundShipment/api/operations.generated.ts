@@ -88,13 +88,6 @@ export type AddToInboundShipmentFromMasterListMutationVariables = Types.Exact<{
 
 export type AddToInboundShipmentFromMasterListMutation = { __typename: 'Mutations', addToInboundShipmentFromMasterList: { __typename: 'AddToInboundShipmentFromMasterListError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'MasterListNotFoundForThisStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'InvoiceLineConnector', totalCount: number } };
 
-export type InsertSupplierReturnMutationVariables = Types.Exact<{
-  input: Types.SupplierReturnInput;
-}>;
-
-
-export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
-
 export const InboundLineFragmentDoc = gql`
     fragment InboundLine on InvoiceLineNode {
   __typename
@@ -711,17 +704,6 @@ export const AddToInboundShipmentFromMasterListDocument = gql`
   }
 }
     `;
-export const InsertSupplierReturnDocument = gql`
-    mutation insertSupplierReturn($input: SupplierReturnInput!) {
-  insertSupplierReturn(input: $input) {
-    ... on InvoiceNode {
-      __typename
-      id
-      invoiceNumber
-    }
-  }
-}
-    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -756,9 +738,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     addToInboundShipmentFromMasterList(variables: AddToInboundShipmentFromMasterListMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddToInboundShipmentFromMasterListMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddToInboundShipmentFromMasterListMutation>(AddToInboundShipmentFromMasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addToInboundShipmentFromMasterList', 'mutation');
-    },
-    insertSupplierReturn(variables: InsertSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierReturn', 'mutation');
     }
   };
 }
@@ -914,22 +893,5 @@ export const mockUpsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockAddToInboundShipmentFromMasterListMutation = (resolver: ResponseResolver<GraphQLRequest<AddToInboundShipmentFromMasterListMutationVariables>, GraphQLContext<AddToInboundShipmentFromMasterListMutation>, any>) =>
   graphql.mutation<AddToInboundShipmentFromMasterListMutation, AddToInboundShipmentFromMasterListMutationVariables>(
     'addToInboundShipmentFromMasterList',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockInsertSupplierReturnMutation((req, res, ctx) => {
- *   const { input } = req.variables;
- *   return res(
- *     ctx.data({ insertSupplierReturn })
- *   )
- * })
- */
-export const mockInsertSupplierReturnMutation = (resolver: ResponseResolver<GraphQLRequest<InsertSupplierReturnMutationVariables>, GraphQLContext<InsertSupplierReturnMutation>, any>) =>
-  graphql.mutation<InsertSupplierReturnMutation, InsertSupplierReturnMutationVariables>(
-    'insertSupplierReturn',
     resolver
   )

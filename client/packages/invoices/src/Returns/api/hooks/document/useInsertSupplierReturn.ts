@@ -1,10 +1,10 @@
 import { useQueryClient, useMutation } from '@openmsupply-client/common';
-import { useInboundApi } from '../utils/useInboundApi';
+import { useReturnsApi } from '../utils/useReturnsApi';
 
 export const useInsertSupplierReturn = () => {
   const queryClient = useQueryClient();
   // const navigate = useNavigate();
-  const api = useInboundApi();
+  const api = useReturnsApi();
   return useMutation(api.insertSupplierReturn, {
     onSuccess: () => {
       // TODO: redirect to details page
