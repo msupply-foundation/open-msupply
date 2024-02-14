@@ -200,9 +200,12 @@ export const useFormatDateTime = () => {
   /**
    * While getDateOrNull is naive to the timezone, the timezone will still change.
    * When converting from the assumed naive zone of GMT to the local timezone, the
-   * dateTime will be wrong if the timezone is behind GMT. This function acts in
-   * the same way as getDateOrNull, but will create a datetime of start of day local
-   * time rather than start of day GMT.
+   * dateTime will be wrong if the timezone is behind GMT.
+   * For example: for a user in -10 timezone, a date of 24-02-2024 will become
+   * 2024-02-23T13:00:00.000Z when rendered for mui datepicker.
+   * This function acts in the same way as getDateOrNull, but will create a datetime
+   * of start of day local time rather than start of day GMT by subtracting the local
+   * timezone offset.
    * You can use this function anytime you need a datetime for mui date picker to
    * be created from a date only string. This includes date of birth, date of death
    * or any other date which is time and timezone agnostic.
