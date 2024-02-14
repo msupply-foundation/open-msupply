@@ -71,6 +71,12 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
           draft.latestTemperatureLog?.nodes[0]?.datetime
         )}
       />
+      <TextWithLabelRow
+        sx={textSx}
+        labelProps={labelWrap}
+        label={t('label.sensor-type')}
+        text={draft.type ?? ''}
+      />
     </Box>
   );
 };
