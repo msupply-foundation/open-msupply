@@ -7,7 +7,6 @@ import {
   createTableStore,
   useKeyboardHeightAdjustment,
   WizardStepper,
-  Box,
   useTabs,
   TabPanel,
   TabContext,
@@ -86,9 +85,7 @@ export const NewReturnItemsModal = ({
         width={1024}
       >
         <>
-          <Box paddingTop={'10px'}>
-            <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-          </Box>
+          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
           <TabContext value={currentTab}>
             <TabPanel value={Tabs.Quantity}>
               <QuantityToReturnTable
