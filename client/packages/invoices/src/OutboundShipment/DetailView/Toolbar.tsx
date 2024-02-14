@@ -38,7 +38,7 @@ export const Toolbar: FC<{
 
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const selectedIds: string[] = [];
+  const selectedIds: string[] = useOutbound.utils.selectedIds();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
