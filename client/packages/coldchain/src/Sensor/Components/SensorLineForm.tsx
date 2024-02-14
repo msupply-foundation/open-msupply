@@ -2,7 +2,12 @@ import React, { FC } from 'react';
 import { LocationSearchInput } from '@openmsupply-client/system/src';
 import { useTranslation } from '@common/intl';
 import { BasicTextInput, InputWithLabelRow } from '@common/components';
-import { Box, Formatter, TextWithLabelRow } from '@openmsupply-client/common';
+import {
+  Box,
+  Formatter,
+  TextWithLabelRow,
+  SensorNodeType,
+} from '@openmsupply-client/common';
 import { UseDraftSensorControl } from './SensorEditModal';
 import { isSensorNameEditDisabled } from '../utils';
 
@@ -75,7 +80,11 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
         sx={textSx}
         labelProps={labelWrap}
         label={t('label.sensor-type')}
-        text={draft.type ?? ''}
+        text={
+          draft.type === SensorNodeType.BlueMaestro
+            ? t('label.rtmd')
+            : Formatter.enumCase(draft?.type)
+        }
       />
     </Box>
   );
