@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState, useEffect } from 'react';
+import React, { FC, ReactNode, useState, useEffect, useCallback } from 'react';
 import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import {
@@ -25,12 +25,22 @@ interface DetailTabsProps {
   tabs: TabDefinition[];
   requiresConfirmation?: (tab: string) => boolean;
 }
+
+const handleResize = debounce(
+  () => window.dispatchEvent(new Event('resize')),
+  100
+);
+
 export const DetailTabs: FC<DetailTabsProps> = ({
   tabs,
   requiresConfirmation = () => false,
 }) => {
-  const isValidTab = (tab?: string): tab is string =>
-    !!tab && tabs.some(({ value }) => value === tab);
+  const isValidTab = useCallback(
+    (tab?: string): tab is string =>
+      !!tab && tabs.some(({ value }) => value === tab),
+    [tabs]
+  );
+
   const { urlQuery, updateQuery } = useUrlQuery();
   const t = useTranslation();
   const currentUrlTab = urlQuery['tab'] as string | undefined;
@@ -44,14 +54,9 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
   const { showConfirmation } = useConfirmOnLeaving(false);
-  const handleResize = debounce(
-    () => window.dispatchEvent(new Event('resize')),
-    100
-  );
+
   useEffect(() => {
     handleResize();
-    // depending on handleResize causes too many renders
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [detailPanelOpen, drawerOpen]);
 
   const [tabQueryParams, setTabQueryParams] = useState<
@@ -91,9 +96,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
         };
       });
     }
-    // isValidTab is recreated on every render, so it's safe to ignore it
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlQuery]);
+  }, [isValidTab, urlQuery]);
 
   return (
     <TabContext value={currentTab}>
