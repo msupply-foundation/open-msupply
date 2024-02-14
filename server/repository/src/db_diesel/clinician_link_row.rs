@@ -22,20 +22,11 @@ allow_tables_to_appear_in_same_query!(clinician_link, invoice_line);
 allow_tables_to_appear_in_same_query!(clinician_link, program);
 allow_tables_to_appear_in_same_query!(clinician_link, name_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[table_name = "clinician_link"]
 pub struct ClinicianLinkRow {
     pub id: String,
     pub clinician_id: String,
-}
-
-impl Default for ClinicianLinkRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            clinician_id: Default::default(),
-        }
-    }
 }
 
 pub struct ClinicianLinkRowRepository<'a> {
