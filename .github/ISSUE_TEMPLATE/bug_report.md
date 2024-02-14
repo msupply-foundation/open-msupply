@@ -24,6 +24,7 @@ Steps to reproduce the behaviour:
 ## Your environment 🌱
 <!-- e.g. 1.2.3 -->
 - Version: 
+- mSupply version: 
 - Platform:
   - [ ] android (tablet)
   - [ ] browser (extra points if you tell us which one)
