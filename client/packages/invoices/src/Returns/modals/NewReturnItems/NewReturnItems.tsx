@@ -20,6 +20,7 @@ interface NewReturnItemsModalProps {
   isOpen: boolean;
   stockLineIds: string[];
   onClose: () => void;
+  supplierId: string;
 }
 
 enum Tabs {
@@ -31,6 +32,7 @@ export const NewReturnItemsModal = ({
   isOpen,
   stockLineIds,
   onClose,
+  supplierId,
 }: NewReturnItemsModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -48,8 +50,19 @@ export const NewReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update, saveSupplierReturn } =
-    useDraftReturnLines(stockLineIds);
+  const { lines, update, saveSupplierReturn } = useDraftReturnLines(
+    stockLineIds,
+    supplierId
+  );
+
+  const onOk = async () => {
+    try {
+      await saveSupplierReturn();
+      onClose();
+    } catch {
+      // TODO: handle error display...
+    }
+  };
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -66,13 +79,7 @@ export const NewReturnItemsModal = ({
         }
         okButton={
           currentTab === Tabs.Reason ? (
-            <DialogButton
-              onClick={async () => {
-                saveSupplierReturn(); // ? await here or close? yes bc need to check for errors...
-                onClose();
-              }}
-              variant="ok"
-            />
+            <DialogButton onClick={onOk} variant="ok" />
           ) : undefined
         }
         height={height}

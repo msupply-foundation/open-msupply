@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import {
+  FnUtils,
   RecordPatch,
   SupplierReturnInput,
   SupplierReturnLine,
@@ -13,7 +14,10 @@ export type DraftReturnLine = SupplierReturnLine & {
   comment: string;
 };
 
-export const useDraftReturnLines = (stockLineIds: string[]) => {
+export const useDraftReturnLines = (
+  stockLineIds: string[],
+  supplierId: string
+) => {
   const [draftLines, setDraftLines] = React.useState<DraftReturnLine[]>([]);
 
   const lines = useReturns.lines.newReturnLines(stockLineIds);
@@ -53,12 +57,14 @@ export const useDraftReturnLines = (stockLineIds: string[]) => {
     );
 
     const input: SupplierReturnInput = {
-      id: 'new-uuid',
-      supplierId: '?',
+      id: FnUtils.generateUUID(),
+      supplierId,
       supplierReturnLines,
     };
 
-    mutateAsync(input);
+    // TODO: error handling here
+    // also need to consider what we do if the error was on the first page of the wizard
+    await mutateAsync(input);
   };
 
   return { lines: draftLines, update, saveSupplierReturn };
