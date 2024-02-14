@@ -1,0 +1,62 @@
+import {
+  DataTable,
+  InboundReturnLine,
+  NumberInputCell,
+  useColumns,
+} from 'packages/common/src';
+import React from 'react';
+
+export const QuantityReturnedTableComponent = ({
+  lines,
+  updateLine,
+}: {
+  lines: InboundReturnLine[];
+  updateLine: (line: Partial<InboundReturnLine> & { id: string }) => void;
+}) => {
+  const columns = useColumns<InboundReturnLine>(
+    [
+      'itemCode',
+      'itemName',
+      // 'itemUnit', // not implemented for now
+      // 'location',
+      'batch',
+      'expiryDate',
+      [
+        'numberOfPacks',
+        {
+          label: 'label.pack-quantity-issued',
+          width: 125,
+          accessor: ({ rowData }) => rowData.numberOfPacksIssued,
+        },
+      ],
+      [
+        'numberOfPacksReturned',
+        {
+          width: 100,
+          setter: updateLine,
+          Cell: props => (
+            <NumberInputCell
+              {...props}
+              isRequired
+              max={props.rowData.numberOfPacksIssued}
+              min={1}
+            />
+          ),
+        },
+      ],
+    ],
+    {},
+    [updateLine, lines]
+  );
+
+  return (
+    <DataTable
+      id="inbound-return-line-quantity"
+      columns={columns}
+      data={lines}
+      dense
+    />
+  );
+};
+
+export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
