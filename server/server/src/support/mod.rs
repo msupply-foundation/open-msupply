@@ -1,9 +1,7 @@
-use std::fmt::format;
-
 use actix_web::cookie::Cookie;
 use actix_web::http::header::COOKIE;
 use actix_web::web::{self};
-use actix_web::{Error, HttpRequest};
+use actix_web::HttpRequest;
 use service::token::TokenService;
 use service::{
     auth::{
@@ -12,11 +10,11 @@ use service::{
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
     settings::is_develop,
-    user_account::UserAccountService,
 };
 
 mod database;
 use database::get_database;
+use database::vacuum_database;
 
 const URL_PATH: &str = "/support";
 
@@ -24,6 +22,10 @@ pub fn config_support(cfg: &mut web::ServiceConfig) {
     cfg.route(
         &format!("{}{}", URL_PATH, "/database"),
         web::get().to(get_database),
+    );
+    cfg.route(
+        &format!("{}{}", URL_PATH, "/vacuum"),
+        web::post().to(vacuum_database),
     );
 }
 
@@ -98,8 +100,7 @@ pub fn validate_access(
     auth_data: &AuthData,
     token: Option<String>,
 ) -> Result<ValidatedUser, AuthError> {
-    let user_service = UserAccountService::new(&service_context.connection);
-    let validated_user = validate_auth(auth_data, &token)?;
+    let _validated_user_auth = validate_auth(auth_data, &token)?;
 
     let access_request = ResourceAccessRequest {
         resource: Resource::ServerAdmin,

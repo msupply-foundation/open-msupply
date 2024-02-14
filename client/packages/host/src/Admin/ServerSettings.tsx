@@ -14,6 +14,7 @@ import {
   useTranslation,
   DownloadIcon,
   useNativeClient,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -27,6 +28,7 @@ export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const navigate = useNavigate();
   const { saveDatabase } = useNativeClient();
+  const [isDownloading, setIsDownloading] = useState(false);
   const t = useTranslation('common');
   const {
     isOn: isLogShown,
@@ -89,14 +91,25 @@ export const ServerSettings = () => {
         title={t('label.download-database')}
         component={
           <>
-            <BaseButton
+            <LoadingButton
+              isLoading={isDownloading}
               startIcon={<DownloadIcon />}
               onClick={async () => {
-                await saveDatabase();
+                setIsDownloading(true);
+                const vacuum = await fetch(
+                  `${Environment.API_HOST}/support/vacuum`,
+                  {
+                    method: 'POST',
+                  }
+                );
+                if (vacuum.ok) {
+                  await saveDatabase();
+                }
+                setIsDownloading(false);
               }}
             >
               {t('button.download')}
-            </BaseButton>
+            </LoadingButton>
           </>
         }
       />
