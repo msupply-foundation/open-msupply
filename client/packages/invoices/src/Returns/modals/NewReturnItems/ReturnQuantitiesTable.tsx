@@ -1,20 +1,10 @@
 import {
-  CellProps,
   DataTable,
   NumberInputCell,
   SupplierReturnLine,
   useColumns,
 } from 'packages/common/src';
 import React from 'react';
-
-const QuantityToReturnCell = (props: CellProps<SupplierReturnLine>) => (
-  <NumberInputCell
-    {...props}
-    isRequired
-    max={props.rowData.availableNumberOfPacks}
-    min={1}
-  />
-);
 
 export const QuantityToReturnTableComponent = ({
   lines,
@@ -34,7 +24,18 @@ export const QuantityToReturnTableComponent = ({
       'availableNumberOfPacks',
       [
         'numberOfPacksToReturn',
-        { Cell: QuantityToReturnCell, width: 100, setter: updateLine },
+        {
+          width: 100,
+          setter: updateLine,
+          Cell: props => (
+            <NumberInputCell
+              {...props}
+              isRequired
+              max={props.rowData.availableNumberOfPacks}
+              min={1}
+            />
+          ),
+        },
       ],
     ],
     {},
