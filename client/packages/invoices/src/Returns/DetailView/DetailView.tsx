@@ -19,17 +19,17 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { useOutbound } from '../api';
+import { useReturn } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit } from './OutboundLineEdit';
 
 export const DetailView: FC = () => {
-  const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturn.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<Draft>();
-  const { data, isLoading } = useOutbound.document.get();
+  const { data, isLoading } = useReturn.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   const onRowClick = useCallback(
@@ -42,6 +42,8 @@ export const DetailView: FC = () => {
     onOpen(draft);
     setMode(ModalMode.Create);
   };
+
+  console.log('data', data);
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -97,7 +99,7 @@ export const DetailView: FC = () => {
           onOk={() =>
             navigate(
               RouteBuilder.create(AppRoute.Distribution)
-                .addPart(AppRoute.OutboundShipment)
+                .addPart(AppRoute.Returns)
                 .build()
             )
           }

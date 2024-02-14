@@ -11,7 +11,7 @@ import {
   NothingHere,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
+import { useReturn } from '../api';
 import { useOutboundColumns } from './columns';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -90,12 +90,12 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     queryParams: { sortBy },
   } = useUrlQueryParams();
   const { isGrouped } = useIsGrouped('outboundShipment');
-  const { rows } = useOutbound.line.rows(isGrouped);
+  const { rows } = useReturn.line.rows(isGrouped);
   const columns = useOutboundColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturn.utils.isDisabled();
   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;

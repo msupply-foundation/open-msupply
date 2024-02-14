@@ -18,7 +18,7 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 import { DraftItem } from '../../..';
 import {
   PackSizeController,
@@ -66,7 +66,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
   const [issueQuantity, setIssueQuantity] = useState(0);
   const { format } = useFormatNumber();
-  const { items } = useOutbound.line.rows();
+  const { items } = useReturn.line.rows();
 
   const onChangePackSize = (newPackSize: number) => {
     const packSize = newPackSize === -1 ? 1 : newPackSize;

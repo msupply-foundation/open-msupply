@@ -11,7 +11,7 @@ import {
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
 import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 
 const getStatusOptions = (
   currentStatus: InvoiceNodeStatus,
@@ -95,14 +95,14 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  const { lines, status, onHold, update } = useOutbound.document.fields([
+  const { lines, status, onHold, update } = useReturn.document.fields([
     'status',
     'onHold',
     'lines',
   ]);
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
-  const { data } = useOutbound.document.get();
+  const { data } = useReturn.document.get();
   const hasLinesToPrune =
     data?.status === InvoiceNodeStatus.New &&
     (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
@@ -157,7 +157,7 @@ const useStatusChangeButton = () => {
 
 const useStatusChangePlaceholderCheck = () => {
   const t = useTranslation('distribution');
-  const { data: lines } = useOutbound.line.stockLines();
+  const { data: lines } = useReturn.line.stockLines();
   const alert = useAlertModal({
     title: t('heading.cannot-do-that'),
     message: t('messages.must-allocate-all-lines'),
@@ -185,7 +185,7 @@ export const StatusChangeButton = () => {
     lines,
   } = useStatusChangeButton();
   const { hasPlaceholder, alert } = useStatusChangePlaceholderCheck();
-  const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturn.utils.isDisabled();
   const t = useTranslation();
   const noLines = lines?.totalCount === 0;
 
