@@ -26,11 +26,6 @@ interface DetailTabsProps {
   requiresConfirmation?: (tab: string) => boolean;
 }
 
-const handleResize = debounce(
-  () => window.dispatchEvent(new Event('resize')),
-  100
-);
-
 export const DetailTabs: FC<DetailTabsProps> = ({
   tabs,
   requiresConfirmation = () => false,
@@ -54,10 +49,10 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
   const { showConfirmation } = useConfirmOnLeaving(false);
-
-  useEffect(() => {
-    handleResize();
-  }, [detailPanelOpen, drawerOpen]);
+  const handleResize = useCallback(
+    () => debounce(() => window.dispatchEvent(new Event('resize')), 100),
+    []
+  );
 
   const [tabQueryParams, setTabQueryParams] = useState<
     Record<string, UrlQueryObject>
@@ -84,6 +79,10 @@ export const DetailTabs: FC<DetailTabsProps> = ({
       updateQuery(query, true);
     }
   };
+
+  useEffect(() => {
+    handleResize();
+  }, [detailPanelOpen, drawerOpen, handleResize]);
 
   useEffect(() => {
     const tab = urlQuery['tab'] as string | undefined;
