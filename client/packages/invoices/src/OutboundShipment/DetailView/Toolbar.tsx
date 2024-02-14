@@ -13,11 +13,14 @@ import {
   ZapIcon,
   Switch,
   useIsGrouped,
+  ArrowLeftIcon,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
 
-export const Toolbar: FC = () => {
+export const Toolbar: FC<{
+  onReturnLines: (stockLineIds: string[]) => void;
+}> = ({ onReturnLines }) => {
   const t = useTranslation('distribution');
   const onDelete = useOutbound.line.deleteSelected();
   const { onAllocate } = useOutbound.line.allocateSelected();
@@ -34,6 +37,8 @@ export const Toolbar: FC = () => {
   const { mutateAsync: updateName } = useOutbound.document.updateName();
 
   const isDisabled = useOutbound.utils.isDisabled();
+
+  const selectedIds: string[] = [];
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -99,6 +104,12 @@ export const Toolbar: FC = () => {
             </DropdownMenuItem>
             <DropdownMenuItem IconComponent={ZapIcon} onClick={onAllocate}>
               {t('button.allocate-lines')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              IconComponent={ArrowLeftIcon}
+              onClick={() => onReturnLines(selectedIds)}
+            >
+              {t('button.return-lines')}
             </DropdownMenuItem>
           </DropdownMenu>
         </Grid>
