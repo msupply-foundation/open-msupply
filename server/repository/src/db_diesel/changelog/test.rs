@@ -24,7 +24,7 @@ async fn test_changelog() {
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
     let starting_cursor = repo.latest_cursor().unwrap();
-    repo.drop_all().unwrap();
+    repo.delete(0).unwrap();
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
     let mut result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
@@ -138,7 +138,7 @@ async fn test_changelog_iteration() {
     let repo = ChangelogRepository::new(&connection);
     // Clear change log and get starting cursor
     let starting_cursor = repo.latest_cursor().unwrap();
-    repo.drop_all().unwrap();
+    repo.delete(0).unwrap();
 
     location_repo.upsert_one(&mock_location_1()).unwrap();
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
@@ -190,7 +190,15 @@ async fn test_changelog_iteration() {
 
 #[actix_rt::test]
 async fn test_changelog_filter() {
-    let (_, connection, _, _) = setup_all("test_changelog_filter", MockDataInserts::none()).await;
+    // changelog repository gets changelog.name_id from the related name_link
+    // name_link.name_id so we need to add names and name_links into the DB.
+    let (_, connection, _, _) =
+        setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
+
+    // But remove any names and name_links from change log so
+    // the cursors below don't conflict.
+    let changelog_repo = ChangelogRepository::new(&connection);
+    changelog_repo.delete(0).unwrap();
 
     let log1 = ChangelogRow {
         cursor: 1,
@@ -239,49 +247,47 @@ async fn test_changelog_filter() {
             .unwrap();
     }
 
-    let repo = ChangelogRepository::new(&connection);
-
     // Filter by table name
-
     assert_eq!(
-        repo.changelogs(
-            0,
-            20,
-            Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to()))
-        )
-        .unwrap(),
+        changelog_repo
+            .changelogs(
+                0,
+                20,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to()))
+            )
+            .unwrap(),
         vec![log2.clone()]
     );
 
     // Filter by name_id in
-
     assert_eq!(
-        repo.changelogs(
-            0,
-            20,
-            Some(ChangelogFilter::new().name_id(EqualFilter::equal_any(vec![
-                "name1".to_string(),
-                "name3".to_string()
-            ])))
-        )
-        .unwrap(),
+        changelog_repo
+            .changelogs(
+                0,
+                20,
+                Some(ChangelogFilter::new().name_id(EqualFilter::equal_any(vec![
+                    "name1".to_string(),
+                    "name3".to_string()
+                ])))
+            )
+            .unwrap(),
         vec![log1.clone(), log3.clone()]
     );
 
     // Filter by store_id in or null
-
     assert_eq!(
-        repo.changelogs(
-            0,
-            20,
-            Some(
-                ChangelogFilter::new().store_id(EqualFilter::equal_any_or_null(vec![
-                    "store1".to_string(),
-                    "store2".to_string()
-                ]))
+        changelog_repo
+            .changelogs(
+                0,
+                20,
+                Some(
+                    ChangelogFilter::new().store_id(EqualFilter::equal_any_or_null(vec![
+                        "store1".to_string(),
+                        "store2".to_string()
+                    ]))
+                )
             )
-        )
-        .unwrap(),
+            .unwrap(),
         vec![log1.clone(), log2.clone(), log4.clone()]
     );
 }
@@ -303,7 +309,7 @@ fn test_changelog_name_and_store_id<T, F>(
 ) where
     F: Fn(&StorageConnection, &T),
 {
-    let repo = ChangelogRepository::new(&connection);
+    let repo = ChangelogRepository::new(connection);
 
     db_op(connection, &record.record);
 
@@ -348,7 +354,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     fn invoice() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice".to_string();
-            r.name_id = name().id;
+            r.name_link_id = name().id;
             r.store_id = store().id;
         })
     }
@@ -357,14 +363,14 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         inline_init(|r: &mut InvoiceLineRow| {
             r.id = "invoice_line".to_string();
             r.invoice_id = invoice().id;
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
         })
     }
 
     fn requisition() -> RequisitionRow {
         inline_init(|r: &mut RequisitionRow| {
             r.id = "requisition".to_string();
-            r.name_id = name().id;
+            r.name_link_id = name().id;
             r.store_id = store().id;
         })
     }
@@ -373,7 +379,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line".to_string();
             r.requisition_id = requisition().id;
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
         })
     }
 
@@ -398,7 +404,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -414,7 +420,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -432,7 +438,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Delete,
@@ -450,7 +456,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -466,7 +472,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
@@ -480,7 +486,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
-            name_id: invoice().name_id,
+            name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
         ChangelogAction::Delete,
@@ -494,7 +500,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         ChangelogAction::Upsert,
@@ -510,7 +516,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         ChangelogAction::Upsert,
@@ -528,7 +534,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         ChangelogAction::Delete,
@@ -546,7 +552,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         ChangelogAction::Upsert,
@@ -562,7 +568,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         ChangelogAction::Upsert,
@@ -580,7 +586,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
-            name_id: requisition().name_id,
+            name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
         ChangelogAction::Delete,

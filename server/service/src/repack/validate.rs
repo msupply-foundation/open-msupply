@@ -1,4 +1,4 @@
-use repository::{RepositoryError, StockLineRow, StorageConnection};
+use repository::{RepositoryError, StockLine, StockLineRow, StorageConnection};
 
 use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
 
@@ -8,7 +8,7 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertRepack,
-) -> Result<StockLineRow, InsertRepackError> {
+) -> Result<StockLine, InsertRepackError> {
     use InsertRepackError::*;
 
     let stock_line = check_stock_line_exists(connection, store_id, &input.stock_line_id).map_err(
@@ -27,7 +27,7 @@ pub fn validate(
         return Err(CannotHaveFractionalPack);
     }
 
-    Ok(stock_line.stock_line_row)
+    Ok(stock_line)
 }
 
 fn check_stock_line_reduced_to_zero(input: &InsertRepack, stock_line: &StockLineRow) -> bool {

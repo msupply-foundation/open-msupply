@@ -67,11 +67,23 @@ export const format: currency.Format = (
   return replacePattern.replace('!', symbol).replace('#', moneyString);
 };
 
+// Gets the canonical characters for number separator and decimal from
+// Intl.NumberFormat. This is not always obvious (the " " used in French
+// formatting, for example, is actual a "NARROW NO-BREAK SPACE" (CharCode 8239)
+// even though it looks like a regular space (CharCode 32)), so for consistency
+// this should be the source of truth.
+const getSeparatorAndDecimal = (locale: string) => {
+  const parts = new Intl.NumberFormat(locale).formatToParts(1000.1);
+  const separator = parts.find(({ type }) => type === 'group')?.value ?? ',';
+  const decimal = parts.find(({ type }) => type === 'decimal')?.value ?? '.';
+  return { separator, decimal };
+};
+
 const currencyOptions = {
   en: {
     symbol: '$',
-    separator: ',',
-    decimal: '.',
+    // separator: "," decimal = "."
+    ...getSeparatorAndDecimal('en'),
     precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
@@ -79,8 +91,8 @@ const currencyOptions = {
   },
   fr: {
     symbol: '€',
-    separator: '.',
-    decimal: ',',
+    // separator: " " decimal = ","
+    ...getSeparatorAndDecimal('fr'),
     precision: 2,
     pattern: '# !',
     negativePattern: '-# !',
@@ -88,8 +100,8 @@ const currencyOptions = {
   },
   'fr-DJ': {
     symbol: 'DJF',
-    separator: '.',
-    decimal: ',',
+    // separator: " " decimal = ","
+    ...getSeparatorAndDecimal('fr-DJ'),
     precision: 2,
     pattern: '# !',
     negativePattern: '-# !',
@@ -97,8 +109,8 @@ const currencyOptions = {
   },
   ar: {
     symbol: 'ر.ق.',
-    separator: ',',
-    decimal: '.',
+    // separator: "," decimal = "."
+    ...getSeparatorAndDecimal('ar'),
     precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
@@ -106,8 +118,8 @@ const currencyOptions = {
   },
   es: {
     symbol: '$',
-    separator: ',',
-    decimal: '.',
+    // separator: "," decimal = "."
+    ...getSeparatorAndDecimal('es'),
     precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
@@ -115,8 +127,8 @@ const currencyOptions = {
   },
   tet: {
     symbol: '$',
-    separator: ',',
-    decimal: '.',
+    // separator: "," decimal = "."
+    ...getSeparatorAndDecimal('tet'),
     precision: 2,
     pattern: '!#',
     negativePattern: '-!#',
@@ -124,8 +136,8 @@ const currencyOptions = {
   },
   ru: {
     symbol: '₽',
-    separator: '.',
-    decimal: ',',
+    // separator: "." decimal = ","
+    ...getSeparatorAndDecimal('ru'),
     precision: 2,
     pattern: '# !',
     negativePattern: '-# !',

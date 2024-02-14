@@ -4,7 +4,7 @@ import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import {
   useDebounceCallback,
   DateUtils,
-  PositiveNumberInput,
+  NumericTextInput,
   useFormatDateTime,
   useTranslation,
   FormLabel,
@@ -160,8 +160,7 @@ const UIComponent = (props: ControlProps) => {
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
         Input={
-          <PositiveNumberInput
-            min={0}
+          <NumericTextInput
             type="number"
             InputProps={{
               sx: { '& .MuiInput-input': { textAlign: 'right' } },
@@ -173,7 +172,7 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled || baseTime === undefined}
             error={error}
             helperText={errors}
-            value={localData ?? ''}
+            value={localData}
           />
         }
       />
@@ -188,8 +187,7 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <Box flexBasis="100%" display="flex" alignItems="center" gap={2}>
-            <PositiveNumberInput
-              min={0}
+            <NumericTextInput
               type="number"
               InputProps={{
                 sx: { '& .MuiInput-input': { textAlign: 'right' } },

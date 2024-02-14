@@ -1,6 +1,7 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository,
-    RepositoryError, StorageConnection,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository, RepositoryError,
+    StorageConnection,
 };
 
 pub fn check_line_does_not_exist(
@@ -32,7 +33,7 @@ pub fn check_item_exists(
     ItemRowRepository::new(connection).find_one_by_id(id)
 }
 
-pub fn check_line_exists_option(
+pub fn check_line_row_exists_option(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
@@ -43,6 +44,15 @@ pub fn check_line_exists_option(
         Err(RepositoryError::NotFound) => Ok(None),
         Err(error) => Err(error),
     }
+}
+
+pub fn check_line_exists_option(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<InvoiceLine>, RepositoryError> {
+    Ok(InvoiceLineRepository::new(connection)
+        .query_by_filter(InvoiceLineFilter::new().id(EqualFilter::equal_to(id)))?
+        .pop())
 }
 
 pub fn check_line_belongs_to_invoice(line: &InvoiceLineRow, invoice: &InvoiceRow) -> bool {

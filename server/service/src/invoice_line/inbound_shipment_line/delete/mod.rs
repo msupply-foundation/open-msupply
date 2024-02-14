@@ -107,7 +107,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = String::from("outbound_shipment_e_line_a");
                 r.invoice_id = String::from("outbound_shipment_e");
-                r.item_id = String::from("item_a");
+                r.item_link_id = String::from("item_a");
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.stock_line_id = Some(String::from("item_a_line_a"));
