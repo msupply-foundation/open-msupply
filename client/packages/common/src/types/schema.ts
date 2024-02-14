@@ -5037,8 +5037,8 @@ export type SupplierReturnLine = {
 export type SupplierReturnLineInput = {
   comment: Scalars['String']['input'];
   id: Scalars['String']['input'];
+  numberOfPacksToReturn: Scalars['Float']['input'];
   reasonId: Scalars['String']['input'];
-  returnNumberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
 };
 

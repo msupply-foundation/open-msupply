@@ -5,7 +5,7 @@ import {
   useColumns,
 } from 'packages/common/src';
 import React from 'react';
-import { DraftReturnLine } from './useDraftNewReturnLines';
+import { DraftReturnLine } from './useDraftReturnLines';
 
 const QuantityToReturnCell = (props: CellProps<DraftReturnLine>) => (
   <NumberInputCell
