@@ -6,7 +6,6 @@ import {
   TableProvider,
   createTableStore,
   useKeyboardHeightAdjustment,
-  SupplierReturnLine,
   WizardStepper,
   Box,
 } from '@openmsupply-client/common';
@@ -15,13 +14,13 @@ import { useDraftNewReturnLines } from './useDraftNewReturnLines';
 
 interface NewReturnItemsModalProps {
   isOpen: boolean;
-  newReturns: SupplierReturnLine[];
+  stockLineIds: string[];
   onClose: () => void;
 }
 
 export const NewReturnItemsModal = ({
   isOpen,
-  newReturns,
+  stockLineIds,
   onClose,
 }: NewReturnItemsModalProps) => {
   const t = useTranslation('replenishment');
@@ -29,7 +28,7 @@ export const NewReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update } = useDraftNewReturnLines(newReturns);
+  const { lines, update } = useDraftNewReturnLines(stockLineIds);
 
   return (
     <TableProvider createStore={createTableStore}>

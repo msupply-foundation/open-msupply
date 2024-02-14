@@ -13,14 +13,16 @@ import {
   InvoiceNodeStatus,
   Alert,
   ArrowLeftIcon,
-  SupplierReturnLine,
   useTableStore,
+  useNotification,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
-import { useReturns } from '../../Returns';
 
-const useSelectedIds = () => {
+const useSelectedIdsToReturn = () => {
+  const t = useTranslation('replenishment');
+  const { info } = useNotification();
+
   const { items, lines } = useInbound.lines.rows();
 
   const selectedIds =
@@ -35,7 +37,15 @@ const useSelectedIds = () => {
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     })?.map(({ id }) => id) || [];
 
-  return selectedIds;
+  const getIds = () => {
+    if (!selectedIds.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    }
+    return selectedIds;
+  };
+
+  return getIds;
 };
 
 const InboundInfoPanel = ({
@@ -60,7 +70,7 @@ const InboundInfoPanel = ({
 };
 
 export const Toolbar: FC<{
-  onReturnLines: (lines: SupplierReturnLine[]) => void;
+  onReturnLines: (stockLineIds: string[]) => void;
 }> = ({ onReturnLines }) => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
@@ -74,12 +84,11 @@ export const Toolbar: FC<{
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
 
-  const selectedIds = useSelectedIds();
-  const generateNewReturnLines = useReturns.lines.newReturnLines(selectedIds);
+  const getStockLineIds = useSelectedIdsToReturn();
 
   const onReturn = async () => {
-    const lines = await generateNewReturnLines();
-    if (lines) onReturnLines(lines);
+    const stockLineIds = getStockLineIds();
+    if (stockLineIds.length) onReturnLines(stockLineIds);
   };
 
   const isTransfer = !!shipment?.linkedShipment?.id;
