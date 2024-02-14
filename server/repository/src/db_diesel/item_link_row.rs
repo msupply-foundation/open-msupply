@@ -14,20 +14,11 @@ table! {
 joinable!(item_link -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_link, name_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[table_name = "item_link"]
 pub struct ItemLinkRow {
     pub id: String,
     pub item_id: String,
-}
-
-impl Default for ItemLinkRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            item_id: Default::default(),
-        }
-    }
 }
 
 pub struct ItemLinkRowRepository<'a> {
