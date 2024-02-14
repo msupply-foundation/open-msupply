@@ -20,17 +20,20 @@ export const useEditModal = <T>(): EditModalState<T> => {
   const [entity, setEntity] = useState<T | null>(null);
   const [mode, setMode] = useState<ModalMode | null>(null);
 
-  const onOpen = useCallback((entity: T | null = null) => {
-    setEntity(entity);
-    setMode(entity ? ModalMode.Update : ModalMode.Create);
-    modalControl.toggleOn();
-  }, []);
+  const onOpen = useCallback(
+    (entity: T | null = null) => {
+      setEntity(entity);
+      setMode(entity ? ModalMode.Update : ModalMode.Create);
+      modalControl.toggleOn();
+    },
+    [modalControl]
+  );
 
   const onClose = useCallback(() => {
     setMode(null);
     setEntity(null);
     modalControl.toggleOff();
-  }, []);
+  }, [modalControl]);
 
   return {
     onOpen,

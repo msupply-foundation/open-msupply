@@ -174,7 +174,7 @@ pub fn update_stocktake_line(
             let new_stocktake_line = generate(existing, input)?;
             StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
 
-            let line = get_stocktake_line(ctx, new_stocktake_line.id)?;
+            let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(UpdateStocktakeLineError::InternalError(
                 "Failed to read the just inserted stocktake line!".to_string(),
             ))

@@ -550,6 +550,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
             )
             .unwrap();
 
@@ -598,6 +599,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
             )
             .unwrap();
 
@@ -649,6 +651,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
             )
             .unwrap();
 
@@ -687,6 +690,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
             )
             .unwrap();
 
@@ -774,6 +778,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
             )
             .unwrap();
 
@@ -798,6 +803,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
             )
             .unwrap();
 
