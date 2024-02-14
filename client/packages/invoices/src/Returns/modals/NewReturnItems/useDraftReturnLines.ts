@@ -6,7 +6,6 @@ import {
   SupplierReturnLine,
   SupplierReturnLineInput,
 } from '@openmsupply-client/common';
-import { useInbound } from 'packages/invoices/src/InboundShipment/api';
 import { useReturns } from '../../api';
 
 export type DraftReturnLine = SupplierReturnLine & {
@@ -22,7 +21,7 @@ export const useDraftReturnLines = (
 
   const lines = useReturns.lines.newReturnLines(stockLineIds);
 
-  const { mutateAsync } = useInbound.document.insertSupplierReturn();
+  const { mutateAsync } = useReturns.document.insertSupplierReturn();
 
   useEffect(() => {
     const newDraftLines = (lines ?? []).map(seed => ({
