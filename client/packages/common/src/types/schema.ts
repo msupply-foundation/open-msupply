@@ -1405,6 +1405,23 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export type InboundReturnInput = {
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
+};
+
+export type InboundReturnLine = {
+  __typename: 'InboundReturnLine';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  numberOfPacksIssued: Scalars['Float']['output'];
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  stockLineId: Scalars['String']['output'];
+};
+
 export type InitialisationStatusNode = {
   __typename: 'InitialisationStatusNode';
   siteName?: Maybe<Scalars['String']['output']>;
@@ -3735,6 +3752,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
+  inboundReturnLines: Array<InboundReturnLine>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -3921,6 +3939,12 @@ export type QueriesFormSchemasArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<FormSchemaSortInput>>;
+};
+
+
+export type QueriesInboundReturnLinesArgs = {
+  input: InboundReturnInput;
+  storeId: Scalars['String']['input'];
 };
 
 

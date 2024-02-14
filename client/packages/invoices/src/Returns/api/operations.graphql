@@ -18,6 +18,26 @@ query newSupplierReturnLines(
   }
 }
 
+query inboundReturnLines(
+  $outboundShipmentLineIds: [String!]
+  $storeId: String!
+) {
+  inboundReturnLines(
+    input: { outboundShipmentLineIds: $outboundShipmentLineIds }
+    storeId: $storeId
+  ) {
+    batch
+    expiryDate
+    id
+    itemCode
+    itemName
+    packSize
+    stockLineId
+    numberOfPacksReturned
+    numberOfPacksIssued
+  }
+}
+
 mutation insertSupplierReturn($input: SupplierReturnInput!) {
   insertSupplierReturn(input: $input) {
     ... on InvoiceNode {
