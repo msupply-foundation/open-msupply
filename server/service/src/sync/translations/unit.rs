@@ -44,6 +44,7 @@ impl SyncTranslation for UnitTranslation {
             name: data.units,
             description: None,
             index: data.order_number,
+            is_active: true,
         };
 
         if data.comment != "" {

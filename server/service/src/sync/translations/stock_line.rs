@@ -4,8 +4,8 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, StockLineRow, StockLineRowRepository, StorageConnection,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, StockLine, StockLineFilter, StockLineRepository,
+    StockLineRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -78,7 +78,7 @@ impl SyncTranslation for StockLineTranslation {
         let result = StockLineRow {
             id: data.ID,
             store_id: data.store_ID,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             location_id: data.location_ID,
             batch: data.batch,
             pack_size: data.pack_size,
@@ -89,7 +89,7 @@ impl SyncTranslation for StockLineTranslation {
             expiry_date: data.expiry_date,
             on_hold: data.hold,
             note: data.note,
-            supplier_id: data.supplier_id,
+            supplier_link_id: data.supplier_id,
             barcode_id: data.barcode_id,
         };
 
@@ -107,28 +107,44 @@ impl SyncTranslation for StockLineTranslation {
             return Ok(None);
         }
 
-        let StockLineRow {
-            id,
-            item_id,
-            store_id,
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-            on_hold,
-            note,
-            supplier_id,
-            barcode_id,
-        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(stock_line) = StockLineRepository::new(connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                None,
+            )?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Stock_line row not found"));
+        };
+
+        let StockLine {
+            stock_line_row:
+                StockLineRow {
+                    id,
+                    item_link_id: _,
+                    store_id,
+                    location_id,
+                    batch,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    available_number_of_packs,
+                    total_number_of_packs,
+                    expiry_date,
+                    on_hold,
+                    note,
+                    supplier_link_id: _,
+                    barcode_id,
+                },
+            item_row,
+            supplier_name_row,
+            ..
+        } = stock_line;
 
         let legacy_row = LegacyStockLineRow {
-            ID: id.clone(),
+            ID: id,
             store_ID: store_id,
-            item_ID: item_id,
+            item_ID: item_row.id,
             batch,
             expiry_date,
             hold: on_hold,
@@ -139,7 +155,7 @@ impl SyncTranslation for StockLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             note,
-            supplier_id,
+            supplier_id: supplier_name_row.and_then(|supplier| Some(supplier.id)),
             barcode_id,
         };
 
@@ -164,8 +180,13 @@ impl SyncTranslation for StockLineTranslation {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::{merge_all_item_links, merge_all_name_links};
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_stock_line_translation() {
@@ -181,6 +202,41 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (mock_data, connection, _, _) =
+            setup_all("test_stock_line_push_link_merged", MockDataInserts::all()).await;
+
+        merge_all_item_links(&connection, &mock_data).unwrap();
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::StockLine.equal_to())),
+            )
+            .unwrap();
+
+        let translator = StockLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"));
+
+            // Supplier ID can be null. We want to check if the non-null supplier_ids is "name_a".
+            if translated[0].record.data["name_ID"] != json!(null) {
+                assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            }
         }
     }
 }

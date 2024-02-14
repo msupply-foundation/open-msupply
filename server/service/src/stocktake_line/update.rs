@@ -55,14 +55,15 @@ fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &UpdateStocktakeLine,
-) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
+) -> Result<StocktakeLine, UpdateStocktakeLineError> {
     use UpdateStocktakeLineError::*;
 
     let stocktake_line = match check_stocktake_line_exist(connection, &input.id)? {
         Some(stocktake_line) => stocktake_line,
         None => return Err(StocktakeLineDoesNotExist),
     };
-    let stocktake = match check_stocktake_exist(connection, &stocktake_line.stocktake_id)? {
+    let stocktake_line_row = &stocktake_line.line;
+    let stocktake = match check_stocktake_exist(connection, &stocktake_line_row.stocktake_id)? {
         Some(stocktake) => stocktake,
         None => return Err(InternalError("Orphan stocktake line!".to_string())),
     };
@@ -83,7 +84,7 @@ fn validate(
     }
 
     let stocktake_reduction_amount =
-        stocktake_reduction_amount(&input.counted_number_of_packs, &stocktake_line);
+        stocktake_reduction_amount(&input.counted_number_of_packs, &stocktake_line_row);
     if check_active_adjustment_reasons(connection, stocktake_reduction_amount)?.is_some()
         && input.inventory_adjustment_reason_id.is_none()
         && stocktake_reduction_amount != 0.0
@@ -101,9 +102,10 @@ fn validate(
         }
     }
 
-    if let (Some(counted_number_of_packs), Some(stock_line_id)) =
-        (input.counted_number_of_packs, &stocktake_line.stock_line_id)
-    {
+    if let (Some(counted_number_of_packs), Some(stock_line_id)) = (
+        input.counted_number_of_packs,
+        &stocktake_line_row.stock_line_id,
+    ) {
         let stock_line = check_stock_line_exists(connection, store_id, stock_line_id).map_err(
             |err| match err {
                 CommonStockLineError::DatabaseError(RepositoryError::NotFound) => {
@@ -124,7 +126,7 @@ fn validate(
 }
 
 fn generate(
-    existing: StocktakeLineRow,
+    existing: StocktakeLine,
     UpdateStocktakeLine {
         id: _,
         location,
@@ -140,26 +142,29 @@ fn generate(
         inventory_adjustment_reason_id,
     }: UpdateStocktakeLine,
 ) -> Result<StocktakeLineRow, UpdateStocktakeLineError> {
+    let existing_line = existing.line;
     Ok(StocktakeLineRow {
-        id: existing.id,
-        stocktake_id: existing.stocktake_id,
-        stock_line_id: existing.stock_line_id,
-        location_id: location.map(|l| l.value).unwrap_or(existing.location_id),
-        comment: comment.or(existing.comment),
+        id: existing_line.id,
+        stocktake_id: existing_line.stocktake_id,
+        stock_line_id: existing_line.stock_line_id,
+        location_id: location
+            .map(|l| l.value)
+            .unwrap_or(existing_line.location_id),
+        comment: comment.or(existing_line.comment),
 
         snapshot_number_of_packs: snapshot_number_of_packs
-            .unwrap_or(existing.snapshot_number_of_packs),
-        counted_number_of_packs: counted_number_of_packs.or(existing.counted_number_of_packs),
+            .unwrap_or(existing_line.snapshot_number_of_packs),
+        counted_number_of_packs: counted_number_of_packs.or(existing_line.counted_number_of_packs),
 
-        item_id: existing.item_id,
-        expiry_date: expiry_date.or(existing.expiry_date),
-        batch: batch.or(existing.batch),
-        pack_size: pack_size.map(u32_to_i32).or(existing.pack_size),
-        cost_price_per_pack: cost_price_per_pack.or(existing.cost_price_per_pack),
-        sell_price_per_pack: sell_price_per_pack.or(existing.sell_price_per_pack),
-        note: note.or(existing.note),
+        item_link_id: existing.item.id,
+        expiry_date: expiry_date.or(existing_line.expiry_date),
+        batch: batch.or(existing_line.batch),
+        pack_size: pack_size.map(u32_to_i32).or(existing_line.pack_size),
+        cost_price_per_pack: cost_price_per_pack.or(existing_line.cost_price_per_pack),
+        sell_price_per_pack: sell_price_per_pack.or(existing_line.sell_price_per_pack),
+        note: note.or(existing_line.note),
         inventory_adjustment_reason_id: inventory_adjustment_reason_id
-            .or(existing.inventory_adjustment_reason_id),
+            .or(existing_line.inventory_adjustment_reason_id),
     })
 }
 
@@ -236,14 +241,14 @@ mod stocktake_line_test {
                 r.id = "mock_stocktake_line".to_string();
                 r.stocktake_id = "stocktake_a".to_string();
                 r.snapshot_number_of_packs = 10.0;
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
             })
         }
 
         fn outbound_shipment() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "reduced_stock_outbound_shipment".to_string();
-                r.name_id = "name_store_b".to_string();
+                r.name_link_id = "name_store_b".to_string();
                 r.store_id = "store_a".to_string();
                 r.invoice_number = 15;
                 r.r#type = InvoiceRowType::OutboundShipment;
@@ -259,7 +264,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "outbound_shipment_line".to_string();
                 r.invoice_id = outbound_shipment().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(mock_stock_line_b().id);
                 r.number_of_packs = 29.0;
             })
@@ -270,7 +275,7 @@ mod stocktake_line_test {
                 r.id = "mock_reduced_stock".to_string();
                 r.stocktake_id = "stocktake_a".to_string();
                 r.snapshot_number_of_packs = 10.0;
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.stock_line_id = Some(mock_stock_line_b().id);
             })
         }
@@ -474,7 +479,7 @@ mod stocktake_line_test {
                 sell_price_per_pack: Some(25.0),
                 snapshot_number_of_packs: 10.0,
                 counted_number_of_packs: Some(14.0),
-                item_id: stocktake_line_a.item_id,
+                item_link_id: stocktake_line_a.item_link_id,
                 expiry_date: None,
                 pack_size: None,
                 note: None,
@@ -541,7 +546,7 @@ mod stocktake_line_test {
                 r.id = stocktake_line.id.clone();
                 r.stocktake_id = result.line.stocktake_id.clone();
                 r.snapshot_number_of_packs = 10.0;
-                r.item_id = stocktake_line.item_id;
+                r.item_link_id = stocktake_line.item_link_id;
                 r.comment = Some("Some comment".to_string());
             })
         );

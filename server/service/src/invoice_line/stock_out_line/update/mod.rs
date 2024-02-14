@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLineRow,
+    InvoiceLine, InvoiceLineRow, InvoiceLineRowRepository, RepositoryError, StockLine,
     StockLineRowRepository,
 };
 
@@ -68,9 +68,9 @@ pub fn update_stock_out_line(
             InvoiceLineRowRepository::new(&connection).upsert_one(&update_line)?;
 
             let stock_line_repo = StockLineRowRepository::new(&connection);
-            stock_line_repo.upsert_one(&batch_pair.main_batch)?;
+            stock_line_repo.upsert_one(&batch_pair.main_batch.stock_line_row)?;
             if let Some(previous_batch) = batch_pair.previous_batch_option {
-                stock_line_repo.upsert_one(&previous_batch)?;
+                stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
 
             get_invoice_line(ctx, &update_line.id)
@@ -85,9 +85,9 @@ pub fn update_stock_out_line(
 /// validation and updates need to apply to both batches
 pub struct BatchPair {
     /// Main batch to be updated
-    pub main_batch: StockLineRow,
+    pub main_batch: StockLine,
     /// Optional previous batch (if batch was changed)
-    pub previous_batch_option: Option<StockLineRow>,
+    pub previous_batch_option: Option<StockLine>,
 }
 
 impl BatchPair {
@@ -282,7 +282,11 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.item_id = Some(mock_stock_line_location_is_on_hold()[0].item_id.clone());
+                    r.item_id = Some(
+                        mock_stock_line_location_is_on_hold()[0]
+                            .item_link_id
+                            .clone(),
+                    );
                     r.stock_line_id = Some(mock_stock_line_location_is_on_hold()[0].id.clone());
                     r.r#type = Some(StockOutType::OutboundShipment);
                 }),
@@ -297,7 +301,7 @@ mod test {
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
                     r.stock_line_id = Some(mock_stock_line_on_hold()[0].id.clone());
-                    r.item_id = Some(mock_stock_line_on_hold()[0].item_id.clone());
+                    r.item_id = Some(mock_stock_line_on_hold()[0].item_link_id.clone());
                     r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),

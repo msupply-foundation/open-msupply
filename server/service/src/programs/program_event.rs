@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::{Duration, NaiveDate, NaiveDateTime};
 use repository::{
-    DatetimeFilter, EqualFilter, Pagination, PaginationOption, ProgramEventFilter,
+    DatetimeFilter, EqualFilter, Pagination, PaginationOption, ProgramEvent, ProgramEventFilter,
     ProgramEventRepository, ProgramEventRow, ProgramEventRowRepository, ProgramEventSort,
     ProgramEventSortField, RepositoryError, StorageConnection,
 };
@@ -72,7 +72,7 @@ fn remove_event_stack(
             desc: Some(true),
         }),
     )?;
-    let Some(longest) = stack_events.get(0) else {
+    let Some(longest) = stack_events.get(0).map(|it| &it.program_event_row) else {
         // no stack found -> done
         return Ok(());
     };
@@ -83,17 +83,21 @@ fn remove_event_stack(
     // For simplicity we cleanly remove the whole stack though.
 
     // update active_end_datetime of the latest event from the previous stack
-    let previous_stack = repo.query(
-        Pagination::all(),
-        Some(
-            event_target_filter(event_target)
-                .active_end_datetime(DatetimeFilter::equal_to(datetime)),
-        ),
-        Some(ProgramEventSort {
-            key: ProgramEventSortField::ActiveStartDatetime,
-            desc: Some(true),
-        }),
-    )?;
+    let previous_stack = repo
+        .query(
+            Pagination::all(),
+            Some(
+                event_target_filter(event_target)
+                    .active_end_datetime(DatetimeFilter::equal_to(datetime)),
+            ),
+            Some(ProgramEventSort {
+                key: ProgramEventSortField::ActiveStartDatetime,
+                desc: Some(true),
+            }),
+        )?
+        .into_iter()
+        .map(|it| it.program_event_row)
+        .collect::<Vec<_>>();
 
     // Adjust active_end_datetime of previous stack. For example:
     //    prev              longest.active_end_datetime
@@ -119,7 +123,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
-    ) -> Result<ListResult<ProgramEventRow>, ListError> {
+    ) -> Result<ListResult<ProgramEvent>, ListError> {
         let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
         let repository = ProgramEventRepository::new(&ctx.connection);
         Ok(ListResult {
@@ -135,7 +139,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
-    ) -> Result<ListResult<ProgramEventRow>, ListError> {
+    ) -> Result<ListResult<ProgramEvent>, ListError> {
         let filter = filter
             .unwrap_or(ProgramEventFilter::new())
             .active_start_datetime(DatetimeFilter::before_or_equal_to(at))
@@ -165,7 +169,6 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         let result = connection
             .transaction_sync(|con| -> Result<(), RepositoryError> {
                 // TODO do we need to lock rows in case events are updated concurrently?
-
                 let repo = ProgramEventRepository::new(con);
                 let targets = if events.is_empty() {
                     // We need to clear all events. For this we still need to find all targets.
@@ -180,11 +183,12 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                     .fold(
                         HashMap::<EventTarget, Vec<StackEvent>>::new(),
                         |mut map, it| {
+                            let row = it.program_event_row;
                             let target = EventTarget {
                                 patient_id: patient_id.clone(),
-                                document_type: it.document_type,
-                                document_name: it.document_name,
-                                r#type: it.r#type,
+                                document_type: row.document_type,
+                                document_name: row.document_name,
+                                r#type: row.r#type,
                             };
 
                             map.entry(target).or_insert(vec![]);
@@ -232,8 +236,9 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                         }),
                     )?;
 
-                    let active_end_datetime = if let Some(active_end_datetime) =
-                        overlaps.get(0).map(|it| it.active_end_datetime)
+                    let active_end_datetime = if let Some(active_end_datetime) = overlaps
+                        .get(0)
+                        .map(|it| it.program_event_row.active_end_datetime)
                     {
                         active_end_datetime
                     } else {
@@ -253,15 +258,16 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                                 }),
                             )?
                             .pop()
-                            .map(|e| e.datetime);
+                            .map(|row| row.program_event_row.datetime);
                         // If there is no next event we are inserting the very first event, thus
                         // use max_datetime()
                         next.unwrap_or(max_datetime())
                     };
 
                     for mut overlap in overlaps {
-                        overlap.active_end_datetime = datetime;
-                        ProgramEventRowRepository::new(con).upsert_one(&overlap)?;
+                        let row = &mut overlap.program_event_row;
+                        row.active_end_datetime = datetime;
+                        ProgramEventRowRepository::new(con).upsert_one(row)?;
                     }
 
                     events.sort_by(|a, b| b.active_start_datetime.cmp(&a.active_start_datetime));
@@ -272,7 +278,8 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             datetime,
                             active_start_datetime: it.active_start_datetime,
                             active_end_datetime,
-                            patient_id: Some(patient_id.clone()),
+                            // Use the current patient_id as link id
+                            patient_link_id: Some(patient_id.clone()),
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
                             context_id: context_id.to_string(),
@@ -338,7 +345,7 @@ mod test {
             let mut actual_names = events
                 .rows
                 .iter()
-                .map(|it| it.data.clone().unwrap())
+                .map(|row| row.program_event_row.data.clone().unwrap())
                 .collect::<Vec<_>>();
 
             actual_names.sort();
@@ -776,7 +783,7 @@ mod test {
             .unwrap()
             .rows
             .into_iter()
-            .map(|e| e.active_end_datetime)
+            .map(|row| row.program_event_row.active_end_datetime)
             .collect::<Vec<_>>();
         assert_eq!(
             event_end_datetimes,
@@ -898,8 +905,14 @@ mod test {
         // G2_1: datetime: 2012-04-03T00:00:00, start: 2012-05-10T00:00:00, end: 2012-05-01T00:00:00
         // G1_2: datetime: 2011-11-29T00:00:00, start: 2012-01-28T00:00:00, end: 2012-04-03T00:00:00
         // G1_1: datetime: 2011-11-29T00:00:00, start: 2011-12-31T00:00:00, end: 2012-01-28T00:00:00
-        let result = service.events(&ctx, None, None, None).unwrap();
-        check_integrity(result.rows);
+        let result = service
+            .events(&ctx, None, None, None)
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.program_event_row)
+            .collect();
+        check_integrity(result);
     }
 
     #[actix_rt::test]
@@ -974,7 +987,13 @@ mod test {
                 ],
             )
             .unwrap();
-        let result = service.events(&ctx, None, None, None).unwrap();
-        check_integrity(result.rows);
+        let result = service
+            .events(&ctx, None, None, None)
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.program_event_row)
+            .collect();
+        check_integrity(result);
     }
 }

@@ -72,17 +72,17 @@ pub fn get_requisition_line_chart(
     };
 
     let RequisitionLineRow {
-        item_id,
         available_stock_on_hand,
         average_monthly_consumption,
         requested_quantity,
         ..
     } = requisition_line.requisition_line_row;
+    let item_id = &requisition_line.item_row.id;
 
     let mut consumption_history = get_historic_consumption_for_item(
         &ctx.connection,
         &ctx.store_id,
-        &item_id,
+        item_id,
         requisition_line_datetime.date(),
         consumption_history_options,
     )?;
@@ -102,7 +102,7 @@ pub fn get_requisition_line_chart(
     } = get_stock_evolution_for_item(
         &ctx.connection,
         &ctx.store_id,
-        &item_id,
+        item_id,
         *requisition_line_datetime,
         available_stock_on_hand as u32,
         *expected_delivery_date,
@@ -173,7 +173,7 @@ mod test {
     use repository::{
         db_diesel::requisition_row::RequisitionRowType,
         mock::{
-            mock_draft_response_requisition_for_update_test_line, mock_item_a, mock_name_a,
+            mock_item_a, mock_name_a, mock_new_response_requisition_for_update_test_line,
             mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
@@ -208,7 +208,7 @@ mod test {
             Err(ServiceError::RequisitionLineDoesNotExist)
         );
 
-        let test_line = mock_draft_response_requisition_for_update_test_line();
+        let test_line = mock_new_response_requisition_for_update_test_line();
 
         // NotARequestRequisition
         assert_eq!(
@@ -254,7 +254,7 @@ mod test {
             inline_init(|r: &mut RequisitionRow| {
                 r.id = "requisition".to_string();
                 r.store_id = store().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.expected_delivery_date = Some(date_now());
                 r.r#type = RequisitionRowType::Request;
             })
@@ -264,7 +264,7 @@ mod test {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = "requisition_line".to_string();
                 r.requisition_id = requisition().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.snapshot_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 01, 02)
                         .unwrap()
@@ -281,13 +281,13 @@ mod test {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
-                    r.name_id = mock_name_a().id;
+                    r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineRowType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
                     r.pack_size = 1;
@@ -295,7 +295,7 @@ mod test {
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.pack_size = 1;
                 })];
             })
@@ -498,7 +498,7 @@ mod test {
             inline_init(|r: &mut RequisitionRow| {
                 r.id = "requisition".to_string();
                 r.store_id = store().id;
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap());
                 r.r#type = RequisitionRowType::Request;
             })
@@ -508,7 +508,7 @@ mod test {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = "requisition_line".to_string();
                 r.requisition_id = requisition().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.snapshot_datetime = Some(
                     NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
@@ -527,13 +527,13 @@ mod test {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
-                    r.name_id = mock_name_a().id;
+                    r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.r#type = InvoiceLineRowType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
                     r.pack_size = 1;
@@ -541,7 +541,7 @@ mod test {
                 r.stock_lines = vec![inline_init(|r: &mut StockLineRow| {
                     r.id = format!("{}stock_line", invoice_id);
                     r.store_id = store().id;
-                    r.item_id = mock_item_a().id;
+                    r.item_link_id = mock_item_a().id;
                     r.pack_size = 1;
                 })];
             })
