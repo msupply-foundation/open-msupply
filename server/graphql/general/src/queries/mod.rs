@@ -46,6 +46,8 @@ pub use self::plugin::*;
 pub mod temperature_chart;
 pub use self::temperature_chart::*;
 
+pub mod inbound_return_lines;
+pub use self::inbound_return_lines::*;
 pub mod new_supplier_return;
 pub use self::new_supplier_return::*;
 pub mod return_reason;

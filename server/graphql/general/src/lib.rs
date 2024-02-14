@@ -307,6 +307,14 @@ impl GeneralQueries {
     pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
         return_reasons()
     }
+
+    pub async fn inbound_return_lines(
+        &self,
+        store_id: String,
+        input: InboundReturnInput,
+    ) -> Result<Vec<InboundReturnLine>> {
+        inbound_return_lines(store_id, input)
+    }
 }
 
 #[derive(Default, Clone)]
