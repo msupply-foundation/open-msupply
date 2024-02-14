@@ -115,6 +115,8 @@ impl<'a> StocktakeLineRepository<'a> {
         self.query(Pagination::all(), Some(filter), None, store_id)
     }
 
+    /// Query stocktake lines
+    /// Note `store_id` is only required when filtering by item code or name
     pub fn query(
         &self,
         pagination: Pagination,
