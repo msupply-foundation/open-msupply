@@ -1,6 +1,6 @@
 use super::requisition_line_row::requisition_line::dsl as requisition_line_dsl;
 
-use crate::db_diesel::{item_row::item, requisition_row::requisition};
+use crate::db_diesel::{item_link_row::item_link, requisition_row::requisition};
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 use diesel::prelude::*;
@@ -11,7 +11,7 @@ table! {
     requisition_line (id) {
         id -> Text,
         requisition_id -> Text,
-        item_id -> Text,
+        item_link_id -> Text,
         requested_quantity -> Integer,
         suggested_quantity -> Integer,
         supply_quantity -> Integer,
@@ -26,21 +26,22 @@ table! {
 
 table! {
     #[sql_name = "requisition_line"]
-    requistion_line_is_sync_update (id) {
+    requisition_line_is_sync_update (id) {
         id -> Text,
         is_sync_update -> Bool,
     }
 }
 
-joinable!(requisition_line -> item (item_id));
+joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
+allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
 #[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
 #[table_name = "requisition_line"]
 pub struct RequisitionLineRow {
     pub id: String,
     pub requisition_id: String,
-    pub item_id: String,
+    pub item_link_id: String,
     pub requested_quantity: i32,
     pub suggested_quantity: i32,
     pub supply_quantity: i32,
@@ -81,8 +82,8 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
-        diesel::update(requistion_line_is_sync_update::table.find(id))
-            .set(requistion_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
+        diesel::update(requisition_line_is_sync_update::table.find(id))
+            .set(requisition_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&self.connection.connection)?;
 
         Ok(())
@@ -120,9 +121,9 @@ impl<'a> RequisitionLineRowRepository<'a> {
 
     #[cfg(test)]
     fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
-        let result = requistion_line_is_sync_update::table
+        let result = requisition_line_is_sync_update::table
             .find(id)
-            .select(requistion_line_is_sync_update::dsl::is_sync_update)
+            .select(requisition_line_is_sync_update::dsl::is_sync_update)
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)

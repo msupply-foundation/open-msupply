@@ -1,6 +1,6 @@
 use super::{
-    item_row::item, master_list_line_row::master_list_line::dsl::*, master_list_row::master_list,
-    StorageConnection,
+    item_link_row::item_link, master_list_line_row::master_list_line::dsl::*,
+    master_list_row::master_list, name_link_row::name_link, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -10,19 +10,21 @@ use diesel::prelude::*;
 table! {
     master_list_line (id) {
         id -> Text,
-        item_id -> Text,
+        item_link_id -> Text,
         master_list_id -> Text,
     }
 }
 
 joinable!(master_list_line -> master_list (master_list_id));
-joinable!(master_list_line -> item (item_id));
+joinable!(master_list_line -> item_link (item_link_id));
+allow_tables_to_appear_in_same_query!(master_list_line, item_link);
+allow_tables_to_appear_in_same_query!(master_list_line, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
 #[table_name = "master_list_line"]
 pub struct MasterListLineRow {
     pub id: String,
-    pub item_id: String,
+    pub item_link_id: String,
     pub master_list_id: String,
 }
 

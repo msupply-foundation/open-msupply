@@ -1,9 +1,7 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, program_row::program, store_row::store,
-    StorageConnection,
+    name_link_row::name_link, name_row::name, name_store_join::name_store_join,
+    program_row::program, store_row::store, RepositoryError, StorageConnection,
 };
-
-use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -14,19 +12,20 @@ table! {
         document_type -> Text,
         document_name -> Text,
         program_id -> Text,
-        patient_id -> Text,
+        patient_link_id -> Text,
         enrolment_datetime -> Timestamp,
         program_enrolment_id -> Nullable<Text>,
         status -> Nullable<Text>,
     }
 }
 
-joinable!(program_enrolment -> name (patient_id));
+joinable!(program_enrolment -> name_link (patient_link_id));
 joinable!(program_enrolment -> program (program_id));
 allow_tables_to_appear_in_same_query!(program_enrolment, name);
 allow_tables_to_appear_in_same_query!(program_enrolment, name_store_join);
 allow_tables_to_appear_in_same_query!(program_enrolment, store);
 allow_tables_to_appear_in_same_query!(program_enrolment, program);
+allow_tables_to_appear_in_same_query!(program_enrolment, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "program_enrolment"]
@@ -40,7 +39,7 @@ pub struct ProgramEnrolmentRow {
     /// Reference to program id
     pub program_id: String,
     /// The patient this program belongs to
-    pub patient_id: String,
+    pub patient_link_id: String,
     /// Time when the patient has been enrolled to this program
     pub enrolment_datetime: NaiveDateTime,
     /// Program specific patient id
