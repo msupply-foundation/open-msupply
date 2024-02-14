@@ -308,12 +308,12 @@ impl GeneralQueries {
         return_reasons()
     }
 
-    pub async fn inbound_return_lines(
+    pub async fn generate_inbound_return_lines(
         &self,
         store_id: String,
-        input: InboundReturnInput,
+        input: GenerateInboundReturnInput,
     ) -> Result<Vec<InboundReturnLine>> {
-        inbound_return_lines(store_id, input)
+        generate_inbound_return_lines(store_id, input)
     }
 }
 
