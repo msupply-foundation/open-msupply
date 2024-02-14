@@ -1,31 +1,15 @@
 import {
   useNotification,
   useQuery,
-  useTableStore,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useInboundApi } from '../utils/useInboundApi';
-import { useInboundRows } from './useInboundRows';
+import { useReturnsApi } from '../utils/useReturnsApi';
 
-export const useNewSupplierReturnLines = () => {
+export const useNewSupplierReturnLines = (selectedIds: string[]) => {
   const t = useTranslation('replenishment');
   const { info, error } = useNotification();
 
-  const api = useInboundApi();
-
-  const { items, lines } = useInboundRows();
-
-  const selectedIds =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    })?.map(({ id }) => id) || [];
+  const api = useReturnsApi();
 
   const { refetch } = useQuery(
     api.keys.newReturns(selectedIds),

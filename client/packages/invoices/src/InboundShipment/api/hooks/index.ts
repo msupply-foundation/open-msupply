@@ -22,7 +22,6 @@ export const useInbound = {
     items: Lines.useInboundItems,
     rows: Lines.useInboundRows,
     serviceLines: Lines.useInboundServiceLines,
-    newReturnLines: Lines.useNewSupplierReturnLines,
 
     delete: Lines.useDeleteInboundLines,
     deleteSelected: Lines.useDeleteSelectedLines,
