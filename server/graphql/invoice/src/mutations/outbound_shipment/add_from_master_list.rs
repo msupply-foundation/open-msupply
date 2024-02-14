@@ -302,7 +302,7 @@ mod test {
             Ok(vec![InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_line_a(),
                 invoice_row: mock_new_outbound_shipment_no_lines(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: None,
                 stock_line_option: None,
             }])

@@ -588,7 +588,7 @@ mod test {
             Ok(InvoiceLine {
                 invoice_row: mock_outbound_shipment_c(),
                 invoice_line_row: mock_outbound_shipment_c_invoice_lines()[0].clone(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
