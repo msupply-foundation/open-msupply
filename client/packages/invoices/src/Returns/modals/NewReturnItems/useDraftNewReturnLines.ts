@@ -1,11 +1,14 @@
 import React, { useEffect } from 'react';
 import { RecordPatch, SupplierReturnLine } from '@openmsupply-client/common';
+import { useReturns } from '../../api';
 
-export const useDraftNewReturnLines = (lines: SupplierReturnLine[]) => {
+export const useDraftNewReturnLines = (stockLineIds: string[]) => {
   const [draftLines, setDraftLines] = React.useState<SupplierReturnLine[]>([]);
 
+  const lines = useReturns.lines.newReturnLines(stockLineIds);
+
   useEffect(() => {
-    const newDraftLines = lines.map(seed => ({ ...seed }));
+    const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
 
     setDraftLines(newDraftLines);
   }, [lines]);

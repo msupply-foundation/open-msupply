@@ -8,8 +8,7 @@ export const useReturnsApi = () => {
     base: () => ['returns'] as const,
     count: () => [...keys.base(), 'count'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
-    newReturns: (lineIds: string[]) =>
-      [...keys.base(), storeId, 'newReturns', lineIds] as const,
+    newReturns: () => [...keys.base(), storeId, 'newReturns'] as const,
   };
 
   const { client } = useGql();

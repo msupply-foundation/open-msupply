@@ -10,7 +10,6 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
-  SupplierReturnLine,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -38,8 +37,8 @@ export const DetailView: FC = () => {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
-    entity: newReturns,
-  } = useEditModal<SupplierReturnLine[]>();
+    entity: stockLineIds,
+  } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
@@ -106,7 +105,7 @@ export const DetailView: FC = () => {
             <NewReturnItemsModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
-              newReturns={newReturns || []}
+              stockLineIds={stockLineIds || []}
             />
           )}
         </TableProvider>
