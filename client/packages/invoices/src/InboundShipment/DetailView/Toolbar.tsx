@@ -14,9 +14,29 @@ import {
   Alert,
   ArrowLeftIcon,
   SupplierReturnLine,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
+import { useReturns } from '../../Returns';
+
+const useSelectedIds = () => {
+  const { items, lines } = useInbound.lines.rows();
+
+  const selectedIds =
+    useTableStore(state => {
+      const { isGrouped } = state;
+
+      return isGrouped
+        ? items
+            ?.filter(({ id }) => state.rowState[id]?.isSelected)
+            .map(({ lines }) => lines.flat())
+            .flat()
+        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
+    })?.map(({ id }) => id) || [];
+
+  return selectedIds;
+};
 
 const InboundInfoPanel = ({
   shipment,
@@ -54,7 +74,8 @@ export const Toolbar: FC<{
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
 
-  const generateNewReturnLines = useInbound.lines.newReturnLines();
+  const selectedIds = useSelectedIds();
+  const generateNewReturnLines = useReturns.lines.newReturnLines(selectedIds);
 
   const onReturn = async () => {
     const lines = await generateNewReturnLines();

@@ -25,7 +25,7 @@ import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
-import { NewReturnItemsModal } from './modals';
+import { NewReturnItemsModal } from '../../Returns';
 
 type InboundLineItem = InboundLineFragment['item'];
 

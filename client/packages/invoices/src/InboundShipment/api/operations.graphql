@@ -222,26 +222,6 @@ query inboundByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-query newSupplierReturnLines(
-  $inboundShipmentLineIds: [String!]
-  $storeId: String!
-) {
-  newSupplierReturn(
-    input: { inboundShipmentLineIds: $inboundShipmentLineIds }
-    storeId: $storeId
-  ) {
-    availableNumberOfPacks
-    batch
-    expiryDate
-    id
-    itemCode
-    itemName
-    numberOfPacksToReturn
-    packSize
-    stockLineId
-  }
-}
-
 mutation updateInboundShipment(
   $storeId: String!
   $input: UpdateInboundShipmentInput!
