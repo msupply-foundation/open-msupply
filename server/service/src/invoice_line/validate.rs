@@ -1,7 +1,7 @@
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository, RepositoryError,
-    StorageConnection,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository, StorageConnection,
 };
 
 pub fn check_line_does_not_exist(
@@ -60,4 +60,20 @@ pub fn check_line_belongs_to_invoice(line: &InvoiceLineRow, invoice: &InvoiceRow
         return false;
     }
     return true;
+}
+
+pub fn check_line_not_associated_with_stocktake(
+    connection: &StorageConnection,
+    id: &str,
+    store_id: String,
+) -> bool {
+    let result = StockLineRepository::new(connection).query_by_filter(
+        StockLineFilter::new().item_id(EqualFilter::equal_to(id)),
+        Some(store_id),
+    );
+    match result {
+        Ok(_line) => false,
+        Err(RepositoryError::NotFound) => true,
+        Err(_error) => true,
+    }
 }
