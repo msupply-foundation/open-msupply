@@ -2163,7 +2163,8 @@ export enum InvoiceNodeType {
   InventoryReduction = 'INVENTORY_REDUCTION',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Prescription = 'PRESCRIPTION',
-  Repack = 'REPACK'
+  Repack = 'REPACK',
+  SupplierReturn = 'SUPPLIER_RETURN'
 }
 
 export type InvoiceResponse = InvoiceNode | NodeError;
@@ -3738,6 +3739,7 @@ export type Queries = {
   me: UserResponse;
   /** Query omSupply "name" entries */
   names: NamesResponse;
+  newSupplierReturn: Array<SupplierReturnLine>;
   numberOfRecordsInPushQueue: Scalars['Int']['output'];
   patient?: Maybe<PatientNode>;
   patientSearch: PatientSearchResponse;
@@ -3989,6 +3991,12 @@ export type QueriesNamesArgs = {
   filter?: InputMaybe<NameFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<NameSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesNewSupplierReturnArgs = {
+  input: SupplierReturnInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4976,6 +4984,23 @@ export type SuggestedQuantityCalculationNode = {
   minimumStockOnHand: Scalars['Int']['output'];
   stockOnHand: Scalars['Int']['output'];
   suggestedQuantity: Scalars['Int']['output'];
+};
+
+export type SupplierReturnInput = {
+  inboundShipmentLineIds: Array<Scalars['String']['input']>;
+};
+
+export type SupplierReturnLine = {
+  __typename: 'SupplierReturnLine';
+  availableNumberOfPacks: Scalars['Float']['output'];
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  numberOfPacksToReturn: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  stockLineId: Scalars['String']['output'];
 };
 
 export type SupplyRequestedQuantityError = {

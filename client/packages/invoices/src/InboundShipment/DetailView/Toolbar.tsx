@@ -12,9 +12,29 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  ArrowLeftIcon,
+  useTableStore,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
+
+const useSelectedIds = () => {
+  const { items, lines } = useInbound.lines.rows();
+
+  const selectedIds =
+    useTableStore(state => {
+      const { isGrouped } = state;
+
+      return isGrouped
+        ? items
+            ?.filter(({ id }) => state.rowState[id]?.isSelected)
+            .map(({ lines }) => lines.flat())
+            .flat()
+        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
+    })?.map(({ id }) => id) || [];
+
+  return selectedIds;
+};
 
 const InboundInfoPanel = ({
   shipment,
@@ -37,7 +57,9 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-export const Toolbar: FC = () => {
+export const Toolbar: FC<{
+  onReturnLines: (stockLineIds: string[]) => void;
+}> = ({ onReturnLines }) => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
@@ -49,6 +71,9 @@ export const Toolbar: FC = () => {
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
+
+  const selectedIds = useSelectedIds();
+
   const isTransfer = !!shipment?.linkedShipment?.id;
 
   if (!data) return null;
@@ -112,6 +137,12 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
+            <DropdownMenuItem
+              IconComponent={ArrowLeftIcon}
+              onClick={() => onReturnLines(selectedIds)}
+            >
+              {t('button.return-lines')}
+            </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>

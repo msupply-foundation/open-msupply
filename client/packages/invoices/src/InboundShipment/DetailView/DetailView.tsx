@@ -10,6 +10,7 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  useNotification,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -24,6 +25,7 @@ import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
+import { NewReturnItemsModal } from '../../Returns';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -32,8 +34,15 @@ export const DetailView: FC = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<InboundLineItem>();
+  const {
+    onOpen: onOpenReturns,
+    onClose: onCloseReturns,
+    isOpen: returnsIsOpen,
+    entity: stockLineIds,
+  } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
+  const { info } = useNotification();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -41,6 +50,13 @@ export const DetailView: FC = () => {
     },
     [onOpen]
   );
+
+  const onReturn = async (stockLineIds: string[]) => {
+    if (!stockLineIds.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    } else onOpenReturns(stockLineIds);
+  };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -77,7 +93,7 @@ export const DetailView: FC = () => {
         >
           <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar />
+          <Toolbar onReturnLines={onReturn} />
 
           <DetailTabs tabs={tabs} />
 
@@ -91,6 +107,14 @@ export const DetailView: FC = () => {
               onClose={onClose}
               mode={mode}
               item={entity}
+            />
+          )}
+
+          {returnsIsOpen && (
+            <NewReturnItemsModal
+              isOpen={returnsIsOpen}
+              onClose={onCloseReturns}
+              stockLineIds={stockLineIds || []}
             />
           )}
         </TableProvider>
