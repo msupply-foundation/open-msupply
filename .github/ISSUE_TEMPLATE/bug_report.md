@@ -25,11 +25,11 @@ Steps to reproduce the behaviour:
 <!-- e.g. 1.2.3 -->
 - Version: 
 - Platform:
- - [ ] android (tablet)
- - [ ] browser (extra points if you tell us which one)
- - [ ] desktop (windows)
- - [ ] desktop (macOS)
- - [ ] server (windows)
+  - [ ] android (tablet)
+  - [ ] browser (extra points if you tell us which one)
+  - [ ] desktop (windows)
+  - [ ] desktop (macOS)
+  - [ ] server (windows)
 - Database type: <!-- if on PC -->
- - [ ] Postgres
- - [ ] SQLite3
+  - [ ] Postgres
+  - [ ] SQLite3
