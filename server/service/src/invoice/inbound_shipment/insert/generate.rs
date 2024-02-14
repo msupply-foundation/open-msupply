@@ -28,7 +28,7 @@ pub fn generate(
     let result = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_id: other_party_id,
+        name_link_id: other_party_id,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         r#type: InvoiceRowType::InboundShipment,
         comment,
@@ -49,7 +49,7 @@ pub fn generate(
         verified_datetime: None,
         linked_invoice_id: None,
         requisition_id: None,
-        clinician_id: None,
+        clinician_link_id: None,
     };
 
     Ok(result)

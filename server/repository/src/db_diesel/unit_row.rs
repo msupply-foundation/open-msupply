@@ -8,6 +8,7 @@ table! {
         name -> Text,
         description -> Nullable<Text>,
         index -> Integer,
+        is_active -> Bool,
     }
 }
 
@@ -18,6 +19,7 @@ pub struct UnitRow {
     pub name: String,
     pub description: Option<String>,
     pub index: i32,
+    pub is_active: bool,
 }
 
 pub struct UnitRowRepository<'a> {
@@ -63,8 +65,18 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
+    pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+        let result = unit
+            .filter(id.eq(unit_id).and(is_active.eq(false)))
+            .first(&self.connection.connection)
+            .optional()?;
+        Ok(result)
+    }
+
     pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(unit.filter(id.eq(unit_id))).execute(&self.connection.connection)?;
+        diesel::update(unit.filter(id.eq(unit_id)))
+            .set(is_active.eq(false))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 }

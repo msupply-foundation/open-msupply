@@ -13,6 +13,7 @@ export const useDraftStocktakeLines = (
   const [draftLines, setDraftLines] = useState<DraftStocktakeLine[]>([]);
 
   useEffect(() => {
+    if (!item) setDraftLines([]);
     if (item && stockLines?.nodes && stocktakeLines) {
       const fromStockLines = get.draftLinesFromStockLines(
         id,

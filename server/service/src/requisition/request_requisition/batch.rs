@@ -130,7 +130,7 @@ pub fn batch_request_requisition(
 mod test {
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
+            mock_full_draft_response_requisition_for_update_test, mock_item_a, mock_name_store_c,
             mock_store_a, MockDataInserts,
         },
         test_db::setup_all,
@@ -160,7 +160,9 @@ mod test {
         let service = service_provider.requisition_service;
 
         let delete_requisition_input = inline_init(|input: &mut DeleteRequestRequisition| {
-            input.id = mock_draft_response_requisition_for_update_test().id;
+            input.id = mock_full_draft_response_requisition_for_update_test()
+                .requisition
+                .id;
         });
 
         let mut input = BatchRequestRequisition {
