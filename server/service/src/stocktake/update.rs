@@ -113,9 +113,11 @@ fn check_stock_lines_reduced_to_zero(
 fn load_stocktake_lines(
     connection: &StorageConnection,
     stocktake_id: &str,
+    store_id: &str,
 ) -> Result<Vec<StocktakeLine>, RepositoryError> {
     StocktakeLineRepository::new(connection).query_by_filter(
         StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(stocktake_id)),
+        Some(store_id.to_string()),
     )
 }
 
@@ -139,7 +141,7 @@ fn validate(
     if !check_store_id_matches(store_id, &existing.store_id) {
         return Err(UpdateStocktakeError::InvalidStore);
     }
-    let stocktake_lines = load_stocktake_lines(connection, &input.id)?;
+    let stocktake_lines = load_stocktake_lines(connection, &input.id, store_id)?;
 
     let status_changed = input.status.is_some();
     if status_changed {
@@ -454,12 +456,14 @@ fn generate_exit_location_movements(
 fn unallocated_lines_to_trim(
     connection: &StorageConnection,
     stocktake: &StocktakeRow,
+    store_id: &str,
 ) -> Result<Option<Vec<StocktakeLineRow>>, RepositoryError> {
     if stocktake.status != StocktakeStatus::Finalised {
         return Ok(None);
     }
     let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
         StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake.id)),
+        Some(store_id.to_string()),
     )?;
     if stocktake_lines.is_empty() {
         return Ok(None);
@@ -639,7 +643,7 @@ fn generate(
         inventory_adjustment_lines: [inventory_addition_lines, inventory_reduction_lines].concat(),
         stock_lines,
         location_movements: Some(location_movements),
-        stocktake_lines_to_trim: unallocated_lines_to_trim(connection, &stocktake)?,
+        stocktake_lines_to_trim: unallocated_lines_to_trim(connection, &stocktake, &ctx.store_id)?,
     })
 }
 
@@ -1114,6 +1118,7 @@ mod test {
         let stocktake_line = StocktakeLineRepository::new(&context.connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&result.id)),
+                None,
             )
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();

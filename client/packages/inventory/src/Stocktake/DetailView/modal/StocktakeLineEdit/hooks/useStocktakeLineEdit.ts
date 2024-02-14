@@ -25,7 +25,9 @@ export const useStocktakeLineEdit = (
 ): useStocktakeLineEditController => {
   const t = useTranslation('inventory');
   const { id } = useStocktake.document.fields('id');
-  const nextItem = useNextItem(item?.id);
+  const { items } = useStocktake.line.rows();
+  const filteredItems = items.filter(item => item.item?.id === item?.id);
+  const nextItem = useNextItem(filteredItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
   const { mutateAsync: upsertLines, isLoading: isSaving } =
     useStocktake.line.save();

@@ -26,6 +26,7 @@ impl Loader<String> for StocktakeLineByStocktakeIdLoader {
         let all_lines = repo.query_by_filter(
             StocktakeLineFilter::new()
                 .stocktake_id(EqualFilter::equal_any(stocktake_ids.to_owned())),
+            None,
         )?;
 
         let mut map: HashMap<String, Vec<StocktakeLine>> = HashMap::new();
