@@ -1,15 +1,28 @@
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, Pagination,
+    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemLinkRow,
+    ItemRow, Pagination,
 };
 
 use super::{
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
+    item_row::{item, item::dsl as item_dsl},
     master_list_line_row::{master_list_line, master_list_line::dsl as master_list_line_dsl},
     DBType, MasterListLineRow, StorageConnection,
 };
 
-use diesel::prelude::*;
+use diesel::{
+    helper_types::{InnerJoin, IntoBoxed},
+    prelude::*,
+};
 
-pub type MasterListLine = MasterListLineRow;
+#[derive(Clone, Debug, PartialEq)]
+pub struct MasterListLine {
+    pub id: String,
+    pub item_id: String,
+    pub master_list_id: String,
+}
+
+type MasterListLineJoin = (MasterListLineRow, (ItemLinkRow, ItemRow));
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct MasterListLineFilter {
@@ -43,9 +56,9 @@ impl<'a> MasterListLineRepository<'a> {
 
         query = query.order(master_list_line_dsl::id.asc());
 
-        let result = query.load::<MasterListLineRow>(&self.connection.connection)?;
+        let result = query.load::<MasterListLineJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 
     pub fn query(
@@ -61,22 +74,28 @@ impl<'a> MasterListLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListLineRow>(&self.connection.connection)?;
+            .load::<MasterListLineJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedMasterListLineQuery = master_list_line::BoxedQuery<'static, DBType>;
+type BoxedMasterListLineQuery = IntoBoxed<
+    'static,
+    InnerJoin<master_list_line::table, InnerJoin<item_link::table, item::table>>,
+    DBType,
+>;
 
 fn create_filtered_query(
     filter: Option<MasterListLineFilter>,
 ) -> Result<BoxedMasterListLineQuery, RepositoryError> {
-    let mut query = master_list_line_dsl::master_list_line.into_boxed();
+    let mut query = master_list_line_dsl::master_list_line
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
+        .into_boxed();
 
     if let Some(f) = filter {
         apply_equal_filter!(query, f.id, master_list_line_dsl::id);
-        apply_equal_filter!(query, f.item_id, master_list_line_dsl::item_id);
+        apply_equal_filter!(query, f.item_id, item_dsl::id);
         apply_equal_filter!(
             query,
             f.master_list_id,
@@ -85,6 +104,14 @@ fn create_filtered_query(
     }
 
     Ok(query)
+}
+
+fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> MasterListLine {
+    MasterListLine {
+        id: master_list_line_row.id,
+        master_list_id: master_list_line_row.master_list_id,
+        item_id: item_row.id,
+    }
 }
 
 impl MasterListLineFilter {

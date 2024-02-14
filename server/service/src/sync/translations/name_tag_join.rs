@@ -48,7 +48,7 @@ impl SyncTranslation for NameTagJoinTranslation {
 
         let result = NameTagJoinRow {
             id: ID,
-            name_id: name_ID,
+            name_link_id: name_ID,
             name_tag_id: name_tag_ID,
         };
 

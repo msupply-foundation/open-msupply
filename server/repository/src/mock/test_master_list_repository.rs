@@ -81,12 +81,12 @@ pub fn mock_test_master_list_name_filter1() -> FullMockMasterList {
             MasterListNameJoinRow {
                 id: join1,
                 master_list_id: id.clone(),
-                name_id: mock_test_master_list_name1().id,
+                name_link_id: mock_test_master_list_name1().id,
             },
             MasterListNameJoinRow {
                 id: join2,
                 master_list_id: id.clone(),
-                name_id: mock_test_master_list_name2().id,
+                name_link_id: mock_test_master_list_name2().id,
             },
         ],
         lines: Vec::new(),
@@ -111,12 +111,12 @@ pub fn mock_test_master_list_name_filter2() -> FullMockMasterList {
             MasterListNameJoinRow {
                 id: join1,
                 master_list_id: id.clone(),
-                name_id: mock_test_master_list_name2().id,
+                name_link_id: mock_test_master_list_name2().id,
             },
             MasterListNameJoinRow {
                 id: join2,
                 master_list_id: id.clone(),
-                name_id: mock_test_master_list_name3().id,
+                name_link_id: mock_test_master_list_name3().id,
             },
         ],
         lines: Vec::new(),
@@ -141,12 +141,12 @@ pub fn mock_test_master_list_name_filter3() -> FullMockMasterList {
             MasterListNameJoinRow {
                 id: join1,
                 master_list_id: id.clone(),
-                name_id: mock_test_master_list_name1().id,
+                name_link_id: mock_test_master_list_name1().id,
             },
             MasterListNameJoinRow {
                 id: join2,
                 master_list_id: id.clone(),
-                name_id: mock_test_master_list_name3().id,
+                name_link_id: mock_test_master_list_name3().id,
             },
         ],
         lines: Vec::new(),
