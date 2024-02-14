@@ -7,12 +7,12 @@ import {
   useBufferState,
   BufferedTextInput,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation('distribution');
-  const isDisabled = useOutbound.utils.isDisabled();
-  const { transportReference, update } = useOutbound.document.fields([
+  const isDisabled = useReturn.utils.isDisabled();
+  const { transportReference, update } = useReturn.document.fields([
     'transportReference',
   ]);
   const [referenceBuffer, setReferenceBuffer] = useBufferState(

@@ -7,7 +7,7 @@ import {
   SortUtils,
 } from '@openmsupply-client/common';
 import { useStockLines } from '@openmsupply-client/system';
-import { useOutbound } from '../../../api';
+import { useReturn } from '../../../api';
 import { DraftItem } from '../../../..';
 import { DraftStockOutLine } from '../../../../types';
 import {
@@ -21,12 +21,9 @@ import {
 export const useDraftOutboundLines = (
   item: DraftItem | null
 ): UseDraftStockOutLinesControl => {
-  const { id: invoiceId, status } = useOutbound.document.fields([
-    'id',
-    'status',
-  ]);
+  const { id: invoiceId, status } = useReturn.document.fields(['id', 'status']);
   const { data: lines, isLoading: outboundLinesLoading } =
-    useOutbound.line.stockLines(item?.id ?? '');
+    useReturn.line.stockLines(item?.id ?? '');
   const { data, isLoading } = useStockLines(item?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const [draftStockOutLines, setDraftStockOutLines] = useState<

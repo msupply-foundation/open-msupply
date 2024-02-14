@@ -15,14 +15,14 @@ import {
   useIsGrouped,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
-import { useOutbound } from '../api';
+import { useReturn } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
-  const onDelete = useOutbound.line.deleteSelected();
-  const { onAllocate } = useOutbound.line.allocateSelected();
+  const onDelete = useReturn.line.deleteSelected();
+  const { onAllocate } = useReturn.line.allocateSelected();
   const { id, otherParty, theirReference, update, requisition } =
-    useOutbound.document.fields([
+    useReturn.document.fields([
       'id',
       'otherParty',
       'theirReference',
@@ -31,9 +31,9 @@ export const Toolbar: FC = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
-  const { mutateAsync: updateName } = useOutbound.document.updateName();
+  const { mutateAsync: updateName } = useReturn.document.updateName();
 
-  const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturn.utils.isDisabled();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>

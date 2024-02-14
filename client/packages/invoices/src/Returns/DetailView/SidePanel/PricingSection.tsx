@@ -15,7 +15,7 @@ import {
   MenuDotsIcon,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
 import { TaxEdit } from '../modals';
 
@@ -28,7 +28,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
   const serviceLineModal = useToggle(false);
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
-  const { data: serviceLines } = useOutbound.line.serviceLines();
+  const { data: serviceLines } = useReturn.line.serviceLines();
   const { serviceTotalBeforeTax, serviceTotalAfterTax } = pricing;
 
   const tax = PricingUtils.effectiveTax(
@@ -40,7 +40,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
     serviceTotalAfterTax
   );
 
-  const { updateServiceLineTax } = useOutbound.document.updateTax();
+  const { updateServiceLineTax } = useReturn.document.updateTax();
   const disableServiceTax =
     serviceLines
       ?.map(line => line.totalBeforeTax)
@@ -96,7 +96,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
   const t = useTranslation('distribution');
   const c = useFormatCurrency();
 
-  const { updateInvoiceTax } = useOutbound.document.updateInvoiceTax();
+  const { updateInvoiceTax } = useReturn.document.updateInvoiceTax();
 
   const { stockTotalBeforeTax, stockTotalAfterTax } = pricing;
 
@@ -125,11 +125,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit
-            disabled={disableTax}
-            tax={tax}
-            update={updateInvoiceTax}
-          />
+          <TaxEdit disabled={disableTax} tax={tax} update={updateInvoiceTax} />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
@@ -159,9 +155,9 @@ export const Totals = ({ pricing }: PricingGroupProps) => {
 
 export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
-  const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturn.utils.isDisabled();
 
-  const { pricing } = useOutbound.document.fields('pricing');
+  const { pricing } = useReturn.document.fields('pricing');
 
   return (
     <DetailPanelSection title={t('heading.invoice-details')}>

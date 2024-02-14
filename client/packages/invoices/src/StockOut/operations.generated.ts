@@ -99,7 +99,6 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-<<<<<<< Updated upstream
     dummy(variables?: DummyQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DummyQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DummyQuery>(DummyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'dummy', 'query');
     }
@@ -122,9 +121,3 @@ export const mockDummyQuery = (resolver: ResponseResolver<GraphQLRequest<DummyQu
     'dummy',
     resolver
   )
-=======
-
-  };
-}
-export type Sdk = ReturnType<typeof getSdk>;
->>>>>>> Stashed changes

@@ -22,7 +22,7 @@ import {
 import { OutboundLineEditTable } from './OutboundLineEditTable';
 import { OutboundLineEditForm } from './OutboundLineEditForm';
 import { useDraftOutboundLines, useNextItem } from './hooks';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 import { getPackQuantityCellId } from '../../../utils';
 import { Draft, DraftItem } from '../../..';
 import {
@@ -69,10 +69,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
 
-  const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
-  const { status } = useOutbound.document.fields('status');
-  const { mutateAsync } = useOutbound.line.save(status);
-  const isDisabled = useOutbound.utils.isDisabled();
+  const { mutateAsync: insertBarcode } = useReturn.utils.barcodeInsert();
+  const { status } = useReturn.document.fields('status');
+  const { mutateAsync } = useReturn.line.save(status);
+  const isDisabled = useReturn.utils.isDisabled();
   const {
     draftStockOutLines,
     updateQuantity,

@@ -11,7 +11,7 @@ import {
   Tooltip,
   Box,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../api';
+import { useReturn } from '../api';
 import { isOutboundDisabled } from '../../utils';
 import { Draft } from '../..';
 
@@ -21,9 +21,9 @@ export const AddFromScannerButtonComponent = ({
   onAddItem: (draft?: Draft) => void;
 }) => {
   const t = useTranslation('distribution');
-  const { data: outbound } = useOutbound.document.get();
+  const { data: outbound } = useReturn.document.get();
   const isDisabled = !!outbound && isOutboundDisabled(outbound);
-  const { mutateAsync: getBarcode } = useOutbound.utils.barcode();
+  const { mutateAsync: getBarcode } = useReturn.utils.barcode();
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
   const { error, warning } = useNotification();

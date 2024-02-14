@@ -10,7 +10,7 @@ import {
   useBreadcrumbs,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, outboundStatuses } from '../../../utils';
-import { useOutbound, OutboundFragment } from '../../api';
+import { useReturn, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
@@ -50,7 +50,7 @@ const createStatusLog = (invoice: OutboundFragment) => {
 
 export const FooterComponent: FC = () => {
   const t = useTranslation('distribution');
-  const { data } = useOutbound.document.get();
+  const { data } = useReturn.document.get();
   const { navigateUpOne } = useBreadcrumbs();
 
   return (

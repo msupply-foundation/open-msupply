@@ -12,12 +12,12 @@ import {
   Tooltip,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 
 const RelatedDocumentsSectionComponent = () => {
   const t = useTranslation('distribution');
   const { localisedDate: d } = useFormatDateTime();
-  const { requisition } = useOutbound.document.fields('requisition');
+  const { requisition } = useReturn.document.fields('requisition');
 
   const getTooltip = (createdDatetime: string, username?: string) => {
     let tooltip = t('messages.customer-requisition-created-on', {
@@ -36,7 +36,12 @@ const RelatedDocumentsSectionComponent = () => {
         {!requisition ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
-          <Tooltip title={getTooltip(requisition.createdDatetime, requisition.user?.username)}>
+          <Tooltip
+            title={getTooltip(
+              requisition.createdDatetime,
+              requisition.user?.username
+            )}
+          >
             <Grid item>
               <PanelRow>
                 <PanelLabel>{t('label.requisition')}</PanelLabel>

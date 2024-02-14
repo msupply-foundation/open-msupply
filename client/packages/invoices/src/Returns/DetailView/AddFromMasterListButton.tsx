@@ -7,14 +7,14 @@ import {
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { MasterListSearchModal } from '@openmsupply-client/system';
-import { useOutbound } from '../api';
+import { useReturn } from '../api';
 
 export const AddFromMasterListButtonComponent = () => {
   const t = useTranslation('distribution');
-  const { status } = useOutbound.document.fields(['status']);
+  const { status } = useReturn.document.fields(['status']);
   const isDisabled = status !== InvoiceNodeStatus.New;
-  const { addFromMasterList } = useOutbound.utils.addFromMasterList();
-  const { otherPartyId } = useOutbound.document.fields(['otherPartyId']);
+  const { addFromMasterList } = useReturn.utils.addFromMasterList();
+  const { otherPartyId } = useReturn.document.fields(['otherPartyId']);
   const modalController = useToggle();
   const filterByName = { existsForNameId: { equalTo: otherPartyId } };
 

@@ -8,7 +8,7 @@ import {
   useDeleteConfirmation,
   useTranslation,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
+import { useReturn } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 import { PricingSection } from './PricingSection';
 import { RelatedDocumentsSection } from './RelatedDocumentsSection';
@@ -18,8 +18,8 @@ import { canDeleteInvoice } from '../../../utils';
 export const SidePanelComponent = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
-  const { data } = useOutbound.document.get();
-  const { mutateAsync } = useOutbound.document.delete();
+  const { data } = useReturn.document.get();
+  const { mutateAsync } = useReturn.document.delete();
   const canDelete = data ? canDeleteInvoice(data) : false;
   const deleteAction = async () => {
     if (!data) return;
