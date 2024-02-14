@@ -8,8 +8,6 @@ export const useInboundApi = () => {
     base: () => ['inbound'] as const,
     count: () => [...keys.base(), 'count'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
-    newReturns: (lineIds: string[]) =>
-      [...keys.base(), storeId, 'newReturns', lineIds] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<InboundRowFragment>) =>
