@@ -19,7 +19,7 @@ export const useDraftReturnLines = (
 ) => {
   const [draftLines, setDraftLines] = React.useState<DraftReturnLine[]>([]);
 
-  const lines = useReturns.lines.newReturnLines(stockLineIds);
+  const lines = useReturns.lines.supplierReturnLines(stockLineIds);
 
   const { mutateAsync } = useReturns.document.insertSupplierReturn();
 
