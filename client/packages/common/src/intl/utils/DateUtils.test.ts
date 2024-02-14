@@ -2,10 +2,6 @@ import { renderHookWithProvider } from '../../utils/testing';
 import { useFormatDateTime } from './DateUtils';
 
 describe('useFormatDateTime', () => {
-  it('to be truthy', () => {
-    const truthy = true;
-    expect(truthy).toBe(true);
-  });
   it('getLocalDateTime returns start of day for local timezone regardless of time zone', () => {
     const { result } = renderHookWithProvider(useFormatDateTime);
     const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
