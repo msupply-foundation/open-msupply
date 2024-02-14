@@ -34,6 +34,6 @@ pub fn new_supplier_return(
         available_number_of_packs: 1000.0,
         pack_size: 20,
         number_of_packs_to_return: 300.0,
-        // No location column for now
+        // No location or unit column for now
     }])
 }

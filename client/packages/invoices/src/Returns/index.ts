@@ -1,2 +1,2 @@
-// export { OutboundShipmentListView } from './ListView';
-export { DetailView } from './DetailView';
+export * from './api';
+export * from './modals';
