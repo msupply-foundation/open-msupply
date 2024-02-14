@@ -146,13 +146,13 @@ impl RequisitionNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to requisition ({})",
-                &self.row().name_id,
+                &self.name_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -164,7 +164,7 @@ impl RequisitionNode {
     }
 
     pub async fn other_party_id(&self) -> &str {
-        &self.row().name_id
+        &self.name_row().id
     }
 
     /// Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line

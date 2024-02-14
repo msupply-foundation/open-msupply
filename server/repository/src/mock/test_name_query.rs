@@ -48,7 +48,7 @@ pub fn mock_name_1() -> NameRow {
 pub fn mock_name_1_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_name_1_join_id"),
-        name_id: mock_name_1().id,
+        name_link_id: mock_name_1().id,
         store_id: mock_test_name_query_store_2().id,
         name_is_customer: false,
         name_is_supplier: true,
@@ -67,7 +67,7 @@ pub fn mock_name_2() -> NameRow {
 pub fn mock_name_2_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_name_2_join_id"),
-        name_id: mock_name_2().id,
+        name_link_id: mock_name_2().id,
         store_id: mock_test_name_query_store_1().id,
         name_is_customer: true,
         name_is_supplier: true,
@@ -85,7 +85,7 @@ pub fn mock_name_3() -> NameRow {
 pub fn mock_name_3_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_name_3_join_id"),
-        name_id: mock_name_3().id,
+        name_link_id: mock_name_3().id,
         store_id: mock_test_name_query_store_1().id,
         name_is_customer: true,
         name_is_supplier: true,
@@ -95,7 +95,7 @@ pub fn mock_name_3_join() -> NameStoreJoinRow {
 pub fn mock_name_3_join2() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_name_3_join2_id"),
-        name_id: mock_name_3().id,
+        name_link_id: mock_name_3().id,
         store_id: mock_test_name_query_store_2().id,
         name_is_customer: false,
         name_is_supplier: false,
@@ -113,7 +113,7 @@ pub fn name_a_umlaut() -> NameRow {
 pub fn name_a_umlaut_join() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("name_a_umlaut_join_id"),
-        name_id: name_a_umlaut().id,
+        name_link_id: name_a_umlaut().id,
         store_id: mock_test_name_query_store_1().id,
         name_is_customer: true,
         name_is_supplier: true,

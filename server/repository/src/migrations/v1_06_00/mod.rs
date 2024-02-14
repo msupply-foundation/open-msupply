@@ -31,6 +31,7 @@ impl Migration for V1_06_00 {
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
         changelog_deduped::migrate(connection)?;
+
         Ok(())
     }
 }

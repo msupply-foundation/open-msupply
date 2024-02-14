@@ -1,7 +1,7 @@
 use crate::{
     activity_log::activity_log_entry,
     requisition::{
-        common::{check_approval_status, check_requisition_exists},
+        common::{check_approval_status, check_requisition_row_exists},
         query::get_requisition,
     },
     service_provider::ServiceContext,
@@ -78,7 +78,7 @@ pub fn validate(
     store_id: &str,
     input: &UpdateResponseRequisition,
 ) -> Result<(RequisitionRow, bool), OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if check_approval_status(&requisition_row) {
@@ -144,8 +144,8 @@ mod test_update {
     use chrono::Utc;
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
-            mock_new_response_requisition, mock_response_program_requisition,
+            mock_finalised_response_requisition, mock_new_response_requisition,
+            mock_new_response_requisition_for_update_test, mock_response_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
             MockDataInserts,
         },
@@ -225,7 +225,7 @@ mod test_update {
             service.update_response_requisition(
                 &context,
                 UpdateResponseRequisition {
-                    id: mock_draft_response_requisition_for_update_test().id,
+                    id: mock_new_response_requisition_for_update_test().id,
                     colour: None,
                     status: None,
                     their_reference: None,

@@ -1,5 +1,5 @@
 import { FnUtils, SortUtils } from '@common/utils';
-import { NonNegativeIntegerCell, CellProps } from '@openmsupply-client/common';
+import { NumberInputCell, CellProps } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../types';
 import { InvoiceLineNodeType, InvoiceNodeStatus } from '@common/types';
 import {
@@ -338,10 +338,11 @@ export const shouldUpdatePlaceholder = (
 ) => quantity > 0 && !placeholder.isCreated;
 
 export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
-  <NonNegativeIntegerCell
+  <NumberInputCell
+    {...props}
     max={props.rowData.stockLine?.availableNumberOfPacks}
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
-    {...props}
+    min={1}
   />
 );
 

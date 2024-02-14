@@ -87,6 +87,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
+        Box::new(special::ItemMergeTranslation {}),
+        Box::new(special::NameMergeTranslation {}),
+        Box::new(special::ClinicianMergeTranslation {}),
     ]
 }
 
@@ -204,6 +207,9 @@ pub(crate) enum PullUpsertRecord {
     FormSchema(FormSchemaJson),
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
+    ItemLink(ItemLinkRow),
+    NameLink(NameLinkRow),
+    ClinicianLink(ClinicianLinkRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -223,7 +229,6 @@ pub(crate) enum PullDeleteRecordTable {
     ProgramRequisitionOrderType,
     MasterListNameJoin,
     Report,
-    Name,
     InventoryAdjustmentReason,
     // Remote-Central (site specific)
     NameStoreJoin,
@@ -322,11 +327,19 @@ pub(crate) trait SyncTranslation {
         Ok(None)
     }
 
+    fn try_translate_pull_merge(
+        &self,
+        _: &StorageConnection,
+        _: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        Ok(None)
+    }
+
     /// Implementation should return three types of results
     /// * Error - Something completely unexpected that is not recoverable
     /// * None - Translator did not match record type
     /// * Some - Translator did match and either translated record/records or
-    ///          empty array if record is deliberatly ignored
+    ///          empty array if record is deliberately ignored
     fn try_translate_push_upsert(
         &self,
         _: &StorageConnection,
