@@ -46,6 +46,20 @@ In this case a simple type def should be used, keeping the internal database str
 pub type MyEntity = MyDieselRow;
 ```
 
+Currently, repositories are split into two parts, a "entity" repository and a "query" repository.
+The entity repository contains methods to upsert, delete or retrieve entities.
+The query repository contains some advanced query functionality, e.g. it supports pagination, sorting and filtering.
+
+Depending on the use-case, the query repository can return a composite type which contains multiple entity types.
+For example, the `ItemRepository` returns an `Item` type which contains the main item entity and the joined unit entity:
+
+```rust
+pub struct Item {
+    pub item_row: ItemRow,
+    pub unit_row: Option<UnitRow>,
+}
+```
+
 ## Service Layer
 
 The service layer contains the main business logic and uses the repository layer to query or mutate data while enforcing invariants.
