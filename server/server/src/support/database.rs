@@ -14,6 +14,18 @@ pub async fn get_database(
 }
 
 #[cfg(not(feature = "postgres"))]
+pub async fn vacuum_database(service_provider: Data<ServiceProvider>) -> HttpResponse {
+    // Vacuum the database first
+    let result = service_provider.connection_manager.execute("VACUUM");
+    match result {
+        Ok(_) => HttpResponse::Ok().body("Vacuumed database successfully"),
+        Err(e) => {
+            HttpResponse::InternalServerError().body(format!("Error vacuuming database: {:#?}", e))
+        }
+    }
+}
+
+#[cfg(not(feature = "postgres"))]
 pub async fn get_database(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
@@ -35,7 +47,7 @@ pub async fn get_database(
     // Vacuum the database first
     let _result = service_provider.connection_manager.execute("VACUUM");
 
-    let db_path = settings.database.connection_string(); // TODO: Merge https://github.com/msupply-foundation/open-msupply/pull/2899    database_path(&self)
+    let db_path = settings.database.database_path();
     let path = Path::new(&db_path);
 
     let response = fs::NamedFile::open(path)?
