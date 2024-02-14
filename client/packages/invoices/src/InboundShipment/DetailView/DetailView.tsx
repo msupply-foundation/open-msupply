@@ -24,6 +24,7 @@ import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
+import { NewReturnItemsModal } from '../../Returns';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -32,6 +33,12 @@ export const DetailView: FC = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<InboundLineItem>();
+  const {
+    onOpen: onOpenReturns,
+    onClose: onCloseReturns,
+    isOpen: returnsIsOpen,
+    entity: stockLineIds,
+  } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
 
@@ -77,7 +84,7 @@ export const DetailView: FC = () => {
         >
           <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar />
+          <Toolbar onReturnLines={onOpenReturns} />
 
           <DetailTabs tabs={tabs} />
 
@@ -91,6 +98,14 @@ export const DetailView: FC = () => {
               onClose={onClose}
               mode={mode}
               item={entity}
+            />
+          )}
+
+          {returnsIsOpen && (
+            <NewReturnItemsModal
+              isOpen={returnsIsOpen}
+              onClose={onCloseReturns}
+              stockLineIds={stockLineIds || []}
             />
           )}
         </TableProvider>

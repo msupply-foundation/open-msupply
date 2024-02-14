@@ -12,9 +12,41 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  ArrowLeftIcon,
+  useTableStore,
+  useNotification,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
+
+const useSelectedIdsToReturn = () => {
+  const t = useTranslation('replenishment');
+  const { info } = useNotification();
+
+  const { items, lines } = useInbound.lines.rows();
+
+  const selectedIds =
+    useTableStore(state => {
+      const { isGrouped } = state;
+
+      return isGrouped
+        ? items
+            ?.filter(({ id }) => state.rowState[id]?.isSelected)
+            .map(({ lines }) => lines.flat())
+            .flat()
+        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
+    })?.map(({ id }) => id) || [];
+
+  const getIds = () => {
+    if (!selectedIds.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    }
+    return selectedIds;
+  };
+
+  return getIds;
+};
 
 const InboundInfoPanel = ({
   shipment,
@@ -37,7 +69,9 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-export const Toolbar: FC = () => {
+export const Toolbar: FC<{
+  onReturnLines: (stockLineIds: string[]) => void;
+}> = ({ onReturnLines }) => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
@@ -49,6 +83,14 @@ export const Toolbar: FC = () => {
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
+
+  const getStockLineIds = useSelectedIdsToReturn();
+
+  const onReturn = async () => {
+    const stockLineIds = getStockLineIds();
+    if (stockLineIds.length) onReturnLines(stockLineIds);
+  };
+
   const isTransfer = !!shipment?.linkedShipment?.id;
 
   if (!data) return null;
@@ -112,6 +154,9 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
+            <DropdownMenuItem IconComponent={ArrowLeftIcon} onClick={onReturn}>
+              {t('button.return-lines')}
+            </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
