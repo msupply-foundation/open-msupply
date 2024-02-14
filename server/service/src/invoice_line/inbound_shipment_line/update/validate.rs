@@ -8,7 +8,7 @@ use crate::{
         },
     },
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
+use repository::{InvoiceLine, InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
 
 use super::{UpdateInboundShipmentLine, UpdateInboundShipmentLineError};
 
@@ -16,10 +16,11 @@ pub fn validate(
     input: &UpdateInboundShipmentLine,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(InvoiceLineRow, Option<ItemRow>, InvoiceRow), UpdateInboundShipmentLineError> {
+) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateInboundShipmentLineError> {
     use UpdateInboundShipmentLineError::*;
 
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line_row = &line.invoice_line_row;
 
     if !check_pack_size(input.pack_size.clone()) {
         return Err(PackSizeBelowOne);
@@ -30,7 +31,8 @@ pub fn validate(
 
     let item = check_item_option(&input.item_id, connection)?;
 
-    let invoice = check_invoice_exists(&line.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let invoice =
+        check_invoice_exists(&line_row.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
     if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
@@ -41,7 +43,7 @@ pub fn validate(
         return Err(NotThisStoreInvoice);
     }
 
-    if !check_batch(&line, connection)? {
+    if !check_batch(line_row, connection)? {
         return Err(BatchIsReserved);
     }
     if let Some(location) = &input.location {
@@ -50,8 +52,8 @@ pub fn validate(
         }
     }
 
-    if !check_line_belongs_to_invoice(&line, &invoice) {
-        return Err(NotThisInvoiceLine(line.invoice_id));
+    if !check_line_belongs_to_invoice(line_row, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
 
     // TODO: StockLineDoesNotBelongToCurrentStore

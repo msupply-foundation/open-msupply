@@ -45,6 +45,7 @@ default = ["sqlite"]
 sqlite = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
 memory = ["diesel/sqlite", "libsqlite3-sys", "diesel-derive-enum/sqlite"]
 postgres = ["diesel/postgres", "diesel-derive-enum/postgres"]
+integration_test = []
 
 [build-dependencies]
 glob = "0.3.1"

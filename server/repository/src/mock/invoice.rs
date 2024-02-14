@@ -6,7 +6,7 @@ use crate::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, In
 pub fn mock_outbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_a");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_b");
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -24,7 +24,7 @@ pub fn mock_outbound_shipment_a() -> InvoiceRow {
 pub fn mock_outbound_shipment_b() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_b");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 2;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -49,7 +49,7 @@ pub fn mock_outbound_shipment_b() -> InvoiceRow {
 pub fn mock_outbound_shipment_c() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_c");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -66,7 +66,7 @@ pub fn mock_outbound_shipment_c() -> InvoiceRow {
 pub fn mock_outbound_shipment_d() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_d");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 9;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -95,7 +95,7 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
 pub fn mock_outbound_shipment_e() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_e");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_a");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -113,7 +113,7 @@ pub fn mock_outbound_shipment_e() -> InvoiceRow {
 pub fn mock_outbound_shipment_picked() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_picked");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -137,7 +137,7 @@ pub fn mock_outbound_shipment_picked() -> InvoiceRow {
 pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_shipped");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -163,7 +163,7 @@ pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
 pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_no_lines");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -187,7 +187,7 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
 pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("new_outbound_shipment_no_lines");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
@@ -197,7 +197,7 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
 pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("mock_new_outbound_shipment_no_stockline");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
@@ -211,7 +211,7 @@ pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
 pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_on_hold");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_a");
         r.invoice_number = 10;
         r.on_hold = true;
@@ -235,7 +235,7 @@ pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
 pub fn mock_inbound_shipment_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_a");
-        r.name_id = String::from("name_store_b");
+        r.name_link_id = String::from("name_store_b");
         r.store_id = String::from("store_a");
         r.invoice_number = 4;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -253,7 +253,7 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
 pub fn mock_inbound_shipment_b() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_b");
-        r.name_id = String::from("name_store_c");
+        r.name_link_id = String::from("name_store_c");
         r.store_id = String::from("store_a");
         r.invoice_number = 5;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -278,7 +278,7 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
 pub fn mock_inbound_shipment_c() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_c");
-        r.name_id = String::from("name_store_c");
+        r.name_link_id = String::from("name_store_c");
         r.store_id = String::from("store_a");
         r.invoice_number = 6;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -295,7 +295,7 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
 pub fn mock_inbound_shipment_d() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_d");
-        r.name_id = String::from("name_store_c");
+        r.name_link_id = String::from("name_store_c");
         r.store_id = String::from("store_a");
         r.invoice_number = 7;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -318,7 +318,7 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
 pub fn mock_inbound_shipment_e() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("inbound_shipment_e");
-        r.name_id = String::from("name_store_c");
+        r.name_link_id = String::from("name_store_c");
         r.store_id = String::from("store_a");
         r.invoice_number = 7;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -336,7 +336,7 @@ pub fn mock_inbound_shipment_e() -> InvoiceRow {
 pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("empty_draft_inbound_shipment");
-        r.name_id = String::from("name_store_c");
+        r.name_link_id = String::from("name_store_c");
         r.store_id = String::from("store_a");
         r.invoice_number = 8;
         r.r#type = InvoiceRowType::InboundShipment;
@@ -353,7 +353,7 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
 pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("mock_unique_number_inbound_shipment");
-        r.name_id = String::from("name_store_c");
+        r.name_link_id = String::from("name_store_c");
         r.store_id = String::from("store_a");
         r.name_store_id = Some(String::from("store_a"));
         r.invoice_number = 9999999;
@@ -370,7 +370,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = String::from("outbound_shipment_line_a");
         r.invoice_id = String::from("outbound_shipment_c");
-        r.item_id = String::from("item_a");
+        r.item_link_id = String::from("item_a");
         r.item_name = String::from("Item A");
         r.item_code = String::from("a");
         r.pack_size = 1;
@@ -386,7 +386,7 @@ pub fn mock_outbound_shipment_line_a() -> InvoiceLineRow {
 pub fn mock_prescription_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("prescription_a");
-        r.name_id = String::from("testId");
+        r.name_link_id = String::from("testId");
         r.store_id = String::from("store_a");
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::Prescription;
@@ -401,7 +401,7 @@ pub fn mock_prescription_a() -> InvoiceRow {
 pub fn mock_prescription_picked() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("prescription_picked");
-        r.name_id = String::from("testId");
+        r.name_link_id = String::from("testId");
         r.store_id = String::from("store_a");
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::Prescription;
@@ -416,7 +416,7 @@ pub fn mock_prescription_picked() -> InvoiceRow {
 pub fn mock_prescription_verified() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("prescription_verified");
-        r.name_id = String::from("testId");
+        r.name_link_id = String::from("testId");
         r.store_id = String::from("store_a");
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::Prescription;

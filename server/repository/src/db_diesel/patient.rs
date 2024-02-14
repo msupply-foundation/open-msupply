@@ -1,6 +1,5 @@
 use super::{
     name_row::{name, name::dsl as name_dsl},
-    program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
     DBType, NameRow, StorageConnection,
 };
 
@@ -203,7 +202,7 @@ impl<'a> PatientRepository<'a> {
                         ..Default::default()
                     },
                 ))
-                .select(program_enrolment_dsl::patient_id);
+                .select(name_dsl::id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
             }
@@ -414,7 +413,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_id: patient_row.id.clone(),
+                patient_link_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),
@@ -514,7 +513,7 @@ mod tests {
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
-                patient_id: patient_row.id.clone(),
+                patient_link_id: patient_row.id.clone(),
                 document_type: "ProgramType".to_string(),
                 program_id: mock_program_a().id,
                 enrolment_datetime: Utc::now().naive_utc(),

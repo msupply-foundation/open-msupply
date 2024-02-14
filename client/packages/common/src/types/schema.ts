@@ -2227,6 +2227,7 @@ export type ItemFilterInput = {
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;

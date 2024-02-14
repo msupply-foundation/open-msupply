@@ -3,7 +3,7 @@ use util::{
     inline_init,
 };
 
-use crate::{NameRow, NameType};
+use crate::{NameLinkRow, NameRow, NameType};
 
 pub fn mock_name_store_a() -> NameRow {
     inline_init(|r: &mut NameRow| {
@@ -126,6 +126,24 @@ pub fn mock_patient_b() -> NameRow {
     })
 }
 
+// Deleted through a merge
+fn mock_merged_patient() -> NameRow {
+    inline_init(|r: &mut NameRow| {
+        r.id = String::from("softdeleted");
+        r.name = String::from("softdeleted");
+        r.code = String::from("softdeleted");
+        r.is_customer = true;
+        r.r#type = NameType::Patient;
+    })
+}
+
+pub fn mock_merged_patient_name_link() -> NameLinkRow {
+    NameLinkRow {
+        id: mock_merged_patient().id,
+        name_id: mock_patient().id,
+    }
+}
+
 pub fn mock_names() -> Vec<NameRow> {
     vec![
         mock_name_a(),
@@ -140,5 +158,10 @@ pub fn mock_names() -> Vec<NameRow> {
         mock_patient(),
         mock_patient_b(),
         mock_program_master_list_test(),
+        mock_merged_patient(),
     ]
+}
+
+pub fn mock_name_links() -> Vec<NameLinkRow> {
+    vec![mock_merged_patient_name_link()]
 }
