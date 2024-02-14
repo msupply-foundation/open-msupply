@@ -31,5 +31,5 @@ Steps to reproduce the behaviour:
   - [ ] desktop (macOS)
   - [ ] server (windows)
 - Database type: <!-- if on PC -->
-  - [ ] Postgres
+  - [ ] PostgreSQL
   - [ ] SQLite3
