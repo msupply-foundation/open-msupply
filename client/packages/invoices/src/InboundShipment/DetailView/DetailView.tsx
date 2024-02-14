@@ -25,7 +25,7 @@ import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
-import { NewReturnItemsModal } from '../../Returns';
+import { SupplierReturnLinesModal } from '../../Returns';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -110,7 +110,7 @@ export const DetailView: FC = () => {
             />
           )}
           {returnsIsOpen && (
-            <NewReturnItemsModal
+            <SupplierReturnLinesModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
               stockLineIds={stockLineIds || []}
