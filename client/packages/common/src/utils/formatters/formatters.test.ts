@@ -1,6 +1,6 @@
 import { Formatter } from './formatters';
-import * as df from 'date-fns';
-import * as dateFnsTz from 'date-fns-tz';
+import { addMilliseconds } from 'date-fns';
+import { getTimezoneOffset } from 'date-fns-tz';
 
 describe('Formatter', () => {
   it('is defined', () => {
@@ -52,17 +52,17 @@ describe('Formatter', () => {
   it('naiveDateTime', () => {
     const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
     const localalisedStartOfDay = new Date('1984/3/13');
-    const utcStartOfDay = df.addMilliseconds(
+    const utcStartOfDay = addMilliseconds(
       localalisedStartOfDay,
-      dateFnsTz.getTimezoneOffset(timeZone, localalisedStartOfDay)
+      getTimezoneOffset(timeZone, localalisedStartOfDay)
     );
     expect(Formatter.toIsoString(utcStartOfDay)).toBe(
       '1984-03-13T00:00:00.000Z'
     );
     const localisedNewDate = new Date('1984/3/13 11:12:13');
-    const utcNewDate = df.addMilliseconds(
+    const utcNewDate = addMilliseconds(
       localisedNewDate,
-      dateFnsTz.getTimezoneOffset(timeZone, localisedNewDate)
+      getTimezoneOffset(timeZone, localisedNewDate)
     );
     expect(Formatter.toIsoString(utcNewDate)).toBe('1984-03-13T11:12:13.000Z');
     expect(Formatter.toIsoString(null)).toBe(null);
