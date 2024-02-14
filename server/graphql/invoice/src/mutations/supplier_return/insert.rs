@@ -16,7 +16,7 @@ pub struct InsertInput {
 pub struct SupplierReturnLineInput {
     pub id: String,
     pub stock_line_id: String,
-    pub return_number_of_packs: f64,
+    pub number_of_packs_to_return: f64,
     pub reason_id: String,
     pub comment: String,
 }

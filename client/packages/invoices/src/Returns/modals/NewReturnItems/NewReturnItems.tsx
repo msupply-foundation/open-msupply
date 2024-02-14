@@ -13,7 +13,7 @@ import {
   TabContext,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
-import { useDraftNewReturnLines } from './useDraftNewReturnLines';
+import { useDraftReturnLines } from './useDraftReturnLines';
 import { ReturnReasonsTable } from './ReturnReasonsTable';
 
 interface NewReturnItemsModalProps {
@@ -48,8 +48,8 @@ export const NewReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update } = useDraftNewReturnLines(stockLineIds);
-  // const { mutateAsync } = useInbound.document.insertSupplierReturn();
+  const { lines, update, saveSupplierReturn } =
+    useDraftReturnLines(stockLineIds);
 
   return (
     <TableProvider createStore={createTableStore}>
@@ -66,7 +66,13 @@ export const NewReturnItemsModal = ({
         }
         okButton={
           currentTab === Tabs.Reason ? (
-            <DialogButton onClick={() => console.log(lines)} variant="ok" />
+            <DialogButton
+              onClick={async () => {
+                saveSupplierReturn(); // ? await here or close? yes bc need to check for errors...
+                onClose();
+              }}
+              variant="ok"
+            />
           ) : undefined
         }
         height={height}
