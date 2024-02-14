@@ -10,6 +10,7 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  useNotification,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -41,6 +42,7 @@ export const DetailView: FC = () => {
   } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
+  const { info } = useNotification();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -48,6 +50,13 @@ export const DetailView: FC = () => {
     },
     [onOpen]
   );
+
+  const onReturn = async (stockLineIds: string[]) => {
+    if (!stockLineIds.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    } else onOpenReturns(stockLineIds);
+  };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -84,7 +93,7 @@ export const DetailView: FC = () => {
         >
           <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar onReturnLines={onOpenReturns} />
+          <Toolbar onReturnLines={onReturn} />
 
           <DetailTabs tabs={tabs} />
 
