@@ -18,11 +18,11 @@ query newSupplierReturnLines(
   }
 }
 
-query inboundReturnLines(
+query generateInboundReturnLines(
   $outboundShipmentLineIds: [String!]
   $storeId: String!
 ) {
-  inboundReturnLines(
+  generateInboundReturnLines(
     input: { outboundShipmentLineIds: $outboundShipmentLineIds }
     storeId: $storeId
   ) {

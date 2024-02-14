@@ -12,12 +12,12 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       return result?.newSupplierReturn;
     },
     inboundReturnLines: async (outboundShipmentLineIds: string[]) => {
-      const result = await sdk.inboundReturnLines({
+      const result = await sdk.generateInboundReturnLines({
         outboundShipmentLineIds,
         storeId,
       });
 
-      return result?.inboundReturnLines;
+      return result?.generateInboundReturnLines;
     },
   },
   insertSupplierReturn: async (input: SupplierReturnInput) => {

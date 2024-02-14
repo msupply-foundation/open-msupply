@@ -12,13 +12,13 @@ export type NewSupplierReturnLinesQueryVariables = Types.Exact<{
 
 export type NewSupplierReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
 
-export type InboundReturnLinesQueryVariables = Types.Exact<{
+export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   outboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type InboundReturnLinesQuery = { __typename: 'Queries', inboundReturnLines: Array<{ __typename: 'InboundReturnLine', batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, packSize: number, stockLineId: string, numberOfPacksReturned: number, numberOfPacksIssued: number }> };
+export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: Array<{ __typename: 'InboundReturnLine', batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, packSize: number, stockLineId: string, numberOfPacksReturned: number, numberOfPacksIssued: number }> };
 
 export type InsertSupplierReturnMutationVariables = Types.Exact<{
   input: Types.SupplierReturnInput;
@@ -46,9 +46,9 @@ export const NewSupplierReturnLinesDocument = gql`
   }
 }
     `;
-export const InboundReturnLinesDocument = gql`
-    query inboundReturnLines($outboundShipmentLineIds: [String!], $storeId: String!) {
-  inboundReturnLines(
+export const GenerateInboundReturnLinesDocument = gql`
+    query generateInboundReturnLines($outboundShipmentLineIds: [String!], $storeId: String!) {
+  generateInboundReturnLines(
     input: {outboundShipmentLineIds: $outboundShipmentLineIds}
     storeId: $storeId
   ) {
@@ -86,8 +86,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     newSupplierReturnLines(variables: NewSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NewSupplierReturnLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NewSupplierReturnLinesQuery>(NewSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'newSupplierReturnLines', 'query');
     },
-    inboundReturnLines(variables: InboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InboundReturnLinesQuery>(InboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundReturnLines', 'query');
+    generateInboundReturnLines(variables: GenerateInboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateInboundReturnLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateInboundReturnLinesQuery>(GenerateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateInboundReturnLines', 'query');
     },
     insertSupplierReturn(variables: InsertSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertSupplierReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierReturn', 'mutation');
@@ -117,16 +117,16 @@ export const mockNewSupplierReturnLinesQuery = (resolver: ResponseResolver<Graph
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockInboundReturnLinesQuery((req, res, ctx) => {
+ * mockGenerateInboundReturnLinesQuery((req, res, ctx) => {
  *   const { outboundShipmentLineIds, storeId } = req.variables;
  *   return res(
- *     ctx.data({ inboundReturnLines })
+ *     ctx.data({ generateInboundReturnLines })
  *   )
  * })
  */
-export const mockInboundReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<InboundReturnLinesQueryVariables>, GraphQLContext<InboundReturnLinesQuery>, any>) =>
-  graphql.query<InboundReturnLinesQuery, InboundReturnLinesQueryVariables>(
-    'inboundReturnLines',
+export const mockGenerateInboundReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<GenerateInboundReturnLinesQueryVariables>, GraphQLContext<GenerateInboundReturnLinesQuery>, any>) =>
+  graphql.query<GenerateInboundReturnLinesQuery, GenerateInboundReturnLinesQueryVariables>(
+    'generateInboundReturnLines',
     resolver
   )
 

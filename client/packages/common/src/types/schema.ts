@@ -1395,6 +1395,10 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
+export type GenerateInboundReturnInput = {
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
+};
+
 export type GenerateSupplierReturnLinesInput = {
   inboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
@@ -1403,10 +1407,6 @@ export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
   notDelivered: Scalars['Int']['output'];
-};
-
-export type InboundReturnInput = {
-  outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
 
 export type InboundReturnLine = {
@@ -3752,7 +3752,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
-  inboundReturnLines: Array<InboundReturnLine>;
+  generateInboundReturnLines: Array<InboundReturnLine>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -3942,8 +3942,8 @@ export type QueriesFormSchemasArgs = {
 };
 
 
-export type QueriesInboundReturnLinesArgs = {
-  input: InboundReturnInput;
+export type QueriesGenerateInboundReturnLinesArgs = {
+  input: GenerateInboundReturnInput;
   storeId: Scalars['String']['input'];
 };
 
