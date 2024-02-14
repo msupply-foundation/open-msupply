@@ -25,7 +25,7 @@ import { AppRoute } from '@openmsupply-client/config';
 import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit } from './OutboundLineEdit';
-import { SupplierReturnLinesModal } from '../../Returns';
+import { InboundReturnEditModal } from '../../Returns';
 
 export const DetailView: FC = () => {
   const { info } = useNotification();
@@ -104,7 +104,7 @@ export const DetailView: FC = () => {
           )}
 
           {returnsIsOpen && (
-            <SupplierReturnLinesModal
+            <InboundReturnEditModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
               stockLineIds={stockLineIds || []}
