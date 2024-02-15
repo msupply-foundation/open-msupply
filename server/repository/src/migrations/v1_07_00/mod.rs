@@ -4,6 +4,7 @@ use super::{version::Version, Migration};
 
 use crate::{ChangelogRepository, StorageConnection};
 
+mod activity_log_add_clear_invoice_created_before_store;
 mod barcode_add_manufacturer_link_id;
 mod changelog_add_name_link_id;
 mod clinician_link;
@@ -68,6 +69,7 @@ fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> 
     // We don't want merge-migration updates to sync back.
     run_without_change_log_updates(connection, || {
         store_add_created_date::migrate(connection)?;
+        activity_log_add_clear_invoice_created_before_store::migrate(connection)?;
 
         item_add_is_active::migrate(connection)?;
         unit_add_is_active::migrate(connection)?;
