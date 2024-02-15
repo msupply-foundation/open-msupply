@@ -11,14 +11,14 @@ use repository::{
     StoreRowRepository,
 };
 
-use super::{ZeroInboundShipmentLineQuantities, ZeroInboundShipmentLineQuantitiesError};
+use super::{ZeroInboundShipmentLineQuantity, ZeroInboundShipmentLineQuantityError};
 
 pub fn validate(
-    input: &ZeroInboundShipmentLineQuantities,
+    input: &ZeroInboundShipmentLineQuantity,
     store_id: &str,
     connection: &StorageConnection,
-) -> Result<(InvoiceRow, InvoiceLineRow), ZeroInboundShipmentLineQuantitiesError> {
-    use ZeroInboundShipmentLineQuantitiesError::*;
+) -> Result<(InvoiceRow, InvoiceLineRow), ZeroInboundShipmentLineQuantityError> {
+    use ZeroInboundShipmentLineQuantityError::*;
 
     let line = check_line_exists_option(connection, &input.id)?
         .ok_or(LineDoesNotExist)?

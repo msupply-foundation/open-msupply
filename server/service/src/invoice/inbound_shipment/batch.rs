@@ -7,8 +7,8 @@ use crate::{
             update_inbound_shipment_line, zero_inbound_shipment_line_quantity,
             DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
-            UpdateInboundShipmentLineError, ZeroInboundShipmentLineQuantities,
-            ZeroInboundShipmentLineQuantitiesError,
+            UpdateInboundShipmentLineError, ZeroInboundShipmentLineQuantity,
+            ZeroInboundShipmentLineQuantityError,
         },
         inbound_shipment_service_line::{
             delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
@@ -39,7 +39,7 @@ pub struct BatchInboundShipment {
     pub update_shipment: Option<Vec<UpdateInboundShipment>>,
     pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
     pub continue_on_error: Option<bool>,
-    pub zero_line_quantities: Option<Vec<ZeroInboundShipmentLineQuantities>>,
+    pub zero_lines_quantity: Option<Vec<ZeroInboundShipmentLineQuantity>>,
 }
 
 pub type InsertShipmentsResult =
@@ -74,10 +74,10 @@ pub type UpdateShipmentsResult =
     Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>;
 pub type DeleteShipmentsResult =
     Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>;
-pub type ZeroLineQuantitiesResult = Vec<
+pub type ZeroLinesQuantityResult = Vec<
     InputWithResult<
-        ZeroInboundShipmentLineQuantities,
-        Result<InvoiceLine, ZeroInboundShipmentLineQuantitiesError>,
+        ZeroInboundShipmentLineQuantity,
+        Result<InvoiceLine, ZeroInboundShipmentLineQuantityError>,
     >,
 >;
 
@@ -92,7 +92,7 @@ pub struct BatchInboundShipmentResult {
     pub delete_service_line: DeleteServiceLinesResult,
     pub update_shipment: UpdateShipmentsResult,
     pub delete_shipment: DeleteShipmentsResult,
-    pub zero_line_quantities: ZeroLineQuantitiesResult,
+    pub zero_lines_quantity: ZeroLinesQuantityResult,
 }
 
 pub fn batch_inbound_shipment(
@@ -140,10 +140,10 @@ pub fn batch_inbound_shipment(
             }
 
             let (has_errors, result) = mutations_processor.do_mutations(
-                input.zero_line_quantities,
+                input.zero_lines_quantity,
                 zero_inbound_shipment_line_quantity,
             );
-            results.zero_line_quantities = result;
+            results.zero_lines_quantity = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
@@ -265,7 +265,7 @@ mod test {
             insert_service_line: None,
             update_service_line: None,
             delete_service_line: None,
-            zero_line_quantities: None,
+            zero_lines_quantity: None,
         };
 
         // Test rollback
