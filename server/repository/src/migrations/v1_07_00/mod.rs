@@ -28,6 +28,7 @@ mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
+mod sync_log;
 mod unit_add_is_active;
 
 mod item_link_create_table;
@@ -39,6 +40,7 @@ impl Migration for V1_07_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sync_log::migrate(connection)?;
         migrate_merge_feature(connection)?;
 
         Ok(())
@@ -97,8 +99,6 @@ fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> 
         clinician_store_join_add_clinician_link_id::migrate(connection)?;
         encounter_add_clinician_link_id::migrate(connection)?;
         invoice_add_clinician_link_id::migrate(connection)?;
-
-        // run after indexes, TODO move when moving migrations to v1_07_00
         contact_trace_link_id::migrate(connection)?;
 
         Ok(())

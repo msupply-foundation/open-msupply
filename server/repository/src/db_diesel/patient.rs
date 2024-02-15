@@ -223,7 +223,7 @@ impl<'a> PatientRepository<'a> {
                         ..Default::default()
                     },
                 ))
-                .select(program_enrolment_dsl::patient_id);
+                .select(name_dsl::id);
 
                 query = query.filter(name_dsl::id.eq_any(sub_query))
             }
