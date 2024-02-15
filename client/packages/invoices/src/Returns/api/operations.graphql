@@ -47,3 +47,13 @@ mutation insertSupplierReturn($input: SupplierReturnInput!) {
     }
   }
 }
+
+mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
+  insertInboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
