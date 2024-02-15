@@ -17,3 +17,25 @@ query newSupplierReturnLines(
     stockLineId
   }
 }
+
+query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: SUPPLIER_RETURN
+  ) {
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+      lines {
+        nodes {
+          id
+        }
+      }
+      otherPartyName
+      otherPartyStore {
+        code
+      }
+    }
+  }
+}
