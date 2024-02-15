@@ -5,6 +5,7 @@ import { Utils } from './utils';
 export const useReturns = {
   document: {
     listOutbound: Document.useOutbounds,
+    listAllOutbound: Document.useOutboundsAll,
   },
   lines: {
     newReturnLines: Lines.useNewSupplierReturnLines,

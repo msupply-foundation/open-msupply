@@ -56,6 +56,23 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
+    listAllOutbound: async (
+      sortBy: SortBy<OutboundReturnRowFragment>
+    ): Promise<{
+      nodes: OutboundReturnRowFragment[];
+      totalCount: number;
+    }> => {
+      const filter = {
+        type: { equalTo: InvoiceNodeType.SupplierReturn },
+      };
+      const result = await sdk.outboundReturns({
+        key: outboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
+        storeId,
+      });
+      return result?.invoices;
+    },
     newSupplierReturnLines: async (lineIds: string[]) => {
       const result = await sdk.newSupplierReturnLines({
         inboundShipmentLineIds: lineIds,

@@ -10,31 +10,34 @@ import {
   ToggleState,
   EnvUtils,
   Platform,
+  useNotification,
+  FileUtils,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
+import { useReturns } from '../api';
+import { outboundReturnsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
   const t = useTranslation('replenishment');
-  // const { success, error } = useNotification();
+  const { success, error } = useNotification();
   // const { mutate: onCreate } = useReturns.document.insertOutbound();
-  const isLoading = false;
-  // const { fetchAsync, isLoading } = useReturns.document.listAllOutbound({
-  //   key: 'createdDateTime',
-  //   direction: 'desc',
-  //   isDesc: true,
-  // });
+  const { fetchAsync, isLoading } = useReturns.document.listAllOutbound({
+    key: 'createdDateTime',
+    direction: 'desc',
+    isDesc: true,
+  });
 
   const csvExport = async () => {
-    //   const data = await fetchAsync();
-    //   if (!data || !data?.nodes.length) {
-    //     error(t('error.no-data'))();
-    //     return;
-    //   }
-    //   const csv = outboundsToCsv(data.nodes, t);
-    //   FileUtils.exportCSV(csv, t('filename.outbound-returns'));
-    //   success(t('success'))();
+    const data = await fetchAsync();
+    if (!data || !data?.nodes.length) {
+      error(t('error.no-data'))();
+      return;
+    }
+    const csv = outboundReturnsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.outbound-returns'));
+    success(t('success'))();
   };
 
   return (
