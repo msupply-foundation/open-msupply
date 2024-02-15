@@ -30,6 +30,7 @@ mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
 mod store_add_created_date;
+mod sync_log;
 mod unit_add_is_active;
 
 mod item_link_create_table;
@@ -41,6 +42,9 @@ impl Migration for V1_07_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sync_log::migrate(connection)?;
+        store_add_created_date::migrate(connection)?;
+        activity_log_add_clear_invoice_created_before_store::migrate(connection)?;
         migrate_merge_feature(connection)?;
 
         Ok(())
@@ -68,9 +72,6 @@ fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
 fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> {
     // We don't want merge-migration updates to sync back.
     run_without_change_log_updates(connection, || {
-        store_add_created_date::migrate(connection)?;
-        activity_log_add_clear_invoice_created_before_store::migrate(connection)?;
-
         item_add_is_active::migrate(connection)?;
         unit_add_is_active::migrate(connection)?;
         // Item link migrations
@@ -102,8 +103,6 @@ fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> 
         clinician_store_join_add_clinician_link_id::migrate(connection)?;
         encounter_add_clinician_link_id::migrate(connection)?;
         invoice_add_clinician_link_id::migrate(connection)?;
-
-        // run after indexes, TODO move when moving migrations to v1_07_00
         contact_trace_link_id::migrate(connection)?;
 
         Ok(())

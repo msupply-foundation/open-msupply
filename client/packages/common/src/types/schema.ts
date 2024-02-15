@@ -3351,6 +3351,7 @@ export type PatientFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   nameOrCode?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
+  programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
 
 export type PatientNode = {
