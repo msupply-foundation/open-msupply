@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository, RepositoryError, StockLine,
+    InvoiceLineRowRepository, InvoiceRow, ItemRow, ItemRowRepository, RepositoryError,
     StockLineFilter, StockLineRepository, StorageConnection,
 };
 
