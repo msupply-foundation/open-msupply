@@ -5,10 +5,11 @@ use crate::sync::{
         PullUpsertRecord,
     },
 };
+use chrono::NaiveDate;
 use repository::{StoreRow, SyncBufferRow};
 use util::inline_init;
 
-const STORE_1: (&'static str, &'static str) = (
+const STORE_1: (&str, &str) = (
     "4E27CEB263354EB7B1B33CEA8F7884D8",
     r#"{
     "ID": "4E27CEB263354EB7B1B33CEA8F7884D8",
@@ -63,12 +64,13 @@ fn store_1() -> TestSyncPullRecord {
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
+            s.created_date = Some(NaiveDate::from_ymd(2021, 9, 3));
         }))],
     )
 }
 
 // Note, has wrong mode: should be "drug_registry" (to fix tests)
-const STORE_2: (&'static str, &'static str) = (
+const STORE_2: (&str, &str) = (
     "9EDD3F83C3D64C22A3CC9C98CF4967C5",
     r#"{
     "ID": "9EDD3F83C3D64C22A3CC9C98CF4967C5",
@@ -126,7 +128,7 @@ fn store_2() -> TestSyncPullRecord {
 }
 
 // Note, has wrong mode: should be "supervisor" (to fix tests)
-const STORE_3: (&'static str, &'static str) = (
+const STORE_3: (&str, &str) = (
     "9A3F71AA4C6D48649ADBC4B2966C5B9D",
     r#"{
     "ID": "9A3F71AA4C6D48649ADBC4B2966C5B9D",
@@ -184,7 +186,7 @@ fn store_3() -> TestSyncPullRecord {
 }
 
 // Note, has wrong mode: should be "his" (to fix tests)
-const STORE_4: (&'static str, &'static str) = (
+const STORE_4: (&str, &str) = (
     "2CD38EF518764ED79258961101100C3D",
     r#"{
     "ID": "2CD38EF518764ED79258961101100C3D",
