@@ -108,6 +108,7 @@ export const DetailView: FC = () => {
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
               stockLineIds={stockLineIds || []}
+              customerId={data.otherPartyId}
             />
           )}
 
