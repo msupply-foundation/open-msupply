@@ -28,6 +28,7 @@ mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
+mod store_add_created_date;
 mod unit_add_is_active;
 
 mod item_link_create_table;
@@ -66,6 +67,8 @@ fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
 fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> {
     // We don't want merge-migration updates to sync back.
     run_without_change_log_updates(connection, || {
+        store_add_created_date::migrate(connection)?;
+
         item_add_is_active::migrate(connection)?;
         unit_add_is_active::migrate(connection)?;
         // Item link migrations
@@ -409,7 +412,7 @@ async fn migration_1_07_00_merge() {
     insert_merge_test_data(&connection);
 
     let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
-        .order(stock_on_hand_dsl::id.asc())
+        .order(stock_on_hand_dsl::item_id.asc())
         .load(&connection.connection)
         .unwrap();
 
@@ -447,7 +450,7 @@ async fn migration_1_07_00_merge() {
 
     // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
     let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
-        .order(stock_on_hand_dsl::id.asc())
+        .order(stock_on_hand_dsl::item_id.asc())
         .load(&connection.connection)
         .unwrap();
     assert_eq!(old_soh, new_soh);
