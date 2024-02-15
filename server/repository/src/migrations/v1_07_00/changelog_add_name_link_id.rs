@@ -22,10 +22,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         ALTER TABLE requisition_line DISABLE TRIGGER ALL;
         ALTER TABLE name_store_join DISABLE TRIGGER ALL;
 
-
-
-        ALTER TABLE changelog DROP CONSTRAINT changelog_name_id_fkey;
-
         -- Adding changelog.name_link_id
         ALTER TABLE changelog
         RENAME COLUMN name_id to name_link_id;
@@ -52,7 +48,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         DROP TRIGGER requisition_line_delete_trigger;
 
         -- Adding changelog.name_link_id
-        PRAGMA foreign_keys = OFF;
 
         CREATE TABLE tmp_changelog AS SELECT * FROM changelog;
         DROP TABLE changelog;
@@ -70,9 +65,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         );
         INSERT INTO changelog SELECT * FROM tmp_changelog;
         DROP TABLE tmp_changelog;
-
-        PRAGMA foreign_keys = ON;
-        PRAGMA wal_checkpoint(TRUNCATE);      
      "#,
     )?;
 
