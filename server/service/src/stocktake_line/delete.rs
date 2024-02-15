@@ -140,7 +140,7 @@ mod stocktake_line_test {
         assert_eq!(existing_line.id, deleted_id);
         assert_eq!(
             service
-                .get_stocktake_line(&context, existing_line.id)
+                .get_stocktake_line(&context, "invalid", existing_line.id)
                 .unwrap(),
             None
         );
