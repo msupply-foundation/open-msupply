@@ -10,34 +10,34 @@ use graphql_types::types::InvoiceLineNode;
 use repository::InvoiceLine;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice_line::inbound_shipment_line::{
-    ZeroInboundShipmentLineQuantities as ServiceInput,
-    ZeroInboundShipmentLineQuantitiesError as ServiceError,
+    ZeroInboundShipmentLineQuantity as ServiceInput,
+    ZeroInboundShipmentLineQuantityError as ServiceError,
 };
 
 #[derive(InputObject)]
-#[graphql(name = "ZeroInboundShipmentLineQuantitiesInput")]
-pub struct ZeroInboundShipmentLineQuantitiesInput {
+#[graphql(name = "ZeroInboundShipmentLineQuantityInput")]
+pub struct ZeroInboundShipmentLineQuantityInput {
     pub id: String,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "ZeroInboundShipmentLineQuantitiesError")]
-pub struct ZeroInboundShipmentLineQuantitiesError {
-    pub error: ZeroInboundShipmentLineQuantitiesErrorInterface,
+#[graphql(name = "ZeroInboundShipmentLineQuantityError")]
+pub struct ZeroInboundShipmentLineQuantityError {
+    pub error: ZeroInboundShipmentLineQuantityErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "ZeroInboundShipmentLineQuantitiesResponse")]
-pub enum ZeroInboundShipmentLineQuantitiesResponse {
-    Error(ZeroInboundShipmentLineQuantitiesError),
+#[graphql(name = "ZeroInboundShipmentLineQuantityResponse")]
+pub enum ZeroInboundShipmentLineQuantityResponse {
+    Error(ZeroInboundShipmentLineQuantityError),
     Response(InvoiceLineNode),
 }
 
 pub fn zero_inbound_shipment_line_quantity(
     ctx: &Context<'_>,
     store_id: &str,
-    input: ZeroInboundShipmentLineQuantitiesInput,
-) -> Result<ZeroInboundShipmentLineQuantitiesResponse> {
+    input: ZeroInboundShipmentLineQuantityInput,
+) -> Result<ZeroInboundShipmentLineQuantityResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -57,9 +57,9 @@ pub fn zero_inbound_shipment_line_quantity(
 }
 
 #[derive(Interface)]
-#[graphql(name = "ZeroInboundShipmentLineQuantitiesErrorInterface")]
+#[graphql(name = "ZeroInboundShipmentLineQuantityErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
-pub enum ZeroInboundShipmentLineQuantitiesErrorInterface {
+pub enum ZeroInboundShipmentLineQuantityErrorInterface {
     RecordNotFound(RecordNotFound),
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
@@ -67,31 +67,31 @@ pub enum ZeroInboundShipmentLineQuantitiesErrorInterface {
     InvoiceWasCreatedAfterStore(InvoiceWasCreatedAfterStore),
 }
 
-impl ZeroInboundShipmentLineQuantitiesInput {
+impl ZeroInboundShipmentLineQuantityInput {
     pub fn to_domain(self) -> ServiceInput {
-        let ZeroInboundShipmentLineQuantitiesInput { id } = self;
+        let ZeroInboundShipmentLineQuantityInput { id } = self;
         ServiceInput { id }
     }
 }
 
 pub fn map_response(
     from: Result<InvoiceLine, ServiceError>,
-) -> Result<ZeroInboundShipmentLineQuantitiesResponse> {
+) -> Result<ZeroInboundShipmentLineQuantityResponse> {
     let result = match from {
-        Ok(invoice_line) => ZeroInboundShipmentLineQuantitiesResponse::Response(
+        Ok(invoice_line) => ZeroInboundShipmentLineQuantityResponse::Response(
             InvoiceLineNode::from_domain(invoice_line),
         ),
-        Err(error) => ZeroInboundShipmentLineQuantitiesResponse::Error(
-            ZeroInboundShipmentLineQuantitiesError {
+        Err(error) => {
+            ZeroInboundShipmentLineQuantityResponse::Error(ZeroInboundShipmentLineQuantityError {
                 error: map_error(error)?,
-            },
-        ),
+            })
+        }
     };
 
     Ok(result)
 }
 
-fn map_error(error: ServiceError) -> Result<ZeroInboundShipmentLineQuantitiesErrorInterface> {
+fn map_error(error: ServiceError) -> Result<ZeroInboundShipmentLineQuantityErrorInterface> {
     use StandardGraphqlError::*;
     let formatted_error = format!("{:#?}", error);
 
@@ -99,33 +99,31 @@ fn map_error(error: ServiceError) -> Result<ZeroInboundShipmentLineQuantitiesErr
         // Structured Errors
         ServiceError::LineDoesNotExist => {
             return Ok(
-                ZeroInboundShipmentLineQuantitiesErrorInterface::RecordNotFound(RecordNotFound {}),
+                ZeroInboundShipmentLineQuantityErrorInterface::RecordNotFound(RecordNotFound {}),
             )
         }
         ServiceError::CannotEditFinalised => {
             return Ok(
-                ZeroInboundShipmentLineQuantitiesErrorInterface::CannotEditInvoice(
+                ZeroInboundShipmentLineQuantityErrorInterface::CannotEditInvoice(
                     CannotEditInvoice {},
                 ),
             )
         }
         ServiceError::InvoiceDoesNotExist => {
             return Ok(
-                ZeroInboundShipmentLineQuantitiesErrorInterface::ForeignKeyError(ForeignKeyError(
+                ZeroInboundShipmentLineQuantityErrorInterface::ForeignKeyError(ForeignKeyError(
                     ForeignKey::InvoiceId,
                 )),
             )
         }
         ServiceError::BatchIsReserved => {
             return Ok(
-                ZeroInboundShipmentLineQuantitiesErrorInterface::BatchIsReserved(
-                    BatchIsReserved {},
-                ),
+                ZeroInboundShipmentLineQuantityErrorInterface::BatchIsReserved(BatchIsReserved {}),
             )
         }
         ServiceError::InvoiceWasCreatedAfterStore => {
             return Ok(
-                ZeroInboundShipmentLineQuantitiesErrorInterface::InvoiceWasCreatedAfterStore(
+                ZeroInboundShipmentLineQuantityErrorInterface::InvoiceWasCreatedAfterStore(
                     InvoiceWasCreatedAfterStore {},
                 ),
             )

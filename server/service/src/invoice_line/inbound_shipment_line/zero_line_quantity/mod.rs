@@ -17,12 +17,12 @@ use self::generate::GenerateResult;
 
 /// For invoices that were created before store.
 #[derive(Clone, Debug, PartialEq, Default)]
-pub struct ZeroInboundShipmentLineQuantities {
+pub struct ZeroInboundShipmentLineQuantity {
     pub id: String,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum ZeroInboundShipmentLineQuantitiesError {
+pub enum ZeroInboundShipmentLineQuantityError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
@@ -36,8 +36,8 @@ pub enum ZeroInboundShipmentLineQuantitiesError {
 
 pub fn zero_inbound_shipment_line_quantity(
     ctx: &ServiceContext,
-    input: ZeroInboundShipmentLineQuantities,
-) -> Result<InvoiceLine, ZeroInboundShipmentLineQuantitiesError> {
+    input: ZeroInboundShipmentLineQuantity,
+) -> Result<InvoiceLine, ZeroInboundShipmentLineQuantityError> {
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
@@ -65,15 +65,15 @@ pub fn zero_inbound_shipment_line_quantity(
             )?;
 
             get_invoice_line(ctx, &new_line.id)
-                .map_err(ZeroInboundShipmentLineQuantitiesError::DatabaseError)?
-                .ok_or(ZeroInboundShipmentLineQuantitiesError::LineDoesNotExist)
+                .map_err(ZeroInboundShipmentLineQuantityError::DatabaseError)?
+                .ok_or(ZeroInboundShipmentLineQuantityError::LineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
     Ok(new_line)
 }
 
-impl From<RepositoryError> for ZeroInboundShipmentLineQuantitiesError {
+impl From<RepositoryError> for ZeroInboundShipmentLineQuantityError {
     fn from(error: RepositoryError) -> Self {
-        ZeroInboundShipmentLineQuantitiesError::DatabaseError(error)
+        ZeroInboundShipmentLineQuantityError::DatabaseError(error)
     }
 }

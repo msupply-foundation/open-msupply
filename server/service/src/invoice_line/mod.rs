@@ -125,8 +125,8 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn zero_inbound_shipment_line_quantity(
         &self,
         ctx: &ServiceContext,
-        input: ZeroInboundShipmentLineQuantities,
-    ) -> Result<InvoiceLine, ZeroInboundShipmentLineQuantitiesError> {
+        input: ZeroInboundShipmentLineQuantity,
+    ) -> Result<InvoiceLine, ZeroInboundShipmentLineQuantityError> {
         zero_inbound_shipment_line_quantity(ctx, input)
     }
 
