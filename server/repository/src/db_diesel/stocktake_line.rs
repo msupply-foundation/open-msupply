@@ -16,8 +16,8 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
-    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
-    StringFilter,
+    DBType, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow, Pagination,
+    RepositoryError, Sort, StringFilter,
 };
 
 #[derive(Clone)]
@@ -220,7 +220,7 @@ fn apply_item_filter(
                 .unwrap_or(Vec::new()); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(stocktake_line_dsl::item_id.eq_any(item_ids));
+            return query.filter(item_dsl::id.eq_any(item_ids));
         }
     }
     query
