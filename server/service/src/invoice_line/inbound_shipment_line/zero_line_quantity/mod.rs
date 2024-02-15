@@ -34,7 +34,7 @@ pub enum ZeroInboundShipmentLineQuantitiesError {
     NotThisInvoiceLine(String),
 }
 
-pub fn zero_inbound_shipment_line_quantities(
+pub fn zero_inbound_shipment_line_quantity(
     ctx: &ServiceContext,
     input: ZeroInboundShipmentLineQuantities,
 ) -> Result<InvoiceLine, ZeroInboundShipmentLineQuantitiesError> {
