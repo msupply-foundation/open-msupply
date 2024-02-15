@@ -4,10 +4,11 @@ use crate::{
     invoice_line::{
         inbound_shipment_line::{
             delete_inbound_shipment_line, insert_inbound_shipment_line,
-            update_inbound_shipment_line, DeleteInboundShipmentLine,
-            DeleteInboundShipmentLineError, InsertInboundShipmentLine,
+            update_inbound_shipment_line, zero_inbound_shipment_line_quantities,
+            DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
-            UpdateInboundShipmentLineError,
+            UpdateInboundShipmentLineError, ZeroInboundShipmentLineQuantities,
+            ZeroInboundShipmentLineQuantitiesError,
         },
         inbound_shipment_service_line::{
             delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
@@ -38,6 +39,7 @@ pub struct BatchInboundShipment {
     pub update_shipment: Option<Vec<UpdateInboundShipment>>,
     pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
     pub continue_on_error: Option<bool>,
+    pub zero_line_quantities: Option<Vec<ZeroInboundShipmentLineQuantities>>,
 }
 
 pub type InsertShipmentsResult =
@@ -72,6 +74,12 @@ pub type UpdateShipmentsResult =
     Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>;
 pub type DeleteShipmentsResult =
     Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>;
+pub type ZeroLineQuantitiesResult = Vec<
+    InputWithResult<
+        ZeroInboundShipmentLineQuantities,
+        Result<InvoiceLine, ZeroInboundShipmentLineQuantitiesError>,
+    >,
+>;
 
 #[derive(Debug, Default)]
 pub struct BatchInboundShipmentResult {
@@ -84,6 +92,7 @@ pub struct BatchInboundShipmentResult {
     pub delete_service_line: DeleteServiceLinesResult,
     pub update_shipment: UpdateShipmentsResult,
     pub delete_shipment: DeleteShipmentsResult,
+    pub zero_line_quantities: ZeroLineQuantitiesResult,
 }
 
 pub fn batch_inbound_shipment(
@@ -126,6 +135,15 @@ pub fn batch_inbound_shipment(
             let (has_errors, result) = mutations_processor
                 .do_mutations_with_user_id(input.delete_line, delete_inbound_shipment_line);
             results.delete_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.zero_line_quantities,
+                zero_inbound_shipment_line_quantities,
+            );
+            results.zero_line_quantities = result;
             if has_errors && !continue_on_error {
                 return Err(WithDBError::err(results));
             }
@@ -247,6 +265,7 @@ mod test {
             insert_service_line: None,
             update_service_line: None,
             delete_service_line: None,
+            zero_line_quantities: None,
         };
 
         // Test rollback
