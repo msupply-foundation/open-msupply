@@ -22,6 +22,8 @@ pub mod store;
 pub use self::store::*;
 pub mod activity_log;
 pub use self::activity_log::*;
+pub mod database_settings;
+pub use self::database_settings::*;
 pub mod requisition_line_chart;
 pub mod sync_settings;
 pub mod sync_status;

@@ -15,6 +15,7 @@ import {
   DownloadIcon,
   useNativeClient,
   LoadingButton,
+  DatabaseType,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -23,11 +24,13 @@ import { Setting } from './Setting';
 import { AndroidLogFileModal } from './AndroidLogFileModal';
 // import { AndroidDatabaseDownloadModal } from './AndroidDatabaseDownloadModal';
 import { WebAppLogFileModal } from './WebAppLogFileModal';
+import { useDatabaseSettings } from '../api/hooks/settings/useDatabaseSettings';
 
 export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const navigate = useNavigate();
   const { saveDatabase } = useNativeClient();
+  const { data: databaseSettings } = useDatabaseSettings();
   const [isDownloading, setIsDownloading] = useState(false);
   const t = useTranslation('common');
   const {
@@ -87,11 +90,13 @@ export const ServerSettings = () => {
           </>
         }
       />
+
       <Setting
         title={t('label.download-database')}
         component={
           <>
             <LoadingButton
+              disabled={databaseSettings?.databaseType !== DatabaseType.SqLite}
               isLoading={isDownloading}
               startIcon={<DownloadIcon />}
               onClick={async () => {
@@ -133,6 +138,7 @@ export const ServerSettings = () => {
         component={
           <>
             <BaseButton
+              disabled={databaseSettings?.databaseType !== DatabaseType.SqLite}
               startIcon={<DownloadIcon />}
               onClick={() => {
                 open(`${Environment.API_HOST}/support/database`, '_blank');
