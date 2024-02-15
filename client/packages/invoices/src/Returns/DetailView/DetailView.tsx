@@ -2,66 +2,64 @@ import React, { FC, useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
-  useEditModal,
+  // useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
   createQueryParamsStore,
-  DetailTabs,
-  ModalMode,
+  // DetailTabs,
+  // ModalMode,
 } from '@openmsupply-client/common';
-import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
-import { ContentArea } from './ContentArea';
+// import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
+// import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
-import { Toolbar } from './Toolbar';
-import { Footer } from './Footer';
-import { AppBarButtons } from './AppBarButtons';
-import { SidePanel } from './SidePanel';
-import { useReturn } from '../api';
+// import { Toolbar } from './Toolbar';
+// import { Footer } from './Footer';
+// import { AppBarButtons } from './AppBarButtons';
+// import { SidePanel } from './SidePanel';
+import { useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-import { Draft } from '../..';
+// import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
-import { OutboundLineEdit } from './OutboundLineEdit';
+// import { OutboundLineEdit } from './OutboundLineEdit';
 
 export const DetailView: FC = () => {
-  const isDisabled = useReturn.utils.isDisabled();
-  const { entity, mode, onOpen, onClose, isOpen, setMode } =
-    useEditModal<Draft>();
-  const { data, isLoading } = useReturn.document.get();
+  // const isDisabled = useReturn.utils.isDisabled();
+  // const { entity, mode, onOpen, onClose, isOpen, setMode } =
+  //   useEditModal<Draft>();
+  const { data, isLoading } = useReturns.document.invoiceByNumber();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
-  const onRowClick = useCallback(
-    (item: StockOutLineFragment | StockOutItem) => {
-      onOpen({ item: toItemRow(item) });
-    },
-    [toItemRow, onOpen]
-  );
-  const onAddItem = (draft?: Draft) => {
-    onOpen(draft);
-    setMode(ModalMode.Create);
-  };
-
-  console.log('data', data);
+  // const onRowClick = useCallback(
+  //   (item: StockOutLineFragment | StockOutItem) => {
+  //     onOpen({ item: toItemRow(item) });
+  //   },
+  //   [toItemRow, onOpen]
+  // );
+  // const onAddItem = (draft?: Draft) => {
+  //   onOpen(draft);
+  //   setMode(ModalMode.Create);
+  // };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
-  const tabs = [
-    {
-      Component: (
-        <ContentArea
-          onRowClick={!isDisabled ? onRowClick : null}
-          onAddItem={onAddItem}
-        />
-      ),
-      value: 'Details',
-    },
-    {
-      Component: <ActivityLogList recordId={data?.id ?? ''} />,
-      value: 'Log',
-    },
-  ];
+  // const tabs = [
+  //   {
+  //     Component: (
+  //       <ContentArea
+  //         // onRowClick={!isDisabled ? onRowClick : null}
+  //         onAddItem={onAddItem}
+  //       />
+  //     ),
+  //     value: 'Details',
+  //   },
+  //   {
+  //     Component: <ActivityLogList recordId={data?.id ?? ''} />,
+  //     value: 'Log',
+  //   },
+  // ];
 
   return (
     <React.Suspense
@@ -78,20 +76,20 @@ export const DetailView: FC = () => {
             },
           })}
         >
-          <AppBarButtons onAddItem={onAddItem} />
-          {isOpen && (
+          {/* <AppBarButtons onAddItem={onAddItem} /> */}
+          {/* {isOpen && (
             <OutboundLineEdit
               draft={entity}
               mode={mode}
               isOpen={isOpen}
               onClose={onClose}
             />
-          )}
+          )} */}
 
-          <Toolbar />
-          <DetailTabs tabs={tabs} />
-          <Footer />
-          <SidePanel />
+          {/* <Toolbar /> */}
+          {/* <DetailTabs tabs={tabs} /> */}
+          {/* <Footer /> */}
+          {/* <SidePanel /> */}
         </TableProvider>
       ) : (
         <AlertModal
@@ -99,7 +97,7 @@ export const DetailView: FC = () => {
           onOk={() =>
             navigate(
               RouteBuilder.create(AppRoute.Distribution)
-                .addPart(AppRoute.Returns)
+                .addPart(AppRoute.OutboundReturn)
                 .build()
             )
           }
