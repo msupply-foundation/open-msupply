@@ -2,6 +2,7 @@ use super::{StorePreferenceNode, UserStorePermissionConnector};
 use async_graphql::{
     dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
 };
+use chrono::NaiveDate;
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
@@ -51,6 +52,10 @@ impl UserStoreNode {
 
     pub async fn store_mode(&self) -> StoreModeNodeType {
         StoreModeNodeType::from_domain(&self.user_store.store_row.store_mode)
+    }
+
+    pub async fn created_date(&self) -> &Option<NaiveDate> {
+        &self.user_store.store_row.created_date
     }
 }
 
