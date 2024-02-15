@@ -1409,6 +1409,12 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export type InboundReturnInput = {
+  customerId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  inboundReturnLines: Array<InboundReturnLineInput>;
+};
+
 export type InboundReturnLine = {
   __typename: 'InboundReturnLine';
   batch?: Maybe<Scalars['String']['output']>;
@@ -1420,6 +1426,14 @@ export type InboundReturnLine = {
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   stockLineId: Scalars['String']['output'];
+};
+
+export type InboundReturnLineInput = {
+  comment: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  numberOfPacksReturned: Scalars['Float']['input'];
+  reasonId: Scalars['String']['input'];
+  stockLineId: Scalars['String']['input'];
 };
 
 export type InitialisationStatusNode = {
@@ -1492,6 +1506,17 @@ export type InsertFormSchemaInput = {
 };
 
 export type InsertFormSchemaResponse = FormSchemaNode;
+
+export type InsertInboundReturnError = {
+  __typename: 'InsertInboundReturnError';
+  error: InsertInboundReturnErrorInterface;
+};
+
+export type InsertInboundReturnErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertInboundReturnResponse = InsertInboundReturnError | InvoiceNode;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -1941,13 +1966,13 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InsertSupplierResponseErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertSupplierReturnError = {
   __typename: 'InsertSupplierReturnError';
-  error: InsertSupplierResponseErrorInterface;
+  error: InsertSupplierReturnErrorInterface;
+};
+
+export type InsertSupplierReturnErrorInterface = {
+  description: Scalars['String']['output'];
 };
 
 export type InsertSupplierReturnResponse = InsertSupplierReturnError | InvoiceNode;
@@ -2568,6 +2593,7 @@ export type Mutations = {
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
+  insertInboundReturn: InsertInboundReturnResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -2825,6 +2851,12 @@ export type MutationsInsertEncounterArgs = {
 
 export type MutationsInsertFormSchemaArgs = {
   input: InsertFormSchemaInput;
+};
+
+
+export type MutationsInsertInboundReturnArgs = {
+  input: InboundReturnInput;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -3312,7 +3344,7 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
-export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInterface & {
+export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
 };
@@ -3322,12 +3354,12 @@ export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & UpdatePre
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierResponseErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierReturnErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierResponseErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & InsertSupplierReturnErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
