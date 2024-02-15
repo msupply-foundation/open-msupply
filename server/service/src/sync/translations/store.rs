@@ -1,6 +1,7 @@
+use chrono::NaiveDate;
 use repository::{StorageConnection, StoreMode, StoreRow, SyncBufferRow};
 
-use crate::sync::sync_serde::empty_str_as_option_string;
+use crate::sync::sync_serde::{empty_str_as_option_string, zero_date_as_option};
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -29,6 +30,9 @@ pub struct LegacyStoreRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     logo: Option<String>,
     store_mode: LegacyStoreMode,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub created_date: Option<NaiveDate>,
 }
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
@@ -65,7 +69,7 @@ impl SyncTranslation for StoreTranslation {
         }
 
         // ignore stores without name
-        if data.name_id == "" {
+        if data.name_id.is_empty() {
             return Ok(None);
         }
 
@@ -81,6 +85,7 @@ impl SyncTranslation for StoreTranslation {
             site_id: data.site_id,
             logo: data.logo,
             store_mode,
+            created_date: data.created_date,
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
