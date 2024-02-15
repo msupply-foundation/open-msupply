@@ -4,7 +4,7 @@ use crate::{
     invoice_line::{
         inbound_shipment_line::{
             delete_inbound_shipment_line, insert_inbound_shipment_line,
-            update_inbound_shipment_line, zero_inbound_shipment_line_quantities,
+            update_inbound_shipment_line, zero_inbound_shipment_line_quantity,
             DeleteInboundShipmentLine, DeleteInboundShipmentLineError, InsertInboundShipmentLine,
             InsertInboundShipmentLineError, UpdateInboundShipmentLine,
             UpdateInboundShipmentLineError, ZeroInboundShipmentLineQuantities,
@@ -141,7 +141,7 @@ pub fn batch_inbound_shipment(
 
             let (has_errors, result) = mutations_processor.do_mutations(
                 input.zero_line_quantities,
-                zero_inbound_shipment_line_quantities,
+                zero_inbound_shipment_line_quantity,
             );
             results.zero_line_quantities = result;
             if has_errors && !continue_on_error {
