@@ -23,7 +23,7 @@ pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
 
 pub fn check_item_exists(
@@ -59,5 +59,5 @@ pub fn check_line_belongs_to_invoice(line: &InvoiceLineRow, invoice: &InvoiceRow
     if line.invoice_id != invoice.id {
         return false;
     }
-    return true;
+    true
 }
