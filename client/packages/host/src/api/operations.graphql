@@ -33,3 +33,11 @@ mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
     }
   }
 }
+
+query databaseSettings {
+  databaseSettings {
+    ... on DatabaseSettingsNode {
+      databaseType
+    }
+  }
+}
