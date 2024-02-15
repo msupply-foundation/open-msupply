@@ -157,19 +157,6 @@ macro_rules! check_delete_record_by_id {
     }};
 }
 
-macro_rules! check_is_inactive_record_by_id {
-    ($repository:ident, $connection:ident, $id:ident) => {{
-        assert_eq!(
-            $repository::new(&$connection)
-                .find_inactive_by_id(&$id)
-                .unwrap()
-                .expect("Record not found")
-                .is_active,
-            false
-        )
-    }};
-}
-
 macro_rules! check_delete_record_by_id_option {
     ($repository:ident, $connection:ident, $id:ident) => {{
         assert_eq!(
