@@ -12,6 +12,9 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  useAuthContext,
+  DateUtils,
+  RewindIcon,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
@@ -43,6 +46,7 @@ export const Toolbar: FC = () => {
   const { data: shipment } = useInbound.document.get();
 
   const onDelete = useInbound.lines.deleteSelected();
+  const onZeroQuantities = useInbound.lines.zeroQuantities();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
     'theirReference',
@@ -50,6 +54,15 @@ export const Toolbar: FC = () => {
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
   const isTransfer = !!shipment?.linkedShipment?.id;
+  const { store } = useAuthContext();
+  const storeCreatedDate = DateUtils.getDateOrNull(store?.createdDate ?? null);
+  const invoiceCreatedDate = DateUtils.getDateOrNull(
+    shipment?.createdDatetime ?? null
+  );
+  const isInvoiceCreatedBeforeStore =
+    storeCreatedDate && invoiceCreatedDate
+      ? DateUtils.isBefore(invoiceCreatedDate, storeCreatedDate)
+      : false;
 
   if (!data) return null;
 
@@ -115,6 +128,14 @@ export const Toolbar: FC = () => {
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
+            {isInvoiceCreatedBeforeStore && (
+              <DropdownMenuItem
+                IconComponent={RewindIcon}
+                onClick={onZeroQuantities}
+              >
+                {t('button.zero-line-quantities')}
+              </DropdownMenuItem>
+            )}
           </DropdownMenu>
         </Grid>
       </Grid>
