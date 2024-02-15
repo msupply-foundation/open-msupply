@@ -12,7 +12,7 @@ import {
   TabContext,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
-import { useDraftSupplierReturnLines } from './useDraftReturnLines';
+import { useDraftSupplierReturnLines } from './useDraftSupplierReturnLines';
 import { ReturnReasonsTable } from './ReturnReasonsTable';
 
 interface SupplierReturnLinesModalProps {

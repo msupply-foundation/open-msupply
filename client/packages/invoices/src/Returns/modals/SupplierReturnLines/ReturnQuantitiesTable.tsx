@@ -1,6 +1,6 @@
 import { DataTable, NumberInputCell, useColumns } from 'packages/common/src';
 import React from 'react';
-import { DraftSupplierReturnLine } from './useDraftReturnLines';
+import { DraftSupplierReturnLine } from './useDraftSupplierReturnLines';
 
 export const QuantityToReturnTableComponent = ({
   lines,

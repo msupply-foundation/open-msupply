@@ -6,7 +6,7 @@ import {
 } from 'packages/common/src';
 import { ReturnReasonSearchInput } from 'packages/system/src';
 import React from 'react';
-import { DraftSupplierReturnLine } from './useDraftReturnLines';
+import { DraftSupplierReturnLine } from './useDraftSupplierReturnLines';
 
 const ReturnReasonCell = ({
   rowData,
