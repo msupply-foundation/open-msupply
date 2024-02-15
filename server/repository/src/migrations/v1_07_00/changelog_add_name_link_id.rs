@@ -24,11 +24,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
         -- Adding changelog.name_link_id
         ALTER TABLE changelog
-        ADD COLUMN name_link_id TEXT;
-        
-        UPDATE changelog
-        SET name_link_id = name_id;
-        
+        RENAME COLUMN name_id to name_link_id;
+                        
         ALTER TABLE changelog ADD CONSTRAINT changelog_name_link_id_fkey FOREIGN KEY (name_link_id) REFERENCES name_link(id);
         "#,
     )?;
@@ -51,21 +48,30 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         DROP TRIGGER requisition_line_delete_trigger;
 
         -- Adding changelog.name_link_id
-        PRAGMA foreign_keys = OFF;
-        ALTER TABLE changelog
-        ADD COLUMN name_link_id TEXT REFERENCES name_link(id);
-        
-        UPDATE changelog
-        SET name_link_id = name_id;
-        PRAGMA foreign_keys = ON;
+
+        CREATE TABLE tmp_changelog AS SELECT * FROM changelog;
+        DROP TABLE changelog;
+        CREATE TABLE changelog (
+            cursor INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            -- the table name where the change happened
+            table_name TEXT NOT NULL,
+            -- row id of the modified row
+            record_id TEXT NOT NULL,
+            row_action TEXT NOT NULL,
+            -- Below fields are extracted from associated record where it's deemed necessary (see changelog/README.md)
+            name_link_id TEXT REFERENCES name_link(id), -- RENAMED from name_id
+            store_id TEXT,
+            is_sync_update BOOLEAN NOT NULL DEFAULT FALSE
+        );
+        INSERT INTO changelog SELECT * FROM tmp_changelog;
+        DROP TABLE tmp_changelog;
      "#,
     )?;
 
     sql!(
         connection,
         r#"
-        DROP INDEX "index_changelog_name_id_fkey";
-        ALTER TABLE changelog DROP COLUMN name_id;
+        DROP INDEX IF EXISTS "index_changelog_name_id_fkey";
         CREATE INDEX "index_changelog_name_link_id_fkey" ON "changelog" ("name_link_id");
 
         -- View of the changelog that only contains the most recent changes to a row, i.e. previous row
