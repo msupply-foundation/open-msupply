@@ -13,6 +13,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class FileManager {
     private static final int SAVE_FILE_REQUEST = 12321;
@@ -28,8 +30,8 @@ public class FileManager {
     public void SaveDatabase(File file) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/x-sqlite3");
-        intent.putExtra(Intent.EXTRA_TITLE, "openmsupply.sqlite");
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_TITLE, "openmsupply.sqlite.zip");
         activity.startActivityForResult(intent, SAVE_DATABASE_REQUEST);
 
     }
@@ -74,11 +76,17 @@ public class FileManager {
             try {
                 inputStream = new FileInputStream(dbFile);
                 outputStream = context.getContentResolver().openOutputStream(uri);
-
-                byte[] buffer = new byte[1024];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, length);
+                ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(outputStream));
+                try {
+                    ZipEntry entry = new ZipEntry("openmsupply.sqlite");
+                    out.putNextEntry(entry);
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = inputStream.read(buffer)) > 0) {
+                        outputStream.write(buffer, 0, length);
+                    }
+                } finally {
+                    inputStream.close();
                 }
             } catch (Exception e) {
                 Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
