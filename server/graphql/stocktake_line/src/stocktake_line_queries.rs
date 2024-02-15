@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::generic_filters::EqualFilterStringInput;
+use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::{
@@ -17,6 +17,7 @@ pub struct StocktakeLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
+    pub item_code_or_name: Option<StringFilterInput>,
 }
 
 impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
@@ -25,6 +26,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             id: f.id.map(EqualFilter::from),
             stocktake_id: f.stocktake_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
+            item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
         }
     }
 }
@@ -41,8 +43,8 @@ pub enum StocktakeLineSortFieldInput {
     ExpiryDate,
     /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location name
-    LocationName,
+    /// Stocktake line item stock location code
+    LocationCode,
 }
 
 #[derive(InputObject)]
@@ -64,7 +66,7 @@ impl StocktakeLineSortInput {
             from::Batch => to::Batch,
             from::ExpiryDate => to::ExpiryDate,
             from::PackSize => to::PackSize,
-            from::LocationName => to::LocationName,
+            from::LocationCode => to::LocationCode,
         };
 
         StocktakeLineSort {

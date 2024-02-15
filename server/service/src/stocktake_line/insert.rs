@@ -62,9 +62,10 @@ fn check_stocktake_line_does_not_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    let count = StocktakeLineRepository::new(connection).count(Some(
-        StocktakeLineFilter::new().id(EqualFilter::equal_to(id)),
-    ))?;
+    let count = StocktakeLineRepository::new(connection).count(
+        Some(StocktakeLineFilter::new().id(EqualFilter::equal_to(id))),
+        None,
+    )?;
     Ok(count == 0)
 }
 
@@ -73,8 +74,10 @@ fn check_stock_line_is_unique(
     id: &str,
     stock_line_id: &str,
 ) -> Result<bool, RepositoryError> {
-    let stocktake_lines = StocktakeLineRepository::new(connection)
-        .query_by_filter(StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(id)))?;
+    let stocktake_lines = StocktakeLineRepository::new(connection).query_by_filter(
+        StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(id)),
+        None,
+    )?;
     let already_has_stock_line = stocktake_lines.iter().find(|line| {
         if let Some(ref stock_line) = line.stock_line {
             if stock_line.id == stock_line_id {
@@ -269,7 +272,7 @@ pub fn insert_stocktake_line(
             let new_stocktake_line = generate(stock_line, item_id, input);
             StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
 
-            let line = get_stocktake_line(ctx, new_stocktake_line.id)?;
+            let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
             line.ok_or(InsertStocktakeLineError::InternalError(
                 "Failed to read the just inserted stocktake line!".to_string(),
             ))
