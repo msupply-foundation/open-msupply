@@ -51,6 +51,13 @@ type ServiceResult = BatchInboundShipmentResult;
     name = "DeleteInboundShipmentServiceLineResponseWithId",
     params(inbound_shipment_line::service_line::delete::DeleteResponse)
 ))]
+#[graphql(concrete(
+    name = "ZeroInboundShipmentLineQuantityResponseWithId",
+    params(
+        inbound_shipment_line::line::zero_line_quantity::ZeroInboundShipmentLineQuantityResponse
+    )
+))]
+
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
@@ -74,6 +81,8 @@ type UpdateShipmentsResponse =
     Option<Vec<MutationWithId<inbound_shipment::update::UpdateResponse>>>;
 type DeleteShipmentsResponse =
     Option<Vec<MutationWithId<inbound_shipment::delete::DeleteResponse>>>;
+type ZeroLinesQuantityResponse =
+    Option<Vec<MutationWithId<inbound_shipment_line::line::zero_line_quantity::ZeroInboundShipmentLineQuantityResponse>>>;
 
 #[derive(SimpleObject)]
 #[graphql(name = "BatchInboundShipmentResponse")]
@@ -82,6 +91,7 @@ pub struct BatchResponse {
     insert_inbound_shipment_lines: InsertShipmentLinesResponse,
     update_inbound_shipment_lines: UpdateShipmentLinesResponse,
     delete_inbound_shipment_lines: DeleteShipmentLinesResponse,
+    zero_lines_quantity: ZeroLinesQuantityResponse,
     insert_inbound_shipment_service_lines: InsertShipmentServiceLinesResponse,
     update_inbound_shipment_service_lines: UpdateShipmentServiceLinesResponse,
     delete_inbound_shipment_service_lines: DeleteShipmentServiceLinesResponse,
@@ -105,6 +115,9 @@ pub struct BatchInput {
         Option<Vec<inbound_shipment_line::service_line::update::UpdateInput>>,
     pub delete_inbound_shipment_service_lines:
         Option<Vec<inbound_shipment_line::service_line::delete::DeleteInput>>,
+    pub zero_lines_quantity: Option<
+        Vec<inbound_shipment_line::line::zero_line_quantity::ZeroInboundShipmentLineQuantityInput>,
+    >,
     pub update_inbound_shipments: Option<Vec<inbound_shipment::update::UpdateInput>>,
     pub delete_inbound_shipments: Option<Vec<inbound_shipment::delete::DeleteInput>>,
     pub continue_on_error: Option<bool>,
@@ -136,6 +149,7 @@ impl BatchInput {
             insert_inbound_shipment_lines,
             update_inbound_shipment_lines,
             delete_inbound_shipment_lines,
+            zero_lines_quantity,
             insert_inbound_shipment_service_lines,
             update_inbound_shipment_service_lines,
             delete_inbound_shipment_service_lines,
@@ -152,6 +166,8 @@ impl BatchInput {
             update_line: update_inbound_shipment_lines
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             delete_line: delete_inbound_shipment_lines
+                .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
+            zero_lines_quantity: zero_lines_quantity
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
             insert_service_line: insert_inbound_shipment_service_lines
                 .map(|inputs| inputs.into_iter().map(|input| input.to_domain()).collect()),
@@ -178,6 +194,7 @@ impl BatchResponse {
             insert_service_line,
             update_service_line,
             delete_service_line,
+            zero_lines_quantity,
             update_shipment,
             delete_shipment,
         }: ServiceResult,
@@ -192,6 +209,7 @@ impl BatchResponse {
             delete_inbound_shipment_service_lines: map_delete_service_lines(delete_service_line)?,
             update_inbound_shipments: map_update_shipments(update_shipment)?,
             delete_inbound_shipments: map_delete_shipments(delete_shipment)?,
+            zero_lines_quantity: map_zero_lines_quantity(zero_lines_quantity)?,
         };
 
         Ok(result)
@@ -237,6 +255,27 @@ fn map_delete_shipments(responses: DeleteShipmentsResult) -> Result<DeleteShipme
             Ok(response) => response,
             Err(standard_error) => return Err(to_standard_error(response.input, standard_error)),
         };
+        result.push(MutationWithId {
+            id: response.input.id.clone(),
+            response: mapped_response,
+        });
+    }
+
+    Ok(result.vec_or_none())
+}
+
+fn map_zero_lines_quantity(
+    responses: ZeroLinesQuantityResult,
+) -> Result<ZeroLinesQuantityResponse> {
+    let mut result = Vec::new();
+    for response in responses {
+        let mapped_response =
+            match inbound_shipment_line::line::zero_line_quantity::map_response(response.result) {
+                Ok(response) => response,
+                Err(standard_error) => {
+                    return Err(to_standard_error(response.input, standard_error))
+                }
+            };
         result.push(MutationWithId {
             id: response.input.id.clone(),
             response: mapped_response,
@@ -619,6 +658,7 @@ mod test {
                 insert_service_line: vec![],
                 update_service_line: vec![],
                 delete_service_line: vec![],
+                zero_lines_quantity: vec![],
             })
         }));
 
@@ -657,6 +697,7 @@ mod test {
                 insert_service_line: vec![],
                 update_service_line: vec![],
                 delete_service_line: vec![],
+                zero_lines_quantity: vec![],
             })
         }));
         let expected_message = "Bad user input";
@@ -717,6 +758,7 @@ mod test {
                 insert_service_line: vec![],
                 update_service_line: vec![],
                 delete_service_line: vec![],
+                zero_lines_quantity: vec![],
             })
         }));
 
