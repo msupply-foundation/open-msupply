@@ -12,7 +12,7 @@ import {
   TabContext,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
-import { useDraftReturnLines } from './useDraftReturnLines';
+import { useDraftSupplierReturnLines } from './useDraftReturnLines';
 import { ReturnReasonsTable } from './ReturnReasonsTable';
 
 interface SupplierReturnLinesModalProps {
@@ -49,7 +49,7 @@ export const SupplierReturnLinesModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update, saveSupplierReturn } = useDraftReturnLines(
+  const { lines, update, saveSupplierReturn } = useDraftSupplierReturnLines(
     stockLineIds,
     supplierId
   );
