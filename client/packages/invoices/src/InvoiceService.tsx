@@ -32,9 +32,9 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .build();
 
-  // const supplierReturnsRoute = RouteBuilder.create(AppRoute.Returns).build();
+  // const outboundReturnsRoute = RouteBuilder.create(AppRoute.Returns).build();
 
-  const supplierReturnRoute = RouteBuilder.create(AppRoute.OutboundReturn)
+  const outboundReturnRoute = RouteBuilder.create(AppRoute.OutboundReturn)
     .addPart(':invoiceNumber')
     .build();
 
@@ -55,8 +55,8 @@ const InvoiceService: FC = () => {
       />
       <Route path={prescriptionsRoute} element={<PrescriptionListView />} />
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
-      {/* <Route path={supplierReturnsRoute} element={<PrescriptionListView />} /> */}
-      <Route path={supplierReturnRoute} element={<ReturnsDetailView />} />
+
+      <Route path={outboundReturnRoute} element={<ReturnsDetailView />} />
     </Routes>
   );
 };

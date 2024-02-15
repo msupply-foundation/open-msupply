@@ -76,6 +76,7 @@ export const DetailView: FC = () => {
             },
           })}
         >
+          {JSON.stringify(data)}
           {/* <AppBarButtons onAddItem={onAddItem} /> */}
           {/* {isOpen && (
             <OutboundLineEdit
