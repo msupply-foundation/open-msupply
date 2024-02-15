@@ -11,6 +11,7 @@ fragment UserStoreNode on UserStoreNode {
     omProgramModule
     vaccineModule
   }
+  createdDate
 }
 
 query authToken($username: String!, $password: String!) {
