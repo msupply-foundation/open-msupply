@@ -1,5 +1,11 @@
 import React, { useEffect } from 'react';
-import { InboundReturnLine, RecordPatch } from '@openmsupply-client/common';
+import {
+  FnUtils,
+  InboundReturnInput,
+  InboundReturnLine,
+  InboundReturnLineInput,
+  RecordPatch,
+} from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
 export type DraftInboundReturnLine = InboundReturnLine & {
@@ -7,12 +13,16 @@ export type DraftInboundReturnLine = InboundReturnLine & {
   comment: string;
 };
 
-export const useDraftInboundReturnLines = (stockLineIds: string[]) => {
+export const useDraftInboundReturnLines = (
+  stockLineIds: string[],
+  customerId: string
+) => {
   const [draftLines, setDraftLines] = React.useState<DraftInboundReturnLine[]>(
     []
   );
 
   const lines = useReturns.lines.inboundReturnLines(stockLineIds);
+  const { mutateAsync } = useReturns.document.insertInboundReturn();
 
   useEffect(() => {
     const newDraftLines = (lines ?? []).map(seed => ({
@@ -36,5 +46,26 @@ export const useDraftInboundReturnLines = (stockLineIds: string[]) => {
     });
   };
 
-  return { lines: draftLines, update };
+  const saveInboundReturn = async () => {
+    const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
+      line => {
+        const { id, reasonId, numberOfPacksReturned, stockLineId, comment } =
+          line;
+
+        return { id, stockLineId, reasonId, comment, numberOfPacksReturned };
+      }
+    );
+
+    const input: InboundReturnInput = {
+      id: FnUtils.generateUUID(),
+      customerId,
+      inboundReturnLines,
+    };
+
+    // TODO: error handling here
+    // also need to consider what we do if the error was on the first page of the wizard
+    await mutateAsync(input);
+  };
+
+  return { lines: draftLines, update, saveInboundReturn };
 };

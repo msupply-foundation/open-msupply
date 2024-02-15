@@ -18,6 +18,7 @@ import { ReturnReasonsTable } from '../ReturnReasonsTable';
 interface InboundReturnEditModalProps {
   isOpen: boolean;
   stockLineIds: string[];
+  customerId: string;
   onClose: () => void;
 }
 
@@ -29,6 +30,7 @@ enum Tabs {
 export const InboundReturnEditModal = ({
   isOpen,
   stockLineIds,
+  customerId,
   onClose,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation('distribution');
@@ -47,11 +49,16 @@ export const InboundReturnEditModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update } = useDraftInboundReturnLines(stockLineIds);
+  const { lines, update, saveInboundReturn } = useDraftInboundReturnLines(
+    stockLineIds,
+    customerId
+  );
 
+  const okEnabled =
+    currentTab === Tabs.Reason && lines.every(line => line.reasonId);
   const onOk = async () => {
     try {
-      // await saveInboundReturn();
+      await saveInboundReturn();
       onClose();
     } catch {
       // TODO: handle error display...
@@ -73,7 +80,7 @@ export const InboundReturnEditModal = ({
         }
         okButton={
           currentTab === Tabs.Reason ? (
-            <DialogButton onClick={onOk} variant="ok" />
+            <DialogButton onClick={onOk} variant="ok" disabled={!okEnabled} />
           ) : undefined
         }
         height={height}
