@@ -5,6 +5,8 @@ import { useInboundLines } from './useInboundLines';
 import { useInboundRows } from './useInboundRows';
 import { useInboundServiceLines } from './useInboundServiceLines';
 import { useSaveInboundLines } from './useSaveInboundLines';
+import { useZeroInboundLinesQuantity } from './useZeroInboundLinesQuantity';
+import { useZeroInboundLineQuantity } from './useZeroInboundLineQuantity';
 
 export const Lines = {
   useDeleteInboundLines,
@@ -14,4 +16,6 @@ export const Lines = {
   useInboundRows,
   useInboundServiceLines,
   useSaveInboundLines,
+  useZeroInboundLineQuantity,
+  useZeroInboundLinesQuantity,
 };
