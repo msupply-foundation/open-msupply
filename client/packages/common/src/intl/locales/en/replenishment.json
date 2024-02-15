@@ -1,5 +1,6 @@
 {
   "button.add-from-master-list": "Add from master list",
+  "button.new-return": "New Return",
   "button.new-shipment": "New Shipment",
   "button.return-lines": "Return selected lines",
   "button.requested-to-suggested": "Use Suggested Quantities",
@@ -7,6 +8,7 @@
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
   "error.no-internal-orders": "No internal orders to display.",
+  "error.no-outbound-returns": "There are no Outbound Returns to display.",
   "error.no-requisition-items": "No items have been added to this Internal Order.",
   "error.requisition-not-found": "Internal Order not found",
   "error.shipment-not-found": "Shipment not found",
