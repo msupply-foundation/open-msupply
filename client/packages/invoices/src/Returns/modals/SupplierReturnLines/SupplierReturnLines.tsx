@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftSupplierReturnLines } from './useDraftSupplierReturnLines';
-import { ReturnReasonsTable } from './ReturnReasonsTable';
+import { ReturnReasonsTable } from '../ReturnReasonsTable';
 
 interface SupplierReturnLinesModalProps {
   isOpen: boolean;
