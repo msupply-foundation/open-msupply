@@ -15,6 +15,7 @@ import { OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { DraftStockOutLine, InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
+import { OutboundReturnRowFragment } from './Returns';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -242,6 +243,28 @@ export const outboundsToCsv = (
     node.theirReference,
     node.comment,
     node.pricing.totalAfterTax,
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
+export const outboundReturnsToCsv = (
+  returns: OutboundReturnRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.entered'),
+  ];
+
+  const data = returns.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    Formatter.csvDateTimeString(node.createdDatetime),
   ]);
   return Formatter.csv({ fields, data });
 };
