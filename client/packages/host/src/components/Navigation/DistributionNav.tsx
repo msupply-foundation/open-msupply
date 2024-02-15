@@ -52,7 +52,7 @@ export const DistributionNav: FC = () => {
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Distribution)
-              .addPart(AppRoute.Returns)
+              .addPart(AppRoute.OutboundReturn)
               .build()}
             text={t('returns')}
           />

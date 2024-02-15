@@ -7,8 +7,6 @@ export const useDraftNewReturnLines = (stockLineIds: string[]) => {
 
   const lines = useReturns.lines.newReturnLines(stockLineIds);
 
-  console.log('lines', lines);
-
   useEffect(() => {
     const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
 
