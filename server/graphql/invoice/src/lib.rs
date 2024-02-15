@@ -7,7 +7,9 @@ pub mod invoice_queries;
 use self::invoice_queries::*;
 
 pub mod mutations;
-use self::mutations::{inbound_shipment, outbound_shipment, prescription, supplier_return};
+use self::mutations::{
+    inbound_return, inbound_shipment, outbound_shipment, prescription, supplier_return,
+};
 
 #[cfg(test)]
 mod query_tests;
@@ -178,5 +180,14 @@ impl InvoiceMutations {
         input: supplier_return::insert::InsertInput,
     ) -> Result<supplier_return::insert::InsertResponse> {
         supplier_return::insert::insert(ctx, input)
+    }
+
+    async fn insert_inbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_return::insert::InsertInput,
+    ) -> Result<inbound_return::insert::InsertResponse> {
+        inbound_return::insert::insert(ctx, &store_id, input)
     }
 }
