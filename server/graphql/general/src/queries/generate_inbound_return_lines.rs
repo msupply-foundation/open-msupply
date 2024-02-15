@@ -24,7 +24,7 @@ pub fn generate_inbound_return_lines(
     _input: GenerateInboundReturnInput,
 ) -> Result<Vec<InboundReturnLine>> {
     Ok(vec![InboundReturnLine {
-        id: "new_return_return_line1".to_string(),
+        id: "new_inbound_return_line1".to_string(),
         // Below, don't have to match atm
         item_code: "abc".to_string(),
         item_name: "Item name 1".to_string(),
