@@ -31,8 +31,12 @@ public class FileManager {
     public void SaveDatabase(File file) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        intent.setType("application/zip");
-        intent.putExtra(Intent.EXTRA_TITLE, "openmsupply.sqlite.zip");
+        // intent.setType("application/zip");
+        // intent.putExtra(Intent.EXTRA_TITLE, "openmsupply.sqlite.zip");
+        intent.setType("application/x-sqlite3");
+        intent.putExtra(Intent.EXTRA_TITLE, "openmsupply2.sqlite");
+        this.dbFile = file;
+
         activity.startActivityForResult(intent, SAVE_DATABASE_REQUEST);
 
     }
@@ -73,22 +77,22 @@ public class FileManager {
 
             InputStream inputStream = null;
             OutputStream outputStream = null;
+            ZipOutputStream zipStream = null;
 
             try {
                 inputStream = new FileInputStream(dbFile);
                 outputStream = context.getContentResolver().openOutputStream(uri);
-                ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(outputStream));
-                try {
-                    ZipEntry entry = new ZipEntry("openmsupply.sqlite");
-                    out.putNextEntry(entry);
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = inputStream.read(buffer)) > 0) {
-                        outputStream.write(buffer, 0, length);
-                    }
-                } finally {
-                    inputStream.close();
+                // zipStream = new ZipOutputStream(new BufferedOutputStream(outputStream));
+
+                // ZipEntry entry = new ZipEntry("omsupply-database.sqlite");
+                // zipStream.putNextEntry(entry);
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    // zipStream.write(buffer, 0, length);
+                    outputStream.write(buffer, 0, length);
                 }
+
             } catch (Exception e) {
                 Toast.makeText(context, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
             } finally {
@@ -101,11 +105,21 @@ public class FileManager {
                 }
                 if (outputStream != null) {
                     try {
+                        outputStream.flush();
                         outputStream.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
+                if (zipStream != null) {
+                    try {
+                        zipStream.flush();
+                        zipStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
         }
     }
