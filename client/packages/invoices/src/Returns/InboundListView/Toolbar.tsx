@@ -14,8 +14,7 @@ import { useReturns } from '../api';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation('distribution');
-  // TODO
-  const onDelete = useReturns.document.deleteOutboundRows();
+  const onDelete = useReturns.document.deleteInboundRows();
 
   return (
     <AppBarContentPortal

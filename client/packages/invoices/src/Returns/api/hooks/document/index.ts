@@ -3,6 +3,7 @@ import { useOutbounds } from './useOutbounds';
 import { useOutboundsAll } from './useOutboundsAll';
 import { useInbounds } from './useInbounds';
 import { useInboundsAll } from './useInboundsAll';
+import { useInboundDeleteRows } from './useInboundDeleteRows';
 
 export const Document = {
   useOutbounds,
@@ -10,4 +11,5 @@ export const Document = {
   useInbounds,
   useInboundsAll,
   useOutboundDeleteRows,
+  useInboundDeleteRows,
 };

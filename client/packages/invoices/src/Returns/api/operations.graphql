@@ -97,3 +97,15 @@ mutation deleteOutboundReturns(
     }
   }
 }
+
+mutation deleteInboundReturns(
+  $storeId: String!
+  $input: [DeleteCustomerReturnInput!]!
+) {
+  deleteCustomerReturns(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeletedIdsResponse {
+      deletedIds
+    }
+  }
+}
