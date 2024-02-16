@@ -25,18 +25,9 @@ export const useDeleteSelectedLines = (): (() => void) => {
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) || [];
   const onDelete = async () => {
-    const result = await mutateAsync(selectedRows).catch(err => {
+    await mutateAsync(selectedRows).catch(err => {
       throw err;
     });
-    const errorsOnDelete =
-      result.batchInboundShipment.deleteInboundShipmentLines?.filter(
-        line => 'error' in line.response
-      );
-    // throws error as a big object to be processed later in custom formatter
-    if (errorsOnDelete) {
-      throw errorsOnDelete;
-    }
-    return;
   };
 
   const confirmAndDelete = useDeleteConfirmation({
