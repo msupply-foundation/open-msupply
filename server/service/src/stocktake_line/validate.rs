@@ -12,7 +12,10 @@ pub fn check_stocktake_line_exist(
     id: &str,
 ) -> Result<Option<StocktakeLine>, RepositoryError> {
     Ok(StocktakeLineRepository::new(&connection)
-        .query_by_filter(StocktakeLineFilter::new().id(EqualFilter::equal_to(id)))?
+        .query_by_filter(
+            StocktakeLineFilter::new().id(EqualFilter::equal_to(id)),
+            None,
+        )?
         .pop())
 }
 

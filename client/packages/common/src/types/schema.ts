@@ -4815,6 +4815,7 @@ export type StocktakeLineConnector = {
 
 export type StocktakeLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -4845,7 +4846,7 @@ export enum StocktakeLineSortFieldInput {
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  LocationName = 'locationName',
+  LocationCode = 'locationCode',
   PackSize = 'packSize'
 }
 

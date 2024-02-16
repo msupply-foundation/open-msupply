@@ -41,7 +41,7 @@ const ItemListComponent: FC = () => {
 
   const columns = useColumns<ItemWithStats>(
     [
-      'code',
+      ['code', { width: 75 }],
       [
         'name',
         {

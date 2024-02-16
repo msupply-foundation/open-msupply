@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState, useEffect } from 'react';
+import React, { FC, ReactNode, useState, useEffect, useCallback } from 'react';
 import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import {
@@ -25,13 +25,23 @@ interface DetailTabsProps {
   tabs: TabDefinition[];
   requiresConfirmation?: (tab: string) => boolean;
 }
+
 export const DetailTabs: FC<DetailTabsProps> = ({
   tabs,
   requiresConfirmation = () => false,
 }) => {
+  const isValidTab = useCallback(
+    (tab?: string): tab is string =>
+      !!tab && tabs.some(({ value }) => value === tab),
+    [tabs]
+  );
+
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation();
+  const currentUrlTab = urlQuery['tab'] as string | undefined;
+  const currentTab = isValidTab(currentUrlTab)
+    ? currentUrlTab
+    : tabs[0]?.value ?? '';
 
   // Inelegant hack to force the "Underline" indicator for the currently active
   // tab to re-render in the correct position when one of the side "drawers" is
@@ -39,13 +49,10 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
   const { showConfirmation } = useConfirmOnLeaving(false);
-  const handleResize = debounce(
-    () => window.dispatchEvent(new Event('resize')),
-    100
+  const handleResize = useCallback(
+    () => debounce(() => window.dispatchEvent(new Event('resize')), 100),
+    []
   );
-  useEffect(() => {
-    handleResize();
-  }, [detailPanelOpen, drawerOpen]);
 
   const [tabQueryParams, setTabQueryParams] = useState<
     Record<string, UrlQueryObject>
@@ -73,14 +80,13 @@ export const DetailTabs: FC<DetailTabsProps> = ({
     }
   };
 
-  const isValidTab = (tab?: string): tab is string =>
-    !!tab && tabs.some(({ value }) => value === tab);
+  useEffect(() => {
+    handleResize();
+  }, [detailPanelOpen, drawerOpen, handleResize]);
 
   useEffect(() => {
     const tab = urlQuery['tab'] as string | undefined;
     if (isValidTab(tab)) {
-      setCurrentTab(tab);
-
       // store the query params for the current tab
       setTabQueryParams(value => {
         return {
@@ -89,7 +95,7 @@ export const DetailTabs: FC<DetailTabsProps> = ({
         };
       });
     }
-  }, [urlQuery]);
+  }, [isValidTab, urlQuery]);
 
   return (
     <TabContext value={currentTab}>
