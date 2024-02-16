@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   StatusCrumbs,
@@ -18,14 +18,14 @@ const createStatusLog = (stocktake: StocktakeFragment) => {
   };
 };
 
-export const Footer: FC = () => {
+export const Footer = () => {
   const t = useTranslation('inventory');
-  const { data } = useStocktake.document.get();
+  const { data: stocktake } = useStocktake.document.get();
 
   return (
     <AppFooterPortal
       Content={
-        data && (
+        stocktake && (
           <Box
             gap={2}
             display="flex"
@@ -36,7 +36,7 @@ export const Footer: FC = () => {
             <StocktakeLockButton />
             <StatusCrumbs
               statuses={stocktakeStatuses}
-              statusLog={createStatusLog(data)}
+              statusLog={createStatusLog(stocktake)}
               statusFormatter={getStocktakeTranslator(t)}
             />
 

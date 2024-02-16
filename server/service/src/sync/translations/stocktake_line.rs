@@ -121,7 +121,7 @@ impl SyncTranslation for StocktakeLineTranslation {
         let Some(stocktake_line) = StocktakeLineRepository::new(connection)
             .query_by_filter(
                 StocktakeLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
-            )?
+            None,)?
             .pop()
         else {
             return Err(anyhow::anyhow!("Stocktake row not found"));
