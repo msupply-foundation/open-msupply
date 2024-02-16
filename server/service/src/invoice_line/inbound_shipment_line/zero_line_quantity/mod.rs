@@ -58,7 +58,7 @@ pub fn zero_inbound_shipment_line_quantity(
 
             activity_log_entry(
                 ctx,
-                ActivityLogType::ZeroInvoiceCreatedBeforeStore,
+                ActivityLogType::ZeroQuantitiesForInvoiceCreatedBeforeStore,
                 Some(invoice_row.id.to_string()),
                 None,
                 None,

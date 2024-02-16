@@ -107,7 +107,7 @@ export enum ActivityLogNodeType {
   StockOnHold = 'STOCK_ON_HOLD',
   StockSellPriceChange = 'STOCK_SELL_PRICE_CHANGE',
   UserLoggedIn = 'USER_LOGGED_IN',
-  ZeroInvoiceCreatedBeforeStore = 'ZERO_INVOICE_CREATED_BEFORE_STORE'
+  ZeroQuantitiesForInvoiceCreatedBeforeStore = 'ZERO_QUANTITIES_FOR_INVOICE_CREATED_BEFORE_STORE'
 }
 
 export type ActivityLogResponse = ActivityLogConnector;
