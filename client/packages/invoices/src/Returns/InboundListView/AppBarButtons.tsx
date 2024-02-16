@@ -15,14 +15,14 @@ import {
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
-import { outboundReturnsToCsv } from '../../utils';
+import { inboundReturnsToCsv } from '../../utils';
 
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
   const t = useTranslation('distribution');
   const { success, error } = useNotification();
-  // const { mutate: onCreate } = useReturns.document.insertOutbound();
+  // const { mutate: onCreate } = useReturns.document.insertInbound();
   const { fetchAsync, isLoading } = useReturns.document.listAllInbound({
     key: 'createdDateTime',
     direction: 'desc',
@@ -35,8 +35,8 @@ export const AppBarButtonsComponent: FC<{
       error(t('error.no-data'))();
       return;
     }
-    const csv = outboundReturnsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.outbound-returns')); // TODO
+    const csv = inboundReturnsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.inbound-returns'));
     success(t('success'))();
   };
 

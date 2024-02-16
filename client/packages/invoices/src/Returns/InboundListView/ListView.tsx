@@ -15,11 +15,11 @@ import {
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
-import { OutboundReturnRowFragment, useReturns } from '../api';
+import { InboundReturnRowFragment, useReturns } from '../api';
 
 const InboundReturnListViewComponent: FC = () => {
   // TODO: for updating colour
-  // const { mutate: onUpdate } = useOutbound.document.update();
+  // const { mutate: onUpdate } = useReturns.document.updateInbound();
   const t = useTranslation('distribution');
   const {
     updateSortQuery,
@@ -39,10 +39,10 @@ const InboundReturnListViewComponent: FC = () => {
   const queryParams = { ...filter, sortBy, first, offset };
 
   const { data, isError, isLoading } =
-    useReturns.document.listOutbound(queryParams);
+    useReturns.document.listInbound(queryParams);
   // useDisableInboundRows(data?.nodes); // see inbound shipment for implementation reference
 
-  const columns = useColumns<OutboundReturnRowFragment>(
+  const columns = useColumns<InboundReturnRowFragment>(
     [
       // [getNameAndColorColumn(), { setter: onUpdate }],
       [getNameAndColorColumn(), { setter: () => {} }],

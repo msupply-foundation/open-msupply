@@ -3,6 +3,7 @@
   "button.add-item": "Add item",
   "button.allocate-lines": "Allocate placeholder lines",
   "button.create-shipment": "Create Shipment",
+  "button.new-return": "New Return",
   "button.new-outbound-shipment": "New Outbound Shipment",
   "button.supply-to-requested": "Supply requested",
   "button.supply-to-approved": "Supply approved",
