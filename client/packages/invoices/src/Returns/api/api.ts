@@ -1,13 +1,20 @@
 import { InvoiceNodeType, InvoiceSortFieldInput } from '@common/types';
-import { OutboundReturnRowFragment, Sdk } from './operations.generated';
+import {
+  InboundReturnRowFragment,
+  OutboundReturnRowFragment,
+  Sdk,
+} from './operations.generated';
 import { FilterByWithBoolean, SortBy } from '@common/hooks';
 
-export type OutboundListParams = {
+type ListParams<T> = {
   first: number;
   offset: number;
-  sortBy: SortBy<OutboundReturnRowFragment>;
+  sortBy: SortBy<T>;
   filterBy: FilterByWithBoolean | null;
 };
+
+export type OutboundListParams = ListParams<OutboundReturnRowFragment>;
+export type InboundListParams = ListParams<InboundReturnRowFragment>;
 
 const outboundParsers = {
   toSortField: (
@@ -16,6 +23,30 @@ const outboundParsers = {
     switch (sortBy.key) {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
+      }
+      case 'otherPartyName': {
+        return InvoiceSortFieldInput.OtherPartyName;
+      }
+      case 'invoiceNumber': {
+        return InvoiceSortFieldInput.InvoiceNumber;
+      }
+      case 'status':
+      default: {
+        return InvoiceSortFieldInput.Status;
+      }
+    }
+  },
+};
+const inboundParsers = {
+  toSortField: (
+    sortBy: SortBy<InboundReturnRowFragment>
+  ): InvoiceSortFieldInput => {
+    switch (sortBy.key) {
+      case 'createdDatetime': {
+        return InvoiceSortFieldInput.CreatedDatetime;
+      }
+      case 'deliveredDatetime': {
+        return InvoiceSortFieldInput.DeliveredDatetime;
       }
       case 'otherPartyName': {
         return InvoiceSortFieldInput.OtherPartyName;
@@ -67,6 +98,46 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       };
       const result = await sdk.outboundReturns({
         key: outboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
+        storeId,
+      });
+      return result?.invoices;
+    },
+    listInbound: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: InboundListParams): Promise<{
+      nodes: InboundReturnRowFragment[];
+      totalCount: number;
+    }> => {
+      const filter = {
+        ...filterBy,
+        type: { equalTo: InvoiceNodeType.CustomerReturn },
+      };
+      const result = await sdk.inboundReturns({
+        first,
+        offset,
+        key: inboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
+        storeId,
+      });
+      return result?.invoices;
+    },
+    listAllInbound: async (
+      sortBy: SortBy<InboundReturnRowFragment>
+    ): Promise<{
+      nodes: InboundReturnRowFragment[];
+      totalCount: number;
+    }> => {
+      const filter = {
+        type: { equalTo: InvoiceNodeType.CustomerReturn },
+      };
+      const result = await sdk.outboundReturns({
+        key: inboundParsers.toSortField(sortBy),
         desc: !!sortBy.isDesc,
         filter,
         storeId,
