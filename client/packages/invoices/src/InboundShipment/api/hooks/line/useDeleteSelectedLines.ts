@@ -32,9 +32,9 @@ export const useDeleteSelectedLines = (): (() => void) => {
       result.batchInboundShipment.deleteInboundShipmentLines?.filter(
         line => 'error' in line.response
       );
-    if (errorsOnDelete && errorsOnDelete?.length > 0) {
-      const err = { message: t('messages.cant-delete-generic') };
-      throw err;
+    // throws error as a big object to be processed later in custom formatter
+    if (errorsOnDelete) {
+      throw errorsOnDelete;
     }
     return;
   };
