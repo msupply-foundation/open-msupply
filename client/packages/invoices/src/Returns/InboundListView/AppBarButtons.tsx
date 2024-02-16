@@ -13,7 +13,7 @@ import {
   useNotification,
   FileUtils,
 } from '@openmsupply-client/common';
-import { SupplierSearchModal } from '@openmsupply-client/system';
+import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
 import { inboundReturnsToCsv } from '../../utils';
 
@@ -42,12 +42,12 @@ export const AppBarButtonsComponent: FC<{
 
   return (
     <AppBarButtonsPortal>
-      <SupplierSearchModal
+      <CustomerSearchModal
         open={modalController.isOn}
         onClose={modalController.toggleOff}
         onChange={async name => {
           modalController.toggleOff();
-          console.log('TODO: create. Selected supplier:', name);
+          console.log('TODO: create. Selected customer:', name);
           // try {
           //   await onCreate({
           //     id: FnUtils.generateUUID(),
