@@ -106,7 +106,7 @@
   "messages.confirm-delete-shipments_few": "This will permanently remove {{count}} shipments",
   "messages.confirm-delete-shipments_many": "This will permanently remove {{count}} shipments",
   "messages.confirm-delete-shipments_other": "This will permanently remove {{count}} shipments",
-  "messages.confirm-delete-requisition": "This will permently remove Internal Order #{{number}}",
+  "messages.confirm-delete-requisition": "This will permanently remove Internal Order #{{number}}",
   "messages.confirm-delete-requisitions_one": "This will permanently remove 1 internal order",
   "messages.confirm-delete-requisitions_few": "This will permanently remove {{count}} internal order",
   "messages.confirm-delete-requisitions_many": "This will permanently remove {{count}} internal order",
