@@ -51,3 +51,15 @@ query newSupplierReturnLines(
     stockLineId
   }
 }
+
+mutation deleteOutboundReturns(
+  $storeId: String!
+  $input: [DeleteSupplierReturnInput!]!
+) {
+  deleteSupplierReturns(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeletedIdsResponse {
+      deletedIds
+    }
+  }
+}

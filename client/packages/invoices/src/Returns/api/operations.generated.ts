@@ -26,6 +26,14 @@ export type NewSupplierReturnLinesQueryVariables = Types.Exact<{
 
 export type NewSupplierReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
 
+export type DeleteOutboundReturnsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Array<Types.DeleteSupplierReturnInput> | Types.DeleteSupplierReturnInput;
+}>;
+
+
+export type DeleteOutboundReturnsMutation = { __typename: 'Mutations', deleteSupplierReturns: { __typename: 'DeleteSupplierReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
+
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
   __typename
@@ -73,6 +81,16 @@ export const NewSupplierReturnLinesDocument = gql`
   }
 }
     `;
+export const DeleteOutboundReturnsDocument = gql`
+    mutation deleteOutboundReturns($storeId: String!, $input: [DeleteSupplierReturnInput!]!) {
+  deleteSupplierReturns(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeletedIdsResponse {
+      deletedIds
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -86,6 +104,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     newSupplierReturnLines(variables: NewSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NewSupplierReturnLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NewSupplierReturnLinesQuery>(NewSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'newSupplierReturnLines', 'query');
+    },
+    deleteOutboundReturns(variables: DeleteOutboundReturnsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundReturnsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnsMutation>(DeleteOutboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturns', 'mutation');
     }
   };
 }
@@ -122,5 +143,22 @@ export const mockOutboundReturnsQuery = (resolver: ResponseResolver<GraphQLReque
 export const mockNewSupplierReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<NewSupplierReturnLinesQueryVariables>, GraphQLContext<NewSupplierReturnLinesQuery>, any>) =>
   graphql.query<NewSupplierReturnLinesQuery, NewSupplierReturnLinesQueryVariables>(
     'newSupplierReturnLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteOutboundReturnsMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ deleteSupplierReturns })
+ *   )
+ * })
+ */
+export const mockDeleteOutboundReturnsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundReturnsMutationVariables>, GraphQLContext<DeleteOutboundReturnsMutation>, any>) =>
+  graphql.mutation<DeleteOutboundReturnsMutation, DeleteOutboundReturnsMutationVariables>(
+    'deleteOutboundReturns',
     resolver
   )
