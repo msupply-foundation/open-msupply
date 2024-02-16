@@ -33,9 +33,9 @@ export const useDeleteConfirmation = <T>({
   const t = useTranslation('common');
   const { success, info } = useNotification();
 
-  const cannotDeleteSnack = () => {
-    info(cantDelete || t('messages.cant-delete-generic'))();
-  };
+  const cannotDeleteSnack = info(
+    cantDelete || t('messages.cant-delete-generic')
+  );
 
   const showConfirmation = useConfirmationModal({
     onConfirm: async () => {
@@ -49,8 +49,9 @@ export const useDeleteConfirmation = <T>({
           const successSnack = success(deletedMessage);
           successSnack();
         })
-        .catch(() => {
+        .catch(err => {
           cannotDeleteSnack();
+          console.log(err.message);
         });
     },
     message: confirmMessage || t('messages.confirm-delete-generic'),
