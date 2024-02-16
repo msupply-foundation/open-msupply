@@ -501,7 +501,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
         MainActivity mainActivity = (MainActivity) getActivity();
 
-        File file = new File(getContext().getFilesDir(), LOG_FILE_NAME);
+        File file = new File(getContext().getFilesDir(), DB_FILE_NAME);
         mainActivity.SaveDatabase(file);
         response.put("success", true);
 
