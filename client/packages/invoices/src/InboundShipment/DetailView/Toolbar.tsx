@@ -133,7 +133,7 @@ export const Toolbar: FC = () => {
                 IconComponent={RewindIcon}
                 onClick={onZeroQuantities}
               >
-                {t('button.zero-line-quantities')}
+                {t('button.zero-line-quantity')}
               </DropdownMenuItem>
             )}
           </DropdownMenu>
