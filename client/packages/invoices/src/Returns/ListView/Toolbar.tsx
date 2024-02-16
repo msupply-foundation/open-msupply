@@ -10,11 +10,11 @@ import {
   DeleteIcon,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
+import { useReturns } from '../api';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
   const t = useTranslation('replenishment');
-  const onDelete = () => {};
-  // const onDelete = useReturns.document.deleteOutboundRow();
+  const onDelete = useReturns.document.deleteOutboundRows();
 
   return (
     <AppBarContentPortal
