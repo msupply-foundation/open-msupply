@@ -355,7 +355,7 @@
   "log.changed-to": "to",
   "log.invoice-created": "Shipment created",
   "log.invoice-deleted": "Shipment deleted",
-  "log.zero-quantities-for-invoice-created-before-store": "All line quantities have been set to 0 and invoice has been finalised as it was created before the store.",
+  "log.zero-quantities-for-invoice-created-before-store": "The quantity of all lines has been set to 0 and invoice has been finalised as it was created before the store.",
   "log.invoice-number-allocated": "Shipment number allocated",
   "log.invoice-status-allocated": "Shipment allocated",
   "log.invoice-status-delivered": "Shipment delivered",
