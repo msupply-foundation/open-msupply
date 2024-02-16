@@ -77,3 +77,173 @@ impl From<RepositoryError> for ZeroInboundShipmentLineQuantityError {
         ZeroInboundShipmentLineQuantityError::DatabaseError(error)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use chrono::NaiveDate;
+    use repository::{
+        mock::{mock_name_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
+        InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+    };
+    use util::{inline_edit, inline_init};
+
+    use crate::{
+        invoice_line::{
+            inbound_shipment_line::ZeroInboundShipmentLineQuantityError as ServiceError,
+            ZeroInboundShipmentLineQuantity,
+        },
+        service_provider::ServiceProvider,
+    };
+
+    fn inbound_created_after_store() -> InvoiceRow {
+        inline_init(|r: &mut InvoiceRow| {
+            r.id = "inbound_created_after_store".to_string();
+            r.name_link_id = mock_name_a().id;
+            r.store_id = mock_store_a().id;
+            r.invoice_number = 100;
+            r.r#type = InvoiceRowType::InboundShipment;
+            r.status = InvoiceRowStatus::New;
+            r.user_id = Some(mock_user_account_a().id);
+            r.created_datetime = NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+        })
+    }
+
+    fn inbound_created_after_store_line_a() -> InvoiceLineRow {
+        inline_init(|r: &mut InvoiceLineRow| {
+            r.id = "inbound_created_after_store_line_a".to_string();
+            r.invoice_id = "inbound_created_after_store".to_string();
+            r.item_link_id = "item_a".to_string();
+            r.item_name = "Item A".to_string();
+            r.item_code = "item_a_code".to_string();
+            r.pack_size = 1;
+            r.total_before_tax = 0.87;
+            r.total_after_tax = 1.0;
+            r.r#type = InvoiceLineRowType::StockIn;
+            r.number_of_packs = 10.0;
+        })
+    }
+
+    fn inbound_created_before_store() -> InvoiceRow {
+        inline_init(|r: &mut InvoiceRow| {
+            r.id = "inbound_created_before_store".to_string();
+            r.name_link_id = mock_name_a().id;
+            r.store_id = mock_store_a().id;
+            r.invoice_number = 100;
+            r.r#type = InvoiceRowType::InboundShipment;
+            r.status = InvoiceRowStatus::New;
+            r.user_id = Some(mock_user_account_a().id);
+            r.created_datetime = NaiveDate::from_ymd_opt(2017, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap();
+        })
+    }
+
+    fn inbound_created_before_store_line_a() -> InvoiceLineRow {
+        inline_init(|r: &mut InvoiceLineRow| {
+            r.id = "inbound_created_before_store_line_a".to_string();
+            r.invoice_id = "inbound_created_before_store".to_string();
+            r.item_link_id = "item_a".to_string();
+            r.item_name = "Item A".to_string();
+            r.item_code = "item_a_code".to_string();
+            r.pack_size = 1;
+            r.total_before_tax = 0.87;
+            r.total_after_tax = 1.0;
+            r.r#type = InvoiceLineRowType::StockIn;
+            r.number_of_packs = 10.0;
+        })
+    }
+
+    #[actix_rt::test]
+    async fn delete_inbound_shipment_line_errors() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "zero_inbound_shipment_line_quantity_error",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![inbound_created_after_store()];
+                r.invoice_lines = vec![inbound_created_after_store_line_a()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        // InvoiceWasCreatedAfterStore
+        assert_eq!(
+            service.zero_inbound_shipment_line_quantity(
+                &context,
+                ZeroInboundShipmentLineQuantity {
+                    id: inbound_created_after_store_line_a().id.clone(),
+                },
+            ),
+            Err(ServiceError::InvoiceWasCreatedAfterStore)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn delete_inbound_shipment_line_success() {
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "zero_inbound_shipment_line_quantity_success",
+            MockDataInserts::all(),
+            inline_init(|r: &mut MockData| {
+                r.invoices = vec![inbound_created_before_store()];
+                r.invoice_lines = vec![inbound_created_before_store_line_a()];
+            }),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_line_service;
+
+        service
+            .zero_inbound_shipment_line_quantity(
+                &context,
+                ZeroInboundShipmentLineQuantity {
+                    id: inbound_created_before_store_line_a().id,
+                },
+            )
+            .unwrap();
+
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&inbound_created_before_store_line_a().id)
+            .unwrap();
+        let invoice = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&inbound_created_before_store().id)
+            .unwrap();
+        assert_eq!(
+            line,
+            inline_edit(&inbound_created_before_store_line_a(), |mut l| {
+                l.pack_size = 0;
+                l.total_before_tax = 0.0;
+                l.total_after_tax = 0.0;
+                l.number_of_packs = 0.0;
+                l
+            })
+        );
+        assert_eq!(
+            invoice,
+            inline_edit(&inbound_created_before_store(), |mut i| {
+                i.status = InvoiceRowStatus::Verified;
+                i.delivered_datetime = invoice
+                    .delivered_datetime
+                    .or(Some(chrono::Utc::now().naive_utc()));
+                i.verified_datetime = invoice
+                    .verified_datetime
+                    .or(Some(chrono::Utc::now().naive_utc()));
+                i
+            })
+        )
+    }
+}
