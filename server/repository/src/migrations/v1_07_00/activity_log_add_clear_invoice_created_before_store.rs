@@ -6,7 +6,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     sql!(
         connection,
-        r#"ALTER TYPE activity_log_type ADD VALUE 'CLEAR_INVOICE_CREATED_BEFORE_STORE';
+        r#"ALTER TYPE activity_log_type ADD VALUE 'ZERO_INVOICE_CREATED_BEFORE_STORE';
 
         "#
     )?;

@@ -64,7 +64,7 @@ fn store_1() -> TestSyncPullRecord {
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
-            s.created_date = Some(NaiveDate::from_ymd(2021, 9, 3));
+            s.created_date = NaiveDate::from_ymd_opt(2021, 9, 3);
         }))],
     )
 }
