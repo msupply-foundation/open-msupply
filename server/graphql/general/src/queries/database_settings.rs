@@ -18,7 +18,6 @@ pub static DATABASE_TYPE: DatabaseType = DatabaseType::SQLite;
 
 #[Object]
 impl DatabaseSettingsNode {
-    /// Central server url
     pub async fn database_type(&self) -> DatabaseType {
         DATABASE_TYPE.clone()
     }

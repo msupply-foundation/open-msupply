@@ -22,7 +22,6 @@ import { AppRoute, Environment } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
 import { AndroidLogFileModal } from './AndroidLogFileModal';
-// import { AndroidDatabaseDownloadModal } from './AndroidDatabaseDownloadModal';
 import { WebAppLogFileModal } from './WebAppLogFileModal';
 import { useDatabaseSettings } from '../api/hooks/settings/useDatabaseSettings';
 
@@ -38,7 +37,6 @@ export const ServerSettings = () => {
     toggleOn: showLog,
     toggleOff: hideLog,
   } = useToggle();
-  // const { isOn: isDbShown, toggleOn: showDb, toggleOff: hideDB } = useToggle();
   const toggleNativeMode = () => {
     const mode =
       nativeMode === NativeMode.Server ? NativeMode.Client : NativeMode.Server;
