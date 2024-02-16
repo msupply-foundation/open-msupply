@@ -31,10 +31,9 @@ public class FileManager {
     public void SaveDatabase(File file) {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
-        // intent.setType("application/zip");
-        // intent.putExtra(Intent.EXTRA_TITLE, "openmsupply.sqlite.zip");
-        intent.setType("application/x-sqlite3");
-        intent.putExtra(Intent.EXTRA_TITLE, "openmsupply2.sqlite");
+        intent.setType("application/zip");
+        intent.putExtra(Intent.EXTRA_TITLE, "openmsupply.sqlite.zip");
+
         this.dbFile = file;
 
         activity.startActivityForResult(intent, SAVE_DATABASE_REQUEST);
@@ -82,15 +81,14 @@ public class FileManager {
             try {
                 inputStream = new FileInputStream(dbFile);
                 outputStream = context.getContentResolver().openOutputStream(uri);
-                // zipStream = new ZipOutputStream(new BufferedOutputStream(outputStream));
+                zipStream = new ZipOutputStream(outputStream);
 
-                // ZipEntry entry = new ZipEntry("omsupply-database.sqlite");
-                // zipStream.putNextEntry(entry);
+                ZipEntry entry = new ZipEntry("omsupply-database.sqlite");
+                zipStream.putNextEntry(entry);
                 byte[] buffer = new byte[1024];
                 int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    // zipStream.write(buffer, 0, length);
-                    outputStream.write(buffer, 0, length);
+                while ((length = inputStream.read(buffer)) >= 0) {
+                    zipStream.write(buffer, 0, length);
                 }
 
             } catch (Exception e) {
@@ -99,14 +97,6 @@ public class FileManager {
                 if (inputStream != null) {
                     try {
                         inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                if (outputStream != null) {
-                    try {
-                        outputStream.flush();
-                        outputStream.close();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
