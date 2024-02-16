@@ -4,6 +4,8 @@ import { Utils } from './utils';
 
 export const useReturns = {
   document: {
+    listInbound: Document.useInbounds,
+    listAllInbound: Document.useInboundsAll,
     listOutbound: Document.useOutbounds,
     listAllOutbound: Document.useOutboundsAll,
     deleteOutboundRows: Document.useOutboundDeleteRows,
