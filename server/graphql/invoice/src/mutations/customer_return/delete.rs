@@ -3,6 +3,8 @@ use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::RecordNotFound;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 
+use crate::mutations::supplier_return::delete::DeletedIdsResponse;
+
 #[derive(InputObject)]
 #[graphql(name = "DeleteCustomerReturnInput")]
 pub struct DeleteInput {
@@ -13,14 +15,6 @@ pub struct DeleteInput {
 #[graphql(name = "DeleteCustomerReturnError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
-}
-
-pub struct DeletedIdsResponse(pub Vec<String>);
-#[Object]
-impl DeletedIdsResponse {
-    pub async fn deleted_ids(&self) -> &Vec<String> {
-        &self.0
-    }
 }
 
 #[derive(Union)]
