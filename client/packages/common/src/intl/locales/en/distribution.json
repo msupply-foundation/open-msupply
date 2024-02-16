@@ -11,6 +11,7 @@
   "button.stop": "Stop",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
   "error.failed-to-save-service-charges": "Failed to save service charges",
+  "error.no-inbound-returns": "There are no Inbound Returns to display.",
   "error.no-matching-item": "No matching item found",
   "error.no-outbound-items": "No items have been added to this shipment.",
   "error.no-outbound-shipments": "There are no Outbound Shipments to display.",
