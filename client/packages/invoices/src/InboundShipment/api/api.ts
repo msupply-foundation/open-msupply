@@ -321,7 +321,7 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
             !isCreated &&
             isUpdated &&
             type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks === 0
+            numberOfPacks > 0
         )
         .map(inboundParsers.toZeroLineQuantity),
       insertInboundShipmentServiceLines: draftInboundLine
