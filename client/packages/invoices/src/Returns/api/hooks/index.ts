@@ -4,7 +4,7 @@ import { Utils } from './utils';
 
 export const useReturns = {
   document: {
-    invoiceByNumber: Document.useOutboundReturn,
+    outboundReturn: Document.useOutboundReturn,
   },
   lines: {
     newReturnLines: Lines.useNewSupplierReturnLines,
