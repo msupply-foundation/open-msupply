@@ -109,12 +109,12 @@ export const DetailView: FC = () => {
               item={entity}
             />
           )}
-
           {returnsIsOpen && (
             <NewReturnItemsModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
               stockLineIds={stockLineIds || []}
+              supplierId={data.otherParty.id}
             />
           )}
         </TableProvider>

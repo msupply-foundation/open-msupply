@@ -1,3 +1,4 @@
+import { SupplierReturnInput } from '@common/types';
 import { Sdk } from './operations.generated';
 
 export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
@@ -10,5 +11,12 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.newSupplierReturn;
     },
+  },
+  insertSupplierReturn: async (input: SupplierReturnInput) => {
+    const result = await sdk.insertSupplierReturn({
+      input,
+    });
+
+    return result.insertSupplierReturn;
   },
 });
