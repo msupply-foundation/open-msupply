@@ -52,6 +52,16 @@ query newSupplierReturnLines(
   }
 }
 
+mutation insertSupplierReturn($input: SupplierReturnInput!) {
+  insertSupplierReturn(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
 mutation deleteOutboundReturns(
   $storeId: String!
   $input: [DeleteSupplierReturnInput!]!

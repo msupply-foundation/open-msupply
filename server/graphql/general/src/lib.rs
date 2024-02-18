@@ -299,9 +299,13 @@ impl GeneralQueries {
     pub async fn new_supplier_return(
         &self,
         store_id: String,
-        input: SupplierReturnInput,
+        input: GenerateSupplierReturnLinesInput,
     ) -> Result<Vec<SupplierReturnLine>> {
         new_supplier_return(store_id, input)
+    }
+
+    pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
+        return_reasons()
     }
 }
 
