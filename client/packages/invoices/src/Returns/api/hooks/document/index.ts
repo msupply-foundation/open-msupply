@@ -8,7 +8,7 @@ export const Document = {
   useOutboundReturn,
   useOutbounds,
   useOutboundsAll,
-  useOutboundDeleteRows,
 
+  useOutboundDeleteRows,
   useInsertSupplierReturn,
 };
