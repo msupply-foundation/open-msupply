@@ -85,6 +85,14 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.newSupplierReturn;
     },
+    invoiceByNumber: async (invoiceNumber: number) => {
+      const result = await sdk.invoiceByNumber({
+        invoiceNumber,
+        storeId,
+      });
+
+      return result?.invoiceByNumber;
+    },
   },
   insertSupplierReturn: async (input: SupplierReturnInput) => {
     const result = await sdk.insertSupplierReturn({
