@@ -8,6 +8,9 @@ export const useReturns = {
     listAllInbound: Document.useInboundsAll,
     listOutbound: Document.useOutbounds,
     listAllOutbound: Document.useOutboundsAll,
+    outboundReturn: Document.useOutboundReturn,
+
+    insertSupplierReturn: Document.useInsertSupplierReturn,
     deleteOutboundRows: Document.useOutboundDeleteRows,
     deleteInboundRows: Document.useInboundDeleteRows,
   },

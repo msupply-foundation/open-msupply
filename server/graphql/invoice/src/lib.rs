@@ -174,6 +174,14 @@ impl InvoiceMutations {
         prescription::delete::delete(ctx, &store_id, id)
     }
 
+    async fn insert_supplier_return(
+        &self,
+        ctx: &Context<'_>,
+        input: supplier_return::insert::InsertInput,
+    ) -> Result<supplier_return::insert::InsertResponse> {
+        supplier_return::insert::insert(ctx, input)
+    }
+
     async fn delete_supplier_returns(
         &self,
         ctx: &Context<'_>,
