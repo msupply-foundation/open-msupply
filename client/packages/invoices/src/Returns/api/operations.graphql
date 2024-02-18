@@ -86,6 +86,38 @@ query newSupplierReturnLines(
   }
 }
 
+query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: SUPPLIER_RETURN
+  ) {
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+      lines {
+        nodes {
+          id
+        }
+      }
+      otherPartyName
+      otherPartyStore {
+        code
+      }
+    }
+  }
+}
+
+mutation insertSupplierReturn($input: SupplierReturnInput!) {
+  insertSupplierReturn(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
 mutation deleteOutboundReturns(
   $storeId: String!
   $input: [DeleteSupplierReturnInput!]!

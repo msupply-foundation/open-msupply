@@ -43,20 +43,19 @@ export const ReplenishmentNav: FC = () => {
               .build()}
             text={t('internal-order')}
           />
-
-          <AppNavLink
-            end
-            to={RouteBuilder.create(AppRoute.Replenishment)
-              .addPart(AppRoute.Suppliers)
-              .build()}
-            text={t('suppliers')}
-          />
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Replenishment)
               .addPart(AppRoute.OutboundReturn)
               .build()}
             text={t('outbound-return')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Replenishment)
+              .addPart(AppRoute.Suppliers)
+              .build()}
+            text={t('suppliers')}
           />
         </List>
       </Collapse>
