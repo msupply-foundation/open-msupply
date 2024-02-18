@@ -32,8 +32,6 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .build();
 
-  // const outboundReturnsRoute = RouteBuilder.create(AppRoute.Returns).build();
-
   const outboundReturnRoute = RouteBuilder.create(AppRoute.OutboundReturn)
     .addPart(':invoiceNumber')
     .build();

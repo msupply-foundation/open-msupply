@@ -29,7 +29,7 @@ export const DetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
   // const { entity, mode, onOpen, onClose, isOpen, setMode } =
   //   useEditModal<Draft>();
-  const { data, isLoading } = useReturns.document.invoiceByNumber();
+  const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
   // const onRowClick = useCallback(
