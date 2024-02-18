@@ -46,6 +46,7 @@ export type ColumnKey =
   | 'supplyQuantity'
   | 'stockOnHand'
   | 'theirReference'
+  | 'returnReason'
   | 'availableNumberOfPacks'
   | 'numberOfPacksToReturn';
 
@@ -274,6 +275,11 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'availableNumberOfPacks',
     width: 125,
     align: ColumnAlign.Right,
+  },
+  returnReason: {
+    label: 'label.reason',
+    key: 'returnReason',
+    width: 200,
   },
 });
 

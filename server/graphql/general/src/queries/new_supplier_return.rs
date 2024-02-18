@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 #[derive(InputObject, Clone)]
-pub struct SupplierReturnInput {
+pub struct GenerateSupplierReturnLinesInput {
     pub inbound_shipment_line_ids: Vec<String>,
 }
 
@@ -21,7 +21,7 @@ pub struct SupplierReturnLine {
 
 pub fn new_supplier_return(
     _store_id: String,
-    _input: SupplierReturnInput,
+    _input: GenerateSupplierReturnLinesInput,
 ) -> Result<Vec<SupplierReturnLine>> {
     Ok(vec![SupplierReturnLine {
         id: "new_supplier_return_line1".to_string(),

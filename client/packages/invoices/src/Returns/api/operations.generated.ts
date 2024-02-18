@@ -20,6 +20,13 @@ export type InvoiceByNumberQueryVariables = Types.Exact<{
 
 export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
+export type InsertSupplierReturnMutationVariables = Types.Exact<{
+  input: Types.SupplierReturnInput;
+}>;
+
+
+export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+
 
 export const NewSupplierReturnLinesDocument = gql`
     query newSupplierReturnLines($inboundShipmentLineIds: [String!], $storeId: String!) {
@@ -62,6 +69,17 @@ export const InvoiceByNumberDocument = gql`
   }
 }
     `;
+export const InsertSupplierReturnDocument = gql`
+    mutation insertSupplierReturn($input: SupplierReturnInput!) {
+  insertSupplierReturn(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -75,6 +93,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     invoiceByNumber(variables: InvoiceByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InvoiceByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceByNumberQuery>(InvoiceByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceByNumber', 'query');
+    },
+    insertSupplierReturn(variables: InsertSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertSupplierReturnMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierReturn', 'mutation');
     }
   };
 }
@@ -111,5 +132,22 @@ export const mockNewSupplierReturnLinesQuery = (resolver: ResponseResolver<Graph
 export const mockInvoiceByNumberQuery = (resolver: ResponseResolver<GraphQLRequest<InvoiceByNumberQueryVariables>, GraphQLContext<InvoiceByNumberQuery>, any>) =>
   graphql.query<InvoiceByNumberQuery, InvoiceByNumberQueryVariables>(
     'invoiceByNumber',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertSupplierReturnMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertSupplierReturn })
+ *   )
+ * })
+ */
+export const mockInsertSupplierReturnMutation = (resolver: ResponseResolver<GraphQLRequest<InsertSupplierReturnMutationVariables>, GraphQLContext<InsertSupplierReturnMutation>, any>) =>
+  graphql.mutation<InsertSupplierReturnMutation, InsertSupplierReturnMutationVariables>(
+    'insertSupplierReturn',
     resolver
   )
