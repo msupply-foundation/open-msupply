@@ -1,4 +1,8 @@
-import { InvoiceNodeType, InvoiceSortFieldInput } from '@common/types';
+import {
+  InvoiceNodeType,
+  InvoiceSortFieldInput,
+  SupplierReturnInput,
+} from '@common/types';
 import { OutboundReturnRowFragment, Sdk } from './operations.generated';
 import { FilterByWithBoolean, SortBy } from '@common/hooks';
 
@@ -81,6 +85,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.newSupplierReturn;
     },
+  },
+  insertSupplierReturn: async (input: SupplierReturnInput) => {
+    const result = await sdk.insertSupplierReturn({
+      input,
+    });
+
+    return result.insertSupplierReturn;
   },
   deleteOutbound: async (
     returns: OutboundReturnRowFragment[]

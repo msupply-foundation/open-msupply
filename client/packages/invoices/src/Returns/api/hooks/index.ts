@@ -7,6 +7,8 @@ export const useReturns = {
     listOutbound: Document.useOutbounds,
     listAllOutbound: Document.useOutboundsAll,
     deleteOutboundRows: Document.useOutboundDeleteRows,
+
+    insertSupplierReturn: Document.useInsertSupplierReturn,
   },
   lines: {
     newReturnLines: Lines.useNewSupplierReturnLines,
