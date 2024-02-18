@@ -23,10 +23,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('replenishment');
   const { success, error } = useNotification();
-  const onCreate = async (x: unknown) => {
-    console.log(x);
-  }; // TODO - merge create...
-  // const { mutate: onCreate } = useReturns.document.insertSupplierReturn();
+  const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllOutbound({
     key: 'createdDateTime',
     direction: 'desc',
@@ -55,6 +52,7 @@ export const AppBarButtonsComponent: FC<{
             await onCreate({
               id: FnUtils.generateUUID(),
               supplierId: name?.id,
+              supplierReturnLines: [],
             });
           } catch (e) {
             const errorSnack = error(
