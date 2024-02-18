@@ -39,3 +39,13 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
     }
   }
 }
+
+mutation insertSupplierReturn($input: SupplierReturnInput!) {
+  insertSupplierReturn(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}

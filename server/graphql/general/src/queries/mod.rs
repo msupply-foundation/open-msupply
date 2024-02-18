@@ -48,6 +48,8 @@ pub use self::temperature_chart::*;
 
 pub mod new_supplier_return;
 pub use self::new_supplier_return::*;
+pub mod return_reason;
+pub use self::return_reason::*;
 
 #[cfg(test)]
 mod tests;

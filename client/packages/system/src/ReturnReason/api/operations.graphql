@@ -1,0 +1,11 @@
+fragment ReturnReason on ReturnReasonNode {
+  __typename
+  id
+  reason
+}
+
+query returnReasons {
+  returnReasons {
+    ...ReturnReason
+  }
+}
