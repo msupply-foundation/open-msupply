@@ -631,6 +631,17 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
   fullError: Scalars['String']['output'];
 };
 
+export type DatabaseSettingsNode = {
+  __typename: 'DatabaseSettingsNode';
+  /** Central server url */
+  databaseType: DatabaseType;
+};
+
+export enum DatabaseType {
+  Postgres = 'POSTGRES',
+  SqLite = 'SQ_LITE'
+}
+
 export type DateFilterInput = {
   afterOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
   beforeOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -3707,6 +3718,7 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
+  databaseSettings: DatabaseSettingsNode;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
