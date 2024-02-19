@@ -8,6 +8,17 @@ fragment OutboundReturnRow on InvoiceNode {
   createdDatetime
 }
 
+fragment InboundReturnRow on InvoiceNode {
+  __typename
+  id
+  otherPartyName
+  status
+  invoiceNumber
+  colour
+  createdDatetime
+  deliveredDatetime
+}
+
 query outboundReturns(
   $first: Int
   $offset: Int
@@ -26,6 +37,29 @@ query outboundReturns(
       __typename
       nodes {
         ...OutboundReturnRow
+      }
+      totalCount
+    }
+  }
+}
+query inboundReturns(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      nodes {
+        ...InboundReturnRow
       }
       totalCount
     }
@@ -109,6 +143,18 @@ mutation deleteOutboundReturns(
   $input: [DeleteSupplierReturnInput!]!
 ) {
   deleteSupplierReturns(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeletedIdsResponse {
+      deletedIds
+    }
+  }
+}
+
+mutation deleteInboundReturns(
+  $storeId: String!
+  $input: [DeleteCustomerReturnInput!]!
+) {
+  deleteCustomerReturns(storeId: $storeId, input: $input) {
     __typename
     ... on DeletedIdsResponse {
       deletedIds

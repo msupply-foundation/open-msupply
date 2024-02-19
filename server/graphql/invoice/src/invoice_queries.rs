@@ -11,9 +11,9 @@ use graphql_core::{
 };
 use graphql_types::types::{InvoiceConnector, InvoiceNode, InvoiceNodeStatus, InvoiceNodeType};
 use repository::{
-    DatetimeFilter, EqualFilter, Invoice, InvoiceFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceSort,
-    InvoiceSortField, NameRowRepository, PaginationOption, StoreRowRepository, StringFilter,
+    DatetimeFilter, EqualFilter, Invoice, InvoiceFilter, InvoiceLineRow, InvoiceLineRowRepository,
+    InvoiceRepository, InvoiceRow, InvoiceRowRepository, InvoiceSort, InvoiceSortField,
+    PaginationOption, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -144,6 +144,11 @@ pub fn get_invoices(
                 vec![invoice],
             )));
         }
+        if let Some(invoice) = customer_return(ctx, &inv_type) {
+            return Ok(InvoicesResponse::Response(InvoiceConnector::from_vec(
+                vec![invoice],
+            )));
+        }
     };
 
     let user = validate_auth(
@@ -212,6 +217,47 @@ fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
     Some(
         InvoiceRepository::new(&context.connection)
             .query_one(InvoiceFilter::by_id("supplier_return_1"))
+            .unwrap()
+            .unwrap(),
+    )
+}
+fn customer_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice> {
+    if *r#type != InvoiceNodeType::CustomerReturn {
+        return None;
+    }
+
+    let service_provider = ctx.service_provider();
+    let context = service_provider.basic_context().unwrap();
+
+    InvoiceRowRepository::new(&context.connection)
+        .upsert_one(&InvoiceRow {
+            id: "customer_return_1".to_string(),
+            name_id: "8251E89A4B7E6D47AFA01E2805C7DDAD".to_string(),
+            name_store_id: Some("0AF30FF38285394284E5701F005BAD58".to_string()),
+            store_id: "D77F67339BF8400886D009178F4962E1".to_string(),
+            user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
+            invoice_number: 3,
+            ..Default::default()
+        })
+        .unwrap();
+
+    InvoiceLineRowRepository::new(&context.connection)
+        .upsert_one(&InvoiceLineRow {
+            id: "customer_return_line1".to_string(),
+            invoice_id: "customer_return_1".to_string(),
+            item_id: "E43D125F51DE4355AE1233DA449ED08A".to_string(),
+            item_name: "Amoxicillin 250mg tabs".to_string(),
+            item_code: "030453".to_string(),
+            stock_line_id: Some("68118a4f-1f4a-4469-ba35-1f30e2b1bb77".to_string()),
+            pack_size: 20,
+            number_of_packs: 1000.0,
+            ..Default::default()
+        })
+        .unwrap();
+
+    Some(
+        InvoiceRepository::new(&context.connection)
+            .query_one(InvoiceFilter::by_id("customer_return_1"))
             .unwrap()
             .unwrap(),
     )

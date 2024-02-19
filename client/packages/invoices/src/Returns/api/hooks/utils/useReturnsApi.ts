@@ -1,12 +1,25 @@
 import { SortBy, useAuthContext, useGql } from '@openmsupply-client/common';
-import { OutboundListParams, getReturnsQueries } from '../../api';
-import { OutboundReturnRowFragment, getSdk } from '../../operations.generated';
+import {
+  InboundListParams,
+  OutboundListParams,
+  getReturnsQueries,
+} from '../../api';
+import {
+  InboundReturnRowFragment,
+  OutboundReturnRowFragment,
+  getSdk,
+} from '../../operations.generated';
 
 export const useReturnsApi = () => {
   const { storeId } = useAuthContext();
   const keys = {
     base: () => ['returns'] as const,
     count: () => [...keys.base(), 'count'] as const,
+    inboundList: () => [...keys.base(), storeId, 'inboundList'] as const,
+    inboundSortedList: (sortBy: SortBy<InboundReturnRowFragment>) =>
+      [...keys.outboundList(), sortBy] as const,
+    inboundParamList: (params: InboundListParams) =>
+      [...keys.outboundList(), params] as const,
     outboundList: () => [...keys.base(), storeId, 'outboundList'] as const,
     outboundSortedList: (sortBy: SortBy<OutboundReturnRowFragment>) =>
       [...keys.outboundList(), sortBy] as const,
