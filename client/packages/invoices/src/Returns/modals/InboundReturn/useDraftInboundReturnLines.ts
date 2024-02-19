@@ -40,7 +40,7 @@ export const useDraftInboundReturnLines = (
         if (line.id !== patch.id) {
           return line;
         }
-        return { ...line, ...patch, isUpdated: true };
+        return { ...line, ...patch };
       });
       return newLines;
     });

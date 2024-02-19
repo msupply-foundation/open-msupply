@@ -38,7 +38,7 @@ export const DetailView: FC = () => {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
-    entity: stockLineIds,
+    entity: selectedInboundShipmentLineIds,
   } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
@@ -51,11 +51,11 @@ export const DetailView: FC = () => {
     [onOpen]
   );
 
-  const onReturn = async (stockLineIds: string[]) => {
-    if (!stockLineIds.length) {
+  const onReturn = async (inboundShipmentLineIds: string[]) => {
+    if (!inboundShipmentLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
-    } else onOpenReturns(stockLineIds);
+    } else onOpenReturns(inboundShipmentLineIds);
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -113,7 +113,7 @@ export const DetailView: FC = () => {
             <SupplierReturnLinesModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
-              stockLineIds={stockLineIds || []}
+              stockLineIds={selectedInboundShipmentLineIds || []}
               supplierId={data.otherParty.id}
             />
           )}

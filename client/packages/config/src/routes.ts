@@ -5,6 +5,7 @@ export enum AppRoute {
   Login = 'login',
   Distribution = 'distribution',
   OutboundShipment = 'outbound-shipment',
+  OutboundReturn = 'outbound-return',
   CustomerRequisition = 'customer-requisition',
   Customer = 'customers',
   Dispensary = 'dispensary',
