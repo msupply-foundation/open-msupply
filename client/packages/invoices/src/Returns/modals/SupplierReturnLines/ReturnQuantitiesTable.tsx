@@ -28,7 +28,7 @@ export const QuantityToReturnTableComponent = ({
               {...props}
               isRequired
               max={props.rowData.availableNumberOfPacks}
-              min={1}
+              min={0}
             />
           ),
         },
