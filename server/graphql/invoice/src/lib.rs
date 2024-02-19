@@ -179,4 +179,13 @@ impl InvoiceMutations {
     ) -> Result<supplier_return::insert::InsertResponse> {
         supplier_return::insert::insert(ctx, input)
     }
+
+    async fn delete_supplier_returns(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: supplier_return::delete::DeleteInput,
+    ) -> Result<supplier_return::delete::DeleteResponse> {
+        supplier_return::delete::delete(ctx, &store_id, input)
+    }
 }
