@@ -1444,9 +1444,16 @@ export type InboundInvoiceCounts = {
   notDelivered: Scalars['Int']['output'];
 };
 
+export type InboundReturnInput = {
+  customerId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  inboundReturnLines: Array<InboundReturnLineInput>;
+};
+
 export type InboundReturnLine = {
   __typename: 'InboundReturnLine';
   batch?: Maybe<Scalars['String']['output']>;
+  comment: Scalars['String']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
@@ -1454,7 +1461,16 @@ export type InboundReturnLine = {
   numberOfPacksIssued: Scalars['Float']['output'];
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
+};
+
+export type InboundReturnLineInput = {
+  comment: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  numberOfPacksReturned: Scalars['Float']['input'];
+  reasonId?: InputMaybe<Scalars['String']['input']>;
+  stockLineId: Scalars['String']['input'];
 };
 
 export type InitialisationStatusNode = {
@@ -1527,6 +1543,17 @@ export type InsertFormSchemaInput = {
 };
 
 export type InsertFormSchemaResponse = FormSchemaNode;
+
+export type InsertInboundReturnError = {
+  __typename: 'InsertInboundReturnError';
+  error: InsertInboundReturnErrorInterface;
+};
+
+export type InsertInboundReturnErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertInboundReturnResponse = InsertInboundReturnError | InvoiceNode;
 
 export type InsertInboundShipmentError = {
   __typename: 'InsertInboundShipmentError';
@@ -1631,13 +1658,13 @@ export type InsertLocationInput = {
 
 export type InsertLocationResponse = InsertLocationError | LocationNode;
 
-export type InsertOutboundResponseErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type InsertOutboundReturnError = {
   __typename: 'InsertOutboundReturnError';
-  error: InsertOutboundResponseErrorInterface;
+  error: InsertOutboundReturnErrorInterface;
+};
+
+export type InsertOutboundReturnErrorInterface = {
+  description: Scalars['String']['output'];
 };
 
 export type InsertOutboundReturnResponse = InsertOutboundReturnError | InvoiceNode;
@@ -2606,6 +2633,7 @@ export type Mutations = {
   insertDocumentRegistry: InsertDocumentResponse;
   insertEncounter: InsertEncounterResponse;
   insertFormSchema: InsertFormSchemaResponse;
+  insertInboundReturn: InsertInboundReturnResponse;
   insertInboundShipment: InsertInboundShipmentResponse;
   insertInboundShipmentLine: InsertInboundShipmentLineResponse;
   insertInboundShipmentServiceLine: InsertInboundShipmentServiceLineResponse;
@@ -2875,6 +2903,12 @@ export type MutationsInsertEncounterArgs = {
 
 export type MutationsInsertFormSchemaArgs = {
   input: InsertFormSchemaInput;
+};
+
+
+export type MutationsInsertInboundReturnArgs = {
+  input: InboundReturnInput;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -3362,7 +3396,7 @@ export type NumberNode = {
   number: Scalars['Int']['output'];
 };
 
-export type OtherPartyNotACustomer = InsertErrorInterface & UpdateNameErrorInterface & {
+export type OtherPartyNotACustomer = InsertErrorInterface & InsertInboundReturnErrorInterface & UpdateNameErrorInterface & {
   __typename: 'OtherPartyNotACustomer';
   description: Scalars['String']['output'];
 };
@@ -3372,12 +3406,12 @@ export type OtherPartyNotAPatient = InsertPrescriptionErrorInterface & UpdatePre
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertOutboundResponseErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotASupplier = InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotASupplier';
   description: Scalars['String']['output'];
 };
 
-export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundResponseErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
+export type OtherPartyNotVisible = InsertErrorInterface & InsertInboundReturnErrorInterface & InsertInboundShipmentErrorInterface & InsertOutboundReturnErrorInterface & InsertPrescriptionErrorInterface & InsertRequestRequisitionErrorInterface & UpdateInboundShipmentErrorInterface & UpdateNameErrorInterface & UpdatePrescriptionErrorInterface & UpdateRequestRequisitionErrorInterface & {
   __typename: 'OtherPartyNotVisible';
   description: Scalars['String']['output'];
 };
@@ -3399,12 +3433,14 @@ export type OutboundReturnLine = {
   __typename: 'OutboundReturnLine';
   availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
+  comment: Scalars['String']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
 };
 
@@ -3412,7 +3448,7 @@ export type OutboundReturnLineInput = {
   comment: Scalars['String']['input'];
   id: Scalars['String']['input'];
   numberOfPacksToReturn: Scalars['Float']['input'];
-  reasonId: Scalars['String']['input'];
+  reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 

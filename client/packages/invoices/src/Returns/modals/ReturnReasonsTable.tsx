@@ -6,16 +6,23 @@ import {
 } from 'packages/common/src';
 import { ReturnReasonSearchInput } from 'packages/system/src';
 import React from 'react';
-import { DraftSupplierReturnLine } from './useDraftOutboundReturnLines';
+
+interface ReturnWithReason {
+  id: string;
+  itemCode: string;
+  itemName: string;
+  comment: string;
+  reasonId?: string | null;
+}
 
 const ReturnReasonCell = ({
   rowData,
   rowIndex,
   column,
-}: CellProps<DraftSupplierReturnLine>): JSX.Element => (
+}: CellProps<ReturnWithReason>): JSX.Element => (
   <ReturnReasonSearchInput
     autoFocus={rowIndex === 0}
-    selectedReasonId={rowData.reasonId}
+    selectedReasonId={rowData.reasonId ?? null}
     onChange={id => column.setter({ ...rowData, reasonId: id })}
   />
 );
@@ -24,10 +31,10 @@ export const ReturnReasonsComponent = ({
   lines,
   updateLine,
 }: {
-  lines: DraftSupplierReturnLine[];
-  updateLine: (line: Partial<DraftSupplierReturnLine> & { id: string }) => void;
+  lines: ReturnWithReason[];
+  updateLine: (line: Partial<ReturnWithReason> & { id: string }) => void;
 }) => {
-  const columns = useColumns<DraftSupplierReturnLine>(
+  const columns = useColumns<ReturnWithReason>(
     [
       'itemCode',
       'itemName',
@@ -40,12 +47,7 @@ export const ReturnReasonsComponent = ({
   );
 
   return (
-    <DataTable
-      id="supplier-return-line-quantity"
-      columns={columns}
-      data={lines}
-      dense
-    />
+    <DataTable id="return-line-reason" columns={columns} data={lines} dense />
   );
 };
 

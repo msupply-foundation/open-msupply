@@ -17,6 +17,8 @@ pub struct OutboundReturnLine {
     pub available_number_of_packs: f64,
     pub pack_size: i32,
     pub number_of_packs_to_return: f64,
+    pub comment: String,
+    pub reason_id: Option<String>,
 }
 
 pub fn generate_outbound_return_lines(
@@ -34,6 +36,8 @@ pub fn generate_outbound_return_lines(
         available_number_of_packs: 1000.0,
         pack_size: 20,
         number_of_packs_to_return: 300.0,
+        comment: "Comment 1".to_string(),
+        reason_id: None,
         // No location or unit column for now
     }])
 }

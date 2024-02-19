@@ -36,8 +36,9 @@ export const useOutboundDeleteRows = () => {
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction,
+    // TODO: can probably use something like the outboundShipment canDeleteInvoice method once we know what statuses we'll allow here
     canDelete: selectedRows.every(
-      ({ status }) => status === InvoiceNodeStatus.New // is this accurate?
+      ({ status }) => status === InvoiceNodeStatus.New
     ),
     messages: {
       confirmMessage: t('messages.confirm-delete-returns', {
