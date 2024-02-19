@@ -47,7 +47,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             SUM(invoice_line.total_before_tax) AS total_before_tax,
 	        SUM(invoice_line.total_after_tax) AS total_after_tax,
             (SUM(invoice_line.total_after_tax) / SUM(invoice_line.total_before_tax) - 1) * 100 AS tax_percentage,
-            SUM(invoice_line.foreign_currency_price_before_tax) + (SUM(invoice_line.foreign_currency_price_before_tax) * COALESCE(invoice_line.tax, 0) / 100) AS foreign_currency_total_after_tax,
+            SUM(invoice_line.foreign_currency_price_before_tax) + (SUM(invoice_line.foreign_currency_price_before_tax) * COALESCE(invoice_line.tax, 1) / 100) AS foreign_currency_total_after_tax,
 	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_before_tax,
 	        COALESCE(SUM(invoice_line.total_after_tax) FILTER(WHERE invoice_line.type = 'SERVICE'), 0) AS service_total_after_tax,
 	        COALESCE(SUM(invoice_line.total_before_tax) FILTER(WHERE invoice_line.type IN ('STOCK_IN','STOCK_OUT')), 0) AS stock_total_before_tax,
