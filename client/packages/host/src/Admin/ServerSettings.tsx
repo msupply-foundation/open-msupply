@@ -16,6 +16,7 @@ import {
   useNativeClient,
   LoadingButton,
   DatabaseType,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
 import { AppRoute, Environment } from '@openmsupply-client/config';
@@ -92,28 +93,38 @@ export const ServerSettings = () => {
       <Setting
         title={t('label.download-database')}
         component={
-          <>
-            <LoadingButton
-              disabled={databaseSettings?.databaseType !== DatabaseType.SqLite}
-              isLoading={isDownloading}
-              startIcon={<DownloadIcon />}
-              onClick={async () => {
-                setIsDownloading(true);
-                const vacuum = await fetch(
-                  `${Environment.API_HOST}/support/vacuum`,
-                  {
-                    method: 'POST',
-                  }
-                );
-                if (vacuum.ok) {
-                  await saveDatabase();
+          <Tooltip
+            title={
+              databaseSettings?.databaseType !== DatabaseType.SqLite
+                ? t('message.database-not-sqlite')
+                : t('label.download-database')
+            }
+          >
+            <span>
+              <LoadingButton
+                disabled={
+                  databaseSettings?.databaseType !== DatabaseType.SqLite
                 }
-                setIsDownloading(false);
-              }}
-            >
-              {t('button.download')}
-            </LoadingButton>
-          </>
+                isLoading={isDownloading}
+                startIcon={<DownloadIcon />}
+                onClick={async () => {
+                  setIsDownloading(true);
+                  const vacuum = await fetch(
+                    `${Environment.API_HOST}/support/vacuum`,
+                    {
+                      method: 'POST',
+                    }
+                  );
+                  if (vacuum.ok) {
+                    await saveDatabase();
+                  }
+                  setIsDownloading(false);
+                }}
+              >
+                {t('button.download')}
+              </LoadingButton>
+            </span>
+          </Tooltip>
         }
       />
     </>
@@ -134,17 +145,27 @@ export const ServerSettings = () => {
       <Setting
         title={t('label.download-database')}
         component={
-          <>
-            <BaseButton
-              disabled={databaseSettings?.databaseType !== DatabaseType.SqLite}
-              startIcon={<DownloadIcon />}
-              onClick={() => {
-                open(`${Environment.API_HOST}/support/database`, '_blank');
-              }}
-            >
-              {t('button.download')}
-            </BaseButton>
-          </>
+          <Tooltip
+            title={
+              databaseSettings?.databaseType !== DatabaseType.SqLite
+                ? t('message.database-not-sqlite')
+                : t('label.download-database')
+            }
+          >
+            <span>
+              <BaseButton
+                disabled={
+                  databaseSettings?.databaseType !== DatabaseType.SqLite
+                }
+                startIcon={<DownloadIcon />}
+                onClick={() => {
+                  open(`${Environment.API_HOST}/support/database`, '_blank');
+                }}
+              >
+                {t('button.download')}
+              </BaseButton>
+            </span>
+          </Tooltip>
         }
       />
     </>
