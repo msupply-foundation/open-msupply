@@ -8,34 +8,23 @@ import {
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
-export type DraftSupplierReturnLine = SupplierReturnLine & {
-  reasonId: string;
-  comment: string;
-};
-
 export const useDraftSupplierReturnLines = (
   stockLineIds: string[],
   supplierId: string
 ) => {
-  const [draftLines, setDraftLines] = React.useState<DraftSupplierReturnLine[]>(
-    []
-  );
+  const [draftLines, setDraftLines] = React.useState<SupplierReturnLine[]>([]);
 
   const lines = useReturns.lines.supplierReturnLines(stockLineIds);
 
   const { mutateAsync } = useReturns.document.insertSupplierReturn();
 
   useEffect(() => {
-    const newDraftLines = (lines ?? []).map(seed => ({
-      ...seed,
-      reasonId: '',
-      comment: '',
-    }));
+    const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
 
     setDraftLines(newDraftLines);
   }, [lines]);
 
-  const update = (patch: RecordPatch<DraftSupplierReturnLine>) => {
+  const update = (patch: RecordPatch<SupplierReturnLine>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {

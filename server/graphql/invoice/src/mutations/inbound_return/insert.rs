@@ -17,7 +17,7 @@ pub struct InboundReturnLineInput {
     pub id: String,
     pub stock_line_id: String,
     pub number_of_packs_returned: f64,
-    pub reason_id: String,
+    pub reason_id: Option<String>,
     pub comment: String,
 }
 
