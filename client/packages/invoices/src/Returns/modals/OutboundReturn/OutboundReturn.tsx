@@ -12,10 +12,10 @@ import {
   TabContext,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
-import { useDraftSupplierReturnLines } from './useDraftSupplierReturnLines';
+import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ReturnReasonsTable } from './ReturnReasonsTable';
 
-interface SupplierReturnLinesModalProps {
+interface OutboundReturnEditModalProps {
   isOpen: boolean;
   stockLineIds: string[];
   onClose: () => void;
@@ -27,12 +27,12 @@ enum Tabs {
   Reason = 'Reason',
 }
 
-export const SupplierReturnLinesModal = ({
+export const OutboundReturnEditModal = ({
   isOpen,
   stockLineIds,
   onClose,
   supplierId,
-}: SupplierReturnLinesModalProps) => {
+}: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
 
@@ -49,14 +49,14 @@ export const SupplierReturnLinesModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update, saveSupplierReturn } = useDraftSupplierReturnLines(
+  const { lines, update, saveOutboundReturn } = useDraftOutboundReturnLines(
     stockLineIds,
     supplierId
   );
 
   const onOk = async () => {
     try {
-      await saveSupplierReturn();
+      await saveOutboundReturn();
       onClose();
     } catch {
       // TODO: handle error display...
