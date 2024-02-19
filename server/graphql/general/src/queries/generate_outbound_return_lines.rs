@@ -2,12 +2,12 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 #[derive(InputObject, Clone)]
-pub struct GenerateSupplierReturnLinesInput {
+pub struct GenerateOutboundReturnLinesInput {
     pub inbound_shipment_line_ids: Vec<String>,
 }
 
 #[derive(SimpleObject, Clone)]
-pub struct SupplierReturnLine {
+pub struct OutboundReturnLine {
     pub id: String,
     pub item_code: String,
     pub item_name: String,
@@ -19,12 +19,12 @@ pub struct SupplierReturnLine {
     pub number_of_packs_to_return: f64,
 }
 
-pub fn new_supplier_return(
+pub fn generate_outbound_return_lines(
     _store_id: String,
-    _input: GenerateSupplierReturnLinesInput,
-) -> Result<Vec<SupplierReturnLine>> {
-    Ok(vec![SupplierReturnLine {
-        id: "new_supplier_return_line1".to_string(),
+    _input: GenerateOutboundReturnLinesInput,
+) -> Result<Vec<OutboundReturnLine>> {
+    Ok(vec![OutboundReturnLine {
+        id: "new_outbound_return_line1".to_string(),
         // Below, don't have to match atm
         item_code: "abc".to_string(),
         item_name: "Item name 1".to_string(),

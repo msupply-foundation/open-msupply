@@ -38,7 +38,7 @@ export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
+export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: Array<{ __typename: 'OutboundReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   outboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
@@ -57,27 +57,27 @@ export type InvoiceByNumberQueryVariables = Types.Exact<{
 export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
-  input: Types.SupplierReturnInput;
+  input: Types.OutboundReturnInput;
 }>;
 
 
-export type InsertOutboundReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertOutboundReturnMutation = { __typename: 'Mutations', insertOutboundReturn: { __typename: 'InsertOutboundReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type DeleteOutboundReturnsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Array<Types.DeleteSupplierReturnInput> | Types.DeleteSupplierReturnInput;
+  input: Array<Types.DeleteOutboundReturnInput> | Types.DeleteOutboundReturnInput;
 }>;
 
 
-export type DeleteOutboundReturnsMutation = { __typename: 'Mutations', deleteSupplierReturns: { __typename: 'DeleteSupplierReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
+export type DeleteOutboundReturnsMutation = { __typename: 'Mutations', deleteOutboundReturns: { __typename: 'DeleteOutboundReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
 
 export type DeleteInboundReturnsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Array<Types.DeleteCustomerReturnInput> | Types.DeleteCustomerReturnInput;
+  input: Array<Types.DeleteInboundReturnInput> | Types.DeleteInboundReturnInput;
 }>;
 
 
-export type DeleteInboundReturnsMutation = { __typename: 'Mutations', deleteCustomerReturns: { __typename: 'DeleteCustomerReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
+export type DeleteInboundReturnsMutation = { __typename: 'Mutations', deleteInboundReturns: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
 
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
@@ -140,7 +140,7 @@ export const InboundReturnsDocument = gql`
     ${InboundReturnRowFragmentDoc}`;
 export const GenerateOutboundReturnLinesDocument = gql`
     query generateOutboundReturnLines($inboundShipmentLineIds: [String!], $storeId: String!) {
-  newSupplierReturn(
+  generateOutboundReturnLines(
     input: {inboundShipmentLineIds: $inboundShipmentLineIds}
     storeId: $storeId
   ) {
@@ -179,7 +179,7 @@ export const InvoiceByNumberDocument = gql`
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
-    type: SUPPLIER_RETURN
+    type: OUTBOUND_RETURN
   ) {
     ... on InvoiceNode {
       id
@@ -198,8 +198,8 @@ export const InvoiceByNumberDocument = gql`
 }
     `;
 export const InsertOutboundReturnDocument = gql`
-    mutation insertOutboundReturn($input: SupplierReturnInput!) {
-  insertSupplierReturn(input: $input) {
+    mutation insertOutboundReturn($input: OutboundReturnInput!) {
+  insertOutboundReturn(input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -209,8 +209,8 @@ export const InsertOutboundReturnDocument = gql`
 }
     `;
 export const DeleteOutboundReturnsDocument = gql`
-    mutation deleteOutboundReturns($storeId: String!, $input: [DeleteSupplierReturnInput!]!) {
-  deleteSupplierReturns(storeId: $storeId, input: $input) {
+    mutation deleteOutboundReturns($storeId: String!, $input: [DeleteOutboundReturnInput!]!) {
+  deleteOutboundReturns(storeId: $storeId, input: $input) {
     __typename
     ... on DeletedIdsResponse {
       deletedIds
@@ -219,8 +219,8 @@ export const DeleteOutboundReturnsDocument = gql`
 }
     `;
 export const DeleteInboundReturnsDocument = gql`
-    mutation deleteInboundReturns($storeId: String!, $input: [DeleteCustomerReturnInput!]!) {
-  deleteCustomerReturns(storeId: $storeId, input: $input) {
+    mutation deleteInboundReturns($storeId: String!, $input: [DeleteInboundReturnInput!]!) {
+  deleteInboundReturns(storeId: $storeId, input: $input) {
     __typename
     ... on DeletedIdsResponse {
       deletedIds
@@ -305,7 +305,7 @@ export const mockInboundReturnsQuery = (resolver: ResponseResolver<GraphQLReques
  * mockGenerateOutboundReturnLinesQuery((req, res, ctx) => {
  *   const { inboundShipmentLineIds, storeId } = req.variables;
  *   return res(
- *     ctx.data({ newSupplierReturn })
+ *     ctx.data({ generateOutboundReturnLines })
  *   )
  * })
  */
@@ -356,7 +356,7 @@ export const mockInvoiceByNumberQuery = (resolver: ResponseResolver<GraphQLReque
  * mockInsertOutboundReturnMutation((req, res, ctx) => {
  *   const { input } = req.variables;
  *   return res(
- *     ctx.data({ insertSupplierReturn })
+ *     ctx.data({ insertOutboundReturn })
  *   )
  * })
  */
@@ -373,7 +373,7 @@ export const mockInsertOutboundReturnMutation = (resolver: ResponseResolver<Grap
  * mockDeleteOutboundReturnsMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
- *     ctx.data({ deleteSupplierReturns })
+ *     ctx.data({ deleteOutboundReturns })
  *   )
  * })
  */
@@ -390,7 +390,7 @@ export const mockDeleteOutboundReturnsMutation = (resolver: ResponseResolver<Gra
  * mockDeleteInboundReturnsMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
- *     ctx.data({ deleteCustomerReturns })
+ *     ctx.data({ deleteInboundReturns })
  *   )
  * })
  */

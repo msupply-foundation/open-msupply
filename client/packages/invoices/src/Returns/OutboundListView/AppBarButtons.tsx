@@ -52,7 +52,7 @@ export const AppBarButtonsComponent: FC<{
             await onCreate({
               id: FnUtils.generateUUID(),
               supplierId: name?.id,
-              supplierReturnLines: [],
+              outboundReturnLines: [],
             });
           } catch (e) {
             const errorSnack = error(
