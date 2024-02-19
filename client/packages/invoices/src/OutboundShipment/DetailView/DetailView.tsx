@@ -36,7 +36,7 @@ export const DetailView: FC = () => {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
-    entity: stockLineIds,
+    entity: selectedOutboundShipmentLineIds,
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
@@ -107,7 +107,7 @@ export const DetailView: FC = () => {
             <InboundReturnEditModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
-              stockLineIds={stockLineIds || []}
+              stockLineIds={selectedOutboundShipmentLineIds || []}
             />
           )}
 
