@@ -4,6 +4,8 @@ import { Utils } from './utils';
 
 export const useReturns = {
   document: {
+    outboundReturn: Document.useOutboundReturn,
+
     insertSupplierReturn: Document.useInsertSupplierReturn,
   },
   lines: {
