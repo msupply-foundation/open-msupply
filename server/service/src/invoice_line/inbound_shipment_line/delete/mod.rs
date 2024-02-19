@@ -52,6 +52,7 @@ pub enum DeleteInboundShipmentLineError {
     CannotEditFinalised,
     BatchIsReserved,
     NotThisInvoiceLine(String),
+    LineUsedInStocktake,
 }
 
 impl From<RepositoryError> for DeleteInboundShipmentLineError {
@@ -205,7 +206,7 @@ mod test {
             .delete_inbound_shipment_line(
                 &context,
                 DeleteInboundShipmentLine {
-                    id: mock_inbound_shipment_c_invoice_lines()[0].id.clone(),
+                    id: mock_inbound_shipment_c_invoice_lines()[2].id.clone(),
                 },
             )
             .unwrap();
