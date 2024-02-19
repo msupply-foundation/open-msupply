@@ -1,4 +1,5 @@
 export * from './api';
 export * from './modals';
-export * from './ListView';
+export * from './OutboundListView';
+export * from './InboundListView';
 export * from './DetailView';
