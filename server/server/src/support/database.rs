@@ -50,16 +50,11 @@ pub async fn get_database(
     Ok(response)
 }
 
-#[cfg(feature = "postgres")]
-pub async fn vacuum_database(
-    _service_provider: Data<ServiceProvider>,
-    _auth_data: Data<AuthData>,
-) -> HttpResponse {
-    HttpResponse::InternalServerError().body("Postgres Databases vacuum not supported")
-}
-
-#[cfg(not(feature = "postgres"))]
 pub async fn vacuum_database(service_provider: Data<ServiceProvider>) -> HttpResponse {
+    if cfg!(feature = "postgres") {
+        return HttpResponse::InternalServerError().body("Postgres Databases vacuum not supported");
+    }
+
     // Vacuum the database first
     let result = service_provider.connection_manager.execute("VACUUM");
     match result {
