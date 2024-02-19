@@ -38,7 +38,7 @@ fn validate_request(
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
 
-    // We use the refresh token to get the user's access token here, as the actual access token isn't easily to pass as a header in a download link
+    // We use the refresh token to get the user's access token here, as the actual access token isn't easily passed as a header in a download link
 
     // retrieve refresh token (from cookie)
     // Lots of code copied from graphql/core/src/lib.rs refactor opportunity!
