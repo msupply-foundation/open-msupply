@@ -23,7 +23,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('replenishment');
   const { success, error } = useNotification();
-  const { mutateAsync: onCreate } = useReturns.document.insertSupplierReturn();
+  const { mutateAsync: onCreate } = useReturns.document.insertOutboundReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllOutbound({
     key: 'createdDateTime',
     direction: 'desc',

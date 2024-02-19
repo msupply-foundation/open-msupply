@@ -66,7 +66,7 @@ query inboundReturns(
   }
 }
 
-query newSupplierReturnLines(
+query generateOutboundReturnLines(
   $inboundShipmentLineIds: [String!]
   $storeId: String!
 ) {
@@ -128,7 +128,7 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-mutation insertSupplierReturn($input: SupplierReturnInput!) {
+mutation insertOutboundReturn($input: SupplierReturnInput!) {
   insertSupplierReturn(input: $input) {
     ... on InvoiceNode {
       __typename

@@ -32,13 +32,13 @@ export type InboundReturnsQueryVariables = Types.Exact<{
 
 export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null }> } };
 
-export type NewSupplierReturnLinesQueryVariables = Types.Exact<{
+export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
   inboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type NewSupplierReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
+export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   outboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
@@ -56,12 +56,12 @@ export type InvoiceByNumberQueryVariables = Types.Exact<{
 
 export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
-export type InsertSupplierReturnMutationVariables = Types.Exact<{
+export type InsertOutboundReturnMutationVariables = Types.Exact<{
   input: Types.SupplierReturnInput;
 }>;
 
 
-export type InsertSupplierReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertOutboundReturnMutation = { __typename: 'Mutations', insertSupplierReturn: { __typename: 'InsertSupplierReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type DeleteOutboundReturnsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -138,8 +138,8 @@ export const InboundReturnsDocument = gql`
   }
 }
     ${InboundReturnRowFragmentDoc}`;
-export const NewSupplierReturnLinesDocument = gql`
-    query newSupplierReturnLines($inboundShipmentLineIds: [String!], $storeId: String!) {
+export const GenerateOutboundReturnLinesDocument = gql`
+    query generateOutboundReturnLines($inboundShipmentLineIds: [String!], $storeId: String!) {
   newSupplierReturn(
     input: {inboundShipmentLineIds: $inboundShipmentLineIds}
     storeId: $storeId
@@ -197,8 +197,8 @@ export const InvoiceByNumberDocument = gql`
   }
 }
     `;
-export const InsertSupplierReturnDocument = gql`
-    mutation insertSupplierReturn($input: SupplierReturnInput!) {
+export const InsertOutboundReturnDocument = gql`
+    mutation insertOutboundReturn($input: SupplierReturnInput!) {
   insertSupplierReturn(input: $input) {
     ... on InvoiceNode {
       __typename
@@ -242,8 +242,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     inboundReturns(variables: InboundReturnsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InboundReturnsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InboundReturnsQuery>(InboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'inboundReturns', 'query');
     },
-    newSupplierReturnLines(variables: NewSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NewSupplierReturnLinesQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<NewSupplierReturnLinesQuery>(NewSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'newSupplierReturnLines', 'query');
+    generateOutboundReturnLines(variables: GenerateOutboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateOutboundReturnLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateOutboundReturnLinesQuery>(GenerateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateOutboundReturnLines', 'query');
     },
     generateInboundReturnLines(variables: GenerateInboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateInboundReturnLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GenerateInboundReturnLinesQuery>(GenerateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateInboundReturnLines', 'query');
@@ -251,8 +251,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     invoiceByNumber(variables: InvoiceByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InvoiceByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceByNumberQuery>(InvoiceByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceByNumber', 'query');
     },
-    insertSupplierReturn(variables: InsertSupplierReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertSupplierReturnMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<InsertSupplierReturnMutation>(InsertSupplierReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertSupplierReturn', 'mutation');
+    insertOutboundReturn(variables: InsertOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertOutboundReturnMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundReturnMutation>(InsertOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundReturn', 'mutation');
     },
     deleteOutboundReturns(variables: DeleteOutboundReturnsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundReturnsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnsMutation>(DeleteOutboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturns', 'mutation');
@@ -302,16 +302,16 @@ export const mockInboundReturnsQuery = (resolver: ResponseResolver<GraphQLReques
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockNewSupplierReturnLinesQuery((req, res, ctx) => {
+ * mockGenerateOutboundReturnLinesQuery((req, res, ctx) => {
  *   const { inboundShipmentLineIds, storeId } = req.variables;
  *   return res(
  *     ctx.data({ newSupplierReturn })
  *   )
  * })
  */
-export const mockNewSupplierReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<NewSupplierReturnLinesQueryVariables>, GraphQLContext<NewSupplierReturnLinesQuery>, any>) =>
-  graphql.query<NewSupplierReturnLinesQuery, NewSupplierReturnLinesQueryVariables>(
-    'newSupplierReturnLines',
+export const mockGenerateOutboundReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<GenerateOutboundReturnLinesQueryVariables>, GraphQLContext<GenerateOutboundReturnLinesQuery>, any>) =>
+  graphql.query<GenerateOutboundReturnLinesQuery, GenerateOutboundReturnLinesQueryVariables>(
+    'generateOutboundReturnLines',
     resolver
   )
 
@@ -353,16 +353,16 @@ export const mockInvoiceByNumberQuery = (resolver: ResponseResolver<GraphQLReque
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockInsertSupplierReturnMutation((req, res, ctx) => {
+ * mockInsertOutboundReturnMutation((req, res, ctx) => {
  *   const { input } = req.variables;
  *   return res(
  *     ctx.data({ insertSupplierReturn })
  *   )
  * })
  */
-export const mockInsertSupplierReturnMutation = (resolver: ResponseResolver<GraphQLRequest<InsertSupplierReturnMutationVariables>, GraphQLContext<InsertSupplierReturnMutation>, any>) =>
-  graphql.mutation<InsertSupplierReturnMutation, InsertSupplierReturnMutationVariables>(
-    'insertSupplierReturn',
+export const mockInsertOutboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundReturnMutationVariables>, GraphQLContext<InsertOutboundReturnMutation>, any>) =>
+  graphql.mutation<InsertOutboundReturnMutation, InsertOutboundReturnMutationVariables>(
+    'insertOutboundReturn',
     resolver
   )
 

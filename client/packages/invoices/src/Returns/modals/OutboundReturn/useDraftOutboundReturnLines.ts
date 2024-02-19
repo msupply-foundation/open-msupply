@@ -13,7 +13,7 @@ export type DraftSupplierReturnLine = SupplierReturnLine & {
   comment: string;
 };
 
-export const useDraftSupplierReturnLines = (
+export const useDraftOutboundReturnLines = (
   stockLineIds: string[],
   supplierId: string
 ) => {
@@ -21,9 +21,9 @@ export const useDraftSupplierReturnLines = (
     []
   );
 
-  const lines = useReturns.lines.supplierReturnLines(stockLineIds);
+  const lines = useReturns.lines.outboundReturnLines(stockLineIds);
 
-  const { mutateAsync } = useReturns.document.insertSupplierReturn();
+  const { mutateAsync } = useReturns.document.insertOutboundReturn();
 
   useEffect(() => {
     const newDraftLines = (lines ?? []).map(seed => ({
@@ -47,8 +47,8 @@ export const useDraftSupplierReturnLines = (
     });
   };
 
-  const saveSupplierReturn = async () => {
-    const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
+  const saveOutboundReturn = async () => {
+    const outboundReturnLines: SupplierReturnLineInput[] = draftLines.map(
       line => {
         const { id, reasonId, numberOfPacksToReturn, stockLineId, comment } =
           line;
@@ -60,7 +60,7 @@ export const useDraftSupplierReturnLines = (
     const input: SupplierReturnInput = {
       id: FnUtils.generateUUID(),
       supplierId,
-      supplierReturnLines,
+      supplierReturnLines: outboundReturnLines,
     };
 
     // TODO: error handling here
@@ -68,5 +68,5 @@ export const useDraftSupplierReturnLines = (
     await mutateAsync(input);
   };
 
-  return { lines: draftLines, update, saveSupplierReturn };
+  return { lines: draftLines, update, saveOutboundReturn };
 };
