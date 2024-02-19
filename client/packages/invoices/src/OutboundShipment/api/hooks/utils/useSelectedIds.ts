@@ -11,8 +11,7 @@ export const useSelectedIds = () => {
       return isGrouped
         ? items
             ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
+            .flatMap(({ lines }) => lines.flat())
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     })?.map(({ id }) => id) || [];
 
