@@ -1,4 +1,5 @@
 import {
+  InboundReturnInput,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   SupplierReturnInput,
@@ -185,6 +186,14 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert supplier return');
+  },
+  insertInboundReturn: async (input: InboundReturnInput) => {
+    const result = await sdk.insertInboundReturn({
+      input,
+      storeId,
+    });
+
+    return result.insertInboundReturn;
   },
   deleteOutbound: async (
     returns: OutboundReturnRowFragment[]

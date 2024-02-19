@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftSupplierReturnLines } from './useDraftSupplierReturnLines';
-import { ReturnReasonsTable } from './ReturnReasonsTable';
+import { ReturnReasonsTable } from '../ReturnReasonsTable';
 
 interface SupplierReturnLinesModalProps {
   isOpen: boolean;
@@ -42,8 +42,8 @@ export const SupplierReturnLinesModal = ({
   ];
 
   const getActiveStep = () => {
-    const step = returnsSteps.find(step => step.tab === currentTab);
-    return step ? returnsSteps.indexOf(step) : 0;
+    const step = returnsSteps.findIndex(step => step.tab === currentTab);
+    return step === -1 ? 0 : step;
   };
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });

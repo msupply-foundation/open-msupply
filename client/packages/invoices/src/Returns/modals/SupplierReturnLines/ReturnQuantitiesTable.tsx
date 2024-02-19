@@ -1,15 +1,19 @@
-import { DataTable, NumberInputCell, useColumns } from 'packages/common/src';
+import {
+  DataTable,
+  NumberInputCell,
+  SupplierReturnLine,
+  useColumns,
+} from 'packages/common/src';
 import React from 'react';
-import { DraftSupplierReturnLine } from './useDraftSupplierReturnLines';
 
 export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
 }: {
-  lines: DraftSupplierReturnLine[];
-  updateLine: (line: Partial<DraftSupplierReturnLine> & { id: string }) => void;
+  lines: SupplierReturnLine[];
+  updateLine: (line: Partial<SupplierReturnLine> & { id: string }) => void;
 }) => {
-  const columns = useColumns<DraftSupplierReturnLine>(
+  const columns = useColumns<SupplierReturnLine>(
     [
       'itemCode',
       'itemName',
