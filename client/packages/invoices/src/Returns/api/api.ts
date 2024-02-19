@@ -3,15 +3,22 @@ import {
   InvoiceSortFieldInput,
   SupplierReturnInput,
 } from '@common/types';
-import { OutboundReturnRowFragment, Sdk } from './operations.generated';
+import {
+  InboundReturnRowFragment,
+  OutboundReturnRowFragment,
+  Sdk,
+} from './operations.generated';
 import { FilterByWithBoolean, SortBy } from '@common/hooks';
 
-export type OutboundListParams = {
+type ListParams<T> = {
   first: number;
   offset: number;
-  sortBy: SortBy<OutboundReturnRowFragment>;
+  sortBy: SortBy<T>;
   filterBy: FilterByWithBoolean | null;
 };
+
+export type OutboundListParams = ListParams<OutboundReturnRowFragment>;
+export type InboundListParams = ListParams<InboundReturnRowFragment>;
 
 const outboundParsers = {
   toSortField: (
@@ -20,6 +27,30 @@ const outboundParsers = {
     switch (sortBy.key) {
       case 'createdDatetime': {
         return InvoiceSortFieldInput.CreatedDatetime;
+      }
+      case 'otherPartyName': {
+        return InvoiceSortFieldInput.OtherPartyName;
+      }
+      case 'invoiceNumber': {
+        return InvoiceSortFieldInput.InvoiceNumber;
+      }
+      case 'status':
+      default: {
+        return InvoiceSortFieldInput.Status;
+      }
+    }
+  },
+};
+const inboundParsers = {
+  toSortField: (
+    sortBy: SortBy<InboundReturnRowFragment>
+  ): InvoiceSortFieldInput => {
+    switch (sortBy.key) {
+      case 'createdDatetime': {
+        return InvoiceSortFieldInput.CreatedDatetime;
+      }
+      case 'deliveredDatetime': {
+        return InvoiceSortFieldInput.DeliveredDatetime;
       }
       case 'otherPartyName': {
         return InvoiceSortFieldInput.OtherPartyName;
@@ -77,13 +108,61 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    newSupplierReturnLines: async (lineIds: string[]) => {
+    listInbound: async ({
+      first,
+      offset,
+      sortBy,
+      filterBy,
+    }: InboundListParams): Promise<{
+      nodes: InboundReturnRowFragment[];
+      totalCount: number;
+    }> => {
+      const filter = {
+        ...filterBy,
+        type: { equalTo: InvoiceNodeType.CustomerReturn },
+      };
+      const result = await sdk.inboundReturns({
+        first,
+        offset,
+        key: inboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
+        storeId,
+      });
+      return result?.invoices;
+    },
+    listAllInbound: async (
+      sortBy: SortBy<InboundReturnRowFragment>
+    ): Promise<{
+      nodes: InboundReturnRowFragment[];
+      totalCount: number;
+    }> => {
+      const filter = {
+        type: { equalTo: InvoiceNodeType.CustomerReturn },
+      };
+      const result = await sdk.outboundReturns({
+        key: inboundParsers.toSortField(sortBy),
+        desc: !!sortBy.isDesc,
+        filter,
+        storeId,
+      });
+      return result?.invoices;
+    },
+    newSupplierReturnLines: async (inboundShipmentLineIds: string[]) => {
       const result = await sdk.newSupplierReturnLines({
-        inboundShipmentLineIds: lineIds,
+        inboundShipmentLineIds,
         storeId,
       });
 
       return result?.newSupplierReturn;
+    },
+    inboundReturnLines: async (outboundShipmentLineIds: string[]) => {
+      const result = await sdk.generateInboundReturnLines({
+        outboundShipmentLineIds,
+        storeId,
+      });
+
+      return result?.generateInboundReturnLines;
     },
     invoiceByNumber: async (invoiceNumber: number) => {
       const result = await sdk.invoiceByNumber({
@@ -121,6 +200,25 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     if (deleteSupplierReturns.__typename === 'DeletedIdsResponse') {
       return deleteSupplierReturns.deletedIds;
+    }
+
+    // TODO: query for and handle error response...
+    throw new Error('Could not delete outbound returns');
+  },
+  deleteInbound: async (
+    returns: InboundReturnRowFragment[]
+  ): Promise<string[]> => {
+    const result = await sdk.deleteInboundReturns({
+      storeId,
+      input: {
+        ids: returns.map(({ id }) => id),
+      },
+    });
+
+    const { deleteCustomerReturns } = result;
+
+    if (deleteCustomerReturns.__typename === 'DeletedIdsResponse') {
+      return deleteCustomerReturns.deletedIds;
     }
 
     // TODO: query for and handle error response...

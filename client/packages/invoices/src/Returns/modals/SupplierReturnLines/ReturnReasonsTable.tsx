@@ -6,13 +6,13 @@ import {
 } from 'packages/common/src';
 import { ReturnReasonSearchInput } from 'packages/system/src';
 import React from 'react';
-import { DraftReturnLine } from './useDraftReturnLines';
+import { DraftSupplierReturnLine } from './useDraftSupplierReturnLines';
 
 const ReturnReasonCell = ({
   rowData,
   rowIndex,
   column,
-}: CellProps<DraftReturnLine>): JSX.Element => (
+}: CellProps<DraftSupplierReturnLine>): JSX.Element => (
   <ReturnReasonSearchInput
     autoFocus={rowIndex === 0}
     selectedReasonId={rowData.reasonId}
@@ -24,10 +24,10 @@ export const ReturnReasonsComponent = ({
   lines,
   updateLine,
 }: {
-  lines: DraftReturnLine[];
-  updateLine: (line: Partial<DraftReturnLine> & { id: string }) => void;
+  lines: DraftSupplierReturnLine[];
+  updateLine: (line: Partial<DraftSupplierReturnLine> & { id: string }) => void;
 }) => {
-  const columns = useColumns<DraftReturnLine>(
+  const columns = useColumns<DraftSupplierReturnLine>(
     [
       'itemCode',
       'itemName',
