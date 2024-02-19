@@ -11,6 +11,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         
         UPDATE barcode
         SET manufacturer_link_id = manufacturer_id;
+        UPDATE barcode SET manufacturer_link_id = null WHERE manufacturer_link_id = '';
+        UPDATE barcode SET parent_id = null WHERE parent_id = '';
 
         ALTER TABLE barcode ADD CONSTRAINT barcode_manufacturer_link_id_fkey FOREIGN KEY (manufacturer_link_id) REFERENCES name_link(id);
         "#,
@@ -24,6 +26,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         PRAGMA foreign_keys = OFF;
         ALTER TABLE barcode
         ADD COLUMN manufacturer_link_id TEXT REFERENCES name_link(id);
+        UPDATE barcode SET manufacturer_link_id = null WHERE manufacturer_link_id = '';
+        UPDATE barcode SET parent_id = null WHERE parent_id = '';
         
         UPDATE barcode
         SET manufacturer_link_id = manufacturer_id;
