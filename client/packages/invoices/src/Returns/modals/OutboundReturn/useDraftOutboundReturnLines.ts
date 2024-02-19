@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import {
   FnUtils,
+  OutboundReturnInput,
+  OutboundReturnLine,
+  OutboundReturnLineInput,
   RecordPatch,
-  SupplierReturnInput,
-  SupplierReturnLine,
-  SupplierReturnLineInput,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
-export type DraftSupplierReturnLine = SupplierReturnLine & {
+export type DraftSupplierReturnLine = OutboundReturnLine & {
   reasonId: string;
   comment: string;
 };
@@ -48,7 +48,7 @@ export const useDraftOutboundReturnLines = (
   };
 
   const saveOutboundReturn = async () => {
-    const outboundReturnLines: SupplierReturnLineInput[] = draftLines.map(
+    const outboundReturnLines: OutboundReturnLineInput[] = draftLines.map(
       line => {
         const { id, reasonId, numberOfPacksToReturn, stockLineId, comment } =
           line;
@@ -57,10 +57,10 @@ export const useDraftOutboundReturnLines = (
       }
     );
 
-    const input: SupplierReturnInput = {
+    const input: OutboundReturnInput = {
       id: FnUtils.generateUUID(),
       supplierId,
-      supplierReturnLines: outboundReturnLines,
+      outboundReturnLines,
     };
 
     // TODO: error handling here

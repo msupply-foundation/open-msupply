@@ -8,7 +8,7 @@ use self::invoice_queries::*;
 
 pub mod mutations;
 use self::mutations::{
-    customer_return, inbound_shipment, outbound_shipment, prescription, supplier_return,
+    inbound_return, inbound_shipment, outbound_return, outbound_shipment, prescription,
 };
 
 #[cfg(test)]
@@ -174,29 +174,29 @@ impl InvoiceMutations {
         prescription::delete::delete(ctx, &store_id, id)
     }
 
-    async fn insert_supplier_return(
+    async fn insert_outbound_return(
         &self,
         ctx: &Context<'_>,
-        input: supplier_return::insert::InsertInput,
-    ) -> Result<supplier_return::insert::InsertResponse> {
-        supplier_return::insert::insert(ctx, input)
+        input: outbound_return::insert::InsertInput,
+    ) -> Result<outbound_return::insert::InsertResponse> {
+        outbound_return::insert::insert(ctx, input)
     }
 
-    async fn delete_supplier_returns(
+    async fn delete_outbound_returns(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: supplier_return::delete::DeleteInput,
-    ) -> Result<supplier_return::delete::DeleteResponse> {
-        supplier_return::delete::delete(ctx, &store_id, input)
+        input: outbound_return::delete::DeleteInput,
+    ) -> Result<outbound_return::delete::DeleteResponse> {
+        outbound_return::delete::delete(ctx, &store_id, input)
     }
 
-    async fn delete_customer_returns(
+    async fn delete_inbound_returns(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: customer_return::delete::DeleteInput,
-    ) -> Result<customer_return::delete::DeleteResponse> {
-        customer_return::delete::delete(ctx, &store_id, input)
+        input: inbound_return::delete::DeleteInput,
+    ) -> Result<inbound_return::delete::DeleteResponse> {
+        inbound_return::delete::delete(ctx, &store_id, input)
     }
 }
