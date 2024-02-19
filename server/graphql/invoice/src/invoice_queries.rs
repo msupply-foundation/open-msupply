@@ -132,6 +132,20 @@ pub fn get_invoices(
     filter: Option<InvoiceFilterInput>,
     sort: Option<Vec<InvoiceSortInput>>,
 ) -> Result<InvoicesResponse> {
+    if let Some(inv_type) = filter.clone().map(|filter| {
+        filter
+            .r#type
+            .map(|t| t.equal_to)
+            .flatten()
+            .unwrap_or_else(|| InvoiceNodeType::InboundShipment) // ..default to something that isn't a return
+    }) {
+        if let Some(invoice) = supplier_return(ctx, &inv_type) {
+            return Ok(InvoicesResponse::Response(InvoiceConnector::from_vec(
+                vec![invoice],
+            )));
+        }
+    };
+
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -161,7 +175,7 @@ pub fn get_invoices(
     )))
 }
 
-fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<InvoiceNode> {
+fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice> {
     if *r#type != InvoiceNodeType::SupplierReturn {
         return None;
     }
@@ -195,12 +209,12 @@ fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
         })
         .unwrap();
 
-    Some(InvoiceNode {
-        invoice: InvoiceRepository::new(&context.connection)
+    Some(
+        InvoiceRepository::new(&context.connection)
             .query_one(InvoiceFilter::by_id("supplier_return_1"))
             .unwrap()
             .unwrap(),
-    })
+    )
 }
 
 pub fn get_invoice_by_number(
@@ -209,8 +223,8 @@ pub fn get_invoice_by_number(
     invoice_number: u32,
     r#type: InvoiceNodeType,
 ) -> Result<InvoiceResponse> {
-    if let Some(invoice_node) = supplier_return(ctx, &r#type) {
-        return Ok(InvoiceResponse::Response(invoice_node));
+    if let Some(invoice) = supplier_return(ctx, &r#type) {
+        return Ok(InvoiceResponse::Response(InvoiceNode::from_domain(invoice)));
     }
 
     let user = validate_auth(

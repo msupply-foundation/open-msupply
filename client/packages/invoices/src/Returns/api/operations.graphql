@@ -1,3 +1,37 @@
+fragment OutboundReturnRow on InvoiceNode {
+  __typename
+  id
+  otherPartyName
+  status
+  invoiceNumber
+  colour
+  createdDatetime
+}
+
+query outboundReturns(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      nodes {
+        ...OutboundReturnRow
+      }
+      totalCount
+    }
+  }
+}
+
 query newSupplierReturnLines(
   $inboundShipmentLineIds: [String!]
   $storeId: String!
@@ -80,6 +114,18 @@ mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
       __typename
       id
       invoiceNumber
+    }
+  }
+}
+
+mutation deleteOutboundReturns(
+  $storeId: String!
+  $input: [DeleteSupplierReturnInput!]!
+) {
+  deleteSupplierReturns(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeletedIdsResponse {
+      deletedIds
     }
   }
 }
