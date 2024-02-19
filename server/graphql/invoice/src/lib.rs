@@ -8,7 +8,8 @@ use self::invoice_queries::*;
 
 pub mod mutations;
 use self::mutations::{
-    inbound_return, inbound_shipment, outbound_shipment, prescription, supplier_return,
+    customer_return, inbound_return, inbound_shipment, outbound_shipment, prescription,
+    supplier_return,
 };
 
 #[cfg(test)]
@@ -198,5 +199,14 @@ impl InvoiceMutations {
         input: supplier_return::delete::DeleteInput,
     ) -> Result<supplier_return::delete::DeleteResponse> {
         supplier_return::delete::delete(ctx, &store_id, input)
+    }
+
+    async fn delete_customer_returns(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: customer_return::delete::DeleteInput,
+    ) -> Result<customer_return::delete::DeleteResponse> {
+        customer_return::delete::delete(ctx, &store_id, input)
     }
 }
