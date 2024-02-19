@@ -11,6 +11,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
   ModalMode,
+  useNotification,
 } from '@openmsupply-client/common';
 import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
@@ -24,11 +25,20 @@ import { AppRoute } from '@openmsupply-client/config';
 import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit } from './OutboundLineEdit';
+import { InboundReturnEditModal } from '../../Returns';
 
 export const DetailView: FC = () => {
+  const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<Draft>();
+  const {
+    onOpen: onOpenReturns,
+    onClose: onCloseReturns,
+    isOpen: returnsIsOpen,
+    entity: selectedOutboundShipmentLineIds,
+  } = useEditModal<string[]>();
+
   const { data, isLoading } = useOutbound.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
@@ -41,6 +51,13 @@ export const DetailView: FC = () => {
   const onAddItem = (draft?: Draft) => {
     onOpen(draft);
     setMode(ModalMode.Create);
+  };
+
+  const onReturn = async (outboundShipmentLineIds: string[]) => {
+    if (!outboundShipmentLineIds.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    } else onOpenReturns(outboundShipmentLineIds);
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -86,7 +103,15 @@ export const DetailView: FC = () => {
             />
           )}
 
-          <Toolbar />
+          {returnsIsOpen && (
+            <InboundReturnEditModal
+              isOpen={returnsIsOpen}
+              onClose={onCloseReturns}
+              stockLineIds={selectedOutboundShipmentLineIds || []}
+            />
+          )}
+
+          <Toolbar onReturnLines={onReturn} />
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />

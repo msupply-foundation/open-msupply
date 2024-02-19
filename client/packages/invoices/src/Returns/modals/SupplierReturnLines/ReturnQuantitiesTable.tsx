@@ -1,15 +1,15 @@
 import { DataTable, NumberInputCell, useColumns } from 'packages/common/src';
 import React from 'react';
-import { DraftReturnLine } from './useDraftReturnLines';
+import { DraftSupplierReturnLine } from './useDraftSupplierReturnLines';
 
 export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
 }: {
-  lines: DraftReturnLine[];
-  updateLine: (line: Partial<DraftReturnLine> & { id: string }) => void;
+  lines: DraftSupplierReturnLine[];
+  updateLine: (line: Partial<DraftSupplierReturnLine> & { id: string }) => void;
 }) => {
-  const columns = useColumns<DraftReturnLine>(
+  const columns = useColumns<DraftSupplierReturnLine>(
     [
       'itemCode',
       'itemName',
@@ -28,7 +28,7 @@ export const QuantityToReturnTableComponent = ({
               {...props}
               isRequired
               max={props.rowData.availableNumberOfPacks}
-              min={1}
+              min={0}
             />
           ),
         },
