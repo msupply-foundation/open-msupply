@@ -11,8 +11,8 @@ interface ReturnWithReason {
   id: string;
   itemCode: string;
   itemName: string;
-  reasonId: string;
   comment: string;
+  reasonId?: string | null;
 }
 
 const ReturnReasonCell = ({
@@ -22,7 +22,7 @@ const ReturnReasonCell = ({
 }: CellProps<ReturnWithReason>): JSX.Element => (
   <ReturnReasonSearchInput
     autoFocus={rowIndex === 0}
-    selectedReasonId={rowData.reasonId}
+    selectedReasonId={rowData.reasonId ?? null}
     onChange={id => column.setter({ ...rowData, reasonId: id })}
   />
 );

@@ -15,6 +15,8 @@ query newSupplierReturnLines(
     numberOfPacksToReturn
     packSize
     stockLineId
+    comment
+    reasonId
   }
 }
 
@@ -35,6 +37,8 @@ query generateInboundReturnLines(
     stockLineId
     numberOfPacksReturned
     numberOfPacksIssued
+    comment
+    reasonId
   }
 }
 
