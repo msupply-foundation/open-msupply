@@ -386,6 +386,7 @@
   "message.coming-soon": "Coming soon...",
   "message.copy-success": "Copied to clipboard successfully",
   "message.database-not-sqlite": "Database download is only available for SQLite databases",
+  "message.database-not-local": "Database is running on a server, so can't be downloaded here",
   "message.nothing-to-copy": "Nothing to copy",
   "message.nothing-to-save": "Nothing to save",
   "messages.ago": "{{time}} ago",
