@@ -178,13 +178,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    const { insertSupplierReturn } = result;
-
-    if (insertSupplierReturn.__typename === 'InvoiceNode') {
-      return insertSupplierReturn.invoiceNumber;
-    }
-
-    throw new Error('Could not insert supplier return');
+    return result.insertSupplierReturn;
   },
   deleteOutbound: async (
     returns: OutboundReturnRowFragment[]
