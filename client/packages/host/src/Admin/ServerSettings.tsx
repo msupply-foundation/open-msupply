@@ -97,13 +97,16 @@ export const ServerSettings = () => {
             title={
               databaseSettings?.databaseType !== DatabaseType.SqLite
                 ? t('message.database-not-sqlite')
+                : nativeMode !== NativeMode.Server
+                ? t('message.database-not-local')
                 : t('label.download-database')
             }
           >
             <span>
               <LoadingButton
                 disabled={
-                  databaseSettings?.databaseType !== DatabaseType.SqLite
+                  databaseSettings?.databaseType !== DatabaseType.SqLite ||
+                  nativeMode !== NativeMode.Server
                 }
                 isLoading={isDownloading}
                 startIcon={<DownloadIcon />}
