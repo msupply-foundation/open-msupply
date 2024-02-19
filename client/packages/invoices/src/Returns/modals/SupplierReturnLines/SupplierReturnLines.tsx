@@ -12,10 +12,10 @@ import {
   TabContext,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
-import { useDraftReturnLines } from './useDraftReturnLines';
+import { useDraftSupplierReturnLines } from './useDraftSupplierReturnLines';
 import { ReturnReasonsTable } from './ReturnReasonsTable';
 
-interface NewReturnItemsModalProps {
+interface SupplierReturnLinesModalProps {
   isOpen: boolean;
   stockLineIds: string[];
   onClose: () => void;
@@ -27,12 +27,12 @@ enum Tabs {
   Reason = 'Reason',
 }
 
-export const NewReturnItemsModal = ({
+export const SupplierReturnLinesModal = ({
   isOpen,
   stockLineIds,
   onClose,
   supplierId,
-}: NewReturnItemsModalProps) => {
+}: SupplierReturnLinesModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
 
@@ -49,7 +49,7 @@ export const NewReturnItemsModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update, saveSupplierReturn } = useDraftReturnLines(
+  const { lines, update, saveSupplierReturn } = useDraftSupplierReturnLines(
     stockLineIds,
     supplierId
   );
