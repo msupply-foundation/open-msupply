@@ -42,8 +42,8 @@ export const InboundReturnEditModal = ({
   ];
 
   const getActiveStep = () => {
-    const step = returnsSteps.find(step => step.tab === currentTab);
-    return step ? returnsSteps.indexOf(step) : 0;
+    const step = returnsSteps.findIndex(step => step.tab === currentTab);
+    return step === -1 ? 0 : step;
   };
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
