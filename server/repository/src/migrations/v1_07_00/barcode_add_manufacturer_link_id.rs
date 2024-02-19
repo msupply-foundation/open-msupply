@@ -1,14 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-    sql!(
-        connection,
-        r#"
-        UPDATE barcode SET manufacturer_link_id = null WHERE manufacturer_link_id = '';
-        UPDATE barcode SET parent_id = null WHERE parent_id = '';
-        "#,
-    )?;
-
     #[cfg(feature = "postgres")]
     sql!(
         connection,
