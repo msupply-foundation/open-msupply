@@ -12,6 +12,14 @@ export type NewSupplierReturnLinesQueryVariables = Types.Exact<{
 
 export type NewSupplierReturnLinesQuery = { __typename: 'Queries', newSupplierReturn: Array<{ __typename: 'SupplierReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string }> };
 
+export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
+  outboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: Array<{ __typename: 'InboundReturnLine', batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, packSize: number, stockLineId: string, numberOfPacksReturned: number, numberOfPacksIssued: number }> };
+
 export type InvoiceByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -43,6 +51,24 @@ export const NewSupplierReturnLinesDocument = gql`
     numberOfPacksToReturn
     packSize
     stockLineId
+  }
+}
+    `;
+export const GenerateInboundReturnLinesDocument = gql`
+    query generateInboundReturnLines($outboundShipmentLineIds: [String!], $storeId: String!) {
+  generateInboundReturnLines(
+    input: {outboundShipmentLineIds: $outboundShipmentLineIds}
+    storeId: $storeId
+  ) {
+    batch
+    expiryDate
+    id
+    itemCode
+    itemName
+    packSize
+    stockLineId
+    numberOfPacksReturned
+    numberOfPacksIssued
   }
 }
     `;
@@ -91,6 +117,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     newSupplierReturnLines(variables: NewSupplierReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<NewSupplierReturnLinesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<NewSupplierReturnLinesQuery>(NewSupplierReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'newSupplierReturnLines', 'query');
     },
+    generateInboundReturnLines(variables: GenerateInboundReturnLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GenerateInboundReturnLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<GenerateInboundReturnLinesQuery>(GenerateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'generateInboundReturnLines', 'query');
+    },
     invoiceByNumber(variables: InvoiceByNumberQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InvoiceByNumberQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<InvoiceByNumberQuery>(InvoiceByNumberDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'invoiceByNumber', 'query');
     },
@@ -115,6 +144,23 @@ export type Sdk = ReturnType<typeof getSdk>;
 export const mockNewSupplierReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<NewSupplierReturnLinesQueryVariables>, GraphQLContext<NewSupplierReturnLinesQuery>, any>) =>
   graphql.query<NewSupplierReturnLinesQuery, NewSupplierReturnLinesQueryVariables>(
     'newSupplierReturnLines',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockGenerateInboundReturnLinesQuery((req, res, ctx) => {
+ *   const { outboundShipmentLineIds, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ generateInboundReturnLines })
+ *   )
+ * })
+ */
+export const mockGenerateInboundReturnLinesQuery = (resolver: ResponseResolver<GraphQLRequest<GenerateInboundReturnLinesQueryVariables>, GraphQLContext<GenerateInboundReturnLinesQuery>, any>) =>
+  graphql.query<GenerateInboundReturnLinesQuery, GenerateInboundReturnLinesQueryVariables>(
+    'generateInboundReturnLines',
     resolver
   )
 

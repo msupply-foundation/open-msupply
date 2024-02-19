@@ -18,6 +18,26 @@ query newSupplierReturnLines(
   }
 }
 
+query generateInboundReturnLines(
+  $outboundShipmentLineIds: [String!]
+  $storeId: String!
+) {
+  generateInboundReturnLines(
+    input: { outboundShipmentLineIds: $outboundShipmentLineIds }
+    storeId: $storeId
+  ) {
+    batch
+    expiryDate
+    id
+    itemCode
+    itemName
+    packSize
+    stockLineId
+    numberOfPacksReturned
+    numberOfPacksIssued
+  }
+}
+
 query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber

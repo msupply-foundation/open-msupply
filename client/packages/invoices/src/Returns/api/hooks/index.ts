@@ -9,7 +9,8 @@ export const useReturns = {
     insertSupplierReturn: Document.useInsertSupplierReturn,
   },
   lines: {
-    newReturnLines: Lines.useNewSupplierReturnLines,
+    supplierReturnLines: Lines.useNewSupplierReturnLines,
+    inboundReturnLines: Lines.useInboundReturnLines,
   },
   utils: {
     api: Utils.useReturnsApi,
