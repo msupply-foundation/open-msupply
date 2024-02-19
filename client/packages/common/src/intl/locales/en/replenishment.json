@@ -5,7 +5,6 @@
   "button.return-lines": "Return selected lines",
   "button.requested-to-suggested": "Use Suggested Quantities",
   "error.amc-is-zero": "No Average Monthly Consumption value",
-  "error.failed-to-create-return": "Failed to create return!",
   "error.no-inbound-items": "No items have been added to this shipment.",
   "error.no-inbound-shipments": "There are no Inbound Shipments to display.",
   "error.no-internal-orders": "No internal orders to display.",
