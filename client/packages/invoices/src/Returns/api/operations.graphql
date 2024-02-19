@@ -83,6 +83,8 @@ query newSupplierReturnLines(
     numberOfPacksToReturn
     packSize
     stockLineId
+    comment
+    reasonId
   }
 }
 
@@ -103,6 +105,8 @@ query generateInboundReturnLines(
     stockLineId
     numberOfPacksReturned
     numberOfPacksIssued
+    comment
+    reasonId
   }
 }
 
@@ -130,6 +134,16 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
 
 mutation insertSupplierReturn($input: SupplierReturnInput!) {
   insertSupplierReturn(input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
+  insertInboundReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id

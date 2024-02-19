@@ -1,4 +1,5 @@
 import {
+  InboundReturnInput,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   SupplierReturnInput,
@@ -179,6 +180,14 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     });
 
     return result.insertSupplierReturn;
+  },
+  insertInboundReturn: async (input: InboundReturnInput) => {
+    const result = await sdk.insertInboundReturn({
+      input,
+      storeId,
+    });
+
+    return result.insertInboundReturn;
   },
   deleteOutbound: async (
     returns: OutboundReturnRowFragment[]
