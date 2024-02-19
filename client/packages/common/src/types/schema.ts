@@ -1430,6 +1430,10 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
+export type GenerateInboundReturnInput = {
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
+};
+
 export type GenerateSupplierReturnLinesInput = {
   inboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
@@ -1438,6 +1442,19 @@ export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
   notDelivered: Scalars['Int']['output'];
+};
+
+export type InboundReturnLine = {
+  __typename: 'InboundReturnLine';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  numberOfPacksIssued: Scalars['Float']['output'];
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  stockLineId: Scalars['String']['output'];
 };
 
 export type InitialisationStatusNode = {
@@ -3785,6 +3802,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
+  generateInboundReturnLines: Array<InboundReturnLine>;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
@@ -3971,6 +3989,12 @@ export type QueriesFormSchemasArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<FormSchemaSortInput>>;
+};
+
+
+export type QueriesGenerateInboundReturnLinesArgs = {
+  input: GenerateInboundReturnInput;
+  storeId: Scalars['String']['input'];
 };
 
 
