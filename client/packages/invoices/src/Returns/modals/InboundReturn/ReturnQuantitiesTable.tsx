@@ -39,7 +39,7 @@ export const QuantityReturnedTableComponent = ({
               {...props}
               isRequired
               max={props.rowData.numberOfPacksIssued}
-              min={1}
+              min={0}
             />
           ),
         },
