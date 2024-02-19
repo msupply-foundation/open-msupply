@@ -44,7 +44,7 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .build();
 
-  const inboundReturnRoute = RouteBuilder.create(
+  const inboundReturnsRoute = RouteBuilder.create(
     AppRoute.InboundReturn
   ).build();
 
@@ -72,7 +72,7 @@ const InvoiceService: FC = () => {
         element={<OutboundReturnsDetailView />}
       />
 
-      <Route path={inboundReturnRoute} element={<InboundReturnListView />} />
+      <Route path={inboundReturnsRoute} element={<InboundReturnListView />} />
     </Routes>
   );
 };
