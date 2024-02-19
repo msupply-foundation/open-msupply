@@ -12,7 +12,8 @@ export const useReturns = {
     deleteOutboundRows: Document.useOutboundDeleteRows,
   },
   lines: {
-    newReturnLines: Lines.useNewSupplierReturnLines,
+    supplierReturnLines: Lines.useNewSupplierReturnLines,
+    inboundReturnLines: Lines.useInboundReturnLines,
   },
   utils: {
     api: Utils.useReturnsApi,
