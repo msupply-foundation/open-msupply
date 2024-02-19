@@ -4,7 +4,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::api::RemoteSyncRecordV5;
+use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
@@ -28,10 +28,12 @@ pub struct LegacyBarcodeRow {
     pub gtin: String,
     #[serde(rename = "itemID")]
     pub item_id: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "manufacturerID")]
     pub manufacturer_id: Option<String>,
     #[serde(rename = "packSize")]
     pub pack_size: Option<i32>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "parentID")]
     pub parent_id: Option<String>,
 }
