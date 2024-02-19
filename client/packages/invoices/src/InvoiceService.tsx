@@ -2,13 +2,16 @@ import React, { FC } from 'react';
 import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailView, OutboundShipmentListView } from './OutboundShipment';
-import { DetailView as ReturnsDetailView } from './Returns';
+import {
+  DetailView as OutboundReturnsDetailView,
+  OutboundReturnListView,
+  InboundReturnListView,
+} from './Returns';
 import {
   ListView as InboundShipmentListView,
   DetailView as InboundShipmentDetailView,
 } from './InboundShipment';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
-import { InboundReturnListView, OutboundReturnListView } from './Returns';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -41,7 +44,7 @@ const InvoiceService: FC = () => {
     .addPart(':invoiceNumber')
     .build();
 
-  const inboundReturnRoute = RouteBuilder.create(
+  const inboundReturnsRoute = RouteBuilder.create(
     AppRoute.InboundReturn
   ).build();
 
@@ -64,9 +67,12 @@ const InvoiceService: FC = () => {
       <Route path={prescriptionRoute} element={<PrescriptionDetailView />} />
 
       <Route path={outboundReturnsRoute} element={<OutboundReturnListView />} />
-      <Route path={outboundReturnRoute} element={<ReturnsDetailView />} />
+      <Route
+        path={outboundReturnRoute}
+        element={<OutboundReturnsDetailView />}
+      />
 
-      <Route path={inboundReturnRoute} element={<InboundReturnListView />} />
+      <Route path={inboundReturnsRoute} element={<InboundReturnListView />} />
     </Routes>
   );
 };

@@ -1,40 +1,40 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible};
+use graphql_core::simple_generic_errors::{OtherPartyNotACustomer, OtherPartyNotVisible};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 
 #[derive(InputObject)]
-#[graphql(name = "OutboundReturnInput")]
+#[graphql(name = "InboundReturnInput")]
 pub struct InsertInput {
     pub id: String,
-    pub supplier_id: String, // to be other_party_id
-    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
+    pub customer_id: String, // to be other_party_id
+    pub inbound_return_lines: Vec<InboundReturnLineInput>,
 }
 
 #[derive(InputObject)]
-pub struct OutboundReturnLineInput {
+pub struct InboundReturnLineInput {
     pub id: String,
     pub stock_line_id: String,
-    pub number_of_packs_to_return: f64,
+    pub number_of_packs_returned: f64,
     pub reason_id: Option<String>,
     pub comment: String,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "InsertOutboundReturnError")]
+#[graphql(name = "InsertInboundReturnError")]
 pub struct InsertError {
     pub error: InsertErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "InsertOutboundReturnResponse")]
+#[graphql(name = "InsertInboundReturnResponse")]
 pub enum InsertResponse {
     Error(InsertError),
     Response(InvoiceNode),
 }
 
-pub fn insert(_ctx: &Context<'_>, _input: InsertInput) -> Result<InsertResponse> {
+pub fn insert(_ctx: &Context<'_>, _store_id: &str, _input: InsertInput) -> Result<InsertResponse> {
     Ok(InsertResponse::Response(InvoiceNode::from_domain(
         Invoice {
             ..Default::default()
@@ -43,9 +43,9 @@ pub fn insert(_ctx: &Context<'_>, _input: InsertInput) -> Result<InsertResponse>
 }
 
 #[derive(Interface)]
-#[graphql(name = "InsertOutboundReturnErrorInterface")]
+#[graphql(name = "InsertInboundReturnErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
-    OtherPartyNotASupplier(OtherPartyNotASupplier),
+    OtherPartyNotACustomer(OtherPartyNotACustomer),
 }

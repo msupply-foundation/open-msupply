@@ -132,10 +132,13 @@ pub fn get_invoices(
     filter: Option<InvoiceFilterInput>,
     sort: Option<Vec<InvoiceSortInput>>,
 ) -> Result<InvoicesResponse> {
-    if let Some(inv_type) = filter
-        .clone()
-        .map(|filter| filter.r#type.map(|t| t.equal_to).flatten().unwrap())
-    {
+    if let Some(inv_type) = filter.clone().map(|filter| {
+        filter
+            .r#type
+            .map(|t| t.equal_to)
+            .flatten()
+            .unwrap_or_else(|| InvoiceNodeType::InboundShipment) // ..default to something that isn't a return
+    }) {
         if let Some(invoice) = outbound_return(ctx, &inv_type) {
             return Ok(InvoicesResponse::Response(InvoiceConnector::from_vec(
                 vec![invoice],
