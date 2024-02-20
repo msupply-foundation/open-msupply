@@ -2,12 +2,14 @@ use async_graphql::*;
 use chrono::NaiveDate;
 
 #[derive(InputObject, Clone)]
-pub struct GenerateSupplierReturnLinesInput {
-    pub inbound_shipment_line_ids: Vec<String>,
+pub struct GenerateOutboundReturnLinesInput {
+    pub stock_line_ids: Vec<String>,
+    pub item_id: Option<String>,
+    pub return_id: Option<String>,
 }
 
 #[derive(SimpleObject, Clone)]
-pub struct SupplierReturnLine {
+pub struct OutboundReturnLineNode {
     pub id: String,
     pub item_code: String,
     pub item_name: String,
@@ -21,23 +23,50 @@ pub struct SupplierReturnLine {
     pub reason_id: Option<String>,
 }
 
-pub fn new_supplier_return(
-    _store_id: String,
-    _input: GenerateSupplierReturnLinesInput,
-) -> Result<Vec<SupplierReturnLine>> {
-    Ok(vec![SupplierReturnLine {
-        id: "new_supplier_return_line1".to_string(),
-        // Below, don't have to match atm
-        item_code: "abc".to_string(),
-        item_name: "Item name 1".to_string(),
-        stock_line_id: "stock_line_id".to_string(),
-        batch: Some("batch A".to_string()),
-        expiry_date: NaiveDate::from_ymd_opt(2024, 05, 10),
-        available_number_of_packs: 1000.0,
-        pack_size: 20,
-        number_of_packs_to_return: 300.0,
-        comment: "Comment 1".to_string(),
-        reason_id: None,
-        // No location or unit column for now
-    }])
+#[derive(SimpleObject)]
+pub struct OutboundReturnLineConnector {
+    total_count: u32,
+    nodes: Vec<OutboundReturnLineNode>,
+}
+
+#[derive(Union)]
+pub enum GenerateOutboundReturnLinesResponse {
+    Response(OutboundReturnLineConnector),
+}
+
+pub fn generate_outbound_return_lines(
+    ctx: &Context<'_>,
+    store_id: String,
+    input: GenerateOutboundReturnLinesInput,
+) -> Result<GenerateOutboundReturnLinesResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryTemperatureLog,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+    let temperature_chart = service_provider
+        .temperature_chart_service
+        .get_temperature_chart(
+            &service_context,
+            GenerateOutboundReturnLinesInput {
+                from_datetime: from_datetime.naive_utc(),
+                to_datetime: to_datetime.naive_utc(),
+                number_of_data_points,
+                filter: filter.map(TemperatureLogFilter::from),
+            },
+        )
+        .map_err(map_error)?;
+
+    let temperature_chart_node =
+        update_point_temperatures(temperature_chart, &service_context.connection)?;
+
+    Ok(GenerateOutboundReturnLinesResponse::Response(
+        temperature_chart_node,
+    ))
 }
