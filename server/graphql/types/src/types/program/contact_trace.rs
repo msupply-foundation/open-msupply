@@ -234,7 +234,7 @@ impl ContactTraceNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.trace_row().datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.trace_row().datetime, Utc)
     }
 
     /// The encounter document

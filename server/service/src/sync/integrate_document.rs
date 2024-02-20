@@ -172,7 +172,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::from_naive_utc_and_offset(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(50000, 0).unwrap(),
                     Utc,
                 ),
@@ -214,7 +214,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::from_naive_utc_and_offset(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(20000, 0).unwrap(),
                     Utc,
                 ),
@@ -256,7 +256,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::from_naive_utc_and_offset(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(100000, 0).unwrap(),
                     Utc,
                 ),

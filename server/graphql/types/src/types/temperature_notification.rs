@@ -48,7 +48,7 @@ impl TemperatureExcursionNode {
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.row().datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime, Utc)
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {

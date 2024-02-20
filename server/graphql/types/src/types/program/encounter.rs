@@ -334,17 +334,17 @@ impl EncounterNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.encounter_row().created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.encounter_row().created_datetime, Utc)
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.encounter_row().start_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.encounter_row().start_datetime, Utc)
     }
 
     pub async fn end_datetime(&self) -> Option<DateTime<Utc>> {
         self.encounter_row()
             .end_datetime
-            .map(|t| DateTime::from_naive_utc_and_offset(t, Utc))
+            .map(|t| DateTime::<Utc>::from_naive_utc_and_offset(t, Utc))
     }
 
     /// The encounter document
