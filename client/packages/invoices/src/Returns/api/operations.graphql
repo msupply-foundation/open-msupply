@@ -175,3 +175,41 @@ mutation deleteInboundReturns(
     }
   }
 }
+
+mutation deleteOutboundShipmentLines(
+  $storeId: String!
+  $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!
+) {
+  batchOutboundShipment(
+    storeId: $storeId
+    input: { deleteOutboundShipmentLines: $deleteOutboundShipmentLines }
+  ) {
+    deleteOutboundShipmentLines {
+      id
+      response {
+        ... on DeleteOutboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import {
+  DeleteOutboundShipmentLineInput,
   InboundReturnInput,
   InvoiceNodeType,
   InvoiceSortFieldInput,
@@ -65,6 +66,9 @@ const inboundParsers = {
       }
     }
   },
+  toDeleteLine: (line: { id: string }): DeleteOutboundShipmentLineInput => ({
+    id: line.id,
+  }),
 };
 
 export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
@@ -226,5 +230,15 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     // TODO: query for and handle error response...
     throw new Error('Could not delete outbound returns');
+  },
+  deleteOutboundLines: async (lines: { id: string }[]) => {
+    return sdk.deleteOutboundShipmentLines({
+      storeId,
+      deleteOutboundShipmentLines: lines.map(
+        (line: { id: string }): DeleteOutboundShipmentLineInput => ({
+          id: line.id,
+        })
+      ),
+    });
   },
 });

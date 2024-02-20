@@ -87,6 +87,14 @@ export type DeleteInboundReturnsMutationVariables = Types.Exact<{
 
 export type DeleteInboundReturnsMutation = { __typename: 'Mutations', deleteCustomerReturns: { __typename: 'DeleteCustomerReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
 
+export type DeleteOutboundShipmentLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  deleteOutboundShipmentLines: Array<Types.DeleteOutboundShipmentLineInput> | Types.DeleteOutboundShipmentLineInput;
+}>;
+
+
+export type DeleteOutboundShipmentLinesMutation = { __typename: 'Mutations', batchOutboundShipment: { __typename: 'BatchOutboundShipmentResponse', deleteOutboundShipmentLines?: Array<{ __typename: 'DeleteOutboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteOutboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
   __typename
@@ -251,6 +259,42 @@ export const DeleteInboundReturnsDocument = gql`
   }
 }
     `;
+export const DeleteOutboundShipmentLinesDocument = gql`
+    mutation deleteOutboundShipmentLines($storeId: String!, $deleteOutboundShipmentLines: [DeleteOutboundShipmentLineInput!]!) {
+  batchOutboundShipment(
+    storeId: $storeId
+    input: {deleteOutboundShipmentLines: $deleteOutboundShipmentLines}
+  ) {
+    deleteOutboundShipmentLines {
+      id
+      response {
+        ... on DeleteOutboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -285,6 +329,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteInboundReturns(variables: DeleteInboundReturnsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundReturnsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnsMutation>(DeleteInboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturns', 'mutation');
+    },
+    deleteOutboundShipmentLines(variables: DeleteOutboundShipmentLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundShipmentLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundShipmentLinesMutation>(DeleteOutboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundShipmentLines', 'mutation');
     }
   };
 }
@@ -440,5 +487,22 @@ export const mockDeleteOutboundReturnsMutation = (resolver: ResponseResolver<Gra
 export const mockDeleteInboundReturnsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundReturnsMutationVariables>, GraphQLContext<DeleteInboundReturnsMutation>, any>) =>
   graphql.mutation<DeleteInboundReturnsMutation, DeleteInboundReturnsMutationVariables>(
     'deleteInboundReturns',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteOutboundShipmentLinesMutation((req, res, ctx) => {
+ *   const { storeId, deleteOutboundShipmentLines } = req.variables;
+ *   return res(
+ *     ctx.data({ batchOutboundShipment })
+ *   )
+ * })
+ */
+export const mockDeleteOutboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundShipmentLinesMutationVariables>, GraphQLContext<DeleteOutboundShipmentLinesMutation>, any>) =>
+  graphql.mutation<DeleteOutboundShipmentLinesMutation, DeleteOutboundShipmentLinesMutationVariables>(
+    'deleteOutboundShipmentLines',
     resolver
   )
