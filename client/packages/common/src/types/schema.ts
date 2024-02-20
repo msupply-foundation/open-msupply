@@ -1132,6 +1132,8 @@ export type EncounterNode = {
   programId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
   status?: Maybe<EncounterNodeStatus>;
+  /** Tries to suggest a date for the next encounter */
+  suggestedNextEncounter?: Maybe<SuggestedNextEncounterNode>;
   type: Scalars['String']['output'];
 };
 
@@ -4970,6 +4972,12 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SuggestedNextEncounterNode = {
+  __typename: 'SuggestedNextEncounterNode';
+  datetime: Scalars['DateTime']['output'];
+  label?: Maybe<Scalars['String']['output']>;
 };
 
 export type SuggestedQuantityCalculationNode = {
