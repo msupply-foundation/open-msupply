@@ -49,6 +49,7 @@ pub fn suggested_next_encounter(
             }),
             Some(program_filter),
             None,
+            Some(allowed_ctx),
         )
         .map_err(|err| match err {
             ListError::DatabaseError(err) => err,
