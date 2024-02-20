@@ -105,6 +105,21 @@ pub enum EventConfigEnum {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "type")]
+pub enum NextEncounterEnum {
+    Event(NextEncounterEvent),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct NextEncounterEvent {
+    #[serde(rename = "eventType")]
+    pub event_type: String,
+    pub label: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct DocumentRegistryConfig {
+    #[serde(rename = "nextEncounter")]
+    pub next_encounter: Option<NextEncounterEnum>,
     pub events: Vec<EventConfigEnum>,
 }
