@@ -5,7 +5,7 @@ mod tests {
     };
 
     #[actix_rt::test]
-    async fn omsupply_central_sync_pack_variant() {
+    async fn integration_sync_omsupply_central_sync_pack_variant() {
         test_omsupply_central_records("pack_variant", &PackVariantTester).await;
     }
 }
