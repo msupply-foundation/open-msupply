@@ -37,8 +37,9 @@ import { PatientTabValue } from '../PatientView/PatientView';
 import { PickersDay, PickersDayProps } from '@mui/x-date-pickers';
 import Badge from '@mui/material/Badge';
 
+type HighlightedDay = { datetime: Date; label?: string | null };
 type BadgePickersDayProps = {
-  highlightedDays: { datetime: Date; label?: string }[];
+  highlightedDays: HighlightedDay[];
 };
 const BadgePickersDay = (
   props: PickersDayProps<Date> & BadgePickersDayProps
@@ -103,7 +104,9 @@ export const CreateEncounterModal: FC = () => {
     );
   const latestEncounter = latestEncounterData?.nodes[0];
   const suggestedNextEncounter = latestEncounter?.suggestedNextEncounter;
-
+  const suggestedNextInFuture = suggestedNextEncounter
+    ? new Date(suggestedNextEncounter.datetime).getTime() > Date.now()
+    : false;
   const reset = () => {
     selectModal(undefined);
     setEncounterRegistry(undefined);
@@ -147,6 +150,8 @@ export const CreateEncounterModal: FC = () => {
     ) {
       return;
     }
+
+    if (!suggestedNextInFuture) return;
     setDraft({
       ...currentOrNewDraft(),
       startDatetime: latestEncounter.suggestedNextEncounter?.datetime,
@@ -156,6 +161,7 @@ export const CreateEncounterModal: FC = () => {
     currentOrNewDraft,
     encounterRegistry?.encounter.documentType,
     latestEncounter,
+    suggestedNextInFuture,
   ]);
 
   const setStartDatetime = (date: Date | null): void => {
@@ -184,6 +190,16 @@ export const CreateEncounterModal: FC = () => {
 
   const canSubmit = () =>
     draft !== undefined && draft.startDatetime && !startDateTimeError;
+
+  const getHighlightedDays = (): HighlightedDay[] => {
+    if (!suggestedNextInFuture || !suggestedNextEncounter) return [];
+    return [
+      {
+        datetime: new Date(suggestedNextEncounter.datetime),
+        label: suggestedNextEncounter.label,
+      },
+    ];
+  };
 
   return (
     <Modal
@@ -262,16 +278,7 @@ export const CreateEncounterModal: FC = () => {
                       }}
                       slotProps={{
                         day: {
-                          highlightedDays: suggestedNextEncounter
-                            ? [
-                                {
-                                  datetime: new Date(
-                                    suggestedNextEncounter.datetime
-                                  ),
-                                  label: suggestedNextEncounter.label,
-                                },
-                              ]
-                            : [],
+                          highlightedDays: getHighlightedDays(),
                         } as any,
                       }}
                     />
