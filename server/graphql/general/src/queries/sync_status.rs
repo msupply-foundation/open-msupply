@@ -19,12 +19,12 @@ pub struct SyncStatusNode {
 #[Object]
 impl SyncStatusNode {
     async fn started(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.started, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
     }
 
     async fn finished(&self) -> Option<DateTime<Utc>> {
         self.finished
-            .map(|v| DateTime::from_naive_utc_and_offset(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 }
 
@@ -38,12 +38,12 @@ pub struct SyncStatusWithProgressNode {
 #[Object]
 impl SyncStatusWithProgressNode {
     async fn started(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.started, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
     }
 
     async fn finished(&self) -> Option<DateTime<Utc>> {
         self.finished
-            .map(|v| DateTime::from_naive_utc_and_offset(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     async fn total(&self) -> &Option<u32> {

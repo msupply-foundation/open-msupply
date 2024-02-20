@@ -80,7 +80,7 @@ impl TemperatureLogNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::from_naive_utc_and_offset(self.row().datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime, Utc)
     }
 
     pub async fn sensor_id(&self) -> &str {
