@@ -20,6 +20,7 @@ import {
   CentralPatientSearchQuery,
   LinkPatientToStoreMutation,
   ProgramPatientRowFragment,
+  LatestPatientEncounterQuery,
 } from './operations.generated';
 
 export type ListParams = {
@@ -203,4 +204,11 @@ export const getPatientQueries = (sdk: Sdk, storeId: string) => ({
     });
     return result.linkPatientToStore;
   },
+
+  latestPatientEncounter: async (
+    patientId: string,
+    encounterType: string | undefined
+  ): Promise<LatestPatientEncounterQuery['encounters']> =>
+    (await sdk.latestPatientEncounter({ storeId, patientId, encounterType }))
+      .encounters,
 });
