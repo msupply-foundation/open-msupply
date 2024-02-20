@@ -14,6 +14,7 @@ import {
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
+// import { ItemSelector } from './ItemSelector';
 
 interface OutboundReturnEditModalProps {
   isOpen: boolean;
@@ -85,6 +86,11 @@ export const OutboundReturnEditModal = ({
         width={1024}
       >
         <>
+          {/* <ItemSelector
+            disabled={false}
+            item={null}
+            onChangeItem={console.log}
+          /> */}
           <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
           <TabContext value={currentTab}>
             <TabPanel value={Tabs.Quantity}>
@@ -105,3 +111,20 @@ export const OutboundReturnEditModal = ({
     </TableProvider>
   );
 };
+
+/**
+ * OK MOCK STRUCTURE
+ *
+ * Modal - outermost component
+ *
+ * If from dropdown, then we have selected outbound ids -> we need the stock line ids from those!
+ *
+ * If from add, we have nothing
+ * Show item selector, get item id
+ *
+ * We can send that
+ *
+ * Then we keep the item selector, show edit form
+ *
+ * Edit form - needs table, with stepper
+ */
