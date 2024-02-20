@@ -412,6 +412,7 @@ impl EncounterNode {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
                 })),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -455,6 +456,7 @@ impl EncounterNode {
                 page.map(PaginationOption::from),
                 Some(program_filter),
                 sort.map(ProgramEventSortInput::to_domain),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
