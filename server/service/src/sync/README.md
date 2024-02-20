@@ -86,7 +86,7 @@ Please see below commit for an example of adding a new table and relative transl
 
 ## Central Servers
 
-In order to use Open mSupply a central server is required, it’s used to configure central data and as a central hub for synchronisation of records from remote sites via the REST API that it hosts. 
+In order to use Open mSupply a central server is required. This is used to configure central data and as a central hub for synchronisation of records from remote sites via the REST API that it hosts. 
 
 Original mSupply central server is implemented in 4D, located in this private repository. 
 
@@ -98,15 +98,15 @@ Existing remote sites sync to both Original and Open mSupply at the same time, p
 
 An environmental variable flag IS_CENTRAL_SERVER is used to identify an Open mSupply instance as a central server. Open mSupply is still a remote site, from the perspective of Original mSupply central server, and can have active stores. 
 
-When remote sites syncs to Open mSupply’s central server it passes through Original mSupply sync settings, including remote site’s credentials and its own hardware id, Open mSupply central server will use these credentials to check validity of the site against Original mSupply central server.
+When a remote site syncs to Open mSupply’s central server it passes through original mSupply sync settings, including the remote site’s credentials and its own hardware id; Open mSupply central server will use these credentials to check validity of the site against the original mSupply central server.
 
-Open mSupply's central server uses ChangeLog to keep track of what records have been updated in order to figure out what needs to be sent to a remote site. And the remote site keeps track of a cursor (SyncPullCursorV6) to ensure only new updates are synced from the central server.
+Open mSupply's central server uses ChangeLog to keep track of which records have been updated in order to figure out what needs to be sent to a remote site. And the remote site keeps track of a cursor (SyncPullCursorV6) to ensure only new updates are synced from the central server.
 
 ## ChangeLog instead of queue
 
 In Original mSupply central server, remote/transfer/shared records are added to a sync queue for the related remote site. This queue is used to figure out what should go to what site when there are sync API requests from remote sites.
 
-In Open mSupply, ChangeLog is used for this. The logic, of determining which records should go to which site, happens in one sql statements on ChangeLog, which would look something like this:
+In Open mSupply, ChangeLog is used for this. The logic, of determining which records should go to which site, happens in one sql statement on the `ChangeLog` table, which would look something like this:
 ```SQL
 SELECT * FROM changelog_dedup
 WHERE cursor > {remote site SyncPullCursorV6} AND last_sync_site_id != {remote site id}
