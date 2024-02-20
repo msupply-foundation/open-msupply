@@ -107,15 +107,15 @@ impl ProgramEventNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().datetime, Utc)
+        DateTime::from_naive_utc_and_offset(self.row().datetime, Utc)
     }
 
     pub async fn active_start_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().active_start_datetime, Utc)
+        DateTime::from_naive_utc_and_offset(self.row().active_start_datetime, Utc)
     }
 
     pub async fn active_end_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().active_end_datetime, Utc)
+        DateTime::from_naive_utc_and_offset(self.row().active_end_datetime, Utc)
     }
 
     pub async fn document_type(&self) -> &str {

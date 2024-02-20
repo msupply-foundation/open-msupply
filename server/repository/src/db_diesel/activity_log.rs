@@ -108,7 +108,7 @@ fn create_filtered_query(filter: Option<ActivityLogFilter>) -> BoxedLogQuery {
     query
 }
 
-pub fn to_domain(activity_log_row: ActivityLogRow) -> ActivityLog {
+fn to_domain(activity_log_row: ActivityLogRow) -> ActivityLog {
     ActivityLog { activity_log_row }
 }
 

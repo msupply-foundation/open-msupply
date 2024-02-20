@@ -433,7 +433,7 @@ fn to_document(join: DocumentJoin) -> Result<Document, RepositoryError> {
         name,
         parent_ids: parents,
         user_id,
-        datetime: DateTime::<Utc>::from_utc(datetime, Utc),
+        datetime: DateTime::from_naive_utc_and_offset(datetime, Utc),
         r#type,
         data,
         form_schema_id,

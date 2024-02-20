@@ -104,7 +104,7 @@ fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
     query
 }
 
-pub fn to_domain((barcode_row, name_link): BarcodeJoin) -> Barcode {
+fn to_domain((barcode_row, name_link): BarcodeJoin) -> Barcode {
     Barcode {
         barcode_row,
         manufacturer_name_row: name_link.map(|(_, name)| name),

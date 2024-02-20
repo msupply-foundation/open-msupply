@@ -195,7 +195,7 @@ fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeL
     query
 }
 
-pub fn to_domain((line, (_, item), stock_line, location): StocktakeLineJoin) -> StocktakeLine {
+fn to_domain((line, (_, item), stock_line, location): StocktakeLineJoin) -> StocktakeLine {
     StocktakeLine {
         line,
         item,
