@@ -5,7 +5,6 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use repository::{LocationRow, LocationRowDelete};
-use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 
 pub struct LocationRecordTester;
@@ -23,9 +22,8 @@ impl SyncRecordTester for LocationRecordTester {
         };
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(row.clone())],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let row = inline_edit(&row, |mut d| {
@@ -35,15 +33,13 @@ impl SyncRecordTester for LocationRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(row.clone())],
+            ..Default::default()
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::delete(LocationRowDelete(row.id))],
+            ..Default::default()
         });
         result
     }

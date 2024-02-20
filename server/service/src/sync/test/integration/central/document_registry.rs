@@ -64,11 +64,11 @@ impl SyncRecordTester for DocumentRegistryTester {
                 "form_schema": [form_json1],
                 "om_document_registry": [doc_registry_json1],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(form_row1),
                 IntegrationOperation::upsert(doc_registry1),
             ],
+            ..Default::default()
         });
 
         result

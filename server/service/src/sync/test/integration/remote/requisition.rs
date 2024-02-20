@@ -89,7 +89,6 @@ impl SyncRecordTester for RequisitionRecordTester {
                     "type": "store"
                 }],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(requisition_row_1.clone()),
                 IntegrationOperation::upsert(requisition_row_2.clone()),
@@ -97,6 +96,7 @@ impl SyncRecordTester for RequisitionRecordTester {
                 IntegrationOperation::upsert(requisition_row_4),
                 IntegrationOperation::upsert(requisition_line_row_1.clone()),
             ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -139,13 +139,12 @@ impl SyncRecordTester for RequisitionRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(requisition_row_1.clone()),
                 IntegrationOperation::upsert(requisition_row_2.clone()),
                 IntegrationOperation::upsert(requisition_line_row_1.clone()),
             ],
+            ..Default::default()
         });
         // STEP 3 - delete
         let requisition_row_2 = inline_edit(&requisition_row_2, |mut d| {
@@ -153,8 +152,6 @@ impl SyncRecordTester for RequisitionRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(requisition_row_2),
                 IntegrationOperation::delete(RequisitionLineRowDelete(
@@ -162,6 +159,7 @@ impl SyncRecordTester for RequisitionRecordTester {
                 )),
                 IntegrationOperation::delete(RequisitionRowDelete(requisition_row_1.id.clone())),
             ],
+            ..Default::default()
         });
         result
     }

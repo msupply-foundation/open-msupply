@@ -226,7 +226,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 "list_master": [master_list_json, master_list_json2],
                 "list_master_name_join": [master_list_name_join_json, master_list_name_join_json2],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(period_schedule1.clone()),
                 IntegrationOperation::upsert(period_schedule2),
@@ -245,6 +244,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 IntegrationOperation::upsert(order_type2.clone()),
                 IntegrationOperation::upsert(order_type3.clone()),
             ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate from central
@@ -303,7 +303,6 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 "name_tag": [upsert_name_tag_json],
                 "list_master": [upsert_master_list_json],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(upsert_name_tag),
                 IntegrationOperation::upsert(upsert_program_requisition_settings),
@@ -318,6 +317,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
                     program_requisition_settings2.id,
                 )),
             ],
+            ..Default::default()
         });
 
         result
