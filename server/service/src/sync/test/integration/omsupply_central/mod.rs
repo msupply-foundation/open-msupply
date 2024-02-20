@@ -102,7 +102,7 @@ async fn sync_omsupply_central(sync_settings: &SyncSettings) {
     .await;
 
     loop {
-        // TODO max timeout ?
+        // TODO max timeout ? or log output every X seconds
         tokio::time::sleep(Duration::from_secs(1)).await;
         let result = graphql(
             sync_settings,
