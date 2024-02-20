@@ -2,13 +2,15 @@
 pub(crate) mod test;
 
 pub mod api;
+pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
+pub(crate) mod central_data_synchroniser_v6;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;
 pub mod site_info;
-mod sync_api_credentials;
 mod sync_buffer;
+pub mod sync_on_central;
 pub(crate) mod sync_serde;
 pub mod sync_status;
 pub mod sync_user;
@@ -21,6 +23,7 @@ use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
+
 use thiserror::Error;
 
 pub(crate) struct ActiveStoresOnSite {

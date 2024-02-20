@@ -10,13 +10,13 @@ use url::ParseError;
 #[derive(Error, Debug)]
 #[error("Sync api error, url: '{url}', route: '{route}'")]
 pub struct SyncApiError {
-    pub source: SyncApiErrorVariant,
+    pub source: SyncApiErrorVariantV5,
     pub(crate) url: Url,
     pub(crate) route: String,
 }
 
 #[derive(Error, Debug)]
-pub enum SyncApiErrorVariant {
+pub enum SyncApiErrorVariantV5 {
     #[error("status: '{status}'")]
     ParsedError {
         status: StatusCode,
@@ -31,7 +31,7 @@ pub enum SyncApiErrorVariant {
     },
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
-    #[error("Could not parse respose")]
+    #[error("Could not parse response")]
     ResponseParsingError(#[from] ParsingResponseError),
     #[error("Could not parse url")]
     FailToParseUrl(#[from] ParseError),
@@ -85,11 +85,11 @@ struct ErrorWrapper {
     error: ParsedError,
 }
 
-impl SyncApiErrorVariant {
+impl SyncApiErrorVariantV5 {
     pub(crate) async fn from_response_and_status(status: StatusCode, response: Response) -> Self {
         let error = match to_json::<ErrorWrapper>(response).await {
             Ok(ErrorWrapper { error: source }) => {
-                return SyncApiErrorVariant::ParsedError { source, status }
+                return SyncApiErrorVariantV5::ParsedError { source, status }
             }
             Err(error) => error,
         };
@@ -97,20 +97,20 @@ impl SyncApiErrorVariant {
         use ParsingResponseError::*;
         match error {
             CannotGetTextResponse(source) => {
-                SyncApiErrorVariant::ErrorParsingError { status, source }
+                SyncApiErrorVariantV5::ErrorParsingError { status, source }
             }
             ParseError {
                 response_text: text,
                 ..
-            } => SyncApiErrorVariant::AsText { status, text },
+            } => SyncApiErrorVariantV5::AsText { status, text },
         }
     }
 }
 
 impl SyncApiV5 {
-    pub(crate) fn api_error(&self, route: &str, source: SyncApiErrorVariant) -> SyncApiError {
+    pub(crate) fn api_error(&self, route: &str, source: SyncApiErrorVariantV5) -> SyncApiError {
         SyncApiError {
-            url: self.server_url.clone(),
+            url: self.url.clone(),
             route: route.to_string(),
             source,
         }
@@ -118,7 +118,7 @@ impl SyncApiV5 {
 }
 
 impl SyncApiError {
-    pub fn new_test(error: SyncApiErrorVariant) -> Self {
+    pub fn new_test(error: SyncApiErrorVariantV5) -> Self {
         SyncApiError {
             source: error,
             url: Url::parse("http://localhost").unwrap(),
@@ -127,11 +127,11 @@ impl SyncApiError {
     }
 
     pub(crate) fn is_connection(&self) -> bool {
-        matches!(self.source, SyncApiErrorVariant::ConnectionError(_))
+        matches!(self.source, SyncApiErrorVariantV5::ConnectionError(_))
     }
 
     pub(crate) fn is_unknown(&self) -> bool {
-        matches!(self.source, SyncApiErrorVariant::Other(_))
+        matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
 }
 
@@ -154,7 +154,7 @@ mod test {
         assert_matches!(
             result,
             SyncApiError {
-                source: SyncApiErrorVariant::ConnectionError { .. },
+                source: SyncApiErrorVariantV5::ConnectionError { .. },
                 ..
             }
         );
@@ -180,7 +180,7 @@ mod test {
         assert_matches!(
             result,
             SyncApiError {
-                source: SyncApiErrorVariant::AsText {
+                source: SyncApiErrorVariantV5::AsText {
                     status: StatusCode::SERVICE_UNAVAILABLE,
                     ..
                 },
@@ -215,7 +215,7 @@ mod test {
         assert_matches!(
             result,
             SyncApiError {
-                source: SyncApiErrorVariant::ParsedError {
+                source: SyncApiErrorVariantV5::ParsedError {
                     status: StatusCode::SERVICE_UNAVAILABLE,
                     ..
                 },
@@ -242,7 +242,7 @@ mod test {
         assert_matches!(
             result,
             SyncApiError {
-                source: SyncApiErrorVariant::AsText {
+                source: SyncApiErrorVariantV5::AsText {
                     status: StatusCode::SERVICE_UNAVAILABLE,
                     ..
                 },
@@ -278,7 +278,7 @@ mod test {
         assert_matches!(
             result,
             SyncApiError {
-                source: SyncApiErrorVariant::ParsedError {
+                source: SyncApiErrorVariantV5::ParsedError {
                     status: StatusCode::UNAUTHORIZED,
                     source: ParsedError {
                         code: SyncErrorCodeV5::SiteIncorrectHardwareId,
@@ -321,7 +321,7 @@ mod test {
         assert_matches!(
             result,
             SyncApiError {
-                source: SyncApiErrorVariant::ParsedError {
+                source: SyncApiErrorVariantV5::ParsedError {
                     status: StatusCode::CONFLICT,
                     source: ParsedError {
                         code: SyncErrorCodeV5::ApiVersionIncompatible,

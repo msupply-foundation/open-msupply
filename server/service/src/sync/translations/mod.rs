@@ -18,6 +18,7 @@ pub(crate) mod name;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
@@ -40,7 +41,7 @@ use repository::*;
 use thiserror::Error;
 use topological_sort::TopologicalSort;
 
-use super::api::{CommonSyncRecordV5, RemoteSyncRecordV5, SyncActionV5};
+use super::api::{CommonSyncRecord, SyncAction};
 
 pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 
@@ -88,6 +89,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         sensor::boxed(),
         temperature_breach::boxed(),
         temperature_log::boxed(),
+        pack_variant::boxed(),
     ]
 }
 
@@ -201,8 +203,13 @@ impl PullTranslateResult {
     }
 }
 
+pub(crate) struct PushSyncRecord {
+    pub(crate) cursor: i64,
+    pub(crate) record: CommonSyncRecord,
+}
+
 pub(crate) enum PushTranslateResult {
-    PushRecord(Vec<RemoteSyncRecordV5>),
+    PushRecord(Vec<PushSyncRecord>),
     Ignored(String),
     NotMatched,
 }
@@ -211,42 +218,67 @@ impl PushTranslateResult {
     pub(crate) fn upsert(
         changelog: &ChangelogRow,
         table_name: &str,
-        data: serde_json::Value,
+        record_data: serde_json::Value,
     ) -> Self {
-        Self::PushRecord(vec![RemoteSyncRecordV5 {
-            sync_id: changelog.cursor.to_string(),
-            record: CommonSyncRecordV5 {
+        Self::PushRecord(vec![PushSyncRecord {
+            cursor: changelog.cursor,
+            record: CommonSyncRecord {
                 table_name: table_name.to_string(),
                 record_id: changelog.record_id.clone(),
-                action: SyncActionV5::Update,
-                data,
+                action: SyncAction::Update,
+                record_data,
             },
         }])
     }
     pub(crate) fn delete(changelog: &ChangelogRow, table_name: &str) -> Self {
-        Self::PushRecord(vec![RemoteSyncRecordV5 {
-            sync_id: changelog.cursor.to_string(),
-            record: CommonSyncRecordV5 {
+        Self::PushRecord(vec![PushSyncRecord {
+            cursor: changelog.cursor,
+            record: CommonSyncRecord {
                 table_name: table_name.to_string(),
                 record_id: changelog.record_id.clone(),
-                action: SyncActionV5::Delete,
-                data: Default::default(),
+                action: SyncAction::Delete,
+                record_data: Default::default(),
             },
         }])
     }
 }
 
+/// This enum is used in match_to_sync_record to determine
+/// if record needs to be translated and pushed or pulled
+/// since SyncTranslation is used for translating from database row
+/// to sync record when pushing remote records to Legacy Centra, omSupply Central
+/// and when omSupply central is preparing records in response to a pull requestion
+/// from omSupply remote sites
+pub(crate) enum ToSyncRecordTranslationType {
+    /// When omSupply remote is pushing to og mSupply central
+    PushToLegacyCentral,
+    /// When omSupply remote is pushing to omSupply central
+    #[allow(dead_code)]
+    PushToOmSupplyCentral,
+    // When omSupply remote is pulling from omSupply central
+    PullFromOmSupplyCentral,
+}
+
+/// This trait has collection of methods for sync operation translations
+/// it is used on remote site when translating records:
+///  * pulled from legacy and omSupply central servers
+///  * pushed to legacy and omSupply central servers
+/// also used on central site when responding to pull requests
+/// from remote sites, to trasnalte to sync record sent in response
+///
+/// "sync_record" in this context refers to transport layer records (json representation of database record alongside metadata like table_name)
 pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
     fn pull_dependencies(&self) -> Vec<&'static str>;
     fn table_name(&self) -> &'static str;
-    // By default matching by table name
-    fn match_pull(&self, row: &SyncBufferRow) -> bool {
+    /// By default matching by table name
+    /// used to determine if translation applies when remote site pulls sync records from central
+    fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
         self.table_name() == row.table_name
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
@@ -254,7 +286,7 @@ pub(crate) trait SyncTranslation {
         Ok(PullTranslateResult::NotMatched)
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
@@ -266,12 +298,27 @@ pub(crate) trait SyncTranslation {
         None
     }
 
-    // By default matching by change log type
-    fn match_push(&self, row: &ChangelogRow) -> bool {
-        self.change_log_type().as_ref() == Some(&row.table_name)
+    /// By default matching by change log type, this methods also determines
+    /// if records needs to be pushed to legacy or omSupply central and which records
+    /// omSupply central should respond with when pull is requested by remote site
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            // By default will assume records needs to be pushed to central if change_log_type is implemented
+            ToSyncRecordTranslationType::PushToLegacyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            // Have to manually specify in the translation
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral => false,
+            // Have to manually specify in the translation
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => unimplemented!(),
+        }
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         _: &StorageConnection,
         _: &ChangelogRow,
@@ -279,7 +326,7 @@ pub(crate) trait SyncTranslation {
         Ok(PushTranslateResult::NotMatched)
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         _: &ChangelogRow,
@@ -294,15 +341,17 @@ pub(crate) struct PushTranslationError {
     source: anyhow::Error,
 }
 
-pub(crate) fn translate_changelogs_to_push_records(
+pub(crate) fn translate_changelogs_to_sync_records(
     connection: &StorageConnection,
     changelogs: Vec<ChangelogRow>,
-) -> Result<Vec<RemoteSyncRecordV5>, PushTranslationError> {
+    r#type: ToSyncRecordTranslationType,
+) -> Result<Vec<PushSyncRecord>, PushTranslationError> {
     let translators = all_translators();
     let mut out_records = Vec::new();
     for changelog in changelogs {
-        let mut translation_results = translate_changelog(connection, &translators, &changelog)
-            .map_err(|source| PushTranslationError { source, changelog })?;
+        let mut translation_results =
+            translate_changelog(connection, &translators, &changelog, &r#type)
+                .map_err(|source| PushTranslationError { source, changelog })?;
         out_records.append(&mut translation_results);
     }
 
@@ -313,20 +362,21 @@ fn translate_changelog(
     connection: &StorageConnection,
     translators: &SyncTranslators,
     changelog: &ChangelogRow,
-) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
+    r#type: &ToSyncRecordTranslationType,
+) -> Result<Vec<PushSyncRecord>, anyhow::Error> {
     let mut translation_results = Vec::new();
 
     for translator in translators.iter() {
-        if !translator.match_push(&changelog) {
+        if !translator.should_translate_to_sync_record(&changelog, r#type) {
             continue;
         }
 
         let translation_result = match changelog.row_action {
             ChangelogAction::Upsert => {
-                translator.try_translate_push_upsert(connection, &changelog)?
+                translator.try_translate_to_upsert_sync_record(connection, &changelog)?
             }
             ChangelogAction::Delete => {
-                translator.try_translate_push_delete(connection, &changelog)?
+                translator.try_translate_to_delete_sync_record(connection, &changelog)?
             }
         };
 

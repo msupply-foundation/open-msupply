@@ -7,7 +7,7 @@ pub(crate) struct CentralSyncRecordV5 {
     #[serde(rename = "ID")]
     pub(crate) cursor: u64,
     #[serde(flatten)]
-    pub(crate) record: CommonSyncRecordV5,
+    pub(crate) record: CommonSyncRecord,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Serialize)]
@@ -93,20 +93,20 @@ mod test {
                 data: vec![
                     CentralSyncRecordV5 {
                         cursor: 2,
-                        record: CommonSyncRecordV5 {
+                        record: CommonSyncRecord {
                             table_name: "test_table_1".to_string(),
                             record_id: "ID2".to_string(),
-                            action: SyncActionV5::Delete,
-                            data: json!({})
+                            action: SyncAction::Delete,
+                            record_data: json!({})
                         }
                     },
                     CentralSyncRecordV5 {
                         cursor: 3,
-                        record: CommonSyncRecordV5 {
+                        record: CommonSyncRecord {
                             table_name: "test_table_2".to_string(),
                             record_id: "ID4".to_string(),
-                            action: SyncActionV5::Insert,
-                            data: json!({
+                            action: SyncAction::Insert,
+                            record_data: json!({
                                 "test_key": "test_value"
                             })
                         }
