@@ -16,7 +16,7 @@ use crate::{
     service_provider::ServiceProvider,
     sync::{
         api::{
-            CentralSyncBatchV5, CentralSyncRecordV5, CommonSyncRecordV5, RemotePushResponseV5,
+            CentralSyncBatchV5, CentralSyncRecordV5, CommonSyncRecord, RemotePushResponseV5,
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteStatusCodeV5, SiteStatusV5,
         },
         settings::{BatchSize, SyncSettings},
@@ -196,7 +196,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     max_cursor: 3,
                     data: vec![CentralSyncRecordV5 {
                         cursor: 1,
-                        record: CommonSyncRecordV5::test(),
+                        record: CommonSyncRecord::test(),
                     }],
                 };
                 let pull_central = current_status.pull_central.unwrap();
@@ -266,7 +266,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     queue_length: 3,
                     data: vec![RemoteSyncRecordV5 {
                         sync_id: "".to_string(),
-                        record: CommonSyncRecordV5::test(),
+                        record: CommonSyncRecord::test(),
                     }],
                 };
                 let pull_remote = current_status.pull_remote.unwrap();

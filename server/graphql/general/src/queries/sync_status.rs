@@ -61,6 +61,7 @@ pub struct FullSyncStatusNode {
     prepare_initial: Option<SyncStatusNode>,
     integration: Option<SyncStatusNode>,
     pull_central: Option<SyncStatusWithProgressNode>,
+    pull_v6: Option<SyncStatusWithProgressNode>,
     pull_remote: Option<SyncStatusWithProgressNode>,
     push: Option<SyncStatusWithProgressNode>,
     last_successful_sync: Option<SyncStatusNode>,
@@ -97,6 +98,7 @@ pub fn latest_sync_status(
         pull_central,
         pull_remote,
         push,
+        pull_v6,
     } = sync_status;
 
     let result = FullSyncStatusNode {
@@ -139,6 +141,12 @@ pub fn latest_sync_status(
                 finished: last_successful_sync_status.summary.finished,
             }),
         },
+        pull_v6: pull_v6.map(|status| SyncStatusWithProgressNode {
+            started: status.started,
+            finished: status.finished,
+            total: status.total,
+            done: status.done,
+        }),
     };
 
     Ok(Some(result))

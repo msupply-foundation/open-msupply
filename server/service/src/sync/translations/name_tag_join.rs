@@ -32,7 +32,7 @@ impl SyncTranslation for NameTagJoinTranslation {
         ]
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -55,7 +55,7 @@ impl SyncTranslation for NameTagJoinTranslation {
         Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -80,18 +80,18 @@ mod tests {
             setup_all("test_name_tag_join_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
-            assert!(translator.match_pull(&record.sync_buffer_row));
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
-            assert!(translator.match_pull(&record.sync_buffer_row));
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

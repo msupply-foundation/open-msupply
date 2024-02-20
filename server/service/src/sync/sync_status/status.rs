@@ -1,15 +1,16 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
-    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
+    ChangelogRepository, DatetimeFilter, EqualFilter, KeyValueType, Pagination, RepositoryError,
+    Sort, SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 use util::Defaults;
 
 use crate::{
+    cursor_controller::CursorController,
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, remote_data_synchroniser, GetActiveStoresOnSiteError},
+    sync::{get_sync_push_changelogs_filter, GetActiveStoresOnSiteError},
 };
 
 use super::SyncLogError;
@@ -37,6 +38,7 @@ pub struct FullSyncStatus {
     pub prepare_initial: Option<SyncStatus>,
     pub integration: Option<SyncStatus>,
     pub pull_central: Option<SyncStatusWithProgress>,
+    pub pull_v6: Option<SyncStatusWithProgress>,
     pub pull_remote: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
 }
@@ -65,6 +67,10 @@ impl FullSyncStatus {
             error_code: _,
             error_message: _,
             id: _,
+            pull_v6_started_datetime,
+            pull_v6_finished_datetime,
+            pull_v6_progress_total,
+            pull_v6_progress_done,
         } = sync_log_row;
         let error = SyncLogError::from_sync_log_row(&sync_log_row);
 
@@ -100,6 +106,12 @@ impl FullSyncStatus {
                 finished: push_finished_datetime,
                 total: push_progress_total.map(i32_to_u32),
                 done: push_progress_done.map(i32_to_u32),
+            }),
+            pull_v6: pull_v6_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: pull_v6_finished_datetime,
+                total: pull_v6_progress_total.map(i32_to_u32),
+                done: pull_v6_progress_done.map(i32_to_u32),
             }),
         }
     }
@@ -185,8 +197,8 @@ fn get_initialisation_status(
         .pop();
 
     let Some(sync_log) = latest_log_sorted_by_finished_datetime else {
-            return Ok(InitialisationStatus::PreInitialisation)
-        };
+        return Ok(InitialisationStatus::PreInitialisation);
+    };
 
     if sync_log.sync_log_row.finished_datetime == None {
         return Ok(InitialisationStatus::Initialising);
@@ -271,8 +283,9 @@ fn number_of_records_in_push_queue(
     use NumberOfRecordsInPushQueueError as Error;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let cursor =
-        remote_data_synchroniser::get_push_cursor(&ctx.connection).map_err(Error::DatabaseError)?;
+    let cursor = CursorController::new(KeyValueType::RemoteSyncPushCursor)
+        .get(&ctx.connection)
+        .map_err(Error::DatabaseError)?;
 
     let changelog_filter =
         get_sync_push_changelogs_filter(&ctx.connection).map_err(|error| match error {

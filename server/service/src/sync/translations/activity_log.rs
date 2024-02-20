@@ -45,7 +45,7 @@ impl SyncTranslation for ActivityLogTranslation {
         vec![StoreTranslation.table_name()]
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
@@ -70,7 +70,7 @@ impl SyncTranslation for ActivityLogTranslation {
         Some(ChangelogTableName::ActivityLog)
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
@@ -91,9 +91,12 @@ impl SyncTranslation for ActivityLogTranslation {
                 changelog.record_id
             )))?;
 
-        let (Some(store_id), Some(record_id), Some(user_id)) = (store_id, record_id, user_id) else {
-            return Ok(PushTranslateResult::Ignored("Ignoring activity logs without store, user or record id".to_string())
-        )};
+        let (Some(store_id), Some(record_id), Some(user_id)) = (store_id, record_id, user_id)
+        else {
+            return Ok(PushTranslateResult::Ignored(
+                "Ignoring activity logs without store, user or record id".to_string(),
+            ));
+        };
 
         let legacy_row = LegacyActivityLogRow {
             id,
@@ -128,9 +131,9 @@ mod tests {
             setup_all("test_activity_log_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
-            assert!(translator.match_pull(&record.sync_buffer_row));
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -14,6 +14,7 @@ pub mod auth_data;
 pub mod barcode;
 pub mod clinician;
 mod common_stock;
+pub mod cursor_controller;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod document;
@@ -244,6 +245,10 @@ pub fn i32_to_u32(num: i32) -> u32 {
     num.try_into().unwrap_or(0)
 }
 
+pub fn i64_to_u64(num: i64) -> u64 {
+    num.try_into().unwrap_or(0)
+}
+
 pub fn i64_to_u32(num: i64) -> u32 {
     num.try_into().unwrap_or(0)
 }
@@ -271,8 +276,11 @@ fn check_location_exists(
     store_id: &str,
     location_input: &Option<NullableUpdate<String>>,
 ) -> Result<bool, RepositoryError> {
-    let Some(NullableUpdate{ value: Some(location_id) }) = location_input else {
-        return Ok(true)
+    let Some(NullableUpdate {
+        value: Some(location_id),
+    }) = location_input
+    else {
+        return Ok(true);
     };
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()

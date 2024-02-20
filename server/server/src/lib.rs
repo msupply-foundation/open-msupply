@@ -4,7 +4,7 @@ extern crate machine_uid;
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
     cors::cors_policy, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    upload_fridge_tag::config_upload_fridge_tag,
+    sync_on_central::config_sync_on_central, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -30,6 +30,7 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
+use util::is_central_server;
 
 pub mod certs;
 pub mod cold_chain;
@@ -42,6 +43,7 @@ mod serve_frontend;
 pub mod static_files;
 mod upload_fridge_tag;
 pub use self::logging::*;
+mod sync_on_central;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
@@ -76,6 +78,10 @@ pub async fn start_server(
         .context("Failed to run DB migrations")
         .unwrap();
     info!("Run DB migrations...done");
+
+    if is_central_server() {
+        info!("Running as central");
+    }
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -290,6 +296,7 @@ pub async fn start_server(
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
+            .configure(config_sync_on_central)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
     })
