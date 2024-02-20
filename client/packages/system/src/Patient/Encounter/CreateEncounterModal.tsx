@@ -307,7 +307,7 @@ export const CreateEncounterModal: FC = () => {
                           backgroundColor: 'background.drawer',
                         },
                       }}
-                      value={draft?.notes?.[0]?.text ?? 'null'}
+                      value={draft?.notes?.[0]?.text ?? ''}
                       onChange={e => {
                         setNote([
                           {
