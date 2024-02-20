@@ -38,7 +38,8 @@ export const Toolbar: FC<{
 
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const selectedIds: string[] = useOutbound.utils.selectedIds();
+  const selectedStockLineIds: string[] =
+    useOutbound.utils.selectedStockLineIds();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -107,7 +108,7 @@ export const Toolbar: FC<{
             </DropdownMenuItem>
             <DropdownMenuItem
               IconComponent={ArrowLeftIcon}
-              onClick={() => onReturnLines(selectedIds)}
+              onClick={() => onReturnLines(selectedStockLineIds)}
             >
               {t('button.return-lines')}
             </DropdownMenuItem>
