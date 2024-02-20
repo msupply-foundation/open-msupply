@@ -43,8 +43,8 @@ Only data that needs to be present on central server site is a new sync site:
 
 ## 4 `Open mSupply central server`
 
-* Open mSupply central server for should have a port + 2 of mSupply original central server port.
-* IS_CENTRAL_SERVER env variable should be set as `true``
+* The open mSupply central server should have a port offset of `+2` relative to the mSupply central server port.
+* IS_CENTRAL_SERVER env variable should be set to `true`
 * And graphql API should be 'open' (without token), thus 'APP_SERVER__DEBUG_NO_ACCESS_CONTROL' env variable should be set to `true`
 
 In case you are wondering, the APP env variables translate to settings in [configuration .yaml](https://github.com/msupply-foundation/open-msupply/blob/1b8b9237863eef1a764be3973d563e6d84358827/server/configuration/example.yaml#L7) files, and override them
