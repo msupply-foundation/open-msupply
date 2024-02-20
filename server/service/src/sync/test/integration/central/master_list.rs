@@ -85,7 +85,6 @@ impl SyncRecordTester for MasterListTester {
                 "list_master_line": [master_list_line_json],
                 "item": [{"ID": item_id, "type_of": "general"}]
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(master_list_row1),
                 IntegrationOperation::upsert(master_list_row2),
@@ -93,6 +92,7 @@ impl SyncRecordTester for MasterListTester {
                 IntegrationOperation::upsert(master_list_name_join_row2),
                 IntegrationOperation::upsert(master_list_line_row),
             ],
+            ..Default::default()
         });
 
         result

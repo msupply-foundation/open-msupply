@@ -1,6 +1,7 @@
 mod central;
 mod central_server_configurations;
 mod errors;
+mod omsupply_central;
 mod remote;
 mod site_info;
 mod transfer;
@@ -14,6 +15,8 @@ use crate::{
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
 use repository::{mock::MockDataInserts, StorageConnection};
+use serde::Serialize;
+use serde_json::json;
 use std::{error::Error, future::Future, sync::Arc};
 use tokio::task::JoinHandle;
 
@@ -61,10 +64,27 @@ async fn init_test_context(
     }
 }
 
+#[derive(Default, Serialize)]
+pub(crate) struct GraphqlRequest {
+    query: String,
+    variables: serde_json::Value,
+}
 struct TestStepData {
     central_upsert: serde_json::Value,
     central_delete: serde_json::Value,
     integration_records: Vec<IntegrationOperation>,
+    om_supply_central_graphql_operations: Vec<GraphqlRequest>,
+}
+
+impl Default for TestStepData {
+    fn default() -> Self {
+        Self {
+            central_upsert: json!({}),
+            central_delete: json!({}),
+            integration_records: Default::default(),
+            om_supply_central_graphql_operations: Default::default(),
+        }
+    }
 }
 
 trait SyncRecordTester {

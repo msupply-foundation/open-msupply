@@ -161,7 +161,6 @@ impl SyncRecordTester for InvoiceRecordTester {
                     "type": "positiveInventoryAdjustment"
                 }]
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(location_row),
                 IntegrationOperation::upsert(invoice_row_1.clone()),
@@ -176,6 +175,7 @@ impl SyncRecordTester for InvoiceRecordTester {
                 IntegrationOperation::upsert(invoice_line_row_4),
                 IntegrationOperation::upsert(invoice_line_row_5),
             ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
@@ -247,8 +247,6 @@ impl SyncRecordTester for InvoiceRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(stock_line_row),
                 IntegrationOperation::upsert(requisition_row),
@@ -256,6 +254,7 @@ impl SyncRecordTester for InvoiceRecordTester {
                 IntegrationOperation::upsert(invoice_row_2.clone()),
                 IntegrationOperation::upsert(invoice_line_row_1.clone()),
             ],
+            ..Default::default()
         });
         // STEP 3 - delete
         let invoice_row_2 = inline_edit(&invoice_row_2, |mut d| {
@@ -263,13 +262,12 @@ impl SyncRecordTester for InvoiceRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(invoice_row_2),
                 IntegrationOperation::delete(InvoiceLineRowDelete(invoice_line_row_1.id.clone())),
                 IntegrationOperation::delete(InvoiceRowDelete(invoice_row_1.id.clone())),
             ],
+            ..Default::default()
         });
         result
     }

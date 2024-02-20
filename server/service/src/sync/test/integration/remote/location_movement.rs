@@ -54,12 +54,12 @@ impl SyncRecordTester for LocationMovementRecordTester {
                 "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(location_row.clone()),
                 IntegrationOperation::upsert(stock_line_row.clone()),
                 IntegrationOperation::upsert(location_movement_row.clone()),
             ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -80,9 +80,8 @@ impl SyncRecordTester for LocationMovementRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(location_movement.clone())],
+            ..Default::default()
         });
 
         result

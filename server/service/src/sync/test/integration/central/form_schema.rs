@@ -31,8 +31,8 @@ impl SyncRecordTester for FormSchemaTester {
             central_upsert: json!({
                 "form_schema": [json1],
             }),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(row1)],
+            ..Default::default()
         });
 
         result

@@ -103,7 +103,6 @@ impl SyncRecordTester for UnitAndItemTester {
                 "item": [item_json1, item_json2, item_json3],
                 "unit": [unit_json1, unit_json2]
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(unit_row1.clone()),
                 IntegrationOperation::upsert(unit_row2),
@@ -111,15 +110,16 @@ impl SyncRecordTester for UnitAndItemTester {
                 IntegrationOperation::upsert(item_row2.clone()),
                 IntegrationOperation::upsert(item_row3),
             ],
+            ..Default::default()
         });
         // STEP 2 - deletes
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({ "item": [item_row2.id], "unit": [unit_row1.id] }),
             integration_records: vec![
                 IntegrationOperation::delete(UnitRowDelete(unit_row1.id)),
                 IntegrationOperation::delete(ItemRowDelete(item_row2.id)),
             ],
+            ..Default::default()
         });
         result
     }
