@@ -1,15 +1,11 @@
-use crate::{
-    sync::{
-        test::integration::{
-            central_server_configurations::NewSiteProperties, GraphqlRequest, SyncRecordTester,
-            TestStepData,
-        },
-        translations::IntegrationOperation,
+use crate::sync::{
+    test::integration::{
+        central_server_configurations::NewSiteProperties, GraphqlRequest, SyncRecordTester,
+        TestStepData,
     },
-    u32_to_i32,
+    translations::IntegrationOperation,
 };
 
-use rand::Rng;
 use repository::PackVariantRow;
 use serde_json::json;
 use util::uuid::uuid;
@@ -27,15 +23,13 @@ impl SyncRecordTester for PackVariantTester {
             "type_of": "general",
 
         });
-        let mut rng = rand::thread_rng();
-        let pack_size: u32 = rng.gen();
 
         let pack_variant = PackVariantRow {
             id: uuid(),
             item_id: item_id.clone(),
             short_name: uuid(),
             long_name: uuid(),
-            pack_size: u32_to_i32(pack_size / 2),
+            pack_size: 20,
             is_active: true,
         };
 
