@@ -1,3 +1,4 @@
+use super::update::update_sensor_logs_for_breach;
 use anyhow::Context;
 use chrono::NaiveDateTime;
 use repository::{DatetimeFilter, EqualFilter};
@@ -61,13 +62,24 @@ pub fn get_matching_sensor_breach(
     connection: &StorageConnection,
     sensor_id: &str,
     start_datetime: NaiveDateTime,
-    _end_datetime: NaiveDateTime,
+    _end_datetime: NaiveDateTime, // don't match on the end time, just the breach type and start time
     breach_type: &TemperatureBreachRowType,
 ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-    let filter = TemperatureBreachFilter::new()
+    let mut filter = TemperatureBreachFilter::new()
         .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-        .r#type(EqualFilter::equal_to_breach_type(&breach_type))
-        .start_datetime(DatetimeFilter::equal_to(start_datetime));
+        .r#type(EqualFilter::equal_to_breach_type(&breach_type));
+
+    match breach_type {
+        TemperatureBreachRowType::ColdCumulative | TemperatureBreachRowType::HotCumulative => {
+            // Cumulative breach can start any time on the same day (can only be at most one hot/cold per day)
+            let start_breach = start_datetime.date().and_hms_opt(0, 0, 0).unwrap();
+            let end_breach = start_datetime.date().and_hms_opt(23, 59, 59).unwrap();
+            filter = filter.start_datetime(DatetimeFilter::date_range(start_breach, end_breach));
+        }
+        TemperatureBreachRowType::ColdConsecutive | TemperatureBreachRowType::HotConsecutive => {
+            filter = filter.start_datetime(DatetimeFilter::equal_to(start_datetime));
+        }
+    }
 
     TemperatureBreachRepository::new(connection).query_by_filter(filter)
 }
@@ -147,6 +159,7 @@ fn sensor_add_breach_if_new(
             record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
             TemperatureBreachRowRepository::new(connection)
                 .upsert_one(&record.temperature_breach_row)?;
+            update_sensor_logs_for_breach(connection, &record.temperature_breach_row.id)?;
         }
         Ok(())
     } else {
@@ -166,6 +179,7 @@ fn sensor_add_breach_if_new(
             comment: None,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
+        update_sensor_logs_for_breach(connection, &new_temperature_breach.id)?;
         log::info!("Added sensor breach {:?} ", new_temperature_breach);
         Ok(())
     }
@@ -327,6 +341,10 @@ pub fn read_sensor(
         new_sensor_id,
     };
 
+    for temperature_sensor_log in temperature_sensor_logs {
+        sensor_add_log_if_new(connection, &record.sensor_row, &temperature_sensor_log)?;
+    }
+
     for temperature_sensor_breach in temperature_sensor_breaches {
         // Look up matching config from the USB data and snapshot it as part of the breach
         if let Some(temperature_sensor_config) = temperature_sensor_configs
@@ -340,10 +358,6 @@ pub fn read_sensor(
                 &temperature_sensor_config,
             )?;
         }
-    }
-
-    for temperature_sensor_log in temperature_sensor_logs {
-        sensor_add_log_if_new(connection, &record.sensor_row, &temperature_sensor_log)?;
     }
 
     // Finally, update sensor's last connected time if it has changed
