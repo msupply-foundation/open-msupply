@@ -110,7 +110,7 @@ fn update_encounter(con: &StorageConnection, document: &Document) -> Result<(), 
         clinician_id,
         program_row,
         encounter_start_time,
-        existing_encounter.map(|(existing, _)| existing.start_datetime),
+        existing_encounter.map(|encounter| encounter.row.start_datetime),
         None,
     )
     .map_err(|err| RepositoryError::as_db_error(&format!("{:?}", err), ""))?;
@@ -172,7 +172,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(50000, 0).unwrap(),
                     Utc,
                 ),
@@ -203,7 +203,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding older document shouldn't update the patient entry
@@ -214,7 +214,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(20000, 0).unwrap(),
                     Utc,
                 ),
@@ -245,7 +245,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name1");
 
         // adding newer document should update the patient entry
@@ -256,7 +256,7 @@ mod integrate_document_test {
                 name: doc_name.to_string(),
                 parent_ids: vec![],
                 user_id: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(100000, 0).unwrap(),
                     Utc,
                 ),
@@ -287,7 +287,7 @@ mod integrate_document_test {
             .unwrap()
             .pop()
             .unwrap()
-            .0;
+            .row;
         assert_eq!(&found.program_enrolment_id.unwrap(), "name2");
     }
 }
