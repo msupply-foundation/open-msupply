@@ -8,6 +8,7 @@ use chrono::NaiveDateTime;
 use log::error;
 use mime_guess::mime;
 use repository::RepositoryError;
+use service::temperature_breach::insert::InsertTemperatureBreach;
 use service::{
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
@@ -51,8 +52,18 @@ pub async fn put_logs(
 
     let results = match upsert_temperature_logs(service_provider, store_id, logs).await {
         Ok(response) => response,
-        Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
+        Err(error) => {
+            error!("Error inserting temperature logs {:#?}", error);
+            return HttpResponse::InternalServerError().body(format!("{:#?}", error));
+        }
     };
+
+    for result in &results {
+        if let Err(e) = result {
+            error!("Error inserting temperature log {:#?}", e);
+            return HttpResponse::InternalServerError().body(format!("{:#?}", e));
+        }
+    }
 
     HttpResponse::Ok()
         .append_header(header::ContentType(mime::APPLICATION_JSON))
@@ -102,6 +113,51 @@ fn upsert_temperature_log(
         .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
     let datetime = NaiveDateTime::from_timestamp_opt(log.unix_timestamp, 0)
         .context(format!("Unable to parse timestamp {}", log.unix_timestamp))?;
+
+    // If we have a temperature log with a breachid, we need to make sure the breach exists first, if it doesn't we create a temporary record so we don't loose data.
+    match &log.temperature_breach_id {
+        Some(breach_id) => {
+            let breach = service_provider
+                .temperature_breach_service
+                .get_temperature_breach(&ctx, breach_id.clone());
+
+            match breach {
+                Ok(_) => {}
+                Err(SingleRecordError::NotFound(_)) => {
+                    // Create a temperature breach record as it doesn't exist yet
+                    let breach = InsertTemperatureBreach {
+                        id: breach_id.clone(),
+                        sensor_id: log.sensor_id.clone(),
+                        threshold_duration_milliseconds: 0,
+                        duration_milliseconds: 0,
+                        r#type: repository::TemperatureBreachRowType::HotConsecutive,
+                        start_datetime: NaiveDateTime::from_timestamp_millis(log.unix_timestamp)
+                            .unwrap_or_default(),
+                        end_datetime: None,
+                        unacknowledged: true,
+                        threshold_minimum: 0.0,
+                        threshold_maximum: 0.0,
+                        comment: None,
+                        location_id: None,
+                    };
+                    service_provider
+                        .temperature_breach_service
+                        .insert_temperature_breach(&ctx, breach)
+                        .map_err(|e| {
+                            anyhow::anyhow!("Unable to insert temperature breach {:?}", e)
+                        })?;
+                }
+                Err(e) => {
+                    return Err(anyhow::anyhow!(
+                        "Unable to get temperature breach for id '{}'. {:#?}",
+                        breach_id.clone(),
+                        e
+                    ));
+                }
+            }
+        }
+        None => {}
+    };
 
     let result = match service.get_temperature_log(&ctx, id.clone()) {
         Ok(_) => {

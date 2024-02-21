@@ -13,5 +13,7 @@
   "label.finalised": "Завершено",
   "label.pricing": "Цена",
   "label.cant-delete-disabled": "Возможно удаление строк только со статусом 'Новый'",
-  "button.new-shipment": "Новая Поставка"
+  "button.new-shipment": "Новая Поставка",
+  "error.shipment-not-found": "Поставка не найдена",
+  "error.unable-to-calculate": "Невозможно рассчитать"
 }

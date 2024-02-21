@@ -44,6 +44,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filterBy: {
           ...params.filterBy,
           type: { equalTo: ItemNodeType.Service },
+          isActive: true,
         },
       });
       return result;
@@ -55,6 +56,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...params.filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isVisible: { equalTo: true },
+          isActive: true,
         },
       });
       return result;
@@ -75,6 +77,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isVisible: true,
+          isActive: true,
         },
       });
 
@@ -103,6 +106,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           isVisible: true,
+          isActive: true,
         },
       });
 
@@ -130,6 +134,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isVisible: true,
+          isActive: true,
         },
       });
 
@@ -153,7 +158,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, isVisible: true },
+        filter: { ...filterBy, isVisible: true, isActive: true },
       });
 
       const items = result?.items;

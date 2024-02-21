@@ -20,7 +20,7 @@ pub struct PartialLegacyNameRow {
 
 // In omSupply, is_customer and is_supplier relationship between store and name is stored
 // in name_store_join, in mSupply it's stored on name. This translator updates all name_store_joins
-// for name when name is pulled (setting is_customer and is_supplier appropriatly)
+// for name when name is pulled (setting is_customer and is_supplier appropriately)
 // NOTE Translator should be removed when central server configures these properties on name_store_join
 pub(crate) struct NameToNameStoreJoinTranslation {}
 impl SyncTranslation for NameToNameStoreJoinTranslation {
@@ -52,9 +52,9 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
         let upserts: Vec<PullUpsertRecord> = name_store_joins
             .into_iter()
             .map(|mut r| {
-                r.name_is_customer = data.name_is_customer;
-                r.name_is_supplier = data.name_is_supplier;
-                PullUpsertRecord::NameStoreJoin(r)
+                r.name_store_join.name_is_customer = data.name_is_customer;
+                r.name_store_join.name_is_supplier = data.name_is_supplier;
+                PullUpsertRecord::NameStoreJoin(r.name_store_join)
             })
             .collect();
 

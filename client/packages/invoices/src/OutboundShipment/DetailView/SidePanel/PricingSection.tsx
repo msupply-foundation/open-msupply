@@ -125,11 +125,7 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit
-            disabled={disableTax}
-            tax={tax}
-            update={updateInvoiceTax}
-          />
+          <TaxEdit disabled={disableTax} tax={tax} update={updateInvoiceTax} />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>

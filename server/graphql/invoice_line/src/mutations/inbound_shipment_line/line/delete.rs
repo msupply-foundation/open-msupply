@@ -105,6 +105,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::LineUsedInStocktake => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())

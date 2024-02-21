@@ -5,6 +5,7 @@ use super::{
 
 use crate::{
     db_diesel::{
+        name_link_row::{name_link, name_link::dsl as name_link_dsl},
         name_row::{name, name::dsl as name_dsl},
         period::period::{self, dsl as period_dsl},
         program_requisition::program_row::program::{self, dsl as program_dsl},
@@ -15,7 +16,7 @@ use crate::{
         apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
+    DBType, NameLinkRow, NameRow, PeriodRow, ProgramRow, StorageConnection, StoreRow,
 };
 
 use crate::Pagination;
@@ -27,7 +28,7 @@ use diesel::{
 
 pub type RequisitionJoin = (
     RequisitionRow,
-    NameRow,
+    (NameLinkRow, NameRow),
     StoreRow,
     Option<ProgramRow>,
     Option<PeriodRow>,
@@ -137,7 +138,10 @@ type BoxedRequisitionQuery = IntoBoxed<
     'static,
     LeftJoin<
         LeftJoin<
-            InnerJoin<InnerJoin<requisition::table, name::table>, store::table>,
+            InnerJoin<
+                InnerJoin<requisition::table, InnerJoin<name_link::table, name::table>>,
+                store::table,
+            >,
             program::table,
         >,
         period::table,
@@ -149,7 +153,7 @@ fn create_filtered_query(
     filter: Option<RequisitionFilter>,
 ) -> Result<BoxedRequisitionQuery, RepositoryError> {
     let mut query = requisition_dsl::requisition
-        .inner_join(name_dsl::name)
+        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .inner_join(store_dsl::store)
         .left_join(program_dsl::program)
         .left_join(period_dsl::period)
@@ -203,7 +207,7 @@ fn create_filtered_query(
             requisition_dsl::expected_delivery_date
         );
 
-        apply_equal_filter!(query, name_id, requisition_dsl::name_id);
+        apply_equal_filter!(query, name_id, name_dsl::id);
         apply_string_filter!(query, name, name_dsl::name_);
         apply_equal_filter!(query, colour, requisition_dsl::colour);
         apply_string_filter!(query, their_reference, requisition_dsl::their_reference);
@@ -217,7 +221,7 @@ fn create_filtered_query(
 }
 
 fn to_domain(
-    (requisition_row, name_row, store_row, program_row, period_row): RequisitionJoin,
+    (requisition_row, (_, name_row), store_row, program_row, period_row): RequisitionJoin,
 ) -> Requisition {
     Requisition {
         requisition_row,

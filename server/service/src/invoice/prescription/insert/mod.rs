@@ -112,7 +112,7 @@ mod test {
         fn not_a_patient_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_patient_join".to_string();
-                r.name_id = not_a_patient().id;
+                r.name_link_id = not_a_patient().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = false;
             })
@@ -192,7 +192,7 @@ mod test {
         fn patient_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "patient_join".to_string();
-                r.name_id = patient().id;
+                r.name_link_id = patient().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_customer = true;
             })
@@ -232,7 +232,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = patient().id;
+                u.name_link_id = patient().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })

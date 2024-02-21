@@ -8,9 +8,9 @@ import {
   Column,
   ArrayUtils,
   useCurrency,
-  PositiveNumberCell,
   useTranslation,
   useColumnUtils,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -153,7 +153,7 @@ export const usePrescriptionColumn = ({
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberCell,
+          Cell: NumberCell,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
