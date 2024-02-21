@@ -119,6 +119,7 @@ export const Toolbar: FC<{
           </Box>
           <DropdownMenu label={t('label.actions')}>
             <DropdownMenuItem
+              disabled={shipment?.status === InvoiceNodeStatus.New}
               IconComponent={ArrowLeftIcon}
               onClick={() => onReturnLines(selectedStockLineIds)}
             >
