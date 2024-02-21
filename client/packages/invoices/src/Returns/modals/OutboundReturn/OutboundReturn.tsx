@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -14,6 +14,7 @@ import {
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
+import { ItemSelector } from './ItemSelector';
 // import { ItemSelector } from './ItemSelector';
 
 interface OutboundReturnEditModalProps {
@@ -36,6 +37,9 @@ export const OutboundReturnEditModal = ({
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+  // or just null?
+  const [item] = useState(null);
+  // const [item, setItem] = useState(null);
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
@@ -86,11 +90,13 @@ export const OutboundReturnEditModal = ({
         width={1024}
       >
         <>
-          {/* <ItemSelector
-            disabled={false}
-            item={null}
-            onChangeItem={console.log}
-          /> */}
+          {!stockLineIds.length && (
+            <ItemSelector
+              disabled={!!item}
+              item={item}
+              onChangeItem={console.log}
+            />
+          )}
           <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
           <TabContext value={currentTab}>
             <TabPanel value={Tabs.Quantity}>
@@ -117,7 +123,7 @@ export const OutboundReturnEditModal = ({
  *
  * Modal - outermost component
  *
- * If from dropdown, then we have selected outbound ids -> we need the stock line ids from those!
+ * If from dropdown, then we have stockLineIds
  *
  * If from add, we have nothing
  * Show item selector, get item id
