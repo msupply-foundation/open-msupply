@@ -179,7 +179,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       input,
     });
 
-    return result.insertSupplierReturn;
+    const { insertSupplierReturn } = result;
+
+    if (insertSupplierReturn.__typename === 'InvoiceNode') {
+      return insertSupplierReturn.invoiceNumber;
+    }
+
+    throw new Error('Could not insert supplier return');
   },
   insertInboundReturn: async (input: InboundReturnInput) => {
     const result = await sdk.insertInboundReturn({
