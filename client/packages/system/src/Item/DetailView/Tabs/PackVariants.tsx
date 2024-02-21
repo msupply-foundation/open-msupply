@@ -18,7 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
-  useIsCentralServerOrWarning,
+  useCentralServerCallback,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 import { PackVariantEditModal } from '../../Components/PackVariantEditModal';
@@ -37,7 +37,7 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   );
   const variants = variantsControl?.variants ?? [];
   const onDelete = usePackVariantDeleteSelected(variants);
-  const isCentralServerOrWarning = useIsCentralServerOrWarning();
+  const { executeIfCentralOrShowWarning } = useCentralServerCallback();
 
   const columns = useColumns<VariantFragment>([
     'packSize',
@@ -56,6 +56,9 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
     'selection',
   ]);
 
+  // TODO hide drop down
+  const isEmpty = false;
+
   return (
     <>
       {isOpen && (
@@ -67,34 +70,40 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
           itemId={itemId ?? ''}
         />
       )}
-      <Box display="flex" justifyContent="space-between" paddingBottom={2}>
-        <DropdownMenu label="Select">
-          <DropdownMenuItem
-            IconComponent={DeleteIcon}
-            onClick={
-              hasPermission ? isCentralServerOrWarning(onDelete) : warningSnack
-            }
-          >
-            {t('button.delete-lines')}
-          </DropdownMenuItem>
-        </DropdownMenu>
+      <Box display="flex" justifyContent="flex-end" gap={2} paddingBottom={2}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('label.new-pack-variant')}
           onClick={
             hasPermission
-              ? isCentralServerOrWarning(() => onOpen())
+              ? executeIfCentralOrShowWarning(() => onOpen())
               : warningSnack
           }
         />
+        <DropdownMenu
+          label="Select"
+          sx={{ visibility: isEmpty ? 'hidden' : 'visible' }}
+        >
+          <DropdownMenuItem
+            IconComponent={DeleteIcon}
+            onClick={
+              hasPermission
+                ? executeIfCentralOrShowWarning(onDelete)
+                : warningSnack
+            }
+          >
+            {t('button.delete-lines')}
+          </DropdownMenuItem>
+        </DropdownMenu>
       </Box>
+
       <DataTable
         id="item-variants-detail"
         data={variants}
         columns={columns}
         noDataElement={<NothingHere body={t('error.no-pack-variants')} />}
         onRowClick={
-          hasPermission ? isCentralServerOrWarning(onOpen) : warningSnack
+          hasPermission ? executeIfCentralOrShowWarning(onOpen) : warningSnack
         }
       />
     </>

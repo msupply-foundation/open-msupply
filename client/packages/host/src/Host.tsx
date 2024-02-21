@@ -65,7 +65,7 @@ const skipRequest = () =>
  */
 const Init = () => {
   // Fetch pack units at startup. Note, the units are cached, i.e. they are not fetched repeatedly.
-  // They will be refetched on page reload or when store is changed based on cache usePackUnits api keys
+  // They will be refetched on page reload or when store is changed based on cache usePackVariants cache keys
   useRefreshPackVariant();
   useInitPlugins();
   return <></>;
@@ -81,8 +81,8 @@ const Host = () => (
               url={Environment.GRAPHQL_URL}
               skipRequest={skipRequest}
             >
-              <Init />
               <AuthProvider>
+                <Init />
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
                     <AlertModalProvider>
