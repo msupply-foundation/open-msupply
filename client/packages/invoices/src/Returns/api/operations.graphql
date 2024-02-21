@@ -66,12 +66,9 @@ query inboundReturns(
   }
 }
 
-query generateOutboundReturnLines(
-  $inboundShipmentLineIds: [String!]
-  $storeId: String!
-) {
+query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   generateOutboundReturnLines(
-    input: { inboundShipmentLineIds: $inboundShipmentLineIds }
+    input: { stockLineIds: $stockLineIds }
     storeId: $storeId
   ) {
     availableNumberOfPacks
@@ -88,12 +85,9 @@ query generateOutboundReturnLines(
   }
 }
 
-query generateInboundReturnLines(
-  $outboundShipmentLineIds: [String!]
-  $storeId: String!
-) {
+query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   generateInboundReturnLines(
-    input: { outboundShipmentLineIds: $outboundShipmentLineIds }
+    input: { stockLineIds: $stockLineIds }
     storeId: $storeId
   ) {
     batch

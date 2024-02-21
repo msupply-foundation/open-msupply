@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 
 #[derive(InputObject, Clone)]
 pub struct GenerateOutboundReturnLinesInput {
-    pub inbound_shipment_line_ids: Vec<String>,
+    pub stock_line_ids: Vec<String>,
 }
 
 #[derive(SimpleObject, Clone)]
