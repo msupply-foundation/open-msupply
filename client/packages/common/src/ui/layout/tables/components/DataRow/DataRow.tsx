@@ -101,6 +101,7 @@ const DataRowComponent = <T extends RecordWithId>({
             onClick={onRowClick}
           >
             {columns.map((column, columnIndex) => {
+              const isError = column.getIsError?.(rowData);
               return (
                 <TableCell
                   key={`${rowKey}${String(column.key)}`}
@@ -121,6 +122,10 @@ const DataRowComponent = <T extends RecordWithId>({
                     fontSize: dense ? '12px' : '14px',
                     backgroundColor: column.backgroundColor,
                     fontWeight: 'normal',
+                    border: theme =>
+                      isError
+                        ? `2px solid ${theme.palette.error.main}`
+                        : 'none',
                   }}
                 >
                   {
@@ -128,7 +133,7 @@ const DataRowComponent = <T extends RecordWithId>({
                       isDisabled={isDisabled || column.getIsDisabled?.(rowData)}
                       rowData={rowData}
                       columns={columns}
-                      isError={column.getIsError?.(rowData)}
+                      isError={isError}
                       column={column}
                       rowKey={rowKey}
                       columnIndex={columnIndex}

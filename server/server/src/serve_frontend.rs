@@ -1,5 +1,8 @@
 use actix_web::{
-    get, http::header::ContentType, web::ServiceConfig, HttpRequest, HttpResponse, Responder,
+    get,
+    http::header::{self, ContentType},
+    web::ServiceConfig,
+    HttpRequest, HttpResponse, Responder,
 };
 use mime_guess::{from_path, mime};
 use reqwest::StatusCode;
@@ -11,12 +14,18 @@ use rust_embed::RustEmbed;
 struct Asset;
 
 const INDEX: &'static str = "index.html";
+const CACHE_MAX_AGE: u32 = 60 * 60 * 24; // 1 day
 
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs
 fn serve_frontend(path: &str) -> HttpResponse {
     if let Some(content) = Asset::get(path) {
         return HttpResponse::Ok()
             .content_type(from_path(path).first_or_octet_stream().as_ref())
+            .append_header(("x-content-type-options", "nosniff"))
+            .append_header(header::CacheControl(vec![
+                header::CacheDirective::Public,
+                header::CacheDirective::MaxAge(CACHE_MAX_AGE),
+            ]))
             .body(content.data.into_owned());
     }
 
