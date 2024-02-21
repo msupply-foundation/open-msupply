@@ -1,5 +1,5 @@
 use anyhow::Context;
-use chrono::NaiveDateTime;
+use chrono::{Local, LocalResult, NaiveDateTime, TimeZone};
 use repository::{DatetimeFilter, EqualFilter};
 use repository::{
     RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
@@ -283,6 +283,42 @@ pub enum ReadSensorError {
     StringError(String),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
+}
+
+fn re_map_times(
+    sensor: &temperature_sensor::Sensor,
+) -> Result<temperature_sensor::Sensor, ReadSensorError> {
+    let mut sensor_mapped = sensor.clone();
+    // map logs
+    let logs_mapped: Vec<temperature_sensor::TemperatureLog> = sensor_mapped
+        .clone()
+        .logs
+        .context("no temperature logs")?
+        .into_iter()
+        .map(
+            |temperature_sensor::TemperatureLog {
+                 timestamp,
+                 temperature,
+             }| {
+                let local = match Local.from_local_datetime(&timestamp) {
+                    LocalResult::None => {
+                        return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                    }
+                    LocalResult::Single(r) => r,
+                    LocalResult::Ambiguous(r, _) => r,
+                };
+                Ok(temperature_sensor::TemperatureLog {
+                    temperature,
+                    timestamp: local.naive_utc(),
+                })
+            },
+        )
+        .collect::<Result<_, _>>()?;
+    // map temperature breaches
+
+    // map
+    // map other things
+    Ok(sensor_mapped)
 }
 
 pub fn read_sensor(
