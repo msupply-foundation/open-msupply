@@ -1431,11 +1431,11 @@ export enum GenderType {
 }
 
 export type GenerateInboundReturnInput = {
-  outboundShipmentLineIds: Array<Scalars['String']['input']>;
+  stockLineIds: Array<Scalars['String']['input']>;
 };
 
 export type GenerateOutboundReturnLinesInput = {
-  inboundShipmentLineIds: Array<Scalars['String']['input']>;
+  stockLineIds: Array<Scalars['String']['input']>;
 };
 
 export type InboundInvoiceCounts = {
