@@ -26,6 +26,7 @@ import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit } from './OutboundLineEdit';
 import { InboundReturnEditModal } from '../../Returns';
+import { canReturnOutboundLines } from '../../utils';
 
 export const DetailView: FC = () => {
   const { info } = useNotification();
@@ -54,7 +55,10 @@ export const DetailView: FC = () => {
   };
 
   const onReturn = async (selectedStockLineIds: string[]) => {
-    if (!selectedStockLineIds.length) {
+    if (!data || !canReturnOutboundLines(data)) {
+      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      cantReturnSnack();
+    } else if (!selectedStockLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
     } else onOpenReturns(selectedStockLineIds);

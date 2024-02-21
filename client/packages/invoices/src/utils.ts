@@ -11,7 +11,7 @@ import {
   Formatter,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { OutboundRowFragment } from './OutboundShipment/api';
+import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { DraftStockOutLine, InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
@@ -206,6 +206,10 @@ export const canDeletePrescription = (
 export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Delivered ||
   inbound.status === InvoiceNodeStatus.Verified;
+
+export const canReturnOutboundLines = (outbound: OutboundFragment): boolean =>
+  outbound.status === InvoiceNodeStatus.Delivered ||
+  outbound.status === InvoiceNodeStatus.Verified;
 
 export const isA = {
   stockOutLine: (line: { type: InvoiceLineNodeType }) =>
