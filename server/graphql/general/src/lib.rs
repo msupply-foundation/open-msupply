@@ -296,12 +296,13 @@ impl GeneralQueries {
         )
     }
 
-    pub async fn new_supplier_return(
+    pub async fn generate_outbound_return_lines(
         &self,
+        ctx: &Context<'_>,
         store_id: String,
-        input: GenerateSupplierReturnLinesInput,
-    ) -> Result<Vec<SupplierReturnLine>> {
-        new_supplier_return(store_id, input)
+        input: GenerateOutboundReturnLinesInput,
+    ) -> Result<GenerateOutboundReturnLinesResponse> {
+        generate_outbound_return_lines(ctx, store_id, input)
     }
 
     pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
