@@ -16,18 +16,20 @@ export const useIsCentralServerApi = () => {
   return !!data;
 };
 
-const isCentralServerOrWarning =
-  (isCentralServer: Boolean, orDo: () => void) =>
+const returnOrFallback =
+  (isCentralServer: boolean, fallback: () => void) =>
   <T>(f: T | (() => void)) =>
-    isCentralServer ? f : orDo;
+    isCentralServer ? f : fallback;
 
-export const useIsCentralServerOrWarning = () => {
+export const useCentralServerCallback = () => {
   const { warning } = useNotification();
   const isCentralServer = useIsCentralServerApi();
   const t = useTranslation('common');
 
-  return isCentralServerOrWarning(
-    isCentralServer,
-    warning(t('auth.not-a-central-server'))
-  );
+  return {
+    executeIfCentralOrShowWarning: returnOrFallback(
+      isCentralServer,
+      warning(t('auth.not-a-central-server'))
+    ),
+  };
 };
