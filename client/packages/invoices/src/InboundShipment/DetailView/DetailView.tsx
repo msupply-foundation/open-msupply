@@ -54,8 +54,8 @@ export const DetailView: FC = () => {
 
   const onReturn = async (selectedStockLineIds: string[]) => {
     if (!data || !canReturnInboundLines(data)) {
-      const selectLinesSnack = info(t('messages.cant-return-shipment'));
-      selectLinesSnack();
+      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      cantReturnSnack();
     } else if (!selectedStockLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
