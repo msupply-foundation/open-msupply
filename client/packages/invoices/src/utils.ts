@@ -203,6 +203,10 @@ export const canDeletePrescription = (
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
 
+export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
+  inbound.status === InvoiceNodeStatus.Delivered ||
+  inbound.status === InvoiceNodeStatus.Verified;
+
 export const isA = {
   stockOutLine: (line: { type: InvoiceLineNodeType }) =>
     line.type === InvoiceLineNodeType.StockOut,
