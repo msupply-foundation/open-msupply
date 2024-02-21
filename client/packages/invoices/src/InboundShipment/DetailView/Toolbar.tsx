@@ -13,28 +13,9 @@ import {
   InvoiceNodeStatus,
   Alert,
   ArrowLeftIcon,
-  useTableStore,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
-
-const useSelectedIds = () => {
-  const { items, lines } = useInbound.lines.rows();
-
-  const selectedIds =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .map(({ lines }) => lines.flat())
-            .flat()
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    })?.map(({ id }) => id) || [];
-
-  return selectedIds;
-};
 
 const InboundInfoPanel = ({
   shipment,
@@ -72,7 +53,7 @@ export const Toolbar: FC<{
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
 
-  const selectedIds = useSelectedIds();
+  const selectedStockLineIds = useInbound.utils.selectedStockLineIds();
 
   const isTransfer = !!shipment?.linkedShipment?.id;
 
@@ -139,7 +120,7 @@ export const Toolbar: FC<{
           <DropdownMenu label={t('label.actions')}>
             <DropdownMenuItem
               IconComponent={ArrowLeftIcon}
-              onClick={() => onReturnLines(selectedIds)}
+              onClick={() => onReturnLines(selectedStockLineIds)}
             >
               {t('button.return-lines')}
             </DropdownMenuItem>
