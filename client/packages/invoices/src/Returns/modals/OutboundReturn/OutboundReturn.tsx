@@ -15,7 +15,7 @@ import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
 import { ItemSelector } from './ItemSelector';
-// import { ItemSelector } from './ItemSelector';
+import { ItemStockOnHandFragment } from 'packages/system/src';
 
 interface OutboundReturnEditModalProps {
   isOpen: boolean;
@@ -37,9 +37,7 @@ export const OutboundReturnEditModal = ({
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
-  // or just null?
-  const [item] = useState(null);
-  // const [item, setItem] = useState(null);
+  const [item, setItem] = useState<ItemStockOnHandFragment | null>(null);
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
@@ -56,7 +54,8 @@ export const OutboundReturnEditModal = ({
 
   const { lines, update, saveOutboundReturn } = useDraftOutboundReturnLines(
     stockLineIds,
-    supplierId
+    supplierId,
+    item?.id
   );
 
   const onOk = async () => {
@@ -94,24 +93,29 @@ export const OutboundReturnEditModal = ({
             <ItemSelector
               disabled={!!item}
               item={item}
-              onChangeItem={console.log}
+              onChangeItem={setItem}
             />
           )}
-          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-          <TabContext value={currentTab}>
-            <TabPanel value={Tabs.Quantity}>
-              <QuantityToReturnTable
-                lines={lines}
-                updateLine={line => update(line)}
+          {lines.length > 0 && (
+            <TabContext value={currentTab}>
+              <WizardStepper
+                activeStep={getActiveStep()}
+                steps={returnsSteps}
               />
-            </TabPanel>
-            <TabPanel value={Tabs.Reason}>
-              <ReturnReasonsTable
-                lines={lines}
-                updateLine={line => update(line)}
-              />
-            </TabPanel>
-          </TabContext>
+              <TabPanel value={Tabs.Quantity}>
+                <QuantityToReturnTable
+                  lines={lines}
+                  updateLine={line => update(line)}
+                />
+              </TabPanel>
+              <TabPanel value={Tabs.Reason}>
+                <ReturnReasonsTable
+                  lines={lines}
+                  updateLine={line => update(line)}
+                />
+              </TabPanel>
+            </TabContext>
+          )}
         </>
       </Modal>
     </TableProvider>

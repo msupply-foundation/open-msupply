@@ -35,6 +35,7 @@ export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typenam
 export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
   stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
+  itemId?: Types.InputMaybe<Types.Scalars['String']['input']>;
 }>;
 
 
@@ -147,7 +148,7 @@ export const InboundReturnsDocument = gql`
 }
     ${InboundReturnRowFragmentDoc}`;
 export const GenerateOutboundReturnLinesDocument = gql`
-    query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
+    query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!, $itemId: String) {
   generateOutboundReturnLines(
     input: {stockLineIds: $stockLineIds}
     storeId: $storeId
@@ -329,7 +330,7 @@ export const mockInboundReturnsQuery = (resolver: ResponseResolver<GraphQLReques
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockGenerateOutboundReturnLinesQuery((req, res, ctx) => {
- *   const { stockLineIds, storeId } = req.variables;
+ *   const { stockLineIds, storeId, itemId } = req.variables;
  *   return res(
  *     ctx.data({ generateOutboundReturnLines })
  *   )

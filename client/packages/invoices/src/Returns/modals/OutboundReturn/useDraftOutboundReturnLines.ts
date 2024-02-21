@@ -10,11 +10,12 @@ import { useReturns } from '../../api';
 
 export const useDraftOutboundReturnLines = (
   stockLineIds: string[],
-  supplierId: string
+  supplierId: string,
+  itemId?: string
 ) => {
   const [draftLines, setDraftLines] = React.useState<OutboundReturnLine[]>([]);
 
-  const lines = useReturns.lines.outboundReturnLines(stockLineIds);
+  const lines = useReturns.lines.outboundReturnLines(stockLineIds, itemId);
 
   const { mutateAsync } = useReturns.document.insertOutboundReturn();
 
