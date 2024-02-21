@@ -14,6 +14,7 @@ import {
   Switch,
   useIsGrouped,
   ArrowLeftIcon,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -106,12 +107,24 @@ export const Toolbar: FC<{
             <DropdownMenuItem IconComponent={ZapIcon} onClick={onAllocate}>
               {t('button.allocate-lines')}
             </DropdownMenuItem>
-            <DropdownMenuItem
-              IconComponent={ArrowLeftIcon}
-              onClick={() => onReturnLines(selectedStockLineIds)}
+
+            <Tooltip
+              title={
+                !selectedStockLineIds.length
+                  ? t('message.placeholder-lines-cannot-be-returned')
+                  : ''
+              }
             >
-              {t('button.return-lines')}
-            </DropdownMenuItem>
+              <span>
+                <DropdownMenuItem
+                  disabled={!selectedStockLineIds.length}
+                  IconComponent={ArrowLeftIcon}
+                  onClick={() => onReturnLines(selectedStockLineIds)}
+                >
+                  {t('button.return-lines')}
+                </DropdownMenuItem>
+              </span>
+            </Tooltip>
           </DropdownMenu>
         </Grid>
       </Grid>
