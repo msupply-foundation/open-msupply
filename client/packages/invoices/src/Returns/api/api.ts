@@ -185,7 +185,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       return insertOutboundReturn.invoiceNumber;
     }
 
-    throw new Error('Could not insert supplier return');
+    throw new Error('Could not insert outbound return');
   },
   insertInboundReturn: async (input: InboundReturnInput) => {
     const result = await sdk.insertInboundReturn({
