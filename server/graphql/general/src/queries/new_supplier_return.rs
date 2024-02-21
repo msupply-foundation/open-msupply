@@ -1,5 +1,7 @@
 use async_graphql::*;
 use chrono::NaiveDate;
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject, Clone)]
 pub struct GenerateOutboundReturnLinesInput {
@@ -42,7 +44,7 @@ pub fn generate_outbound_return_lines(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryTemperatureLog,
+            resource: Resource::QueryTemperatureLog, // TODO new resource
             store_id: Some(store_id.clone()),
         },
     )?;
@@ -50,23 +52,25 @@ pub fn generate_outbound_return_lines(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
-    let temperature_chart = service_provider
-        .temperature_chart_service
-        .get_temperature_chart(
-            &service_context,
-            GenerateOutboundReturnLinesInput {
-                from_datetime: from_datetime.naive_utc(),
-                to_datetime: to_datetime.naive_utc(),
-                number_of_data_points,
-                filter: filter.map(TemperatureLogFilter::from),
-            },
-        )
-        .map_err(map_error)?;
+    // let outbound_return = service_provider.invoice_service
+    // .get_temperature_chart(
+    //     &service_context,
+    //     GenerateOutboundReturnLinesInput {
+    //         from_datetime: from_datetime.naive_utc(),
+    //         to_datetime: to_datetime.naive_utc(),
+    //         number_of_data_points,
+    //         filter: filter.map(TemperatureLogFilter::from),
+    //     },
+    // )
+    // .map_err(map_error)?;
 
-    let temperature_chart_node =
-        update_point_temperatures(temperature_chart, &service_context.connection)?;
+    // let temperature_chart_node =
+    //     update_point_temperatures(temperature_chart, &service_context.connection)?;
 
     Ok(GenerateOutboundReturnLinesResponse::Response(
-        temperature_chart_node,
+        OutboundReturnLineConnector {
+            total_count: 0,
+            nodes: vec![],
+        },
     ))
 }
