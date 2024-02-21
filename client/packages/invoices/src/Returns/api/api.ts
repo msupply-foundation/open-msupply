@@ -2,7 +2,7 @@ import {
   InboundReturnInput,
   InvoiceNodeType,
   InvoiceSortFieldInput,
-  SupplierReturnInput,
+  OutboundReturnInput,
 } from '@common/types';
 import {
   InboundReturnRowFragment,
@@ -80,7 +80,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const filter = {
         ...filterBy,
-        type: { equalTo: InvoiceNodeType.SupplierReturn },
+        type: { equalTo: InvoiceNodeType.OutboundReturn },
       };
       const result = await sdk.outboundReturns({
         first,
@@ -99,7 +99,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       totalCount: number;
     }> => {
       const filter = {
-        type: { equalTo: InvoiceNodeType.SupplierReturn },
+        type: { equalTo: InvoiceNodeType.OutboundReturn },
       };
       const result = await sdk.outboundReturns({
         key: outboundParsers.toSortField(sortBy),
@@ -120,7 +120,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }> => {
       const filter = {
         ...filterBy,
-        type: { equalTo: InvoiceNodeType.CustomerReturn },
+        type: { equalTo: InvoiceNodeType.InboundReturn },
       };
       const result = await sdk.inboundReturns({
         first,
@@ -139,7 +139,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       totalCount: number;
     }> => {
       const filter = {
-        type: { equalTo: InvoiceNodeType.CustomerReturn },
+        type: { equalTo: InvoiceNodeType.InboundReturn },
       };
       const result = await sdk.outboundReturns({
         key: inboundParsers.toSortField(sortBy),
@@ -149,13 +149,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    newSupplierReturnLines: async (inboundShipmentLineIds: string[]) => {
-      const result = await sdk.newSupplierReturnLines({
+    outboundReturnLines: async (inboundShipmentLineIds: string[]) => {
+      const result = await sdk.generateOutboundReturnLines({
         inboundShipmentLineIds,
         storeId,
       });
 
-      return result?.newSupplierReturn;
+      return result?.generateOutboundReturnLines;
     },
     inboundReturnLines: async (outboundShipmentLineIds: string[]) => {
       const result = await sdk.generateInboundReturnLines({
@@ -174,18 +174,18 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       return result?.invoiceByNumber;
     },
   },
-  insertSupplierReturn: async (input: SupplierReturnInput) => {
-    const result = await sdk.insertSupplierReturn({
+  insertOutboundReturn: async (input: OutboundReturnInput) => {
+    const result = await sdk.insertOutboundReturn({
       input,
     });
 
-    const { insertSupplierReturn } = result;
+    const { insertOutboundReturn } = result;
 
-    if (insertSupplierReturn.__typename === 'InvoiceNode') {
-      return insertSupplierReturn.invoiceNumber;
+    if (insertOutboundReturn.__typename === 'InvoiceNode') {
+      return insertOutboundReturn.invoiceNumber;
     }
 
-    throw new Error('Could not insert supplier return');
+    throw new Error('Could not insert outbound return');
   },
   insertInboundReturn: async (input: InboundReturnInput) => {
     const result = await sdk.insertInboundReturn({
@@ -193,7 +193,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       storeId,
     });
 
-    return result.insertInboundReturn;
+    const { insertInboundReturn } = result;
+
+    if (insertInboundReturn.__typename === 'InvoiceNode') {
+      return insertInboundReturn.invoiceNumber;
+    }
+
+    throw new Error('Could not insert inbound return');
   },
   deleteOutbound: async (
     returns: OutboundReturnRowFragment[]
@@ -205,10 +211,10 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
 
-    const { deleteSupplierReturns } = result;
+    const { deleteOutboundReturns } = result;
 
-    if (deleteSupplierReturns.__typename === 'DeletedIdsResponse') {
-      return deleteSupplierReturns.deletedIds;
+    if (deleteOutboundReturns.__typename === 'DeletedIdsResponse') {
+      return deleteOutboundReturns.deletedIds;
     }
 
     // TODO: query for and handle error response...
@@ -224,13 +230,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
 
-    const { deleteCustomerReturns } = result;
+    const { deleteInboundReturns } = result;
 
-    if (deleteCustomerReturns.__typename === 'DeletedIdsResponse') {
-      return deleteCustomerReturns.deletedIds;
+    if (deleteInboundReturns.__typename === 'DeletedIdsResponse') {
+      return deleteInboundReturns.deletedIds;
     }
 
     // TODO: query for and handle error response...
-    throw new Error('Could not delete outbound returns');
+    throw new Error('Could not delete inbound returns');
   },
 });

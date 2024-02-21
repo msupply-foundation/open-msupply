@@ -3,35 +3,57 @@ use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::RecordNotFound;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
 
-use crate::mutations::supplier_return::delete::DeletedIdsResponse;
-
 #[derive(InputObject)]
-#[graphql(name = "DeleteCustomerReturnInput")]
+#[graphql(name = "DeleteOutboundReturnInput")]
 pub struct DeleteInput {
     pub ids: Vec<String>,
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "DeleteCustomerReturnError")]
+#[graphql(name = "DeleteOutboundReturnError")]
 pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
+pub struct DeletedIdsResponse(pub Vec<String>);
+#[Object]
+impl DeletedIdsResponse {
+    pub async fn deleted_ids(&self) -> &Vec<String> {
+        &self.0
+    }
+}
+
 #[derive(Union)]
-#[graphql(name = "DeleteCustomerReturnResponse")]
+#[graphql(name = "DeleteOutboundReturnResponse")]
 pub enum DeleteResponse {
     Error(DeleteError),
     Response(DeletedIdsResponse),
 }
 
 pub fn delete(_ctx: &Context<'_>, _store_id: &str, _input: DeleteInput) -> Result<DeleteResponse> {
+    // let user = validate_auth(
+    //     ctx,
+    //     &ResourceAccessRequest {
+    //         resource: Resource::MutateOutboundShipment,
+    //         store_id: Some(store_id.to_string()),
+    //     },
+    // )?;
+
+    // let service_provider = ctx.service_provider();
+    // let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    // map_response(
+    //     service_provider
+    //         .invoice_service
+    //         .delete_inbound_shipment(&service_context, input.to_domain()),
+    // )
     Ok(DeleteResponse::Response(DeletedIdsResponse(vec![
         "deleted_id".to_string(),
     ])))
 }
 
 #[derive(Interface)]
-#[graphql(name = "DeleteCustomerReturnErrorInterface")]
+#[graphql(name = "DeleteOutboundReturnErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
