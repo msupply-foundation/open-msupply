@@ -11,6 +11,7 @@
   "button.new-shipment": "New Shipment",
   "button.select-a-color": "Select a colour",
   "button.stop": "Stop",
+  "error.failed-to-create-return": "Failed to create return!",
   "error.failed-to-create-outbound": "Failed to create Outbound Shipment",
   "error.failed-to-save-service-charges": "Failed to save service charges",
   "error.no-inbound-returns": "There are no Inbound Returns to display.",

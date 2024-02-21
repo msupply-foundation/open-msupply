@@ -193,7 +193,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       storeId,
     });
 
-    return result.insertInboundReturn;
+    const { insertInboundReturn } = result;
+
+    if (insertInboundReturn.__typename === 'InvoiceNode') {
+      return insertInboundReturn.invoiceNumber;
+    }
+
+    throw new Error('Could not insert inbound return');
   },
   deleteOutbound: async (
     returns: OutboundReturnRowFragment[]
