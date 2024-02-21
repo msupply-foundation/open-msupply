@@ -10,7 +10,7 @@ pub fn document_a() -> Document {
         name: String::from("document_a"),
         parent_ids: vec![],
         user_id: String::from("user_account_a"),
-        datetime: DateTime::<Utc>::from_utc(
+        datetime: DateTime::<Utc>::from_naive_utc_and_offset(
             NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
             Utc,
         ),
