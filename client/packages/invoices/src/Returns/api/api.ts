@@ -149,17 +149,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    outboundReturnLines: async (inboundShipmentLineIds: string[]) => {
+    outboundReturnLines: async (stockLineIds: string[]) => {
       const result = await sdk.generateOutboundReturnLines({
-        inboundShipmentLineIds,
+        stockLineIds,
         storeId,
       });
 
       return result?.generateOutboundReturnLines;
     },
-    inboundReturnLines: async (outboundShipmentLineIds: string[]) => {
+    inboundReturnLines: async (stockLineIds: string[]) => {
       const result = await sdk.generateInboundReturnLines({
-        outboundShipmentLineIds,
+        stockLineIds,
         storeId,
       });
 

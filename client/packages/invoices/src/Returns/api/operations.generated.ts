@@ -33,7 +33,7 @@ export type InboundReturnsQueryVariables = Types.Exact<{
 export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null }> } };
 
 export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
-  inboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -41,7 +41,7 @@ export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
 export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: Array<{ __typename: 'OutboundReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, comment: string, reasonId?: string | null }> };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
-  outboundShipmentLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -147,9 +147,9 @@ export const InboundReturnsDocument = gql`
 }
     ${InboundReturnRowFragmentDoc}`;
 export const GenerateOutboundReturnLinesDocument = gql`
-    query generateOutboundReturnLines($inboundShipmentLineIds: [String!], $storeId: String!) {
+    query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   generateOutboundReturnLines(
-    input: {inboundShipmentLineIds: $inboundShipmentLineIds}
+    input: {stockLineIds: $stockLineIds}
     storeId: $storeId
   ) {
     availableNumberOfPacks
@@ -167,9 +167,9 @@ export const GenerateOutboundReturnLinesDocument = gql`
 }
     `;
 export const GenerateInboundReturnLinesDocument = gql`
-    query generateInboundReturnLines($outboundShipmentLineIds: [String!], $storeId: String!) {
+    query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   generateInboundReturnLines(
-    input: {outboundShipmentLineIds: $outboundShipmentLineIds}
+    input: {stockLineIds: $stockLineIds}
     storeId: $storeId
   ) {
     batch
@@ -329,7 +329,7 @@ export const mockInboundReturnsQuery = (resolver: ResponseResolver<GraphQLReques
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockGenerateOutboundReturnLinesQuery((req, res, ctx) => {
- *   const { inboundShipmentLineIds, storeId } = req.variables;
+ *   const { stockLineIds, storeId } = req.variables;
  *   return res(
  *     ctx.data({ generateOutboundReturnLines })
  *   )
@@ -346,7 +346,7 @@ export const mockGenerateOutboundReturnLinesQuery = (resolver: ResponseResolver<
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockGenerateInboundReturnLinesQuery((req, res, ctx) => {
- *   const { outboundShipmentLineIds, storeId } = req.variables;
+ *   const { stockLineIds, storeId } = req.variables;
  *   return res(
  *     ctx.data({ generateInboundReturnLines })
  *   )
