@@ -66,12 +66,9 @@ query inboundReturns(
   }
 }
 
-query newSupplierReturnLines(
-  $inboundShipmentLineIds: [String!]
-  $storeId: String!
-) {
-  newSupplierReturn(
-    input: { inboundShipmentLineIds: $inboundShipmentLineIds }
+query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
+  generateOutboundReturnLines(
+    input: { stockLineIds: $stockLineIds }
     storeId: $storeId
   ) {
     availableNumberOfPacks
@@ -88,12 +85,9 @@ query newSupplierReturnLines(
   }
 }
 
-query generateInboundReturnLines(
-  $outboundShipmentLineIds: [String!]
-  $storeId: String!
-) {
+query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   generateInboundReturnLines(
-    input: { outboundShipmentLineIds: $outboundShipmentLineIds }
+    input: { stockLineIds: $stockLineIds }
     storeId: $storeId
   ) {
     batch
@@ -114,7 +108,7 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
-    type: SUPPLIER_RETURN
+    type: OUTBOUND_RETURN
   ) {
     ... on InvoiceNode {
       id
@@ -132,8 +126,8 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-mutation insertSupplierReturn($input: SupplierReturnInput!) {
-  insertSupplierReturn(input: $input) {
+mutation insertOutboundReturn($input: OutboundReturnInput!) {
+  insertOutboundReturn(input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -154,9 +148,9 @@ mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
 
 mutation deleteOutboundReturns(
   $storeId: String!
-  $input: [DeleteSupplierReturnInput!]!
+  $input: [DeleteOutboundReturnInput!]!
 ) {
-  deleteSupplierReturns(storeId: $storeId, input: $input) {
+  deleteOutboundReturns(storeId: $storeId, input: $input) {
     __typename
     ... on DeletedIdsResponse {
       deletedIds
@@ -166,9 +160,9 @@ mutation deleteOutboundReturns(
 
 mutation deleteInboundReturns(
   $storeId: String!
-  $input: [DeleteCustomerReturnInput!]!
+  $input: [DeleteInboundReturnInput!]!
 ) {
-  deleteCustomerReturns(storeId: $storeId, input: $input) {
+  deleteInboundReturns(storeId: $storeId, input: $input) {
     __typename
     ... on DeletedIdsResponse {
       deletedIds

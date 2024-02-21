@@ -1,7 +1,7 @@
 import {
   DataTable,
   NumberInputCell,
-  SupplierReturnLine,
+  OutboundReturnLine,
   useColumns,
 } from 'packages/common/src';
 import React from 'react';
@@ -10,10 +10,10 @@ export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
 }: {
-  lines: SupplierReturnLine[];
-  updateLine: (line: Partial<SupplierReturnLine> & { id: string }) => void;
+  lines: OutboundReturnLine[];
+  updateLine: (line: Partial<OutboundReturnLine> & { id: string }) => void;
 }) => {
-  const columns = useColumns<SupplierReturnLine>(
+  const columns = useColumns<OutboundReturnLine>(
     [
       'itemCode',
       'itemName',

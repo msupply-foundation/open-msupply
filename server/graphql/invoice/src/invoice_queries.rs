@@ -139,12 +139,12 @@ pub fn get_invoices(
             .flatten()
             .unwrap_or_else(|| InvoiceNodeType::InboundShipment) // ..default to something that isn't a return
     }) {
-        if let Some(invoice) = supplier_return(ctx, &inv_type) {
+        if let Some(invoice) = outbound_return(ctx, &inv_type) {
             return Ok(InvoicesResponse::Response(InvoiceConnector::from_vec(
                 vec![invoice],
             )));
         }
-        if let Some(invoice) = customer_return(ctx, &inv_type) {
+        if let Some(invoice) = inbound_return(ctx, &inv_type) {
             return Ok(InvoicesResponse::Response(InvoiceConnector::from_vec(
                 vec![invoice],
             )));
@@ -180,8 +180,8 @@ pub fn get_invoices(
     )))
 }
 
-fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice> {
-    if *r#type != InvoiceNodeType::SupplierReturn {
+fn outbound_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice> {
+    if *r#type != InvoiceNodeType::OutboundReturn {
         return None;
     }
 
@@ -190,7 +190,7 @@ fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
 
     InvoiceRowRepository::new(&context.connection)
         .upsert_one(&InvoiceRow {
-            id: "supplier_return_1".to_string(),
+            id: "outbound_return_1".to_string(),
             name_id: "8251E89A4B7E6D47AFA01E2805C7DDAD".to_string(),
             name_store_id: Some("0AF30FF38285394284E5701F005BAD58".to_string()),
             store_id: "D77F67339BF8400886D009178F4962E1".to_string(),
@@ -203,7 +203,7 @@ fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
     InvoiceLineRowRepository::new(&context.connection)
         .upsert_one(&InvoiceLineRow {
             id: "line1".to_string(),
-            invoice_id: "supplier_return_1".to_string(),
+            invoice_id: "outbound_return_1".to_string(),
             item_id: "E43D125F51DE4355AE1233DA449ED08A".to_string(),
             item_name: "Amoxicillin 250mg tabs".to_string(),
             item_code: "030453".to_string(),
@@ -216,13 +216,13 @@ fn supplier_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
 
     Some(
         InvoiceRepository::new(&context.connection)
-            .query_one(InvoiceFilter::by_id("supplier_return_1"))
+            .query_one(InvoiceFilter::by_id("outbound_return_1"))
             .unwrap()
             .unwrap(),
     )
 }
-fn customer_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice> {
-    if *r#type != InvoiceNodeType::CustomerReturn {
+fn inbound_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice> {
+    if *r#type != InvoiceNodeType::InboundReturn {
         return None;
     }
 
@@ -231,7 +231,7 @@ fn customer_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
 
     InvoiceRowRepository::new(&context.connection)
         .upsert_one(&InvoiceRow {
-            id: "customer_return_1".to_string(),
+            id: "inbound_return_1".to_string(),
             name_id: "8251E89A4B7E6D47AFA01E2805C7DDAD".to_string(),
             name_store_id: Some("0AF30FF38285394284E5701F005BAD58".to_string()),
             store_id: "D77F67339BF8400886D009178F4962E1".to_string(),
@@ -243,8 +243,8 @@ fn customer_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
 
     InvoiceLineRowRepository::new(&context.connection)
         .upsert_one(&InvoiceLineRow {
-            id: "customer_return_line1".to_string(),
-            invoice_id: "customer_return_1".to_string(),
+            id: "inbound_return_line1".to_string(),
+            invoice_id: "inbound_return_1".to_string(),
             item_id: "E43D125F51DE4355AE1233DA449ED08A".to_string(),
             item_name: "Amoxicillin 250mg tabs".to_string(),
             item_code: "030453".to_string(),
@@ -257,7 +257,7 @@ fn customer_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoic
 
     Some(
         InvoiceRepository::new(&context.connection)
-            .query_one(InvoiceFilter::by_id("customer_return_1"))
+            .query_one(InvoiceFilter::by_id("inbound_return_1"))
             .unwrap()
             .unwrap(),
     )
@@ -269,7 +269,7 @@ pub fn get_invoice_by_number(
     invoice_number: u32,
     r#type: InvoiceNodeType,
 ) -> Result<InvoiceResponse> {
-    if let Some(invoice) = supplier_return(ctx, &r#type) {
+    if let Some(invoice) = outbound_return(ctx, &r#type) {
         return Ok(InvoiceResponse::Response(InvoiceNode::from_domain(invoice)));
     }
 
