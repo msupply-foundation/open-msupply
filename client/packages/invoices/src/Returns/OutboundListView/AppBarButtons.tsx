@@ -12,6 +12,7 @@ import {
   Platform,
   useNotification,
   FileUtils,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -22,7 +23,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('replenishment');
   const { success, error } = useNotification();
-  // const { mutate: onCreate } = useReturns.document.insertOutbound();
+  const { mutateAsync: onCreate } = useReturns.document.insertOutboundReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllOutbound({
     key: 'createdDateTime',
     direction: 'desc',
@@ -47,18 +48,18 @@ export const AppBarButtonsComponent: FC<{
         onClose={modalController.toggleOff}
         onChange={async name => {
           modalController.toggleOff();
-          console.log('TODO: create. Selected supplier:', name);
-          // try {
-          //   await onCreate({
-          //     id: FnUtils.generateUUID(),
-          //     otherPartyId: name?.id,
-          //   });
-          // } catch (e) {
-          //   const errorSnack = error(
-          //     'Failed to create return! ' + (e as Error).message
-          //   );
-          //   errorSnack();
-          // }
+          try {
+            await onCreate({
+              id: FnUtils.generateUUID(),
+              supplierId: name?.id,
+              outboundReturnLines: [],
+            });
+          } catch (e) {
+            const errorSnack = error(
+              `${t('error.failed-to-create-return')} ${(e as Error).message}`
+            );
+            errorSnack();
+          }
         }}
       />
       <Grid container gap={1}>

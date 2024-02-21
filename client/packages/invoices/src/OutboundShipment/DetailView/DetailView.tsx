@@ -26,6 +26,7 @@ import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit } from './OutboundLineEdit';
 import { InboundReturnEditModal } from '../../Returns';
+import { canReturnOutboundLines } from '../../utils';
 
 export const DetailView: FC = () => {
   const { info } = useNotification();
@@ -36,7 +37,7 @@ export const DetailView: FC = () => {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
-    entity: selectedOutboundShipmentLineIds,
+    entity: stockLineIds,
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
@@ -53,11 +54,14 @@ export const DetailView: FC = () => {
     setMode(ModalMode.Create);
   };
 
-  const onReturn = async (outboundShipmentLineIds: string[]) => {
-    if (!outboundShipmentLineIds.length) {
+  const onReturn = async (selectedStockLineIds: string[]) => {
+    if (!data || !canReturnOutboundLines(data)) {
+      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      cantReturnSnack();
+    } else if (!selectedStockLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
-    } else onOpenReturns(outboundShipmentLineIds);
+    } else onOpenReturns(selectedStockLineIds);
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -107,7 +111,7 @@ export const DetailView: FC = () => {
             <InboundReturnEditModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
-              stockLineIds={selectedOutboundShipmentLineIds || []}
+              stockLineIds={stockLineIds || []}
               customerId={data.otherPartyId}
             />
           )}

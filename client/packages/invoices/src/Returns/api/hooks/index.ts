@@ -10,13 +10,13 @@ export const useReturns = {
     listAllOutbound: Document.useOutboundsAll,
     outboundReturn: Document.useOutboundReturn,
 
-    insertSupplierReturn: Document.useInsertSupplierReturn,
+    insertOutboundReturn: Document.useInsertOutboundReturn,
     insertInboundReturn: Document.useInsertInboundReturn,
     deleteOutboundRows: Document.useOutboundDeleteRows,
     deleteInboundRows: Document.useInboundDeleteRows,
   },
   lines: {
-    supplierReturnLines: Lines.useNewSupplierReturnLines,
+    outboundReturnLines: Lines.useOutboundReturnLines,
     inboundReturnLines: Lines.useInboundReturnLines,
   },
   utils: {

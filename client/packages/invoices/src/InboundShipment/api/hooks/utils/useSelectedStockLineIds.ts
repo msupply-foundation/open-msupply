@@ -1,8 +1,9 @@
 import { useTableStore } from 'packages/common/src';
-import { useOutboundRows } from '../line/useOutboundRows';
+import { useInboundRows } from '../line/useInboundRows';
+import { isString } from 'lodash';
 
-export const useSelectedIds = () => {
-  const { items, lines } = useOutboundRows();
+export const useSelectedStockLineIds = () => {
+  const { items, lines } = useInboundRows();
 
   const selectedIds =
     useTableStore(state => {
@@ -11,9 +12,12 @@ export const useSelectedIds = () => {
       return isGrouped
         ? items
             ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .flatMap(({ lines }) => lines.flat())
+            .map(({ lines }) => lines.flat())
+            .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    })?.map(({ id }) => id) || [];
+    })
+      ?.map(({ stockLine }) => stockLine?.id)
+      .filter(isString) || [];
 
   return selectedIds;
 };

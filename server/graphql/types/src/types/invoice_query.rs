@@ -27,8 +27,8 @@ pub enum InvoiceNodeType {
     Prescription,
     InventoryAddition,
     InventoryReduction,
-    SupplierReturn,
-    CustomerReturn,
+    OutboundReturn,
+    InboundReturn,
     Repack,
 }
 
@@ -396,8 +396,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
-            SupplierReturn => unimplemented!(),
-            CustomerReturn => unimplemented!(),
+            OutboundReturn => unimplemented!(),
+            InboundReturn => unimplemented!(),
         }
     }
 
