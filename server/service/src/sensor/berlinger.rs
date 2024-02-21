@@ -314,6 +314,7 @@ fn re_map_times(
             },
         )
         .collect::<Result<_, _>>()?;
+    sensor_mapped.logs = Some(logs_mapped);
     // map temperature breaches
 
     // map
