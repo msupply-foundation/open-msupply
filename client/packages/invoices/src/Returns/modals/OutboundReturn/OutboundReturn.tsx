@@ -121,20 +121,3 @@ export const OutboundReturnEditModal = ({
     </TableProvider>
   );
 };
-
-/**
- * OK MOCK STRUCTURE
- *
- * Modal - outermost component
- *
- * If from dropdown, then we have stockLineIds
- *
- * If from add, we have nothing
- * Show item selector, get item id
- *
- * We can send that
- *
- * Then we keep the item selector, show edit form
- *
- * Edit form - needs table, with stepper
- */
