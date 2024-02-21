@@ -299,7 +299,7 @@ mod test {
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new invoice line id".to_string();
-                u.item_id = mock_item_a().id.clone();
+                u.item_link_id = mock_item_a().id.clone();
                 u.pack_size = 1;
                 u.number_of_packs = 1.0;
                 u
@@ -340,7 +340,7 @@ mod test {
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
                 u.id = "new invoice line pack to one".to_string();
-                u.item_id = mock_item_a().id.clone();
+                u.item_link_id = mock_item_a().id.clone();
                 u.pack_size = 1;
                 u.number_of_packs = 200.0;
                 u.sell_price_per_pack = 10.0;

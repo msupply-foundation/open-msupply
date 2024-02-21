@@ -8,7 +8,7 @@ import { useUpdateStocktake } from './useUpdateStocktake';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
 
 export const useStocktakeFields = <
-  KeyOfStocktake extends keyof StocktakeFragment
+  KeyOfStocktake extends keyof StocktakeFragment,
 >(
   keys: KeyOfStocktake | KeyOfStocktake[]
 ): FieldSelectorControl<StocktakeFragment, KeyOfStocktake> => {
@@ -16,6 +16,7 @@ export const useStocktakeFields = <
   const { mutateAsync } = useUpdateStocktake();
   const { data } = useStocktake();
   const api = useStocktakeApi();
+
   return useFieldsSelector(
     api.keys.detail(stocktakeNumber),
     () => api.get.byNumber(stocktakeNumber),
