@@ -18,11 +18,6 @@ table! {
     }
 }
 
-// // joinable!(asset_catalogue -> asset_category(category_id));
-// // joinable!(asset_catalogue -> asset_class (class_id));
-// // joinable!(asset_catalogue -> asset_type (type_id));
-// // allow_tables_to_appear_in_same_query!(asset_catalogue, asset_category, asset_class, asset_type);
-
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
 #[table_name = "asset_catalogue"]
 pub struct AssetCatalogueRow {
