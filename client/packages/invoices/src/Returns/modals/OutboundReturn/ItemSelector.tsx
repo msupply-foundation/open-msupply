@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/system';
 
 interface ItemSelectorProps {
-  item: any | null;
+  item: ItemStockOnHandFragment | null;
   disabled: boolean;
   onChangeItem: (item: ItemStockOnHandFragment) => void;
 }
@@ -53,7 +53,7 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <BasicTextInput
             disabled
-            sx={{ width: 150 }}
+            sx={{ width: 150, marginBottom: '10px' }}
             value={item.unitName ?? ''}
           />
         </ModalRow>
