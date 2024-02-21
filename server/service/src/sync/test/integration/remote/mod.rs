@@ -114,7 +114,7 @@ fn replace_system_name_ids(records: &mut IntegrationRecords, connection: &Storag
             if invoice.r#type == InvoiceRowType::InventoryAddition
                 || invoice.r#type == InvoiceRowType::InventoryReduction
             {
-                invoice.name_id = inventory_adjustment_name.id.clone();
+                invoice.name_link_id = inventory_adjustment_name.id.clone();
                 invoice.name_store_id = None;
             }
         }

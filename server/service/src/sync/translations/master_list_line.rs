@@ -38,7 +38,7 @@ impl SyncTranslation for MasterListLineTranslation {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)?;
         let result = MasterListLineRow {
             id: data.ID,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             master_list_id: data.item_master_ID,
         };
 

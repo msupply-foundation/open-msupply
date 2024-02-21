@@ -1,6 +1,3 @@
-#[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
-use std::path::Path;
-
 use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -47,12 +44,17 @@ impl DatabaseSettings {
     pub fn full_init_sql(&self) -> Option<String> {
         self.init_sql.clone()
     }
+
+    pub fn database_path(&self) -> String {
+        self.database_name.clone()
+    }
 }
 
 // feature sqlite
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
+        use std::path::Path;
         if self.database_name.ends_with(".sqlite") {
             // just use DB if name ends in .sqlite
             self.database_name.clone()
@@ -225,7 +227,7 @@ mod database_setting_test {
             Some(expected_init_sql)
         );
 
-        //Ensure sqlite WAL is enabled if init_sql is missing a trailing semicoln
+        //Ensure sqlite WAL is enabled if init_sql is missing a trailing semicolon
         let init_sql_missing_semi_colon = "PRAGMA temp_store_directory = '{}'";
         let expected_init_sql = format!("{};{}", init_sql_missing_semi_colon, SQLITE_WAL_PRAGMA);
         assert_eq!(

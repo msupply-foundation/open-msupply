@@ -139,6 +139,18 @@ export const useNativeClient = ({
 
     return result;
   };
+
+  const saveDatabase = async () => {
+    const result = await nativeAPI?.saveDatabase();
+
+    if (!result) {
+      console.error('No result from nativeAPI.saveDatabase');
+      return;
+    }
+
+    return result;
+  };
+
   const advertiseService = nativeAPI?.advertiseService ?? (() => {});
 
   const setServerMode = (
@@ -213,6 +225,7 @@ export const useNativeClient = ({
     keepAwake,
     allowSleep,
     saveFile,
+    saveDatabase,
     setServerMode,
   };
 };

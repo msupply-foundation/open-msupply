@@ -25,7 +25,7 @@ fn validate(
     stocktake_line_id: &str,
 ) -> Result<(), DeleteStocktakeLineError> {
     let line = match check_stocktake_line_exist(connection, stocktake_line_id)? {
-        Some(line) => line,
+        Some(line) => line.line,
         None => return Err(DeleteStocktakeLineError::StocktakeLineDoesNotExist),
     };
     let stocktake = match check_stocktake_exist(connection, &line.stocktake_id)? {
@@ -140,7 +140,7 @@ mod stocktake_line_test {
         assert_eq!(existing_line.id, deleted_id);
         assert_eq!(
             service
-                .get_stocktake_line(&context, existing_line.id)
+                .get_stocktake_line(&context, "invalid", existing_line.id)
                 .unwrap(),
             None
         );
