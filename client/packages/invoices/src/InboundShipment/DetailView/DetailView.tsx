@@ -11,7 +11,6 @@ import {
   createQueryParamsStore,
   DetailTabs,
   useNotification,
-  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -27,6 +26,7 @@ import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { OutboundReturnEditModal } from '../../Returns';
+import { canReturnInboundLines } from '../../utils';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -53,8 +53,8 @@ export const DetailView: FC = () => {
   );
 
   const onReturn = async (selectedStockLineIds: string[]) => {
-    if (data?.status === InvoiceNodeStatus.New) {
-      const selectLinesSnack = info(t('messages.cant-return-new-shipment'));
+    if (!data || !canReturnInboundLines(data)) {
+      const selectLinesSnack = info(t('messages.cant-return-shipment'));
       selectLinesSnack();
     } else if (!selectedStockLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
