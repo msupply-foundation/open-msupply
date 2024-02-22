@@ -41,16 +41,16 @@ pub fn generate_outbound_return_lines(
     store_id: String,
     input: GenerateOutboundReturnLinesInput,
 ) -> Result<GenerateOutboundReturnLinesResponse> {
-    let user = validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::QueryTemperatureLog, // TODO new resource
-            store_id: Some(store_id.clone()),
-        },
-    )?;
+    // let user = validate_auth(
+    //     ctx,
+    //     &ResourceAccessRequest {
+    //         resource: Resource::QueryTemperatureLog, // TODO new resource
+    //         store_id: Some(store_id.clone()),
+    //     },
+    // )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    // let service_context = service_provider.context(store_id.clone(), user.user_id)?;
 
     // let outbound_return = service_provider.invoice_service
     // .get_temperature_chart(
@@ -70,7 +70,19 @@ pub fn generate_outbound_return_lines(
     Ok(GenerateOutboundReturnLinesResponse::Response(
         OutboundReturnLineConnector {
             total_count: 0,
-            nodes: vec![],
+            nodes: vec![OutboundReturnLineNode {
+                id: "id".to_string(),
+                item_code: "item_code".to_string(),
+                item_name: "item_name".to_string(),
+                stock_line_id: "stock_line_id".to_string(),
+                batch: Some("batch".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd(2021, 1, 1)),
+                available_number_of_packs: 0.0,
+                pack_size: 0,
+                number_of_packs_to_return: 0.0,
+                comment: "".to_string(),
+                reason_id: None,
+            }],
         },
     ))
 }
