@@ -174,11 +174,11 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         apply_string_filter!(query, serial_number, asset_dsl::serial_number);
         apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
         apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
-        apply_equal_filter!(query, catalogue_item_id, asset_dsl::catalogue_item_id);
+        apply_equal_filter!(query, catalogue_item_id, asset_dsl::asset_catalogue_item_id);
         apply_date_filter!(query, installation_date, asset_dsl::installation_date);
         apply_date_filter!(query, replacement_date, asset_dsl::replacement_date);
     }
-    query
+    query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
 }
 
 #[cfg(test)]
@@ -191,7 +191,7 @@ mod tests {
             asset_row::{AssetRow, AssetRowRepository},
             asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },
-        mock::{mock_name_store_a, mock_store_a, MockDataInserts},
+        mock::{mock_store_a, MockDataInserts},
         test_db, EqualFilter,
     };
 
