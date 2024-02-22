@@ -123,7 +123,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let type_ids = AssetTypeRepository::new(&self.connection)
                     .query_by_filter(AssetTypeFilter::new().name(asset_type))?
                     .iter()
-                    .map(|c| c.id.clone())
+                    .map(|c| c.asset_type_row.id.clone())
                     .collect::<Vec<String>>();
                 query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(type_ids));
             }
