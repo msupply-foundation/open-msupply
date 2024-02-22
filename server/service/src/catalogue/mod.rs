@@ -1,4 +1,5 @@
 use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
+use self::query_categories::{get_asset_categories, get_asset_category};
 use self::query_classes::{get_asset_class, get_asset_classes};
 
 use super::{ListError, ListResult};
@@ -62,7 +63,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         filter: Option<AssetCategoryFilter>,
         sort: Option<AssetCategorySort>,
     ) -> Result<ListResult<AssetCategory>, ListError> {
-        get_asset_classes(connection, pagination, filter, sort)
+        get_asset_categories(connection, pagination, filter, sort)
     }
 
     fn get_asset_category(
@@ -70,6 +71,6 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         id: String,
     ) -> Result<AssetCategory, SingleRecordError> {
-        get_asset_class(ctx, id)
+        get_asset_category(ctx, id)
     }
 }
