@@ -117,7 +117,7 @@ impl<'a> AssetCategoryRepository<'a> {
 }
 
 fn to_domain(asset_category_row: AssetCategoryRow) -> AssetCategory {
-    asset_category_row
+    AssetCategory { asset_category_row }
 }
 
 type BoxedAssetCategoryQuery = IntoBoxed<'static, asset_category::table, DBType>;
