@@ -12,7 +12,7 @@ use crate::{
 };
 
 pub struct AssetCategory {
-    asset_category_row: AssetCategoryRow,
+    pub asset_category_row: AssetCategoryRow,
 }
 
 pub enum AssetCategorySortField {
