@@ -57,7 +57,7 @@ export interface VariantControl {
 }
 
 // Will call API to refresh pack variant if cache is expired
-// or if store is change (based on cache keys)
+// or if store is changed (based on cache keys)
 export const useRefreshPackVariant = () => {
   const { setItems } = usePackVariantStore();
 
