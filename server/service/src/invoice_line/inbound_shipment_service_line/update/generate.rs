@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, ItemRow};
+use repository::{InvoiceLine, InvoiceLineRow, ItemRow};
 
 use crate::invoice::common::calculate_total_after_tax;
 
@@ -13,7 +13,7 @@ pub fn generate(
         tax: input_tax,
         note: input_note,
     }: UpdateInboundShipmentServiceLine,
-    existing_line: InvoiceLineRow,
+    existing_line: InvoiceLine,
     ItemRow {
         id: item_id,
         name: item_name,
@@ -26,13 +26,13 @@ pub fn generate(
     // 3) else: use existing line name
     let updated_item_name = if let Some(input_name) = input_name {
         Some(input_name)
-    } else if item_id != existing_line.item_id {
+    } else if item_id != existing_line.item_row.id {
         Some(item_name)
     } else {
         None
     };
 
-    let mut update_line = existing_line;
+    let mut update_line = existing_line.invoice_line_row;
 
     if let Some(item_name) = updated_item_name {
         update_line.item_name = item_name;
@@ -40,7 +40,7 @@ pub fn generate(
     }
 
     if let Some(input_item_id) = input_item_id {
-        update_line.item_id = input_item_id;
+        update_line.item_link_id = input_item_id;
     }
 
     if let Some(total_before_tax) = input_total_before_tax {
@@ -63,21 +63,29 @@ pub fn generate(
 
 #[cfg(test)]
 mod inbound_shipment_service_line_update_test {
-    use repository::mock::{mock_inbound_shipment_invoice_lines, mock_items};
+    use repository::mock::{
+        mock_inbound_shipment_a, mock_inbound_shipment_invoice_lines, mock_items,
+    };
 
     use super::*;
 
     #[test]
     fn test_name_update() {
-        let mut line = mock_inbound_shipment_invoice_lines()
-            .get(0)
-            .unwrap()
-            .clone();
         let items = mock_items();
         let item1 = items.get(0).unwrap().clone();
         let item2 = items.get(1).unwrap().clone();
         assert_ne!(item1.name, item2.name);
-        line.item_id = item1.id.to_owned();
+        let mut line = InvoiceLine {
+            invoice_line_row: mock_inbound_shipment_invoice_lines()
+                .get(0)
+                .unwrap()
+                .clone(),
+            invoice_row: mock_inbound_shipment_a(),
+            item_row: item1.clone(),
+            location_row_option: None,
+            stock_line_option: None,
+        };
+        line.invoice_line_row.item_link_id = item1.id.to_owned();
 
         // no name change
         let result = generate(

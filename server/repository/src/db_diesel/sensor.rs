@@ -105,7 +105,7 @@ impl<'a> SensorRepository<'a> {
 
 type BoxedSensorQuery = sensor::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(sensor_row: SensorRow) -> Sensor {
+fn to_domain(sensor_row: SensorRow) -> Sensor {
     Sensor { sensor_row }
 }
 

@@ -85,7 +85,7 @@ trait SyncRecordTester {
 
 // Sometime central server returns unexpected errors
 // this seems to happen when it's `overloaded` (when multiple requests are fired up at once)
-// ingore these errors in integration tests
+// ignore these errors in integration tests
 const NUMBER_OF_RETRIES: u32 = 5;
 async fn with_retry<T, E, F, Fut>(f: F) -> Result<T, E>
 where
@@ -95,7 +95,7 @@ where
 {
     let mut retries = 0;
     loop {
-        // Reduce chance concurrent operations runing at the same time (when tests all start at once)
+        // Reduce chance concurrent operations running at the same time (when tests all start at once)
         random_delay(10, 50).await;
         let error = match f().await {
             Ok(result) => return Ok(result),

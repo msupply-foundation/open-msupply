@@ -41,7 +41,7 @@ export const LoginLayout = ({
         sx={{
           backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
           backgroundSize: (theme: Theme) => theme.mixins.gradient.size,
-          padding: '0 80px 7% 80px',
+          padding: '0 5% 7%',
         }}
         display="flex"
         alignItems="flex-start"
@@ -53,8 +53,8 @@ export const LoginLayout = ({
             sx={{
               color: (theme: Theme) => theme.typography.login.color,
               fontSize: {
-                xs: '38px',
-                sm: '38px',
+                xs: '28px',
+                sm: '30px',
                 md: '48px',
                 lg: '64px',
                 xl: '64px',

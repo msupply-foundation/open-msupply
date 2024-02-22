@@ -1,5 +1,7 @@
 use super::{
-    contact_trace_row::{contact_trace, contact_trace::dsl as contact_trace_dsl},
+    contact_trace_row::{
+        contact_trace_name_link_view, contact_trace_name_link_view::dsl as contact_trace_dsl,
+    },
     document::{document, document::dsl as document_dsl},
     program_row::{program, program::dsl as program_dsl},
     StorageConnection,
@@ -57,12 +59,12 @@ pub type ContactTraceSort = Sort<ContactTraceSortField>;
 
 type BoxedProgramQuery = IntoBoxed<
     'static,
-    InnerJoin<InnerJoin<contact_trace::table, document::table>, program::table>,
+    InnerJoin<InnerJoin<contact_trace_name_link_view::table, document::table>, program::table>,
     DBType,
 >;
 
 fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgramQuery {
-    let mut query = contact_trace_dsl::contact_trace
+    let mut query = contact_trace_dsl::contact_trace_name_link_view
         .inner_join(document_dsl::document)
         .inner_join(program_dsl::program)
         .into_boxed();
@@ -166,9 +168,16 @@ impl<'a> ContactTraceRepository<'a> {
             query = query.order(contact_trace_dsl::patient_id.asc())
         }
 
-        let result = query
+        let final_query = query
             .offset(pagination.offset as i64)
-            .limit(pagination.limit as i64)
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        //println!(
+        //    "{}",
+        //    diesel::debug_query::<DBType, _>(&final_query).to_string()
+        //);
+        let result = final_query
             .load::<ContactTraceJoin>(&self.connection.connection)?
             .into_iter()
             .map(|row| ContactTrace {
