@@ -48,7 +48,12 @@ pub fn generate_outbound_return_lines(
 
     let return_lines = service_provider
         .invoice_service
-        .generate_outbound_return_lines(&service_context)
+        .generate_outbound_return_lines(
+            &service_context,
+            input.stock_line_ids,
+            input.item_id,
+            input.return_id,
+        )
         .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(GenerateOutboundReturnLinesResponse::Response(

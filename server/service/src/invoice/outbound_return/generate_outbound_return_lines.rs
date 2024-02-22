@@ -1,4 +1,4 @@
-use repository::{ItemRow, StockLineRow};
+use repository::{ItemRow, ItemRowRepository, StockLineRow, StockLineRowRepository};
 
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 
@@ -12,60 +12,63 @@ pub struct OutboundReturnLine {
     pub item: ItemRow,
 }
 
-pub struct OutboundReturnLinesInput {
-    pub stock_line_ids: Vec<String>,
-    pub item_id: Option<String>,
-    pub return_id: Option<String>,
-}
-
 pub fn generate_outbound_return_lines(
     ctx: &ServiceContext,
-    input: OutboundReturnLinesInput,
+    stock_line_ids: Vec<String>,
+    item_id: Option<String>,
+    return_id: Option<String>,
 ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-    // validate
-    // - stock line ids exist?
-    // - item_id exists?
-    // - return_id exists?
-    // wondering if we do need the inbound shipment id - don't I need to validate its delivered/verified?
-    // what else does backend need to check to determine stock is returnable?
-    // maybe not much - if quantity available is 0, then can't do anything after this
+    validate(ctx, &stock_line_ids, &item_id, &return_id)?;
 
-    /*
-     THEN!
-    v1:
-    query for stock lines
-    query for items based on ids in stock lines, or consider join here
+    // PERHAPS A JOIN BETTER HERE
+    let stock_lines =
+        StockLineRowRepository::new(&ctx.connection).find_many_by_ids(&stock_line_ids)?;
 
-    v2
-    if item id, query stock lines by item id?
+    let item_row_repo = ItemRowRepository::new(&ctx.connection);
 
-    v3
-    if return_id, query for return lines by return id
-     */
-    Ok(ListResult {
-        count: 1,
-        rows: vec![OutboundReturnLine {
-            id: "id".to_string(),
+    let return_lines: Vec<OutboundReturnLine> = stock_lines
+        .iter()
+        .map(|stock_line| OutboundReturnLine {
+            id: "id".to_string(), // TODO make new
+            item: item_row_repo
+                .find_one_by_id(&stock_line.item_id)
+                .unwrap()
+                .expect("UH OH ITEM NOT FOUND"),
+            stock_line: stock_line.clone(),
+
+            // these will be populated by the insert... we should query for them from the existing return eventually
             reason_id: None,
             comment: None,
             number_of_packs: 0,
-            item: ItemRow {
-                id: "item_id".to_string(),
-                code: "x_item_code".to_string(),
-                name: "item_name".to_string(),
-                ..Default::default()
-            },
-            stock_line: StockLineRow {
-                id: "stock_line_id".to_string(),
-                item_id: "item_id".to_string(),
-                store_id: "store_id".to_string(),
-                batch: Some("batch".to_string()),
-                pack_size: 0,
-                available_number_of_packs: 0.0,
-                cost_price_per_pack: 0.0,
-                sell_price_per_pack: 0.0,
-                ..Default::default()
-            },
-        }],
+        })
+        .collect();
+
+    // if item id, query stock lines by item id?
+
+    // if return_id, query for return lines by return id
+
+    Ok(ListResult {
+        count: return_lines.len() as u32,
+        rows: return_lines,
     })
+}
+
+fn validate(
+    ctx: &ServiceContext,
+    stock_line_ids: &Vec<String>,
+    item_id: &Option<String>,
+    return_id: &Option<String>,
+) -> Result<(), ListError> {
+    // store IDs
+    // TODO: may need ServiceError?
+    // error if nothing provided (stock line ids = [], item id = None, return id = None) as can't return anything
+
+    // do we want to constrain anything around EITHER stock line ids or item id?
+
+    // these ids need to exist in order to respond with return lines, but it is just a query - do we need to validate that they exist or just return an empty array?
+    // validate stock line ids
+    // validate item id
+    // validate return id
+
+    Ok(())
 }
