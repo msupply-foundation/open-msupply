@@ -1,4 +1,4 @@
-use self::query_catalogue::{get_asset_catalogue_item, get_asset_catalogue_items};
+use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
 use self::query_classes::{get_asset_class, get_asset_classes};
 
 use super::{ListError, ListResult};
@@ -13,7 +13,7 @@ use repository::{
     PaginationOption, StorageConnection,
 };
 
-pub mod query_catalogue;
+pub mod query_catalogue_item;
 pub mod query_classes;
 pub mod query_types;
 
