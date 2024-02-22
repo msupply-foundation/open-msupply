@@ -14,9 +14,9 @@ use repository::{
 };
 
 pub mod query_catalogue_item;
+pub mod query_categories;
 pub mod query_classes;
 pub mod query_types;
-
 pub trait AssetCatalogueServiceTrait: Sync + Send {
     fn get_asset_catalogue_items(
         &self,
@@ -51,6 +51,24 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         id: String,
     ) -> Result<AssetClass, SingleRecordError> {
+        get_asset_class(ctx, id)
+    }
+
+    fn get_asset_categories(
+        &self,
+        connection: &StorageConnection,
+        pagination: Option<PaginationOption>,
+        filter: Option<AssetCategoryFilter>,
+        sort: Option<AssetCategorySort>,
+    ) -> Result<ListResult<AssetCategory>, ListError> {
+        get_asset_classes(connection, pagination, filter, sort)
+    }
+
+    fn get_asset_category(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<AssetCategory, SingleRecordError> {
         get_asset_class(ctx, id)
     }
 }
