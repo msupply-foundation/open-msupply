@@ -11,7 +11,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             asset_category_id TEXT NOT NULL REFERENCES asset_category(id),
             asset_type_id TEXT NOT NULL REFERENCES asset_type(id),
             manufacturer TEXT,
-            model TEXT NOT NULL,
+            model TEXT NOT NULL
         );
         "#,
     )?;
