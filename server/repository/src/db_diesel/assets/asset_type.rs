@@ -11,7 +11,9 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type AssetType = AssetTypeRow;
+pub struct AssetType {
+    pub asset_type_row: AssetTypeRow,
+}
 
 pub enum AssetTypeSortField {
     Name,
@@ -105,7 +107,7 @@ impl<'a> AssetTypeRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetType>(&self.connection.connection)?;
+        let result = final_query.load::<AssetTypeRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -197,15 +199,15 @@ mod tests {
             .query_one(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(t.id, id);
-        assert_eq!(t.name, name);
+        assert_eq!(t.asset_type_row.id, id);
+        assert_eq!(t.asset_type_row.name, name);
 
         // Query by name
         let t = type_repository
             .query_one(AssetTypeFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(t.id, id);
-        assert_eq!(t.name, name);
+        assert_eq!(t.asset_type_row.id, id);
+        assert_eq!(t.asset_type_row.name, name);
     }
 }
