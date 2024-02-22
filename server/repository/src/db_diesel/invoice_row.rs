@@ -39,7 +39,6 @@ table! {
         clinician_id -> Nullable<Text>,
         currency_id -> Nullable<Text>,
         currency_rate -> Nullable<Double>,
-        foreign_currency_total -> Nullable<Double>,
     }
 }
 
@@ -106,7 +105,6 @@ pub struct InvoiceRow {
     pub clinician_id: Option<String>,
     pub currency_id: Option<String>,
     pub currency_rate: Option<f64>,
-    pub foreign_currency_total: Option<f64>,
 }
 
 impl Default for InvoiceRow {
@@ -138,7 +136,6 @@ impl Default for InvoiceRow {
             clinician_id: Default::default(),
             currency_id: Default::default(),
             currency_rate: Default::default(),
-            foreign_currency_total: Default::default(),
         }
     }
 }

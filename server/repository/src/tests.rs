@@ -163,6 +163,7 @@ mod repository_test {
                 note: None,
                 location_id: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             }
         }
         pub fn invoice_line_2() -> InvoiceLineRow {
@@ -186,6 +187,7 @@ mod repository_test {
                 note: None,
                 location_id: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             }
         }
 
@@ -210,6 +212,7 @@ mod repository_test {
                 note: None,
                 location_id: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             }
         }
 
@@ -234,6 +237,7 @@ mod repository_test {
                 note: None,
                 location_id: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             }
         }
 

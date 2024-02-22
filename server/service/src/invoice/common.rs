@@ -5,6 +5,8 @@ use repository::{
 };
 use util::inline_edit;
 
+use crate::store_preference::get_store_preferences;
+
 pub fn generate_invoice_user_id_update(
     user_id: &str,
     existing_invoice_row: InvoiceRow,
@@ -33,6 +35,13 @@ pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64
     match tax {
         Some(tax) => total_before_tax * (1.0 + tax / 100.0),
         None => total_before_tax,
+    }
+}
+
+pub fn calculate_foreign_currency_total(total: f64, currency_rate: Option<f64>) -> Option<f64> {
+    match currency_rate {
+        Some(currency_rate) => Some(total / currency_rate),
+        None => None,
     }
 }
 
@@ -66,6 +75,14 @@ pub fn check_master_list_for_store(
             .exists_for_store_id(EqualFilter::equal_to(store_id)),
     )?;
     Ok(rows.pop())
+}
+
+pub fn check_can_issue_in_foreign_currency(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<bool, RepositoryError> {
+    let store_preferences = get_store_preferences(connection, store_id)?;
+    Ok(store_preferences.issue_in_foreign_currency)
 }
 
 pub enum InvoiceLineHasNoStockLine {

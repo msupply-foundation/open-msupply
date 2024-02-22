@@ -52,7 +52,6 @@ pub fn generate(
         clinician_id: None,
         currency_id: None,
         currency_rate: None,
-        foreign_currency_total: None,
     };
 
     Ok(result)

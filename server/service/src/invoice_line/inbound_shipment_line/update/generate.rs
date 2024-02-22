@@ -1,5 +1,8 @@
 use crate::{
-    invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
+    invoice::common::{
+        calculate_foreign_currency_total, calculate_total_after_tax,
+        generate_invoice_user_id_update,
+    },
     invoice_line::inbound_shipment_line::{
         generate::convert_invoice_line_to_single_pack, generate_batch,
     },
@@ -33,7 +36,12 @@ pub fn generate(
 
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
-    let update_line = generate_line(input, current_line, new_item_option);
+    let update_line = generate_line(
+        input,
+        current_line,
+        new_item_option,
+        existing_invoice_row.currency_rate,
+    );
 
     let mut update_line = match store_preferences.pack_to_one {
         true => convert_invoice_line_to_single_pack(update_line),
@@ -89,6 +97,7 @@ fn generate_line(
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
+    currency_rate: Option<f64>,
 ) -> InvoiceLineRow {
     let mut update_line = current_line;
 
@@ -102,6 +111,8 @@ fn generate_line(
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
     update_line.number_of_packs = number_of_packs.unwrap_or(update_line.number_of_packs);
     update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
+    update_line.foreign_currency_price_before_tax =
+        calculate_foreign_currency_total(update_line.total_before_tax, currency_rate);
 
     if let Some(item) = new_item_option {
         update_line.item_id = item.id;
