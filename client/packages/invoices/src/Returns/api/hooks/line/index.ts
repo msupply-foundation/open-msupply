@@ -1,7 +1,7 @@
 import { useInboundReturnLines } from './useInboundReturnLines';
-import { useNewSupplierReturnLines } from './useNewSupplierReturnLines';
+import { useOutboundReturnLines } from './useOutboundReturnLines';
 
 export const Lines = {
-  useNewSupplierReturnLines,
+  useOutboundReturnLines,
   useInboundReturnLines,
 };

@@ -50,8 +50,8 @@ pub use self::temperature_chart::*;
 
 pub mod generate_inbound_return_lines;
 pub use self::generate_inbound_return_lines::*;
-pub mod new_supplier_return;
-pub use self::new_supplier_return::*;
+pub mod generate_outbound_return_lines;
+pub use self::generate_outbound_return_lines::*;
 pub mod return_reason;
 pub use self::return_reason::*;
 

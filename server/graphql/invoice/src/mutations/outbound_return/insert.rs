@@ -5,15 +5,15 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 
 #[derive(InputObject)]
-#[graphql(name = "SupplierReturnInput")]
+#[graphql(name = "OutboundReturnInput")]
 pub struct InsertInput {
     pub id: String,
     pub supplier_id: String, // to be other_party_id
-    pub supplier_return_lines: Vec<SupplierReturnLineInput>,
+    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
 
 #[derive(InputObject)]
-pub struct SupplierReturnLineInput {
+pub struct OutboundReturnLineInput {
     pub id: String,
     pub stock_line_id: String,
     pub number_of_packs_to_return: f64,
@@ -22,13 +22,13 @@ pub struct SupplierReturnLineInput {
 }
 
 #[derive(SimpleObject)]
-#[graphql(name = "InsertSupplierReturnError")]
+#[graphql(name = "InsertOutboundReturnError")]
 pub struct InsertError {
     pub error: InsertErrorInterface,
 }
 
 #[derive(Union)]
-#[graphql(name = "InsertSupplierReturnResponse")]
+#[graphql(name = "InsertOutboundReturnResponse")]
 pub enum InsertResponse {
     Error(InsertError),
     Response(InvoiceNode),
@@ -43,7 +43,7 @@ pub fn insert(_ctx: &Context<'_>, _input: InsertInput) -> Result<InsertResponse>
 }
 
 #[derive(Interface)]
-#[graphql(name = "InsertSupplierReturnErrorInterface")]
+#[graphql(name = "InsertOutboundReturnErrorInterface")]
 #[graphql(field(name = "description", type = "&str"))]
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
