@@ -314,11 +314,47 @@ fn re_map_times(
             },
         )
         .collect::<Result<_, _>>()?;
-    sensor_mapped.logs = Some(logs_mapped);
     // map temperature breaches
+    let breaches_mapped: Vec<temperature_sensor::TemperatureBreach> = sensor_mapped
+        .clone()
+        .breaches
+        .context("no temperature breaches")?
+        .into_iter()
+        .map(
+            |temperature_sensor::TemperatureBreach {
+                 breach_type,
+                 start_timestamp,
+                 end_timestamp,
+                 duration,
+                 acknowledged,
+             }| {
+                let local_start = match Local.from_local_datetime(&start_timestamp) {
+                    LocalResult::None => {
+                        return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                    }
+                    LocalResult::Single(r) => r,
+                    LocalResult::Ambiguous(r, _) => r,
+                };
+                let local_end = match Local.from_local_datetime(&end_timestamp) {
+                    LocalResult::None => {
+                        return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                    }
+                    LocalResult::Single(r) => r,
+                    LocalResult::Ambiguous(r, _) => r,
+                };
+                Ok(temperature_sensor::TemperatureBreach {
+                    breach_type,
+                    start_timestamp: local_start.naive_utc(),
+                    end_timestamp: local_end.naive_utc(),
+                    duration,
+                    acknowledged,
+                })
+            },
+        )
+        .collect::<Result<_, _>>()?;
+    sensor_mapped.logs = Some(logs_mapped);
+    sensor_mapped.breaches = Some(breaches_mapped);
 
-    // map
-    // map other things
     Ok(sensor_mapped)
 }
 
@@ -329,8 +365,9 @@ pub fn read_sensor(
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let filename = fridgetag_file.to_string_lossy();
 
-    let mut temperature_sensor =
+    let temperature_sensor_unmapped =
         temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
+    let mut temperature_sensor = re_map_times(&temperature_sensor_unmapped)?;
 
     let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
