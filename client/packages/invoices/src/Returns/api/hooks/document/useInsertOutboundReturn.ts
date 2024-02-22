@@ -7,17 +7,17 @@ import {
 import { useReturnsApi } from '../utils/useReturnsApi';
 import { AppRoute } from 'packages/config/src';
 
-export const useInsertInboundReturn = () => {
+export const useInsertOutboundReturn = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const api = useReturnsApi();
-  return useMutation(api.insertInboundReturn, {
+  return useMutation(api.insertOutboundReturn, {
     onSuccess: invoiceNumber => {
-      const route = RouteBuilder.create(AppRoute.Distribution)
-        .addPart(AppRoute.InboundReturn)
+      const route = RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.OutboundReturn)
         .addPart(String(invoiceNumber))
         .build();
-      navigate(route);
+      navigate(route, { replace: true });
       return queryClient.invalidateQueries(api.keys.base());
     },
   });

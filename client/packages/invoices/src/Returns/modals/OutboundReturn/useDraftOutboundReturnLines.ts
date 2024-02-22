@@ -1,22 +1,22 @@
 import React, { useEffect } from 'react';
 import {
   FnUtils,
+  OutboundReturnInput,
+  OutboundReturnLine,
+  OutboundReturnLineInput,
   RecordPatch,
-  SupplierReturnInput,
-  SupplierReturnLine,
-  SupplierReturnLineInput,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
-export const useDraftSupplierReturnLines = (
+export const useDraftOutboundReturnLines = (
   stockLineIds: string[],
   supplierId: string
 ) => {
-  const [draftLines, setDraftLines] = React.useState<SupplierReturnLine[]>([]);
+  const [draftLines, setDraftLines] = React.useState<OutboundReturnLine[]>([]);
 
-  const lines = useReturns.lines.supplierReturnLines(stockLineIds);
+  const lines = useReturns.lines.outboundReturnLines(stockLineIds);
 
-  const { mutateAsync } = useReturns.document.insertSupplierReturn();
+  const { mutateAsync } = useReturns.document.insertOutboundReturn();
 
   useEffect(() => {
     const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
@@ -24,7 +24,7 @@ export const useDraftSupplierReturnLines = (
     setDraftLines(newDraftLines);
   }, [lines]);
 
-  const update = (patch: RecordPatch<SupplierReturnLine>) => {
+  const update = (patch: RecordPatch<OutboundReturnLine>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {
@@ -36,8 +36,8 @@ export const useDraftSupplierReturnLines = (
     });
   };
 
-  const saveSupplierReturn = async () => {
-    const supplierReturnLines: SupplierReturnLineInput[] = draftLines.map(
+  const saveOutboundReturn = async () => {
+    const outboundReturnLines: OutboundReturnLineInput[] = draftLines.map(
       line => {
         const { id, reasonId, numberOfPacksToReturn, stockLineId, comment } =
           line;
@@ -46,10 +46,10 @@ export const useDraftSupplierReturnLines = (
       }
     );
 
-    const input: SupplierReturnInput = {
+    const input: OutboundReturnInput = {
       id: FnUtils.generateUUID(),
       supplierId,
-      supplierReturnLines,
+      outboundReturnLines,
     };
 
     // TODO: error handling here
@@ -57,5 +57,5 @@ export const useDraftSupplierReturnLines = (
     await mutateAsync(input);
   };
 
-  return { lines: draftLines, update, saveSupplierReturn };
+  return { lines: draftLines, update, saveOutboundReturn };
 };
