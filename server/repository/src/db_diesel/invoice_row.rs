@@ -58,6 +58,8 @@ pub enum InvoiceRowType {
     InventoryAddition,
     InventoryReduction,
     Repack,
+    InboundReturn,
+    OutboundReturn,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
