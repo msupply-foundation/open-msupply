@@ -91,7 +91,7 @@ impl SyncTranslation for DocumentTranslation {
             name,
             parent_ids: serde_json::from_str(&parent_ids)?,
             user_id,
-            datetime: DateTime::<Utc>::from_utc(datetime, Utc),
+            datetime: DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc),
             r#type,
             data,
             form_schema_id,

@@ -151,37 +151,37 @@ impl InvoiceNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn allocated_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .allocated_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn picked_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .picked_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn shipped_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .shipped_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .delivered_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn verified_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .verified_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn colour(&self) -> &Option<String> {
