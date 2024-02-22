@@ -296,8 +296,7 @@ fn re_map_times(
     {
         None => None,
         Some(logs) => Some(
-            logs.context("no temperature logs")?
-                .into_iter()
+            logs.into_iter()
                 .map(
                     |temperature_sensor::TemperatureLog {
                          timestamp,
