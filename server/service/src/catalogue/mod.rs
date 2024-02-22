@@ -8,6 +8,7 @@ use repository::{
         asset_catalogue_item::{
             AssetCatalogueItem, AssetCatalogueItemFilter, AssetCatalogueItemSort,
         },
+        asset_category::{AssetCategory, AssetCategoryFilter, AssetCategorySort},
         asset_class::{AssetClass, AssetClassFilter, AssetClassSort},
     },
     PaginationOption, StorageConnection,
