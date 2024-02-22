@@ -495,7 +495,8 @@ mod test {
         assert_eq!(program_context, found_trace.document.context_id);
         assert_eq!(
             program.datetime,
-            DateTime::<Utc>::from_utc(found_trace.contact_trace.datetime, Utc).to_rfc3339()
+            DateTime::<Utc>::from_naive_utc_and_offset(found_trace.contact_trace.datetime, Utc)
+                .to_rfc3339()
         );
         assert_eq!(
             program.contact_trace_id,
