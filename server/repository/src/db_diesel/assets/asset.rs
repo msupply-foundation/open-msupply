@@ -191,7 +191,7 @@ mod tests {
             asset_row::{AssetRow, AssetRowRepository},
             asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },
-        mock::MockDataInserts,
+        mock::{mock_name_store_a, mock_store_a, MockDataInserts},
         test_db, EqualFilter,
     };
 
@@ -200,8 +200,11 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) =
-            test_db::setup_all("test_asset_query_repository", MockDataInserts::none()).await;
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_asset_query_repository",
+            MockDataInserts::none().stores(),
+        )
+        .await;
 
         // TODO: Replace this reference data with mock data, or inserted data from https://github.com/msupply-foundation/open-msupply/issues/3035
 
@@ -248,6 +251,7 @@ mod tests {
         let serial_number = "test_serial_number".to_string();
         let asset = AssetRow {
             id: asset_id.clone(),
+            store_id: mock_store_a().id,
             serial_number: serial_number.clone(),
             category_id: category_id.clone(),
             type_id: type_id.clone(),
