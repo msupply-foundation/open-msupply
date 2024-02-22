@@ -11,7 +11,9 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type AssetClass = AssetClassRow;
+pub struct AssetClass {
+    pub asset_class_row: AssetClassRow,
+}
 
 pub enum AssetClassSortField {
     Name,
@@ -101,14 +103,14 @@ impl<'a> AssetClassRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetClass>(&self.connection.connection)?;
+        let result = final_query.load::<AssetClassRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
 fn to_domain(asset_class_row: AssetClassRow) -> AssetClass {
-    asset_class_row
+    AssetClass { asset_class_row }
 }
 
 type BoxedAssetClassQuery = IntoBoxed<'static, asset_class::table, DBType>;
@@ -161,15 +163,15 @@ mod tests {
             .query_one(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(reference_data.id, id);
-        assert_eq!(reference_data.name, name);
+        assert_eq!(reference_data.asset_class_row.id, id);
+        assert_eq!(reference_data.asset_class_row.name, name);
 
         // Query by name
         let reference_data = reference_data_repository
             .query_one(AssetClassFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(reference_data.id, id);
-        assert_eq!(reference_data.name, name);
+        assert_eq!(reference_data.asset_class_row.id, id);
+        assert_eq!(reference_data.asset_class_row.name, name);
     }
 }
