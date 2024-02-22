@@ -1,8 +1,9 @@
 use repository::{
-    assets::asset_class::{AssetCategory, AssetCategoryFilter, AssetCategoryRepository, AssetCategorySort},
+    assets::asset_category::{
+        AssetCategory, AssetCategoryFilter, AssetCategoryRepository, AssetCategorySort,
+    },
     EqualFilter, PaginationOption, StorageConnection,
 };
-
 
 use crate::{
     get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
@@ -12,7 +13,7 @@ use crate::{
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
 
-pub fn get_categories (
+pub fn get_categories(
     connection: &StorageConnection,
     pagination: Option<PaginationOption>,
     filter: Option<AssetCategoryFilter>,
@@ -26,9 +27,13 @@ pub fn get_categories (
     })
 }
 
-pub fn get_asset_category(ctx: &ServiceContext, id: String) -> Result<AssetCategory, SingleRecordError> {
-    let repository - AssetCategoryRepository::new(&ctx.connection);
-    let mut result = repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))?;
+pub fn get_asset_category(
+    ctx: &ServiceContext,
+    id: String,
+) -> Result<AssetCategory, SingleRecordError> {
+    let repository = AssetCategoryRepository::new(&ctx.connection);
+    let mut result =
+        repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))?;
     if let Some(record) = result.pop() {
         Ok(record)
     } else {
