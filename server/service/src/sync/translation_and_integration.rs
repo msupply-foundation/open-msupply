@@ -40,17 +40,15 @@ impl<'a> TranslationAndIntegration<'a> {
         let mut translation_results = Vec::new();
 
         for translator in translators.iter() {
-            if !translator.match_pull(&sync_record) {
+            if !translator.should_translate_from_sync_record(&sync_record) {
                 continue;
             }
 
             let translation_result = match sync_record.action {
-                SyncBufferAction::Upsert => {
-                    translator.try_translate_pull_upsert(self.connection, &sync_record)?
-                }
-                SyncBufferAction::Delete => {
-                    translator.try_translate_pull_delete(self.connection, &sync_record)?
-                }
+                SyncBufferAction::Upsert => translator
+                    .try_translate_from_upsert_sync_record(self.connection, &sync_record)?,
+                SyncBufferAction::Delete => translator
+                    .try_translate_from_delete_sync_record(self.connection, &sync_record)?,
                 SyncBufferAction::Merge => return Err(anyhow::anyhow!("Merge not implemented")),
             };
 

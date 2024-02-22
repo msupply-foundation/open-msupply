@@ -46,11 +46,11 @@ impl SyncRecordTester for StockLineRecordTester {
                 "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(location_row),
                 IntegrationOperation::upsert(stock_line_row.clone()),
             ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let stock_line_row = inline_edit(&stock_line_row, |mut d| {
@@ -73,16 +73,15 @@ impl SyncRecordTester for StockLineRecordTester {
                 "ID": stock_line_row.item_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::upsert(stock_line_row.clone())],
+            ..Default::default()
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![IntegrationOperation::delete(StockLineRowDelete(
                 stock_line_row.id,
             ))],
+            ..Default::default()
         });
         result
     }

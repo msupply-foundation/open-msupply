@@ -13,9 +13,9 @@ pub use self::core::*;
 use super::{
     api::{
         CommonSyncRecord, ParsedError, ParsingResponseError, SyncApiError, SyncApiErrorVariantV5,
+        SyncApiSettings,
     },
     translations::PushSyncRecord,
-    SyncApiSettings,
 };
 
 #[derive(Deserialize, Debug, Error, Serialize)]
@@ -72,9 +72,9 @@ pub(crate) struct SyncApiErrorV6 {
 pub(crate) enum SyncApiErrorVariantV6 {
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
-    #[error("Could not parse respose")]
+    #[error("Could not parse response")]
     ParsedError(#[from] SyncParsedErrorV6),
-    #[error("Could not parse respose")]
+    #[error("Could not parse response")]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
     Other(#[source] anyhow::Error),
@@ -87,7 +87,7 @@ pub(crate) struct SyncRecordV6 {
 }
 #[derive(Deserialize, Debug, Serialize)]
 pub struct SyncBatchV6 {
-    // Latest chnagelog cursor in the 'records'
+    // Latest changelog cursor in the 'records'
     // being pushed/pulled
     pub(crate) end_cursor: u64,
     // Number of records in changelog to pull/push

@@ -67,13 +67,13 @@ impl SyncRecordTester for InventoryAdjustmentReasonTester {
                     "type": "negativeInventoryAdjustment"
                   }],
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(pos_1),
                 IntegrationOperation::upsert(pos_2),
                 IntegrationOperation::upsert(neg_1),
                 IntegrationOperation::upsert(neg_2),
             ],
+            ..Default::default()
         });
         // STEP 2 - deletes
         // TODO should be soft deleted

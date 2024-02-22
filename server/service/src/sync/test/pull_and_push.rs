@@ -3,10 +3,12 @@ use crate::sync::{
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
-        test_data::{get_all_omsupply_ceantral_push_records, get_all_push_test_records},
+        test_data::{get_all_omsupply_central_push_records, get_all_push_test_records},
         TestSyncPushRecord,
     },
-    translations::{translate_changelogs_to_push_records, PushSyncRecord, PushTranslationType},
+    translations::{
+        translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
+    },
 };
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
@@ -70,7 +72,7 @@ async fn test_sync_pull_and_push() {
     // PUSH UPSERT
     let mut test_records = vec![
         get_all_push_test_records(),
-        get_all_omsupply_ceantral_push_records(),
+        get_all_omsupply_central_push_records(),
     ]
     .into_iter()
     .flatten()
@@ -86,16 +88,16 @@ async fn test_sync_pull_and_push() {
         .unwrap();
     // Translate
     let mut translated = vec![
-        translate_changelogs_to_push_records(
+        translate_changelogs_to_sync_records(
             &connection,
             changelogs.clone(),
-            PushTranslationType::Legacy,
+            ToSyncRecordTranslationType::PushToLegacyCentral,
         )
         .unwrap(),
-        translate_changelogs_to_push_records(
+        translate_changelogs_to_sync_records(
             &connection,
             changelogs.clone(),
-            PushTranslationType::OmSupplyCentralSitePush,
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral,
         )
         .unwrap(),
     ]
@@ -108,7 +110,7 @@ async fn test_sync_pull_and_push() {
     test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
 
     // Test ids and table names
-    pretty_assertions::assert_eq!(
+    assert_eq!(
         translated
             .iter()
             .map(|r| (r.record.record_id.clone(), r.record.table_name.clone()))

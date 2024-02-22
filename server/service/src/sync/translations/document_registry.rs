@@ -49,12 +49,12 @@ impl SyncTranslation for DocumentRegistryTranslation {
     fn pull_dependencies(&self) -> Vec<&'static str> {
         vec![
             FormSchemaTranslation.table_name(),
-            // TODO is this needed ?
+            // The program context is synced via the program master list
             MasterListTranslation.table_name(),
         ]
     }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,

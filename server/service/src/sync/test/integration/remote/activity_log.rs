@@ -6,7 +6,6 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{ActivityLogRow, ActivityLogRowDelete, ActivityLogType};
-use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 
 pub struct ActivityLogRecordTester;
@@ -48,14 +47,13 @@ impl SyncRecordTester for ActivityLogRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(log_1),
                 IntegrationOperation::upsert(log_2),
                 // Should not sync out thus need to check if it's missing after re-initialisation
                 IntegrationOperation::delete(ActivityLogRowDelete(log_3.id)),
             ],
+            ..Default::default()
         });
         result
     }

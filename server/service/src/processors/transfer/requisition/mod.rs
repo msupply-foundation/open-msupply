@@ -9,11 +9,12 @@ pub(crate) mod test;
 
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    CursorController, EqualFilter, KeyValueType, RepositoryError, Requisition, StorageConnection,
+    EqualFilter, KeyValueType, RepositoryError, Requisition, StorageConnection,
 };
 use thiserror::Error;
 
 use crate::{
+    cursor_controller::CursorController,
     processors::transfer::{
         get_requisition_and_linked_requisition,
         requisition::{
