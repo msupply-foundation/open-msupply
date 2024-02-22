@@ -114,7 +114,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let class_ids = AssetClassRepository::new(&self.connection)
                     .query_by_filter(AssetClassFilter::new().name(class))?
                     .iter()
-                    .map(|c| c.id.clone())
+                    .map(|c| c.asset_class_row.id.clone())
                     .collect::<Vec<String>>();
                 query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(class_ids));
             }
