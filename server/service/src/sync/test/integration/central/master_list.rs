@@ -20,13 +20,13 @@ impl SyncRecordTester for MasterListTester {
             name: uuid(),
             code: uuid(),
             description: "".to_string(),
-            is_active: true,
+            is_active: false,
         };
         let master_list_json1 = json!({
             "ID": master_list_row1.id,
             "description":  master_list_row1.name,
             "code": master_list_row1.code,
-            "is_active": true,
+            "inactive": true,
         });
 
         let master_list_name_join_row1 = MasterListNameJoinRow {
@@ -38,7 +38,6 @@ impl SyncRecordTester for MasterListTester {
             "ID": master_list_name_join_row1.id,
             "list_master_ID":  master_list_name_join_row1.master_list_id,
             "name_ID": master_list_name_join_row1.name_id,
-            "is_active": false,
         });
 
         let master_list_row2 = MasterListRow {
@@ -52,7 +51,8 @@ impl SyncRecordTester for MasterListTester {
             "ID": master_list_row2.id,
             "description":  master_list_row2.name,
             "code": master_list_row2.code,
-            "note": master_list_row2.description
+            "note": master_list_row2.description,
+            "inactive": true,
         });
 
         let master_list_name_join_row2 = MasterListNameJoinRow {
@@ -85,7 +85,6 @@ impl SyncRecordTester for MasterListTester {
                 "list_master_line": [master_list_line_json],
                 "item": [{"ID": item_id, "type_of": "general"}]
             }),
-            central_delete: json!({}),
             integration_records: vec![
                 IntegrationOperation::upsert(master_list_row1),
                 IntegrationOperation::upsert(master_list_row2),
@@ -93,6 +92,7 @@ impl SyncRecordTester for MasterListTester {
                 IntegrationOperation::upsert(master_list_name_join_row2),
                 IntegrationOperation::upsert(master_list_line_row),
             ],
+            ..Default::default()
         });
 
         result

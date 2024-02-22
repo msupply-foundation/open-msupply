@@ -1,6 +1,9 @@
-use crate::sync::{
-    api_v6::{SyncBatchV6, SyncRecordV6},
-    sync_status::logger::SyncStepProgress,
+use crate::{
+    cursor_controller::CursorController,
+    sync::{
+        api_v6::{SyncBatchV6, SyncRecordV6},
+        sync_status::logger::SyncStepProgress,
+    },
 };
 
 use super::{
@@ -10,8 +13,7 @@ use super::{
 };
 
 use repository::{
-    CursorController, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
-    SyncBufferRowRepository,
+    KeyValueType, RepositoryError, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
 };
 use thiserror::Error;
 
@@ -58,10 +60,9 @@ impl CentralDataSynchroniserV6 {
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
-            let is_emtpy = records.is_empty();
+            let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
-                // Would ideally have  mapping method for this
                 let buffer_row = record.to_buffer_row()?;
 
                 insert_one_and_update_cursor(
@@ -74,7 +75,7 @@ impl CentralDataSynchroniserV6 {
 
             cursor_controller.update(&connection, end_cursor + 1)?;
 
-            if is_emtpy && total_records == 0 {
+            if is_empty && total_records == 0 {
                 break;
             }
         }

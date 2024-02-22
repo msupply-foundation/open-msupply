@@ -1,12 +1,9 @@
 use std::{collections::HashMap, convert::TryInto};
 
-use crate::{
-    service_provider::ServiceProvider,
-    sync::{settings::SyncSettings, SyncApiSettings},
-};
+use crate::{service_provider::ServiceProvider, sync::settings::SyncSettings};
 use repository::migrations::Version;
 use reqwest::{header::HeaderMap, Client, Response, Url};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
@@ -18,6 +15,19 @@ const APP_NAME: &'static str = "Open mSupply Mobile";
 
 #[cfg(not(target_os = "android"))]
 const APP_NAME: &'static str = "Open mSupply Desktop";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncApiSettings {
+    pub server_url: String,
+    pub username: String,
+    pub password_sha256: String,
+    pub site_uuid: String,
+    pub app_version: String,
+    pub app_name: String,
+    pub sync_version: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct SyncApiV5 {
     pub url: Url,

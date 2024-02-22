@@ -1,4 +1,4 @@
-use crate::sync::{api::ParsingResponseError, SyncApiSettings};
+use crate::sync::api::{ParsingResponseError, SyncApiSettings};
 use reqwest::{Client, Response};
 use thiserror::Error;
 use url::{ParseError, Url};
@@ -6,7 +6,7 @@ use url::{ParseError, Url};
 use super::*;
 
 // For now port_offset of 2
-static PORT_OFFST: u16 = 2;
+static PORT_OFFSET: u16 = 2;
 
 #[derive(Debug, Clone)]
 pub(crate) struct SyncApiV6 {
@@ -55,7 +55,7 @@ async fn response_or_err(
 pub(crate) fn get_omsupply_central_url(sync_v5_url: &str) -> Result<Url, ParseError> {
     let mut url = Url::parse(sync_v5_url)?;
     // Unwrap is safe unless domain is not http or https, see port_or_know_default()
-    url.set_port(Some(url.port_or_known_default().unwrap() + PORT_OFFST))
+    url.set_port(Some(url.port_or_known_default().unwrap() + PORT_OFFSET))
         .unwrap();
 
     Ok(url)
@@ -67,7 +67,7 @@ impl SyncApiV6 {
             SyncApiV6CreatingError::CannotParseSyncUrl(sync_v5_settings.server_url.clone(), error)
         })?;
 
-        url = url.join("sync/").unwrap();
+        url = url.join("central/sync/").unwrap();
 
         Ok(Self {
             url,

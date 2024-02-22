@@ -2,10 +2,9 @@ use super::{
     api::{ParsingSyncRecordError, SyncApiError, SyncApiV5},
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
-use crate::sync::api::CentralSyncBatchV5;
+use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
 use repository::{
-    CursorController, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
-    SyncBufferRowRepository,
+    KeyValueType, RepositoryError, StorageConnection, SyncBufferRow, SyncBufferRowRepository,
 };
 use thiserror::Error;
 
