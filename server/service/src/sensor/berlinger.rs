@@ -290,30 +290,35 @@ fn re_map_times(
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
     let mut sensor_mapped = sensor.clone();
     // map logs
-    let logs_mapped: Vec<temperature_sensor::TemperatureLog> = sensor_mapped
+    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = match sensor_mapped
         .clone()
         .logs
-        .context("no temperature logs")?
-        .into_iter()
-        .map(
-            |temperature_sensor::TemperatureLog {
-                 timestamp,
-                 temperature,
-             }| {
-                let local = match Local.from_local_datetime(&timestamp) {
-                    LocalResult::None => {
-                        return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
-                    }
-                    LocalResult::Single(r) => r,
-                    LocalResult::Ambiguous(r, _) => r,
-                };
-                Ok(temperature_sensor::TemperatureLog {
-                    temperature,
-                    timestamp: local.naive_utc(),
-                })
-            },
-        )
-        .collect::<Result<_, _>>()?;
+    {
+        None => None,
+        Some(logs) => Some(
+            logs.context("no temperature logs")?
+                .into_iter()
+                .map(
+                    |temperature_sensor::TemperatureLog {
+                         timestamp,
+                         temperature,
+                     }| {
+                        let local = match Local.from_local_datetime(&timestamp) {
+                            LocalResult::None => {
+                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                            }
+                            LocalResult::Single(r) => r,
+                            LocalResult::Ambiguous(r, _) => r,
+                        };
+                        Ok(temperature_sensor::TemperatureLog {
+                            temperature,
+                            timestamp: local.naive_utc(),
+                        })
+                    },
+                )
+                .collect::<Result<_, _>>()?,
+        ),
+    };
     // map temperature breaches
     let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> = match sensor_mapped
         .clone()
@@ -359,11 +364,7 @@ fn re_map_times(
     };
     // convert last connected timestamp
     // let last_connected_timestamp:
-
-    sensor_mapped.logs = match logs_mapped.len() > 0 {
-        false => None,
-        true => Some(logs_mapped),
-    };
+    sensor_mapped.logs = logs_mapped;
     sensor_mapped.breaches = breaches_mapped;
 
     Ok(sensor_mapped)
