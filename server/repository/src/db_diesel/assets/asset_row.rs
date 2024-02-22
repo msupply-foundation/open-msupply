@@ -10,6 +10,7 @@ use diesel::prelude::*;
 table! {
     asset (id) {
         id -> Text,
+        store_id -> Text,
         serial_number -> Text,
         asset_category_id -> Text,
         asset_type_id -> Text,
@@ -26,6 +27,7 @@ table! {
 #[table_name = "asset"]
 pub struct AssetRow {
     pub id: String,
+    pub store_id: String,
     pub serial_number: String,
     #[column_name = "asset_category_id"]
     pub category_id: String,
