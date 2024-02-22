@@ -315,45 +315,56 @@ fn re_map_times(
         )
         .collect::<Result<_, _>>()?;
     // map temperature breaches
-    let breaches_mapped: Vec<temperature_sensor::TemperatureBreach> = sensor_mapped
+    let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> = match sensor_mapped
         .clone()
         .breaches
-        .context("no temperature breaches")?
-        .into_iter()
-        .map(
-            |temperature_sensor::TemperatureBreach {
-                 breach_type,
-                 start_timestamp,
-                 end_timestamp,
-                 duration,
-                 acknowledged,
-             }| {
-                let local_start = match Local.from_local_datetime(&start_timestamp) {
-                    LocalResult::None => {
-                        return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
-                    }
-                    LocalResult::Single(r) => r,
-                    LocalResult::Ambiguous(r, _) => r,
-                };
-                let local_end = match Local.from_local_datetime(&end_timestamp) {
-                    LocalResult::None => {
-                        return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
-                    }
-                    LocalResult::Single(r) => r,
-                    LocalResult::Ambiguous(r, _) => r,
-                };
-                Ok(temperature_sensor::TemperatureBreach {
-                    breach_type,
-                    start_timestamp: local_start.naive_utc(),
-                    end_timestamp: local_end.naive_utc(),
-                    duration,
-                    acknowledged,
-                })
-            },
-        )
-        .collect::<Result<_, _>>()?;
-    sensor_mapped.logs = Some(logs_mapped);
-    sensor_mapped.breaches = Some(breaches_mapped);
+    {
+        None => None,
+        Some(breaches) => Some(
+            breaches
+                .into_iter()
+                .map(
+                    |temperature_sensor::TemperatureBreach {
+                         breach_type,
+                         start_timestamp,
+                         end_timestamp,
+                         duration,
+                         acknowledged,
+                     }| {
+                        let local_start = match Local.from_local_datetime(&start_timestamp) {
+                            LocalResult::None => {
+                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                            }
+                            LocalResult::Single(r) => r,
+                            LocalResult::Ambiguous(r, _) => r,
+                        };
+                        let local_end = match Local.from_local_datetime(&end_timestamp) {
+                            LocalResult::None => {
+                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                            }
+                            LocalResult::Single(r) => r,
+                            LocalResult::Ambiguous(r, _) => r,
+                        };
+                        Ok(temperature_sensor::TemperatureBreach {
+                            breach_type,
+                            start_timestamp: local_start.naive_utc(),
+                            end_timestamp: local_end.naive_utc(),
+                            duration,
+                            acknowledged,
+                        })
+                    },
+                )
+                .collect::<Result<_, _>>()?,
+        ),
+    };
+    // convert last connected timestamp
+    // let last_connected_timestamp:
+
+    sensor_mapped.logs = match logs_mapped.len() > 0 {
+        false => None,
+        true => Some(logs_mapped),
+    };
+    sensor_mapped.breaches = breaches_mapped;
 
     Ok(sensor_mapped)
 }
