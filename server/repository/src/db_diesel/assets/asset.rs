@@ -10,8 +10,7 @@ use crate::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection,
-    StringFilter,
+    DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 type Asset = AssetRow;
@@ -20,6 +19,7 @@ pub enum AssetSortField {
     SerialNumber,
     InstallationDate,
     ReplacementDate,
+    ModifiedDatetime,
 }
 
 pub type AssetSort = Sort<AssetSortField>;
@@ -125,6 +125,9 @@ impl<'a> AssetRepository<'a> {
                 }
                 AssetSortField::ReplacementDate => {
                     apply_sort!(query, sort, asset_dsl::replacement_date)
+                }
+                AssetSortField::ModifiedDatetime => {
+                    apply_sort!(query, sort, asset_dsl::modified_datetime)
                 }
             }
         } else {

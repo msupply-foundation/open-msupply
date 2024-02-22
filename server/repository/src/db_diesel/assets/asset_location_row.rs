@@ -3,6 +3,7 @@ use super::asset_location_row::asset_location::dsl::*;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 table! {
@@ -10,6 +11,8 @@ table! {
         id -> Text,
         asset_id -> Text,
         location_id -> Text,
+        created_datetime -> Timestamp,
+        modified_datetime -> Timestamp,
     }
 }
 
@@ -19,6 +22,8 @@ pub struct AssetLocationRow {
     pub id: String,
     pub asset_id: String,
     pub location_id: String,
+    pub created_datetime: NaiveDateTime,
+    pub modified_datetime: NaiveDateTime,
 }
 
 pub struct AssetLocationRowRepository<'a> {

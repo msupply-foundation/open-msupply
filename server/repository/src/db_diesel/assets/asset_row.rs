@@ -16,6 +16,8 @@ table! {
         catalogue_item_id -> Nullable<Text>,
         installation_date -> Nullable<Date>,
         replacement_date -> Nullable<Date>,
+        created_datetime -> Timestamp,
+        modified_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
@@ -32,6 +34,8 @@ pub struct AssetRow {
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
+    pub created_datetime: NaiveDateTime,
+    pub modified_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
 
