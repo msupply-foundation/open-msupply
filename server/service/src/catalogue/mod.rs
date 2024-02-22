@@ -1,4 +1,4 @@
-use self::query::{get_asset_catalogue_item, get_asset_catalogue_items};
+use self::query_catalogue::{get_asset_catalogue_item, get_asset_catalogue_items};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -9,9 +9,11 @@ use repository::{
     PaginationOption, StorageConnection,
 };
 
-pub mod query;
+pub mod query_catalogue;
+pub mod query_classes;
+pub mod query_types;
 
-pub trait AssetCatalogueItemServiceTrait: Sync + Send {
+pub trait AssetCatalogueServiceTrait: Sync + Send {
     fn get_asset_catalogue_items(
         &self,
         connection: &StorageConnection,
