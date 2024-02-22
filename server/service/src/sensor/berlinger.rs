@@ -288,12 +288,8 @@ pub enum ReadSensorError {
 fn re_map_times(
     sensor: &temperature_sensor::Sensor,
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
-    let mut sensor_mapped = sensor.clone();
     // map logs
-    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = match sensor_mapped
-        .clone()
-        .logs
-    {
+    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = match sensor.clone().logs {
         None => None,
         Some(logs) => Some(
             logs.into_iter()
@@ -319,7 +315,7 @@ fn re_map_times(
         ),
     };
     // map temperature breaches
-    let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> = match sensor_mapped
+    let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> = match sensor
         .clone()
         .breaches
     {
@@ -362,9 +358,21 @@ fn re_map_times(
         ),
     };
     // convert last connected timestamp
-    // let last_connected_timestamp:
-    sensor_mapped.logs = logs_mapped;
+    let last_connected_timestamp_converted = match sensor.clone().last_connected_timestamp {
+        None => None,
+        Some(timestamp) => Some(match Local.from_local_datetime(&timestamp) {
+            LocalResult::None => {
+                return Err(anyhow::anyhow!("Cannot convert to local timestamp").into())
+            }
+            LocalResult::Single(r) => r.naive_utc(),
+            LocalResult::Ambiguous(r, _) => r.naive_utc(),
+        }),
+    };
+
+    let mut sensor_mapped = sensor.clone();
+    sensor_mapped.last_connected_timestamp = last_connected_timestamp_converted;
     sensor_mapped.breaches = breaches_mapped;
+    sensor_mapped.logs = logs_mapped;
 
     Ok(sensor_mapped)
 }
