@@ -11,7 +11,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         ALTER TABLE invoice ADD COLUMN currency_rate {DOUBLE};
         ALTER TABLE invoice_line ADD COLUMN foreign_currency_price_before_tax {DOUBLE};
 
-        DROP VIEW IF EXISTS invoice_stats;
+        DROP VIEW invoice_stats;
         "#,
     )?;
 
