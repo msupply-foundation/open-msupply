@@ -1,6 +1,7 @@
 use super::{
-    asset_catalogue_row::{
-        asset_catalogue, asset_catalogue::dsl as asset_catalogue_dsl, AssetCatalogueRow,
+    asset_catalogue_item_row::{
+        asset_catalogue_item, asset_catalogue_item::dsl as asset_catalogue_item_dsl,
+        AssetCatalogueItemRow,
     },
     asset_category::{AssetCategoryFilter, AssetCategoryRepository},
     asset_class::{AssetClassFilter, AssetClassRepository},
@@ -16,41 +17,44 @@ use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, 
 use diesel::prelude::*;
 
 #[derive(PartialEq, Debug, Clone)]
-pub struct AssetCatalogue {
-    pub asset_catalogue_row: AssetCatalogueRow,
+pub struct AssetCatalogueItem {
+    pub asset_catalogue_item_row: AssetCatalogueItemRow,
 }
 
 #[derive(Clone, PartialEq, Debug)]
-pub struct AssetCatalogueFilter {
+pub struct AssetCatalogueItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub category: Option<StringFilter>,
+    pub category_id: Option<EqualFilter<String>>,
     pub class: Option<StringFilter>,
+    pub class_id: Option<EqualFilter<String>>,
     pub code: Option<StringFilter>,
     pub manufacturer: Option<StringFilter>,
     pub model: Option<StringFilter>,
     pub r#type: Option<StringFilter>,
+    pub type_id: Option<EqualFilter<String>>,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum AssetCatalogueSortField {
+pub enum AssetCatalogueItemSortField {
     Catalogue,
     Code,
     Make,
     Model,
 }
 
-pub type AssetCatalogueSort = Sort<AssetCatalogueSortField>;
+pub type AssetCatalogueItemSort = Sort<AssetCatalogueItemSortField>;
 
-pub struct AssetCatalogueRepository<'a> {
+pub struct AssetCatalogueItemRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> AssetCatalogueRepository<'a> {
+impl<'a> AssetCatalogueItemRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        AssetCatalogueRepository { connection }
+        AssetCatalogueItemRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<AssetCatalogueFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<AssetCatalogueItemFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&self.connection.connection)?)
@@ -58,39 +62,39 @@ impl<'a> AssetCatalogueRepository<'a> {
 
     pub fn query_by_filter(
         &self,
-        filter: AssetCatalogueFilter,
-    ) -> Result<Vec<AssetCatalogue>, RepositoryError> {
+        filter: AssetCatalogueItemFilter,
+    ) -> Result<Vec<AssetCatalogueItem>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
         &self,
         pagination: Pagination,
-        filter: Option<AssetCatalogueFilter>,
-        sort: Option<AssetCatalogueSort>,
-    ) -> Result<Vec<AssetCatalogue>, RepositoryError> {
+        filter: Option<AssetCatalogueItemFilter>,
+        sort: Option<AssetCatalogueItemSort>,
+    ) -> Result<Vec<AssetCatalogueItem>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
 
         if let Some(sort) = sort {
             match sort.key {
-                AssetCatalogueSortField::Catalogue => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_dsl::id)
+                AssetCatalogueItemSortField::Catalogue => {
+                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::id)
                 }
-                AssetCatalogueSortField::Code => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_dsl::code)
+                AssetCatalogueItemSortField::Code => {
+                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::code)
                 }
-                AssetCatalogueSortField::Make => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_dsl::manufacturer)
+                AssetCatalogueItemSortField::Make => {
+                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::manufacturer)
                 }
-                AssetCatalogueSortField::Model => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_dsl::model)
+                AssetCatalogueItemSortField::Model => {
+                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::model)
                 }
             }
         } else {
-            query = query.order(asset_catalogue_dsl::id.asc())
+            query = query.order(asset_catalogue_item_dsl::id.asc())
         }
         if let Some(f) = filter {
-            let AssetCatalogueFilter {
+            let AssetCatalogueItemFilter {
                 category,
                 class,
                 r#type,
@@ -102,7 +106,8 @@ impl<'a> AssetCatalogueRepository<'a> {
                     .iter()
                     .map(|c| c.id.clone())
                     .collect::<Vec<String>>();
-                query = query.filter(asset_catalogue_dsl::asset_category_id.eq_any(category_ids));
+                query =
+                    query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(category_ids));
             }
 
             if let Some(class) = class {
@@ -111,7 +116,7 @@ impl<'a> AssetCatalogueRepository<'a> {
                     .iter()
                     .map(|c| c.id.clone())
                     .collect::<Vec<String>>();
-                query = query.filter(asset_catalogue_dsl::asset_class_id.eq_any(class_ids));
+                query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(class_ids));
             }
 
             if let Some(asset_type) = r#type {
@@ -120,31 +125,31 @@ impl<'a> AssetCatalogueRepository<'a> {
                     .iter()
                     .map(|c| c.id.clone())
                     .collect::<Vec<String>>();
-                query = query.filter(asset_catalogue_dsl::asset_type_id.eq_any(type_ids));
+                query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(type_ids));
             }
         }
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<AssetCatalogueRow>(&self.connection.connection)?;
+            .load::<AssetCatalogueItemRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedAssetCatalogueQuery = asset_catalogue::BoxedQuery<'static, DBType>;
+type BoxedAssetCatalogueItemQuery = asset_catalogue_item::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(asset_catalogue_row: AssetCatalogueRow) -> AssetCatalogue {
-    AssetCatalogue {
-        asset_catalogue_row,
+pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalogueItem {
+    AssetCatalogueItem {
+        asset_catalogue_item_row,
     }
 }
 
-fn create_filtered_query(filter: Option<AssetCatalogueFilter>) -> BoxedAssetCatalogueQuery {
-    let mut query = asset_catalogue_dsl::asset_catalogue.into_boxed();
+fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAssetCatalogueItemQuery {
+    let mut query = asset_catalogue_item_dsl::asset_catalogue_item.into_boxed();
 
     if let Some(f) = filter {
-        let AssetCatalogueFilter {
+        let AssetCatalogueItemFilter {
             id,
             code,
             manufacturer,
@@ -152,25 +157,27 @@ fn create_filtered_query(filter: Option<AssetCatalogueFilter>) -> BoxedAssetCata
             ..
         } = f;
 
-        apply_equal_filter!(query, id, asset_catalogue_dsl::id);
-        apply_string_filter!(query, code, asset_catalogue_dsl::code);
-        apply_string_filter!(query, manufacturer, asset_catalogue_dsl::manufacturer);
-        apply_string_filter!(query, model, asset_catalogue_dsl::model);
+        apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
+        apply_string_filter!(query, code, asset_catalogue_item_dsl::code);
+        apply_string_filter!(query, manufacturer, asset_catalogue_item_dsl::manufacturer);
+        apply_string_filter!(query, model, asset_catalogue_item_dsl::model);
     }
     query
 }
 
-impl AssetCatalogueFilter {
-    pub fn new() -> AssetCatalogueFilter {
-        AssetCatalogueFilter {
+impl AssetCatalogueItemFilter {
+    pub fn new() -> AssetCatalogueItemFilter {
+        AssetCatalogueItemFilter {
             id: None,
             category: None,
+            category_id: None,
             class: None,
+            class_id: None,
             code: None,
             manufacturer: None,
             model: None,
-
             r#type: None,
+            type_id: None,
         }
     }
 
@@ -184,8 +191,18 @@ impl AssetCatalogueFilter {
         self
     }
 
+    pub fn category_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.category_id = Some(filter);
+        self
+    }
+
     pub fn class(mut self, filter: StringFilter) -> Self {
         self.class = Some(filter);
+        self
+    }
+
+    pub fn class_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.class_id = Some(filter);
         self
     }
 
@@ -206,6 +223,11 @@ impl AssetCatalogueFilter {
 
     pub fn r#type(mut self, filter: StringFilter) -> Self {
         self.r#type = Some(filter);
+        self
+    }
+
+    pub fn type_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.type_id = Some(filter);
         self
     }
 }
