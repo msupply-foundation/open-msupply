@@ -14,7 +14,7 @@ table! {
         serial_number -> Text,
         asset_category_id -> Text,
         asset_type_id -> Text,
-        catalogue_item_id -> Nullable<Text>,
+        asset_catalogue_item_id -> Nullable<Text>,
         installation_date -> Nullable<Date>,
         replacement_date -> Nullable<Date>,
         created_datetime -> Timestamp,
@@ -33,6 +33,7 @@ pub struct AssetRow {
     pub category_id: String,
     #[column_name = "asset_type_id"]
     pub type_id: String,
+    #[column_name = "asset_catalogue_item_id"]
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
