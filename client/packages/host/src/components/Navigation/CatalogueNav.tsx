@@ -31,6 +31,13 @@ export const CatalogueNav: FC = () => {
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Catalogue)
+              .addPart(AppRoute.Assets)
+              .build()}
+            text={t('assets')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Catalogue)
               .addPart(AppRoute.Items)
               .build()}
             text={t('items')}

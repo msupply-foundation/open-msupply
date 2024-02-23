@@ -1,0 +1,228 @@
+fragment ServiceItemRow on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+
+fragment StockLine on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  id
+  itemId
+  location {
+    code
+    id
+    name
+    onHold
+  }
+  item {
+    name
+    code
+  }
+  note
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+}
+
+fragment ItemRow on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+
+fragment ItemWithPackSize on ItemNode {
+  ...ItemRow
+  defaultPackSize
+}
+fragment ItemStockOnHand on ItemNode {
+  ...ItemWithPackSize
+  availableStockOnHand(storeId: $storeId)
+}
+fragment ItemRowWithStats on ItemNode {
+  ...ItemStockOnHand
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+
+fragment Item on ItemNode {
+  __typename
+  id
+  code
+  name
+  atcCategory
+  ddd
+  defaultPackSize
+  doses
+  isVaccine
+  margin
+  msupplyUniversalCode
+  msupplyUniversalName
+  outerPackSize
+  strength
+  type
+  unitName
+  volumePerOuterPack
+  volumePerPack
+  weight
+  availableStockOnHand(storeId: $storeId)
+  availableBatches(storeId: $storeId) {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      ...StockLine
+    }
+  }
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+  }
+}
+
+query itemsWithStockLines(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+  $storeId: String!
+) {
+  items(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...Item
+      }
+      totalCount
+    }
+  }
+}
+
+query items(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+  $storeId: String!
+) {
+  items(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...ItemRow
+      }
+      totalCount
+    }
+  }
+}
+
+query itemStockOnHand(
+  $storeId: String!
+  $key: ItemSortFieldInput
+  $isDesc: Boolean
+  $filter: ItemFilterInput
+  $first: Int
+  $offset: Int
+) {
+  items(
+    storeId: $storeId
+    sort: { key: $key, desc: $isDesc }
+    filter: $filter
+    page: { first: $first, offset: $offset }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...ItemStockOnHand
+      }
+      totalCount
+    }
+  }
+}
+
+query itemsWithStats(
+  $storeId: String!
+  $key: ItemSortFieldInput
+  $isDesc: Boolean
+  $filter: ItemFilterInput
+  $first: Int
+  $offset: Int
+) {
+  items(
+    storeId: $storeId
+    sort: { key: $key, desc: $isDesc }
+    filter: $filter
+    page: { first: $first, offset: $offset }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        code
+        id
+        name
+        unitName
+        defaultPackSize
+        availableStockOnHand(storeId: $storeId)
+        stats(storeId: $storeId) {
+          __typename
+          averageMonthlyConsumption
+          availableStockOnHand
+          availableMonthsOfStockOnHand
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+query itemById($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId }, isActive: true }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        ...Item
+        stats(storeId: $storeId) {
+          __typename
+          averageMonthlyConsumption
+          availableStockOnHand
+          availableMonthsOfStockOnHand
+        }
+        availableBatches(storeId: $storeId) {
+          totalCount
+          nodes {
+            ...StockLine
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
