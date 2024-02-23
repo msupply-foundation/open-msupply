@@ -8,9 +8,7 @@ export const useStocktakeLines = (id: string) => {
   });
   const api = useStocktakeApi();
 
-  return {
-    ...useQuery(api.keys.lines(id, queryParams), () =>
-      api.get.lines(id, queryParams)
-    ),
-  };
+  return useQuery(api.keys.lines(id, queryParams), () =>
+    api.get.lines(id, queryParams)
+  );
 };
