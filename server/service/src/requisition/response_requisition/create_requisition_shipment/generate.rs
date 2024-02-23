@@ -86,6 +86,7 @@ pub fn generate_invoice_lines(
             cost_price_per_pack: 0.0,
             stock_line_id: None,
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
         });
     }
 

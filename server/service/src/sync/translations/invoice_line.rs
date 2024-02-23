@@ -222,6 +222,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            return_reason_id: None, // TODO
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -282,6 +283,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     note,
                     inventory_adjustment_reason_id,
+                    return_reason_id: _, // TODO
                 },
             item_row,
             ..
