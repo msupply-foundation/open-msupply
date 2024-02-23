@@ -18,8 +18,6 @@ pub fn generate_outbound_return_lines(
     item_id: Option<String>,
     return_id: Option<String>,
 ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-    // Should this be a validation error instead?
-    // Or can I set up the filters differently so if nothing is provided, nothing is returned?
     if stock_line_ids.is_empty() && item_id.is_none() && return_id.is_none() {
         return Ok(ListResult {
             count: 0,
@@ -45,7 +43,6 @@ pub fn generate_outbound_return_lines(
             id: uuid(),
             stock_line: stock_line.clone(),
 
-            // these will be populated by the insert... we should query for them from the existing return eventually
             reason_id: None,
             comment: None,
             number_of_packs: 0,
