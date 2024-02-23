@@ -24,6 +24,18 @@ pub use self::location::*;
 pub mod sensor;
 pub use self::sensor::*;
 
+pub mod asset_catalogue_item;
+pub use self::asset_catalogue_item::*;
+
+pub mod asset_category;
+pub use self::asset_category::*;
+
+pub mod asset_class;
+pub use self::asset_class::*;
+
+pub mod asset_type;
+pub use self::asset_type::*;
+
 pub mod temperature_breach;
 pub use self::temperature_breach::*;
 
