@@ -391,6 +391,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         number_of_packs: 2.0,
         note: None,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
