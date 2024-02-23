@@ -340,6 +340,7 @@ impl MockDataInserts {
     }
 
     pub fn stores(mut self) -> Self {
+        self.names = true;
         self.stores = true;
         self
     }
