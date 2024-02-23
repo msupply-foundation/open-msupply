@@ -8,8 +8,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         CREATE TABLE asset (
             id TEXT NOT NULL PRIMARY KEY,
-            store_id TEXT NOT NULL REFERENCES store (id), -- This serves as the location of the asset at least for now
-            serial_number TEXT NOT NULL, 
+            store_id TEXT REFERENCES store (id), -- This serves as the location of the asset at least for now
+            name TEXT NOT NULL,
+            code TEXT NOT NULL,
+            serial_number TEXT, 
             asset_category_id TEXT REFERENCES asset_category (id),
             asset_type_id TEXT REFERENCES asset_type (id),
             asset_catalogue_item_id TEXT REFERENCES asset_catalogue_item (id),
@@ -18,7 +20,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             deleted_datetime {DATETIME},
             created_datetime {DATETIME} NOT NULL,
             modified_datetime {DATETIME} NOT NULL,
-            UNIQUE (serial_number, deleted_datetime) --If something doesn't have a serial number, one can be generated?
+            UNIQUE (code) -- Asset codes must be unique, they'll be used in the barcode
         );
         CREATE INDEX asset_category_id ON asset (asset_category_id);
         CREATE INDEX asset_type_id ON asset (asset_type_id);

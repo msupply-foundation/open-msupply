@@ -6,6 +6,7 @@ use super::asset_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    assets::asset_catalogue_item_row::asset_catalogue_item::dsl as asset_catalogue_item_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -16,6 +17,7 @@ use crate::{
 type Asset = AssetRow;
 
 pub enum AssetSortField {
+    Name,
     SerialNumber,
     InstallationDate,
     ReplacementDate,
@@ -27,7 +29,10 @@ pub type AssetSort = Sort<AssetSortField>;
 #[derive(Clone)]
 pub struct AssetFilter {
     pub id: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
     pub serial_number: Option<StringFilter>,
+    pub class_id: Option<EqualFilter<String>>,
     pub category_id: Option<EqualFilter<String>>,
     pub type_id: Option<EqualFilter<String>>,
     pub catalogue_item_id: Option<EqualFilter<String>>,
@@ -39,7 +44,10 @@ impl AssetFilter {
     pub fn new() -> AssetFilter {
         AssetFilter {
             id: None,
+            name: None,
+            code: None,
             serial_number: None,
+            class_id: None,
             category_id: None,
             type_id: None,
             catalogue_item_id: None,
@@ -53,8 +61,23 @@ impl AssetFilter {
         self
     }
 
+    pub fn name(mut self, filter: StringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: StringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
     pub fn serial_number(mut self, filter: StringFilter) -> Self {
         self.serial_number = Some(filter);
+        self
+    }
+
+    pub fn class_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.class_id = Some(filter);
         self
     }
 
@@ -117,6 +140,9 @@ impl<'a> AssetRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
+                AssetSortField::Name => {
+                    apply_sort_no_case!(query, sort, asset_dsl::name);
+                }
                 AssetSortField::SerialNumber => {
                     apply_sort_no_case!(query, sort, asset_dsl::serial_number);
                 }
@@ -162,7 +188,10 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
     if let Some(f) = filter {
         let AssetFilter {
             id,
+            name,
+            code,
             serial_number,
+            class_id,
             category_id,
             type_id,
             catalogue_item_id,
@@ -171,12 +200,49 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
+        apply_string_filter!(query, name, asset_dsl::name);
+        apply_string_filter!(query, code, asset_dsl::code);
         apply_string_filter!(query, serial_number, asset_dsl::serial_number);
-        apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
-        apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
+
         apply_equal_filter!(query, catalogue_item_id, asset_dsl::asset_catalogue_item_id);
         apply_date_filter!(query, installation_date, asset_dsl::installation_date);
         apply_date_filter!(query, replacement_date, asset_dsl::replacement_date);
+
+        if let Some(category_id) = category_id {
+            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
+                .select(asset_catalogue_item_dsl::id.nullable())
+                .into_boxed();
+            apply_equal_filter!(
+                sub_query,
+                Some(category_id),
+                asset_catalogue_item_dsl::asset_category_id
+            );
+            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
+        }
+
+        if let Some(class_id) = class_id {
+            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
+                .select(asset_catalogue_item_dsl::id.nullable())
+                .into_boxed();
+            apply_equal_filter!(
+                sub_query,
+                Some(class_id),
+                asset_catalogue_item_dsl::asset_class_id
+            );
+            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
+        }
+
+        if let Some(type_id) = type_id {
+            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
+                .select(asset_catalogue_item_dsl::id.nullable())
+                .into_boxed();
+            apply_equal_filter!(
+                sub_query,
+                Some(type_id),
+                asset_catalogue_item_dsl::asset_type_id
+            );
+            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
+        }
     }
     query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
 }
@@ -186,10 +252,7 @@ mod tests {
     use crate::{
         assets::{
             asset::AssetRepository,
-            asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
-            asset_class_row::{AssetClassRow, AssetClassRowRepository},
             asset_row::{AssetRow, AssetRowRepository},
-            asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },
         mock::{mock_store_a, MockDataInserts},
         test_db, EqualFilter,
@@ -206,44 +269,7 @@ mod tests {
         )
         .await;
 
-        // TODO: Replace this reference data with mock data, or inserted data from https://github.com/msupply-foundation/open-msupply/issues/3035
-
-        // Create a class row
-        let class_id = "test_class_id".to_string();
-        let class_name = "test_class_name".to_string();
-        let class_row = AssetClassRow {
-            id: class_id.clone(),
-            name: class_name.clone(),
-        };
-        let class_row_repo = AssetClassRowRepository::new(&storage_connection);
-        class_row_repo.insert_one(&class_row).unwrap();
-
-        // Create a category
-        let category_id = "test_category_id".to_string();
-        let category_name = "test_category_name".to_string();
-        let category_row = AssetCategoryRow {
-            id: category_id.clone(),
-            name: category_name.clone(),
-            class_id: class_id.clone(),
-        };
-        let category_row_repo = AssetCategoryRowRepository::new(&storage_connection);
-        category_row_repo.insert_one(&category_row).unwrap();
-
-        // Create the type
-        let type_id = "test_type_id".to_string();
-        let type_name = "test_type_name".to_string();
-
-        // Insert a row
-        let type_row_repository = AssetTypeRowRepository::new(&storage_connection);
-        type_row_repository
-            .insert_one(&AssetTypeRow {
-                id: type_id.clone(),
-                name: type_name.clone(),
-                category_id: category_id.clone(),
-            })
-            .unwrap();
-
-        // Create an asset
+        // Create an asset without catalogue item
         let asset_repository = AssetRepository::new(&storage_connection);
         let asset_row_repository = AssetRowRepository::new(&storage_connection);
 
@@ -251,10 +277,9 @@ mod tests {
         let serial_number = "test_serial_number".to_string();
         let asset = AssetRow {
             id: asset_id.clone(),
-            store_id: mock_store_a().id,
-            serial_number: serial_number.clone(),
-            category_id: category_id.clone(),
-            type_id: type_id.clone(),
+            name: "test_name".to_string(),
+            store_id: Some(mock_store_a().id),
+            serial_number: Some(serial_number.clone()),
             ..Default::default()
         };
 
@@ -266,6 +291,6 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(result.id, asset_id);
-        assert_eq!(result.serial_number, serial_number);
+        assert_eq!(result.serial_number, Some(serial_number));
     }
 }
