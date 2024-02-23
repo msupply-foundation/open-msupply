@@ -19,7 +19,7 @@ pub fn generate(
     let result = InvoiceRow {
         id,
         user_id: Some(user_id.to_string()),
-        name_id: patient_id,
+        name_link_id: patient_id,
         name_store_id: None,
         r#type: InvoiceRowType::Prescription,
         invoice_number: next_number(connection, &NumberRowType::Prescription, store_id)?,
@@ -40,9 +40,9 @@ pub fn generate(
         verified_datetime: None,
         linked_invoice_id: None,
         requisition_id: None,
-        clinician_id: None,
         currency_id: None,
         currency_rate: None,
+        clinician_link_id: None,
     };
 
     Ok(result)

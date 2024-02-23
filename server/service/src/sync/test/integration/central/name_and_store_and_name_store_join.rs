@@ -48,6 +48,7 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
             is_deceased: false,
             national_health_number: None,
             date_of_death: None,
+            custom_data_string: None,
         };
         let name_json1 = json!({
             "ID": name_row1.id,
@@ -119,28 +120,28 @@ impl SyncRecordTester for NameAndStoreAndNameStoreJoinTester {
         // STEP 2 name store joins need to be inserted after store (for them to be inserted in sync queue)
         let mut name_store_join_row1 = NameStoreJoinRow {
             id: uuid(),
-            name_id: name_row2.id.clone(),
+            name_link_id: name_row2.id.clone(),
             store_id: new_site_properties.store_id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
         };
         let name_store_join_json1 = json!({
             "ID": name_store_join_row1.id,
-            "name_ID": name_store_join_row1.name_id,
+            "name_ID": name_store_join_row1.name_link_id,
             "store_ID": name_store_join_row1.store_id
 
         });
 
         let mut name_store_join_row2 = NameStoreJoinRow {
             id: uuid(),
-            name_id: name_row2.id.clone(),
+            name_link_id: name_row2.id.clone(),
             store_id: store_row.id.clone(),
             name_is_customer: true,
             name_is_supplier: false,
         };
         let name_store_join_json2 = json!({
             "ID": name_store_join_row2.id,
-            "name_ID": name_store_join_row2.name_id,
+            "name_ID": name_store_join_row2.name_link_id,
             "store_ID": name_store_join_row2.store_id
         });
 

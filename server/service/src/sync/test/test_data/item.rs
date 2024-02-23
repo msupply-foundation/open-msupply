@@ -179,6 +179,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 r#type: ItemRowType::NonStock,
                 legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
                 default_pack_size: 1,
+                is_active: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -192,6 +193,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 r#type: ItemRowType::Stock,
                 legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
                 default_pack_size: 2,
+                is_active: true,
             }),
         ),
     ]

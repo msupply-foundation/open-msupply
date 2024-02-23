@@ -5,7 +5,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'org.openmsupply.client',
-  appName: 'openmsupply-client',
+  appName: 'Open mSupply',
   // This is only needed for `npx cap copy` to work, and it does have to point to actual bundle
   // bundle is server by remote server (local or discovered) or through webpack if debugging (see comment below)
   webDir: '../host/dist/',

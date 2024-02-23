@@ -227,6 +227,7 @@ mod invoice_count_service_test {
         let name_repo = NameRowRepository::new(&connection);
         name_repo.insert_one(&name_store_a).await.unwrap();
         name_repo.insert_one(&name_store_b).await.unwrap();
+
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&store_1).await.unwrap();
         let invoice_repo = InvoiceRowRepository::new(&connection);

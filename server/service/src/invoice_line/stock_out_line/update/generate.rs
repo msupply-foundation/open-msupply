@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StockLine, StockLineRow};
 
 use crate::invoice::common::calculate_total_after_tax;
 
@@ -31,7 +31,7 @@ pub fn generate(
         input,
         existing_line,
         item_row,
-        batch_pair.main_batch.clone(),
+        batch_pair.main_batch.stock_line_row.clone(),
     );
 
     Ok((new_line, batch_pair))
@@ -42,30 +42,30 @@ fn generate_batch_update(
     existing_line: &InvoiceLineRow,
     batch_pair: &BatchPair,
     adjust_total_number_of_packs: bool,
-) -> StockLineRow {
+) -> StockLine {
     let mut update_batch = batch_pair.main_batch.clone();
 
     let reduction = batch_pair.get_main_batch_reduction(input, existing_line);
 
-    update_batch.available_number_of_packs -= reduction;
+    update_batch.stock_line_row.available_number_of_packs -= reduction;
     if adjust_total_number_of_packs {
-        update_batch.total_number_of_packs -= reduction;
+        update_batch.stock_line_row.total_number_of_packs -= reduction;
     }
 
     update_batch
 }
 fn generate_previous_batch_update(
     existing_line: &InvoiceLineRow,
-    previous_batch_option: Option<StockLineRow>,
+    previous_batch_option: Option<StockLine>,
     adjust_total_number_of_packs: bool,
-) -> Option<StockLineRow> {
+) -> Option<StockLine> {
     // If previous batch is present, this means batch was changes thus:
     // - release stock of the batch
     previous_batch_option.map(|mut previous_batch| {
         let addition = existing_line.number_of_packs;
-        previous_batch.available_number_of_packs += addition;
+        previous_batch.stock_line_row.available_number_of_packs += addition;
         if adjust_total_number_of_packs {
-            previous_batch.total_number_of_packs += addition;
+            previous_batch.stock_line_row.total_number_of_packs += addition;
         }
         previous_batch
     })
@@ -104,7 +104,7 @@ fn generate_line(
     let mut update_line = InvoiceLineRow {
         id,
         invoice_id,
-        item_id,
+        item_link_id: item_id,
         location_id,
         pack_size,
         batch,

@@ -181,7 +181,7 @@ fn generate_lines_from_master_list(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: 0.0,
-                item_id: item_id.to_string(),
+                item_link_id: item_id.to_string(),
                 location_id: None,
                 batch: None,
                 expiry_date: None,
@@ -198,7 +198,7 @@ fn generate_lines_from_master_list(
             stock_lines.into_iter().for_each(|line| {
                 let StockLineRow {
                     id: stock_line_id,
-                    item_id,
+                    item_link_id: _,
                     location_id,
                     batch,
                     pack_size,
@@ -207,7 +207,7 @@ fn generate_lines_from_master_list(
                     total_number_of_packs,
                     expiry_date,
                     note,
-                    supplier_id: _,
+                    supplier_link_id: _,
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
@@ -218,7 +218,7 @@ fn generate_lines_from_master_list(
                     id: uuid(),
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_id,
+                    item_link_id: line.item_row.id,
                     location_id,
                     batch,
                     expiry_date,
@@ -257,7 +257,7 @@ fn generate_lines_from_location(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id: _,
                 location_id,
                 batch,
                 pack_size,
@@ -266,7 +266,7 @@ fn generate_lines_from_location(
                 total_number_of_packs,
                 expiry_date,
                 note,
-                supplier_id: _,
+                supplier_link_id: _,
                 store_id: _,
                 on_hold: _,
                 available_number_of_packs: _,
@@ -277,7 +277,7 @@ fn generate_lines_from_location(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id,
+                item_link_id: line.item_row.id,
                 location_id,
                 batch,
                 expiry_date,
@@ -312,7 +312,7 @@ pub fn generate_lines_with_stock(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id: _,
                 location_id,
                 batch,
                 pack_size,
@@ -321,7 +321,7 @@ pub fn generate_lines_with_stock(
                 total_number_of_packs,
                 expiry_date,
                 note,
-                supplier_id: _,
+                supplier_link_id: _,
                 store_id: _,
                 on_hold: _,
                 available_number_of_packs: _,
@@ -332,7 +332,7 @@ pub fn generate_lines_with_stock(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id,
+                item_link_id: line.item_row.id,
                 location_id,
                 batch,
                 expiry_date,
@@ -525,7 +525,7 @@ mod test {
             &inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line_row_1".to_string();
                 r.store_id = mock_store_b().id;
-                r.item_id = item_query_test1().id;
+                r.item_link_id = item_query_test1().id;
             })
         });
 
@@ -550,6 +550,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
             )
             .unwrap();
 
@@ -576,7 +577,7 @@ mod test {
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
             id: "master_list_line_b".to_string(),
             master_list_id: master_list_id.clone(),
-            item_id: "item_d".to_string(),
+            item_link_id: "item_d".to_string(),
         });
 
         service
@@ -598,6 +599,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
             )
             .unwrap();
 
@@ -606,7 +608,7 @@ mod test {
         assert_eq!(
             stocktake_rows
                 .iter()
-                .find(|r| r.line.item_id == "item_d")
+                .find(|r| r.line.item_link_id == "item_d")
                 .unwrap()
                 .line
                 .stock_line_id,
@@ -649,6 +651,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
             )
             .unwrap();
 
@@ -660,7 +663,7 @@ mod test {
             &inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line_row_1".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.location_id = Some(location_id.clone());
                 r.total_number_of_packs = 100.0;
             })
@@ -687,6 +690,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
             )
             .unwrap();
 
@@ -708,7 +712,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_1".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_a().id;
+                s.item_link_id = mock_item_a().id;
                 s.total_number_of_packs = 100.0;
             })
         }
@@ -717,7 +721,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_3".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_b().id;
+                s.item_link_id = mock_item_b().id;
                 s.total_number_of_packs = 10.0;
             })
         }
@@ -726,7 +730,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_2".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_b().id;
+                s.item_link_id = mock_item_b().id;
                 s.total_number_of_packs = 0.0;
             })
         }
@@ -774,6 +778,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
             )
             .unwrap();
 
@@ -798,6 +803,7 @@ mod test {
         let stocktake_rows = StocktakeLineRepository::new(&connection)
             .query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
             )
             .unwrap();
 
