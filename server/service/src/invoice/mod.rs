@@ -17,6 +17,8 @@ use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 
+pub mod outbound_return;
+
 pub mod outbound_shipment;
 use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
 
