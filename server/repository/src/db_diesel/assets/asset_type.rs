@@ -24,7 +24,7 @@ pub type AssetTypeSort = Sort<AssetTypeSortField>;
 #[derive(Clone)]
 pub struct AssetTypeFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<StringFilter>,
+    pub name: Option<EqualFilter<String>>,
     pub category_id: Option<EqualFilter<String>>,
 }
 
@@ -42,7 +42,7 @@ impl AssetTypeFilter {
         self
     }
 
-    pub fn name(mut self, filter: StringFilter) -> Self {
+    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
         self.name = Some(filter);
         self
     }
@@ -130,7 +130,7 @@ fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery
         } = f;
 
         apply_equal_filter!(query, id, asset_type_dsl::id);
-        apply_string_filter!(query, name, asset_type_dsl::name);
+        apply_equal_filter!(query, name, asset_type_dsl::name);
         apply_equal_filter!(query, category_id, asset_type_dsl::asset_category_id);
     }
     query
@@ -148,7 +148,7 @@ mod tests {
             asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },
         mock::MockDataInserts,
-        test_db, EqualFilter, StringFilter,
+        test_db, EqualFilter,
     };
 
     use super::AssetTypeFilter;
@@ -204,7 +204,7 @@ mod tests {
 
         // Query by name
         let t = type_repository
-            .query_one(AssetTypeFilter::new().name(StringFilter::equal_to(&name)))
+            .query_one(AssetTypeFilter::new().name(EqualFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
         assert_eq!(t.asset_type_row.id, id);

@@ -31,7 +31,7 @@ pub struct AssetCatalogueItemFilter {
     pub code: Option<StringFilter>,
     pub manufacturer: Option<StringFilter>,
     pub model: Option<StringFilter>,
-    pub r#type: Option<StringFilter>,
+    pub r#type: Option<EqualFilter<String>>,
     pub type_id: Option<EqualFilter<String>>,
 }
 
@@ -221,7 +221,7 @@ impl AssetCatalogueItemFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: StringFilter) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
         self.r#type = Some(filter);
         self
     }
