@@ -190,11 +190,12 @@ pub trait InvoiceServiceTrait: Sync + Send {
     fn generate_outbound_return_lines(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         stock_line_ids: Vec<String>,
         item_id: Option<String>,
         return_id: Option<String>,
     ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-        generate_outbound_return_lines(ctx, stock_line_ids, item_id, return_id)
+        generate_outbound_return_lines(ctx, store_id, stock_line_ids, item_id, return_id)
     }
 }
 

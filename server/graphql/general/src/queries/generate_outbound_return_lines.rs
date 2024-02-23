@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{ItemRow, StockLineRow};
+use repository::{ItemRow, StockLine, StockLineRow};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     invoice::outbound_return::generate_outbound_return_lines::OutboundReturnLine,
@@ -50,6 +50,7 @@ pub fn generate_outbound_return_lines(
         .invoice_service
         .generate_outbound_return_lines(
             &service_context,
+            &store_id,
             input.stock_line_ids,
             input.item_id,
             input.return_id,
@@ -85,12 +86,12 @@ impl OutboundReturnLineNode {
         OutboundReturnLineNode { return_line }
     }
 
-    pub fn item(&self) -> &ItemRow {
-        &self.return_line.item
+    pub fn item_row(&self) -> &ItemRow {
+        &self.return_line.stock_line.item_row
     }
 
     pub fn stock_line_row(&self) -> &StockLineRow {
-        &self.return_line.stock_line
+        &self.return_line.stock_line.stock_line_row
     }
 }
 
@@ -113,11 +114,11 @@ impl OutboundReturnLineNode {
     }
 
     pub async fn item_code(&self) -> &str {
-        &self.item().code
+        &self.item_row().code
     }
 
     pub async fn item_name(&self) -> &str {
-        &self.item().name
+        &self.item_row().name
     }
 
     pub async fn stock_line_id(&self) -> &str {
