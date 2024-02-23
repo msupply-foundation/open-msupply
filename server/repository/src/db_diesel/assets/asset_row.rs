@@ -11,6 +11,7 @@ table! {
     asset (id) {
         id -> Text,
         name -> Text,
+        code -> Text,
         store_id -> Nullable<Text>,
         serial_number -> Nullable<Text>,
         asset_catalogue_item_id -> Nullable<Text>,
@@ -27,6 +28,7 @@ table! {
 pub struct AssetRow {
     pub id: String,
     pub name: String,
+    pub code: String,
     pub store_id: Option<String>,
     pub serial_number: Option<String>,
     #[column_name = "asset_catalogue_item_id"]
