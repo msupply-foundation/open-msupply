@@ -92,6 +92,7 @@ export const DetailView: FC = () => {
               mode={mode}
               item={entity}
               currency={data.currency}
+              isExternalSupplier={!data.otherParty.store}
             />
           )}
         </TableProvider>

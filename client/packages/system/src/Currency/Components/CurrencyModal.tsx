@@ -13,12 +13,14 @@ interface CurrencyModalProps {
   currency: CurrencyRowFragment | null;
   onChange: (currency: CurrencyRowFragment | null) => void;
   isDisabled?: boolean;
+  currencyRate?: number;
 }
 
 export const CurrencyModal: FC<CurrencyModalProps> = ({
   currency,
   onChange,
   isDisabled,
+  currencyRate,
 }) => {
   const t = useTranslation();
   const modalController = useToggle();
@@ -47,7 +49,12 @@ export const CurrencyModal: FC<CurrencyModalProps> = ({
         onClose={onClose}
         onChange={() => onChange(value)}
         Input={
-          <CurrencySearchInput value={value} width={75} onChange={setValue} />
+          <CurrencySearchInput
+            value={value}
+            width={100}
+            onChange={setValue}
+            currencyRate={currencyRate}
+          />
         }
       />
     </>

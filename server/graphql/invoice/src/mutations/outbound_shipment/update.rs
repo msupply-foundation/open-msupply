@@ -14,7 +14,7 @@ use service::invoice::outbound_shipment::update::{
 use service::invoice_line::ShipmentTaxUpdate;
 
 use super::error::{
-    CannotChangeStatusOfInvoiceOnHold, CannotIssueInForeignCurrency, InvoiceIsNotEditable,
+    CannotChangeForeignCurrency, CannotChangeStatusOfInvoiceOnHold, InvoiceIsNotEditable,
     NotAnOutboundShipmentError,
 };
 
@@ -97,7 +97,7 @@ pub enum UpdateErrorInterface {
     InvoiceIsNotEditable(InvoiceIsNotEditable),
     NotAnOutboundShipment(NotAnOutboundShipmentError),
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(CanOnlyChangeToAllocatedWhenNoUnallocatedLines),
-    CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
+    CannotIssueInForeignCurrency(CannotChangeForeignCurrency),
 }
 
 impl UpdateInput {
@@ -170,7 +170,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         }
         ServiceError::CannotIssueInForeignCurrency => {
             return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
-                CannotIssueInForeignCurrency,
+                CannotChangeForeignCurrency,
             ))
         }
         // Standard Graphql Errors
