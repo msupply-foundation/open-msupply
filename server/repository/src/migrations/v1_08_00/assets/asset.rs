@@ -18,7 +18,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             replacement_date {DATE},
             deleted_datetime {DATETIME},
             created_datetime {DATETIME} NOT NULL,
-            modified_datetime {DATETIME} NOT NULL,
+            modified_datetime {DATETIME} NOT NULL
         );
         CREATE INDEX asset_category_id ON asset (asset_category_id);
         CREATE INDEX asset_type_id ON asset (asset_type_id);
