@@ -2,7 +2,7 @@ use async_graphql::*;
 
 use repository::{
     assets::{
-        asset_catalogue_item::{AssetCatalogueItem, AssetCatalogueItemFilter},
+        asset_catalogue_item::{self, AssetCatalogueItem, AssetCatalogueItemFilter},
         asset_catalogue_item_row::AssetCatalogueItemRow,
     },
     EqualFilter, StringFilter,
@@ -97,9 +97,9 @@ impl AssetCatalogueItemNode {
 }
 
 impl AssetCatalogueItemNode {
-    pub fn from_domain(asset_catalogue_item_row: AssetCatalogueItem) -> AssetCatalogueItem {
+    pub fn from_domain(asset_catalogue_item: AssetCatalogueItem) -> AssetCatalogueItemNode {
         AssetCatalogueItemNode {
-            asset_catalogue_item_row,
+            asset_catalogue_item,
         }
     }
 
