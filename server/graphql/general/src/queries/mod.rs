@@ -16,8 +16,6 @@ pub mod names;
 pub use self::names::*;
 pub mod item;
 pub use self::item::*;
-pub mod asset_catalogue_item;
-pub use self::asset_catalogue_item::*;
 pub mod stock_counts;
 pub use self::stock_counts::*;
 pub mod store;

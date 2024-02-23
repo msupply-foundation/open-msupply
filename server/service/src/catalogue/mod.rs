@@ -4,6 +4,7 @@ use self::query_classes::{get_asset_class, get_asset_classes};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
+use repository::RepositoryError;
 use repository::{
     assets::{
         asset_catalogue_item::{
@@ -32,10 +33,10 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
 
     fn get_asset_catalogue_item(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         id: String,
-    ) -> Result<AssetCatalogueItem, SingleRecordError> {
-        get_asset_catalogue_item(ctx, id)
+    ) -> Result<Option<AssetCatalogueItem>, RepositoryError> {
+        get_asset_catalogue_item(connection, id)
     }
 
     fn get_asset_classes(

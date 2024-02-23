@@ -3,17 +3,21 @@ use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
     map_filter,
     pagination::PaginationInput,
+    simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{AssetCatalogueItemConnector, AssetCatalogueItemNode};
+use graphql_types::types::{
+    AssetCatalogueItemConnector, AssetCatalogueItemNode, AssetCatalogueItemResponse,
+    AssetCatalogueItemsResponse,
+};
 use repository::asset_catalogue_item::{
     AssetCatalogueItemFilter, AssetCatalogueItemSort, AssetCatalogueItemSortField,
 };
 use repository::{EqualFilter, PaginationOption, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    catalogue::query_catalogue_item::get_asset_catalogue_items,
+    catalogue::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items},
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -34,6 +38,8 @@ pub struct AssetCatalogueItemSortInput {
     desc: Option<bool>,
 }
 
+#[derive(InputObject, Clone)]
+
 pub struct AssetCatalogueItemFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub category: Option<StringFilterInput>,
@@ -43,7 +49,7 @@ pub struct AssetCatalogueItemFilterInput {
     pub code: Option<StringFilterInput>,
     pub manufacturer: Option<StringFilterInput>,
     pub model: Option<StringFilterInput>,
-    pub r#type: Option<StringFilterInput>,
+    pub r#type: Option<EqualFilterStringInput>,
     pub type_id: Option<EqualFilterStringInput>,
 }
 
@@ -58,16 +64,10 @@ impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
             code: f.code.map(StringFilter::from),
             manufacturer: f.manufacturer.map(StringFilter::from),
             model: f.model.map(StringFilter::from),
-            r#type: f.r#type.map(StringFilter::from),
+            r#type: f.r#type.map(EqualFilter::from),
             type_id: f.type_id.map(EqualFilter::from),
         }
     }
-}
-
-#[derive(Union)]
-
-pub enum AssetCatalogueItemsResponse {
-    Response(AssetCatalogueItemConnector),
 }
 
 pub fn asset_catalogue_items(
@@ -99,6 +99,32 @@ pub fn asset_catalogue_items(
     ))
 }
 
+pub fn asset_catalogue_item(
+    ctx: &Context<'_>,
+    store_id: String,
+    id: String,
+) -> Result<AssetCatalogueItemResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::QueryAssetCatalogueItem,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+    let connection_manager = ctx.get_connection_manager().connection()?;
+    let item = get_asset_catalogue_item(&connection_manager, id)?;
+
+    let response = match item {
+        Some(item) => {
+            AssetCatalogueItemResponse::Response(AssetCatalogueItemNode::from_domain(item))
+        }
+        None => AssetCatalogueItemResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+    Ok(response)
+}
+
 impl AssetCatalogueItemFilterInput {
     pub fn to_domain(self) -> AssetCatalogueItemFilter {
         let AssetCatalogueItemFilterInput {
@@ -123,7 +149,7 @@ impl AssetCatalogueItemFilterInput {
             code: code.map(StringFilter::from),
             manufacturer: manufacturer.map(StringFilter::from),
             model: model.map(StringFilter::from),
-            r#type: r#type.map(|t| map_filter!(t, AssetCatalogueItemNode::from_domain)),
+            r#type: r#type.map(EqualFilter::from),
             type_id: type_id.map(EqualFilter::from),
         }
     }

@@ -1,6 +1,9 @@
 use async_graphql::*;
 
-use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
+use graphql_core::{
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
+    simple_generic_errors::NodeError,
+};
 use repository::{
     assets::{
         asset_catalogue_item::{self, AssetCatalogueItem, AssetCatalogueItemFilter},
@@ -47,6 +50,17 @@ impl AssetCatalogueItemNode {
     pub async fn asset_type_id(&self) -> &str {
         &self.row().type_id
     }
+}
+
+#[derive(Union)]
+pub enum AssetCatalogueItemsResponse {
+    Response(AssetCatalogueItemConnector),
+}
+
+#[derive(Union)]
+pub enum AssetCatalogueItemResponse {
+    Error(NodeError),
+    Response(AssetCatalogueItemNode),
 }
 
 impl AssetCatalogueItemNode {

@@ -3,7 +3,7 @@ use repository::{
         AssetCatalogueItem, AssetCatalogueItemFilter, AssetCatalogueItemRepository,
         AssetCatalogueItemSort,
     },
-    EqualFilter, PaginationOption, StorageConnection,
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -30,15 +30,11 @@ pub fn get_asset_catalogue_items(
 }
 
 pub fn get_asset_catalogue_item(
-    ctx: &ServiceContext,
+    connection: &StorageConnection,
     id: String,
-) -> Result<AssetCatalogueItem, SingleRecordError> {
-    let repository = AssetCatalogueItemRepository::new(&ctx.connection);
+) -> Result<Option<AssetCatalogueItem>, RepositoryError> {
+    let repository = AssetCatalogueItemRepository::new(&connection);
     let mut result = repository
         .query_by_filter(AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(&id)))?;
-    if let Some(record) = result.pop() {
-        Ok(record)
-    } else {
-        Err(SingleRecordError::NotFound(id))
-    }
+    Ok(result.pop())
 }
