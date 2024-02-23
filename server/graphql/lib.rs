@@ -11,6 +11,7 @@ use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
