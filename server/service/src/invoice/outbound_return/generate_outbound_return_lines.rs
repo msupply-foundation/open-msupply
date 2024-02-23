@@ -1,39 +1,48 @@
-use repository::{ItemRow, ItemRowRepository, StockLineRow, StockLineRowRepository};
-
 use crate::{service_provider::ServiceContext, ListError, ListResult};
+use repository::{EqualFilter, StockLine, StockLineFilter, StockLineRepository};
+use util::uuid::uuid;
 
+#[derive(Debug, Clone)]
 pub struct OutboundReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
     pub comment: Option<String>,
     pub number_of_packs: u32,
-    pub stock_line: StockLineRow,
-    // TODO: should Item be here or should we make a new join query on stockline??
-    pub item: ItemRow,
+    pub stock_line: StockLine,
 }
 
 pub fn generate_outbound_return_lines(
     ctx: &ServiceContext,
+    store_id: &str,
     stock_line_ids: Vec<String>,
     item_id: Option<String>,
     return_id: Option<String>,
 ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-    validate(ctx, &stock_line_ids, &item_id, &return_id)?;
+    // Should this be a validation error instead?
+    // Or can I set up the filters differently so if nothing is provided, nothing is returned?
+    if stock_line_ids.is_empty() && item_id.is_none() && return_id.is_none() {
+        return Ok(ListResult {
+            count: 0,
+            rows: vec![],
+        });
+    }
 
-    // PERHAPS A JOIN BETTER HERE
-    let stock_lines =
-        StockLineRowRepository::new(&ctx.connection).find_many_by_ids(&stock_line_ids)?;
+    let mut filter = StockLineFilter::new().is_available(true);
 
-    let item_row_repo = ItemRowRepository::new(&ctx.connection);
+    if !stock_line_ids.is_empty() {
+        filter.id = Some(EqualFilter::equal_any(
+            stock_line_ids.iter().map(String::clone).collect(),
+        ))
+    }
+    filter.item_id = item_id.map(|item_id| EqualFilter::equal_to(&item_id));
+
+    let stock_lines = StockLineRepository::new(&ctx.connection)
+        .query_by_filter(filter, Some(store_id.to_string()))?;
 
     let return_lines: Vec<OutboundReturnLine> = stock_lines
         .iter()
         .map(|stock_line| OutboundReturnLine {
-            id: "id".to_string(), // TODO make new
-            item: item_row_repo
-                .find_one_by_id(&stock_line.item_id)
-                .unwrap()
-                .expect("UH OH ITEM NOT FOUND"),
+            id: uuid(),
             stock_line: stock_line.clone(),
 
             // these will be populated by the insert... we should query for them from the existing return eventually
@@ -43,8 +52,7 @@ pub fn generate_outbound_return_lines(
         })
         .collect();
 
-    // if item id, query stock lines by item id?
-
+    // TODO:
     // if return_id, query for return lines by return id
 
     Ok(ListResult {
@@ -53,22 +61,91 @@ pub fn generate_outbound_return_lines(
     })
 }
 
-fn validate(
-    ctx: &ServiceContext,
-    stock_line_ids: &Vec<String>,
-    item_id: &Option<String>,
-    return_id: &Option<String>,
-) -> Result<(), ListError> {
-    // store IDs
-    // TODO: may need ServiceError?
-    // error if nothing provided (stock line ids = [], item id = None, return id = None) as can't return anything
+#[cfg(test)]
+mod test {
+    use crate::service_provider::ServiceProvider;
+    use repository::{
+        mock::{mock_item_a_lines, MockDataInserts},
+        test_db::setup_all,
+    };
 
-    // do we want to constrain anything around EITHER stock line ids or item id?
+    #[actix_rt::test]
+    async fn generate_outbound_return_lines_nothing_supplied() {
+        let (_, _, connection_manager, _) = setup_all(
+            "generate_outbound_return_lines_nothing_supplied",
+            MockDataInserts::all(),
+        )
+        .await;
 
-    // these ids need to exist in order to respond with return lines, but it is just a query - do we need to validate that they exist or just return an empty array?
-    // validate stock line ids
-    // validate item id
-    // validate return id
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
 
-    Ok(())
+        let store_id = "store_a";
+        let stock_line_ids = vec![];
+        let item_id = None;
+        let return_id = None;
+
+        let result = service
+            .generate_outbound_return_lines(&context, store_id, stock_line_ids, item_id, return_id)
+            .unwrap();
+
+        assert_eq!(result.count, 0);
+    }
+
+    #[actix_rt::test]
+    async fn generate_outbound_return_lines_stock_line_ids() {
+        let (_, _, connection_manager, _) = setup_all(
+            "generate_outbound_return_lines_stock_line_ids",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let store_id = "store_a";
+        let stock_line_ids = mock_item_a_lines()
+            .iter()
+            .map(|stock_line| stock_line.id.clone())
+            .collect();
+        let item_id = None;
+        let return_id = None;
+
+        let result = service
+            .generate_outbound_return_lines(&context, store_id, stock_line_ids, item_id, return_id)
+            .unwrap();
+
+        assert_eq!(result.count, 2);
+        assert_eq!(result.rows[0].stock_line.item_row.id, "item_a");
+    }
+
+    #[actix_rt::test]
+    async fn generate_inbound_return_lines_item_id() {
+        let (_, _, connection_manager, _) = setup_all(
+            "generate_inbound_return_lines_item_id",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let store_id = "store_a";
+        let stock_line_ids = vec![];
+        let item_id = Some("item_query_test1".to_string());
+        let return_id = None;
+
+        let result = service
+            .generate_outbound_return_lines(&context, store_id, stock_line_ids, item_id, return_id)
+            .unwrap();
+
+        assert_eq!(result.count, 1);
+        assert_eq!(
+            result.rows[0].stock_line.stock_line_row.id,
+            "item_query_test1"
+        );
+    }
 }
