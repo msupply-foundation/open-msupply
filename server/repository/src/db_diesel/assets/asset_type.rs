@@ -6,9 +6,9 @@ use super::asset_type_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 
 pub struct AssetType {
