@@ -60,6 +60,10 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_log", "datetime"),
         ("activity_log", "datetime"),
         ("user_account", "last_successful_sync"),
+        ("asset", "created_datetime"),
+        ("asset", "modified_datetime"),
+        ("asset_internal_location", "created_datetime"),
+        ("asset_internal_location", "modified_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -95,6 +99,8 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("stocktake_line", "expiry_date"),
         ("period", "start_date"),
         ("period", "end_date"),
+        ("asset", "installation_date"),
+        ("asset", "replacement_date"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -621,6 +627,7 @@ mod tests {
             FROM information_schema.columns 
             WHERE data_type = 'timestamp without time zone' 
               AND table_name != '__diesel_schema_migrations'
+              AND column_name not in ('deleted_datetime') -- assume we don't want to change dates on these fields?
               AND is_updatable = 'YES'
             "#;
 
