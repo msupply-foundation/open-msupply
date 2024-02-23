@@ -81,6 +81,7 @@ fn generate_line(
         total_after_tax,
         tax,
         r#type,
+        return_reason_id,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -120,6 +121,7 @@ fn generate_line(
         r#type,
         note: input.note,
         inventory_adjustment_reason_id: None,
+        return_reason_id,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {
