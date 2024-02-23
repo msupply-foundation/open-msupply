@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use repository::{ItemRow, StockLine, StockLineRow};
+use repository::{ItemRow, StockLineRow};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     invoice::outbound_return::generate_outbound_return_lines::OutboundReturnLine,
