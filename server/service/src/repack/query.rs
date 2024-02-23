@@ -129,7 +129,7 @@ mod test {
     async fn query_repacks() {
         let invoice = InvoiceRow {
             id: "repack_invoice_a".to_string(),
-            name_id: "name_store_a".to_string(),
+            name_link_id: "name_store_a".to_string(),
             store_id: "store_a".to_string(),
             invoice_number: 10,
             r#type: InvoiceRowType::Repack,
@@ -146,7 +146,7 @@ mod test {
 
         let invoice_line_a_stock_line_a = StockLineRow {
             id: "line_a_stock_line_a".to_string(),
-            item_id: mock_item_a().id,
+            item_link_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
             pack_size: 5,
             cost_price_per_pack: 0.20,
@@ -160,7 +160,7 @@ mod test {
         let invoice_line_a = InvoiceLineRow {
             id: "invoice_a_line_a".to_string(),
             invoice_id: "repack_invoice_a".to_string(),
-            item_id: mock_item_a().id,
+            item_link_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(invoice_line_a_stock_line_a.id.clone()),
@@ -179,7 +179,7 @@ mod test {
 
         let original_stock_line = StockLineRow {
             id: "original_stock_line".to_string(),
-            item_id: mock_item_a().id,
+            item_link_id: mock_item_a().id,
             store_id: mock_store_a().id.clone(),
             pack_size: 10,
             cost_price_per_pack: 0.10,
@@ -192,7 +192,7 @@ mod test {
         let invoice_line_b = InvoiceLineRow {
             id: "invoice_b_line_b".to_string(),
             invoice_id: "repack_invoice_a".to_string(),
-            item_id: mock_item_a().id,
+            item_link_id: mock_item_a().id,
             item_name: mock_item_a().name,
             item_code: mock_item_a().code,
             stock_line_id: Some(original_stock_line.id.clone()),

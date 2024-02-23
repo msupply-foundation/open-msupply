@@ -24,7 +24,7 @@ pub fn generate(
         tax,
         note,
         item_code: item.code,
-        item_id: item.id,
+        item_link_id: item.id,
         item_name: name.unwrap_or(item.name),
         r#type: InvoiceLineRowType::Service,
         // Default

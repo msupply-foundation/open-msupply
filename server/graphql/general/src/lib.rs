@@ -296,6 +296,10 @@ impl GeneralQueries {
         )
     }
 
+    pub async fn database_settings(&self, ctx: &Context<'_>) -> Result<DatabaseSettingsNode> {
+        database_settings(ctx)
+    }
+
     pub async fn generate_outbound_return_lines(
         &self,
         store_id: String,

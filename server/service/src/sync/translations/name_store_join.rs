@@ -1,6 +1,7 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    StorageConnection, StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, StorageConnection,
+    StoreRowRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -87,7 +88,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
 
         let result = NameStoreJoinRow {
             id: data.id,
-            name_id: data.name_id,
+            name_link_id: data.name_id,
             store_id: data.store_id,
             // name_is_customer: data.name_is_customer.unwrap_or(name.is_customer),
             // name_is_supplier: data.name_is_supplier.unwrap_or(name.is_supplier),
@@ -112,22 +113,26 @@ impl SyncTranslation for NameStoreJoinTranslation {
             return Ok(None);
         }
 
-        let NameStoreJoinRow {
-            id,
-            name_id,
-            store_id,
-            name_is_customer,
-            name_is_supplier,
+        let NameStoreJoin {
+            name_store_join:
+                NameStoreJoinRow {
+                    id,
+                    name_link_id: _,
+                    store_id,
+                    name_is_customer,
+                    name_is_supplier,
+                },
+            name,
         } = NameStoreJoinRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Name store join row ({}) not found",
-                changelog.record_id
-            )))?;
+            .query_by_filter(
+                NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or(anyhow::anyhow!("Name store join not found"))?;
 
         let legacy_row = LegacyNameStoreJoinRow {
             id,
-            name_id,
+            name_id: name.id,
             store_id,
             name_is_customer: Some(name_is_customer),
             name_is_supplier: Some(name_is_supplier),
@@ -162,7 +167,11 @@ impl SyncTranslation for NameStoreJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_name_store_join_translation() {
@@ -197,6 +206,35 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_name_store_join_push_merged() {
+        let (mock_data, connection, _, _) =
+            setup_all("test_name_store_join_push_merged", MockDataInserts::all()).await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(
+                    ChangelogFilter::new().table_name(ChangelogTableName::NameStoreJoin.equal_to()),
+                ),
+            )
+            .unwrap();
+
+        let translator = NameStoreJoinTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
         }
     }
 }

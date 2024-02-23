@@ -1,15 +1,21 @@
 use super::{
+    clinician_link_row::{clinician_link, clinician_link::dsl as clinician_link_dsl},
     clinician_row::{clinician, clinician::dsl as clinician_dsl},
     invoice_line_row::invoice_line::dsl as invoice_line_dsl,
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
     ClinicianRow, DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
     StorageConnection, StoreRow,
 };
 
-use crate::diesel_macros::{
-    apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+use crate::{
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case,
+        apply_string_filter,
+    },
+    ClinicianLinkRow, NameLinkRow,
 };
 
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
@@ -75,7 +81,12 @@ pub struct InvoiceRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-type InvoiceJoin = (InvoiceRow, NameRow, StoreRow, Option<ClinicianRow>);
+type InvoiceJoin = (
+    InvoiceRow,
+    (NameLinkRow, NameRow),
+    StoreRow,
+    Option<(ClinicianLinkRow, ClinicianRow)>,
+);
 
 impl<'a> InvoiceRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -163,33 +174,39 @@ impl<'a> InvoiceRepository<'a> {
     pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
         Ok(invoice_dsl::invoice
             .filter(invoice_dsl::id.eq(record_id))
-            .inner_join(name_dsl::name)
+            .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .inner_join(store_dsl::store)
-            .left_join(clinician_dsl::clinician)
+            .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
             .first::<InvoiceJoin>(&self.connection.connection)?)
     }
 }
 
-fn to_domain((invoice_row, name_row, store_row, clinician_row): InvoiceJoin) -> Invoice {
+fn to_domain((invoice_row, (_, name_row), store_row, clinician_link_join): InvoiceJoin) -> Invoice {
     Invoice {
         invoice_row,
         name_row,
         store_row,
-        clinician_row,
+        clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
     }
 }
 
 type BoxedInvoiceQuery = IntoBoxed<
     'static,
-    LeftJoin<InnerJoin<InnerJoin<invoice::table, name::table>, store::table>, clinician::table>,
+    LeftJoin<
+        InnerJoin<
+            InnerJoin<invoice::table, InnerJoin<name_link::table, name::table>>,
+            store::table,
+        >,
+        InnerJoin<clinician_link::table, clinician::table>,
+    >,
     DBType,
 >;
 
-fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
+fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     let mut query = invoice_dsl::invoice
-        .inner_join(name_dsl::name)
+        .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .inner_join(store_dsl::store)
-        .left_join(clinician_dsl::clinician)
+        .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -220,7 +237,7 @@ fn create_filtered_query<'a>(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery
 
         apply_equal_filter!(query, id, invoice_dsl::id);
         apply_equal_filter!(query, invoice_number, invoice_dsl::invoice_number);
-        apply_equal_filter!(query, name_id, invoice_dsl::name_id);
+        apply_equal_filter!(query, name_id, name_dsl::id);
         apply_string_filter!(query, name, name_dsl::name_);
         apply_equal_filter!(query, store_id, invoice_dsl::store_id);
         apply_equal_filter!(query, their_reference, invoice_dsl::their_reference);
@@ -421,7 +438,7 @@ impl Invoice {
         &self.name_row.name
     }
     pub fn other_party_id(&self) -> &str {
-        &self.invoice_row.name_id
+        &self.name_row.id
     }
     pub fn other_party_store_id(&self) -> &Option<String> {
         &self.invoice_row.name_store_id

@@ -24,7 +24,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
         };
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_id: uuid(),
+            item_link_id: uuid(),
             store_id: store_id.clone(),
             location_id: Some(location_row.id.clone()),
             batch: Some("some remote sync test batch".to_string()),
@@ -36,7 +36,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
             expiry_date: NaiveDate::from_ymd_opt(2021, 03, 21),
             on_hold: true,
             note: Some("some remote sync test note".to_string()),
-            supplier_id: Some(new_site_properties.name_id.clone()),
+            supplier_link_id: Some(new_site_properties.name_id.clone()),
             barcode_id: None,
         };
 
@@ -51,7 +51,7 @@ impl SyncRecordTester for LocationMovementRecordTester {
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_id,
+                "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
             central_delete: json!({}),

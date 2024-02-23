@@ -1,5 +1,6 @@
 use super::StorageConnection;
 
+use crate::db_diesel::{name_link_row::name_link, name_row::name};
 use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
@@ -11,7 +12,7 @@ table! {
         datetime -> Timestamp,
         active_start_datetime -> Timestamp,
         active_end_datetime -> Timestamp,
-        patient_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
         context_id -> Text,
         document_type -> Text,
         document_name -> Nullable<Text>,
@@ -19,6 +20,10 @@ table! {
         data -> Nullable<Text>,
     }
 }
+
+joinable!(program_event -> name_link (patient_link_id));
+allow_tables_to_appear_in_same_query!(program_event, name_link);
+allow_tables_to_appear_in_same_query!(program_event, name);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
 #[table_name = "program_event"]
@@ -42,7 +47,7 @@ pub struct ProgramEventRow {
     /// events are inserted, i.e. it depends on other events in the system.
     pub active_end_datetime: NaiveDateTime,
     /// Patient id, if event is associated with a patient
-    pub patient_id: Option<String>,
+    pub patient_link_id: Option<String>,
     pub context_id: String,
     /// The document type the event is associated with (might be different from the source of the
     /// event). For example, an encounter could set the status of a program enrolment.
