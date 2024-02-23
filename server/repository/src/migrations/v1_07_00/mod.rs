@@ -25,7 +25,6 @@ mod program_enrolment_add_patient_link_id;
 mod program_event_patient_link_id;
 mod requisition_add_name_link_id;
 mod requisition_line_add_item_link_id;
-mod return_comment;
 mod return_reasons;
 mod return_types;
 mod stock_line_add_item_link_id;
@@ -72,7 +71,6 @@ fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
 fn migrate_returns(connection: &StorageConnection) -> anyhow::Result<()> {
     return_reasons::migrate(connection)?;
     return_types::migrate(connection)?;
-    return_comment::migrate(connection)?;
     Ok(())
 }
 
