@@ -14,6 +14,7 @@ import {
   PricingUtils,
   InvoiceLineNodeType,
   Currencies,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useInbound } from '../../api';
 import { InboundServiceLineEdit, TaxEdit } from '../modals';
@@ -44,6 +45,7 @@ export const PricingSectionComponent = () => {
   const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
+  const { store } = useAuthContext();
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -149,7 +151,9 @@ export const PricingSectionComponent = () => {
                   currencyRate: value?.rate,
                 });
               }}
-              isDisabled={!!otherParty.store}
+              isDisabled={
+                !!otherParty.store && store?.preferences.issueInForeignCurrency
+              }
               currency={currency as CurrencyRowFragment}
               currencyRate={currencyRate ?? 1}
             />
