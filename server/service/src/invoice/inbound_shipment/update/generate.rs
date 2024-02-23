@@ -56,7 +56,7 @@ pub(crate) fn generate(
 
     if let Some(other_party) = other_party_option {
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        update_invoice.name_id = other_party.name_row.id;
+        update_invoice.name_link_id = other_party.name_row.id;
     }
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
@@ -68,7 +68,7 @@ pub(crate) fn generate(
             &update_invoice.store_id,
             &update_invoice.id,
             update_invoice.tax,
-            &update_invoice.name_id,
+            &update_invoice.name_link_id,
             update_invoice.currency_rate,
         )?)
     } else {
@@ -231,7 +231,7 @@ pub fn generate_lines_and_stock_lines(
         let InvoiceLineRow {
             id: _,
             invoice_id: _,
-            item_id,
+            item_link_id,
             item_name: _,
             item_code: _,
             stock_line_id: _,
@@ -254,7 +254,7 @@ pub fn generate_lines_and_stock_lines(
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id,
                 store_id: store_id.to_string(),
                 location_id,
                 batch,
@@ -266,7 +266,7 @@ pub fn generate_lines_and_stock_lines(
                 expiry_date,
                 on_hold: false,
                 note,
-                supplier_id: Some(supplier_id.to_string()),
+                supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
             };
             result.push(LineAndStockLine { line, stock_line });

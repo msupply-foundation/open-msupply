@@ -93,7 +93,7 @@ mod test {
         let variables = Some(json!({
           "filter": {
             "createdDatetime": {
-                "beforeOrEqualTo": DateTime::<Utc>::from_utc(filter_time, Utc).to_rfc3339()
+                "beforeOrEqualTo": DateTime::<Utc>::from_naive_utc_and_offset(filter_time, Utc).to_rfc3339()
             },
           }
         }));

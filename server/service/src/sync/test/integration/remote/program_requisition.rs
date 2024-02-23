@@ -58,6 +58,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
+            is_active: true,
         };
         let master_list_json = json!({
         "ID": master_list_row.id,
@@ -112,12 +113,12 @@ impl SyncRecordTester for ProgramRequisitionTester {
         let master_list_name_join_row = MasterListNameJoinRow {
             id: uuid(),
             master_list_id: master_list_row.id.clone(),
-            name_id: new_site_properties.name_id.clone(),
+            name_link_id: new_site_properties.name_id.clone(),
         };
         let master_list_name_join_json = json!({
             "ID": master_list_name_join_row.id,
             "list_master_ID":  master_list_name_join_row.master_list_id,
-            "name_ID": master_list_name_join_row.name_id,
+            "name_ID": master_list_name_join_row.name_link_id,
         });
 
         let program = ProgramRow {
@@ -173,6 +174,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
+            is_active: true,
         };
         let master_list_json2 = json!({
         "ID": master_list_row2.id,
@@ -193,12 +195,12 @@ impl SyncRecordTester for ProgramRequisitionTester {
         let master_list_name_join_row2 = MasterListNameJoinRow {
             id: uuid(),
             master_list_id: master_list_row2.id.clone(),
-            name_id: new_site_properties.name_id.clone(),
+            name_link_id: new_site_properties.name_id.clone(),
         };
         let master_list_name_join_json2 = json!({
             "ID": master_list_name_join_row2.id,
             "list_master_ID":  master_list_name_join_row2.master_list_id,
-            "name_ID": master_list_name_join_row2.name_id,
+            "name_ID": master_list_name_join_row2.name_link_id,
         });
 
         let program2 = ProgramRow {

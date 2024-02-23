@@ -9,9 +9,9 @@ import {
   ArrayUtils,
   useCurrency,
   InvoiceLineNodeType,
-  PositiveNumberCell,
   TooltipTextCell,
   useColumnUtils,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -164,7 +164,7 @@ export const useOutboundColumns = ({
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberCell,
+          Cell: NumberCell,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -233,6 +233,7 @@ export const useOutboundColumns = ({
       [
         'unitQuantity',
         {
+          Cell: NumberCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;

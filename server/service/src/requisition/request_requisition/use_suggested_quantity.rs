@@ -1,5 +1,5 @@
 use crate::{
-    requisition::common::{check_requisition_exists, get_lines_for_requisition},
+    requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
 };
 use repository::EqualFilter;
@@ -59,7 +59,7 @@ fn validate(
     store_id: &str,
     input: &UseSuggestedQuantity,
 ) -> Result<(), OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.request_requisition_id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.request_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
@@ -110,7 +110,7 @@ mod test {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test,
+            mock_full_draft_response_requisition_for_update_test,
             mock_request_draft_requisition_calculation_test, mock_sent_request_requisition,
             mock_store_a, mock_store_b, MockDataInserts,
         },
@@ -165,7 +165,9 @@ mod test {
             service.use_suggested_quantity(
                 &context,
                 UseSuggestedQuantity {
-                    request_requisition_id: mock_draft_response_requisition_for_update_test().id,
+                    request_requisition_id: mock_full_draft_response_requisition_for_update_test()
+                        .requisition
+                        .id,
                 },
             ),
             Err(ServiceError::NotARequestRequisition)

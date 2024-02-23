@@ -80,7 +80,7 @@ impl Loader<RequisitionAndItemId> for LinkedRequisitionLineLoader {
                 (
                     RequisitionAndItemId::new(
                         &line.requisition_line_row.requisition_id,
-                        &line.requisition_line_row.item_id,
+                        &line.item_row.id,
                     ),
                     line,
                 )

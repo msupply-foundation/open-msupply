@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowType, Pagination, RepositoryError, StockLine, StockLineFilter,
-    StockLineRepository, StockLineSort, StockLineSortField, StorageConnection,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
+    Pagination, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineSort,
+    StockLineSortField, StorageConnection,
 };
 use util::{
     constants::stock_line_expiring_soon_offset, date_now, date_now_with_offset,
@@ -31,16 +31,16 @@ pub struct GenerateOutput {
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
-    unallocated_line: InvoiceLineRow,
+    unallocated_line: InvoiceLine,
 ) -> Result<GenerateOutput, RepositoryError> {
     let mut result = GenerateOutput::default();
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
     // Assume pack_size 1 for unallocated line
-    let mut remaining_to_allocate = unallocated_line.number_of_packs as i32;
+    let mut remaining_to_allocate = unallocated_line.invoice_line_row.number_of_packs as i32;
     // If nothing remaing to alloacted just remove the line
     if remaining_to_allocate <= 0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
-            id: unallocated_line.id,
+            id: unallocated_line.invoice_line_row.id,
         });
         return Ok(result);
     }
@@ -83,7 +83,7 @@ pub fn generate(
         ) {
             Some(stock_line_update) => result.update_lines.push(stock_line_update),
             None => result.insert_lines.push(generate_new_line(
-                &unallocated_line.invoice_id,
+                &unallocated_line.invoice_line_row.invoice_id,
                 (packs_to_allocate).into(),
                 &stock_line,
             )),
@@ -100,11 +100,11 @@ pub fn generate(
     // If nothing remaining to alloacted just remove the line, otherwise update
     if remaining_to_allocate <= 0 {
         result.delete_unallocated_line = Some(DeleteOutboundShipmentUnallocatedLine {
-            id: unallocated_line.id,
+            id: unallocated_line.invoice_line_row.id,
         });
     } else {
         result.update_unallocated_line = Some(UpdateOutboundShipmentUnallocatedLine {
-            id: unallocated_line.id,
+            id: unallocated_line.invoice_line_row.id,
             quantity: remaining_to_allocate as u32,
         });
     };
@@ -150,11 +150,12 @@ fn generate_new_line(
     stock_line: &StockLine,
 ) -> InsertStockOutLine {
     let stock_line_row = &stock_line.stock_line_row;
+    let item_row = &stock_line.item_row;
     InsertStockOutLine {
         id: uuid::uuid(),
         r#type: Some(StockOutType::OutboundShipment),
         invoice_id: invoice_id.to_string(),
-        item_id: stock_line_row.item_id.clone(),
+        item_id: item_row.id.clone(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
@@ -205,10 +206,10 @@ fn packs_to_allocate_from_stock_line(remaining_to_allocate: i32, line: &StockLin
 fn get_sorted_available_stock_lines(
     connection: &StorageConnection,
     store_id: &str,
-    unallocated_line: &InvoiceLineRow,
+    unallocated_line: &InvoiceLine,
 ) -> Result<Vec<StockLine>, RepositoryError> {
     let filter = StockLineFilter::new()
-        .item_id(EqualFilter::equal_to(&unallocated_line.item_id))
+        .item_id(EqualFilter::equal_to(&unallocated_line.item_row.id))
         .store_id(EqualFilter::equal_to(store_id))
         .is_available(true);
 
@@ -223,12 +224,14 @@ fn get_sorted_available_stock_lines(
 
 fn get_allocated_lines(
     connection: &StorageConnection,
-    unallocated_line: &InvoiceLineRow,
+    unallocated_line: &InvoiceLine,
 ) -> Result<Vec<InvoiceLine>, RepositoryError> {
     InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
-            .item_id(EqualFilter::equal_to(&unallocated_line.item_id))
-            .invoice_id(EqualFilter::equal_to(&unallocated_line.invoice_id))
+            .item_id(EqualFilter::equal_to(&unallocated_line.item_row.id))
+            .invoice_id(EqualFilter::equal_to(
+                &unallocated_line.invoice_line_row.invoice_id,
+            ))
             .r#type(InvoiceLineRowType::StockOut.equal_to()),
     )
 }

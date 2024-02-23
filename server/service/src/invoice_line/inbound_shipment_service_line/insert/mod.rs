@@ -224,14 +224,16 @@ mod test {
         let default_service_item = ItemRepository::new(&connection)
             .query_one(
                 None,
-                ItemFilter::new().code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)),
+                ItemFilter::new()
+                    .code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE))
+                    .is_active(true),
             )
             .unwrap()
             .unwrap();
         assert_eq!(
             line,
             inline_edit(&line, |mut u| {
-                u.item_id = default_service_item.item_row.id;
+                u.item_link_id = default_service_item.item_row.id;
                 u.item_name = default_service_item.item_row.name;
                 u
             })
@@ -263,7 +265,7 @@ mod test {
             inline_edit(&line, |mut u| {
                 u.id = "new_line2_id".to_string();
                 u.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-                u.item_id = mock_item_service_item().id;
+                u.item_link_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 0.3;
                 u.tax = Some(10.0);
