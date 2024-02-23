@@ -37,7 +37,7 @@ pub fn generate_outbound_return_lines(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateOutboundReturn, // TODO how to link up permissions? ... i think i gotta fetch from central or something??
+            // resource: Resource::MutateOutboundReturn, // TODO: later...
             resource: Resource::MutateInboundShipment,
             store_id: Some(store_id.clone()),
         },
