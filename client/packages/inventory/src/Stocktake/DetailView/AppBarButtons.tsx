@@ -18,6 +18,7 @@ import {
   useReport,
 } from '@openmsupply-client/system';
 import { JsonData } from '@openmsupply-client/programs';
+import { isStocktakeDisabled } from '../../utils';
 
 interface AppBarButtonProps {
   onAddItem: (newState: boolean) => void;
@@ -26,11 +27,11 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  const isDisabled = useStocktake.utils.isDisabled();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  const { data } = useStocktake.document.get();
   const { print, isPrinting } = useReport.utils.print();
+  const { data } = useStocktake.document.get();
+  const isDisabled = !data || isStocktakeDisabled(data);
 
   const {
     queryParams: { sortBy },

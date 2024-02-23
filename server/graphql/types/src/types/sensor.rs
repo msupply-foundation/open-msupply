@@ -106,7 +106,7 @@ impl SensorNode {
     pub async fn last_connection_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .last_connection_datetime
-            .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
+            .map(|datetime| DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc))
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {

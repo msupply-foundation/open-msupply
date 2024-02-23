@@ -29,7 +29,10 @@ impl BarcodeNode {
     }
 
     pub async fn manufacturer_id(&self) -> Option<String> {
-        self.row().manufacturer_id.clone()
+        self.barcode
+            .manufacturer_name_row
+            .as_ref()
+            .map(|it| it.id.clone())
     }
 
     pub async fn pack_size(&self) -> Option<i32> {
@@ -116,6 +119,7 @@ mod test {
                                 r.pack_size = Some(1);
                             })
                         },
+                        manufacturer_name_row: None,
                     },
                 }
             }

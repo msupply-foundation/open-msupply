@@ -115,7 +115,7 @@ fn create_filtered_query(filter: Option<PluginDataFilter>) -> BoxedPluginQuery {
     query
 }
 
-pub fn to_domain(plugin_data_row: PluginDataRow) -> PluginData {
+fn to_domain(plugin_data_row: PluginDataRow) -> PluginData {
     PluginData {
         plugin_data: plugin_data_row,
     }

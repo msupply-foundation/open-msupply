@@ -6,8 +6,8 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, NumberRowType, RepositoryError, Requisition, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowApprovalStatus,
+    ActivityLogType, ItemRow, NumberRowType, RepositoryError, Requisition, RequisitionLine,
+    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowApprovalStatus,
     RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, StorageConnection,
 };
 use util::uuid::uuid;
@@ -115,7 +115,7 @@ fn generate_response_requisition(
     record_for_processing: &RequisitionTransferProcessorRecord,
 ) -> Result<RequisitionRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_id = request_requisition.store_row.name_id.clone();
+    let name_link_id = request_requisition.store_row.name_id.clone();
 
     let request_requisition_row = &request_requisition.requisition_row;
 
@@ -149,7 +149,7 @@ fn generate_response_requisition(
     let result = RequisitionRow {
         id: uuid(),
         requisition_number,
-        name_id,
+        name_link_id,
         store_id,
         r#type: RequisitionRowType::Response,
         status: RequisitionRowStatus::New,
@@ -184,25 +184,29 @@ fn generate_response_requisition_lines(
 
     let response_lines = request_lines
         .into_iter()
-        .map(|l| l.requisition_line_row)
         .map(
-            |RequisitionLineRow {
-                 id: _,
-                 requisition_id: _,
-                 approved_quantity: _,
-                 approval_comment: _,
-                 item_id,
-                 requested_quantity,
-                 suggested_quantity,
-                 supply_quantity: _,
-                 available_stock_on_hand,
-                 average_monthly_consumption,
-                 snapshot_datetime,
-                 comment,
+            |RequisitionLine {
+                 requisition_line_row:
+                     RequisitionLineRow {
+                         id: _,
+                         requisition_id: _,
+                         approved_quantity: _,
+                         approval_comment: _,
+                         item_link_id: _,
+                         requested_quantity,
+                         suggested_quantity,
+                         supply_quantity: _,
+                         available_stock_on_hand,
+                         average_monthly_consumption,
+                         snapshot_datetime,
+                         comment,
+                     },
+                 item_row: ItemRow { id: item_id, .. },
+                 requisition_row: _,
              }| RequisitionLineRow {
                 id: uuid(),
                 requisition_id: response_requisition_id.to_string(),
-                item_id,
+                item_link_id: item_id,
                 requested_quantity,
                 suggested_quantity,
                 available_stock_on_hand,

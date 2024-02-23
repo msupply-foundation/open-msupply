@@ -45,6 +45,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "Units".to_owned(),
                 description: None,
                 index: 0,
+                is_active: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -55,6 +56,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "Tab".to_owned(),
                 description: None,
                 index: 1,
+                is_active: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -65,6 +67,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "Bottle".to_owned(),
                 description: Some("This is a bottle unit type".to_owned()),
                 index: 2,
+                is_active: true,
             }),
         ),
     ]
