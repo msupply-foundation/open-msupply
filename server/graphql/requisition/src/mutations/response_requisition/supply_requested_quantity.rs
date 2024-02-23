@@ -113,7 +113,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_request_draft_requisition, mock_sent_request_requisition_line, MockDataInserts,
+            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
+            MockDataInserts,
         },
         RequisitionLine, StorageConnectionManager,
     };
@@ -282,6 +283,7 @@ mod test {
             Ok(vec![RequisitionLine {
                 requisition_line_row: mock_sent_request_requisition_line(),
                 requisition_row: mock_request_draft_requisition(),
+                item_row: mock_item_a(),
             }])
         }));
 

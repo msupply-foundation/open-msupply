@@ -24,6 +24,7 @@
     "autosuggest-highlight": "^3.3.4",
     "currency.js": "^2.0.4",
     "date-fns": "^2.27.0",
+    "date-fns-tz": "^2.0.0",
     "dompurify": "^3.0.1",
     "graphql-import-node": "^0.0.5",
     "graphql-request": "^6.1.0",
