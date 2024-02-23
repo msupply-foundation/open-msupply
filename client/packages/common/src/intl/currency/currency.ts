@@ -67,6 +67,18 @@ export const format: currency.Format = (
   return replacePattern.replace('!', symbol).replace('#', moneyString);
 };
 
+// Gets the canonical characters for number separator and decimal from
+// Intl.NumberFormat. This is not always obvious (the " " used in French
+// formatting, for example, is actual a "NARROW NO-BREAK SPACE" (CharCode 8239)
+// even though it looks like a regular space (CharCode 32)), so for consistency
+// this should be the source of truth.
+const getSeparatorAndDecimal = (code: string) => {
+  const parts = new Intl.NumberFormat(code).formatToParts(1000.1);
+  const separator = parts.find(({ type }) => type === 'group')?.value ?? ',';
+  const decimal = parts.find(({ type }) => type === 'decimal')?.value ?? '.';
+  return { separator, decimal };
+};
+
 export type Currencies =
   | 'USD'
   | 'EUR'
@@ -83,9 +95,8 @@ export const currencyOptions = (code?: Currencies) => {
   switch (code) {
     case 'EUR':
       return {
+        ...getSeparatorAndDecimal('EUR'),
         symbol: '€',
-        separator: '.',
-        decimal: ',',
         precision: 2,
         pattern: '# !',
         negativePattern: '-# !',
@@ -93,19 +104,17 @@ export const currencyOptions = (code?: Currencies) => {
       };
     case 'DJF':
       return {
+        ...getSeparatorAndDecimal('DJF'),
         symbol: 'DJF',
-        separator: ',',
-        decimal: '.',
-        precision: 2,
+        precision: 0,
         pattern: '# !',
         negativePattern: '-# !',
         format,
       };
     case 'QAR':
       return {
+        ...getSeparatorAndDecimal('QAR'),
         symbol: 'ر.ق.',
-        separator: ',',
-        decimal: '.',
         precision: 2,
         pattern: '!#',
         negativePattern: '-!#',
@@ -113,9 +122,8 @@ export const currencyOptions = (code?: Currencies) => {
       };
     case 'RUB':
       return {
+        ...getSeparatorAndDecimal('RUB'),
         symbol: '₽',
-        separator: '.',
-        decimal: ',',
         precision: 2,
         pattern: '# !',
         negativePattern: '-# !',
@@ -123,18 +131,18 @@ export const currencyOptions = (code?: Currencies) => {
       };
     case 'SSP': {
       return {
+        ...getSeparatorAndDecimal('SSP'),
         symbol: 'SSP',
         pattern: '# !',
-        separator: ',',
         negativePattern: '-# !',
+        precision: 2,
         format,
       };
     }
     case 'PGK': {
       return {
+        ...getSeparatorAndDecimal('PGK'),
         symbol: 'K',
-        separator: '.',
-        decimal: ',',
         precision: 2,
         pattern: '# !',
         negativePattern: '-# !',
@@ -143,31 +151,30 @@ export const currencyOptions = (code?: Currencies) => {
     }
     case 'COP': {
       return {
+        ...getSeparatorAndDecimal('COP'),
         symbol: '$',
         pattern: '# !',
         negativePattern: '-# !',
-        separator: ',',
+        precision: 2,
         format,
       };
     }
     case 'SBD': {
       return {
+        ...getSeparatorAndDecimal('SBD'),
         symbol: 'SI$',
         pattern: '# !',
         negativePattern: '-# !',
-        format,
-        separator: ',',
-        decimal: '.',
         precision: 2,
+        format,
       };
     }
     case 'USD':
     case 'NZD':
     default:
       return {
+        ...getSeparatorAndDecimal('USD'),
         symbol: '$',
-        separator: ',',
-        decimal: '.',
         precision: 2,
         pattern: '!#',
         negativePattern: '-!#',
