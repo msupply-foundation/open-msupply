@@ -108,7 +108,7 @@ pub(crate) fn process_shipment_transfers(
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
         .table_name(ChangelogTableName::Invoice.equal_to())
-        .name_id(EqualFilter::equal_any(active_stores.name_ids()));
+        .name_id(EqualFilter::equal_any(active_stores.name_ids().clone()));
 
     loop {
         let cursor = key_value_store_repo
@@ -143,6 +143,8 @@ pub(crate) fn process_shipment_transfers(
                     .get_store_id_for_name_id(name_id)
                     .ok_or_else(|| Error::NameIsNotAnActiveStore(log.clone()))?,
             };
+
+            // TODO: MERGE: Ignore if invoice name_link_id points to store's name. Supplying to itself! (Can happen with names are merge into stores)
 
             // Try record against all of the processors
             for processor in processors.iter() {

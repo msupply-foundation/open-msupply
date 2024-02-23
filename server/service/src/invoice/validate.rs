@@ -87,7 +87,6 @@ pub fn check_invoice_status(
             return Err(InvoiceRowStatusError::CannotReverseInvoiceStatus);
         }
     }
-
     Ok(())
 }
 

@@ -43,18 +43,27 @@ pub fn get_stocktake_lines(
     let repository = StocktakeLineRepository::new(&ctx.connection);
 
     Ok(ListResult {
-        rows: repository.query(pagination, Some(filter.clone()), sort)?,
-        count: i64_to_u32(repository.count(Some(filter))?),
+        rows: repository.query(
+            pagination,
+            Some(filter.clone()),
+            sort,
+            Some(store_id.to_string()),
+        )?,
+        count: i64_to_u32(repository.count(Some(filter), Some(store_id.to_string()))?),
     })
 }
 
 pub fn get_stocktake_line(
     ctx: &ServiceContext,
     id: String,
+    store_id: &str,
 ) -> Result<Option<StocktakeLine>, RepositoryError> {
     let repository = StocktakeLineRepository::new(&ctx.connection);
     Ok(repository
-        .query_by_filter(StocktakeLineFilter::new().id(EqualFilter::equal_to(&id)))?
+        .query_by_filter(
+            StocktakeLineFilter::new().id(EqualFilter::equal_to(&id)),
+            Some(store_id.to_string()),
+        )?
         .pop())
 }
 
