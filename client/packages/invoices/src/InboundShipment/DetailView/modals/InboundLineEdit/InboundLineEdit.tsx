@@ -29,6 +29,7 @@ interface InboundLineEditProps {
   onClose: () => void;
   isDisabled?: boolean;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -102,6 +103,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   onClose,
   isDisabled = false,
   currency,
+  isExternalSupplier,
 }) => {
   const t = useTranslation('replenishment');
   const { error } = useNotification();
@@ -187,6 +189,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               updateDraftLine={updateDraftLine}
               isDisabled={isDisabled}
               currency={currency}
+              isExternalSupplier={isExternalSupplier}
             />
           </form>
         )}

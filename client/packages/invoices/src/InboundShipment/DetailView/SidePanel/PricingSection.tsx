@@ -25,20 +25,27 @@ export const PricingSectionComponent = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const serviceLineModal = useToggle(false);
   const { c } = useCurrency();
-  const { store } = useAuthContext();
 
-  const { pricing, lines, taxPercentage, currency, update } =
-    useInbound.document.fields([
-      'pricing',
-      'lines',
-      'taxPercentage',
-      'currency',
-    ]);
+  const {
+    pricing,
+    lines,
+    taxPercentage,
+    currency,
+    update,
+    otherParty,
+    currencyRate,
+  } = useInbound.document.fields([
+    'pricing',
+    'lines',
+    'taxPercentage',
+    'currency',
+    'otherParty',
+    'currencyRate',
+  ]);
   const { data: serviceLines } = useInbound.lines.serviceLines();
   const { mutateAsync: updateTax } = useInbound.document.updateTax();
   const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
-  const storeIssuesInForeignCurrency =
-    store?.preferences.issueInForeignCurrency;
+  const { store } = useAuthContext();
 
   const tax = PricingUtils.effectiveTax(
     pricing?.serviceTotalBeforeTax,
@@ -144,8 +151,11 @@ export const PricingSectionComponent = () => {
                   currencyRate: value?.rate,
                 });
               }}
-              isDisabled={!storeIssuesInForeignCurrency}
+              isDisabled={
+                !!otherParty.store && store?.preferences.issueInForeignCurrency
+              }
               currency={currency as CurrencyRowFragment}
+              currencyRate={currencyRate ?? 1}
             />
           </PanelField>
         </PanelRow>
@@ -155,7 +165,7 @@ export const PricingSectionComponent = () => {
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.rate')}</PanelLabel>
-          <PanelField>{currency?.rate ?? 1}</PanelField>
+          <PanelField>{currencyRate ?? 1}</PanelField>
         </PanelRow>
         <PanelRow>
           <PanelLabel>{t('heading.total')}</PanelLabel>

@@ -22,6 +22,7 @@ interface TabLayoutProps {
   isDisabled: boolean;
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
 }
 
 enum Tabs {
@@ -36,6 +37,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
   isDisabled,
   updateDraftLine,
   currency,
+  isExternalSupplier,
 }) => {
   const [currentTab, setCurrentTab] = useState<Tabs>(Tabs.Batch);
   const isMediumScreen = useIsMediumScreen();
@@ -113,6 +115,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
             lines={draftLines}
             updateDraftLine={updateDraftLine}
             currency={currency}
+            isExternalSupplier={isExternalSupplier}
           />
         </InboundLineEditPanel>
 
