@@ -295,6 +295,10 @@ impl GeneralQueries {
             filter,
         )
     }
+
+    pub async fn database_settings(&self, ctx: &Context<'_>) -> Result<DatabaseSettingsNode> {
+        database_settings(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
