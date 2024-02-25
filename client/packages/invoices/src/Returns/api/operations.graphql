@@ -126,8 +126,8 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-mutation insertOutboundReturn($input: OutboundReturnInput!) {
-  insertOutboundReturn(input: $input) {
+mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
+  insertOutboundReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
