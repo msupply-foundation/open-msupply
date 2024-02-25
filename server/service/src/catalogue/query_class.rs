@@ -28,13 +28,9 @@ pub fn get_asset_classes(
 pub fn get_asset_class(
     connection: &StorageConnection,
     id: String,
-) -> Result<AssetClass, SingleRecordError> {
+) -> Result<Option<AssetClass>, SingleRecordError> {
     let repository = AssetClassRepository::new(&connection);
     let mut result =
         repository.query_by_filter(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))?;
-    if let Some(record) = result.pop() {
-        Ok(record)
-    } else {
-        Err(SingleRecordError::NotFound(id))
-    }
+    Ok(result.pop())
 }

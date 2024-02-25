@@ -77,7 +77,7 @@ pub fn asset_classes(
     ))
 }
 
-pub fn asset_class(ctx: &Context<'_>, store_id: String, id: String) -> Result<AssetClassRespons> {
+pub fn asset_class(ctx: &Context<'_>, store_id: String, id: String) -> Result<AssetClassResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -96,6 +96,7 @@ pub fn asset_class(ctx: &Context<'_>, store_id: String, id: String) -> Result<As
             error: NodeErrorInterface::record_not_found(),
         })
     }
+    Ok(response)
 }
 
 impl AssetClassFilterInput {
@@ -113,7 +114,7 @@ impl AssetClassFilterInput {
 }
 
 impl AssetClassSortInput {
-    pub fn to_domian(self) -> AssetClassSort {
+    pub fn to_domain(self) -> AssetClassSort {
         use AssetClassSortField as to;
         use AssetClassSortFieldInput as from;
         let key = match self.key {
