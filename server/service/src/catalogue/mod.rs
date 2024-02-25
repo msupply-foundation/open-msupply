@@ -4,7 +4,6 @@ use self::query_class::{get_asset_class, get_asset_classes};
 use self::query_type::{get_asset_type, get_asset_types};
 
 use super::{ListError, ListResult};
-use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::RepositoryError;
 use repository::{
     assets::{
@@ -55,7 +54,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetClass>, SingleRecordError> {
+    ) -> Result<Option<AssetClass>, RepositoryError> {
         get_asset_class(connection, id)
     }
 
@@ -73,7 +72,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetCategory>, SingleRecordError> {
+    ) -> Result<Option<AssetCategory>, RepositoryError> {
         get_asset_category(connection, id)
     }
 
@@ -91,7 +90,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetType>, SingleRecordError> {
+    ) -> Result<Option<AssetType>, RepositoryError> {
         get_asset_type(connection, id)
     }
 }

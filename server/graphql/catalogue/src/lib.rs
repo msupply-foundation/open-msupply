@@ -1,7 +1,6 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use graphql_types::types::*;
-use repository::asset_class::AssetClass;
 
 pub mod asset_catalogue_item_queries;
 use self::asset_catalogue_item_queries::*;
@@ -55,7 +54,7 @@ impl AssetCatalogueItemQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc "id of the class")] id: String,
+        #[graphql(desc = "id of the class")] id: String,
     ) -> Result<AssetClassResponse> {
         asset_class(ctx, store_id, id)
     }
@@ -77,7 +76,7 @@ impl AssetCatalogueItemQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc "id of the class")] id: String,
+        #[graphql(desc = "id of the class")] id: String,
     ) -> Result<AssetCategoryResponse> {
         asset_category(ctx, store_id, id)
     }
@@ -99,7 +98,7 @@ impl AssetCatalogueItemQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc "id of the class")] id: String,
+        #[graphql(desc = "id of the class")] id: String,
     ) -> Result<AssetTypeResponse> {
         asset_type(ctx, store_id, id)
     }
