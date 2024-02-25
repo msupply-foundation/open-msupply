@@ -32,6 +32,11 @@ impl AssetTypeNode {
 }
 
 #[derive(Union)]
+pub enum AssetTypesResponse {
+    Response(AssetTypeConnector),
+}
+
+#[derive(Union)]
 
 pub enum AssetTypeResponse {
     Error(NodeError),
