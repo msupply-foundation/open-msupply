@@ -2,21 +2,21 @@ use async_graphql::*;
 
 use graphql_core::{
     simple_generic_errors::{OtherPartyNotASupplier, OtherPartyNotVisible},
-    standard_graphql_error::validate_auth,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
-use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_return::insert::{
-    InsertOutboundReturn as ServiceInput, InsertOutboundReturnLine,
+    InsertOutboundReturn as ServiceInput, InsertOutboundReturnError as ServiceError,
+    InsertOutboundReturnLine,
 };
 
 #[derive(InputObject)]
 #[graphql(name = "OutboundReturnInput")]
 pub struct InsertInput {
     pub id: String,
-    pub supplier_id: String, // to be other_party_id
+    pub supplier_id: String,
     pub outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
 
@@ -57,13 +57,16 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 
     let result = service_provider
         .invoice_service
-        .insert_outbound_return(&service_context, input);
+        .insert_outbound_return(&service_context, input.to_domain());
 
-    Ok(InsertResponse::Response(InvoiceNode::from_domain(
-        Invoice {
-            ..Default::default()
-        },
-    )))
+    match result {
+        Ok(outbound_return) => Ok(InsertResponse::Response(InvoiceNode::from_domain(
+            outbound_return,
+        ))),
+        Err(err) => Ok(InsertResponse::Error(InsertError {
+            error: map_error(err)?,
+        })),
+    }
 }
 
 #[derive(Interface)]
@@ -72,6 +75,32 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
 pub enum InsertErrorInterface {
     OtherPartyNotVisible(OtherPartyNotVisible),
     OtherPartyNotASupplier(OtherPartyNotASupplier),
+}
+
+fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        ServiceError::OtherPartyNotVisible => {
+            return Ok(InsertErrorInterface::OtherPartyNotVisible(
+                OtherPartyNotVisible,
+            ))
+        }
+        ServiceError::OtherPartyNotASupplier => {
+            return Ok(InsertErrorInterface::OtherPartyNotASupplier(
+                OtherPartyNotASupplier,
+            ))
+        }
+
+        // Standard Graphql Errors
+        ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    Err(graphql_error.extend())
 }
 
 impl InsertInput {
