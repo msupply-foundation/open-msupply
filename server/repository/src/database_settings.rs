@@ -44,6 +44,10 @@ impl DatabaseSettings {
     pub fn full_init_sql(&self) -> Option<String> {
         self.init_sql.clone()
     }
+
+    pub fn database_path(&self) -> String {
+        self.database_name.clone()
+    }
 }
 
 // feature sqlite

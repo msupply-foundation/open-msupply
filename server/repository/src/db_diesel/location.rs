@@ -107,7 +107,7 @@ impl<'a> LocationRepository<'a> {
 
 type BoxedLocationQuery = location::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(location_row: LocationRow) -> Location {
+fn to_domain(location_row: LocationRow) -> Location {
     Location { location_row }
 }
 

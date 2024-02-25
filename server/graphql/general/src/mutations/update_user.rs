@@ -18,7 +18,7 @@ pub struct UpdateUserNode {
 #[Object]
 impl UpdateUserNode {
     pub async fn last_successful_sync(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.last_successful_sync, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.last_successful_sync, Utc)
     }
 }
 
