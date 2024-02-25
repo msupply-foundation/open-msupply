@@ -1,6 +1,7 @@
 use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
 use self::query_category::{get_asset_categories, get_asset_category};
 use self::query_class::{get_asset_class, get_asset_classes};
+use self::query_type::{get_asset_type, get_asset_types};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -12,6 +13,7 @@ use repository::{
         },
         asset_category::{AssetCategory, AssetCategoryFilter, AssetCategorySort},
         asset_class::{AssetClass, AssetClassFilter, AssetClassSort},
+        asset_type::{AssetType, AssetTypeFilter, AssetTypeSort},
     },
     PaginationOption, StorageConnection,
 };
@@ -51,10 +53,10 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
 
     fn get_asset_class(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         id: String,
     ) -> Result<AssetClass, SingleRecordError> {
-        get_asset_class(ctx, id)
+        get_asset_class(connection, id)
     }
 
     fn get_asset_categories(
@@ -69,9 +71,27 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
 
     fn get_asset_category(
         &self,
-        ctx: &ServiceContext,
+        connection: &StorageConnection,
         id: String,
     ) -> Result<AssetCategory, SingleRecordError> {
-        get_asset_category(ctx, id)
+        get_asset_category(connection, id)
+    }
+
+    fn get_asset_types(
+        &self,
+        connection: &StorageConnection,
+        pagination: Option<PaginationOption>,
+        filter: Option<AssetTypeFilter>,
+        sort: Option<AssetTypeSort>,
+    ) -> Result<ListResult<AssetType>, ListError> {
+        get_asset_types(connection, pagination, filter, sort)
+    }
+
+    fn get_asset_type(
+        &self,
+        connection: &StorageConnection,
+        id: String,
+    ) -> Result<AssetType, SingleRecordError> {
+        get_asset_type(connection, id)
     }
 }
