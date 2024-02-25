@@ -145,8 +145,8 @@ export const currencyOptions = (code?: Currencies) => {
     }
     case 'COP': {
       return {
-        separator: ',',
-        decimal: '.',
+        separator: '.',
+        decimal: ',',
         symbol: '$',
         pattern: '# !',
         negativePattern: '-# !',
