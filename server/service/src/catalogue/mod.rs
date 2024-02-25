@@ -55,7 +55,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<AssetClass, SingleRecordError> {
+    ) -> Result<Option<AssetClass>, SingleRecordError> {
         get_asset_class(connection, id)
     }
 
@@ -73,7 +73,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<AssetCategory, SingleRecordError> {
+    ) -> Result<Option<AssetCategory>, SingleRecordError> {
         get_asset_category(connection, id)
     }
 
@@ -91,7 +91,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<AssetType, SingleRecordError> {
+    ) -> Result<Option<AssetType>, SingleRecordError> {
         get_asset_type(connection, id)
     }
 }
