@@ -46,6 +46,9 @@ impl AssetCategoryNode {
     pub fn from_domain(asset_category: AssetCategory) -> AssetCategoryNode {
         AssetCategoryNode { asset_category }
     }
+    pub fn row(&self) -> &AssetCategoryRow {
+        &self.asset_category.asset_category_row
+    }
 }
 
 impl AssetCategoryConnector {
