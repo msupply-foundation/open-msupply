@@ -7,6 +7,8 @@ pub mod asset_catalogue_item_queries;
 use self::asset_catalogue_item_queries::*;
 pub mod asset_class_queries;
 use self::asset_class_queries::*;
+pub mod asset_category_queries;
+use self::asset_category_queries::*;
 
 #[derive(Default, Clone)]
 pub struct AssetCatalogueItemQueries;
@@ -41,8 +43,9 @@ impl AssetCatalogueItemQueries {
         store_id: String,
         #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
         #[graphql(desc = "Filter option")] filter: Option<AssetClassFilterInput>,
-        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")] sort: Option<Vec<AssetClassSortInput>>
-    ) -> Result<AssetClassesResponse {
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<AssetClassSortInput>>,
+    ) -> Result<AssetClassesResponse> {
         asset_classes(ctx, store_id, page, filter, sort)
     }
 
@@ -53,5 +56,27 @@ impl AssetCatalogueItemQueries {
         #[graphql(desc "id of the class")] id: String,
     ) -> Result<AssetClassResponse> {
         asset_class(ctx, store_id, id)
+    }
+
+    // asset category queries
+    pub async fn asset_categories(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<AssetCategoryFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<AssetCategorySortInput>>,
+    ) -> Result<AssetCategoriesResponse> {
+        asset_categories(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn asset_category(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc "id of the class")] id: String,
+    ) -> Result<AssetCategoryResponse> {
+        asset_category(ctx, store_id, id)
     }
 }
