@@ -2,10 +2,10 @@ use repository::{
     assets::asset_category::{
         AssetCategory, AssetCategoryFilter, AssetCategoryRepository, AssetCategorySort,
     },
-    EqualFilter, PaginationOption, StorageConnection,
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
+use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -27,7 +27,7 @@ pub fn get_asset_categories(
 pub fn get_asset_category(
     connection: &StorageConnection,
     id: String,
-) -> Result<Option<AssetCategory>, SingleRecordError> {
+) -> Result<Option<AssetCategory>, RepositoryError> {
     let repository = AssetCategoryRepository::new(&connection);
     let mut result =
         repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))?;

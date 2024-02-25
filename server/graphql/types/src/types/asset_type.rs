@@ -40,7 +40,7 @@ pub enum AssetTypesResponse {
 
 pub enum AssetTypeResponse {
     Error(NodeError),
-    Response(AssetTypeConnector),
+    Response(AssetTypeNode),
 }
 
 impl AssetTypeNode {

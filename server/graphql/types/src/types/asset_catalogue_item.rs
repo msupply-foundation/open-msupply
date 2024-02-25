@@ -1,15 +1,8 @@
 use async_graphql::*;
 
-use graphql_core::{
-    generic_filters::{EqualFilterStringInput, StringFilterInput},
-    simple_generic_errors::NodeError,
-};
-use repository::{
-    assets::{
-        asset_catalogue_item::{self, AssetCatalogueItem, AssetCatalogueItemFilter},
-        asset_catalogue_item_row::AssetCatalogueItemRow,
-    },
-    EqualFilter, StringFilter,
+use graphql_core::simple_generic_errors::NodeError;
+use repository::assets::{
+    asset_catalogue_item::AssetCatalogueItem, asset_catalogue_item_row::AssetCatalogueItemRow,
 };
 use service::ListResult;
 

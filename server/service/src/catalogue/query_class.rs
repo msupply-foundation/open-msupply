@@ -1,9 +1,9 @@
 use repository::{
     assets::asset_class::{AssetClass, AssetClassFilter, AssetClassRepository, AssetClassSort},
-    EqualFilter, PaginationOption, StorageConnection,
+    EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
-use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
+use crate::{get_default_pagination, i64_to_u32, ListError, ListResult};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
@@ -25,7 +25,7 @@ pub fn get_asset_classes(
 pub fn get_asset_class(
     connection: &StorageConnection,
     id: String,
-) -> Result<Option<AssetClass>, SingleRecordError> {
+) -> Result<Option<AssetClass>, RepositoryError> {
     let repository = AssetClassRepository::new(&connection);
     let mut result =
         repository.query_by_filter(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))?;

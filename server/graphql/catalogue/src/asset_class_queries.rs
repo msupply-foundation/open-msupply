@@ -1,7 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
     generic_filters::{EqualFilterStringInput, StringFilterInput},
-    map_filter,
     pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -89,22 +88,17 @@ pub fn asset_class(ctx: &Context<'_>, store_id: String, id: String) -> Result<As
     let class = get_asset_class(&connection_manager, id)?;
 
     let response = match class {
-        Some(class) => {
-            AssetClassResponse::Response(AssetClassNode::from_domain(class))
-        }
+        Some(class) => AssetClassResponse::Response(AssetClassNode::from_domain(class)),
         None => AssetClassResponse::Error(NodeError {
             error: NodeErrorInterface::record_not_found(),
-        })
-    }
+        }),
+    };
     Ok(response)
 }
 
 impl AssetClassFilterInput {
     pub fn to_domain(self) -> AssetClassFilter {
-        let AssetClassFilterInput {
-            id,
-            name,
-        } = self;
+        let AssetClassFilterInput { id, name } = self;
 
         AssetClassFilter {
             id: id.map(EqualFilter::from),
