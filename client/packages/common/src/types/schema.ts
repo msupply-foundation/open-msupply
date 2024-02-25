@@ -633,7 +633,6 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
 
 export type DatabaseSettingsNode = {
   __typename: 'DatabaseSettingsNode';
-  /** Central server url */
   databaseType: DatabaseType;
 };
 
@@ -2950,6 +2949,7 @@ export type MutationsInsertLocationArgs = {
 
 export type MutationsInsertOutboundReturnArgs = {
   input: OutboundReturnInput;
+  storeId: Scalars['String']['input'];
 };
 
 

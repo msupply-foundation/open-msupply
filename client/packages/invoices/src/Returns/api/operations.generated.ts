@@ -57,6 +57,7 @@ export type InvoiceByNumberQueryVariables = Types.Exact<{
 export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
   input: Types.OutboundReturnInput;
 }>;
 
@@ -210,8 +211,8 @@ export const InvoiceByNumberDocument = gql`
 }
     `;
 export const InsertOutboundReturnDocument = gql`
-    mutation insertOutboundReturn($input: OutboundReturnInput!) {
-  insertOutboundReturn(input: $input) {
+    mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
+  insertOutboundReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
@@ -380,7 +381,7 @@ export const mockInvoiceByNumberQuery = (resolver: ResponseResolver<GraphQLReque
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockInsertOutboundReturnMutation((req, res, ctx) => {
- *   const { input } = req.variables;
+ *   const { storeId, input } = req.variables;
  *   return res(
  *     ctx.data({ insertOutboundReturn })
  *   )
