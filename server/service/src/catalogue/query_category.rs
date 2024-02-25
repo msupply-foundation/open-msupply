@@ -30,13 +30,9 @@ pub fn get_asset_categories(
 pub fn get_asset_category(
     connection: &StorageConnection,
     id: String,
-) -> Result<AssetCategory, SingleRecordError> {
+) -> Result<Option<AssetCategory>, SingleRecordError> {
     let repository = AssetCategoryRepository::new(&connection);
     let mut result =
         repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))?;
-    if let Some(record) = result.pop() {
-        Ok(record)
-    } else {
-        Err(SingleRecordError::NotFound(id))
-    }
+    Ok(result.pop())
 }

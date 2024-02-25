@@ -28,13 +28,9 @@ pub fn get_asset_types(
 pub fn get_asset_type(
     connection: &StorageConnection,
     id: String,
-) -> Result<AssetType, SingleRecordError> {
+) -> Result<Option<AssetType>, SingleRecordError> {
     let repository = AssetTypeRepository::new(&connection);
     let mut result =
         repository.query_by_filter(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))?;
-    if let Some(record) = result.pop() {
-        Ok(record)
-    } else {
-        Err(SingleRecordError::NotFound(id))
-    }
+    Ok(result.pop())
 }
