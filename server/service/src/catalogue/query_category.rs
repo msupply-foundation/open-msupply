@@ -5,10 +5,7 @@ use repository::{
     EqualFilter, PaginationOption, StorageConnection,
 };
 
-use crate::{
-    get_default_pagination, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
-    SingleRecordError,
-};
+use crate::{get_default_pagination, i64_to_u32, ListError, ListResult, SingleRecordError};
 
 pub const MAX_LIMIT: u32 = 1000;
 pub const MIN_LIMIT: u32 = 1;
