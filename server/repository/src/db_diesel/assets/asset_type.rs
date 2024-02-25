@@ -11,6 +11,8 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 
+#[derive(PartialEq, Debug, Clone)]
+
 pub struct AssetType {
     pub asset_type_row: AssetTypeRow,
 }
