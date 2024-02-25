@@ -94,6 +94,7 @@ fn trans_line_1_pull_record() -> TestSyncPullRecord {
             number_of_packs: 700.36363636,
             note: None,
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
         }),
     )
 }
@@ -206,6 +207,7 @@ fn trans_line_2_pull_record() -> TestSyncPullRecord {
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
         }),
     )
 }
@@ -321,6 +323,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
         }),
     )
 }
@@ -436,6 +439,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
         }),
     )
 }
