@@ -154,13 +154,25 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             code,
             manufacturer,
             model,
-            ..
+            category: _, // Handled in query() function
+            category_id,
+            class: _, // Handled in query() function
+            class_id,
+            r#type: _, // Handled in query() function
+            type_id,
         } = f;
 
         apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
         apply_string_filter!(query, code, asset_catalogue_item_dsl::code);
         apply_string_filter!(query, manufacturer, asset_catalogue_item_dsl::manufacturer);
         apply_string_filter!(query, model, asset_catalogue_item_dsl::model);
+        apply_equal_filter!(
+            query,
+            category_id,
+            asset_catalogue_item_dsl::asset_category_id
+        );
+        apply_equal_filter!(query, class_id, asset_catalogue_item_dsl::asset_class_id);
+        apply_equal_filter!(query, type_id, asset_catalogue_item_dsl::asset_type_id);
     }
     query
 }
