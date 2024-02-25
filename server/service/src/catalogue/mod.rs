@@ -1,6 +1,6 @@
 use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
-use self::query_categories::{get_asset_categories, get_asset_category};
-use self::query_classes::{get_asset_class, get_asset_classes};
+use self::query_category::{get_asset_categories, get_asset_category};
+use self::query_class::{get_asset_class, get_asset_classes};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
@@ -17,9 +17,9 @@ use repository::{
 };
 
 pub mod query_catalogue_item;
-pub mod query_categories;
-pub mod query_classes;
-pub mod query_types;
+pub mod query_category;
+pub mod query_class;
+pub mod query_type;
 pub trait AssetCatalogueServiceTrait: Sync + Send {
     fn get_asset_catalogue_items(
         &self,
