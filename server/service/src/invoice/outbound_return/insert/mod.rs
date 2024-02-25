@@ -38,10 +38,12 @@ pub enum InsertOutboundReturnError {
     DatabaseError(RepositoryError),
 }
 
+type OutError = InsertOutboundReturnError;
+
 pub fn insert_outbound_return(
     ctx: &ServiceContext,
     input: InsertOutboundReturn,
-) -> Result<Invoice, InsertOutboundReturnError> {
+) -> Result<Invoice, OutError> {
     let outbound_return: Invoice = ctx
         .connection
         .transaction_sync(|connection| {
@@ -69,28 +71,25 @@ pub fn insert_outbound_return(
             }
 
             get_invoice(ctx, None, &new_invoice.id)
-                .map_err(|error| InsertOutboundReturnError::DatabaseError(error))?
-                .ok_or(InsertOutboundReturnError::NewlyCreatedInvoiceDoesNotExist)
+                .map_err(|error| OutError::DatabaseError(error))?
+                .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
     Ok(outbound_return)
 }
 
-impl From<RepositoryError> for InsertOutboundReturnError {
+impl From<RepositoryError> for OutError {
     fn from(error: RepositoryError) -> Self {
-        InsertOutboundReturnError::DatabaseError(error)
+        OutError::DatabaseError(error)
     }
 }
 
-impl From<TransactionError<InsertOutboundReturnError>> for InsertOutboundReturnError {
-    fn from(error: TransactionError<InsertOutboundReturnError>) -> Self {
+impl From<TransactionError<OutError>> for OutError {
+    fn from(error: TransactionError<OutError>) -> Self {
         match error {
             TransactionError::Transaction { msg, level } => {
-                InsertOutboundReturnError::DatabaseError(RepositoryError::TransactionError {
-                    msg,
-                    level,
-                })
+                OutError::DatabaseError(RepositoryError::TransactionError { msg, level })
             }
             TransactionError::Inner(e) => e,
         }
@@ -109,7 +108,9 @@ mod test {
     use util::{inline_edit, inline_init};
 
     use crate::{
-        invoice::outbound_return::insert::{InsertOutboundReturn, InsertOutboundReturnError},
+        invoice::outbound_return::insert::{
+            InsertOutboundReturn, InsertOutboundReturnError as ServiceError,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -159,7 +160,7 @@ mod test {
                     r.id = mock_outbound_return_a().id;
                 })
             ),
-            Err(InsertOutboundReturnError::InvoiceAlreadyExists)
+            Err(ServiceError::InvoiceAlreadyExists)
         );
 
         // OtherPartyDoesNotExist
@@ -171,7 +172,7 @@ mod test {
                     r.other_party_id = "does_not_exist".to_string();
                 })
             ),
-            Err(InsertOutboundReturnError::OtherPartyDoesNotExist)
+            Err(ServiceError::OtherPartyDoesNotExist)
         );
 
         // OtherPartyNotVisible
@@ -183,7 +184,7 @@ mod test {
                     r.other_party_id = not_visible().id.clone();
                 })
             ),
-            Err(InsertOutboundReturnError::OtherPartyNotVisible)
+            Err(ServiceError::OtherPartyNotVisible)
         );
 
         // OtherPartyNotASupplier
@@ -195,7 +196,7 @@ mod test {
                     r.other_party_id = not_a_supplier().id.clone();
                 })
             ),
-            Err(InsertOutboundReturnError::OtherPartyNotASupplier)
+            Err(ServiceError::OtherPartyNotASupplier)
         );
 
         // TODO: line error?
