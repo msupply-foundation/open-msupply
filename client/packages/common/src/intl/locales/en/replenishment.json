@@ -28,7 +28,7 @@
   "info.automatic-shipment-no-edit": "You are unable to edit details until the status is confirmed as Delivered.",
   "info.manual-shipment": "This shipment was created manually. The delivery status will not be automatically updated.",
   "label.add-batch": "Add batch",
-  "label.cant-zero-quantity-disabled": "All lines must be selected as this will finalise the invoice and quantities can only be set 0 when the status is New",
+  "label.cant-zero-quantity-disabled": "All lines must be selected and status must be New",
   "label.consumption": "Consumption",
   "label.current": "Current",
   "label.draft": "Draft",

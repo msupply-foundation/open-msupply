@@ -14,9 +14,6 @@ pub fn generate(
     let new_line = generate_line(existing_invoice_line.clone());
 
     let invoice_row = InvoiceRow {
-        status: InvoiceRowStatus::Verified,
-        delivered_datetime: Some(chrono::Utc::now().naive_utc()),
-        verified_datetime: Some(chrono::Utc::now().naive_utc()),
         user_id: if existing_invoice_row.user_id != Some(user_id.to_string()) {
             Some(user_id.to_string())
         } else {
