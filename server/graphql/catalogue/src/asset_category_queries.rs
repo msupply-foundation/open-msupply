@@ -78,7 +78,7 @@ pub fn asset_categories(
     ))
 }
 
-pub fn asset_category(ctx: &Conect<'_>, store_id, id:String) -> Result<AssetCategoryResponse> {
+pub fn asset_category(ctx: &Context<'_>, store_id: String, id:String) -> Result<AssetCategoryResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {

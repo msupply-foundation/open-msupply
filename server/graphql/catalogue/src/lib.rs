@@ -9,6 +9,8 @@ pub mod asset_class_queries;
 use self::asset_class_queries::*;
 pub mod asset_category_queries;
 use self::asset_category_queries::*;
+pub mod asset_type_queries;
+use self::asset_type_queries::*;
 
 #[derive(Default, Clone)]
 pub struct AssetCatalogueItemQueries;
@@ -78,5 +80,27 @@ impl AssetCatalogueItemQueries {
         #[graphql(desc "id of the class")] id: String,
     ) -> Result<AssetCategoryResponse> {
         asset_category(ctx, store_id, id)
+    }
+
+    // asset type queries
+    pub async fn asset_types(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<AssetTypeFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<AssetTypeSortInput>>,
+    ) -> Result<AssetTypesResponse> {
+        asset_types(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn asset_type(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc "id of the class")] id: String,
+    ) -> Result<AssetTypeResponse> {
+        asset_type(ctx, store_id, id)
     }
 }
