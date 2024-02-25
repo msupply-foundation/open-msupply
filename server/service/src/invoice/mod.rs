@@ -10,6 +10,9 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
+use self::outbound_return::insert::insert_outbound_return;
+use self::outbound_return::insert::InsertOutboundReturn;
+use self::outbound_return::insert::InsertOutboundReturnError;
 use self::outbound_shipment::batch_outbound_shipment;
 use self::outbound_shipment::BatchOutboundShipment;
 use self::outbound_shipment::BatchOutboundShipmentResult;
@@ -184,6 +187,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: BatchPrescription,
     ) -> Result<BatchPrescriptionResult, RepositoryError> {
         batch_prescription(ctx, input)
+    }
+
+    fn insert_outbound_return(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertOutboundReturn,
+    ) -> Result<Invoice, InsertOutboundReturnError> {
+        insert_outbound_return(ctx, input)
     }
 }
 
