@@ -1,4 +1,4 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   EditIcon,
   IconButton,
@@ -26,13 +26,8 @@ export const CurrencyModal: FC<CurrencyModalProps> = ({
   const modalController = useToggle();
   const [value, setValue] = React.useState(currency);
 
-  useEffect(() => {
-    setValue(currency);
-  }, [currency]);
-
   const onClose = () => {
     modalController.toggleOff();
-    setValue(currency);
   };
 
   return (
