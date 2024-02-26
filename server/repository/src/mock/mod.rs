@@ -110,13 +110,13 @@ use crate::{
     PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
     ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
     ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
-    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
-    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
-    SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
-    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
-    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
+    ReturnReasonRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
+    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
+    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
+    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
+    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -168,6 +168,7 @@ pub struct MockData {
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
+    pub return_reasons: Vec<ReturnReasonRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
@@ -229,6 +230,7 @@ pub struct MockDataInserts {
     pub activity_logs: bool,
     pub sync_logs: bool,
     pub inventory_adjustment_reasons: bool,
+    pub return_reasons: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -279,6 +281,7 @@ impl MockDataInserts {
             activity_logs: true,
             sync_logs: true,
             inventory_adjustment_reasons: true,
+            return_reasons: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -446,6 +449,10 @@ impl MockDataInserts {
 
     pub fn inventory_adjustment_reasons(mut self) -> Self {
         self.inventory_adjustment_reasons = true;
+        self
+    }
+    pub fn return_reasons(mut self) -> Self {
+        self.return_reasons = true;
         self
     }
 
@@ -902,6 +909,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.return_reasons {
+            for row in &mock_data.return_reasons {
+                let repo = ReturnReasonRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
 
         if inserts.programs {
             for row in &mock_data.programs {
@@ -1001,6 +1014,7 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
+            mut return_reasons,
             mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
@@ -1049,6 +1063,7 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
+        self.return_reasons.append(&mut return_reasons);
         self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);

@@ -144,7 +144,8 @@ mod test {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow, RepositoryError,
+        InvoiceLineRowRepository, InvoiceRowRepository, NameRow, NameStoreJoinRow, RepositoryError,
+        ReturnReasonRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -304,12 +305,19 @@ mod test {
             })
         }
 
+        fn return_reason() -> ReturnReasonRow {
+            inline_init(|r: &mut ReturnReasonRow| {
+                r.id = "return_reason".to_string();
+            })
+        }
+
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "test_insert_outbound_return_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
                 r.names = vec![supplier()];
                 r.name_store_joins = vec![supplier_join()];
+                r.return_reasons = vec![return_reason()];
             }),
         )
         .await;
@@ -326,6 +334,12 @@ mod test {
                 inline_init(|r: &mut InsertOutboundReturn| {
                     r.id = "new_outbound_return_id".to_string();
                     r.other_party_id = supplier().id;
+                    r.outbound_return_lines = vec![InsertOutboundReturnLine {
+                        id: "new_outbound_return_line_id".to_string(),
+                        stock_line_id: mock_stock_line_b().id,
+                        reason_id: return_reason().id,
+                        ..Default::default()
+                    }];
                 }),
             )
             .unwrap();
@@ -340,6 +354,22 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
+                u
+            })
+        );
+
+        let lines = InvoiceLineRowRepository::new(&connection)
+            .find_many_by_invoice_id("new_outbound_return_id")
+            .unwrap();
+
+        assert_eq!(lines.len(), 1);
+        assert_eq!(
+            lines[0],
+            inline_edit(&lines[0], |mut u| {
+                u.invoice_id = "new_outbound_return_id".to_string();
+                u.id = "new_outbound_return_line_id".to_string();
+                u.stock_line_id = Some(mock_stock_line_b().id);
+                u.return_reason_id = Some(return_reason().id);
                 u
             })
         );
