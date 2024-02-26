@@ -6,9 +6,9 @@ use super::asset_type_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection,
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub enum AssetTypeSortField {
@@ -20,7 +20,7 @@ pub type AssetTypeSort = Sort<AssetTypeSortField>;
 #[derive(Clone)]
 pub struct AssetTypeFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
     pub category_id: Option<EqualFilter<String>>,
 }
 
@@ -38,7 +38,7 @@ impl AssetTypeFilter {
         self
     }
 
-    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn name(mut self, filter: StringFilter) -> Self {
         self.name = Some(filter);
         self
     }
@@ -129,7 +129,7 @@ fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery
         } = f;
 
         apply_equal_filter!(query, id, asset_type_dsl::id);
-        apply_equal_filter!(query, name, asset_type_dsl::name);
+        apply_string_filter!(query, name, asset_type_dsl::name);
         apply_equal_filter!(query, category_id, asset_type_dsl::asset_category_id);
     }
     query
@@ -139,15 +139,13 @@ fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery
 mod tests {
     use crate::{
         assets::{
-            asset_category_row::AssetCategoryRow,
-            asset_category_row::AssetCategoryRowRepository,
-            asset_class_row::AssetClassRow,
-            asset_class_row::AssetClassRowRepository,
+            asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
+            asset_class_row::{AssetClassRow, AssetClassRowRepository},
             asset_type::AssetTypeRepository,
             asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },
         mock::MockDataInserts,
-        test_db, EqualFilter,
+        test_db, EqualFilter, StringFilter,
     };
 
     use super::AssetTypeFilter;
@@ -203,7 +201,7 @@ mod tests {
 
         // Query by name
         let t = type_repository
-            .query_one(AssetTypeFilter::new().name(EqualFilter::equal_to(&name)))
+            .query_one(AssetTypeFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
         assert_eq!(t.id, id);

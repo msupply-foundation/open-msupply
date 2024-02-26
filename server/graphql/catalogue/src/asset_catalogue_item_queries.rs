@@ -48,7 +48,7 @@ pub struct AssetCatalogueItemFilterInput {
     pub code: Option<StringFilterInput>,
     pub manufacturer: Option<StringFilterInput>,
     pub model: Option<StringFilterInput>,
-    pub r#type: Option<EqualFilterStringInput>,
+    pub r#type: Option<StringFilterInput>,
     pub type_id: Option<EqualFilterStringInput>,
 }
 
@@ -63,7 +63,7 @@ impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
             code: f.code.map(StringFilter::from),
             manufacturer: f.manufacturer.map(StringFilter::from),
             model: f.model.map(StringFilter::from),
-            r#type: f.r#type.map(EqualFilter::from),
+            r#type: f.r#type.map(StringFilter::from),
             type_id: f.type_id.map(EqualFilter::from),
         }
     }
@@ -143,7 +143,7 @@ impl AssetCatalogueItemFilterInput {
             code: code.map(StringFilter::from),
             manufacturer: manufacturer.map(StringFilter::from),
             model: model.map(StringFilter::from),
-            r#type: r#type.map(EqualFilter::from),
+            r#type: r#type.map(StringFilter::from),
             type_id: type_id.map(EqualFilter::from),
         }
     }
