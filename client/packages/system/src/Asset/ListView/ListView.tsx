@@ -8,11 +8,9 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
-  ColumnAlign,
   TooltipTextCell,
-  useToggle,
 } from '@openmsupply-client/common';
-import { useAssets, ItemRowFragment } from '../api';
+import { AssetCatalogueItemFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 
@@ -22,32 +20,33 @@ const AssetListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
-    filters: [{ key: 'codeOrName' }],
+    initialSort: { key: 'code', dir: 'asc' },
+    filters: [
+      { key: 'manufacturer' },
+      { key: 'model' },
+      { key: 'category' },
+      { key: 'class' },
+      { key: 'type' },
+    ],
   });
   const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const modalController = useToggle();
 
-  const columns = useColumns<ItemRowFragment>(
+  const columns = useColumns<AssetCatalogueItemFragment>(
     [
-      ['code', { width: 75 }],
-      [
-        'name',
-        {
-          Cell: TooltipTextCell,
-          maxWidth: 350,
-        },
-      ],
+      ['code', { width: 150 }],
       {
-        accessor: ({ rowData }) => rowData.unitName ?? '',
-        align: ColumnAlign.Right,
-        key: 'unitName',
-        label: 'label.unit',
-        sortable: false,
-        width: 100,
+        key: 'manufacturer',
+        Cell: TooltipTextCell,
+        maxWidth: 350,
+        label: 'label.manufacturer',
+      },
+
+      {
+        key: 'model',
+        label: 'label.model',
       },
     ],
     {
@@ -59,7 +58,7 @@ const AssetListComponent: FC = () => {
 
   return (
     <>
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons />
       <Toolbar />
       <DataTable
         id="item-list"

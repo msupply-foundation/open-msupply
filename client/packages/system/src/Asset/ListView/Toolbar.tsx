@@ -24,24 +24,24 @@ export const Toolbar = () => {
             {
               type: 'text',
               name: t('label.code'),
-              urlParameter: 'asset.code',
+              urlParameter: 'code',
             },
             {
               type: 'text',
               name: t('label.manufacturer'),
-              urlParameter: 'asset.manufacturer',
+              urlParameter: 'manufacturer',
               placeholder: t('placeholder.search-by-location-name'),
             },
             {
               type: 'text',
               name: t('label.model'),
-              urlParameter: 'asset.model',
+              urlParameter: 'model',
               placeholder: t('placeholder.search-by-location-name'),
             },
             {
               type: 'enum',
               name: t('label.class'),
-              urlParameter: 'asset.class',
+              urlParameter: 'class',
               options: [
                 {
                   label: 'Cold Chain Equipment',
@@ -52,7 +52,7 @@ export const Toolbar = () => {
             {
               type: 'enum',
               name: t('label.category'),
-              urlParameter: 'asset.category',
+              urlParameter: 'category',
               options: [
                 {
                   label: 'Insulated Containers',
@@ -67,7 +67,7 @@ export const Toolbar = () => {
             {
               type: 'enum',
               name: t('label.type'),
-              urlParameter: 'asset.type',
+              urlParameter: 'type',
               options: [
                 {
                   label: 'Icelined refrigerator',

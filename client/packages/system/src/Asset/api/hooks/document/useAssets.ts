@@ -3,7 +3,13 @@ import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssets = () => {
   const { queryParams } = useUrlQueryParams({
-    filters: [{ key: 'codeOrName' }],
+    filters: [
+      { key: 'manufacturer' },
+      { key: 'model' },
+      { key: 'category' },
+      { key: 'class' },
+      { key: 'type' },
+    ],
   });
   const api = useAssetApi();
   return useQuery(api.keys.paramList(queryParams), () =>

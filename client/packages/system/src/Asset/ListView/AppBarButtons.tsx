@@ -1,26 +1,20 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   DownloadIcon,
-  PlusCircleIcon,
   useNotification,
   AppBarButtonsPortal,
-  ButtonWithIcon,
   Grid,
   useTranslation,
   //   FnUtils,
   //   FileUtils,
   LoadingButton,
-  ToggleState,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-// import { CustomerSearchModal } from '@openmsupply-client/system';
 // import { useAsset } from '../api';
 // import { assetsToCsv } from '../../utils';
 
-export const AppBarButtonsComponent: FC<{
-  modalController: ToggleState;
-}> = ({ modalController }) => {
+export const AppBarButtonsComponent = () => {
   const { success /* , error */ } = useNotification();
   //   const { mutate: onCreate } = useOutbound.document.insert();
   const t = useTranslation(['catalogue']);
@@ -45,29 +39,6 @@ export const AppBarButtonsComponent: FC<{
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-catalogue-item')}
-          onClick={modalController.toggleOn}
-        />
-        {/* <CustomerSearchModal
-          open={modalController.isOn}
-          onClose={modalController.toggleOff}
-          onChange={async name => {
-            modalController.toggleOff();
-            try {
-              await onCreate({
-                id: FnUtils.generateUUID(),
-                otherPartyId: name?.id,
-              });
-            } catch (e) {
-              const errorSnack = error(
-                'Failed to create invoice! ' + (e as Error).message
-              );
-              errorSnack();
-            }
-          }}
-        /> */}
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={false}
