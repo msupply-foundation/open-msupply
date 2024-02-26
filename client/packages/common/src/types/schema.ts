@@ -1471,7 +1471,7 @@ export type InboundReturnInput = {
 export type InboundReturnLine = {
   __typename: 'InboundReturnLine';
   batch?: Maybe<Scalars['String']['output']>;
-  comment: Scalars['String']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
@@ -1484,7 +1484,7 @@ export type InboundReturnLine = {
 };
 
 export type InboundReturnLineInput = {
-  comment: Scalars['String']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacksReturned: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
