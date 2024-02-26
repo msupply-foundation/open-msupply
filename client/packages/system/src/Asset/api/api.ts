@@ -1,58 +1,62 @@
 import {
   SortBy,
-  ItemSortFieldInput,
   FilterByWithBoolean,
+  AssetCatalogueItemSortFieldInput,
 } from '@openmsupply-client/common';
-import { Sdk, ItemRowFragment } from './operations.generated';
+import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
 export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
   filterBy?: FilterByWithBoolean | null;
-  isVisible?: boolean;
 };
 
 const itemParsers = {
-  toSortField: (sortBy: SortBy<ItemRowFragment>) => {
-    const fields: Record<string, ItemSortFieldInput> = {
-      name: ItemSortFieldInput.Name,
-      code: ItemSortFieldInput.Code,
+  toSortField: (sortBy: SortBy<AssetCatalogueItemFragment>) => {
+    const fields: Record<string, AssetCatalogueItemSortFieldInput> = {
+      catalogue: AssetCatalogueItemSortFieldInput.Catalogue,
+      code: AssetCatalogueItemSortFieldInput.Code,
+      make: AssetCatalogueItemSortFieldInput.Manufacturer,
+      model: AssetCatalogueItemSortFieldInput.Model,
     };
 
-    return fields[sortBy.key] ?? ItemSortFieldInput.Name;
+    return fields[sortBy.key] ?? AssetCatalogueItemSortFieldInput.Manufacturer;
   },
 };
 
 export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
   get: {
-    byId: async (itemId: string) => {
-      const result = await sdk.itemById({ storeId, itemId });
-      const { items } = result;
-      if (items.__typename === 'ItemConnector') {
-        if (items.nodes.length) {
-          return items.nodes[0];
+    byId: async (assetCatalogueItemId: string) => {
+      const result = await sdk.assetCatalogueItemById({
+        storeId,
+        assetCatalogueItemId,
+      });
+      const { assetCatalogueItems } = result;
+      if (assetCatalogueItems.__typename === 'AssetCatalogueItemConnector') {
+        if (assetCatalogueItems.nodes.length) {
+          return assetCatalogueItems.nodes[0];
         }
       }
 
-      throw new Error('Item not found');
+      throw new Error('Asset catalogue item not found');
     },
     list: async ({
       first,
       offset,
       sortBy,
       filterBy,
-    }: ListParams<ItemRowFragment>) => {
-      const result = await sdk.items({
+    }: ListParams<AssetCatalogueItemFragment>) => {
+      const result = await sdk.assetCatalogueItems({
         first,
         offset,
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, isVisible: true, isActive: true },
+        filter: filterBy,
       });
 
-      const items = result?.items;
+      const items = result?.assetCatalogueItems;
 
       return items;
     },

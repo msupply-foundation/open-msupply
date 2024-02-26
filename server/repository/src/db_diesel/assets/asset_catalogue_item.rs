@@ -39,7 +39,7 @@ pub struct AssetCatalogueItemFilter {
 pub enum AssetCatalogueItemSortField {
     Catalogue,
     Code,
-    Make,
+    Manufacturer,
     Model,
 }
 
@@ -83,7 +83,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 AssetCatalogueItemSortField::Code => {
                     apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::code)
                 }
-                AssetCatalogueItemSortField::Make => {
+                AssetCatalogueItemSortField::Manufacturer => {
                     apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::manufacturer)
                 }
                 AssetCatalogueItemSortField::Model => {

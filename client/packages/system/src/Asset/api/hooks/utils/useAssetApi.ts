@@ -1,6 +1,6 @@
 import { getAssetQueries, ListParams } from '../../api';
 import { useAuthContext, useGql } from '@openmsupply-client/common';
-import { getSdk, ItemRowFragment } from '../../operations.generated';
+import { getSdk, AssetCatalogueItemFragment } from '../../operations.generated';
 
 export const useAssetApi = () => {
   const { client } = useGql();
@@ -10,7 +10,7 @@ export const useAssetApi = () => {
     base: () => ['asset'] as const,
     detail: (id: string) => [...keys.base(), storeId, id] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
-    paramList: (params: ListParams<ItemRowFragment>) =>
+    paramList: (params: ListParams<AssetCatalogueItemFragment>) =>
       [...keys.list(), params] as const,
   };
 
