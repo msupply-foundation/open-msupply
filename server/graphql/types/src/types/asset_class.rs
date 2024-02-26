@@ -2,13 +2,13 @@ use async_graphql::*;
 
 use graphql_core::simple_generic_errors::NodeError;
 
-use repository::assets::{asset_class::AssetClass, asset_class_row::AssetClassRow};
+use repository::assets::asset_class_row::AssetClassRow;
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 
 pub struct AssetClassNode {
-    pub asset_class: AssetClass,
+    pub asset_class: AssetClassRow,
 }
 
 #[derive(SimpleObject)]
@@ -40,16 +40,16 @@ pub enum AssetClassResponse {
 }
 
 impl AssetClassNode {
-    pub fn from_domain(asset_class: AssetClass) -> AssetClassNode {
+    pub fn from_domain(asset_class: AssetClassRow) -> AssetClassNode {
         AssetClassNode { asset_class }
     }
     pub fn row(&self) -> &AssetClassRow {
-        &self.asset_class.asset_class_row
+        &self.asset_class
     }
 }
 
 impl AssetClassConnector {
-    pub fn from_domain(asset_classes: ListResult<AssetClass>) -> AssetClassConnector {
+    pub fn from_domain(asset_classes: ListResult<AssetClassRow>) -> AssetClassConnector {
         AssetClassConnector {
             total_count: asset_classes.count,
             nodes: asset_classes

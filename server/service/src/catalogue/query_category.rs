@@ -1,7 +1,6 @@
 use repository::{
-    assets::asset_category::{
-        AssetCategory, AssetCategoryFilter, AssetCategoryRepository, AssetCategorySort,
-    },
+    asset_category_row::AssetCategoryRow,
+    assets::asset_category::{AssetCategoryFilter, AssetCategoryRepository, AssetCategorySort},
     EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
 
@@ -15,7 +14,7 @@ pub fn get_asset_categories(
     pagination: Option<PaginationOption>,
     filter: Option<AssetCategoryFilter>,
     sort: Option<AssetCategorySort>,
-) -> Result<ListResult<AssetCategory>, ListError> {
+) -> Result<ListResult<AssetCategoryRow>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = AssetCategoryRepository::new(&connection);
     Ok(ListResult {
@@ -27,7 +26,7 @@ pub fn get_asset_categories(
 pub fn get_asset_category(
     connection: &StorageConnection,
     id: String,
-) -> Result<Option<AssetCategory>, RepositoryError> {
+) -> Result<Option<AssetCategoryRow>, RepositoryError> {
     let repository = AssetCategoryRepository::new(&connection);
     let mut result =
         repository.query_by_filter(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))?;
