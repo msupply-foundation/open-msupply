@@ -30,7 +30,7 @@ impl AssetCatalogueItemQueries {
     pub async fn asset_catalogue_item(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "id of the asset catalogue item")] id: String,
+        id: String,
     ) -> Result<AssetCatalogueItemResponse> {
         asset_catalogue_item(ctx, id)
     }
@@ -47,11 +47,7 @@ impl AssetCatalogueItemQueries {
         asset_classes(ctx, page, filter, sort)
     }
 
-    pub async fn asset_class(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "id of the class")] id: String,
-    ) -> Result<AssetClassResponse> {
+    pub async fn asset_class(&self, ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> {
         asset_class(ctx, id)
     }
 
@@ -70,7 +66,7 @@ impl AssetCatalogueItemQueries {
     pub async fn asset_category(
         &self,
         ctx: &Context<'_>,
-        #[graphql(desc = "id of the class")] id: String,
+        id: String,
     ) -> Result<AssetCategoryResponse> {
         asset_category(ctx, id)
     }
@@ -87,11 +83,7 @@ impl AssetCatalogueItemQueries {
         asset_types(ctx, page, filter, sort)
     }
 
-    pub async fn asset_type(
-        &self,
-        ctx: &Context<'_>,
-        #[graphql(desc = "id of the class")] id: String,
-    ) -> Result<AssetTypeResponse> {
+    pub async fn asset_type(&self, ctx: &Context<'_>, id: String) -> Result<AssetTypeResponse> {
         asset_type(ctx, id)
     }
 }
