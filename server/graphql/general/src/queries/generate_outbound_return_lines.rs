@@ -6,6 +6,8 @@ use graphql_core::{
 use graphql_types::types::OutboundReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
+use service::invoice::outbound_return::generate_outbound_return_lines::GenerateOutboundReturnLinesInput as ServiceInput;
+
 #[derive(InputObject, Clone)]
 /// At least one input is required.
 /// Note that if you provide multiple inputs, they will be applied as an AND filter.
@@ -39,16 +41,26 @@ pub fn generate_outbound_return_lines(
 
     let return_lines = service_provider
         .invoice_service
-        .generate_outbound_return_lines(
-            &service_context,
-            &store_id,
-            input.stock_line_ids,
-            input.item_id,
-            input.return_id,
-        )
+        .generate_outbound_return_lines(&service_context, &store_id, input.to_domain())
         .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(GenerateOutboundReturnLinesResponse::Response(
         OutboundReturnLineConnector::from_domain(return_lines),
     ))
+}
+
+impl GenerateOutboundReturnLinesInput {
+    fn to_domain(self) -> ServiceInput {
+        let GenerateOutboundReturnLinesInput {
+            stock_line_ids,
+            item_id,
+            return_id,
+        } = self;
+
+        ServiceInput {
+            stock_line_ids,
+            item_id,
+            return_id,
+        }
+    }
 }

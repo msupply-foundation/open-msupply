@@ -11,12 +11,20 @@ pub struct OutboundReturnLine {
     pub stock_line: StockLine,
 }
 
+pub struct GenerateOutboundReturnLinesInput {
+    pub stock_line_ids: Vec<String>,
+    pub item_id: Option<String>,
+    pub return_id: Option<String>,
+}
+
 pub fn generate_outbound_return_lines(
     ctx: &ServiceContext,
     store_id: &str,
-    stock_line_ids: Vec<String>,
-    item_id: Option<String>,
-    return_id: Option<String>,
+    GenerateOutboundReturnLinesInput {
+        stock_line_ids,
+        item_id,
+        return_id,
+    }: GenerateOutboundReturnLinesInput,
 ) -> Result<ListResult<OutboundReturnLine>, ListError> {
     if stock_line_ids.is_empty() && item_id.is_none() && return_id.is_none() {
         return Ok(ListResult {
@@ -72,6 +80,8 @@ mod test {
         test_db::setup_all,
     };
 
+    type ServiceInput = super::GenerateOutboundReturnLinesInput;
+
     #[actix_rt::test]
     async fn generate_outbound_return_lines_nothing_supplied() {
         let (_, _, connection_manager, _) = setup_all(
@@ -90,7 +100,15 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(&context, store_id, stock_line_ids, item_id, return_id)
+            .generate_outbound_return_lines(
+                &context,
+                store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            )
             .unwrap();
 
         assert_eq!(result.count, 0);
@@ -117,7 +135,15 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(&context, store_id, stock_line_ids, item_id, return_id)
+            .generate_outbound_return_lines(
+                &context,
+                store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            )
             .unwrap();
 
         assert_eq!(result.count, 2);
@@ -142,7 +168,15 @@ mod test {
         let return_id = None;
 
         let result = service
-            .generate_outbound_return_lines(&context, store_id, stock_line_ids, item_id, return_id)
+            .generate_outbound_return_lines(
+                &context,
+                store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            )
             .unwrap();
 
         assert_eq!(result.count, 1);
