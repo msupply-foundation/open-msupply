@@ -2175,6 +2175,7 @@ export type InvoiceLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   pricing: PricingNode;
+  returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;

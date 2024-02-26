@@ -120,6 +120,16 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
       lines {
         nodes {
           id
+          returnReasonId
+          stockLine {
+            id
+            packSize
+            item {
+              id
+              code
+              name
+            }
+          }
         }
       }
       otherPartyName
