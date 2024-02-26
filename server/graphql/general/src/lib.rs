@@ -309,8 +309,8 @@ impl GeneralQueries {
         generate_outbound_return_lines(ctx, store_id, input)
     }
 
-    pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
-        return_reasons()
+    pub async fn return_reasons(&self, ctx: &Context<'_>) -> Result<ReturnReasonResponse> {
+        return_reasons(&ctx)
     }
 
     pub async fn generate_inbound_return_lines(

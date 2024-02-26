@@ -6,6 +6,13 @@ fragment ReturnReason on ReturnReasonNode {
 
 query returnReasons {
   returnReasons {
-    ...ReturnReason
+    __typename
+    ... on ReturnReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ReturnReason
+      }
+    }
   }
 }

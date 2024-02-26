@@ -1444,6 +1444,10 @@ export type GenerateInboundReturnInput = {
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
+/**
+ * At least one input is required.
+ * Note that if you provide multiple inputs, they will be applied as an AND filter.
+ */
 export type GenerateOutboundReturnLinesInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   returnId?: InputMaybe<Scalars['String']['input']>;
@@ -3453,7 +3457,7 @@ export type OutboundReturnLineInput = {
   comment: Scalars['String']['input'];
   id: Scalars['String']['input'];
   numberOfPacksToReturn: Scalars['Float']['input'];
-  reasonId?: InputMaybe<Scalars['String']['input']>;
+  reasonId: Scalars['String']['input'];
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3461,12 +3465,12 @@ export type OutboundReturnLineNode = {
   __typename: 'OutboundReturnLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
-  comment: Scalars['String']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
-  numberOfPacksToReturn: Scalars['Float']['output'];
+  numberOfPacksToReturn: Scalars['Int']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
@@ -3947,7 +3951,7 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
-  returnReasons: Array<ReturnReasonNode>;
+  returnReasons: ReturnReasonResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -4775,12 +4779,20 @@ export type ResponseStoreStatsNode = {
   stockOnOrder: Scalars['Int']['output'];
 };
 
+export type ReturnReasonConnector = {
+  __typename: 'ReturnReasonConnector';
+  nodes: Array<ReturnReasonNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ReturnReasonNode = {
   __typename: 'ReturnReasonNode';
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   reason: Scalars['String']['output'];
 };
+
+export type ReturnReasonResponse = ReturnReasonConnector;
 
 export type SensorAxisNode = {
   __typename: 'SensorAxisNode';
@@ -6090,6 +6102,8 @@ export enum UserPermission {
   ItemMutate = 'ITEM_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
   LogQuery = 'LOG_QUERY',
+  OutboundReturnMutate = 'OUTBOUND_RETURN_MUTATE',
+  OutboundReturnQuery = 'OUTBOUND_RETURN_QUERY',
   OutboundShipmentMutate = 'OUTBOUND_SHIPMENT_MUTATE',
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
   PatientMutate = 'PATIENT_MUTATE',
