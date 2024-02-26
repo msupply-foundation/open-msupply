@@ -1,5 +1,5 @@
 [package]
-name = "graphql_asset_catalogue"
+name = "asset_catalogue"
 version = "0.1.0"
 edition = "2018"
 

@@ -50,7 +50,7 @@ impl From<AssetCategoryFilterInput> for AssetCategoryFilter {
 
 pub fn asset_categories(
     ctx: &Context<'_>,
-    store_id: String,
+
     page: Option<PaginationInput>,
     filter: Option<AssetCategoryFilterInput>,
     sort: Option<Vec<AssetCategorySortInput>>,
@@ -59,7 +59,7 @@ pub fn asset_categories(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAssetCatalogueItem,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
@@ -77,16 +77,12 @@ pub fn asset_categories(
     ))
 }
 
-pub fn asset_category(
-    ctx: &Context<'_>,
-    store_id: String,
-    id: String,
-) -> Result<AssetCategoryResponse> {
+pub fn asset_category(ctx: &Context<'_>, id: String) -> Result<AssetCategoryResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAssetCatalogueItem,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;

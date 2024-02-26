@@ -71,7 +71,6 @@ impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
 
 pub fn asset_catalogue_items(
     ctx: &Context<'_>,
-    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<AssetCatalogueItemFilterInput>,
     sort: Option<Vec<AssetCatalogueItemSortInput>>,
@@ -80,7 +79,7 @@ pub fn asset_catalogue_items(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAssetCatalogueItem,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
@@ -98,16 +97,12 @@ pub fn asset_catalogue_items(
     ))
 }
 
-pub fn asset_catalogue_item(
-    ctx: &Context<'_>,
-    store_id: String,
-    id: String,
-) -> Result<AssetCatalogueItemResponse> {
+pub fn asset_catalogue_item(ctx: &Context<'_>, id: String) -> Result<AssetCatalogueItemResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAssetCatalogueItem,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
