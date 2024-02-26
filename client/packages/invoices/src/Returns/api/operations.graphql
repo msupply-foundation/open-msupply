@@ -71,17 +71,21 @@ query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
     input: { stockLineIds: $stockLineIds }
     storeId: $storeId
   ) {
-    availableNumberOfPacks
-    batch
-    expiryDate
-    id
-    itemCode
-    itemName
-    numberOfPacksToReturn
-    packSize
-    stockLineId
-    comment
-    reasonId
+    ... on OutboundReturnLineConnector {
+      nodes {
+        availableNumberOfPacks
+        batch
+        expiryDate
+        id
+        itemCode
+        itemName
+        numberOfPacksToReturn
+        packSize
+        stockLineId
+        comment
+        reasonId
+      }
+    }
   }
 }
 

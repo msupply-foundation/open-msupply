@@ -38,7 +38,7 @@ export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: Array<{ __typename: 'OutboundReturnLine', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, comment: string, reasonId?: string | null }> };
+export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, comment: string, reasonId?: string | null }> } };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
@@ -153,17 +153,21 @@ export const GenerateOutboundReturnLinesDocument = gql`
     input: {stockLineIds: $stockLineIds}
     storeId: $storeId
   ) {
-    availableNumberOfPacks
-    batch
-    expiryDate
-    id
-    itemCode
-    itemName
-    numberOfPacksToReturn
-    packSize
-    stockLineId
-    comment
-    reasonId
+    ... on OutboundReturnLineConnector {
+      nodes {
+        availableNumberOfPacks
+        batch
+        expiryDate
+        id
+        itemCode
+        itemName
+        numberOfPacksToReturn
+        packSize
+        stockLineId
+        comment
+        reasonId
+      }
+    }
   }
 }
     `;
