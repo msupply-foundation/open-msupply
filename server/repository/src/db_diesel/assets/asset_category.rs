@@ -11,7 +11,11 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type AssetCategory = AssetCategoryRow;
+#[derive(PartialEq, Debug)]
+
+pub struct AssetCategory {
+    pub asset_category_row: AssetCategoryRow,
+}
 
 pub enum AssetCategorySortField {
     Name,
@@ -108,14 +112,14 @@ impl<'a> AssetCategoryRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetCategory>(&self.connection.connection)?;
+        let result = final_query.load::<AssetCategoryRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
 fn to_domain(asset_category_row: AssetCategoryRow) -> AssetCategory {
-    asset_category_row
+    AssetCategory { asset_category_row }
 }
 
 type BoxedAssetCategoryQuery = IntoBoxed<'static, asset_category::table, DBType>;
@@ -186,15 +190,15 @@ mod tests {
             .query_one(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(category.id, id);
-        assert_eq!(category.name, name);
+        assert_eq!(category.asset_category_row.id, id);
+        assert_eq!(category.asset_category_row.name, name);
 
         // Query by name
         let category = category_repository
             .query_one(AssetCategoryFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(category.id, id);
-        assert_eq!(category.name, name);
+        assert_eq!(category.asset_category_row.id, id);
+        assert_eq!(category.asset_category_row.name, name);
     }
 }

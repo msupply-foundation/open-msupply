@@ -6,12 +6,16 @@ use super::asset_type_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 
-type AssetType = AssetTypeRow;
+#[derive(PartialEq, Debug, Clone)]
+
+pub struct AssetType {
+    pub asset_type_row: AssetTypeRow,
+}
 
 pub enum AssetTypeSortField {
     Name,
@@ -22,7 +26,7 @@ pub type AssetTypeSort = Sort<AssetTypeSortField>;
 #[derive(Clone)]
 pub struct AssetTypeFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<StringFilter>,
+    pub name: Option<EqualFilter<String>>,
     pub category_id: Option<EqualFilter<String>>,
 }
 
@@ -40,7 +44,7 @@ impl AssetTypeFilter {
         self
     }
 
-    pub fn name(mut self, filter: StringFilter) -> Self {
+    pub fn name(mut self, filter: EqualFilter<String>) -> Self {
         self.name = Some(filter);
         self
     }
@@ -105,14 +109,14 @@ impl<'a> AssetTypeRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetType>(&self.connection.connection)?;
+        let result = final_query.load::<AssetTypeRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
 fn to_domain(asset_type_row: AssetTypeRow) -> AssetType {
-    asset_type_row
+    AssetType { asset_type_row }
 }
 
 type BoxedAssetTypeQuery = IntoBoxed<'static, asset_type::table, DBType>;
@@ -128,7 +132,7 @@ fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery
         } = f;
 
         apply_equal_filter!(query, id, asset_type_dsl::id);
-        apply_string_filter!(query, name, asset_type_dsl::name);
+        apply_equal_filter!(query, name, asset_type_dsl::name);
         apply_equal_filter!(query, category_id, asset_type_dsl::asset_category_id);
     }
     query
@@ -146,7 +150,7 @@ mod tests {
             asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },
         mock::MockDataInserts,
-        test_db, EqualFilter, StringFilter,
+        test_db, EqualFilter,
     };
 
     use super::AssetTypeFilter;
@@ -197,15 +201,15 @@ mod tests {
             .query_one(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(t.id, id);
-        assert_eq!(t.name, name);
+        assert_eq!(t.asset_type_row.id, id);
+        assert_eq!(t.asset_type_row.name, name);
 
         // Query by name
         let t = type_repository
-            .query_one(AssetTypeFilter::new().name(StringFilter::equal_to(&name)))
+            .query_one(AssetTypeFilter::new().name(EqualFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(t.id, id);
-        assert_eq!(t.name, name);
+        assert_eq!(t.asset_type_row.id, id);
+        assert_eq!(t.asset_type_row.name, name);
     }
 }

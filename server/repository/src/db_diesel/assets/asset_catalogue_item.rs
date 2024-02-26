@@ -31,7 +31,7 @@ pub struct AssetCatalogueItemFilter {
     pub code: Option<StringFilter>,
     pub manufacturer: Option<StringFilter>,
     pub model: Option<StringFilter>,
-    pub r#type: Option<StringFilter>,
+    pub r#type: Option<EqualFilter<String>>,
     pub type_id: Option<EqualFilter<String>>,
 }
 
@@ -104,7 +104,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let category_ids = AssetCategoryRepository::new(&self.connection)
                     .query_by_filter(AssetCategoryFilter::new().name(category))?
                     .iter()
-                    .map(|c| c.id.clone())
+                    .map(|c| c.asset_category_row.id.clone())
                     .collect::<Vec<String>>();
                 query =
                     query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(category_ids));
@@ -114,7 +114,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let class_ids = AssetClassRepository::new(&self.connection)
                     .query_by_filter(AssetClassFilter::new().name(class))?
                     .iter()
-                    .map(|c| c.id.clone())
+                    .map(|c| c.asset_class_row.id.clone())
                     .collect::<Vec<String>>();
                 query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(class_ids));
             }
@@ -123,7 +123,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let type_ids = AssetTypeRepository::new(&self.connection)
                     .query_by_filter(AssetTypeFilter::new().name(asset_type))?
                     .iter()
-                    .map(|c| c.id.clone())
+                    .map(|c| c.asset_type_row.id.clone())
                     .collect::<Vec<String>>();
                 query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(type_ids));
             }
@@ -154,13 +154,25 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             code,
             manufacturer,
             model,
-            ..
+            category: _, // Handled in query() function
+            category_id,
+            class: _, // Handled in query() function
+            class_id,
+            r#type: _, // Handled in query() function
+            type_id,
         } = f;
 
         apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
         apply_string_filter!(query, code, asset_catalogue_item_dsl::code);
         apply_string_filter!(query, manufacturer, asset_catalogue_item_dsl::manufacturer);
         apply_string_filter!(query, model, asset_catalogue_item_dsl::model);
+        apply_equal_filter!(
+            query,
+            category_id,
+            asset_catalogue_item_dsl::asset_category_id
+        );
+        apply_equal_filter!(query, class_id, asset_catalogue_item_dsl::asset_class_id);
+        apply_equal_filter!(query, type_id, asset_catalogue_item_dsl::asset_type_id);
     }
     query
 }
@@ -221,7 +233,7 @@ impl AssetCatalogueItemFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: StringFilter) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<String>) -> Self {
         self.r#type = Some(filter);
         self
     }
