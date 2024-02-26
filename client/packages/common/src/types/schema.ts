@@ -633,7 +633,6 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
 
 export type DatabaseSettingsNode = {
   __typename: 'DatabaseSettingsNode';
-  /** Central server url */
   databaseType: DatabaseType;
 };
 
@@ -1708,7 +1707,6 @@ export type InsertOutboundShipmentLineErrorInterface = {
 export type InsertOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
   tax?: InputMaybe<Scalars['Float']['input']>;
@@ -1834,7 +1832,6 @@ export type InsertPrescriptionLineErrorInterface = {
 export type InsertPrescriptionLineInput = {
   id: Scalars['String']['input'];
   invoiceId: Scalars['String']['input'];
-  itemId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
@@ -5607,7 +5604,6 @@ export type UpdateOutboundShipmentLineErrorInterface = {
 
 export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
   tax?: InputMaybe<TaxInput>;
@@ -5756,7 +5752,6 @@ export type UpdatePrescriptionLineErrorInterface = {
 
 export type UpdatePrescriptionLineInput = {
   id: Scalars['String']['input'];
-  itemId?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
