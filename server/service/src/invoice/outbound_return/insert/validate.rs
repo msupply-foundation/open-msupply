@@ -31,9 +31,5 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    // still need this?
-    // TODO add check that customer belongs to "this" store (from name_store_join?)
-    // OtherPartyNotACustomerOfThisStore
-
     Ok(other_party)
 }
