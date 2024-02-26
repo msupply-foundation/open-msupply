@@ -136,8 +136,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | NoInvoiceType
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
-        | NumberOfPacksBelowOne
-        | ItemNotFound => StandardGraphqlError::BadUserInput(formatted_error),
+        | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | NewlyCreatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
         }
