@@ -78,8 +78,6 @@ pub fn insert_outbound_return(
                         number_of_packs: line.number_of_packs.clone(),
                         note: Some(line.note.clone()),
                         r#type: Some(StockOutType::OutboundReturn),
-                        // TODO
-                        item_id: "TODO".to_string(),
                         tax: None,
                         total_before_tax: None,
                     },
