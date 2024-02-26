@@ -47,7 +47,6 @@ fn generate_line(
         id,
         r#type: _,
         invoice_id,
-        item_id,
         stock_line_id,
         number_of_packs,
         total_before_tax,
@@ -55,6 +54,7 @@ fn generate_line(
         note,
     }: InsertStockOutLine,
     ItemRow {
+        id: item_id,
         name: item_name,
         code: item_code,
         ..
