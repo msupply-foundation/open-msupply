@@ -11,12 +11,6 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-#[derive(PartialEq, Debug, Clone)]
-
-pub struct AssetClass {
-    pub asset_class_row: AssetClassRow,
-}
-
 pub enum AssetClassSortField {
     Name,
 }
@@ -66,14 +60,14 @@ impl<'a> AssetClassRepository<'a> {
     pub fn query_one(
         &self,
         filter: AssetClassFilter,
-    ) -> Result<Option<AssetClass>, RepositoryError> {
+    ) -> Result<Option<AssetClassRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: AssetClassFilter,
-    ) -> Result<Vec<AssetClass>, RepositoryError> {
+    ) -> Result<Vec<AssetClassRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -82,7 +76,7 @@ impl<'a> AssetClassRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetClassFilter>,
         sort: Option<AssetClassSort>,
-    ) -> Result<Vec<AssetClass>, RepositoryError> {
+    ) -> Result<Vec<AssetClassRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -111,8 +105,8 @@ impl<'a> AssetClassRepository<'a> {
     }
 }
 
-fn to_domain(asset_class_row: AssetClassRow) -> AssetClass {
-    AssetClass { asset_class_row }
+fn to_domain(asset_class_row: AssetClassRow) -> AssetClassRow {
+    AssetClassRow { asset_class_row }
 }
 
 type BoxedAssetClassQuery = IntoBoxed<'static, asset_class::table, DBType>;
@@ -165,15 +159,15 @@ mod tests {
             .query_one(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(reference_data.asset_class_row.id, id);
-        assert_eq!(reference_data.asset_class_row.name, name);
+        assert_eq!(reference_data.id, id);
+        assert_eq!(reference_data.name, name);
 
         // Query by name
         let reference_data = reference_data_repository
             .query_one(AssetClassFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(reference_data.asset_class_row.id, id);
-        assert_eq!(reference_data.asset_class_row.name, name);
+        assert_eq!(reference_data.id, id);
+        assert_eq!(reference_data.name, name);
     }
 }

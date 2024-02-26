@@ -11,12 +11,6 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-#[derive(PartialEq, Debug)]
-
-pub struct AssetCategory {
-    pub asset_category_row: AssetCategoryRow,
-}
-
 pub enum AssetCategorySortField {
     Name,
 }
@@ -73,14 +67,14 @@ impl<'a> AssetCategoryRepository<'a> {
     pub fn query_one(
         &self,
         filter: AssetCategoryFilter,
-    ) -> Result<Option<AssetCategory>, RepositoryError> {
+    ) -> Result<Option<AssetCategoryRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: AssetCategoryFilter,
-    ) -> Result<Vec<AssetCategory>, RepositoryError> {
+    ) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -89,7 +83,7 @@ impl<'a> AssetCategoryRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetCategoryFilter>,
         sort: Option<AssetCategorySort>,
-    ) -> Result<Vec<AssetCategory>, RepositoryError> {
+    ) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -118,8 +112,8 @@ impl<'a> AssetCategoryRepository<'a> {
     }
 }
 
-fn to_domain(asset_category_row: AssetCategoryRow) -> AssetCategory {
-    AssetCategory { asset_category_row }
+fn to_domain(asset_category_row: AssetCategoryRow) -> AssetCategoryRow {
+    AssetCategoryRow { asset_category_row }
 }
 
 type BoxedAssetCategoryQuery = IntoBoxed<'static, asset_category::table, DBType>;
@@ -190,15 +184,15 @@ mod tests {
             .query_one(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(category.asset_category_row.id, id);
-        assert_eq!(category.asset_category_row.name, name);
+        assert_eq!(category.id, id);
+        assert_eq!(category.name, name);
 
         // Query by name
         let category = category_repository
             .query_one(AssetCategoryFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(category.asset_category_row.id, id);
-        assert_eq!(category.asset_category_row.name, name);
+        assert_eq!(category.id, id);
+        assert_eq!(category.name, name);
     }
 }

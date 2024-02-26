@@ -11,12 +11,6 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection,
 };
 
-#[derive(PartialEq, Debug, Clone)]
-
-pub struct AssetType {
-    pub asset_type_row: AssetTypeRow,
-}
-
 pub enum AssetTypeSortField {
     Name,
 }
@@ -70,14 +64,17 @@ impl<'a> AssetTypeRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: AssetTypeFilter) -> Result<Option<AssetType>, RepositoryError> {
+    pub fn query_one(
+        &self,
+        filter: AssetTypeFilter,
+    ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: AssetTypeFilter,
-    ) -> Result<Vec<AssetType>, RepositoryError> {
+    ) -> Result<Vec<AssetTypeRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -86,7 +83,7 @@ impl<'a> AssetTypeRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetTypeFilter>,
         sort: Option<AssetTypeSort>,
-    ) -> Result<Vec<AssetType>, RepositoryError> {
+    ) -> Result<Vec<AssetTypeRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -115,8 +112,8 @@ impl<'a> AssetTypeRepository<'a> {
     }
 }
 
-fn to_domain(asset_type_row: AssetTypeRow) -> AssetType {
-    AssetType { asset_type_row }
+fn to_domain(asset_type_row: AssetTypeRow) -> AssetTypeRow {
+    AssetTypeRow { asset_type_row }
 }
 
 type BoxedAssetTypeQuery = IntoBoxed<'static, asset_type::table, DBType>;
@@ -201,15 +198,15 @@ mod tests {
             .query_one(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
-        assert_eq!(t.asset_type_row.id, id);
-        assert_eq!(t.asset_type_row.name, name);
+        assert_eq!(t.id, id);
+        assert_eq!(t.name, name);
 
         // Query by name
         let t = type_repository
             .query_one(AssetTypeFilter::new().name(EqualFilter::equal_to(&name)))
             .unwrap()
             .unwrap();
-        assert_eq!(t.asset_type_row.id, id);
-        assert_eq!(t.asset_type_row.name, name);
+        assert_eq!(t.id, id);
+        assert_eq!(t.name, name);
     }
 }
