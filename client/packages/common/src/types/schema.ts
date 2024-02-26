@@ -1445,8 +1445,12 @@ export type GenerateInboundReturnInput = {
 };
 
 export type GenerateOutboundReturnLinesInput = {
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  returnId?: InputMaybe<Scalars['String']['input']>;
   stockLineIds: Array<Scalars['String']['input']>;
 };
+
+export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
 
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
@@ -3438,8 +3442,22 @@ export type OutboundReturnInput = {
   supplierId: Scalars['String']['input'];
 };
 
-export type OutboundReturnLine = {
-  __typename: 'OutboundReturnLine';
+export type OutboundReturnLineConnector = {
+  __typename: 'OutboundReturnLineConnector';
+  nodes: Array<OutboundReturnLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type OutboundReturnLineInput = {
+  comment: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  numberOfPacksToReturn: Scalars['Float']['input'];
+  reasonId?: InputMaybe<Scalars['String']['input']>;
+  stockLineId: Scalars['String']['input'];
+};
+
+export type OutboundReturnLineNode = {
+  __typename: 'OutboundReturnLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
   comment: Scalars['String']['output'];
@@ -3451,14 +3469,6 @@ export type OutboundReturnLine = {
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
-};
-
-export type OutboundReturnLineInput = {
-  comment: Scalars['String']['input'];
-  id: Scalars['String']['input'];
-  numberOfPacksToReturn: Scalars['Float']['input'];
-  reasonId?: InputMaybe<Scalars['String']['input']>;
-  stockLineId: Scalars['String']['input'];
 };
 
 /**
@@ -3877,7 +3887,7 @@ export type Queries = {
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
   generateInboundReturnLines: Array<InboundReturnLine>;
-  generateOutboundReturnLines: Array<OutboundReturnLine>;
+  generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
   insertPrescription: InsertPrescriptionResponse;
