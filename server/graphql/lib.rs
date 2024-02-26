@@ -7,7 +7,7 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use asset_catalogue::AssetCatalogueItemQueries;
+use asset_catalogue::AssetCatalogueQueries;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
@@ -73,7 +73,7 @@ pub struct Queries(
     pub FormSchemaQueries,
     pub ClinicianQueries,
     pub PluginQueries,
-    pub AssetCatalogueItemQueries,
+    pub AssetCatalogueQueries,
 );
 
 impl Queries {
@@ -97,7 +97,7 @@ impl Queries {
             FormSchemaQueries,
             ClinicianQueries,
             PluginQueries,
-            AssetCatalogueItemQueries,
+            AssetCatalogueQueries,
         )
     }
 }
