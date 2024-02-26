@@ -285,7 +285,7 @@ pub enum ReadSensorError {
     Other(#[from] anyhow::Error),
 }
 
-fn re_map_times(
+fn convert_from_localtime(
     sensor: &temperature_sensor::Sensor,
 ) -> Result<temperature_sensor::Sensor, ReadSensorError> {
     // map logs
@@ -386,7 +386,7 @@ pub fn read_sensor(
 
     let temperature_sensor_unmapped =
         temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
-    let mut temperature_sensor = re_map_times(&temperature_sensor_unmapped)?;
+    let mut temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
 
     let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
