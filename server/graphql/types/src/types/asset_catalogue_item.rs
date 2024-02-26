@@ -30,6 +30,9 @@ impl AssetCatalogueItemNode {
     pub async fn asset_class_id(&self) -> &str {
         &self.row().class_id
     }
+    pub async fn asset_type_id(&self) -> &str {
+        &self.row().type_id
+    }
 
     pub async fn code(&self) -> &str {
         &self.row().code
@@ -39,9 +42,6 @@ impl AssetCatalogueItemNode {
     }
     pub async fn model(&self) -> &str {
         &self.row().model
-    }
-    pub async fn asset_type_id(&self) -> &str {
-        &self.row().type_id
     }
 }
 
