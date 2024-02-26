@@ -16,11 +16,6 @@ use crate::{
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
 
-#[derive(PartialEq, Debug, Clone)]
-pub struct AssetCatalogueItem {
-    pub asset_catalogue_item_row: AssetCatalogueItemRow,
-}
-
 #[derive(Clone, PartialEq, Debug)]
 pub struct AssetCatalogueItemFilter {
     pub id: Option<EqualFilter<String>>,
@@ -63,7 +58,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: AssetCatalogueItemFilter,
-    ) -> Result<Vec<AssetCatalogueItem>, RepositoryError> {
+    ) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -72,7 +67,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetCatalogueItemFilter>,
         sort: Option<AssetCatalogueItemSort>,
-    ) -> Result<Vec<AssetCatalogueItem>, RepositoryError> {
+    ) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
 
         if let Some(sort) = sort {
@@ -104,7 +99,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let category_ids = AssetCategoryRepository::new(&self.connection)
                     .query_by_filter(AssetCategoryFilter::new().name(category))?
                     .iter()
-                    .map(|c| c.asset_category_row.id.clone())
+                    .map(|c| c.id.clone())
                     .collect::<Vec<String>>();
                 query =
                     query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(category_ids));
@@ -114,7 +109,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let class_ids = AssetClassRepository::new(&self.connection)
                     .query_by_filter(AssetClassFilter::new().name(class))?
                     .iter()
-                    .map(|c| c.asset_class_row.id.clone())
+                    .map(|c| c.id.clone())
                     .collect::<Vec<String>>();
                 query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(class_ids));
             }
@@ -123,7 +118,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 let type_ids = AssetTypeRepository::new(&self.connection)
                     .query_by_filter(AssetTypeFilter::new().name(asset_type))?
                     .iter()
-                    .map(|c| c.asset_type_row.id.clone())
+                    .map(|c| c.id.clone())
                     .collect::<Vec<String>>();
                 query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(type_ids));
             }
@@ -139,10 +134,8 @@ impl<'a> AssetCatalogueItemRepository<'a> {
 
 type BoxedAssetCatalogueItemQuery = asset_catalogue_item::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalogueItem {
-    AssetCatalogueItem {
-        asset_catalogue_item_row,
-    }
+pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalogueItemRow {
+    asset_catalogue_item_row
 }
 
 fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAssetCatalogueItemQuery {
