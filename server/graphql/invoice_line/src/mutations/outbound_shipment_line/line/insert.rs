@@ -21,7 +21,6 @@ use super::{
 pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
-    pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
@@ -89,7 +88,6 @@ impl InsertInput {
         let InsertInput {
             id,
             invoice_id,
-            item_id: _,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -226,7 +224,6 @@ mod test {
           "input": {
             "id": "n/a",
             "invoiceId": "n/a",
-            "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "stockLineId": "n/a",
@@ -552,7 +549,6 @@ mod test {
             "input": {
                 "id": "new id",
                 "invoiceId": "invoice input",
-                "itemId": "item input",
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,
