@@ -150,12 +150,10 @@ fn generate_new_line(
     stock_line: &StockLine,
 ) -> InsertStockOutLine {
     let stock_line_row = &stock_line.stock_line_row;
-    let item_row = &stock_line.item_row;
     InsertStockOutLine {
         id: uuid::uuid(),
         r#type: Some(StockOutType::OutboundShipment),
         invoice_id: invoice_id.to_string(),
-        item_id: item_row.id.clone(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
