@@ -13,7 +13,8 @@ const BARCODE_1: (&'static str, &'static str) = (
     "barcode": "0123456789",
     "itemID": "item_a",
     "manufacturerID": "name_a",
-    "packSize": 1
+    "packSize": 1,
+    "parentID": ""
     }"#,
 );
 
@@ -24,7 +25,8 @@ const BARCODE_2: (&'static str, &'static str) = (
     "barcode": "9876543210",
     "itemID": "item_b",
     "manufacturerID": "name_a",
-    "packSize": 1
+    "packSize": 1,
+    "parentID": ""
     }"#,
 );
 
