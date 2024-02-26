@@ -49,7 +49,6 @@ impl From<AssetClassFilterInput> for AssetClassFilter {
 
 pub fn asset_classes(
     ctx: &Context<'_>,
-    store_id: String,
     page: Option<PaginationInput>,
     filter: Option<AssetClassFilterInput>,
     sort: Option<Vec<AssetClassSortInput>>,
@@ -58,7 +57,7 @@ pub fn asset_classes(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAssetCatalogueItem,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
@@ -76,12 +75,12 @@ pub fn asset_classes(
     ))
 }
 
-pub fn asset_class(ctx: &Context<'_>, store_id: String, id: String) -> Result<AssetClassResponse> {
+pub fn asset_class(ctx: &Context<'_>, id: String) -> Result<AssetClassResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAssetCatalogueItem,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
