@@ -1,5 +1,6 @@
 use repository::{
-    ActivityLogType, Invoice, InvoiceRowRepository, RepositoryError, TransactionError,
+    ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    TransactionError,
 };
 
 use crate::{
@@ -27,7 +28,7 @@ pub struct InsertOutboundReturnLine {
     pub id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
-    pub reason_id: Option<String>,
+    pub reason_id: String,
     pub note: String,
 }
 
@@ -45,6 +46,10 @@ pub enum InsertOutboundReturnError {
     LineInsertError {
         line_id: String,
         error: InsertStockOutLineError,
+    },
+    LineReturnReasonUpdateError {
+        line_id: String,
+        error: RepositoryError,
     },
 }
 
@@ -68,6 +73,8 @@ pub fn insert_outbound_return(
 
             InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
 
+            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+
             for line in input.outbound_return_lines {
                 insert_stock_out_line(
                     ctx,
@@ -83,10 +90,16 @@ pub fn insert_outbound_return(
                     },
                 )
                 .map_err(|error| OutError::LineInsertError {
-                    line_id: line.id,
+                    line_id: line.id.clone(),
                     error,
                 })?;
-                // TODO: reason id
+
+                invoice_line_repo
+                    .update_return_reason_id(&line.id, Some(line.reason_id.clone()))
+                    .map_err(|error| OutError::LineReturnReasonUpdateError {
+                        line_id: line.id.clone(),
+                        error,
+                    })?;
             }
 
             activity_log_entry(

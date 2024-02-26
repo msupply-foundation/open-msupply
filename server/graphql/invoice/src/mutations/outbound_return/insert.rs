@@ -25,7 +25,7 @@ pub struct OutboundReturnLineInput {
     pub id: String,
     pub stock_line_id: String,
     pub number_of_packs_to_return: f64,
-    pub reason_id: Option<String>,
+    pub reason_id: String,
     pub comment: String,
 }
 
@@ -98,6 +98,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
         ServiceError::LineInsertError { .. } => InternalError(formatted_error),
+        ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 

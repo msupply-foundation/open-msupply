@@ -1,9 +1,8 @@
 use super::{
-    return_reason_row::return_reason,
     inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
-    location_row::location, name_link_row::name_link, stock_line_row::stock_line,
-    StorageConnection,
+    location_row::location, name_link_row::name_link, return_reason_row::return_reason,
+    stock_line_row::stock_line, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -131,6 +130,18 @@ impl<'a> InvoiceLineRowRepository<'a> {
                 tax.eq(tax_input),
                 total_after_tax.eq(total_after_tax_calculation),
             ))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_return_reason_id(
+        &self,
+        record_id: &str,
+        reason_id: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(return_reason_id.eq(reason_id))
             .execute(&self.connection.connection)?;
         Ok(())
     }
