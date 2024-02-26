@@ -50,7 +50,6 @@ impl From<AssetCategoryFilterInput> for AssetCategoryFilter {
 
 pub fn asset_categories(
     ctx: &Context<'_>,
-
     page: Option<PaginationInput>,
     filter: Option<AssetCategoryFilterInput>,
     sort: Option<Vec<AssetCategorySortInput>>,

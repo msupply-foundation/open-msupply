@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
-    generic_filters::EqualFilterStringInput,
+    generic_filters::{EqualFilterStringInput, StringFilterInput},
     pagination::PaginationInput,
     simple_generic_errors::{NodeError, NodeErrorInterface},
     standard_graphql_error::{validate_auth, StandardGraphqlError},
@@ -10,7 +10,10 @@ use graphql_types::types::{
     AssetTypeConnector, AssetTypeNode, AssetTypeResponse, AssetTypesResponse,
 };
 
-use repository::asset_type::{AssetTypeFilter, AssetTypeSort, AssetTypeSortField};
+use repository::{
+    asset_type::{AssetTypeFilter, AssetTypeSort, AssetTypeSortField},
+    StringFilter,
+};
 use repository::{EqualFilter, PaginationOption};
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -34,7 +37,7 @@ pub struct AssetTypeSortInput {
 #[derive(InputObject, Clone)]
 pub struct AssetTypeFilterInput {
     pub id: Option<EqualFilterStringInput>,
-    pub name: Option<EqualFilterStringInput>,
+    pub name: Option<StringFilterInput>,
     pub category_id: Option<EqualFilterStringInput>,
 }
 
@@ -42,7 +45,7 @@ impl From<AssetTypeFilterInput> for AssetTypeFilter {
     fn from(f: AssetTypeFilterInput) -> Self {
         AssetTypeFilter {
             id: f.id.map(EqualFilter::from),
-            name: f.name.map(EqualFilter::from),
+            name: f.name.map(StringFilter::from),
             category_id: f.category_id.map(EqualFilter::from),
         }
     }
@@ -105,7 +108,7 @@ impl AssetTypeFilterInput {
         } = self;
         AssetTypeFilter {
             id: id.map(EqualFilter::from),
-            name: name.map(EqualFilter::from),
+            name: name.map(StringFilter::from),
             category_id: category_id.map(EqualFilter::from),
         }
     }
