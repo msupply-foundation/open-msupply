@@ -44,7 +44,7 @@ export const NumberInputCell = <T extends RecordWithId>({
         ...TextInputProps?.InputProps,
       }}
       onChange={num => {
-        const newValue = num;
+        const newValue = num === undefined ? 0 : num;
         setBuffer(newValue);
         updater({ ...rowData, [column.key]: Number(newValue) });
       }}

@@ -15,7 +15,11 @@ export const useFormatNumber = () => {
     ) => {
       if (value === undefined) return '';
       const locale = options?.locale ?? currentLanguage;
-      return new Intl.NumberFormat(locale, options).format(value);
+      return new Intl.NumberFormat(locale, {
+        // Don't round here, as most use cases have their own internal rounding
+        maximumFractionDigits: 21, // maximum allowed
+        ...options,
+      }).format(value);
     },
     round: (value?: number, dp?: number): string => {
       const intl = new Intl.NumberFormat(currentLanguage, {
