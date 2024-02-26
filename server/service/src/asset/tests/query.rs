@@ -2,7 +2,7 @@
 mod query {
     use chrono::NaiveDateTime;
     use repository::{
-        asset::{AssetFilter, AssetSortField},
+        assets::asset::{AssetFilter, AssetSortField},
         mock::MockDataInserts,
         test_db::setup_all,
     };

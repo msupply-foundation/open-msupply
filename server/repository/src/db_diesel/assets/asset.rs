@@ -14,7 +14,7 @@ use crate::{
     DBType, DateFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type Asset = AssetRow;
+pub type Asset = AssetRow;
 
 pub enum AssetSortField {
     Name,
