@@ -25,14 +25,20 @@ pub fn generate_outbound_return_lines(
         });
     }
 
-    let mut filter = StockLineFilter::new().is_available(true);
+    let mut filter = StockLineFilter::new();
 
     if !stock_line_ids.is_empty() {
         filter.id = Some(EqualFilter::equal_any(
             stock_line_ids.iter().map(String::clone).collect(),
         ))
     }
-    filter.item_id = item_id.map(|item_id| EqualFilter::equal_to(&item_id));
+    match item_id {
+        Some(item_id) => {
+            filter.item_id = Some(EqualFilter::equal_to(&item_id));
+            filter.is_available = Some(true);
+        }
+        None => {}
+    }
 
     let stock_lines = StockLineRepository::new(&ctx.connection)
         .query_by_filter(filter, Some(store_id.to_string()))?;
