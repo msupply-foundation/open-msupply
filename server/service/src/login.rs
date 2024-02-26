@@ -397,6 +397,11 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             }
             Permissions::EditSupplierInvoices => {
                 output.insert(Permission::InboundShipmentMutate);
+                // TODO: WHICH?
+                output.insert(Permission::OutboundReturnMutate);
+            }
+            Permissions::ReturnStockFromSupplierInvoices => {
+                output.insert(Permission::OutboundReturnMutate);
             }
             Permissions::CreateSupplierInvoices => {
                 output.insert(Permission::InboundShipmentMutate);

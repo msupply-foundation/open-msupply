@@ -302,10 +302,11 @@ impl GeneralQueries {
 
     pub async fn generate_outbound_return_lines(
         &self,
+        ctx: &Context<'_>,
         store_id: String,
         input: GenerateOutboundReturnLinesInput,
-    ) -> Result<Vec<OutboundReturnLine>> {
-        generate_outbound_return_lines(store_id, input)
+    ) -> Result<GenerateOutboundReturnLinesResponse> {
+        generate_outbound_return_lines(ctx, store_id, input)
     }
 
     pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
