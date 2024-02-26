@@ -512,6 +512,8 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
             }
             _ => {}
         },
+        InvoiceRowType::InboundReturn => todo!(),
+        InvoiceRowType::OutboundReturn => todo!(),
     };
     mapping
 }
@@ -532,6 +534,8 @@ fn to_legacy_confirm_time(
         InvoiceRowType::InventoryAddition
         | InvoiceRowType::InventoryReduction
         | InvoiceRowType::Repack => verified_datetime,
+        InvoiceRowType::InboundReturn => todo!(),
+        InvoiceRowType::OutboundReturn => todo!(),
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -579,6 +583,8 @@ fn invoice_status(
             LegacyTransactStatus::Fn => InvoiceRowStatus::Verified,
             _ => return None,
         },
+        InvoiceRowType::InboundReturn => todo!(),
+        InvoiceRowType::OutboundReturn => todo!(),
     };
     Some(status)
 }
@@ -593,6 +599,8 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
         InvoiceRowType::InventoryAddition => LegacyTransactType::Si,
         InvoiceRowType::InventoryReduction => LegacyTransactType::Sc,
         InvoiceRowType::Repack => LegacyTransactType::Sr,
+        InvoiceRowType::InboundReturn => todo!(),
+        InvoiceRowType::OutboundReturn => todo!(),
     };
     return Some(t);
 }
@@ -636,6 +644,8 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Delivered => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
+        InvoiceRowType::InboundReturn => todo!(),
+        InvoiceRowType::OutboundReturn => todo!(),
     };
     Some(status)
 }

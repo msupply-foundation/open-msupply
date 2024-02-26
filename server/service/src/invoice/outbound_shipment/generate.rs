@@ -34,6 +34,7 @@ pub fn generate_unallocated_invoice_lines(
                     number_of_packs: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
                 });
             }
             Ok(None) => {}

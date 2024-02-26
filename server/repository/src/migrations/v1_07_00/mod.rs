@@ -25,6 +25,8 @@ mod program_enrolment_add_patient_link_id;
 mod program_event_patient_link_id;
 mod requisition_add_name_link_id;
 mod requisition_line_add_item_link_id;
+mod return_reasons;
+mod return_types;
 mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
@@ -42,6 +44,7 @@ impl Migration for V1_07_00 {
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sync_log::migrate(connection)?;
         migrate_merge_feature(connection)?;
+        migrate_returns(connection)?;
 
         Ok(())
     }
@@ -63,6 +66,12 @@ fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
     // Revert changelog to the state before the merge migrations
     changelog_repo.delete((cursor_before_job + 1).try_into()?)?;
     Ok(cursor_after_job)
+}
+
+fn migrate_returns(connection: &StorageConnection) -> anyhow::Result<()> {
+    return_reasons::migrate(connection)?;
+    return_types::migrate(connection)?;
+    Ok(())
 }
 
 fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> {

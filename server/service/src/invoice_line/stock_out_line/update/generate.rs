@@ -120,6 +120,7 @@ fn generate_line(
         r#type,
         note: input.note,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

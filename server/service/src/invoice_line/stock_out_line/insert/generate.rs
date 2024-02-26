@@ -98,5 +98,6 @@ fn generate_line(
         tax,
         note,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
     }
 }

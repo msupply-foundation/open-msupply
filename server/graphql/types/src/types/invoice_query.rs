@@ -418,6 +418,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
+            InboundReturn => InvoiceNodeType::InboundReturn,
+            OutboundReturn => InvoiceNodeType::OutboundReturn,
         }
     }
 }
