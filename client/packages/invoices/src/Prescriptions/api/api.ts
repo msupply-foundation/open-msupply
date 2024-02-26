@@ -79,7 +79,6 @@ const prescriptionParsers = {
   toInsertLine: (line: DraftStockOutLine): InsertPrescriptionLineInput => {
     return {
       id: line.id,
-      itemId: line.item.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
