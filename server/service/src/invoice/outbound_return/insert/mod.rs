@@ -140,10 +140,11 @@ impl From<TransactionError<OutError>> for OutError {
 mod test {
     use repository::{
         mock::{
-            mock_outbound_return_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
+            mock_name_a, mock_outbound_return_a, mock_stock_line_b, mock_store_a,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRowRepository, NameRow, NameStoreJoinRow,
+        InvoiceRowRepository, NameRow, NameStoreJoinRow, RepositoryError,
     };
     use util::{inline_edit, inline_init};
 
@@ -151,8 +152,11 @@ mod test {
         invoice::outbound_return::insert::{
             InsertOutboundReturn, InsertOutboundReturnError as ServiceError,
         },
+        invoice_line::stock_out_line::InsertStockOutLineError,
         service_provider::ServiceProvider,
     };
+
+    use super::InsertOutboundReturnLine;
 
     #[actix_rt::test]
     async fn test_insert_outbound_return_errors() {
@@ -189,7 +193,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, "".to_string())
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
         // InvoiceAlreadyExists
@@ -239,7 +243,48 @@ mod test {
             Err(ServiceError::OtherPartyNotASupplier)
         );
 
-        // TODO: line error?
+        // LineInsertError
+        assert_eq!(
+            service_provider.invoice_service.insert_outbound_return(
+                &context,
+                InsertOutboundReturn {
+                    id: "new_id".to_string(),
+                    other_party_id: mock_name_a().id, // Supplier
+                    outbound_return_lines: vec![InsertOutboundReturnLine {
+                        id: "new_line_id".to_string(),
+                        stock_line_id: "stock_line_id".to_string(),
+                        ..Default::default()
+                    }],
+                },
+            ),
+            Err(ServiceError::LineInsertError {
+                line_id: "new_line_id".to_string(),
+                error: InsertStockOutLineError::StockLineNotFound,
+            }),
+        );
+
+        // LineReturnReasonUpdateError
+        assert_eq!(
+            service_provider.invoice_service.insert_outbound_return(
+                &context,
+                InsertOutboundReturn {
+                    id: "some_new_id".to_string(),
+                    other_party_id: mock_name_a().id, // Supplier
+                    outbound_return_lines: vec![InsertOutboundReturnLine {
+                        id: "new_line_id".to_string(),
+                        stock_line_id: mock_stock_line_b().id,
+                        reason_id: "does_not_exist".to_string(),
+                        ..Default::default()
+                    }],
+                },
+            ),
+            Err(ServiceError::LineReturnReasonUpdateError {
+                line_id: "new_line_id".to_string(),
+                error: RepositoryError::ForeignKeyViolation(
+                    "\"FOREIGN KEY constraint failed\"".to_string()
+                ),
+            }),
+        );
     }
 
     #[actix_rt::test]
