@@ -7,6 +7,8 @@ use graphql_types::types::OutboundReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject, Clone)]
+/// At least one input is required.
+/// Note that if you provide multiple inputs, they will be applied as an AND filter.
 pub struct GenerateOutboundReturnLinesInput {
     pub stock_line_ids: Vec<String>,
     pub item_id: Option<String>,
