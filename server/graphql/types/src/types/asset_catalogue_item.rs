@@ -1,14 +1,12 @@
 use async_graphql::*;
 
 use graphql_core::simple_generic_errors::NodeError;
-use repository::assets::{
-    asset_catalogue_item::AssetCatalogueItem, asset_catalogue_item_row::AssetCatalogueItemRow,
-};
+use repository::assets::asset_catalogue_item_row::AssetCatalogueItemRow;
 use service::ListResult;
 
 #[derive(PartialEq, Debug)]
 pub struct AssetCatalogueItemNode {
-    pub asset_catalogue_item: AssetCatalogueItem,
+    pub asset_catalogue_item: AssetCatalogueItemRow,
 }
 
 #[derive(SimpleObject)]
@@ -57,20 +55,20 @@ pub enum AssetCatalogueItemResponse {
 }
 
 impl AssetCatalogueItemNode {
-    pub fn from_domain(asset_catalogue_item: AssetCatalogueItem) -> AssetCatalogueItemNode {
+    pub fn from_domain(asset_catalogue_item: AssetCatalogueItemRow) -> AssetCatalogueItemNode {
         AssetCatalogueItemNode {
             asset_catalogue_item,
         }
     }
 
     pub fn row(&self) -> &AssetCatalogueItemRow {
-        &self.asset_catalogue_item.asset_catalogue_item_row
+        &self.asset_catalogue_item
     }
 }
 
 impl AssetCatalogueItemConnector {
     pub fn from_domain(
-        asset_catalogue_items: ListResult<AssetCatalogueItem>,
+        asset_catalogue_items: ListResult<AssetCatalogueItemRow>,
     ) -> AssetCatalogueItemConnector {
         AssetCatalogueItemConnector {
             total_count: asset_catalogue_items.count,

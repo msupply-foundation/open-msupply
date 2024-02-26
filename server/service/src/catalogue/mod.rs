@@ -7,12 +7,14 @@ use super::{ListError, ListResult};
 use repository::RepositoryError;
 use repository::{
     assets::{
-        asset_catalogue_item::{
-            AssetCatalogueItem, AssetCatalogueItemFilter, AssetCatalogueItemSort,
-        },
-        asset_category::{AssetCategory, AssetCategoryFilter, AssetCategorySort},
-        asset_class::{AssetClass, AssetClassFilter, AssetClassSort},
-        asset_type::{AssetType, AssetTypeFilter, AssetTypeSort},
+        asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemSort},
+        asset_catalogue_item_row::AssetCatalogueItemRow,
+        asset_category::{AssetCategoryFilter, AssetCategorySort},
+        asset_category_row::AssetCategoryRow,
+        asset_class::{AssetClassFilter, AssetClassSort},
+        asset_class_row::AssetClassRow,
+        asset_type::{AssetTypeFilter, AssetTypeSort},
+        asset_type_row::AssetTypeRow,
     },
     PaginationOption, StorageConnection,
 };
@@ -28,7 +30,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<AssetCatalogueItemFilter>,
         sort: Option<AssetCatalogueItemSort>,
-    ) -> Result<ListResult<AssetCatalogueItem>, ListError> {
+    ) -> Result<ListResult<AssetCatalogueItemRow>, ListError> {
         get_asset_catalogue_items(connection, pagination, filter, sort)
     }
 
@@ -36,7 +38,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetCatalogueItem>, RepositoryError> {
+    ) -> Result<Option<AssetCatalogueItemRow>, RepositoryError> {
         get_asset_catalogue_item(connection, id)
     }
 
@@ -46,7 +48,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<AssetClassFilter>,
         sort: Option<AssetClassSort>,
-    ) -> Result<ListResult<AssetClass>, ListError> {
+    ) -> Result<ListResult<AssetClassRow>, ListError> {
         get_asset_classes(connection, pagination, filter, sort)
     }
 
@@ -54,7 +56,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetClass>, RepositoryError> {
+    ) -> Result<Option<AssetClassRow>, RepositoryError> {
         get_asset_class(connection, id)
     }
 
@@ -64,7 +66,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<AssetCategoryFilter>,
         sort: Option<AssetCategorySort>,
-    ) -> Result<ListResult<AssetCategory>, ListError> {
+    ) -> Result<ListResult<AssetCategoryRow>, ListError> {
         get_asset_categories(connection, pagination, filter, sort)
     }
 
@@ -72,7 +74,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetCategory>, RepositoryError> {
+    ) -> Result<Option<AssetCategoryRow>, RepositoryError> {
         get_asset_category(connection, id)
     }
 
@@ -82,7 +84,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<AssetTypeFilter>,
         sort: Option<AssetTypeSort>,
-    ) -> Result<ListResult<AssetType>, ListError> {
+    ) -> Result<ListResult<AssetTypeRow>, ListError> {
         get_asset_types(connection, pagination, filter, sort)
     }
 
@@ -90,7 +92,7 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         connection: &StorageConnection,
         id: String,
-    ) -> Result<Option<AssetType>, RepositoryError> {
+    ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         get_asset_type(connection, id)
     }
 }

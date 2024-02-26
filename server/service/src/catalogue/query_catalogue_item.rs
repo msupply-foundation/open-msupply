@@ -1,7 +1,7 @@
 use repository::{
+    asset_catalogue_item_row::AssetCatalogueItemRow,
     assets::asset_catalogue_item::{
-        AssetCatalogueItem, AssetCatalogueItemFilter, AssetCatalogueItemRepository,
-        AssetCatalogueItemSort,
+        AssetCatalogueItemFilter, AssetCatalogueItemRepository, AssetCatalogueItemSort,
     },
     EqualFilter, PaginationOption, RepositoryError, StorageConnection,
 };
@@ -16,7 +16,7 @@ pub fn get_asset_catalogue_items(
     pagination: Option<PaginationOption>,
     filter: Option<AssetCatalogueItemFilter>,
     sort: Option<AssetCatalogueItemSort>,
-) -> Result<ListResult<AssetCatalogueItem>, ListError> {
+) -> Result<ListResult<AssetCatalogueItemRow>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = AssetCatalogueItemRepository::new(&connection);
 
@@ -29,7 +29,7 @@ pub fn get_asset_catalogue_items(
 pub fn get_asset_catalogue_item(
     connection: &StorageConnection,
     id: String,
-) -> Result<Option<AssetCatalogueItem>, RepositoryError> {
+) -> Result<Option<AssetCatalogueItemRow>, RepositoryError> {
     let repository = AssetCatalogueItemRepository::new(&connection);
     let mut result = repository
         .query_by_filter(AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(&id)))?;
