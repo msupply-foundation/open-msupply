@@ -12,9 +12,9 @@ pub mod asset_type_queries;
 use self::asset_type_queries::*;
 
 #[derive(Default, Clone)]
-pub struct AssetCatalogueItemQueries;
+pub struct AssetCatalogueQueries;
 #[Object]
-impl AssetCatalogueItemQueries {
+impl AssetCatalogueQueries {
     // asset catalogue item queries
     pub async fn asset_catalogue_items(
         &self,
