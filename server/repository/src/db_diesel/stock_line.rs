@@ -250,7 +250,7 @@ fn apply_item_filter(
     query
 }
 
-pub fn to_domain(
+fn to_domain(
     (stock_line_row, (_, item_row), location_row, name_link_join, barcode_row): StockLineJoin,
 ) -> StockLine {
     StockLine {

@@ -461,7 +461,8 @@ mod test {
         assert_eq!(program_context, found_program.program_row.context_id);
         assert_eq!(
             program.enrolment_datetime,
-            DateTime::<Utc>::from_utc(found_program.row.enrolment_datetime, Utc).to_rfc3339()
+            DateTime::<Utc>::from_naive_utc_and_offset(found_program.row.enrolment_datetime, Utc)
+                .to_rfc3339()
         );
         assert_eq!(
             program.program_enrolment_id,
