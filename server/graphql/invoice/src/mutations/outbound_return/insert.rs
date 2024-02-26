@@ -97,6 +97,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
         ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
+        ServiceError::LineInsertError { .. } => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
