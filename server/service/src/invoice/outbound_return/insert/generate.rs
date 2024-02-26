@@ -30,9 +30,7 @@ pub fn generate(
         status: InvoiceRowStatus::New,
         // Default
         on_hold: false,
-        // on_hold: input.on_hold.unwrap_or(false),
         colour: None,
-        // colour: input.colour,
         comment: None,
         their_reference: None,
         tax: None,
