@@ -58,7 +58,7 @@ pub fn validate(
     })?;
 
     if patch.currency_id.is_some() && other_party.store_row.is_some() {
-        return Err(CannotChangeCurrencyForInternalSuppliers);
+        return Err(CannotIssueForeignCurrencyForInternalSuppliers);
     }
 
     Ok((invoice, Some(other_party), status_changed))
