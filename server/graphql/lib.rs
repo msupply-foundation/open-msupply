@@ -7,11 +7,11 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
+use asset_catalogue::AssetCatalogueItemQueries;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
-use graphql_asset_catalogue::AssetCatalogueItemQueries;
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
