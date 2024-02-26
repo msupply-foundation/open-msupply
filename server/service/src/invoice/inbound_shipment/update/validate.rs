@@ -57,8 +57,8 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    if patch.currency_id.is_some() && other_party.store_row.is_none() {
-        return Err(CannotChangeCurrencyForInternalSuppliers);
+    if patch.currency_id.is_some() && other_party.store_row.is_some() {
+        return Err(CannotIssueForeignCurrencyForInternalSuppliers);
     }
 
     Ok((invoice, Some(other_party), status_changed))
