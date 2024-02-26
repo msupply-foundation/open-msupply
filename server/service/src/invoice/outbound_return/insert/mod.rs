@@ -3,7 +3,12 @@ use repository::{
 };
 
 use crate::{
-    activity_log::activity_log_entry, invoice::get_invoice, service_provider::ServiceContext,
+    activity_log::activity_log_entry,
+    invoice::get_invoice,
+    invoice_line::stock_out_line::{
+        insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError, StockOutType,
+    },
+    service_provider::ServiceContext,
 };
 pub mod generate;
 pub mod validate;
@@ -36,6 +41,11 @@ pub enum InsertOutboundReturnError {
     // Internal
     NewlyCreatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
+    // Line Errors
+    LineInsertError {
+        line_id: String,
+        error: InsertStockOutLineError,
+    },
 }
 
 type OutError = InsertOutboundReturnError;
@@ -58,6 +68,29 @@ pub fn insert_outbound_return(
 
             InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
 
+            for line in input.outbound_return_lines {
+                insert_stock_out_line(
+                    ctx,
+                    InsertStockOutLine {
+                        id: line.id.clone(),
+                        invoice_id: new_invoice.id.clone(),
+                        stock_line_id: line.stock_line_id.clone(),
+                        number_of_packs: line.number_of_packs.clone(),
+                        note: Some(line.note.clone()),
+                        r#type: Some(StockOutType::OutboundReturn),
+                        // TODO
+                        item_id: "TODO".to_string(),
+                        tax: None,
+                        total_before_tax: None,
+                    },
+                )
+                .map_err(|error| OutError::LineInsertError {
+                    line_id: line.id,
+                    error,
+                })?;
+                // TODO: reason id
+            }
+
             activity_log_entry(
                 &ctx,
                 ActivityLogType::InvoiceCreated,
@@ -65,10 +98,6 @@ pub fn insert_outbound_return(
                 None,
                 None,
             )?;
-
-            for _line in input.outbound_return_lines {
-                // insert them liiiines
-            }
 
             get_invoice(ctx, None, &new_invoice.id)
                 .map_err(|error| OutError::DatabaseError(error))?
