@@ -1,6 +1,4 @@
-use repository::asset::{
-    Asset, AssetFilter, AssetRepository, AssetSort,
-};
+use repository::assets::asset::{Asset, AssetFilter, AssetRepository, AssetSort};
 use repository::{EqualFilter, PaginationOption, StorageConnection};
 
 use crate::{
@@ -26,10 +24,7 @@ pub fn get_assets(
     })
 }
 
-pub fn get_asset(
-    ctx: &ServiceContext,
-    id: String,
-) -> Result<Asset, SingleRecordError> {
+pub fn get_asset(ctx: &ServiceContext, id: String) -> Result<Asset, SingleRecordError> {
     let repository = AssetRepository::new(&ctx.connection);
 
     let mut result =

@@ -4,7 +4,7 @@ use self::update::{update_asset, UpdateAsset, UpdateAssetError};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
-use repository::asset::{Asset, AssetFilter, AssetSort};
+use repository::assets::asset::{Asset, AssetFilter, AssetSort};
 use repository::{PaginationOption, StorageConnection};
 
 pub mod insert;
@@ -23,11 +23,7 @@ pub trait AssetServiceTrait: Sync + Send {
         get_assets(connection, pagination, filter, sort)
     }
 
-    fn get_asset(
-        &self,
-        ctx: &ServiceContext,
-        id: String,
-    ) -> Result<Asset, SingleRecordError> {
+    fn get_asset(&self, ctx: &ServiceContext, id: String) -> Result<Asset, SingleRecordError> {
         get_asset(ctx, id)
     }
 
