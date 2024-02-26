@@ -3,17 +3,6 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 
-#[cfg(feature = "postgres")]
-pub async fn get_database(
-    _request: HttpRequest,
-    _service_provider: Data<ServiceProvider>,
-    _auth_data: Data<AuthData>,
-    _settings: Data<Settings>,
-) -> Result<HttpResponse, Error> {
-    Ok(HttpResponse::InternalServerError().body("Postgres Databases export not supported"))
-}
-
-#[cfg(not(feature = "postgres"))]
 pub async fn get_database(
     request: HttpRequest,
     service_provider: Data<ServiceProvider>,
@@ -26,6 +15,12 @@ pub async fn get_database(
     use actix_web::http::header::DispositionParam;
     use actix_web::http::header::DispositionType;
     use std::path::Path;
+
+    if cfg!(feature = "postgres") {
+        return Ok(
+            HttpResponse::InternalServerError().body("Postgres Databases export not supported")
+        );
+    }
 
     let auth_result = validate_request(request.clone(), &service_provider, &auth_data);
     if auth_result.is_err() {

@@ -86,7 +86,7 @@
   "messages.recorded-on": "Recorded on {{datetime}}",
   "messages.regenerate-id-confirm": "This will create a new ID and cannot be undone.",
   "messages.results-found": "{{totalCount}} results found",
-  "messages.results-over-limit": "Showing the first 100 results only - please refine your search",
+  "messages.results-over-limit": "Showing the first {{limit}} results only - please refine your search",
   "messages.save-encounter-as-visited": "Save encounter as Visited?",
   "messages.stock-expired": "Some stock lines are expired and cannot be allocated.",
   "messages.stock-on-hold": "Some stock lines are hold and cannot be allocated.",

@@ -204,7 +204,7 @@ impl ProgramEnrolmentNode {
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().enrolment_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().enrolment_datetime, Utc)
     }
 
     pub async fn program_enrolment_id(&self) -> &Option<String> {
