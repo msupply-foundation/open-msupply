@@ -4313,6 +4313,13 @@ export type QueriesResponseRequisitionStatsArgs = {
 };
 
 
+export type QueriesReturnReasonsArgs = {
+  filter?: InputMaybe<ReturnReasonFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReturnReasonSortInput>>;
+};
+
+
 export type QueriesSensorsArgs = {
   filter?: InputMaybe<SensorFilterInput>;
   page?: InputMaybe<PaginationInput>;
@@ -4785,6 +4792,11 @@ export type ReturnReasonConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type ReturnReasonFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type ReturnReasonNode = {
   __typename: 'ReturnReasonNode';
   id: Scalars['String']['output'];
@@ -4793,6 +4805,21 @@ export type ReturnReasonNode = {
 };
 
 export type ReturnReasonResponse = ReturnReasonConnector;
+
+export enum ReturnReasonSortFieldInput {
+  Id = 'id',
+  Reason = 'reason'
+}
+
+export type ReturnReasonSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ReturnReasonSortFieldInput;
+};
 
 export type SensorAxisNode = {
   __typename: 'SensorAxisNode';
