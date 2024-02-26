@@ -9,7 +9,7 @@ export type ReturnReasonFragment = { __typename: 'ReturnReasonNode', id: string,
 export type ReturnReasonsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type ReturnReasonsQuery = { __typename: 'Queries', returnReasons: Array<{ __typename: 'ReturnReasonNode', id: string, reason: string }> };
+export type ReturnReasonsQuery = { __typename: 'Queries', returnReasons: { __typename: 'ReturnReasonConnector', totalCount: number, nodes: Array<{ __typename: 'ReturnReasonNode', id: string, reason: string }> } };
 
 export const ReturnReasonFragmentDoc = gql`
     fragment ReturnReason on ReturnReasonNode {
@@ -21,7 +21,14 @@ export const ReturnReasonFragmentDoc = gql`
 export const ReturnReasonsDocument = gql`
     query returnReasons {
   returnReasons {
-    ...ReturnReason
+    __typename
+    ... on ReturnReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ReturnReason
+      }
+    }
   }
 }
     ${ReturnReasonFragmentDoc}`;

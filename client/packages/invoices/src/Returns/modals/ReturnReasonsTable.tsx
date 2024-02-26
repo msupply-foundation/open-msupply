@@ -11,7 +11,7 @@ interface ReturnWithReason {
   id: string;
   itemCode: string;
   itemName: string;
-  comment: string;
+  comment?: string | null;
   reasonId?: string | null;
 }
 

@@ -100,7 +100,7 @@ export const InboundReturnEditModal = ({
             <TabPanel value={Tabs.Reason}>
               <ReturnReasonsTable
                 lines={lines}
-                updateLine={line => update(line)}
+                updateLine={line => update(line as any)} // TODO fix this
               />
             </TabPanel>
           </TabContext>

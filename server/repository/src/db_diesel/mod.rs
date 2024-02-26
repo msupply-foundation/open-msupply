@@ -65,6 +65,7 @@ pub mod report;
 mod report_row;
 pub mod requisition;
 pub mod requisition_line;
+pub mod return_reason;
 mod return_reason_row;
 pub mod sensor;
 mod sensor_row;

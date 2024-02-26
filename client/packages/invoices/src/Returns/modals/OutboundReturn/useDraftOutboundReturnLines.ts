@@ -45,7 +45,13 @@ export const useDraftOutboundReturnLines = (
         const { id, reasonId, numberOfPacksToReturn, stockLineId, comment } =
           line;
 
-        return { id, stockLineId, reasonId, comment, numberOfPacksToReturn };
+        return {
+          id,
+          stockLineId,
+          reasonId: reasonId ?? '', // TODO
+          comment: comment ?? '',
+          numberOfPacksToReturn,
+        };
       }
     );
 
