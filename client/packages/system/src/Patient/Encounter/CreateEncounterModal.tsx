@@ -32,7 +32,6 @@ import {
   ClinicianAutocompleteOption,
   ClinicianSearchInput,
 } from '../../Clinician';
-import { PatientTabValue } from '../PatientView/PatientView';
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -127,28 +126,14 @@ export const CreateEncounterModal: FC = () => {
                 draft,
                 encounterRegistry.encounter.formSchemaId
               );
-
-              if (!id) {
-                error(t('error.encounter-not-created'))();
-                return;
-              }
-              const startDatetime = new Date(draft?.startDatetime ?? 0);
-              if (DateUtils.addHours(startDatetime, 1).getTime() > Date.now()) {
-                navigate(
-                  RouteBuilder.create(AppRoute.Dispensary)
-                    .addPart(AppRoute.Patients)
-                    .addPart(patientId)
-                    .addQuery({ tab: PatientTabValue.Encounters })
-                    .build()
-                );
-              } else {
+              if (!!id)
                 navigate(
                   RouteBuilder.create(AppRoute.Dispensary)
                     .addPart(AppRoute.Encounter)
                     .addPart(id)
                     .build()
                 );
-              }
+              else error(t('error.encounter-not-created'))();
             }
             reset();
           }}
