@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">openmsupply-client</string>
-    <string name="title_activity_main">openmsupply-client</string>
+    <string name="app_name">Open mSupply</string>
+    <string name="title_activity_main">Open mSupply</string>
     <string name="package_name">org.openmsupply.client</string>
     <string name="custom_url_scheme">org.openmsupply.client</string>
 </resources>

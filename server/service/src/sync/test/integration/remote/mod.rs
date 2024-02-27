@@ -123,14 +123,15 @@ fn replace_system_name_ids(
         let Some(mut_invoice) = record
             .as_mut_any()
             .map(|any| any.downcast_mut::<InvoiceRow>())
-            .flatten() else  {
+            .flatten()
+        else {
             continue;
         };
 
         if mut_invoice.r#type == InvoiceRowType::InventoryAddition
             || mut_invoice.r#type == InvoiceRowType::InventoryReduction
         {
-            mut_invoice.name_id = inventory_adjustment_name.id.clone();
+            mut_invoice.name_link_id = inventory_adjustment_name.id.clone();
             mut_invoice.name_store_id = None;
         }
     }

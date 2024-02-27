@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   ItemRowFragment,
   LocationRowFragment,
@@ -16,6 +16,7 @@ import {
   useRowHighlight,
   useNotification,
   useIsGrouped,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { StocktakeLineEditForm } from './StocktakeLineEditForm';
 import { useStocktakeLineEdit } from './hooks';
@@ -45,14 +46,19 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
   onClose,
   isOpen,
 }) => {
-  const isDisabled = useStocktake.utils.isDisabled();
   const [currentItem, setCurrentItem] = useState(item);
   const isMediumScreen = useIsMediumScreen();
+  const { isDisabled, items, totalLineCount } = useStocktake.line.rows();
   const { draftLines, update, addLine, isSaving, save, nextItem } =
     useStocktakeLineEdit(currentItem);
   const { highlightRows } = useRowHighlight();
   const { error } = useNotification();
   const { isGrouped } = useIsGrouped('stocktake');
+  const {
+    updatePaginationQuery,
+    queryParams: { first, offset, page },
+  } = useUrlQueryParams();
+  const hasMorePages = totalLineCount > Number(first) + Number(offset);
   // Order by newly added batch since new batches are now
   // added to the top of the stocktake list instead of the bottom
   const reversedDraftLines = [...draftLines].reverse();
@@ -65,9 +71,26 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
       return;
     }
 
-    if (mode === ModalMode.Update && nextItem) setCurrentItem(nextItem);
-    else if (mode === ModalMode.Create) setCurrentItem(null);
-    else onClose();
+    switch (true) {
+      case mode === ModalMode.Update && !!nextItem:
+        setCurrentItem(nextItem);
+        break;
+      case mode === ModalMode.Update && hasMorePages:
+        // we are at the end of the current paginated set of items
+        // fetch more pages and set the current item to null
+        // so that we can correctly set the current item when the
+        // lines query returns
+        updatePaginationQuery(page + 1);
+        setCurrentItem(null);
+        break;
+      case mode === ModalMode.Create:
+        setCurrentItem(null);
+        break;
+      default:
+        onClose();
+        break;
+    }
+
     // Returning true here triggers the slide animation
     return true;
   };
@@ -92,6 +115,15 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
 
   const hasValidBatches = draftLines.length > 0;
 
+  useEffect(() => {
+    // if the pagination has been increased and items have been fetched
+    // and we are updating and the current item has been nulled
+    // then it is time to set the curren item again
+    if (mode === ModalMode.Update && !currentItem && !!items[0]?.item)
+      setCurrentItem(items[0]?.item);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
   return (
     <TableProvider
       createStore={createTableStore}
@@ -105,7 +137,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
         onCancel={onClose}
         mode={mode}
         isOpen={isOpen}
-        hasNext={!!nextItem}
+        hasNext={!!nextItem || hasMorePages}
         isValid={hasValidBatches && !isSaving}
       >
         {(() => {
@@ -121,6 +153,7 @@ export const StocktakeLineEdit: FC<StocktakeLineEditProps> = ({
             <>
               <StocktakeLineEditForm
                 item={currentItem}
+                items={items}
                 onChangeItem={setCurrentItem}
                 mode={mode}
               />

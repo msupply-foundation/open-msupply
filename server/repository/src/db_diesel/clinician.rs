@@ -1,4 +1,5 @@
 use super::{
+    clinician_link_row::clinician_link::dsl as clinician_link_dsl,
     clinician_row::{clinician, clinician::dsl as clinician_dsl},
     clinician_store_join_row::clinician_store_join::dsl as clinician_store_join_dsl,
     DBType, StorageConnection,
@@ -163,11 +164,11 @@ fn create_filtered_query(store_id: String, filter: Option<ClinicianFilter>) -> B
     };
 
     // Restrict results to clinicians belonging to the store as specified in the
-    // clinician_store_join.
-    // Note, add AND filter last, after all potential future OR filters.
     let sub_query = clinician_store_join_dsl::clinician_store_join
-        .select(clinician_store_join_dsl::clinician_id)
+        .inner_join(clinician_link_dsl::clinician_link)
+        .select(clinician_link_dsl::clinician_id)
         .filter(clinician_store_join_dsl::store_id.eq(store_id.clone()));
+
     query = query.filter(clinician_dsl::id.eq_any(sub_query));
 
     query
@@ -275,7 +276,7 @@ mod tests {
             .upsert_one(&ClinicianStoreJoinRow {
                 id: "JoinId1".to_string(),
                 store_id: mock_store_a().id,
-                clinician_id: "clinician_store_a".to_string(),
+                clinician_link_id: "clinician_store_a".to_string(),
             })
             .unwrap();
 

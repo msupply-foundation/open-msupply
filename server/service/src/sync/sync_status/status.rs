@@ -36,7 +36,7 @@ pub struct FullSyncStatus {
     pub error: Option<SyncLogError>,
     pub summary: SyncStatus,
     pub prepare_initial: Option<SyncStatus>,
-    pub integration: Option<SyncStatus>,
+    pub integration: Option<SyncStatusWithProgress>,
     pub pull_central: Option<SyncStatusWithProgress>,
     pub pull_v6: Option<SyncStatusWithProgress>,
     pub pull_remote: Option<SyncStatusWithProgress>,
@@ -71,6 +71,8 @@ impl FullSyncStatus {
             pull_v6_finished_datetime,
             pull_v6_progress_total,
             pull_v6_progress_done,
+            integration_progress_total,
+            integration_progress_done,
         } = sync_log_row;
         let error = SyncLogError::from_sync_log_row(&sync_log_row);
 
@@ -85,9 +87,11 @@ impl FullSyncStatus {
                 started,
                 finished: prepare_initial_finished_datetime,
             }),
-            integration: integration_started_datetime.map(|started| SyncStatus {
+            integration: integration_started_datetime.map(|started| SyncStatusWithProgress {
                 started,
                 finished: integration_finished_datetime,
+                total: integration_progress_total.map(i32_to_u32),
+                done: integration_progress_done.map(i32_to_u32),
             }),
             pull_central: pull_central_started_datetime.map(|started| SyncStatusWithProgress {
                 started,

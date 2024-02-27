@@ -24,7 +24,6 @@ export const useDeleteSelectedLines = (): (() => void) => {
             .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) || [];
-
   const onDelete = async () => {
     await mutateAsync(selectedRows).catch(err => {
       throw err;

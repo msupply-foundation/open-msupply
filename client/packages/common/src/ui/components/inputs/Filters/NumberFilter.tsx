@@ -8,6 +8,7 @@ import {
 import { NumericTextInput } from '@common/components';
 import { FILTER_WIDTH, FilterDefinitionCommon } from './FilterMenu';
 import { RangeOption } from './DateFilter';
+import { FilterLabelSx } from './styleConstants';
 
 export interface NumberFilterDefinition extends FilterDefinitionCommon {
   type: 'number';
@@ -30,7 +31,9 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
   } = filterDefinition;
   const { urlQuery, updateQuery } = useUrlQuery();
   const urlValue = urlQuery[urlParameter] as number;
-  const [value, setValue] = useState(getNumberFromUrl(urlValue, range));
+  const [value, setValue] = useState(
+    getNumberFromUrl(urlValue, range) as number | undefined
+  );
 
   const debouncedOnChange = useDebouncedValueCallback(
     val => {
@@ -57,17 +60,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
     <NumericTextInput
       label={name}
       width={FILTER_WIDTH / 2}
-      sx={{
-        '& .MuiInputLabel-root': {
-          zIndex: 100,
-          top: '4px',
-          left: '8px',
-          color: 'gray.main',
-        },
-        '& .MuiInputLabel-root.Mui-focused': {
-          color: 'secondary.main',
-        },
-      }}
+      sx={FilterLabelSx}
       onChange={handleChange}
       value={value}
       min={getRangeBoundary(urlValue, range, minValue)}

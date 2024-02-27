@@ -68,6 +68,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
+  const [okDisabled, setOkDisabled] = useState(false);
 
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
   const { status } = useOutbound.document.fields('status');
@@ -222,7 +223,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       }
       okButton={
         <DialogButton
-          disabled={!currentItem}
+          disabled={!currentItem || okDisabled}
           variant="ok"
           onClick={() => handleSave(onClose)}
         />
@@ -247,6 +248,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           showZeroQuantityConfirmation={showZeroQuantityConfirmation}
           hasOnHold={hasOnHold}
           hasExpired={hasExpired}
+          setOkDisabled={setOkDisabled}
+          draftStockOutLines={draftStockOutLines}
         />
 
         <TableWrapper

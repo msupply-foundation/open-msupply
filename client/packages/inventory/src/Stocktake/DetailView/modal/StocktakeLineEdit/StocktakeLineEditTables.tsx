@@ -8,7 +8,6 @@ import {
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
-  NonNegativeDecimalCell,
   EnabledCheckboxCell,
   ColumnDescription,
   Theme,
@@ -16,6 +15,7 @@ import {
   useTableStore,
   CellProps,
   getColumnLookupWithOverrides,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -195,11 +195,11 @@ export const BatchTable: FC<
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'StockLineReducedBelowZero',
-      Cell: NonNegativeDecimalCell,
+      Cell: props => <NumberInputCell {...props} decimalLimit={2} />,
       setter: patch => {
-        // If counted number of packs was changed to result in no adjustment
-        // we should remove inventoryAdjustmentReason, otherwise could have a reason
-        // on a line with no adjustments
+        // If counted number of packs was changed to result in no adjustment we
+        // should remove inventoryAdjustmentReason, otherwise could have a
+        // reason on a line with no adjustments
         const inventoryAdjustmentReason =
           !patch.countedNumberOfPacks ||
           patch.snapshotNumberOfPacks == patch.countedNumberOfPacks

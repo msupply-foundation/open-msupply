@@ -35,7 +35,7 @@ export const Initialise = () => {
 
   useEffect(() => {
     setPageTitle(`${t('messages.not-initialised')} | ${t('app')} `);
-  }, []);
+  }, [setPageTitle, t]);
 
   const isInputDisabled = isInitialising || isLoading;
 
@@ -88,6 +88,7 @@ export const Initialise = () => {
       Button={
         <LoadingButton
           isLoading={isLoading}
+          loadingStyle={{ iconColor: 'secondary.main' }}
           onClick={isInitialising ? onRetry : onInitialise}
           variant="outlined"
           startIcon={<SaveIcon />}

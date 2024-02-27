@@ -239,7 +239,7 @@ impl SyncTranslation for RequisitionTranslation {
             id: data.ID.to_string(),
             user_id: data.user_id,
             requisition_number: data.serial_number,
-            name_id: data.name_ID,
+            name_link_id: data.name_ID,
             store_id: data.store_ID,
             r#type,
             status,
@@ -316,7 +316,7 @@ impl SyncTranslation for RequisitionTranslation {
             ID: id.clone(),
             user_id,
             serial_number: requisition_number,
-            name_ID: name_id,
+            name_ID: name_row.id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
             status: to_legacy_status(&r#type, &status, has_outbound_shipment).ok_or(
@@ -502,8 +502,13 @@ impl LegacyAuthorisationStatus {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_name_links;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_requisition_translation() {
@@ -529,6 +534,36 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_push_merged() {
+        let (mock_data, connection, _, _) = setup_all(
+            "test_requisition_push_merged",
+            MockDataInserts::none().names().stores().requisitions(),
+        )
+        .await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to())),
+            )
+            .unwrap();
+
+        let translator = RequisitionTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
         }
     }
 }

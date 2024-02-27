@@ -33,7 +33,7 @@ const ItemListComponent: FC = () => {
 
   const columns = useColumns<ItemsWithStatsFragment>(
     [
-      'code',
+      ['code', { width: 75 }],
       [
         'name',
         {

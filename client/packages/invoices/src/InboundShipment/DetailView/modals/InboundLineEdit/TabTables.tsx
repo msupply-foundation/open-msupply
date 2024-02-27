@@ -11,9 +11,9 @@ import {
   alpha,
   QueryParamsProvider,
   createQueryParamsStore,
-  NonNegativeIntegerCell,
   CellProps,
   getColumnLookupWithOverrides,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -65,7 +65,7 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   rowData,
   ...props
 }) => (
-  <NonNegativeIntegerCell
+  <NumberInputCell
     {...props}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}

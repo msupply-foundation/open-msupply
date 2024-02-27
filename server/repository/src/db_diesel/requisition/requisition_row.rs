@@ -1,8 +1,8 @@
 use super::requisition_row::requisition::dsl as requisition_dsl;
 
 use crate::db_diesel::{
-    name_row::name, period::period, program_requisition::program_row::program, store_row::store,
-    user_row::user_account,
+    item_link_row::item_link, name_link_row::name_link, period::period,
+    program_requisition::program_row::program, store_row::store, user_row::user_account,
 };
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
@@ -19,7 +19,7 @@ table! {
     requisition (id) {
         id -> Text,
         requisition_number -> Bigint,
-        name_id -> Text,
+        name_link_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
         #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionRowTypeMapping,
@@ -49,11 +49,13 @@ table! {
     }
 }
 
-joinable!(requisition -> name (name_id));
+joinable!(requisition -> name_link (name_link_id));
 joinable!(requisition -> store (store_id));
 joinable!(requisition -> user_account (user_id));
 joinable!(requisition -> period (period_id));
 joinable!(requisition -> program (program_id));
+allow_tables_to_appear_in_same_query!(requisition, name_link);
+allow_tables_to_appear_in_same_query!(requisition, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -89,7 +91,7 @@ pub enum RequisitionRowApprovalStatus {
 pub struct RequisitionRow {
     pub id: String,
     pub requisition_number: i64,
-    pub name_id: String,
+    pub name_link_id: String,
     pub store_id: String,
     pub user_id: Option<String>,
     #[column_name = "type_"]
@@ -121,7 +123,7 @@ impl Default for RequisitionRow {
             id: Default::default(),
             user_id: Default::default(),
             requisition_number: Default::default(),
-            name_id: Default::default(),
+            name_link_id: Default::default(),
             store_id: Default::default(),
             sent_datetime: Default::default(),
             finalised_datetime: Default::default(),

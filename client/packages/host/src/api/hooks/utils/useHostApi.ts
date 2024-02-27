@@ -6,6 +6,7 @@ export const useHostApi = () => {
   const keys = {
     base: () => ['host'] as const,
     displaySettings: () => [...keys.base(), 'displaySettings'] as const,
+    databaseSettings: () => [...keys.base(), 'databaseSettings'] as const,
     plugins: () => [...keys.base(), 'plugins'] as const,
   };
 

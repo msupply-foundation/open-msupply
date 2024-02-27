@@ -12,7 +12,7 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'AccountBlocked', description: string, timeoutRemaining: number } | { __typename: 'InvalidCredentials', description: string } } };
 
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -68,6 +68,11 @@ export const AuthTokenDocument = gql`
         ... on InvalidCredentials {
           __typename
           description
+        }
+        ... on AccountBlocked {
+          __typename
+          description
+          timeoutRemaining
         }
         description
       }
