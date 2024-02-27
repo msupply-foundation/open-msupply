@@ -267,11 +267,18 @@ export const Toolbar: FC<ToolbarProps> = ({
                     value={DateUtils.getDateOrNull(endDatetime ?? null)}
                     onChange={date => {
                       const endDatetime = date
-                        ? DateUtils.formatRFC3339(date)
+                        ? DateUtils.formatRFC3339(
+                            new Date(
+                              new Date(startDatetime ?? '').setHours(
+                                date.getHours(),
+                                date.getMinutes()
+                              )
+                            )
+                          )
                         : undefined;
                       if (endDatetime) {
                         setEndDatetime(endDatetime);
-                        onChange({ endDatetime });
+                        onChange({ startDatetime, endDatetime });
                       }
                     }}
                   />
