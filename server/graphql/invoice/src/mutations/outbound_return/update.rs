@@ -5,10 +5,12 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
-use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::outbound_return::update::{
     UpdateOutboundReturn as ServiceInput, UpdateOutboundReturnError as ServiceError,
-    UpdateOutboundReturnLine,
+};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    invoice::outbound_return::update::UpdateOutboundReturnStatus,
 };
 
 use super::insert::OutboundReturnLineInput;
@@ -17,8 +19,16 @@ use super::insert::OutboundReturnLineInput;
 #[graphql(name = "UpdateOutboundReturnInput")]
 pub struct UpdateInput {
     pub id: String,
-    // pub supplier_id: String, // perhaps todo - do we want to able to change the supplier we're returning to?
-    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
+    // supplier_id: String, // do we want to able to change the supplier we're returning to?
+    status: Option<UpdateOutboundReturnStatusInput>,
+    outbound_return_lines: Vec<OutboundReturnLineInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateOutboundReturnStatusInput {
+    Allocated,
+    Picked,
+    Shipped,
 }
 
 // #[derive(InputObject)]
@@ -74,9 +84,9 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         // }
 
         // Standard Graphql Errors
-        ServiceError::InvoiceDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::LineUpdateError { .. } => InternalError(formatted_error),
-        ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
+        ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
+        // ServiceError::LineUpdateError { .. } => InternalError(formatted_error),
+        // ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
@@ -87,36 +97,48 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
+            status,
             outbound_return_lines,
         }: UpdateInput = self;
 
         ServiceInput {
             id,
+            status: status.map(|status| status.to_domain()),
             outbound_return_lines: outbound_return_lines
                 .into_iter()
-                .map(|line| line.to_domain_update())
+                .map(|line| line.to_domain())
                 .collect(),
         }
     }
 }
 
-impl OutboundReturnLineInput {
-    // TODO: only one of these?
-    pub fn to_domain_update(self) -> UpdateOutboundReturnLine {
-        let OutboundReturnLineInput {
-            id,
-            stock_line_id,
-            number_of_packs_to_return,
-            reason_id,
-            comment,
-        }: OutboundReturnLineInput = self;
-
-        UpdateOutboundReturnLine {
-            id,
-            stock_line_id,
-            number_of_packs: number_of_packs_to_return,
-            reason_id,
-            note: comment,
+impl UpdateOutboundReturnStatusInput {
+    pub fn to_domain(&self) -> UpdateOutboundReturnStatus {
+        use UpdateOutboundReturnStatus::*;
+        match self {
+            UpdateOutboundReturnStatusInput::Allocated => Allocated,
+            UpdateOutboundReturnStatusInput::Picked => Picked,
+            UpdateOutboundReturnStatusInput::Shipped => Shipped,
         }
     }
 }
+// impl OutboundReturnLineInput {
+//     // TODO: only one of these?
+//     pub fn to_domain_update(self) -> UpdateOutboundReturnLine {
+//         let OutboundReturnLineInput {
+//             id,
+//             stock_line_id,
+//             number_of_packs_to_return,
+//             reason_id,
+//             comment,
+//         }: OutboundReturnLineInput = self;
+
+//         UpdateOutboundReturnLine {
+//             id,
+//             stock_line_id,
+//             number_of_packs: number_of_packs_to_return,
+//             reason_id,
+//             note: comment,
+//         }
+//     }
+// }
