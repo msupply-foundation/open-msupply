@@ -60,5 +60,16 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
+    listAll: async ({ sortBy }: ListParams<AssetCatalogueItemFragment>) => {
+      const result = await sdk.assetCatalogueItems({
+        key: itemParsers.toSortField(sortBy),
+        desc: sortBy.isDesc,
+        storeId,
+      });
+
+      const items = result?.assetCatalogueItems;
+
+      return items;
+    },
   },
 });

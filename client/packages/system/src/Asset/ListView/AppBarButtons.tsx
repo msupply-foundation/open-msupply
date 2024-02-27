@@ -5,34 +5,28 @@ import {
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  //   FnUtils,
-  //   FileUtils,
+  FileUtils,
   LoadingButton,
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-// import { useAsset } from '../api';
-// import { assetsToCsv } from '../../utils';
+import { useAssets } from '../api';
+import { assetCategoryListItemsToCsv } from '../utils';
 
 export const AppBarButtonsComponent = () => {
-  const { success /* , error */ } = useNotification();
-  //   const { mutate: onCreate } = useOutbound.document.insert();
+  const { success, error } = useNotification();
   const t = useTranslation(['catalogue']);
-  //   const { fetchAsync, isLoading } = useOutbound.document.listAll({
-  //     key: 'createdDateTime',
-  //     direction: 'desc',
-  //     isDesc: true,
-  //   });
+  const { fetchAsync, isLoading } = useAssets.document.listAll();
 
   const csvExport = async () => {
-    // const data = await fetchAsync();
-    // if (!data || !data?.nodes.length) {
-    //   error(t('error.no-data'))();
-    //   return;
-    // }
+    const data = await fetchAsync();
+    if (!data || !data?.nodes.length) {
+      error(t('error.no-data'))();
+      return;
+    }
 
-    // const csv = outboundsToCsv(data.nodes, t);
-    // FileUtils.exportCSV(csv, t('filename.outbounds'));
+    const csv = assetCategoryListItemsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.asset-categories'));
     success(t('success'))();
   };
 
@@ -41,7 +35,7 @@ export const AppBarButtonsComponent = () => {
       <Grid container gap={1}>
         <LoadingButton
           startIcon={<DownloadIcon />}
-          isLoading={false}
+          isLoading={isLoading}
           variant="outlined"
           onClick={csvExport}
           disabled={EnvUtils.platform === Platform.Android}
