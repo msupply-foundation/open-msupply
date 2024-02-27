@@ -83,6 +83,7 @@
   "error.unable-to-load-data": "An error has occurred: there was a problem loading the data.",
   "error.unable-to-read-barcode": "Unable to read a barcode",
   "error.unable-to-load-server-log": "No server logs found. Check your configuration to see if server logs are enabled.",
+  "filename.asset-categories": "asset-categories",
   "filename.inbounds": "inbound-shipments",
   "filename.locations": "locations",
   "filename.master-lists": "master-lists",

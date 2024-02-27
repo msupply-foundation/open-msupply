@@ -1,5 +1,5 @@
 import { getAssetQueries, ListParams } from '../../api';
-import { useAuthContext, useGql } from '@openmsupply-client/common';
+import { SortBy, useAuthContext, useGql } from '@openmsupply-client/common';
 import { getSdk, AssetCatalogueItemFragment } from '../../operations.generated';
 
 export const useAssetApi = () => {
@@ -12,6 +12,8 @@ export const useAssetApi = () => {
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams<AssetCatalogueItemFragment>) =>
       [...keys.list(), params] as const,
+    sortedList: (sortBy: SortBy<AssetCatalogueItemFragment>) =>
+      [...keys.list(), sortBy] as const,
   };
 
   const queries = getAssetQueries(getSdk(client), storeId);

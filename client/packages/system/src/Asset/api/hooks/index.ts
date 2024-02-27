@@ -6,6 +6,7 @@ export const useAssets = {
   document: {
     get: Document.useAsset,
     list: Document.useAssets,
+    listAll: Document.useAssetsAll,
 
     fields: Document.useAssetFields,
   },
