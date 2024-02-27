@@ -1,29 +1,33 @@
 use super::{query::get_asset, validate::check_asset_exists};
-use crate::{service_provider::ServiceContext, SingleRecordError};
-use chrono::Utc;
+use crate::{service_provider::ServiceContext, NullableUpdate, SingleRecordError};
+use chrono::{NaiveDate, Utc};
 use repository::{
-    assets::asset_row::{AssetRow, AssetRowRepository},
-    RepositoryError, StorageConnection,
+    assets::{
+        asset::{AssetFilter, AssetRepository},
+        asset_row::{AssetRow, AssetRowRepository},
+    },
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
     AssetDoesNotExist,
     AssetDoesNotBelongToCurrentStore,
+    SerialNumberAlreadyExists,
     UpdatedRecordNotFound,
-    LocationIsOnHold,
     DatabaseError(RepositoryError),
 }
 
+#[derive(Debug, Default)]
 pub struct UpdateAsset {
     pub id: String,
     pub store_id: Option<String>,
     pub name: Option<String>,
     pub code: Option<String>,
-    pub serial_number: Option<String>,
-    pub catalogue_item_id: Option<String>,
-    pub installation_date: Option<chrono::NaiveDate>,
-    pub replacement_date: Option<chrono::NaiveDate>,
+    pub serial_number: Option<NullableUpdate<String>>,
+    pub catalogue_item_id: Option<NullableUpdate<String>>,
+    pub installation_date: Option<NullableUpdate<NaiveDate>>,
+    pub replacement_date: Option<NullableUpdate<NaiveDate>>,
 }
 
 pub fn update_asset(
@@ -52,6 +56,22 @@ pub fn validate(
         Some(asset_row) => asset_row,
         None => return Err(UpdateAssetError::AssetDoesNotExist),
     };
+
+    // Check the serial number is unique (if present)
+    if let Some(serial_number) = &input.serial_number {
+        if let Some(serial_number) = &serial_number.value {
+            if AssetRepository::new(connection)
+                .query_one(
+                    AssetFilter::new()
+                        .id(EqualFilter::not_equal_to(&asset_row.id))
+                        .serial_number(StringFilter::equal_to(serial_number)),
+                )?
+                .is_some()
+            {
+                return Err(UpdateAssetError::SerialNumberAlreadyExists);
+            }
+        }
+    }
     if let Some(store_id) = &asset_row.store_id {
         // TODO: confirm, maybe people can just create them on central for any store
         if ctx_store_id != store_id {
@@ -80,11 +100,21 @@ pub fn generate(
     asset_row.name = name.unwrap_or(asset_row.name);
     asset_row.code = code.unwrap_or(asset_row.code);
 
-    // If these fields are None in UpdateAsset, they won't be updated by diesel... (pretty sure?)
-    asset_row.serial_number = serial_number;
-    asset_row.catalogue_item_id = catalogue_item_id;
-    asset_row.installation_date = installation_date;
-    asset_row.replacement_date = replacement_date;
+    if let Some(serial_number) = serial_number {
+        asset_row.serial_number = serial_number.value;
+    }
+
+    if let Some(catalogue_item_id) = catalogue_item_id {
+        asset_row.catalogue_item_id = catalogue_item_id.value;
+    }
+
+    if let Some(installation_date) = installation_date {
+        asset_row.installation_date = installation_date.value;
+    }
+
+    if let Some(replacement_date) = replacement_date {
+        asset_row.replacement_date = replacement_date.value;
+    }
 
     // Set the modified date time
     asset_row.modified_datetime = Utc::now().naive_utc();

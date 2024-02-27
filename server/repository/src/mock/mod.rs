@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
-mod asset;
+pub mod asset;
 mod barcode;
 mod clinician;
 pub mod common;
@@ -240,7 +240,7 @@ pub struct MockDataInserts {
     pub clinician_store_joins: bool,
     pub contexts: bool,
     pub plugin_data: bool,
-    pub asserts: bool,
+    pub assets: bool,
 }
 
 impl MockDataInserts {
@@ -291,7 +291,7 @@ impl MockDataInserts {
             clinician_store_joins: true,
             contexts: true,
             plugin_data: true,
-            asserts: true,
+            assets: true,
         }
     }
 
@@ -506,7 +506,9 @@ impl MockDataInserts {
     }
 
     pub fn assets(mut self) -> Self {
-        self.asserts = true;
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
         self
     }
 }
@@ -971,7 +973,7 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.asserts {
+        if inserts.assets {
             for row in &mock_data.assets {
                 let repo = AssetRowRepository::new(connection);
                 repo.upsert_one(&row).unwrap();
