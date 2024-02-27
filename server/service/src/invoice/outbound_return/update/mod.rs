@@ -1,12 +1,16 @@
-use repository::{Invoice, RepositoryError};
+use repository::{Invoice, InvoiceRowRepository, RepositoryError};
 
-use crate::{invoice::get_invoice, service_provider::ServiceContext};
+use crate::{
+    activity_log::{activity_log_entry, log_type_from_invoice_status},
+    invoice::get_invoice,
+    service_provider::ServiceContext,
+};
 
 use super::insert::InsertOutboundReturnLine;
 
 pub mod generate;
 pub mod validate;
-// use generate::generate;
+use generate::generate;
 use validate::validate;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -29,29 +33,39 @@ pub enum UpdateOutboundReturnError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
-    UpdatedRecordNotFound,
+    UpdatedReturnDoesNotExist,
     NotAnOutboundReturn,
+    // InvoiceLineHasNoStockLine,
+    // CannotReverseInvoiceStatus,
     // LineUpdateError(UpdateOutboundReturnLineError),
     DatabaseError(RepositoryError),
 }
 
 pub fn update_outbound_return(
     ctx: &ServiceContext,
-    input: UpdateOutboundReturn, // TODO...
+    input: UpdateOutboundReturn,
 ) -> Result<Invoice, UpdateOutboundReturnError> {
     let outbound_return = ctx
         .connection
         .transaction_sync(|connection| {
-            let return_row = validate(connection, &ctx.store_id, &input.id)?;
-            // let updated_return_row = generate(input, return_row);
-            // OutboundReturnRepository::new(&connection).upsert_one(&updated_return_row)?;
-            // generate_outbound_return_lines(&connection, &updated_return_row)?;
-            // get_outbound_return(ctx, updated_return_row.id).map_err(UpdateOutboundReturnError::from)
-            // let return_row = validate(ctx, &ctx.store_id, &input.id)?;
+            let (return_row, status_changed) = validate(connection, &ctx.store_id, &input.id)?;
+            let (updated_return_row,) = generate(&input, return_row);
+
+            InvoiceRowRepository::new(connection).upsert_one(&updated_return_row)?;
+
+            if status_changed {
+                activity_log_entry(
+                    &ctx,
+                    log_type_from_invoice_status(&updated_return_row.status, false),
+                    Some(updated_return_row.id.to_owned()),
+                    None,
+                    None,
+                )?;
+            }
 
             get_invoice(ctx, None, &input.id)
                 .map_err(|error| UpdateOutboundReturnError::DatabaseError(error))?
-                .ok_or(UpdateOutboundReturnError::UpdatedRecordNotFound)
+                .ok_or(UpdateOutboundReturnError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
