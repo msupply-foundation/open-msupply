@@ -1,6 +1,8 @@
-use repository::{InvoiceRow, StorageConnection};
+use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
 
-use crate::invoice::{check_invoice_exists, check_invoice_is_editable, check_store};
+use crate::invoice::{
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+};
 
 use super::UpdateOutboundReturnError;
 
@@ -16,13 +18,12 @@ pub fn validate(
     if !check_store(&return_row, store_id) {
         return Err(ReturnDoesNotBelongToCurrentStore);
     }
-
     if !check_invoice_is_editable(&return_row) {
         return Err(ReturnIsNotEditable);
     }
-    // if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
-    //     return Err(NotAnOutboundShipment);
-    // }
+    if !check_invoice_type(&return_row, InvoiceRowType::OutboundReturn) {
+        return Err(NotAnOutboundReturn);
+    }
 
     Ok(return_row)
 }
