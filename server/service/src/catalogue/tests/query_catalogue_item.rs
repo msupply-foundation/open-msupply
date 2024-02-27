@@ -1,6 +1,5 @@
 #[cfg(test)]
 mod query_catalogue_item {
-    use std::default;
 
     use repository::{
         assets::asset_catalogue_item::{AssetCatalogueItemFilter, AssetCatalogueItemSortField},
@@ -10,8 +9,7 @@ mod query_catalogue_item {
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
-    use crate::service_provider;
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::{service_provider::ServiceProvider, ListError};
 
     // note - no mocks required because data is created in migration V1_08_00
 
@@ -213,7 +211,6 @@ mod query_catalogue_item {
                 None,
             )
             .unwrap();
-        // println!("result_1 {:?}", result_1);
         assert_eq!(result_1.count, 158);
 
         // class filter - no matches
@@ -227,7 +224,6 @@ mod query_catalogue_item {
                 None,
             )
             .unwrap();
-        println!("result {:?}", result);
         assert_eq!(result.count, 0);
 
         // add query with multiple filters of different types with one not passing
