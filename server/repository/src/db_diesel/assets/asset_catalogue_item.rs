@@ -1,11 +1,6 @@
-use super::{
-    asset_catalogue_item_row::{
-        asset_catalogue_item, asset_catalogue_item::dsl as asset_catalogue_item_dsl,
-        AssetCatalogueItemRow,
-    },
-    asset_category::{AssetCategoryFilter, AssetCategoryRepository},
-    asset_class::{AssetClassFilter, AssetClassRepository},
-    asset_type::{AssetTypeFilter, AssetTypeRepository},
+use super::asset_catalogue_item_row::{
+    asset_catalogue_item, asset_catalogue_item::dsl as asset_catalogue_item_dsl,
+    AssetCatalogueItemRow,
 };
 
 use crate::{
