@@ -75,6 +75,10 @@ impl AssetNode {
         &self.row().id
     }
 
+    pub async fn store_id(&self) -> &Option<String> {
+        &self.row().store_id
+    }
+
     pub async fn name(&self) -> &str {
         &self.row().name
     }
@@ -83,7 +87,31 @@ impl AssetNode {
         &self.row().code
     }
 
-    // TODO: other fields
+    pub async fn serial_number(&self) -> &Option<String> {
+        &self.row().serial_number
+    }
+
+    // TODO: Loaders for store, class, category, type, catalogue_item
+
+    pub async fn catalogue_item_id(&self) -> &Option<String> {
+        &self.row().catalogue_item_id
+    }
+
+    pub async fn installation_date(&self) -> &Option<chrono::NaiveDate> {
+        &self.row().installation_date
+    }
+
+    pub async fn replacement_date(&self) -> &Option<chrono::NaiveDate> {
+        &self.row().replacement_date
+    }
+
+    pub async fn created_datetime(&self) -> &chrono::NaiveDateTime {
+        &self.row().created_datetime
+    }
+
+    pub async fn modified_datetime(&self) -> &chrono::NaiveDateTime {
+        &self.row().modified_datetime
+    }
 }
 
 #[derive(Union)]
