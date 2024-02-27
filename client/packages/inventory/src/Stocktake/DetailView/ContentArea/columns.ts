@@ -6,13 +6,13 @@ import {
   ArrayUtils,
   Column,
   SortBy,
-  PositiveNumberCell,
   getLinesFromRow,
   TooltipTextCell,
   useTranslation,
   TypedTFunction,
   LocaleKey,
   useColumnUtils,
+  NumberCell,
 } from '@openmsupply-client/common';
 import {
   InventoryAdjustmentReasonRowFragment,
@@ -111,11 +111,6 @@ export const useStocktakeColumns = ({
       [
         'expiryDate',
         {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'expiryDate'] },
-              { path: ['expiryDate'], default: '' },
-            ]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
               { path: ['lines', 'expiryDate'] },
@@ -123,44 +118,27 @@ export const useStocktakeColumns = ({
             ]),
         },
       ],
-      [
-        'location',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'location', 'code'] },
-              { path: ['location', 'code'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'location', 'code'] },
-              { path: ['location', 'code'] },
-            ]),
-        },
-      ],
+      {
+        key: 'locationCode',
+        label: 'label.location',
+        width: 90,
+        accessor: ({ rowData }) =>
+          getColumnProperty(rowData, [
+            { path: ['lines', 'location', 'code'] },
+            { path: ['location', 'code'] },
+          ]),
+      },
       {
         key: 'snapshotNumPacks',
         label: 'label.snapshot-num-of-packs',
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
           ),
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            return (
-              lines.reduce(
-                (total, line) => total + line.snapshotNumberOfPacks,
-                0
-              ) ?? 0
-            ).toString();
-          } else {
-            return row.snapshotNumberOfPacks ?? '';
-          }
-        },
+        sortable: false,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
@@ -193,24 +171,12 @@ export const useStocktakeColumns = ({
         label: 'label.counted-num-of-packs',
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
           ),
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            return (
-              lines.reduce(
-                (total, line) => total + (line.countedNumberOfPacks ?? 0),
-                0
-              ) ?? 0
-            ).toString();
-          } else {
-            return row.countedNumberOfPacks ?? '';
-          }
-        },
+        sortable: false,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
@@ -229,25 +195,7 @@ export const useStocktakeColumns = ({
         key: 'difference',
         label: 'label.difference',
         align: ColumnAlign.Right,
-        getSortValue: row => {
-          if ('lines' in row) {
-            const { lines } = row;
-            const total =
-              lines.reduce(
-                (total, line) =>
-                  total +
-                  (line.snapshotNumberOfPacks -
-                    (line.countedNumberOfPacks ?? line.snapshotNumberOfPacks)),
-                0
-              ) ?? 0;
-            return (total < 0 ? Math.abs(total) : -total).toString();
-          } else {
-            return (
-              row.snapshotNumberOfPacks -
-                (row.countedNumberOfPacks ?? row.snapshotNumberOfPacks) ?? ''
-            );
-          }
-        },
+        sortable: false,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
@@ -272,17 +220,12 @@ export const useStocktakeColumns = ({
         key: 'inventoryAdjustmentReason',
         label: 'label.reason',
         accessor: ({ rowData }) => getStocktakeReasons(rowData, t),
-        getSortValue: rowData => getStocktakeReasons(rowData, t),
+        sortable: false,
       },
       {
         key: 'comment',
         label: 'label.stocktake-comment',
-
-        getSortValue: row =>
-          getColumnPropertyAsString(row, [
-            { path: ['lines', 'comment'] },
-            { path: ['comment'], default: '' },
-          ]),
+        sortable: false,
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [
             { path: ['lines', 'comment'] },

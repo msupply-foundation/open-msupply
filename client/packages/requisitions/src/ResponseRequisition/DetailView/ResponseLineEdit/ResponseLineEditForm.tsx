@@ -6,7 +6,6 @@ import {
   TextArea,
   Typography,
   useTranslation,
-  NonNegativeNumberInput,
 } from '@openmsupply-client/common';
 import { DraftResponseLine } from './hooks';
 import { VariantControl } from '@openmsupply-client/system';
@@ -129,15 +128,14 @@ export const ResponseLineEditForm = ({
           />
           <InputWithLabelRow
             Input={
-              <NonNegativeNumberInput
+              <NumericTextInput
                 disabled={disabled}
                 autoFocus
                 value={numberOfPacksFromQuantity(supplyQuantity)}
                 width={150}
-                onChange={supplyQuantity =>
+                onChange={q =>
                   update({
-                    supplyQuantity:
-                      numberOfPacksToTotalQuantity(supplyQuantity),
+                    supplyQuantity: q && numberOfPacksToTotalQuantity(q),
                   })
                 }
               />

@@ -22,6 +22,11 @@ query authToken($username: String!, $password: String!) {
           __typename
           description
         }
+        ... on AccountBlocked {
+          __typename
+          description
+          timeoutRemaining
+        }
         description
       }
     }

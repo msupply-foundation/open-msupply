@@ -131,7 +131,7 @@ pub fn store() -> StoreRow {
 pub fn name_store_join1() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_to_name_store_join1".to_string(),
-        name_id: NAME_1.0.to_string(),
+        name_link_id: NAME_1.0.to_string(),
         store_id: store().id,
         name_is_customer: false,
         name_is_supplier: true,
@@ -141,7 +141,7 @@ pub fn name_store_join1() -> NameStoreJoinRow {
 pub fn name_store_join2() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_to_name_store_join2".to_string(),
-        name_id: NAME_1.0.to_string(),
+        name_link_id: NAME_1.0.to_string(),
         store_id: store().id,
         name_is_customer: false,
         name_is_supplier: false,
@@ -151,7 +151,7 @@ pub fn name_store_join2() -> NameStoreJoinRow {
 pub fn name_store_join3() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: "name_to_name_store_join3".to_string(),
-        name_id: name2().id,
+        name_link_id: name2().id,
         store_id: store().id,
         name_is_customer: true,
         name_is_supplier: true,
@@ -193,7 +193,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyNameStoreJoinRow {
                 id: name_store_join1().id,
                 store_id: name_store_join1().store_id,
-                name_id: name_store_join1().name_id,
+                name_id: name_store_join1().name_link_id,
                 inactive: Some(false),
                 name_is_customer: Some(true),
 
@@ -206,7 +206,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyNameStoreJoinRow {
                 id: name_store_join2().id,
                 store_id: name_store_join2().store_id,
-                name_id: name_store_join2().name_id,
+                name_id: name_store_join2().name_link_id,
                 inactive: Some(false),
                 name_is_customer: Some(true),
                 name_is_supplier: Some(false),
@@ -218,7 +218,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
             push_data: json!(LegacyNameStoreJoinRow {
                 id: name_store_join3().id,
                 store_id: name_store_join3().store_id,
-                name_id: name_store_join3().name_id,
+                name_id: name_store_join3().name_link_id,
                 inactive: Some(false),
                 name_is_customer: Some(true),
                 name_is_supplier: Some(true),

@@ -124,7 +124,6 @@ export const useResponseColumns = () => {
     label: 'label.remaining-to-supply',
     description: 'description.remaining-to-supply',
     key: 'remainingToSupply',
-    width: 100,
     align: ColumnAlign.Right,
     getSortValue: rowData => rowData.remainingQuantityToSupply,
     Cell: PackVariantQuantityCell({

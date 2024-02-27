@@ -74,7 +74,7 @@ impl ActivityLogNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().datetime.clone(), Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime.clone(), Utc)
     }
 
     pub async fn to(&self) -> &Option<String> {

@@ -1,8 +1,8 @@
-import { Utils } from '@openmsupply-client/system/src/Patient/api/hooks/utils';
 import { PatientSchema } from '@openmsupply-client/programs';
+import { usePatient } from '@openmsupply-client/system';
 
 export const usePatientSearchQuery = () => {
-  const { data, error, isLoading, mutateAsync } = Utils.usePatientSearch();
+  const { data, error, isLoading, mutateAsync } = usePatient.utils.search();
 
   const results =
     // If patient has a full document field, use that since it'll make more data

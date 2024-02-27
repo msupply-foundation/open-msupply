@@ -3,7 +3,6 @@ import {
   Grid,
   InputWithLabelRow,
   NumericTextInput,
-  NonNegativeIntegerInput,
   TextArea,
   Typography,
 } from '@openmsupply-client/common';
@@ -191,14 +190,13 @@ export const RequestLineEditForm = ({
           />
           <InputWithLabelRow
             Input={
-              <NonNegativeIntegerInput
+              <NumericTextInput
                 autoFocus
                 value={numberOfPacksFromQuantity(requestedQuantity)}
                 width={100}
-                onChange={requestedQuantity =>
+                onChange={q =>
                   update({
-                    requestedQuantity:
-                      numberOfPacksToTotalQuantity(requestedQuantity),
+                    requestedQuantity: q && numberOfPacksToTotalQuantity(q),
                   })
                 }
               />
@@ -219,7 +217,6 @@ export const RequestLineEditForm = ({
             InputProps={{
               sx: { backgroundColor: theme => theme.palette.background.menu },
             }}
-
             minRows={7}
             maxRows={7}
           />

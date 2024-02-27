@@ -166,7 +166,7 @@ impl TemperatureBreachRowType {
     }
 }
 
-pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
+fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
     }

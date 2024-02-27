@@ -11,7 +11,7 @@ use url::ParseError;
 use super::*;
 
 #[cfg(target_os = "android")]
-const APP_NAME: &'static str = "Open mSupply Mobile";
+const APP_NAME: &'static str = "Open mSupply Android";
 
 #[cfg(not(target_os = "android"))]
 const APP_NAME: &'static str = "Open mSupply Desktop";

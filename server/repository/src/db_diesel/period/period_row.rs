@@ -25,6 +25,8 @@ pub struct PeriodRow {
     pub end_date: NaiveDate,
 }
 
+allow_tables_to_appear_in_same_query!(period, name_link);
+
 pub struct PeriodRowRepository<'a> {
     connection: &'a StorageConnection,
 }

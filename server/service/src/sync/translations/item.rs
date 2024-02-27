@@ -19,7 +19,8 @@ pub struct LegacyItemRow {
     ID: String,
     item_name: String,
     code: String,
-    unit_ID: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    unit_ID: Option<String>,
     type_of: LegacyItemType,
     default_pack_size: u32,
 }
@@ -60,14 +61,15 @@ impl SyncTranslation for ItemTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyItemRow>(&sync_record.data)?;
 
-        let mut result = ItemRow {
+        let result = ItemRow {
             id: data.ID,
             name: data.item_name,
             code: data.code,
-            unit_id: None,
+            unit_id: data.unit_ID,
             r#type: to_item_type(data.type_of),
             legacy_record: ordered_simple_json(&sync_record.data)?,
             default_pack_size: data.default_pack_size as i32,
+            is_active: true,
         };
 
         if data.unit_ID != "" {

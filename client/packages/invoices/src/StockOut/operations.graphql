@@ -69,3 +69,10 @@ fragment StockOutLine on InvoiceLineNode {
     }
   }
 }
+
+# Dummy query because the typescript-graphql-request plugin requires at least one query
+query dummy {
+  dummy: me {
+    __typename
+  }
+}

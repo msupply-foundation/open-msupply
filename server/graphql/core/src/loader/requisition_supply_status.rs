@@ -34,11 +34,9 @@ impl Loader<RequisitionAndItemId> for RequisitionLineSupplyStatusLoader {
             .into_iter()
             .map(|status| {
                 let requisition_line_row = &status.requisition_line.requisition_line_row;
+                let item_row = &status.requisition_line.item_row;
                 (
-                    RequisitionAndItemId::new(
-                        &requisition_line_row.requisition_id,
-                        &requisition_line_row.item_id,
-                    ),
+                    RequisitionAndItemId::new(&requisition_line_row.requisition_id, &item_row.id),
                     status,
                 )
             })

@@ -1,6 +1,5 @@
 import {
   useColumns,
-  PositiveNumberCell,
   ColumnAlign,
   ExpiryDateCell,
   CheckCell,
@@ -8,6 +7,7 @@ import {
   useCurrency,
   LocationCell,
   Column,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -61,7 +61,7 @@ export const useOutboundLineEditColumns = ({
         },
       ],
       {
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,
@@ -69,7 +69,7 @@ export const useOutboundLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       {
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         label: 'label.available-packs',
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,

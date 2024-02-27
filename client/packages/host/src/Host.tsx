@@ -25,11 +25,12 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
-import { AuthenticationAlert } from './components/AuthenticationAlert';
+import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
 import { useRefreshPackVariant } from '@openmsupply-client/system';
 import { useInitPlugins } from './plugins';
+import { BackButtonHandler } from './BackButtonHandler';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -57,7 +58,7 @@ Bugsnag.start({
 });
 
 const skipRequest = () =>
-  LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+  LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
 
 /**
  * Empty component which can be used to call startup hooks.
@@ -81,49 +82,52 @@ const Host = () => (
               url={Environment.GRAPHQL_URL}
               skipRequest={skipRequest}
             >
-              <AuthProvider>
-                <Init />
-                <AppThemeProvider>
-                  <ConfirmationModalProvider>
-                    <AlertModalProvider>
-                      <BrowserRouter>
-                        <AuthenticationAlert />
-                        <Viewport>
-                          <Box display="flex" style={{ minHeight: '100%' }}>
-                            <Routes>
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Initialise
-                                ).build()}
-                                element={<Initialise />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Login
-                                ).build()}
-                                element={<Login />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Discovery
-                                ).build()}
-                                element={<Discovery />}
-                              />
-                              <Route
-                                path={RouteBuilder.create(
-                                  AppRoute.Android
-                                ).build()}
-                                element={<Android />}
-                              />
-                              <Route path="*" element={<Site />} />
-                            </Routes>
-                          </Box>
-                        </Viewport>
-                      </BrowserRouter>
-                    </AlertModalProvider>
-                  </ConfirmationModalProvider>
-                </AppThemeProvider>
-              </AuthProvider>
+              <PluginProvider>
+                <AuthProvider>
+                  <Init />
+                  <AppThemeProvider>
+                    <ConfirmationModalProvider>
+                      <AlertModalProvider>
+                        <BrowserRouter>
+                          <ErrorAlert />
+                          <BackButtonHandler />
+                          <Viewport>
+                            <Box display="flex" style={{ minHeight: '100%' }}>
+                              <Routes>
+                                <Route
+                                  path={RouteBuilder.create(
+                                    AppRoute.Initialise
+                                  ).build()}
+                                  element={<Initialise />}
+                                />
+                                <Route
+                                  path={RouteBuilder.create(
+                                    AppRoute.Login
+                                  ).build()}
+                                  element={<Login />}
+                                />
+                                <Route
+                                  path={RouteBuilder.create(
+                                    AppRoute.Discovery
+                                  ).build()}
+                                  element={<Discovery />}
+                                />
+                                <Route
+                                  path={RouteBuilder.create(
+                                    AppRoute.Android
+                                  ).build()}
+                                  element={<Android />}
+                                />
+                                <Route path="*" element={<Site />} />
+                              </Routes>
+                            </Box>
+                          </Viewport>
+                        </BrowserRouter>
+                      </AlertModalProvider>
+                    </ConfirmationModalProvider>
+                  </AppThemeProvider>
+                </AuthProvider>
+              </PluginProvider>
               {/* <ReactQueryDevtools initialIsOpen /> */}
             </GqlProvider>
           </QueryClientProvider>

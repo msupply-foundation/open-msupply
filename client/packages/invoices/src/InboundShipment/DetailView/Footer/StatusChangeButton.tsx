@@ -155,11 +155,15 @@ const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-inbound-status-as', {
+    message: `${t('messages.confirm-inbound-status-as', {
       status: selectedOption?.value
         ? getStatusTranslation(selectedOption?.value)
         : '',
-    }),
+    })}\n${
+      status === InvoiceNodeStatus.New
+        ? t('messages.confirm-changing-from-new')
+        : ''
+    }`,
     onConfirm: onConfirmStatusChange,
   });
 

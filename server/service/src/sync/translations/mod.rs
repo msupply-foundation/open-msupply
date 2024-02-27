@@ -79,17 +79,20 @@ pub(crate) fn all_translators() -> SyncTranslators {
         barcode::boxed(),
         clinician::boxed(),
         clinician_store_join::boxed(),
-        // Remote-Central (site specific)
         name_store_join::boxed(),
         user_permission::boxed(),
         document::boxed(),
-        // Special translations
-        special::name_to_name_store_join::boxed(),
         // Cold chain
         sensor::boxed(),
         temperature_breach::boxed(),
         temperature_log::boxed(),
         pack_variant::boxed(),
+        // Special translations
+        special::name_to_name_store_join::boxed(),
+        // Merge
+        item_merge_translation::boxed(),
+        name_merge_translation::boxed(),
+        clinician_merge_translation::boxed(),
     ]
 }
 

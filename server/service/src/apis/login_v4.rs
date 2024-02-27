@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug)]
 pub enum LoginV4Error {
     Unauthorised,
+    AccountBlocked(u64),
     ConnectionError(reqwest::Error),
+    ParseError(serde_json::Error),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -24,6 +26,13 @@ pub enum LoginStatusV4 {
     Error,
     #[serde(other)]
     Unknown,
+}
+
+#[derive(Deserialize)]
+pub struct LoginResponseErrorV4 {
+    status: String,
+    #[serde(rename = "timeoutRemaining")]
+    timeout_remaining: Option<u64>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -144,17 +153,35 @@ impl LoginApiV4 {
             .await
             .map_err(|e| LoginV4Error::ConnectionError(e))?;
 
-        if reqwest::StatusCode::UNAUTHORIZED == response.status() {
+        let status = response.status();
+
+        if status == reqwest::StatusCode::UNAUTHORIZED {
             return Err(LoginV4Error::Unauthorised);
         }
 
-        let response = response
-            .error_for_status()
-            .map_err(|e| LoginV4Error::ConnectionError(e))?
-            .json()
-            .await
-            .map_err(|e| LoginV4Error::ConnectionError(e))?;
+        let body = response.json::<serde_json::Value>().await;
 
-        Ok(response)
+        match body {
+            Ok(body) => {
+                if status == reqwest::StatusCode::FORBIDDEN {
+                    // Handle account blocked error (i.e. too many failed login attempts)
+                    if let Ok(error_body) =
+                        serde_json::from_value::<LoginResponseErrorV4>(body.clone())
+                    {
+                        if error_body.status == "user_login_timeout" {
+                            if let Some(timeout_remaining) = error_body.timeout_remaining {
+                                return Err(LoginV4Error::AccountBlocked(timeout_remaining));
+                            }
+                        }
+                    }
+                }
+
+                let response = serde_json::from_value::<LoginResponseV4>(body)
+                    .map_err(|e| LoginV4Error::ParseError(e))?;
+
+                Ok(response)
+            }
+            Err(e) => Err(LoginV4Error::ConnectionError(e)),
+        }
     }
 }

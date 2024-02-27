@@ -51,7 +51,7 @@ fn requisition_line_request_pull_record() -> TestSyncPullRecord {
         RequisitionLineRow {
             id: REQUISITION_LINE_1.0.to_string(),
             requisition_id: "mock_request_draft_requisition3".to_string(),
-            item_id: "item_a".to_string(),
+            item_link_id: "item_a".to_string(),
             requested_quantity: 102,
             suggested_quantity: 101,
             supply_quantity: 2,
@@ -129,7 +129,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
         RequisitionLineRow {
             id: REQUISITION_LINE_OM_FIELD.0.to_string(),
             requisition_id: "mock_request_draft_requisition3".to_string(),
-            item_id: "item_a".to_string(),
+            item_link_id: "item_a".to_string(),
             requested_quantity: 102,
             suggested_quantity: 101,
             supply_quantity: 2,

@@ -127,7 +127,7 @@ mod test {
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = "test".to_string();
-                    r.name_id = mock_name_a().id;
+                    r.name_link_id = mock_name_a().id;
                     r.store_id = mock_store_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                     r.status = InvoiceRowStatus::Allocated;

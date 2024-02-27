@@ -13,9 +13,7 @@ export const useDeleteSelectedRequisitions = () => {
   const { queryParams } = useUrlQueryParams({
     initialSort: { key: 'createdDatetime', dir: 'desc' },
   });
-  const { data: rows } = useRequests(queryParams, {
-    enabled: false,
-  });
+  const { data: rows } = useRequests(queryParams);
   const { mutateAsync } = useDeleteRequests();
   const t = useTranslation('replenishment');
   const { selectedRows } = useTableStore(state => ({

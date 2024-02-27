@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useMutation } from 'react-query';
 import { uniqWith } from 'lodash';
-import { useNavigate } from '@openmsupply-client/common';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 import { Capacitor } from '@capacitor/core';
-import { App } from '@capacitor/app';
 import {
   getNativeAPI,
   getPreference,
@@ -45,7 +43,6 @@ export const useNativeClient = ({
   discovery,
 }: { discovery?: boolean; autoconnect?: boolean } = {}) => {
   const nativeAPI = getNativeAPI();
-  const navigate = useNavigate();
   const { token } = useAuthContext();
 
   const setMode = (mode: NativeMode) =>
@@ -87,7 +84,7 @@ export const useNativeClient = ({
   const stopDiscovery = () =>
     setState(state => ({ ...state, isDiscovering: false }));
 
-  const startDiscovery = () => {
+  const startDiscovery = useCallback(() => {
     if (!nativeAPI) return;
 
     nativeAPI.connectedServer().then(connectedServer => {
@@ -104,7 +101,7 @@ export const useNativeClient = ({
     }));
 
     nativeAPI.startServerDiscovery();
-  };
+  }, [discovery, nativeAPI]);
 
   const readLog = async () => {
     const noResult = 'log unavailable';
@@ -142,6 +139,18 @@ export const useNativeClient = ({
 
     return result;
   };
+
+  const saveDatabase = async () => {
+    const result = await nativeAPI?.saveDatabase();
+
+    if (!result) {
+      console.error('No result from nativeAPI.saveDatabase');
+      return;
+    }
+
+    return result;
+  };
+
   const advertiseService = nativeAPI?.advertiseService ?? (() => {});
 
   const setServerMode = (
@@ -185,26 +194,14 @@ export const useNativeClient = ({
       clearTimeout(timeoutTimer);
       clearInterval(pollInterval);
     };
-  }, [state.isDiscovering]);
+  }, [nativeAPI, state.isDiscovering]);
 
   useEffect(() => {
     startDiscovery();
     getPreference('previousServer', '').then(server => {
       if (!!server) setState(state => ({ ...state, previousServer: server }));
     });
-    if (Capacitor.isNativePlatform()) {
-      App.removeAllListeners();
-      App.addListener('backButton', ({ canGoBack }) => {
-        if (canGoBack) navigate(-1);
-      });
-    }
-
-    return () => {
-      if (Capacitor.isNativePlatform()) {
-        App.removeAllListeners();
-      }
-    };
-  }, []);
+  }, [startDiscovery]);
 
   // Auto connect if autoconnect=true and server found matching previousConnectedServer
   useEffect(() => {
@@ -214,7 +211,7 @@ export const useNativeClient = ({
     if (previousServer === null) return;
 
     connectToPrevious(previousServer);
-  }, [state.previousServer, autoconnect]);
+  }, [state.previousServer, autoconnect, state, nativeAPI, connectToPrevious]);
 
   return {
     ...state,
@@ -228,6 +225,7 @@ export const useNativeClient = ({
     keepAwake,
     allowSleep,
     saveFile,
+    saveDatabase,
     setServerMode,
   };
 };

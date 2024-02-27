@@ -32,6 +32,12 @@ export type Scalars = {
   NaiveDate: { input: string; output: string; }
 };
 
+export type AccountBlocked = AuthTokenErrorInterface & {
+  __typename: 'AccountBlocked';
+  description: Scalars['String']['output'];
+  timeoutRemaining: Scalars['Int']['output'];
+};
+
 export type ActiveEncounterEventFilterInput = {
   data?: InputMaybe<StringFilterInput>;
   /**
@@ -639,6 +645,17 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
 };
+
+export type DatabaseSettingsNode = {
+  __typename: 'DatabaseSettingsNode';
+  /** Central server url */
+  databaseType: DatabaseType;
+};
+
+export enum DatabaseType {
+  Postgres = 'POSTGRES',
+  SqLite = 'SQ_LITE'
+}
 
 export type DateFilterInput = {
   afterOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -1373,7 +1390,7 @@ export type FormSchemaSortInput = {
 export type FullSyncStatusNode = {
   __typename: 'FullSyncStatusNode';
   error?: Maybe<SyncErrorNode>;
-  integration?: Maybe<SyncStatusNode>;
+  integration?: Maybe<SyncStatusWithProgressNode>;
   isSyncing: Scalars['Boolean']['output'];
   lastSuccessfulSync?: Maybe<SyncStatusNode>;
   prepareInitial?: Maybe<SyncStatusNode>;
@@ -2262,6 +2279,7 @@ export type ItemFilterInput = {
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -3409,6 +3427,7 @@ export type PatientFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   nameOrCode?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
+  programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
 
 export type PatientNode = {
@@ -3779,6 +3798,7 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
+  databaseSettings: DatabaseSettingsNode;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -4879,6 +4899,7 @@ export type StocktakeLineConnector = {
 
 export type StocktakeLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -4909,7 +4930,7 @@ export enum StocktakeLineSortFieldInput {
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  LocationName = 'locationName',
+  LocationCode = 'locationCode',
   PackSize = 'packSize'
 }
 

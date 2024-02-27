@@ -4,6 +4,7 @@ import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 export type AuthenticationError = {
   message: string;
   detail?: string;
+  timeoutRemaining?: number;
 };
 
 export interface AuthenticationResponse {
@@ -23,15 +24,16 @@ const authTokenGuard = (
   }
 
   if (authTokenQuery?.authToken?.__typename === 'AuthTokenError') {
-    switch (authTokenQuery.authToken.error.__typename) {
-      case 'InvalidCredentials':
-        return {
-          token: '',
-          error: { message: '' },
-        };
-      default:
-        return { token: '', error: { message: '' } };
-    }
+    return {
+      token: '',
+      error: {
+        message: authTokenQuery.authToken.error.__typename,
+        timeoutRemaining:
+          authTokenQuery.authToken.error.__typename === 'AccountBlocked'
+            ? authTokenQuery.authToken.error.timeoutRemaining
+            : undefined,
+      },
+    };
   }
 
   return {
@@ -98,7 +100,8 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return result.me;
       } catch (e) {
         console.error(e);
-        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+        LocalStorage.setItem('/error/auth', AuthError.ServerError);
+        LocalStorage.setItem('/error/server', (e as Error).message);
       }
     },
     permissions: async ({

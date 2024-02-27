@@ -79,8 +79,12 @@ impl SensorNode {
         &self.row().name
     }
 
-    pub async fn serial(&self) -> &str {
-        &self.row().serial
+    pub async fn serial(&self) -> String {
+        // the serial is stored as `| SENSOR_MANUFACTURER` in the database
+        // and the front end does not want to know about the manufacturer
+        let re = regex::Regex::new(r"\| .+$").unwrap();
+
+        re.replace(&self.row().serial, "").to_string()
     }
 
     pub async fn r#type(&self) -> SensorNodeType {
@@ -102,7 +106,7 @@ impl SensorNode {
     pub async fn last_connection_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .last_connection_datetime
-            .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
+            .map(|datetime| DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc))
     }
 
     pub async fn location(&self, ctx: &Context<'_>) -> Result<Option<LocationNode>> {

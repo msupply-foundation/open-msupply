@@ -1,8 +1,8 @@
 use std::any::Any;
 
 use super::{
-    clinician_row::clinician, invoice_row::invoice::dsl::*, name_row::name, store_row::store,
-    user_row::user_account, StorageConnection,
+    clinician_link_row::clinician_link, invoice_row::invoice::dsl::*, item_link_row::item_link,
+    name_link_row::name_link, store_row::store, user_row::user_account, StorageConnection,
 };
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
@@ -17,7 +17,7 @@ use util::Defaults;
 table! {
     invoice (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         name_store_id -> Nullable<Text>,
         store_id -> Text,
         user_id -> Nullable<Text>,
@@ -38,14 +38,16 @@ table! {
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
-        clinician_id -> Nullable<Text>,
+        clinician_link_id -> Nullable<Text>,
     }
 }
 
-joinable!(invoice -> name (name_id));
+joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
-joinable!(invoice -> clinician (clinician_id));
+joinable!(invoice -> clinician_link (clinician_link_id));
+allow_tables_to_appear_in_same_query!(invoice, item_link);
+allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -54,8 +56,8 @@ pub enum InvoiceRowType {
     OutboundShipment,
     InboundShipment,
     Prescription,
-    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two seperate types
-    // central server may have old inventory adjustement type, thus map it to inventory additions
+    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two separate types
+    // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
     InventoryAddition,
     InventoryReduction,
@@ -79,7 +81,7 @@ pub enum InvoiceRowStatus {
 #[table_name = "invoice"]
 pub struct InvoiceRow {
     pub id: String,
-    pub name_id: String,
+    pub name_link_id: String,
     pub name_store_id: Option<String>,
     pub store_id: String,
     pub user_id: Option<String>,
@@ -101,7 +103,7 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
-    pub clinician_id: Option<String>,
+    pub clinician_link_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -113,7 +115,7 @@ impl Default for InvoiceRow {
             // Defaults
             id: Default::default(),
             user_id: Default::default(),
-            name_id: Default::default(),
+            name_link_id: Default::default(),
             name_store_id: Default::default(),
             store_id: Default::default(),
             invoice_number: Default::default(),
@@ -130,7 +132,7 @@ impl Default for InvoiceRow {
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
             tax: Default::default(),
-            clinician_id: Default::default(),
+            clinician_link_id: Default::default(),
         }
     }
 }
@@ -203,41 +205,6 @@ impl<'a> InvoiceRowRepository<'a> {
             .filter(type_.eq(r#type).and(store_id.eq(store)))
             .select(max(invoice_number))
             .first(&self.connection.connection)?;
-        Ok(result)
-    }
-}
-
-pub struct OutboundShipmentRowRepository<'a> {
-    connection: &'a StorageConnection,
-}
-
-impl<'a> OutboundShipmentRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
-        OutboundShipmentRowRepository { connection }
-    }
-
-    pub async fn find_many_by_name_id(
-        &self,
-        name: &str,
-    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(name_id.eq(name)),
-            )
-            .get_results(&self.connection.connection)?;
-        Ok(result)
-    }
-
-    pub fn find_many_by_store_id(&self, store: &str) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(store_id.eq(store)),
-            )
-            .get_results(&self.connection.connection)?;
         Ok(result)
     }
 }

@@ -206,7 +206,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_id,
+            item_link_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -269,7 +269,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
             invoice_id,
-            item_id,
+            item_id: item_row.id,
             item_name,
             stock_line_id,
             location_id,
@@ -325,12 +325,15 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineTyp
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_item_links;
+
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
-        KeyValueStoreRow, KeyValueType,
+        test_db::{setup_all, setup_all_with_data},
+        ChangelogFilter, ChangelogRepository, KeyValueStoreRow, KeyValueType,
     };
+    use serde_json::json;
     use util::inline_init;
 
     #[actix_rt::test]
@@ -373,6 +376,38 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (mock_data, connection, _, _) = setup_all(
+            "test_invoice_line_push_item_link_merged",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        merge_all_item_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
+            )
+            .unwrap();
+
+        let translator = InvoiceLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }

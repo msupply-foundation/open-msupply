@@ -24,7 +24,7 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 }
 // In omSupply, is_customer and is_supplier relationship between store and name is stored
 // in name_store_join, in mSupply it's stored on name. This translator updates all name_store_joins
-// for name when name is pulled (setting is_customer and is_supplier appropriatly)
+// for name when name is pulled (setting is_customer and is_supplier appropriately)
 // NOTE Translator should be removed when central server configures these properties on name_store_join
 pub(super) struct NameToNameStoreJoinTranslation;
 impl SyncTranslation for NameToNameStoreJoinTranslation {
@@ -61,7 +61,7 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
             .map(|r| NameStoreJoinRow {
                 name_is_customer: data.name_is_customer,
                 name_is_supplier: data.name_is_supplier,
-                ..r
+                ..r.name_store_join
             })
             .collect();
 
