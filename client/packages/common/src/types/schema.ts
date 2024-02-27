@@ -3455,10 +3455,10 @@ export type OutboundReturnLineConnector = {
 };
 
 export type OutboundReturnLineInput = {
-  comment: Scalars['String']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   numberOfPacksToReturn: Scalars['Float']['input'];
-  reasonId: Scalars['String']['input'];
+  reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 

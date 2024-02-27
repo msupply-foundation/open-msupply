@@ -28,8 +28,8 @@ pub struct InsertOutboundReturnLine {
     pub id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
-    pub reason_id: String,
-    pub note: String,
+    pub reason_id: Option<String>,
+    pub note: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -83,7 +83,7 @@ pub fn insert_outbound_return(
                         invoice_id: new_invoice.id.clone(),
                         stock_line_id: line.stock_line_id.clone(),
                         number_of_packs: line.number_of_packs.clone(),
-                        note: Some(line.note.clone()),
+                        note: line.note.clone(),
                         r#type: Some(StockOutType::OutboundReturn),
                         tax: None,
                         total_before_tax: None,
@@ -95,7 +95,7 @@ pub fn insert_outbound_return(
                 })?;
 
                 invoice_line_repo
-                    .update_return_reason_id(&line.id, Some(line.reason_id.clone()))
+                    .update_return_reason_id(&line.id, line.reason_id.clone())
                     .map_err(|error| OutError::LineReturnReasonUpdateError {
                         line_id: line.id.clone(),
                         error,
@@ -274,7 +274,7 @@ mod test {
                     outbound_return_lines: vec![InsertOutboundReturnLine {
                         id: "new_line_id".to_string(),
                         stock_line_id: mock_stock_line_b().id,
-                        reason_id: "does_not_exist".to_string(),
+                        reason_id: Some("does_not_exist".to_string()),
                         ..Default::default()
                     }],
                 },
@@ -337,7 +337,7 @@ mod test {
                     r.outbound_return_lines = vec![InsertOutboundReturnLine {
                         id: "new_outbound_return_line_id".to_string(),
                         stock_line_id: mock_stock_line_b().id,
-                        reason_id: return_reason().id,
+                        reason_id: Some(return_reason().id),
                         ..Default::default()
                     }];
                 }),

@@ -147,6 +147,14 @@ mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
       id
       invoiceNumber
     }
+
+    ... on InsertOutboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
   }
 }
 
