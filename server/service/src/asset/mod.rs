@@ -1,3 +1,4 @@
+use self::delete::{delete_asset, DeleteAssetError};
 use self::insert::{insert_asset, InsertAsset, InsertAssetError};
 use self::query::{get_asset, get_assets};
 use self::update::{update_asset, UpdateAsset, UpdateAssetError};
@@ -7,6 +8,7 @@ use crate::{service_provider::ServiceContext, SingleRecordError};
 use repository::assets::asset::{Asset, AssetFilter, AssetSort};
 use repository::{PaginationOption, StorageConnection};
 
+pub mod delete;
 pub mod insert;
 pub mod query;
 pub mod update;
@@ -41,6 +43,10 @@ pub trait AssetServiceTrait: Sync + Send {
         input: UpdateAsset,
     ) -> Result<Asset, UpdateAssetError> {
         update_asset(ctx, input)
+    }
+
+    fn delete_asset(&self, ctx: &ServiceContext, id: String) -> Result<String, DeleteAssetError> {
+        delete_asset(ctx, id)
     }
 }
 

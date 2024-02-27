@@ -79,14 +79,14 @@ impl AssetMutations {
         update_asset(ctx, &store_id, input)
     }
 
-    // async fn delete_asset(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     input: DeleteAssetInput,
-    // ) -> Result<DeleteAssetResponse> {
-    //     delete_asset(ctx, &store_id, input)
-    // }
+    async fn delete_asset(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        asset_id: String,
+    ) -> Result<DeleteAssetResponse> {
+        delete_asset(ctx, &store_id, &asset_id)
+    }
 }
 
 #[cfg(test)]
