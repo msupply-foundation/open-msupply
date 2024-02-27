@@ -1,12 +1,14 @@
 use repository::{
-    ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    TransactionError,
+    ActivityLogType, Invoice, InvoiceRowRepository, RepositoryError, TransactionError,
 };
 
 use crate::{
     activity_log::activity_log_entry,
     invoice::get_invoice,
-    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+    invoice_line::{
+        stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
+        update_return_reason_id::{update_return_reason_id, UpdateLineReturnReasonError},
+    },
     service_provider::ServiceContext,
 };
 pub mod generate;
@@ -47,7 +49,7 @@ pub enum InsertOutboundReturnError {
     },
     LineReturnReasonUpdateError {
         line_id: String,
-        error: RepositoryError,
+        error: UpdateLineReturnReasonError,
     },
 }
 
@@ -80,14 +82,13 @@ pub fn insert_outbound_return(
                 })?;
             }
 
-            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
             for line in update_line_return_reasons {
-                invoice_line_repo
-                    .update_return_reason_id(&line.id, line.reason_id.clone())
-                    .map_err(|error| OutError::LineReturnReasonUpdateError {
-                        line_id: line.id.clone(),
+                update_return_reason_id(ctx, line.clone()).map_err(|error| {
+                    OutError::LineReturnReasonUpdateError {
+                        line_id: line.line_id,
                         error,
-                    })?;
+                    }
+                })?;
             }
 
             activity_log_entry(
@@ -132,8 +133,7 @@ mod test {
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRowRepository, NameRow, NameStoreJoinRow, RepositoryError,
-        ReturnReasonRow,
+        InvoiceLineRowRepository, InvoiceRowRepository, NameRow, NameStoreJoinRow, ReturnReasonRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -141,7 +141,10 @@ mod test {
         invoice::outbound_return::insert::{
             InsertOutboundReturn, InsertOutboundReturnError as ServiceError,
         },
-        invoice_line::stock_out_line::InsertStockOutLineError,
+        invoice_line::{
+            stock_out_line::InsertStockOutLineError,
+            update_return_reason_id::UpdateLineReturnReasonError,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -269,9 +272,7 @@ mod test {
             ),
             Err(ServiceError::LineReturnReasonUpdateError {
                 line_id: "new_line_id".to_string(),
-                error: RepositoryError::ForeignKeyViolation(
-                    "\"FOREIGN KEY constraint failed\"".to_string()
-                ),
+                error: UpdateLineReturnReasonError::ReasonDoesNotExist,
             }),
         );
     }
@@ -296,6 +297,7 @@ mod test {
         fn return_reason() -> ReturnReasonRow {
             inline_init(|r: &mut ReturnReasonRow| {
                 r.id = "return_reason".to_string();
+                r.is_active = true;
             })
         }
 
