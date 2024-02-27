@@ -94,12 +94,13 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
 
         // Standard Graphql Errors
-        ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
-        ServiceError::LineInsertError { .. } => InternalError(formatted_error),
-        ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::InvoiceAlreadyExists | ServiceError::OtherPartyDoesNotExist => {
+            BadUserInput(formatted_error)
+        }
+        ServiceError::NewlyCreatedInvoiceDoesNotExist
+        | ServiceError::LineInsertError { .. }
+        | ServiceError::LineReturnReasonUpdateError { .. }
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
