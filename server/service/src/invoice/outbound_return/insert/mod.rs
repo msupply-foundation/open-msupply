@@ -6,9 +6,7 @@ use repository::{
 use crate::{
     activity_log::activity_log_entry,
     invoice::get_invoice,
-    invoice_line::stock_out_line::{
-        insert_stock_out_line, InsertStockOutLine, InsertStockOutLineError, StockOutType,
-    },
+    invoice_line::stock_out_line::{insert_stock_out_line, InsertStockOutLineError},
     service_provider::ServiceContext,
 };
 pub mod generate;
@@ -63,7 +61,7 @@ pub fn insert_outbound_return(
         .connection
         .transaction_sync(|connection| {
             let other_party = validate(connection, &ctx.store_id, &input)?;
-            let new_invoice = generate(
+            let (outbound_return, insert_stock_out_lines, update_line_return_reasons) = generate(
                 connection,
                 &ctx.store_id,
                 &ctx.user_id,
@@ -71,29 +69,19 @@ pub fn insert_outbound_return(
                 other_party,
             )?;
 
-            InvoiceRowRepository::new(&connection).upsert_one(&new_invoice)?;
+            InvoiceRowRepository::new(&connection).upsert_one(&outbound_return)?;
+
+            for line in insert_stock_out_lines {
+                insert_stock_out_line(ctx, line.clone()).map_err(|error| {
+                    OutError::LineInsertError {
+                        line_id: line.id,
+                        error,
+                    }
+                })?;
+            }
 
             let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
-
-            for line in input.outbound_return_lines {
-                insert_stock_out_line(
-                    ctx,
-                    InsertStockOutLine {
-                        id: line.id.clone(),
-                        invoice_id: new_invoice.id.clone(),
-                        stock_line_id: line.stock_line_id.clone(),
-                        number_of_packs: line.number_of_packs.clone(),
-                        note: line.note.clone(),
-                        r#type: Some(StockOutType::OutboundReturn),
-                        tax: None,
-                        total_before_tax: None,
-                    },
-                )
-                .map_err(|error| OutError::LineInsertError {
-                    line_id: line.id.clone(),
-                    error,
-                })?;
-
+            for line in update_line_return_reasons {
                 invoice_line_repo
                     .update_return_reason_id(&line.id, line.reason_id.clone())
                     .map_err(|error| OutError::LineReturnReasonUpdateError {
@@ -105,12 +93,12 @@ pub fn insert_outbound_return(
             activity_log_entry(
                 &ctx,
                 ActivityLogType::InvoiceCreated,
-                Some(new_invoice.id.to_owned()),
+                Some(outbound_return.id.to_owned()),
                 None,
                 None,
             )?;
 
-            get_invoice(ctx, None, &new_invoice.id)
+            get_invoice(ctx, None, &outbound_return.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
