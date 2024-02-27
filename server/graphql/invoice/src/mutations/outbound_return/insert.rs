@@ -26,7 +26,7 @@ pub struct OutboundReturnLineInput {
     pub stock_line_id: String,
     pub number_of_packs_to_return: f64,
     pub reason_id: Option<String>,
-    pub comment: Option<String>,
+    pub note: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -131,7 +131,7 @@ impl OutboundReturnLineInput {
             stock_line_id,
             number_of_packs_to_return,
             reason_id,
-            comment,
+            note,
         }: OutboundReturnLineInput = self;
 
         InsertOutboundReturnLine {
@@ -139,7 +139,7 @@ impl OutboundReturnLineInput {
             stock_line_id,
             number_of_packs: number_of_packs_to_return,
             reason_id,
-            note: comment,
+            note,
         }
     }
 }

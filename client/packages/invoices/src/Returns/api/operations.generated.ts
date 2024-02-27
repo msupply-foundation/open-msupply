@@ -38,7 +38,7 @@ export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, comment?: string | null, reasonId?: string | null }> } };
+export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, note?: string | null, reasonId?: string | null }> } };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
@@ -46,7 +46,7 @@ export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: Array<{ __typename: 'InboundReturnLine', batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, packSize: number, stockLineId: string, numberOfPacksReturned: number, numberOfPacksIssued: number, comment?: string | null, reasonId?: string | null }> };
+export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: Array<{ __typename: 'InboundReturnLine', batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, packSize: number, stockLineId: string, numberOfPacksReturned: number, numberOfPacksIssued: number, note?: string | null, reasonId?: string | null }> };
 
 export type InvoiceByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -164,7 +164,7 @@ export const GenerateOutboundReturnLinesDocument = gql`
         numberOfPacksToReturn
         packSize
         stockLineId
-        comment
+        note
         reasonId
       }
     }
@@ -186,7 +186,7 @@ export const GenerateInboundReturnLinesDocument = gql`
     stockLineId
     numberOfPacksReturned
     numberOfPacksIssued
-    comment
+    note
     reasonId
   }
 }
