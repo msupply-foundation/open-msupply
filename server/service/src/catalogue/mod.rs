@@ -96,3 +96,10 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         get_asset_type(connection, id)
     }
 }
+
+pub struct CatalogueService {}
+
+impl AssetCatalogueServiceTrait for CatalogueService {}
+
+#[cfg(test)]
+mod tests;

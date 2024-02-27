@@ -19,7 +19,6 @@ pub fn get_asset_catalogue_items(
 ) -> Result<ListResult<AssetCatalogueItemRow>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = AssetCatalogueItemRepository::new(&connection);
-
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
         count: i64_to_u32(repository.count(filter)?),
