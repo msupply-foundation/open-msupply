@@ -6,14 +6,10 @@ use repository::{
 };
 
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
+use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
 
 use super::InsertOutboundReturn;
-
-pub struct UpdateLineReturnReason {
-    pub id: String,
-    pub reason_id: Option<String>,
-}
 
 pub fn generate(
     connection: &StorageConnection,
@@ -76,13 +72,9 @@ pub fn generate(
     let update_line_return_reasons = input
         .outbound_return_lines
         .iter()
-        .filter_map(|line| {
-            line.reason_id
-                .clone()
-                .map(|reason_id| UpdateLineReturnReason {
-                    id: line.id.clone(),
-                    reason_id: Some(reason_id),
-                })
+        .map(|line| UpdateLineReturnReason {
+            line_id: line.id.clone(),
+            reason_id: line.reason_id.clone(),
         })
         .collect();
 
