@@ -308,5 +308,6 @@ mod query_catalogue_item {
                 }),
             )
             .unwrap();
+        assert_eq!(result.rows[0].code, "E003/002");
     }
 }
