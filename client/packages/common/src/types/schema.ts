@@ -336,7 +336,7 @@ export type AssetTypeFilterInput = {
 
 export type AssetTypeNode = {
   __typename: 'AssetTypeNode';
-  catetoryId: Scalars['String']['output'];
+  categoryId: Scalars['String']['output'];
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
 };
