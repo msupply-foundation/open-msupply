@@ -14,6 +14,9 @@ export const useAssetApi = () => {
       [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<AssetCatalogueItemFragment>) =>
       [...keys.list(), sortBy] as const,
+    categories: () => [...keys.base(), 'categories'] as const,
+    classes: () => [...keys.base(), 'classes'] as const,
+    types: () => [...keys.base(), 'types'] as const,
   };
 
   const queries = getAssetQueries(getSdk(client), storeId);

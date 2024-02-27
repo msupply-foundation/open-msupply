@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import {
-  useNavigate,
+  // useNavigate,
   TableProvider,
   DataTable,
   useColumns,
@@ -31,7 +31,7 @@ const AssetListComponent: FC = () => {
   });
   const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const t = useTranslation('catalogue');
 
   const columns = useColumns<AssetCatalogueItemFragment>(
@@ -40,7 +40,7 @@ const AssetListComponent: FC = () => {
       {
         key: 'manufacturer',
         Cell: TooltipTextCell,
-        maxWidth: 350,
+        width: 350,
         label: 'label.manufacturer',
       },
 
@@ -68,9 +68,9 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => {
-          navigate(`/catalogue/assets/${row.id}`);
-        }}
+        // onRowClick={row => {
+        //   navigate(`/catalogue/assets/${row.id}`);
+        // }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />
     </>

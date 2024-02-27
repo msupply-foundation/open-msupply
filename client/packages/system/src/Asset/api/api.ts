@@ -2,6 +2,9 @@ import {
   SortBy,
   FilterByWithBoolean,
   AssetCatalogueItemSortFieldInput,
+  AssetCategorySortFieldInput,
+  AssetClassSortFieldInput,
+  AssetTypeSortFieldInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -70,6 +73,33 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       const items = result?.assetCatalogueItems;
 
       return items;
+    },
+    categories: async () => {
+      const result = await sdk.assetCategories({
+        storeId,
+        sort: { key: AssetCategorySortFieldInput.Name, desc: false },
+      });
+      const categories = result?.assetCategories;
+
+      return categories;
+    },
+    classes: async () => {
+      const result = await sdk.assetClasses({
+        storeId,
+        sort: { key: AssetClassSortFieldInput.Name, desc: false },
+      });
+      const classes = result?.assetClasses;
+
+      return classes;
+    },
+    types: async () => {
+      const result = await sdk.assetTypes({
+        storeId,
+        sort: { key: AssetTypeSortFieldInput.Name, desc: false },
+      });
+      const types = result?.assetTypes;
+
+      return types;
     },
   },
 });
