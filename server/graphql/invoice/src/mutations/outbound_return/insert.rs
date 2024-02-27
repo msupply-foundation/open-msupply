@@ -59,14 +59,14 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         .invoice_service
         .insert_outbound_return(&service_context, input.to_domain());
 
-    match result {
-        Ok(outbound_return) => Ok(InsertResponse::Response(InvoiceNode::from_domain(
-            outbound_return,
-        ))),
-        Err(err) => Ok(InsertResponse::Error(InsertError {
+    let result = match result {
+        Ok(outbound_return) => InsertResponse::Response(InvoiceNode::from_domain(outbound_return)),
+        Err(err) => InsertResponse::Error(InsertError {
             error: map_error(err)?,
-        })),
-    }
+        }),
+    };
+
+    Ok(result)
 }
 
 #[derive(Interface)]
