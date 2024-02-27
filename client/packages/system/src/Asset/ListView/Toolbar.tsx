@@ -22,6 +22,32 @@ export const Toolbar = () => {
         <FilterMenu
           filters={[
             {
+              type: 'enum',
+              name: t('label.category'),
+              urlParameter: 'category',
+              options: [
+                {
+                  label: 'Insulated Containers',
+                  value: 'aaa-bbb-ccc',
+                },
+                {
+                  label: 'Refrigerators and freezers',
+                  value: 'aaa-bbb-ccc',
+                },
+              ],
+            },
+            {
+              type: 'enum',
+              name: t('label.class'),
+              urlParameter: 'class',
+              options: [
+                {
+                  label: 'Cold Chain Equipment',
+                  value: 'aaa-bbb-ccc',
+                },
+              ],
+            },
+            {
               type: 'text',
               name: t('label.code'),
               urlParameter: 'code',
@@ -37,32 +63,6 @@ export const Toolbar = () => {
               name: t('label.model'),
               urlParameter: 'model',
               placeholder: t('placeholder.search-by-location-name'),
-            },
-            {
-              type: 'enum',
-              name: t('label.class'),
-              urlParameter: 'class',
-              options: [
-                {
-                  label: 'Cold Chain Equipment',
-                  value: 'aaa-bbb-ccc',
-                },
-              ],
-            },
-            {
-              type: 'enum',
-              name: t('label.category'),
-              urlParameter: 'category',
-              options: [
-                {
-                  label: 'Insulated Containers',
-                  value: 'aaa-bbb-ccc',
-                },
-                {
-                  label: 'Refrigerators and freezers',
-                  value: 'aaa-bbb-ccc',
-                },
-              ],
             },
             {
               type: 'enum',
