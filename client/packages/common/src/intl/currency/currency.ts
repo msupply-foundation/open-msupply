@@ -1,5 +1,6 @@
 import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
+import { useIntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
   const trimmed = Number(`.${centsString}`);
@@ -91,12 +92,13 @@ export type Currencies =
   | 'COP'
   | 'SBD';
 
-export const currencyOptions = (code?: Currencies) => {
+export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
     case 'EUR':
       return {
+        // eslint-disable-next-line no-irregular-whitespace
         // separator: " " decimal = ","
-        ...getSeparatorAndDecimal('fr'),
+        ...getSeparatorAndDecimal(locale),
         symbol: '€',
         precision: 2,
         pattern: '# !',
@@ -105,8 +107,9 @@ export const currencyOptions = (code?: Currencies) => {
       };
     case 'DJF':
       return {
+        // eslint-disable-next-line no-irregular-whitespace
         // separator: " " decimal = ","
-        ...getSeparatorAndDecimal('fr-DJ'),
+        ...getSeparatorAndDecimal(locale),
         symbol: 'DJF',
         precision: 0,
         pattern: '# !',
@@ -116,7 +119,7 @@ export const currencyOptions = (code?: Currencies) => {
     case 'QAR':
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('ar'),
+        ...getSeparatorAndDecimal(locale),
         symbol: 'ر.ق.',
         precision: 2,
         pattern: '!#',
@@ -126,7 +129,7 @@ export const currencyOptions = (code?: Currencies) => {
     case 'RUB':
       return {
         // separator: "." decimal = ","
-        ...getSeparatorAndDecimal('ru'),
+        ...getSeparatorAndDecimal(locale),
         symbol: '₽',
         precision: 2,
         pattern: '# !',
@@ -136,7 +139,7 @@ export const currencyOptions = (code?: Currencies) => {
     case 'SSP': {
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('en-ss'),
+        ...getSeparatorAndDecimal(locale),
         symbol: 'SSP',
         pattern: '# !',
         negativePattern: '-# !',
@@ -147,7 +150,7 @@ export const currencyOptions = (code?: Currencies) => {
     case 'PGK': {
       return {
         // separator: "." decimal = ","
-        ...getSeparatorAndDecimal('pg'),
+        ...getSeparatorAndDecimal(locale),
         symbol: 'K',
         precision: 2,
         pattern: '# !',
@@ -158,7 +161,7 @@ export const currencyOptions = (code?: Currencies) => {
     case 'COP': {
       return {
         // separator: "." decimal = ","
-        ...getSeparatorAndDecimal('co'),
+        ...getSeparatorAndDecimal(locale),
         symbol: '$',
         pattern: '# !',
         negativePattern: '-# !',
@@ -169,7 +172,7 @@ export const currencyOptions = (code?: Currencies) => {
     case 'SBD': {
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('sb'),
+        ...getSeparatorAndDecimal(locale),
         symbol: 'SI$',
         pattern: '# !',
         negativePattern: '-# !',
@@ -182,7 +185,7 @@ export const currencyOptions = (code?: Currencies) => {
     default:
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('en'),
+        ...getSeparatorAndDecimal(locale),
         symbol: '$',
         precision: 2,
         pattern: '!#',
@@ -194,9 +197,10 @@ export const currencyOptions = (code?: Currencies) => {
 
 export const useCurrency = (code?: Currencies) => {
   const { store } = useAuthContext();
+  const { currentLanguage: language } = useIntlUtils();
   const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
 
-  const options = currencyOptions(currencyCode);
+  const options = currencyOptions(language, currencyCode);
   const precision = options.precision;
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
