@@ -105,7 +105,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 158);
+        assert_eq!(result.count, 98);
 
         // category filter - equal like
         result = service
@@ -117,7 +117,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 158);
+        assert_eq!(result.count, 98);
 
         // category filter - no matches
 
@@ -148,7 +148,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 158);
+        assert_eq!(result.count, 151);
 
         // type filter - equal like
         result = service
@@ -160,7 +160,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 158);
+        assert_eq!(result.count, 151);
 
         // type filter - no matches
         result = service
@@ -241,16 +241,15 @@ mod query_catalogue_item {
                             "some string which does not match anything",
                         ))
                         .id(EqualFilter::equal_any(vec![
-                            "id-that-does-not-exist".to_owned()
+                            "f9e939e2-825d-4b22-a1d0-4983a8c4c2c0".to_owned(),
                         ])),
                 ),
                 None,
             )
             .unwrap();
         assert_eq!(result.count, 0);
-        assert_eq!(result.rows[0].code, "E003/108");
 
-        // add query with multiple filters of different types with one passing
+        // add query with multiple filters of different types with one type passing
         let result = service
             .get_asset_catalogue_items(
                 &context.connection,
@@ -258,15 +257,36 @@ mod query_catalogue_item {
                 Some(
                     AssetCatalogueItemFilter::new()
                         .class(StringFilter::like("Cold Chain Equipment"))
-                        .id(EqualFilter::equal_any(vec![
-                            "id-that-does-not-exist".to_owned()
+                        .category(StringFilter::equal_to("Refrigerators and Freezers"))
+                        .r#type(StringFilter::equal_any(vec![
+                            "Icelined Refrigerator".to_owned(),
+                            "Vaccine Carrier LR 3L".to_owned(),
                         ])),
                 ),
                 None,
             )
             .unwrap();
-        assert_eq!(result.count, 2);
+        assert_eq!(result.count, 1);
         assert_eq!(result.rows[0].code, "E003/108");
+
+        // add query which combines special-type filters which conflict
+        let result = service
+            .get_asset_catalogue_items(
+                &context.connection,
+                None,
+                Some(
+                    AssetCatalogueItemFilter::new()
+                        .class(StringFilter::like("Cold Chain Equipment"))
+                        .category(StringFilter::equal_to("Refrigerators and Freezers"))
+                        .r#type(StringFilter::equal_any(vec![
+                            "Freeze-Free Vaccine Carrier Long Range".to_owned(),
+                            "Vaccine Carrier LR 3L".to_owned(),
+                        ])),
+                ),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.count, 0);
     }
 
     #[actix_rt::test]

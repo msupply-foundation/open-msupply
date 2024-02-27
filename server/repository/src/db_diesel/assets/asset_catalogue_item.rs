@@ -92,35 +92,9 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         } else {
             query = query.order(asset_catalogue_item_dsl::id.asc())
         }
-        // if let Some(f) = filter {
-        //     let AssetCatalogueItemFilter {
-        //         category,
-        //         // class,
-        //         r#type,
-        //         ..
-        //     } = f;
-        //     // if let Some(category) = category {
-        //     //     let category_ids = AssetCategoryRepository::new(&self.connection)
-        //     //         .query_by_filter(AssetCategoryFilter::new().name(category))?
-        //     //         .iter()
-        //     //         .map(|c| c.id.clone())
-        //     //         .collect::<Vec<String>>();
-        //     //     query =
-        //     //         query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(category_ids));
-        //     // }
 
-        //     // if let Some(asset_type) = r#type {
-        //     //     let type_ids = AssetTypeRepository::new(&self.connection)
-        //     //         .query_by_filter(AssetTypeFilter::new().name(asset_type))?
-        //     //         .iter()
-        //     //         .map(|c| c.id.clone())
-        //     //         .collect::<Vec<String>>();
-        //     //     query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(type_ids));
-        //     // }
-        // }
-
-        // Debug diesel query
-        println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+        // // Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let result = query
             .offset(pagination.offset as i64)
@@ -189,7 +163,6 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             query = query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(sub_query));
         }
     }
-
     query
 }
 
