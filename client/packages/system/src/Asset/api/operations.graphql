@@ -51,3 +51,41 @@ query assetCatalogueItemById(
     }
   }
 }
+
+query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
+  assetClasses(storeId: $storeId, sort: $sort) {
+    ... on AssetClassConnector {
+      nodes {
+        name
+        id
+      }
+      totalCount
+    }
+  }
+}
+
+query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
+  assetTypes(storeId: $storeId, sort: $sort) {
+    ... on AssetTypeConnector {
+      nodes {
+        id
+        name
+        categoryId
+      }
+      totalCount
+    }
+  }
+}
+
+query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
+  assetCategories(storeId: $storeId, sort: $sort) {
+    ... on AssetCategoryConnector {
+      nodes {
+        classId
+        id
+        name
+      }
+      totalCount
+    }
+  }
+}

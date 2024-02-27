@@ -26,6 +26,30 @@ export type AssetCatalogueItemByIdQueryVariables = Types.Exact<{
 
 export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string }> } };
 
+export type AssetClassesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  sort?: Types.InputMaybe<Types.AssetClassSortInput>;
+}>;
+
+
+export type AssetClassesQuery = { __typename: 'Queries', assetClasses: { __typename: 'AssetClassConnector', totalCount: number, nodes: Array<{ __typename: 'AssetClassNode', name: string, id: string }> } };
+
+export type AssetTypesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  sort?: Types.InputMaybe<Types.AssetTypeSortInput>;
+}>;
+
+
+export type AssetTypesQuery = { __typename: 'Queries', assetTypes: { __typename: 'AssetTypeConnector', totalCount: number, nodes: Array<{ __typename: 'AssetTypeNode', id: string, name: string, categoryId: string }> } };
+
+export type AssetCategoriesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  sort?: Types.InputMaybe<Types.AssetCategorySortInput>;
+}>;
+
+
+export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', classId: string, id: string, name: string }> } };
+
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
   __typename
@@ -73,6 +97,47 @@ export const AssetCatalogueItemByIdDocument = gql`
   }
 }
     ${AssetCatalogueItemFragmentDoc}`;
+export const AssetClassesDocument = gql`
+    query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
+  assetClasses(storeId: $storeId, sort: $sort) {
+    ... on AssetClassConnector {
+      nodes {
+        name
+        id
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const AssetTypesDocument = gql`
+    query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
+  assetTypes(storeId: $storeId, sort: $sort) {
+    ... on AssetTypeConnector {
+      nodes {
+        id
+        name
+        categoryId
+      }
+      totalCount
+    }
+  }
+}
+    `;
+export const AssetCategoriesDocument = gql`
+    query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
+  assetCategories(storeId: $storeId, sort: $sort) {
+    ... on AssetCategoryConnector {
+      nodes {
+        classId
+        id
+        name
+      }
+      totalCount
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -86,6 +151,15 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     assetCatalogueItemById(variables: AssetCatalogueItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCatalogueItemByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCatalogueItemByIdQuery>(AssetCatalogueItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueItemById', 'query');
+    },
+    assetClasses(variables: AssetClassesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetClassesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetClassesQuery>(AssetClassesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetClasses', 'query');
+    },
+    assetTypes(variables: AssetTypesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetTypesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetTypesQuery>(AssetTypesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetTypes', 'query');
+    },
+    assetCategories(variables: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
     }
   };
 }
@@ -122,5 +196,56 @@ export const mockAssetCatalogueItemsQuery = (resolver: ResponseResolver<GraphQLR
 export const mockAssetCatalogueItemByIdQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCatalogueItemByIdQueryVariables>, GraphQLContext<AssetCatalogueItemByIdQuery>, any>) =>
   graphql.query<AssetCatalogueItemByIdQuery, AssetCatalogueItemByIdQueryVariables>(
     'assetCatalogueItemById',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAssetClassesQuery((req, res, ctx) => {
+ *   const { storeId, sort } = req.variables;
+ *   return res(
+ *     ctx.data({ assetClasses })
+ *   )
+ * })
+ */
+export const mockAssetClassesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetClassesQueryVariables>, GraphQLContext<AssetClassesQuery>, any>) =>
+  graphql.query<AssetClassesQuery, AssetClassesQueryVariables>(
+    'assetClasses',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAssetTypesQuery((req, res, ctx) => {
+ *   const { storeId, sort } = req.variables;
+ *   return res(
+ *     ctx.data({ assetTypes })
+ *   )
+ * })
+ */
+export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetTypesQueryVariables>, GraphQLContext<AssetTypesQuery>, any>) =>
+  graphql.query<AssetTypesQuery, AssetTypesQueryVariables>(
+    'assetTypes',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAssetCategoriesQuery((req, res, ctx) => {
+ *   const { storeId, sort } = req.variables;
+ *   return res(
+ *     ctx.data({ assetCategories })
+ *   )
+ * })
+ */
+export const mockAssetCategoriesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCategoriesQueryVariables>, GraphQLContext<AssetCategoriesQuery>, any>) =>
+  graphql.query<AssetCategoriesQuery, AssetCategoriesQueryVariables>(
+    'assetCategories',
     resolver
   )

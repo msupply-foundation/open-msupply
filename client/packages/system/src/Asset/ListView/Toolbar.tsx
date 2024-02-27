@@ -1,13 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
   FilterMenu,
   useTranslation,
+  useUrlQuery,
 } from '@openmsupply-client/common';
+import { useAssets } from '../api/hooks';
+
+type ReferenceData = {
+  id: string;
+  name: string;
+  categoryId?: string;
+};
 
 export const Toolbar = () => {
+  // const { data: classes } = useAssets.utils.classes();
+  const { data: categoryData } = useAssets.utils.categories();
+  const { data: typeData } = useAssets.utils.types();
+  const { urlQuery, updateQuery } = useUrlQuery({
+    skipParse: ['classId', 'categoryId', 'typeId'],
+  });
   const t = useTranslation('catalogue');
+  const [categories, setCategories] = useState<ReferenceData[]>([]);
+  const [types, setTypes] = useState<ReferenceData[]>([]);
+
+  const categoryId = urlQuery['categoryId'];
+  const typeId = urlQuery['typeId'];
+  const mapOptions = (items: { id: string; name: string }[]) =>
+    items.map(item => ({
+      label: item.name,
+      value: item.id,
+    }));
+
+  useEffect(() => {
+    const newTypes = (typeData?.nodes || []).filter(
+      type => !categoryId || type.categoryId === categoryId
+    );
+    setTypes(newTypes);
+
+    if (newTypes.find(t => t.name === typeId) === null) {
+      updateQuery({ categoryId: '' });
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryId, typeData]);
+
+  useEffect(() => setCategories(categoryData?.nodes || []), [categoryData]);
 
   return (
     <AppBarContentPortal
@@ -24,29 +63,15 @@ export const Toolbar = () => {
             {
               type: 'enum',
               name: t('label.category'),
-              urlParameter: 'category',
-              options: [
-                {
-                  label: 'Insulated Containers',
-                  value: 'aaa-bbb-ccc',
-                },
-                {
-                  label: 'Refrigerators and freezers',
-                  value: 'aaa-bbb-ccc',
-                },
-              ],
+              urlParameter: 'categoryId',
+              options: mapOptions(categories),
             },
-            {
-              type: 'enum',
-              name: t('label.class'),
-              urlParameter: 'class',
-              options: [
-                {
-                  label: 'Cold Chain Equipment',
-                  value: 'aaa-bbb-ccc',
-                },
-              ],
-            },
+            // {
+            //   type: 'enum',
+            //   name: t('label.class'),
+            //   urlParameter: 'classId',
+            //   options: mapOptions(classes?.nodes || []),
+            // },
             {
               type: 'text',
               name: t('label.code'),
@@ -67,21 +92,8 @@ export const Toolbar = () => {
             {
               type: 'enum',
               name: t('label.type'),
-              urlParameter: 'type',
-              options: [
-                {
-                  label: 'Icelined refrigerator',
-                  value: 'aaa-bbb-ccc',
-                },
-                {
-                  label: 'Solar direct drive refrigerator/freezer',
-                  value: 'aaa-bbb-ccc',
-                },
-                {
-                  label: 'Vaccine/Waterpacks freezer',
-                  value: 'aaa-bbb-ccc',
-                },
-              ],
+              urlParameter: 'typeId',
+              options: mapOptions(types),
             },
           ]}
         />

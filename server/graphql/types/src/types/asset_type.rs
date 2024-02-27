@@ -26,7 +26,7 @@ impl AssetTypeNode {
     pub async fn name(&self) -> &str {
         &self.row().name
     }
-    pub async fn catetory_id(&self) -> &str {
+    pub async fn category_id(&self) -> &str {
         &self.row().category_id
     }
 }
