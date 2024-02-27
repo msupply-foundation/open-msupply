@@ -82,7 +82,7 @@ query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
         numberOfPacksToReturn
         packSize
         stockLineId
-        comment
+        note
         reasonId
       }
     }
@@ -103,7 +103,7 @@ query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
     stockLineId
     numberOfPacksReturned
     numberOfPacksIssued
-    comment
+    note
     reasonId
   }
 }
