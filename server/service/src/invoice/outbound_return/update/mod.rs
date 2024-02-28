@@ -82,10 +82,6 @@ pub fn update_outbound_return(
                 update_line_return_reasons,
             } = generate(connection, input.clone(), return_row)?;
 
-            println!(
-                "generateResult, {:?} {:?} {:?}, {:?}",
-                lines_to_add, lines_to_update, lines_to_delete, update_line_return_reasons
-            );
             InvoiceRowRepository::new(connection).upsert_one(&updated_return)?;
 
             for line in lines_to_add {
