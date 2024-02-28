@@ -1,18 +1,9 @@
+use super::sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress};
 use super::{
     sync_buffer::SyncBuffer,
-    translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators}};
-use crate::{
-    sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable},
-    usize_to_u64,
+    translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
 };
-
-use super::{
-    sync_buffer::SyncBuffer,
-    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
-    translations::{
-        IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
-    },
-};
+use crate::usize_to_u64;
 use log::warn;
 use repository::*;
 use std::collections::HashMap;
@@ -62,7 +53,7 @@ impl<'a> TranslationAndIntegration<'a> {
                     .try_translate_from_upsert_sync_record(self.connection, &sync_record)?,
                 SyncBufferAction::Delete => translator
                     .try_translate_from_delete_sync_record(self.connection, &sync_record)?,
-                SyncBufferAction::Merge =>translator
+                SyncBufferAction::Merge => translator
                     .try_translate_from_merge_sync_record(self.connection, &sync_record)?,
             };
 
@@ -93,8 +84,7 @@ impl<'a> TranslationAndIntegration<'a> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
-        for sync_record in sync_records {
-            // Try translate
+        // Try translate
         // Record initial progress (will be set as total progress)
         let total_to_integrate = sync_records.len();
 
@@ -206,7 +196,7 @@ pub(crate) fn integrate(
     Ok(())
 }
 
-impl  TranslationAndIntegrationResults {
+impl TranslationAndIntegrationResults {
     fn new() -> TranslationAndIntegrationResults {
         Default::default()
     }
@@ -285,8 +275,8 @@ mod test {
 
         // Record should not exist
         assert_matches!(
-            ItemRowRepository::new(&connection).find_one_by_id("item"),
+            ItemRowRepository::new(&connection).find_active_by_id("item"),
             Ok(None)
         );
-          }
-        }
+    }
+}

@@ -1,7 +1,6 @@
 use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConnection};
-use crate::{db_diesel::name_row::name, repository_error::RepositoryError};
-use crate::{Delete, Upsert};
-
+use crate::repository_error::RepositoryError;
+use crate::{name_link, Delete, Upsert};
 use diesel::prelude::*;
 
 table! {

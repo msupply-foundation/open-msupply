@@ -74,6 +74,8 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "pull_remote_finished_datetime"),
         ("sync_log", "integration_started_datetime"),
         ("sync_log", "integration_finished_datetime"),
+        ("sync_log", "pull_v6_started_datetime"),
+        ("sync_log", "pull_v6_finished_datetime"),
         ("user_account", "last_successful_sync"),
     ]
     .iter()

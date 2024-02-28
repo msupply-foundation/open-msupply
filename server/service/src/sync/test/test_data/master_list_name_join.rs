@@ -24,7 +24,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
         MasterListNameJoinRow {
             id: LIST_MASTER_NAME_JOIN_1.0.to_owned(),
             master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
-            name_id: "1FB32324AF8049248D929CFB35F255BA".to_owned(),
+            name_link_id: "name_store_a".to_owned(),
         },
     )]
 }

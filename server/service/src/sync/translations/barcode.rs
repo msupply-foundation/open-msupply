@@ -4,7 +4,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::translations::item::ItemTranslation;
+use crate::sync::{sync_serde::empty_str_as_option_string, translations::item::ItemTranslation};
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
@@ -80,19 +80,21 @@ impl SyncTranslation for BarcodeTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let BarcodeRow {
-            id,
-            gtin,
-            item_id,
-            manufacturer_link_id,
-            pack_size,
-            parent_id,
-        } = BarcodeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Barcode row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Barcode {
+            barcode_row:
+                BarcodeRow {
+                    id,
+                    gtin,
+                    item_id,
+                    manufacturer_link_id: _,
+                    pack_size,
+                    parent_id,
+                },
+            manufacturer_name_row,
+        } = BarcodeRepository::new(connection)
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 
         let legacy_row = LegacyBarcodeRow {
             id,
@@ -102,6 +104,7 @@ impl SyncTranslation for BarcodeTranslation {
             pack_size,
             parent_id,
         };
+
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
@@ -112,7 +115,9 @@ impl SyncTranslation for BarcodeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -154,15 +159,24 @@ mod tests {
             )
             .unwrap();
 
-        let translator = BarcodeTranslation {};
+        let translator = BarcodeTranslation;
         for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            if translated[0].record.data["name_ID"] != json!(null) {
-                assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            if translated[0].record.record_data["name_ID"] != json!(null) {
+                assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
             }
         }
     }

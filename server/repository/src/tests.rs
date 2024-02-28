@@ -1109,7 +1109,7 @@ mod repository_test {
                 .transaction_sync(|con| {
                     println!("A: transaction started");
                     let repo = ItemRowRepository::new(con);
-                    let _ = repo.find_one_by_id("tx_deadlock_id")?;
+                    let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("A: read");
                     println!("A: Sleeping for 100ms");
                     let start_dt = SystemTime::now();
@@ -1139,7 +1139,7 @@ mod repository_test {
                 .transaction_sync(|con| {
                     println!("B: transaction started");
                     let repo = ItemRowRepository::new(&con);
-                    let _ = repo.find_one_by_id("tx_deadlock_id")?;
+                    let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("B: read");
                     let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
@@ -1170,14 +1170,14 @@ mod repository_test {
 
         //tx_deadlock_id should now have name:name_b_2
         let tx_deadlock_item = repo
-            .find_one_by_id("tx_deadlock_id")
+            .find_active_by_id("tx_deadlock_id")
             .unwrap()
             .expect("tx_deadlock_id record didn't get created!");
         assert!("name_b_2" == tx_deadlock_item.name);
 
         //tx_deadlock_id2 should now have name:name_a
         let tx_deadlock_item2 = repo
-            .find_one_by_id("tx_deadlock_id2")
+            .find_active_by_id("tx_deadlock_id2")
             .unwrap()
             .expect("tx_deadlock_id2 record didn't get created!");
         assert!("name_a" == tx_deadlock_item2.name);

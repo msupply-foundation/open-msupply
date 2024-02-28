@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use repository::{
     EqualFilter, PackVariantFilter, PackVariantRepository, PackVariantRow, RepositoryError,
-    StockLineRowRepository, StockOnHandFilter, StockOnHandRepository,
+    StockLineFilter, StockLineRepository, StockOnHandFilter, StockOnHandRepository,
 };
 
 use crate::service_provider::ServiceContext;
@@ -15,7 +15,10 @@ pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, R
     let connection = &ctx.connection;
     let store_id = &ctx.store_id;
 
-    let stock_lines = StockLineRowRepository::new(connection).find_by_store_id(store_id)?;
+    let stock_lines = StockLineRepository::new(connection).query_by_filter(
+        StockLineFilter::new().store_id(EqualFilter::equal_to(store_id)),
+        None,
+    )?;
     let stock_on_hand = StockOnHandRepository::new(connection).query(Some(
         StockOnHandFilter::new().store_id(EqualFilter::equal_to(store_id)),
     ))?;
@@ -28,8 +31,8 @@ pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, R
     let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
     let mut total_number_of_lines: HashMap<(String, i32), f64> = HashMap::new();
     for stock_line in stock_lines {
-        let item_id = stock_line.item_id.clone();
-        let pack_size = stock_line.pack_size;
+        let item_id = stock_line.item_row.id.clone();
+        let pack_size = stock_line.stock_line_row.pack_size;
 
         if stock_on_hand
             .iter()
@@ -37,7 +40,7 @@ pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, R
         {
             total_number_of_packs
                 .entry((item_id, pack_size))
-                .and_modify(|e| *e += stock_line.total_number_of_packs)
+                .and_modify(|e| *e += stock_line.stock_line_row.total_number_of_packs)
                 .or_insert(0.0);
         } else {
             total_number_of_lines
@@ -131,7 +134,7 @@ mod test {
         let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
 
         for stock_line in stock_lines {
-            let item_id = stock_line.stock_line_row.item_id.clone();
+            let item_id = stock_line.item_row.id.clone();
             let pack_size = stock_line.stock_line_row.pack_size;
 
             total_number_of_packs

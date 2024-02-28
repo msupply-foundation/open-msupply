@@ -8,9 +8,9 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowDelete,
-    InvoiceLineRowRepository, InvoiceLineRowType, ItemRowRepository, StockLineRowRepository,
-    StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineRowType,
+    ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -149,7 +149,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 )
             }
             None => {
-                let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
+                let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
                     Some(item) => item,
                     None => {
                         return Err(anyhow::Error::msg(format!(
@@ -244,27 +244,38 @@ impl SyncTranslation for InvoiceLineTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let InvoiceLineRow {
-            id,
-            invoice_id,
-            item_id,
-            item_name,
-            item_code,
-            stock_line_id,
-            location_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_before_tax,
-            total_after_tax,
-            tax,
-            r#type,
-            number_of_packs,
-            note,
-            inventory_adjustment_reason_id,
-        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice_line) = InvoiceLineRepository::new(connection)
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+        else {
+            return Err(anyhow::anyhow!("invoice_line row not found"));
+        };
+
+        let InvoiceLine {
+            invoice_line_row:
+                InvoiceLineRow {
+                    id,
+                    invoice_id,
+                    item_link_id: _,
+                    item_name,
+                    item_code,
+                    stock_line_id,
+                    location_id,
+                    batch,
+                    expiry_date,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    total_before_tax,
+                    total_after_tax,
+                    tax,
+                    r#type,
+                    number_of_packs,
+                    note,
+                    inventory_adjustment_reason_id,
+                },
+            item_row,
+            ..
+        } = invoice_line;
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
@@ -325,7 +336,9 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineTyp
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_item_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -401,13 +414,21 @@ mod tests {
 
         let translator = InvoiceLineTranslation {};
         for changelog in changelogs {
-            // Translate and sort
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
     }
 }

@@ -2498,7 +2498,7 @@ dependencies = [
  "graphql_types",
  "repository",
  "reqwest",
- "serde 1.0.137",
+ "serde 1.0.196",
  "serde_json",
  "service",
  "thiserror",

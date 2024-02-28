@@ -6,7 +6,7 @@ use url::{ParseError, Url};
 use super::*;
 
 // For now port_offset of 2
-static PORT_OFFSET: u16 = 2;
+pub(crate) static PORT_OFFSET: u16 = 2;
 
 #[derive(Debug, Clone)]
 pub(crate) struct SyncApiV6 {

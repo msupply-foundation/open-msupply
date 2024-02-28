@@ -1,7 +1,7 @@
 use repository::{ItemRow, ItemRowDelete, ItemRowType, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 
-use crate::sync::translations::unit::UnitTranslation;
+use crate::sync::{sync_serde::empty_str_as_option_string, translations::unit::UnitTranslation};
 
 use super::{PullTranslateResult, SyncTranslation};
 
@@ -72,14 +72,9 @@ impl SyncTranslation for ItemTranslation {
             is_active: true,
         };
 
-        if data.unit_ID != "" {
-            result.unit_id = Some(data.unit_ID);
-        }
-
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // TODO soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,

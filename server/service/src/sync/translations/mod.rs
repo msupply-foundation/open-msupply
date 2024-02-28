@@ -90,9 +90,9 @@ pub(crate) fn all_translators() -> SyncTranslators {
         // Special translations
         special::name_to_name_store_join::boxed(),
         // Merge
-        item_merge_translation::boxed(),
-        name_merge_translation::boxed(),
-        clinician_merge_translation::boxed(),
+        special::name_merge::boxed(),
+        special::item_merge::boxed(),
+        special::clinician_merge::boxed(),
     ]
 }
 
@@ -282,6 +282,14 @@ pub(crate) trait SyncTranslation {
     }
 
     fn try_translate_from_upsert_sync_record(
+        &self,
+        _: &StorageConnection,
+        _: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::NotMatched)
+    }
+
+    fn try_translate_from_merge_sync_record(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,

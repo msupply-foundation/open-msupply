@@ -1,6 +1,7 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, NameRowRepository, NameStoreJoinRepository, NameStoreJoinRow,
-    NameStoreJoinRowDelete, StorageConnection, StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
+    StorageConnection, StoreRowRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -104,12 +105,16 @@ impl SyncTranslation for NameStoreJoinTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let NameStoreJoinRow {
-            id,
-            name_id,
-            store_id,
-            name_is_customer,
-            name_is_supplier,
+        let NameStoreJoin {
+            name_store_join:
+                NameStoreJoinRow {
+                    id,
+                    name_link_id: _,
+                    store_id,
+                    name_is_customer,
+                    name_is_supplier,
+                },
+            name,
         } = NameStoreJoinRepository::new(connection)
             .query_by_filter(
                 NameStoreJoinFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
@@ -149,7 +154,9 @@ impl SyncTranslation for NameStoreJoinTranslation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
     };
@@ -213,12 +220,21 @@ mod tests {
 
         let translator = NameStoreJoinTranslation {};
         for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

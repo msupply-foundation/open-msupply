@@ -5,11 +5,11 @@ use super::{
     store_row::store,
     StorageConnection,
 };
-
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameLinkRow, NameRow,
 };
+use crate::{Delete, Upsert};
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},

@@ -111,31 +111,14 @@ impl SyncTranslation for StocktakeLineTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let StocktakeLineRow {
-            id,
-            stocktake_id,
-            stock_line_id,
-            location_id,
-            comment,
-            snapshot_number_of_packs,
-            counted_number_of_packs,
-            item_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            note,
-            inventory_adjustment_reason_id,
-        } = StocktakeLineRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg("Stocktake row not found"))?;
-
-        let stock_line = match &stock_line_id {
-            Some(stock_line_id) => {
-                Some(StockLineRowRepository::new(connection).find_one_by_id(&stock_line_id)?)
-            }
-            None => None,
+        let Some(stocktake_line) = StocktakeLineRepository::new(connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                None,
+            )?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Stocktake row not found"));
         };
 
         let StocktakeLine {
@@ -200,7 +183,9 @@ impl SyncTranslation for StocktakeLineTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_item_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -251,12 +236,22 @@ mod tests {
         let translator = StocktakeLineTranslation {};
         for changelog in changelogs {
             // Translate and sort
+            // Translate and sort
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
     }
 }

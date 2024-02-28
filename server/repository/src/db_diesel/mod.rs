@@ -52,7 +52,7 @@ pub mod name_tag;
 pub mod name_tag_join;
 mod name_tag_row;
 mod number_row;
-mod pack_variant;
+pub mod pack_variant;
 mod pack_variant_row;
 mod patient;
 pub mod period;

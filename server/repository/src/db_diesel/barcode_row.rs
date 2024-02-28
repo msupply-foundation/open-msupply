@@ -1,3 +1,5 @@
+use crate::Upsert;
+
 use super::{
     barcode_row::barcode::dsl as barcode_dsl, invoice_line_row::invoice_line,
     item_link_row::item_link, item_row::item, name_link_row::name_link, RepositoryError,

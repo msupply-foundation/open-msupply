@@ -50,7 +50,7 @@ impl<'a> UnitRowRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
+    pub async fn find_active_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(&self.connection.connection)?;
@@ -83,17 +83,19 @@ impl<'a> UnitRowRepository<'a> {
 
 #[derive(Debug, Clone)]
 pub struct UnitRowDelete(pub String);
-// TODO soft delete
 impl Delete for UnitRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).delete(&self.0)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
-        assert_eq!(
+        assert!(matches!(
             UnitRowRepository::new(con).find_one_by_id_option(&self.0),
-            Ok(None)
-        )
+            Ok(Some(UnitRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
     }
 }
 
