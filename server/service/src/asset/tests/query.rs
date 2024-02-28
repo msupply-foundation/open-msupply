@@ -138,13 +138,13 @@ mod query {
                 ))),
                 Some(AssetSort {
                     key: AssetSortField::Name,
-                    desc: Some(true),
+                    desc: Some(false),
                 }),
             )
             .unwrap();
 
         assert_eq!(result.count, 2);
         assert_eq!(result.rows[0].id, mock_asset_a().id);
-        assert_eq!(result.rows[0].id, mock_asset_b().id);
+        assert_eq!(result.rows[1].id, mock_asset_b().id);
     }
 }
