@@ -19,7 +19,7 @@ interface UseOutboundColumnOptions {
 }
 
 // TO-DO: Replace with generated once query is live
-interface OutboundReturnLine {
+export interface OutboundReturnLine {
   id: string;
   itemCode: string;
   itemName: string;
@@ -50,7 +50,7 @@ const getNumberOfPacks = (row: OutboundReturnLine) =>
 const getUnitQuantity = (row: OutboundReturnLine) =>
   isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
 
-export const useOutboundColumns = ({
+export const useOutboundReturnColumns = ({
   sortBy,
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<OutboundReturnLine>[] => {
