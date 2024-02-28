@@ -648,7 +648,6 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
 
 export type DatabaseSettingsNode = {
   __typename: 'DatabaseSettingsNode';
-  /** Central server url */
   databaseType: DatabaseType;
 };
 

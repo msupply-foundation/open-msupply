@@ -82,52 +82,50 @@ const Host = () => (
               url={Environment.GRAPHQL_URL}
               skipRequest={skipRequest}
             >
-              <PluginProvider>
-                <AuthProvider>
-                  <Init />
-                  <AppThemeProvider>
-                    <ConfirmationModalProvider>
-                      <AlertModalProvider>
-                        <BrowserRouter>
-                          <ErrorAlert />
-                          <BackButtonHandler />
-                          <Viewport>
-                            <Box display="flex" style={{ minHeight: '100%' }}>
-                              <Routes>
-                                <Route
-                                  path={RouteBuilder.create(
-                                    AppRoute.Initialise
-                                  ).build()}
-                                  element={<Initialise />}
-                                />
-                                <Route
-                                  path={RouteBuilder.create(
-                                    AppRoute.Login
-                                  ).build()}
-                                  element={<Login />}
-                                />
-                                <Route
-                                  path={RouteBuilder.create(
-                                    AppRoute.Discovery
-                                  ).build()}
-                                  element={<Discovery />}
-                                />
-                                <Route
-                                  path={RouteBuilder.create(
-                                    AppRoute.Android
-                                  ).build()}
-                                  element={<Android />}
-                                />
-                                <Route path="*" element={<Site />} />
-                              </Routes>
-                            </Box>
-                          </Viewport>
-                        </BrowserRouter>
-                      </AlertModalProvider>
-                    </ConfirmationModalProvider>
-                  </AppThemeProvider>
-                </AuthProvider>
-              </PluginProvider>
+              <AuthProvider>
+                <Init />
+                <AppThemeProvider>
+                  <ConfirmationModalProvider>
+                    <AlertModalProvider>
+                      <BrowserRouter>
+                        <ErrorAlert />
+                        <BackButtonHandler />
+                        <Viewport>
+                          <Box display="flex" style={{ minHeight: '100%' }}>
+                            <Routes>
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Initialise
+                                ).build()}
+                                element={<Initialise />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Login
+                                ).build()}
+                                element={<Login />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Discovery
+                                ).build()}
+                                element={<Discovery />}
+                              />
+                              <Route
+                                path={RouteBuilder.create(
+                                  AppRoute.Android
+                                ).build()}
+                                element={<Android />}
+                              />
+                              <Route path="*" element={<Site />} />
+                            </Routes>
+                          </Box>
+                        </Viewport>
+                      </BrowserRouter>
+                    </AlertModalProvider>
+                  </ConfirmationModalProvider>
+                </AppThemeProvider>
+              </AuthProvider>
               {/* <ReactQueryDevtools initialIsOpen /> */}
             </GqlProvider>
           </QueryClientProvider>
