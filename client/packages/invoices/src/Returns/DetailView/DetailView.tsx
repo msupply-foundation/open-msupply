@@ -9,11 +9,11 @@ import {
   RouteBuilder,
   useTranslation,
   createQueryParamsStore,
-  // DetailTabs,
+  DetailTabs,
   // ModalMode,
 } from '@openmsupply-client/common';
-// import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
-// import { ContentArea } from './ContentArea';
+// import { toItemRow } from '@openmsupply-client/system';
+import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
 // import { Toolbar } from './Toolbar';
 // import { Footer } from './Footer';
@@ -32,34 +32,39 @@ export const DetailView: FC = () => {
   const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
-  // const onRowClick = useCallback(
+
+  const onRowClick = () => {};
+
+  // useCallback(
   //   (item: StockOutLineFragment | StockOutItem) => {
   //     onOpen({ item: toItemRow(item) });
   //   },
-  //   [toItemRow, onOpen]
+  //   [toItemRow]
   // );
-  // const onAddItem = (draft?: Draft) => {
+  const onAddItem = () => {};
+  //  (draft?: Draft) => {
   //   onOpen(draft);
   //   setMode(ModalMode.Create);
   // };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
-  // const tabs = [
-  //   {
-  //     Component: (
-  //       <ContentArea
-  //         // onRowClick={!isDisabled ? onRowClick : null}
-  //         onAddItem={onAddItem}
-  //       />
-  //     ),
-  //     value: 'Details',
-  //   },
-  //   {
-  //     Component: <ActivityLogList recordId={data?.id ?? ''} />,
-  //     value: 'Log',
-  //   },
-  // ];
+  const tabs = [
+    {
+      Component: (
+        <ContentArea
+          onRowClick={onRowClick}
+          onAddItem={onAddItem}
+          rows={data?.lines?.nodes}
+        />
+      ),
+      value: 'Details',
+    },
+    {
+      Component: <p>To-do</p>,
+      value: 'Log',
+    },
+  ];
 
   return (
     <React.Suspense
@@ -76,7 +81,6 @@ export const DetailView: FC = () => {
             },
           })}
         >
-          {JSON.stringify(data)}
           {/* <AppBarButtons onAddItem={onAddItem} /> */}
           {/* {isOpen && (
             <OutboundLineEdit
@@ -88,7 +92,7 @@ export const DetailView: FC = () => {
           )} */}
 
           {/* <Toolbar /> */}
-          {/* <DetailTabs tabs={tabs} /> */}
+          <DetailTabs tabs={tabs} />
           {/* <Footer /> */}
           {/* <SidePanel /> */}
         </TableProvider>
