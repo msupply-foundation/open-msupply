@@ -84,10 +84,16 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         // }
 
         // Standard Graphql Errors
-        ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
+        // not sure whether any of these should be structured errors..
+        ServiceError::NotAnOutboundReturn
+        | ServiceError::ReturnDoesNotBelongToCurrentStore
+        | ServiceError::ReturnIsNotEditable
+        | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
         // ServiceError::LineUpdateError { .. } => InternalError(formatted_error),
         // ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::UpdatedReturnDoesNotExist | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

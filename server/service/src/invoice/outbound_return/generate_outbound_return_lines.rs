@@ -6,7 +6,7 @@ use util::uuid::uuid;
 pub struct OutboundReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
-    pub comment: Option<String>,
+    pub note: Option<String>,
     pub number_of_packs: u32,
     pub stock_line: StockLine,
 }
@@ -58,7 +58,7 @@ pub fn generate_outbound_return_lines(
             stock_line: stock_line.clone(),
 
             reason_id: None,
-            comment: None,
+            note: None,
             number_of_packs: 0,
         })
         .collect();
