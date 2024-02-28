@@ -15,6 +15,7 @@ pub use self::validate::*;
 #[derive(Clone, Debug, PartialEq)]
 pub enum StockOutType {
     OutboundShipment,
+    OutboundReturn,
     Prescription,
 }
 
@@ -23,6 +24,7 @@ impl StockOutType {
         match self {
             StockOutType::OutboundShipment => InvoiceRowType::OutboundShipment,
             StockOutType::Prescription => InvoiceRowType::Prescription,
+            StockOutType::OutboundReturn => InvoiceRowType::OutboundReturn,
         }
     }
 }

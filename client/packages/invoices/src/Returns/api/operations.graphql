@@ -82,7 +82,7 @@ query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
         numberOfPacksToReturn
         packSize
         stockLineId
-        comment
+        note
         reasonId
       }
     }
@@ -103,7 +103,7 @@ query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
     stockLineId
     numberOfPacksReturned
     numberOfPacksIssued
-    comment
+    note
     reasonId
   }
 }
@@ -120,6 +120,16 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
       lines {
         nodes {
           id
+          returnReasonId
+          stockLine {
+            id
+            packSize
+            item {
+              id
+              code
+              name
+            }
+          }
         }
       }
       otherPartyName
@@ -130,12 +140,20 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
   }
 }
 
-mutation insertOutboundReturn($input: OutboundReturnInput!) {
-  insertOutboundReturn(input: $input) {
+mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
+  insertOutboundReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
       invoiceNumber
+    }
+
+    ... on InsertOutboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
     }
   }
 }
