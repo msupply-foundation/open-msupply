@@ -1,4 +1,6 @@
-use repository::{InvoiceLineRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StorageConnection,
+};
 
 use crate::invoice_line::{
     stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
@@ -21,14 +23,15 @@ pub fn generate(
         outbound_return_lines,
     }: UpdateOutboundReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
-    let line_ids: Vec<String> = outbound_return_lines
-        .iter()
-        .map(|line| line.id.clone())
-        .collect();
-
-    let existing_lines = InvoiceLineRowRepository::new(connection).find_many_by_id(&line_ids)?;
-    let check_already_exists =
-        |id: &str| existing_lines.iter().find(|line| line.id == id).is_some();
+    let existing_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&outbound_return_id)),
+    )?;
+    let check_already_exists = |id: &str| {
+        existing_lines
+            .iter()
+            .find(|line| line.invoice_line_row.id == id)
+            .is_some()
+    };
 
     let lines_to_add = outbound_return_lines
         .clone()
