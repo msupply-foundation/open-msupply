@@ -237,7 +237,8 @@ mod test {
                     other_party_id: mock_name_a().id, // Supplier
                     outbound_return_lines: vec![OutboundReturnLineInput {
                         id: "new_line_id".to_string(),
-                        stock_line_id: "stock_line_id".to_string(),
+                        stock_line_id: "does_not_exist".to_string(),
+                        number_of_packs: 1.0,
                         ..Default::default()
                     }],
                 },
@@ -258,6 +259,7 @@ mod test {
                     outbound_return_lines: vec![OutboundReturnLineInput {
                         id: "new_line_id".to_string(),
                         stock_line_id: mock_stock_line_b().id,
+                        number_of_packs: 1.0,
                         reason_id: Some("does_not_exist".to_string()),
                         ..Default::default()
                     }],
@@ -317,12 +319,22 @@ mod test {
                 inline_init(|r: &mut InsertOutboundReturn| {
                     r.id = "new_outbound_return_id".to_string();
                     r.other_party_id = supplier().id;
-                    r.outbound_return_lines = vec![OutboundReturnLineInput {
-                        id: "new_outbound_return_line_id".to_string(),
-                        stock_line_id: mock_stock_line_b().id,
-                        reason_id: Some(return_reason().id),
-                        ..Default::default()
-                    }];
+                    r.outbound_return_lines = vec![
+                        OutboundReturnLineInput {
+                            id: "new_outbound_return_line_id".to_string(),
+                            stock_line_id: mock_stock_line_b().id,
+                            reason_id: Some(return_reason().id),
+                            number_of_packs: 1.0,
+                            ..Default::default()
+                        },
+                        OutboundReturnLineInput {
+                            id: "new_outbound_return_line_id_2".to_string(),
+                            stock_line_id: mock_stock_line_b().id,
+                            reason_id: Some(return_reason().id),
+                            number_of_packs: 0.0,
+                            ..Default::default()
+                        },
+                    ];
                 }),
             )
             .unwrap();
@@ -345,6 +357,7 @@ mod test {
             .find_many_by_invoice_id("new_outbound_return_id")
             .unwrap();
 
+        // line with number_of_packs == 0.0 should not be inserted
         assert_eq!(lines.len(), 1);
         assert_eq!(
             lines[0],
@@ -352,7 +365,7 @@ mod test {
                 u.invoice_id = "new_outbound_return_id".to_string();
                 u.id = "new_outbound_return_line_id".to_string();
                 u.stock_line_id = Some(mock_stock_line_b().id);
-                u.return_reason_id = Some(return_reason().id);
+                u.number_of_packs = 1.0;
                 u
             })
         );
