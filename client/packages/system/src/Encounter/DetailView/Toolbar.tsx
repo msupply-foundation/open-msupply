@@ -278,7 +278,7 @@ export const Toolbar: FC<ToolbarProps> = ({
                         : undefined;
                       if (endDatetime) {
                         setEndDatetime(endDatetime);
-                        onChange({ startDatetime, endDatetime });
+                        onChange({ endDatetime });
                       }
                     }}
                   />
