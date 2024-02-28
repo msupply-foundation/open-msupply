@@ -1,26 +1,24 @@
-import React, { FC, useEffect } from 'react';
+import React, { FC } from 'react';
 import {
   DataTable,
   useTranslation,
   Box,
-  MiniTable,
-  useIsGrouped,
-  InvoiceLineNodeType,
-  useRowStyle,
-  AppSxProp,
+  //   MiniTable,
+  //   useIsGrouped,
+  //   InvoiceLineNodeType,
+  //   useRowStyle,
+  //   AppSxProp,
   NothingHere,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 // import { useOutbound } from '../api';
-import { useOutboundColumns } from './columns';
-import { StockOutLineFragment } from '../../StockOut';
-import { StockOutItem } from '../../types';
-import { useExpansionColumns } from './OutboundLineEdit/columns';
+import { OutboundReturnLine, useOutboundReturnColumns } from './columns';
+// import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: StockOutLineFragment | StockOutItem) => void);
-  rows: any[];
+  onRowClick?: null | ((rowData: OutboundReturnLine) => void);
+  rows: OutboundReturnLine[];
 }
 
 // const Expand: FC<{
@@ -82,7 +80,6 @@ interface ContentAreaProps {
 // };
 
 export const ContentAreaComponent: FC<ContentAreaProps> = ({
-  onAddItem,
   onRowClick,
   rows,
 }) => {
@@ -93,7 +90,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   } = useUrlQueryParams();
   //   const { isGrouped } = useIsGrouped('outboundShipment');
   //   const { rows } = useOutbound.line.rows(isGrouped);
-  const columns = useOutboundColumns({
+  const columns = useOutboundReturnColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
@@ -101,8 +98,6 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
   //   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
-
-  console.log('Return rows', rows);
 
   return (
     <Box flexDirection="column" style={{ width: '100%' }} display="flex">
