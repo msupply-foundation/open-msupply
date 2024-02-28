@@ -129,16 +129,22 @@ mod test {
             },
             OutboundReturnLineInput,
         },
+        invoice_line::{
+            stock_out_line::{InsertStockOutLineError, UpdateStockOutLineError},
+            update_return_reason_id::UpdateLineReturnReasonError,
+        },
         service_provider::ServiceProvider,
     };
     use repository::{
         mock::{
-            mock_name_store_b, mock_outbound_return_a, mock_outbound_return_a_invoice_line_a,
-            mock_outbound_return_a_invoice_line_b, mock_outbound_shipment_a, mock_stock_line_a,
-            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+            mock_item_a, mock_name_store_b, mock_outbound_return_a,
+            mock_outbound_return_a_invoice_line_a, mock_outbound_return_a_invoice_line_b,
+            mock_outbound_shipment_a, mock_stock_line_a, mock_store_a, mock_store_b,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ReturnReasonRow,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        ReturnReasonRow,
     };
 
     #[actix_rt::test]
@@ -167,12 +173,21 @@ mod test {
                 ..base_test_return()
             }
         }
+        fn wrong_store_return_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "wrong_store_return_line".to_string(),
+                invoice_id: wrong_store().id,
+                item_link_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_update_outbound_return_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![wrong_store(), shipped_return()],
+                invoice_lines: vec![wrong_store_return_line()],
                 ..Default::default()
             },
         )
@@ -240,6 +255,74 @@ mod test {
         );
 
         // LineInsertError
+        assert_eq!(
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: mock_outbound_return_a().id,
+                        outbound_return_lines: vec![OutboundReturnLineInput {
+                            id: "new_line".to_string(),
+                            stock_line_id: "does_not_exist".to_string(),
+                            number_of_packs: 1.0,
+                            ..Default::default()
+                        }],
+                        ..Default::default()
+                    }
+                ),
+            Err(ServiceError::LineInsertError {
+                line_id: "new_line".to_string(),
+                error: InsertStockOutLineError::StockLineNotFound,
+            }),
+        );
+
+        // LineUpdateError
+        assert_eq!(
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: mock_outbound_return_a().id,
+                        outbound_return_lines: vec![OutboundReturnLineInput {
+                            id: mock_outbound_return_a_invoice_line_a().id,
+                            stock_line_id: "does_not_exist".to_string(),
+                            number_of_packs: 1.0,
+                            ..Default::default()
+                        }],
+                        ..Default::default()
+                    }
+                ),
+            Err(ServiceError::LineUpdateError {
+                line_id: mock_outbound_return_a_invoice_line_a().id,
+                error: UpdateStockOutLineError::StockLineNotFound,
+            }),
+        );
+
+        // LineReturnReasonUpdateError
+        assert_eq!(
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: mock_outbound_return_a().id,
+                        outbound_return_lines: vec![OutboundReturnLineInput {
+                            id: "new_line_id".to_string(),
+                            number_of_packs: 1.0,
+                            stock_line_id: "item_b_line_a".to_string(),
+                            reason_id: Some("does_not_exist".to_string()),
+                            ..Default::default()
+                        }],
+                        ..Default::default()
+                    },
+                ),
+            Err(ServiceError::LineReturnReasonUpdateError {
+                line_id: "new_line_id".to_string(),
+                error: UpdateLineReturnReasonError::ReasonDoesNotExist,
+            }),
+        );
     }
 
     #[actix_rt::test]
