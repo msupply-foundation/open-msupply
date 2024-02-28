@@ -1,17 +1,17 @@
-use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceRowType, StorageConnection};
 
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
 
-use super::UpdateOutboundReturnError;
+use super::UpdateOutboundReturnLinesError;
 
 pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     id: &str,
-) -> Result<(InvoiceRow, bool), UpdateOutboundReturnError> {
-    use UpdateOutboundReturnError::*;
+) -> Result<(), UpdateOutboundReturnLinesError> {
+    use UpdateOutboundReturnLinesError::*;
 
     let return_row = check_invoice_exists(id, connection)?.ok_or(ReturnDoesNotExist)?;
 
@@ -25,8 +25,5 @@ pub fn validate(
         return Err(NotAnOutboundReturn);
     }
 
-    // TODO: Status check
-    let status_changed = false;
-
-    Ok((return_row, status_changed))
+    Ok(())
 }

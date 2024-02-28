@@ -1,7 +1,6 @@
-use repository::{Invoice, InvoiceRowRepository, RepositoryError};
+use repository::{Invoice, RepositoryError};
 
 use crate::{
-    activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::get_invoice,
     invoice_line::{
         stock_out_line::{
@@ -22,29 +21,18 @@ use self::generate::GenerateResult;
 
 use super::OutboundReturnLineInput;
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum UpdateOutboundReturnStatus {
-    Allocated,
-    Picked,
-    Shipped,
-}
-
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct UpdateOutboundReturn {
-    pub id: String,
-    // pub other_party_id: String,
-    pub status: Option<UpdateOutboundReturnStatus>,
+pub struct UpdateOutboundReturnLines {
+    pub outbound_return_id: String,
     pub outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
 
 #[derive(PartialEq, Debug)]
-pub enum UpdateOutboundReturnError {
+pub enum UpdateOutboundReturnLinesError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
     NotAnOutboundReturn,
-    // InvoiceLineHasNoStockLine,
-    // CannotReverseInvoiceStatus,
     UpdatedReturnDoesNotExist,
     // Line Errors
     LineInsertError {
@@ -66,27 +54,24 @@ pub enum UpdateOutboundReturnError {
     DatabaseError(RepositoryError),
 }
 
-pub fn update_outbound_return(
+pub fn update_outbound_return_lines(
     ctx: &ServiceContext,
-    input: UpdateOutboundReturn,
-) -> Result<Invoice, UpdateOutboundReturnError> {
+    input: UpdateOutboundReturnLines,
+) -> Result<Invoice, UpdateOutboundReturnLinesError> {
     let outbound_return = ctx
         .connection
         .transaction_sync(|connection| {
-            let (return_row, status_changed) = validate(connection, &ctx.store_id, &input.id)?;
+            validate(connection, &ctx.store_id, &input.outbound_return_id)?;
             let GenerateResult {
-                updated_return,
                 lines_to_add,
                 lines_to_update,
                 lines_to_delete,
                 update_line_return_reasons,
-            } = generate(connection, input.clone(), return_row)?;
-
-            InvoiceRowRepository::new(connection).upsert_one(&updated_return)?;
+            } = generate(connection, input.clone())?;
 
             for line in lines_to_add {
                 insert_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnError::LineInsertError {
+                    UpdateOutboundReturnLinesError::LineInsertError {
                         line_id: line.id,
                         error,
                     }
@@ -95,7 +80,7 @@ pub fn update_outbound_return(
 
             for line in lines_to_update {
                 update_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnError::LineUpdateError {
+                    UpdateOutboundReturnLinesError::LineUpdateError {
                         line_id: line.id,
                         error,
                     }
@@ -104,7 +89,7 @@ pub fn update_outbound_return(
 
             for line in lines_to_delete {
                 delete_stock_out_line(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnError::LineDeleteError {
+                    UpdateOutboundReturnLinesError::LineDeleteError {
                         line_id: line.id,
                         error,
                     }
@@ -113,35 +98,25 @@ pub fn update_outbound_return(
 
             for line in update_line_return_reasons {
                 update_return_reason_id(ctx, line.clone()).map_err(|error| {
-                    UpdateOutboundReturnError::LineReturnReasonUpdateError {
+                    UpdateOutboundReturnLinesError::LineReturnReasonUpdateError {
                         line_id: line.line_id,
                         error,
                     }
                 })?;
             }
 
-            if status_changed {
-                activity_log_entry(
-                    &ctx,
-                    log_type_from_invoice_status(&updated_return.status, false),
-                    Some(updated_return.id.to_owned()),
-                    None,
-                    None,
-                )?;
-            }
-
-            get_invoice(ctx, None, &input.id)
-                .map_err(|error| UpdateOutboundReturnError::DatabaseError(error))?
-                .ok_or(UpdateOutboundReturnError::UpdatedReturnDoesNotExist)
+            get_invoice(ctx, None, &input.outbound_return_id)
+                .map_err(|error| UpdateOutboundReturnLinesError::DatabaseError(error))?
+                .ok_or(UpdateOutboundReturnLinesError::UpdatedReturnDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
 
     Ok(outbound_return)
 }
 
-impl From<RepositoryError> for UpdateOutboundReturnError {
+impl From<RepositoryError> for UpdateOutboundReturnLinesError {
     fn from(error: RepositoryError) -> Self {
-        UpdateOutboundReturnError::DatabaseError(error)
+        UpdateOutboundReturnLinesError::DatabaseError(error)
     }
 }
 
@@ -149,7 +124,9 @@ impl From<RepositoryError> for UpdateOutboundReturnError {
 mod test {
     use crate::{
         invoice::outbound_return::{
-            update::{UpdateOutboundReturn, UpdateOutboundReturnError as ServiceError},
+            update_lines::{
+                UpdateOutboundReturnLines, UpdateOutboundReturnLinesError as ServiceError,
+            },
             OutboundReturnLineInput,
         },
         service_provider::ServiceProvider,
@@ -208,49 +185,57 @@ mod test {
 
         // ReturnDoesNotExist
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
-                &context,
-                UpdateOutboundReturn {
-                    id: "non-existent-id".to_string(),
-                    ..Default::default()
-                }
-            ),
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: "non-existent-id".to_string(),
+                        ..Default::default()
+                    }
+                ),
             Err(ServiceError::ReturnDoesNotExist)
         );
 
         // NotAnOutboundReturn
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
-                &context,
-                UpdateOutboundReturn {
-                    id: mock_outbound_shipment_a().id,
-                    ..Default::default()
-                }
-            ),
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: mock_outbound_shipment_a().id,
+                        ..Default::default()
+                    }
+                ),
             Err(ServiceError::NotAnOutboundReturn)
         );
 
         // ReturnDoesNotBelongToCurrentStore
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
-                &context,
-                UpdateOutboundReturn {
-                    id: wrong_store().id,
-                    ..Default::default()
-                }
-            ),
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: wrong_store().id,
+                        ..Default::default()
+                    }
+                ),
             Err(ServiceError::ReturnDoesNotBelongToCurrentStore)
         );
 
         // ReturnIsNotEditable
         assert_eq!(
-            service_provider.invoice_service.update_outbound_return(
-                &context,
-                UpdateOutboundReturn {
-                    id: shipped_return().id,
-                    ..Default::default()
-                }
-            ),
+            service_provider
+                .invoice_service
+                .update_outbound_return_lines(
+                    &context,
+                    UpdateOutboundReturnLines {
+                        outbound_return_id: shipped_return().id,
+                        ..Default::default()
+                    }
+                ),
             Err(ServiceError::ReturnIsNotEditable)
         );
 
@@ -284,10 +269,10 @@ mod test {
 
         service_provider
             .invoice_service
-            .update_outbound_return(
+            .update_outbound_return_lines(
                 &context,
-                UpdateOutboundReturn {
-                    id: mock_outbound_return_a().id,
+                UpdateOutboundReturnLines {
+                    outbound_return_id: mock_outbound_return_a().id,
                     outbound_return_lines: vec![
                         OutboundReturnLineInput {
                             id: "line1".to_string(), // create
