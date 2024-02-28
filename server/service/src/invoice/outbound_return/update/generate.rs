@@ -36,15 +36,16 @@ pub fn generate(
 
     let existing_lines = InvoiceLineRowRepository::new(connection).find_many_by_id(&line_ids)?;
 
-    // TODO: should we allow adding of ones with 0.0 packs? probably
+    // TODO: should we allow adding of ones with 0.0 packs? probably not??
     let lines_to_add = outbound_return_lines
         .clone()
         .into_iter()
         .filter(|line| {
-            existing_lines
-                .iter()
-                .find(|existing_line| existing_line.id == line.id)
-                .is_none()
+            line.number_of_packs > 0.0
+                && existing_lines
+                    .iter()
+                    .find(|existing_line| existing_line.id == line.id)
+                    .is_none()
         })
         .collect();
 
@@ -52,18 +53,19 @@ pub fn generate(
         .clone()
         .into_iter()
         .filter(|line| {
-            existing_lines
-                .iter()
-                .find(|existing_line| existing_line.id == line.id && line.number_of_packs > 0.0)
-                .is_some()
+            line.number_of_packs > 0.0
+                && existing_lines
+                    .iter()
+                    .find(|existing_line| existing_line.id == line.id)
+                    .is_some()
         })
         .collect();
 
-    // TODO: should I check that the line exists first here? p sure it doesn't matter
+    // TODO: should I check that the line exists first here?
     let line_ids_to_delete = outbound_return_lines
         .into_iter()
         .filter_map(|line| {
-            if line.number_of_packs == 0.0 {
+            if line.number_of_packs <= 0.0 {
                 Some(line.id)
             } else {
                 None

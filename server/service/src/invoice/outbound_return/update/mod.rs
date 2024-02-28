@@ -53,11 +53,15 @@ pub fn update_outbound_return(
             let (return_row, status_changed) = validate(connection, &ctx.store_id, &input.id)?;
             let GenerateResult {
                 updated_return: updated_return_row,
-                lines_to_add: _,
-                lines_to_update: _,
-                line_ids_to_delete: _,
+                lines_to_add,
+                lines_to_update,
+                line_ids_to_delete,
             } = generate(connection, input.clone(), return_row)?;
 
+            println!(
+                "generateResult, {:?} {:?} {:?}",
+                lines_to_add, lines_to_update, line_ids_to_delete
+            );
             InvoiceRowRepository::new(connection).upsert_one(&updated_return_row)?;
 
             if status_changed {
@@ -88,15 +92,17 @@ impl From<RepositoryError> for UpdateOutboundReturnError {
 #[cfg(test)]
 mod test {
     use crate::{
-        invoice::outbound_return::update::{
-            UpdateOutboundReturn, UpdateOutboundReturnError as ServiceError,
+        invoice::outbound_return::{
+            update::{UpdateOutboundReturn, UpdateOutboundReturnError as ServiceError},
+            OutboundReturnLineInput,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
         mock::{
-            mock_name_store_b, mock_outbound_shipment_a, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_name_store_b, mock_outbound_return_a, mock_outbound_return_a_invoice_line_a,
+            mock_outbound_shipment_a, mock_store_a, mock_store_b, mock_user_account_a, MockData,
+            MockDataInserts,
         },
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowStatus, InvoiceRowType,
@@ -191,5 +197,51 @@ mod test {
             ),
             Err(ServiceError::ReturnIsNotEditable)
         );
+    }
+
+    #[actix_rt::test]
+    async fn test_update_outbound_return_success() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_update_outbound_return_success",
+            MockDataInserts::all(),
+            MockData {
+                // invoices: vec![wrong_store(), shipped_return()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        service_provider
+            .invoice_service
+            .update_outbound_return(
+                &context,
+                UpdateOutboundReturn {
+                    id: mock_outbound_return_a().id,
+                    outbound_return_lines: vec![
+                        OutboundReturnLineInput {
+                            id: "line1".to_string(),
+                            number_of_packs: 1.0, // create
+                            ..Default::default()
+                        },
+                        OutboundReturnLineInput {
+                            id: mock_outbound_return_a_invoice_line_a().id,
+                            number_of_packs: 2.0, // update
+                            ..Default::default()
+                        },
+                        OutboundReturnLineInput {
+                            id: "line2".to_string(),
+                            number_of_packs: 0.0, // delete
+                            ..Default::default()
+                        },
+                    ],
+                    ..Default::default()
+                },
+            )
+            .unwrap();
     }
 }
