@@ -244,7 +244,8 @@ mod test {
                     other_party_id: mock_name_a().id, // Supplier
                     outbound_return_lines: vec![InsertOutboundReturnLine {
                         id: "new_line_id".to_string(),
-                        stock_line_id: "stock_line_id".to_string(),
+                        stock_line_id: "does_not_exist".to_string(),
+                        number_of_packs: 1.0,
                         ..Default::default()
                     }],
                 },
@@ -265,6 +266,7 @@ mod test {
                     outbound_return_lines: vec![InsertOutboundReturnLine {
                         id: "new_line_id".to_string(),
                         stock_line_id: mock_stock_line_b().id,
+                        number_of_packs: 1.0,
                         reason_id: Some("does_not_exist".to_string()),
                         ..Default::default()
                     }],
