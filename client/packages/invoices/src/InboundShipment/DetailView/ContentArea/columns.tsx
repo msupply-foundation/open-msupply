@@ -124,6 +124,48 @@ export const useInboundShipmentColumns = () => {
             ]),
         },
       ],
+
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row?.packSize ?? 1];
+          },
+          getUnitName: row => {
+            if ('lines' in row) return null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+      },
+      [
+        'numberOfPacks',
+        {
+          Cell: props => <NumberInputCell {...props} min={1} />,
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
+        },
+      ],
       {
         label: 'label.sell',
         key: 'sellPricePerPack',
@@ -173,47 +215,7 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
-      [
-        'numberOfPacks',
-        {
-          Cell: props => <NumberInputCell {...props} min={1} />,
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getSum(lines, 'numberOfPacks');
-            } else {
-              return rowData.numberOfPacks;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getSum(lines, 'numberOfPacks');
-            } else {
-              return rowData.numberOfPacks;
-            }
-          },
-        },
-      ],
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: PackVariantCell({
-          getItemId: row => {
-            if ('lines' in row) return '';
-            else return row?.item?.id;
-          },
-          getPackSizes: row => {
-            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-            else return [row?.packSize ?? 1];
-          },
-          getUnitName: row => {
-            if ('lines' in row) return null;
-            else return row?.item?.unitName ?? null;
-          },
-        }),
-      },
+
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
@@ -225,10 +227,20 @@ export const useInboundShipmentColumns = () => {
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
-  useColumns([
+  useColumns<InboundLineFragment>([
     'batch',
     'expiryDate',
     'location',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackVariantCell({
+        getItemId: row => row?.item?.id,
+        getPackSizes: row => [row?.packSize ?? 1],
+        getUnitName: row => row?.item?.unitName ?? null,
+      }),
+    },
     'numberOfPacks',
     'costPricePerPack',
   ]);
