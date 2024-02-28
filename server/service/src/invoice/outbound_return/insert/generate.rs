@@ -5,6 +5,8 @@ use repository::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
 
+use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
+use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
 
 use super::InsertOutboundReturn;
@@ -15,10 +17,17 @@ pub fn generate(
     user_id: &str,
     input: InsertOutboundReturn,
     other_party: Name,
-) -> Result<InvoiceRow, RepositoryError> {
+) -> Result<
+    (
+        InvoiceRow,
+        Vec<InsertStockOutLine>,
+        Vec<UpdateLineReturnReason>,
+    ),
+    RepositoryError,
+> {
     let current_datetime = Utc::now().naive_utc();
 
-    let result = InvoiceRow {
+    let outbound_return = InvoiceRow {
         id: input.id,
         user_id: Some(user_id.to_string()),
         name_link_id: input.other_party_id,
@@ -45,5 +54,29 @@ pub fn generate(
         clinician_link_id: None,
     };
 
-    Ok(result)
+    let stock_out_lines = input
+        .outbound_return_lines
+        .iter()
+        .map(|line| InsertStockOutLine {
+            id: line.id.clone(),
+            invoice_id: outbound_return.id.clone(),
+            stock_line_id: line.stock_line_id.clone(),
+            number_of_packs: line.number_of_packs.clone(),
+            note: line.note.clone(),
+            r#type: Some(StockOutType::OutboundReturn),
+            tax: None,
+            total_before_tax: None,
+        })
+        .collect();
+
+    let update_line_return_reasons = input
+        .outbound_return_lines
+        .iter()
+        .map(|line| UpdateLineReturnReason {
+            line_id: line.id.clone(),
+            reason_id: line.reason_id.clone(),
+        })
+        .collect();
+
+    Ok((outbound_return, stock_out_lines, update_line_return_reasons))
 }

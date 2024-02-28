@@ -26,8 +26,8 @@ pub struct OutboundReturnLineInput {
     pub id: String,
     pub stock_line_id: String,
     pub number_of_packs_to_return: f64,
-    pub reason_id: String,
-    pub comment: String,
+    pub reason_id: Option<String>,
+    pub note: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -60,14 +60,14 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
         .invoice_service
         .insert_outbound_return(&service_context, input.to_domain());
 
-    match result {
-        Ok(outbound_return) => Ok(InsertResponse::Response(InvoiceNode::from_domain(
-            outbound_return,
-        ))),
-        Err(err) => Ok(InsertResponse::Error(InsertError {
+    let result = match result {
+        Ok(outbound_return) => InsertResponse::Response(InvoiceNode::from_domain(outbound_return)),
+        Err(err) => InsertResponse::Error(InsertError {
             error: map_error(err)?,
-        })),
-    }
+        }),
+    };
+
+    Ok(result)
 }
 
 #[derive(Interface)]
@@ -95,12 +95,13 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
 
         // Standard Graphql Errors
-        ServiceError::InvoiceAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::NewlyCreatedInvoiceDoesNotExist => InternalError(formatted_error),
-        ServiceError::LineInsertError { .. } => InternalError(formatted_error),
-        ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::InvoiceAlreadyExists | ServiceError::OtherPartyDoesNotExist => {
+            BadUserInput(formatted_error)
+        }
+        ServiceError::NewlyCreatedInvoiceDoesNotExist
+        | ServiceError::LineInsertError { .. }
+        | ServiceError::LineReturnReasonUpdateError { .. }
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -132,7 +133,7 @@ impl OutboundReturnLineInput {
             stock_line_id,
             number_of_packs_to_return,
             reason_id,
-            comment,
+            note,
         }: OutboundReturnLineInput = self;
 
         ServiceLineInput {
@@ -140,7 +141,7 @@ impl OutboundReturnLineInput {
             stock_line_id,
             number_of_packs: number_of_packs_to_return,
             reason_id,
-            note: comment,
+            note,
         }
     }
 }

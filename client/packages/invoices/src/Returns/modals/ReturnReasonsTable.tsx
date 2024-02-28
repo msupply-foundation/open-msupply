@@ -11,7 +11,7 @@ interface ReturnWithReason {
   id: string;
   itemCode: string;
   itemName: string;
-  comment?: string | null;
+  note?: string | null;
   reasonId?: string | null;
 }
 
@@ -40,7 +40,13 @@ export const ReturnReasonsComponent = ({
       'itemName',
       // 'itemUnit', // not implemented for now
       ['returnReason', { Cell: ReturnReasonCell, setter: updateLine }],
-      ['comment', { Cell: TextInputCell, width: 200, setter: updateLine }],
+      {
+        key: 'note',
+        label: 'label.comment',
+        Cell: TextInputCell,
+        width: 200,
+        setter: updateLine,
+      },
     ],
     {},
     [updateLine, lines]

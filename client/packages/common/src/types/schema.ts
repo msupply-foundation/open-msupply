@@ -1471,11 +1471,11 @@ export type InboundReturnInput = {
 export type InboundReturnLine = {
   __typename: 'InboundReturnLine';
   batch?: Maybe<Scalars['String']['output']>;
-  comment?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
   numberOfPacksIssued: Scalars['Float']['output'];
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
@@ -1484,8 +1484,8 @@ export type InboundReturnLine = {
 };
 
 export type InboundReturnLineInput = {
-  comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
@@ -3455,10 +3455,10 @@ export type OutboundReturnLineConnector = {
 };
 
 export type OutboundReturnLineInput = {
-  comment: Scalars['String']['input'];
   id: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksToReturn: Scalars['Float']['input'];
-  reasonId: Scalars['String']['input'];
+  reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
 };
 
@@ -3466,11 +3466,11 @@ export type OutboundReturnLineNode = {
   __typename: 'OutboundReturnLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
-  comment?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
   numberOfPacksToReturn: Scalars['Int']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
