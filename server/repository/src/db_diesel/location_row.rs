@@ -2,7 +2,7 @@ use super::{
     item_link_row::item_link, location_row::location::dsl as location_dsl,
     name_link_row::name_link, store_row::store, RepositoryError, StorageConnection,
 };
-
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 table! {

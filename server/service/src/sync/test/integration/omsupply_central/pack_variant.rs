@@ -36,9 +36,13 @@ impl SyncRecordTester for PackVariantTester {
         let pack_variant_mutation = GraphqlRequest {
             query: r#"
             mutation insert($storeId: String!, $input: InsertPackVariantInput!) {
-                insertPackVariant(storeId: $storeId, input: $input) {
-                    ... on VariantNode {
-                        id
+                centralServer {
+                    packVariant {
+                        insertPackVariant(storeId: $storeId, input: $input) {
+                            ... on VariantNode {
+                            id
+                            }
+                    }
                     }
                 }
             }"#
@@ -74,9 +78,13 @@ impl SyncRecordTester for PackVariantTester {
         let pack_variant_mutation = GraphqlRequest {
             query: r#"
             mutation update($storeId: String!, $input: UpdatePackVariantInput!) {
-                updatePackVariant(storeId: $storeId, input: $input) {
-                    ... on VariantNode {
-                        id
+                centralServer {
+                    packVariant {
+                        updatePackVariant(storeId: $storeId, input: $input) {
+                            ... on VariantNode {
+                            id
+                            }
+                        }
                     }
                 }
             }"#

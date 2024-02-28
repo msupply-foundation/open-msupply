@@ -1,7 +1,7 @@
 use super::{name_link_row::name_link, StorageConnection};
 
 use crate::{
-    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError,
+    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError, Upsert,
 };
 
 use diesel::prelude::*;

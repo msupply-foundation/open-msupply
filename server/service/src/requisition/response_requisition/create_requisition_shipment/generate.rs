@@ -61,7 +61,7 @@ pub fn generate_invoice_lines(
 
     for requisition_line_supply_status in requisition_line_supply_statuses.into_iter() {
         let item_row = ItemRowRepository::new(connection)
-            .find_one_by_id(requisition_line_supply_status.item_id())?
+            .find_active_by_id(requisition_line_supply_status.item_id())?
             .ok_or(OutError::ProblemFindingItem)?;
 
         invoice_line_rows.push(InvoiceLineRow {

@@ -4,7 +4,7 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemRowRepository, RequisitionLineRow,
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, ItemRowRepository, RequisitionLineRow,
     RequisitionLineRowDelete, RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -140,7 +140,7 @@ impl SyncTranslation for RequisitionLineTranslation {
 
         // Required for backward compatibility (authorisation web app uses this to display item name)
         let item_name = ItemRowRepository::new(connection)
-            .find_one_by_id(&item_id)?
+            .find_active_by_id(&item_id)?
             .ok_or(anyhow::anyhow!(
                 "Item ({item_id}) not found in requisition line ({id})"
             ))?
@@ -180,7 +180,9 @@ impl SyncTranslation for RequisitionLineTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_item_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -238,15 +240,23 @@ mod tests {
             )
             .unwrap();
 
-        let translator = RequisitionLineTranslation {};
+        let translator = RequisitionLineTranslation;
         for changelog in changelogs {
-            // Translate and sort
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
     }
 }

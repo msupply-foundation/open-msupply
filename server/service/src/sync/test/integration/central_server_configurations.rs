@@ -4,9 +4,8 @@ use std::env;
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
     sync::{
-        api::{to_json, SyncApiError, SyncApiV5},
+        api::{to_json, SyncApiError, SyncApiSettings, SyncApiV5},
         settings::SyncSettings,
-        SyncApiSettings,
     },
 };
 

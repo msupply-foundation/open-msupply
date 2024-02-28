@@ -1,8 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
 use actix_web::{
+    dev::Server,
     web::{self, Data},
-    App, HttpServer,
+    App, HttpServer, Responder,
 };
 use chrono::{NaiveDateTime, Utc};
 use repository::{
@@ -19,6 +20,7 @@ use crate::{
             CentralSyncBatchV5, CentralSyncRecordV5, CommonSyncRecord, RemotePushResponseV5,
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteStatusCodeV5, SiteStatusV5,
         },
+        api_v6::{SyncBatchV6, SyncPullResponseV6},
         settings::{BatchSize, SyncSettings},
         sync_status::{status::InitialisationStatus, SyncLogError},
         synchroniser::{SyncError, Synchroniser},
@@ -337,10 +339,12 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     r.summary = current_status.summary.clone();
                     r.pull_remote = current_status.pull_remote.clone();
                     r.integration = current_status.integration.clone();
+                    // TODO update with proper v6 tests
+                    r.pull_v6 = current_status.pull_v6.clone();
                     r
                 });
 
-                assert_eq!(current_status, new_status);
+                pretty_assertions::assert_eq!(current_status, new_status);
 
                 assert_between!(
                     current_status.summary.finished.unwrap(),
@@ -530,14 +534,35 @@ async fn run_server_and_sync(
 
     let server_future = server.run();
     let server_handle = server_future.handle();
+
+    let v6_server_future = empty_v6_server(port).await;
+    let v6_server_handle = v6_server_future.handle();
+
     let result = tokio::select! {
         _ = server_future => unreachable!("Sync should finish first"),
+        _ = v6_server_future  => unreachable!("Sync should finish first"),
         result = synchroniser.sync() => result
     };
 
     server_handle.stop(true).await;
+    v6_server_handle.stop(true).await;
 
     result
+}
+
+async fn empty_v6_server(port: u16) -> Server {
+    // Empty v6 request (not tests for progress yet), TODO
+    async fn entry() -> impl Responder {
+        web::Json(SyncPullResponseV6::Data(SyncBatchV6 {
+            end_cursor: 0,
+            total_records: 0,
+            records: Vec::new(),
+        }))
+    }
+    HttpServer::new(move || App::new().route("/central/sync/pull", web::to(entry)))
+        .bind(("127.0.0.1", port + crate::sync::api_v6::PORT_OFFSET))
+        .unwrap()
+        .run()
 }
 
 #[derive(Debug)]

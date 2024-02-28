@@ -1,6 +1,6 @@
 use super::period_row::period::dsl as period_dsl;
 
-use crate::{repository_error::RepositoryError, StorageConnection, Upsert};
+use crate::{repository_error::RepositoryError, StorageConnection, Upsert, db_diesel::name_link_row::name_link};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;

@@ -2,8 +2,8 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
-    ProgramRowRepository, RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowDelete,
-    RequisitionRowRepository, StorageConnection, SyncBufferRow,
+    ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    RequisitionRowApprovalStatus, RequisitionRowDelete, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -278,34 +278,39 @@ impl SyncTranslation for RequisitionTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let RequisitionRow {
-            id,
-            user_id,
-            requisition_number,
-            name_id,
-            store_id,
-            r#type,
-            status,
-            created_datetime,
-            sent_datetime,
-            finalised_datetime,
-            colour,
-            comment,
-            their_reference,
-            max_months_of_stock,
-            min_months_of_stock,
-            linked_requisition_id,
-            expected_delivery_date,
-            approval_status,
-            program_id,
-            period_id,
-            order_type,
-        } = RequisitionRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Requisition row not found: {}",
-                changelog.record_id
-            )))?;
+        let Requisition {
+            requisition_row:
+                RequisitionRow {
+                    id,
+                    user_id,
+                    requisition_number,
+                    name_link_id: _,
+                    store_id,
+                    r#type,
+                    status,
+                    created_datetime,
+                    sent_datetime,
+                    finalised_datetime,
+                    colour,
+                    comment,
+                    their_reference,
+                    max_months_of_stock,
+                    min_months_of_stock,
+                    linked_requisition_id,
+                    expected_delivery_date,
+                    approval_status,
+                    program_id,
+                    period_id,
+                    order_type,
+                },
+            name_row,
+            ..
+        } = RequisitionRepository::new(connection)
+            .query_by_filter(
+                RequisitionFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
 
         let has_outbound_shipment = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
@@ -502,7 +507,9 @@ impl LegacyAuthorisationStatus {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -558,12 +565,21 @@ mod tests {
 
         let translator = RequisitionTranslation {};
         for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

@@ -102,8 +102,8 @@ impl SyncApiV5 {
                 password_sha256: sha256(&password),
                 site_uuid: hardware_id.to_string(),
                 sync_version: SYNC_VERSION.to_string(),
-                app_version: Default::default(),
-                app_name: Default::default(),
+                app_version: Version::from_package_json().to_string(),
+                app_name: APP_NAME.to_string(),
             },
         }
     }

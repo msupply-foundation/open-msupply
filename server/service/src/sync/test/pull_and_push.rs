@@ -1,5 +1,6 @@
 use crate::sync::{
     api::SyncAction,
+    sync_status::logger::SyncLogger,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,

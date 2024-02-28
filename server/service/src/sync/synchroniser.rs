@@ -5,8 +5,8 @@ use crate::{
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 
+use std::ops::Not;
 use std::sync::Arc;
-use std::{ops::Not, sync::Arc};
 use thiserror::Error;
 use util::{format_error, is_central_server};
 

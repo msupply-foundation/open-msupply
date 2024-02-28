@@ -1,12 +1,6 @@
-use super::{version::Version, Migration};
+use super::{helpers::run_without_change_log_updates, version::Version, Migration};
 
 use crate::StorageConnection;
-
-use std::convert::TryInto;
-
-use super::{version::Version, Migration};
-
-use crate::{ChangelogRepository, StorageConnection};
 
 mod barcode_add_manufacturer_link_id;
 mod central_omsupply;
@@ -45,25 +39,7 @@ impl Migration for V1_07_00 {
         Version::from_str("1.7.0")
     }
 
-    /// For testing, it returns the change_log cursors as if the changelog would have been updated.
-    fn run_without_change_log_updates<F: FnOnce() -> anyhow::Result<()>>(
-        connection: &StorageConnection,
-        job: F,
-    ) -> anyhow::Result<u64> {
-        // Remember the current changelog cursor in order to be able to delete all changelog entries
-        // triggered by the merge migrations.
-        let changelog_repo = ChangelogRepository::new(connection);
-        let cursor_before_job = changelog_repo.latest_cursor()?;
-
-        job()?;
-
-        let cursor_after_job = changelog_repo.latest_cursor()?;
-        // Revert changelog to the state before the merge migrations
-        changelog_repo.delete((cursor_before_job + 1).try_into()?)?;
-        Ok(cursor_after_job)
-    }
-
-    fn migrate_merge_feature(connection: &StorageConnection) -> anyhow::Result<u64> {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         // We don't want merge-migration updates to sync back.
         run_without_change_log_updates(connection, || {
             item_add_is_active::migrate(connection)?;
@@ -104,27 +80,9 @@ impl Migration for V1_07_00 {
 
         pack_variant::migrate(connection)?;
         central_omsupply::migrate(connection)?;
+        sync_log::migrate(connection)?;
         Ok(())
     }
-}
-
-#[cfg(test)]
-#[actix_rt::test]
-async fn migration_1_07_00() {
-    use crate::migrations::*;
-    use crate::test_db::*;
-
-    let version = V1_07_00.version();
-
-    // This test allows checking sql syntax
-    let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("migration_{version}"),
-        version: Some(version.clone()),
-        ..Default::default()
-    })
-    .await;
-
-    assert_eq!(get_database_version(&connection), version);
 }
 
 #[cfg(test)]
@@ -275,37 +233,6 @@ fn insert_merge_test_data(connection: &StorageConnection) {
         "#
     )
     .unwrap();
-}
-
-#[cfg(test)]
-#[actix_rt::test]
-async fn migration_1_07_00_no_merge_changelog_updates() {
-    use crate::migrations::*;
-    use crate::test_db::*;
-
-    let prev_version = v1_06_00::V1_06_00.version();
-
-    // This test allows checking sql syntax
-    let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!(
-            "migration_{}_no_merge_changelog_updates",
-            V1_07_00.version()
-        ),
-        version: Some(prev_version),
-        ..Default::default()
-    })
-    .await;
-    // enter some data so that changelog would have been updated during the migration
-    insert_merge_test_data(&connection);
-
-    let changelog_repo = ChangelogRepository::new(&connection);
-    let cursor_before_migration = changelog_repo.latest_cursor().unwrap();
-
-    let would_have_been_cursor = migrate_merge_feature(&connection).unwrap();
-    assert!(would_have_been_cursor > cursor_before_migration);
-
-    let cursor_after_migration = changelog_repo.latest_cursor().unwrap();
-    assert_eq!(cursor_before_migration, cursor_after_migration);
 }
 
 #[cfg(test)]

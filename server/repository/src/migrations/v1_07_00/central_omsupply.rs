@@ -11,7 +11,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "#
     )?;
 
-    if cfg!(features = "postgres") {
+    if cfg!(feature = "postgres") {
         sql!(
             connection,
             r#"

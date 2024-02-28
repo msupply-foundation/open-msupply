@@ -99,23 +99,39 @@ impl SyncTranslation for StockLineTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let StockLineRow {
-            id,
-            item_id,
-            store_id,
-            location_id,
-            batch,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            available_number_of_packs,
-            total_number_of_packs,
-            expiry_date,
-            on_hold,
-            note,
-            supplier_id,
-            barcode_id,
-        } = StockLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(stock_line) = StockLineRepository::new(connection)
+            .query_by_filter(
+                StockLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+                None,
+            )?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Stock_line row not found"));
+        };
+
+        let StockLine {
+            stock_line_row:
+                StockLineRow {
+                    id,
+                    item_link_id: _,
+                    store_id,
+                    location_id,
+                    batch,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    available_number_of_packs,
+                    total_number_of_packs,
+                    expiry_date,
+                    on_hold,
+                    note,
+                    supplier_link_id: _,
+                    barcode_id,
+                },
+            item_row,
+            supplier_name_row,
+            ..
+        } = stock_line;
 
         let legacy_row = LegacyStockLineRow {
             ID: id,
@@ -153,7 +169,10 @@ impl SyncTranslation for StockLineTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::{merge_all_item_links, merge_all_name_links};
+    use crate::sync::{
+        test::merge_helpers::{merge_all_item_links, merge_all_name_links},
+        translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -200,16 +219,25 @@ mod tests {
         let translator = StockLineTranslation {};
         for changelog in changelogs {
             // Translate and sort
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
 
             // Supplier ID can be null. We want to check if the non-null supplier_ids is "name_a".
-            if translated[0].record.data["name_ID"] != json!(null) {
-                assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            if translated[0].record.record_data["name_ID"] != json!(null) {
+                assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
             }
         }
     }

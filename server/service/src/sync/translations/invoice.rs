@@ -7,9 +7,9 @@ use crate::sync::{
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowDelete, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository, StorageConnection,
-    StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository,
+    InvoiceRow, InvoiceRowDelete, InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository,
+    StorageConnection, StoreRowRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -262,8 +262,12 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let invoice_row =
-            InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice) = InvoiceRepository::new(connection)
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Invoice not found"));
+        };
 
         // log::info!("Translating invoice row: {:#?}", invoice_row);
 
@@ -621,7 +625,9 @@ fn legacy_invoice_status(
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -677,12 +683,21 @@ mod tests {
 
         let translator = InvoiceTranslation {};
         for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

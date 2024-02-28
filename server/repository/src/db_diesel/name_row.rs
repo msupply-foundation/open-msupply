@@ -1,9 +1,9 @@
 use super::{name_row::name::dsl::*, StorageConnection};
-
 use crate::{
     item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
     NameLinkRowRepository,
 };
+use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
