@@ -6,12 +6,14 @@ use crate::{
     service_provider::ServiceContext,
 };
 
-use super::insert::InsertOutboundReturnLine;
-
 pub mod generate;
 pub mod validate;
 use generate::generate;
 use validate::validate;
+
+use self::generate::GenerateResult;
+
+use super::OutboundReturnLineInput;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundReturnStatus {
@@ -25,7 +27,7 @@ pub struct UpdateOutboundReturn {
     pub id: String,
     // pub other_party_id: String, // maybe?
     pub status: Option<UpdateOutboundReturnStatus>,
-    pub outbound_return_lines: Vec<InsertOutboundReturnLine>,
+    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -33,11 +35,11 @@ pub enum UpdateOutboundReturnError {
     ReturnDoesNotExist,
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
-    UpdatedReturnDoesNotExist,
     NotAnOutboundReturn,
     // InvoiceLineHasNoStockLine,
     // CannotReverseInvoiceStatus,
     // LineUpdateError(UpdateOutboundReturnLineError),
+    UpdatedReturnDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -49,7 +51,12 @@ pub fn update_outbound_return(
         .connection
         .transaction_sync(|connection| {
             let (return_row, status_changed) = validate(connection, &ctx.store_id, &input.id)?;
-            let (updated_return_row,) = generate(&input, return_row);
+            let GenerateResult {
+                updated_return: updated_return_row,
+                lines_to_add: _,
+                lines_to_update: _,
+                line_ids_to_delete: _,
+            } = generate(connection, input.clone(), return_row)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&updated_return_row)?;
 
