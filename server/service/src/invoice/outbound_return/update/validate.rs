@@ -25,21 +25,8 @@ pub fn validate(
         return Err(NotAnOutboundReturn);
     }
 
-    // TODO!
-    // // Status check
+    // TODO: Status check
     let status_changed = false;
-    // let status_changed = check_status_change(&invoice, patch.full_status());
-    // if status_changed {
-    //     check_invoice_status(&invoice, patch.full_status(), &patch.on_hold).map_err(
-    //         |e| match e {
-    //             InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
-    //                 CannotChangeStatusOfInvoiceOnHold
-    //             }
-    //             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
-    //         },
-    //     )?;
-    //     check_can_change_status_to_allocated(connection, &invoice, patch.full_status())?;
-    // }
 
     Ok((return_row, status_changed))
 }
