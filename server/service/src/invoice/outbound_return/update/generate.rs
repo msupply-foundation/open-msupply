@@ -21,17 +21,15 @@ pub fn generate(
     connection: &StorageConnection,
     UpdateOutboundReturn {
         id: _,
-        status,
+        status: _,
         outbound_return_lines,
     }: UpdateOutboundReturn,
     existing_row: InvoiceRow,
 ) -> Result<GenerateResult, RepositoryError> {
     let updated_return = InvoiceRow {
-        status: InvoiceRowStatus::New, // TODO!! should we make the outbound shipment stuff reusable??
+        status: InvoiceRowStatus::New, // TODO - reuse or copy from outbound_shipment?
         ..existing_row
     };
-
-    // TODO: depending on status, we'll need to update the total number of packs on the stock line!
 
     let line_ids: Vec<String> = outbound_return_lines
         .iter()

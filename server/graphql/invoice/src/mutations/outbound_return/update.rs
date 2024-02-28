@@ -19,7 +19,7 @@ use super::insert::OutboundReturnLineInput;
 #[graphql(name = "UpdateOutboundReturnInput")]
 pub struct UpdateInput {
     pub id: String,
-    // supplier_id: String, // do we want to able to change the supplier we're returning to?
+    // supplier_id: String,
     status: Option<UpdateOutboundReturnStatusInput>,
     outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
@@ -30,15 +30,6 @@ pub enum UpdateOutboundReturnStatusInput {
     Picked,
     Shipped,
 }
-
-// #[derive(InputObject)]
-// pub struct OutboundReturnLineInput {
-//     pub id: String,
-//     pub stock_line_id: String,
-//     pub number_of_packs_to_return: f64,
-//     pub reason_id: Option<String>,
-//     pub comment: Option<String>,
-// }
 
 #[derive(Union)]
 #[graphql(name = "UpdateOutboundReturnResponse")]
@@ -76,7 +67,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // TODO - are there any structured errors??
+        // TODO - are any of the below actually structured errors?
         // ServiceError::OtherPartyNotVisible => {
         //     return Ok(UpdateErrorInterface::OtherPartyNotVisible(
         //         OtherPartyNotVisible,
@@ -84,7 +75,6 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         // }
 
         // Standard Graphql Errors
-        // not sure whether any of these should be structured errors..
         ServiceError::NotAnOutboundReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
@@ -129,23 +119,3 @@ impl UpdateOutboundReturnStatusInput {
         }
     }
 }
-// impl OutboundReturnLineInput {
-//     // TODO: only one of these?
-//     pub fn to_domain_update(self) -> UpdateOutboundReturnLine {
-//         let OutboundReturnLineInput {
-//             id,
-//             stock_line_id,
-//             number_of_packs_to_return,
-//             reason_id,
-//             comment,
-//         }: OutboundReturnLineInput = self;
-
-//         UpdateOutboundReturnLine {
-//             id,
-//             stock_line_id,
-//             number_of_packs: number_of_packs_to_return,
-//             reason_id,
-//             note: comment,
-//         }
-//     }
-// }

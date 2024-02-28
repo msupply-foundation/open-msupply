@@ -32,7 +32,7 @@ pub enum UpdateOutboundReturnStatus {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct UpdateOutboundReturn {
     pub id: String,
-    // pub other_party_id: String, // maybe?
+    // pub other_party_id: String,
     pub status: Option<UpdateOutboundReturnStatus>,
     pub outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
