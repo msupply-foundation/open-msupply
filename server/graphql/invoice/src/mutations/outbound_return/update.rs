@@ -89,11 +89,12 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
-        // ServiceError::LineUpdateError { .. } => InternalError(formatted_error),
-        // ServiceError::LineReturnReasonUpdateError { .. } => InternalError(formatted_error),
-        ServiceError::UpdatedReturnDoesNotExist | ServiceError::DatabaseError(_) => {
-            InternalError(formatted_error)
-        }
+        ServiceError::LineInsertError { .. }
+        | ServiceError::LineUpdateError { .. }
+        | ServiceError::LineDeleteError { .. }
+        | ServiceError::LineReturnReasonUpdateError { .. }
+        | ServiceError::UpdatedReturnDoesNotExist
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
