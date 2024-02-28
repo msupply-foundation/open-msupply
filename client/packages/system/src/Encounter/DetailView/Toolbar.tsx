@@ -230,9 +230,19 @@ export const Toolbar: FC<ToolbarProps> = ({
                     onChange={date => {
                       const startDatetime = DateUtils.formatRFC3339(date);
                       setStartDatetime(startDatetime);
+                      const endDt = DateUtils.getDateOrNull(endDatetime);
                       onChange({
                         startDatetime,
-                        endDatetime: endDatetime ?? undefined,
+                        endDatetime: endDatetime
+                          ? DateUtils.formatRFC3339(
+                              new Date(
+                                new Date(startDatetime ?? '').setHours(
+                                  endDt?.getHours() ?? 0,
+                                  endDt?.getMinutes() ?? 0
+                                )
+                              )
+                            )
+                          : undefined,
                       });
                     }}
                   />
