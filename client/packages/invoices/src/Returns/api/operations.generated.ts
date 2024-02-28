@@ -38,7 +38,7 @@ export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, comment: string, reasonId?: string | null }> } };
+export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, comment?: string | null, reasonId?: string | null }> } };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
@@ -54,7 +54,7 @@ export type InvoiceByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
+export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   input: Types.OutboundReturnInput;
@@ -203,6 +203,13 @@ export const InvoiceByNumberDocument = gql`
       lines {
         nodes {
           id
+          itemCode
+          itemName
+          batch
+          expiryDate
+          numberOfPacks
+          packSize
+          sellPricePerPack
         }
       }
       otherPartyName
