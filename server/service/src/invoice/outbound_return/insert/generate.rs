@@ -5,6 +5,7 @@ use repository::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
 
+use crate::invoice::outbound_return::OutboundReturnLineInput;
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
@@ -54,8 +55,13 @@ pub fn generate(
         clinician_link_id: None,
     };
 
-    let stock_out_lines = input
+    let lines_with_packs: Vec<&OutboundReturnLineInput> = input
         .outbound_return_lines
+        .iter()
+        .filter(|line| line.number_of_packs > 0.0)
+        .collect();
+
+    let stock_out_lines = lines_with_packs
         .iter()
         .map(|line| InsertStockOutLine {
             id: line.id.clone(),
@@ -69,8 +75,7 @@ pub fn generate(
         })
         .collect();
 
-    let update_line_return_reasons = input
-        .outbound_return_lines
+    let update_line_return_reasons = lines_with_packs
         .iter()
         .map(|line| UpdateLineReturnReason {
             line_id: line.id.clone(),
