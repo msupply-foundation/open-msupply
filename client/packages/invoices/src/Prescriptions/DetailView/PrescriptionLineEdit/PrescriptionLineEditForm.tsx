@@ -6,7 +6,6 @@ import {
   ModalRow,
   Select,
   useTranslation,
-  InputLabel,
   NumericTextInput,
   Divider,
   Box,

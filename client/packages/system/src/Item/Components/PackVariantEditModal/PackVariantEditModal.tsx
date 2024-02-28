@@ -8,7 +8,7 @@ import {
   useTranslation,
   FnUtils,
   InlineSpinner,
-  NonNegativeIntegerInput,
+  NumericTextInput,
   useNotification,
   noOtherVariants,
   useConfirmationModal,
@@ -162,8 +162,9 @@ export const PackVariantEditModal: FC<PackVariantEditModalProps> = ({
           gap={2}
           justifyContent="center"
         >
-          <NonNegativeIntegerInput
+          <NumericTextInput
             autoFocus
+            allowNegative={false}
             value={draft.packSize}
             onChange={packSize => onUpdate({ packSize: packSize })}
             label={t('label.pack-size')}

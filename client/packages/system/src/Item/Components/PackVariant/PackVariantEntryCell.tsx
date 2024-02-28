@@ -3,7 +3,7 @@ import {
   RecordWithId,
   CellProps,
   Select,
-  PositiveNumberInput,
+  NumericTextInput,
   useDebounceCallback,
   Box,
   useTranslation,
@@ -50,7 +50,7 @@ export const PackVariantEntryCell =
     // This is shared between input with drop down and without drop down
     const numberInput = () => {
       return (
-        <PositiveNumberInput
+        <NumericTextInput
           focusOnRender={shouldFocusInput}
           value={packSize}
           onChange={newValue => {
