@@ -39,6 +39,7 @@
   "discovery.use-server-mode": "Note: You are currently using the client mode. To change to the local server mode click the button below.",
   "distribution": "Distribution",
   "docs": "Docs",
+  "equipment": "Equipment",
   "error.sync-api-incompatible": "Sync api version is not compatible",
   "error.authentication-error": "The server has returned an error",
   "error.connection-error": "Unable to connect to server",

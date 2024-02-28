@@ -3,6 +3,7 @@
   "error.master-list-not-found": "Master list not found",
   "error.no-items": "No items to display.",
   "error.no-master-lists": "No Master Lists to display.",
+  "filename.asset-categories": "Asset Categories",
   "label.atc-category": "ATC category",
   "label.code": "Code",
   "label.ddd": "Defined Daily Dose",

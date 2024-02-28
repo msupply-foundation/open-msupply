@@ -16,15 +16,17 @@ const fullSensorPath = RouteBuilder.create(AppRoute.Coldchain)
   .addWildCard()
   .build();
 
+const fullEquipmentPath = RouteBuilder.create(AppRoute.Coldchain)
+  .addPart(AppRoute.Equipment)
+  .addWildCard()
+  .build();
+
 export const ColdChainRouter: FC = () => {
   const gotoSensor = useMatch(fullSensorPath);
   const gotoMonitoring = useMatch(fullMonitoringPath);
+  const gotoEquipment = useMatch(fullEquipmentPath);
 
-  if (gotoMonitoring) {
-    return <ColdChainService />;
-  }
-
-  if (gotoSensor) {
+  if (gotoMonitoring || gotoSensor || gotoEquipment) {
     return <ColdChainService />;
   }
 
