@@ -46,7 +46,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_breach", "start_datetime"),
         ("temperature_breach", "end_datetime"),
         ("temperature_log", "datetime"),
-        ("activity_log", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -77,6 +76,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "pull_v6_started_datetime"),
         ("sync_log", "pull_v6_finished_datetime"),
         ("user_account", "last_successful_sync"),
+        ("activity_log", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
