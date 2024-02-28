@@ -5,34 +5,22 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
-use service::invoice::outbound_return::update::{
-    UpdateOutboundReturn as ServiceInput, UpdateOutboundReturnError as ServiceError,
-};
-use service::{
-    auth::{Resource, ResourceAccessRequest},
-    invoice::outbound_return::update::UpdateOutboundReturnStatus,
+use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice::outbound_return::update_lines::{
+    UpdateOutboundReturnLines as ServiceInput, UpdateOutboundReturnLinesError as ServiceError,
 };
 
 use super::insert::OutboundReturnLineInput;
 
 #[derive(InputObject)]
-#[graphql(name = "UpdateOutboundReturnInput")]
+#[graphql(name = "UpdateOutboundReturnLinesInput")]
 pub struct UpdateInput {
-    pub id: String,
-    // supplier_id: String,
-    status: Option<UpdateOutboundReturnStatusInput>,
+    pub outbound_return_id: String,
     outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum UpdateOutboundReturnStatusInput {
-    Allocated,
-    Picked,
-    Shipped,
-}
-
 #[derive(Union)]
-#[graphql(name = "UpdateOutboundReturnResponse")]
+#[graphql(name = "UpdateOutboundReturnLinesResponse")]
 pub enum UpdateResponse {
     Response(InvoiceNode),
 }
@@ -52,7 +40,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     let result = service_provider
         .invoice_service
-        .update_outbound_return(&service_context, input.to_domain());
+        .update_outbound_return_lines(&service_context, input.to_domain());
 
     match result {
         Ok(outbound_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
@@ -93,29 +81,16 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
-            id,
-            status,
+            outbound_return_id,
             outbound_return_lines,
         }: UpdateInput = self;
 
         ServiceInput {
-            id,
-            status: status.map(|status| status.to_domain()),
+            outbound_return_id,
             outbound_return_lines: outbound_return_lines
                 .into_iter()
                 .map(|line| line.to_domain())
                 .collect(),
-        }
-    }
-}
-
-impl UpdateOutboundReturnStatusInput {
-    pub fn to_domain(&self) -> UpdateOutboundReturnStatus {
-        use UpdateOutboundReturnStatus::*;
-        match self {
-            UpdateOutboundReturnStatusInput::Allocated => Allocated,
-            UpdateOutboundReturnStatusInput::Picked => Picked,
-            UpdateOutboundReturnStatusInput::Shipped => Shipped,
         }
     }
 }

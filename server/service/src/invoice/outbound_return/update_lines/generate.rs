@@ -1,16 +1,13 @@
-use repository::{
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, RepositoryError, StorageConnection,
-};
+use repository::{InvoiceLineRowRepository, RepositoryError, StorageConnection};
 
 use crate::invoice_line::{
     stock_out_line::{DeleteStockOutLine, InsertStockOutLine, StockOutType, UpdateStockOutLine},
     update_return_reason_id::UpdateLineReturnReason,
 };
 
-use super::UpdateOutboundReturn;
+use super::UpdateOutboundReturnLines;
 
 pub struct GenerateResult {
-    pub updated_return: InvoiceRow,
     pub lines_to_add: Vec<InsertStockOutLine>,
     pub lines_to_update: Vec<UpdateStockOutLine>,
     pub lines_to_delete: Vec<DeleteStockOutLine>,
@@ -19,18 +16,11 @@ pub struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    UpdateOutboundReturn {
-        id: _,
-        status: _,
+    UpdateOutboundReturnLines {
+        outbound_return_id,
         outbound_return_lines,
-    }: UpdateOutboundReturn,
-    existing_row: InvoiceRow,
+    }: UpdateOutboundReturnLines,
 ) -> Result<GenerateResult, RepositoryError> {
-    let updated_return = InvoiceRow {
-        status: InvoiceRowStatus::New, // TODO - reuse or copy from outbound_shipment?
-        ..existing_row
-    };
-
     let line_ids: Vec<String> = outbound_return_lines
         .iter()
         .map(|line| line.id.clone())
@@ -46,7 +36,7 @@ pub fn generate(
         .filter(|line| line.number_of_packs > 0.0 && !check_already_exists(&line.id))
         .map(|line| InsertStockOutLine {
             id: line.id,
-            invoice_id: updated_return.id.clone(),
+            invoice_id: outbound_return_id.clone(),
             number_of_packs: line.number_of_packs,
             stock_line_id: line.stock_line_id,
             note: line.note,
@@ -91,7 +81,6 @@ pub fn generate(
         .collect();
 
     Ok(GenerateResult {
-        updated_return,
         lines_to_add,
         lines_to_update,
         lines_to_delete,
