@@ -59,6 +59,25 @@ const Row = ({
 }) => (
   <InputWithLabelRow labelWidth="90px" label={label} Input={Input} sx={sx} />
 );
+
+/**
+ * Updates the date component of the endDate to match the date of the startDatetime.
+ * If the startDatetime is not provided the current date is used.
+ */
+const updateEndDatetimeFromStartDate = (
+  endDate: Date,
+  startDatetime: string | undefined
+) => {
+  return DateUtils.formatRFC3339(
+    new Date(
+      new Date(startDatetime ?? '').setHours(
+        endDate.getHours(),
+        endDate.getMinutes()
+      )
+    )
+  );
+};
+
 interface ToolbarProps {
   onChange: (patch: Partial<EncounterFragment>) => void;
   onDelete: () => void;
@@ -233,15 +252,8 @@ export const Toolbar: FC<ToolbarProps> = ({
                       const endDt = DateUtils.getDateOrNull(endDatetime);
                       onChange({
                         startDatetime,
-                        endDatetime: endDatetime
-                          ? DateUtils.formatRFC3339(
-                              new Date(
-                                new Date(startDatetime ?? '').setHours(
-                                  endDt?.getHours() ?? 0,
-                                  endDt?.getMinutes() ?? 0
-                                )
-                              )
-                            )
+                        endDatetime: endDt
+                          ? updateEndDatetimeFromStartDate(endDt, startDatetime)
                           : undefined,
                       });
                     }}
@@ -277,14 +289,7 @@ export const Toolbar: FC<ToolbarProps> = ({
                     value={DateUtils.getDateOrNull(endDatetime ?? null)}
                     onChange={date => {
                       const endDatetime = date
-                        ? DateUtils.formatRFC3339(
-                            new Date(
-                              new Date(startDatetime ?? '').setHours(
-                                date.getHours(),
-                                date.getMinutes()
-                              )
-                            )
-                          )
+                        ? updateEndDatetimeFromStartDate(date, startDatetime)
                         : undefined;
                       if (endDatetime) {
                         setEndDatetime(endDatetime);
