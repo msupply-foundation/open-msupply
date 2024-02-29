@@ -301,22 +301,11 @@ impl MockDataInserts {
             clinician_store_joins: true,
             contexts: true,
             plugin_data: true,
-            assets: true,
         }
     }
 
     pub fn none() -> Self {
         MockDataInserts::default()
-    }
-
-    pub fn assets(mut self) -> Self {
-        self.assets = true;
-        self
-    }
-
-    pub fn asset_logs(mut self) -> Self {
-        self.asset_logs = true;
-        self
     }
 
     pub fn user_accounts(mut self) -> Self {
@@ -531,6 +520,15 @@ impl MockDataInserts {
         self.assets = true;
         self
     }
+
+    pub fn asset_logs(mut self) -> Self {
+        self.assets = true;
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
+        self.asset_logs = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -605,7 +603,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
             clinicians: mock_clinicians(),
-            assets: mock_assets(),
             ..Default::default()
         },
     );
@@ -1071,7 +1068,6 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
-            mut assets,
             plugin_data: _,
         } = other;
 

@@ -162,15 +162,14 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_log_query_repository() {
         let (_, storage_connection, _, _) = test_db::setup_all(
-            "test_asset_log_query_repository",
+            "test_asset_log_sort_query_repository",
             // TODO add logs
             MockDataInserts::all(),
         )
         .await;
         let asset_log_repository = AssetLogRepository::new(&storage_connection);
-        let asset_log_row_repository = AssetLogRowRepository::new(&storage_connection);
 
-        let mut logs = asset_log_repository
+        let logs = asset_log_repository
             .query(Pagination::new(), None, None)
             .unwrap();
 
