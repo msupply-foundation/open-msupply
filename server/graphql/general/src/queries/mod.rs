@@ -48,7 +48,6 @@ pub use self::plugin::*;
 pub mod temperature_chart;
 pub use self::temperature_chart::*;
 pub mod currency;
-pub use self::currency::*;
 
 #[cfg(test)]
 mod tests;
