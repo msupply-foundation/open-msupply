@@ -26,7 +26,7 @@ use service::{
 pub enum AssetCatalogueItemSortFieldInput {
     Catalogue,
     Code,
-    Make,
+    Manufacturer,
     Model,
 }
 
@@ -156,7 +156,7 @@ impl AssetCatalogueItemSortInput {
         let key = match self.key {
             from::Catalogue => to::Catalogue,
             from::Code => to::Code,
-            from::Make => to::Make,
+            from::Manufacturer => to::Manufacturer,
             from::Model => to::Model,
         };
 
