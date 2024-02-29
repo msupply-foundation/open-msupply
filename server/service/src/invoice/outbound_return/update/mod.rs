@@ -133,8 +133,8 @@ mod test {
             mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
-        InvoiceRow, InvoiceRowStatus, InvoiceRowType, ReturnReasonRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        ReturnReasonRow, StockLineRowRepository,
     };
 
     #[actix_rt::test]
@@ -287,16 +287,12 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        let line_repo = InvoiceLineRepository::new(&connection);
-
-        let original_stock_line = line_repo
-            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(
-                &mock_outbound_return_b_invoice_line_a().id,
-            )))
-            .unwrap()
-            .unwrap()
-            .stock_line_option
+        let stock_line_row_repo = StockLineRowRepository::new(&connection);
+        let stock_line_id = mock_outbound_return_b_invoice_line_a()
+            .stock_line_id
             .unwrap();
+
+        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
 
         let result = service_provider
             .invoice_service
@@ -314,14 +310,7 @@ mod test {
         assert!(result.invoice_row.picked_datetime.is_some());
         assert!(result.invoice_row.shipped_datetime.is_some());
 
-        let updated_stock_line = line_repo
-            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(
-                &mock_outbound_return_b_invoice_line_a().id,
-            )))
-            .unwrap()
-            .unwrap()
-            .stock_line_option
-            .unwrap();
+        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
 
         assert_eq!(
             updated_stock_line.total_number_of_packs,
