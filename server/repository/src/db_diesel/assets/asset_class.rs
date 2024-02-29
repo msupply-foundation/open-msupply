@@ -11,8 +11,6 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type AssetClass = AssetClassRow;
-
 pub enum AssetClassSortField {
     Name,
 }
@@ -62,14 +60,14 @@ impl<'a> AssetClassRepository<'a> {
     pub fn query_one(
         &self,
         filter: AssetClassFilter,
-    ) -> Result<Option<AssetClass>, RepositoryError> {
+    ) -> Result<Option<AssetClassRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: AssetClassFilter,
-    ) -> Result<Vec<AssetClass>, RepositoryError> {
+    ) -> Result<Vec<AssetClassRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -78,7 +76,7 @@ impl<'a> AssetClassRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetClassFilter>,
         sort: Option<AssetClassSort>,
-    ) -> Result<Vec<AssetClass>, RepositoryError> {
+    ) -> Result<Vec<AssetClassRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -101,13 +99,13 @@ impl<'a> AssetClassRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetClass>(&self.connection.connection)?;
+        let result = final_query.load::<AssetClassRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(asset_class_row: AssetClassRow) -> AssetClass {
+fn to_domain(asset_class_row: AssetClassRow) -> AssetClassRow {
     asset_class_row
 }
 

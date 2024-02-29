@@ -99,6 +99,7 @@ mod user_row;
 mod user_store_join_row;
 
 pub use activity_log_row::*;
+pub use assets::*;
 pub use barcode_row::*;
 pub use changelog::*;
 pub use clinician::*;

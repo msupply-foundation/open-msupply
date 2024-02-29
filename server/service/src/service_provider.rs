@@ -3,6 +3,7 @@ use crate::{
     asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
     barcode::{BarcodeService, BarcodeServiceTrait},
+    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -123,6 +124,8 @@ pub struct ServiceProvider {
     pub log_service: Box<dyn LogServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
+    // Asset catalogue
+    pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
     // Assets
     pub asset_service: Box<dyn AssetServiceTrait>,
 }
@@ -200,6 +203,7 @@ impl ServiceProvider {
             log_service: Box::new(LogService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
+            catalogue_service: Box::new(CatalogueService {}),
             asset_service: Box::new(crate::asset::AssetService {}),
         }
     }
