@@ -1,12 +1,15 @@
 use async_graphql::*;
-use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
+use graphql_core::generic_filters::{
+    DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
+};
 use graphql_core::simple_generic_errors::NodeError;
 use repository::assets::asset::AssetSortField;
+use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 use repository::{
     assets::asset::{Asset, AssetFilter, AssetSort},
     EqualFilter,
 };
-use repository::{DateFilter, StringFilter};
+use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -18,6 +21,7 @@ pub enum AssetSortFieldInput {
     ReplacementDate,
     ModifiedDatetime,
 }
+
 #[derive(InputObject)]
 pub struct AssetSortInput {
     /// Sort query result by `key`
@@ -168,6 +172,130 @@ impl AssetSortInput {
         };
 
         AssetSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+// Asset log types
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum AssetLogSortFieldInput {
+    Status,
+    LogDatetime,
+}
+
+#[derive(InputObject)]
+pub struct AssetLogSortInput {
+    /// Sort query result by `key`
+    key: AssetLogSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+#[derive(InputObject, Clone)]
+
+pub struct AssetLogFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub asset_id: Option<EqualFilterStringInput>,
+    pub status: Option<StringFilterInput>,
+    pub log_datetime: Option<DatetimeFilterInput>,
+}
+
+impl From<AssetLogFilterInput> for AssetLogFilter {
+    fn from(f: AssetLogFilterInput) -> Self {
+        AssetLogFilter {
+            id: f.id.map(EqualFilter::from),
+            asset_id: f.asset_id.map(EqualFilter::from),
+            status: f.status.map(StringFilter::from),
+            log_datetime: f.log_datetime.map(DatetimeFilter::from),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct AssetLogNode {
+    pub asset_log: AssetLog,
+}
+
+#[derive(SimpleObject)]
+pub struct AssetLogConnector {
+    total_count: u32,
+    nodes: Vec<AssetLogNode>,
+}
+
+#[Object]
+impl AssetLogNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn asset_id(&self) -> &str {
+        &self.row().asset_id
+    }
+
+    pub async fn status(&self) -> &Option<String> {
+        &self.row().status
+    }
+
+    pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
+        &self.row().log_datetime
+    }
+}
+
+#[derive(Union)]
+pub enum AssetsLogResponse {
+    Response(AssetLogConnector),
+}
+
+#[derive(Union)]
+pub enum AssetLogResponse {
+    Error(NodeError),
+    Response(AssetLogNode),
+}
+
+impl AssetLogNode {
+    pub fn from_domain(asset_log: AssetLog) -> AssetLogNode {
+        AssetLogNode { asset_log }
+    }
+
+    pub fn row(&self) -> &AssetLog {
+        &self.asset_log
+    }
+}
+
+impl AssetLogConnector {
+    pub fn from_domain(assets: ListResult<AssetLog>) -> AssetLogConnector {
+        AssetLogConnector {
+            total_count: assets.count,
+            nodes: assets
+                .rows
+                .into_iter()
+                .map(AssetLogNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(assets: Vec<AssetLog>) -> AssetLogConnector {
+        AssetLogConnector {
+            total_count: usize_to_u32(assets.len()),
+            nodes: assets.into_iter().map(AssetLogNode::from_domain).collect(),
+        }
+    }
+}
+
+impl AssetLogSortInput {
+    pub fn to_domain(self) -> AssetLogSort {
+        use AssetLogSortField as to;
+        use AssetLogSortFieldInput as from;
+        let key = match self.key {
+            from::Status => to::Status,
+            from::LogDatetime => to::LogDatetime,
+        };
+
+        AssetLogSort {
             key,
             desc: self.desc,
         }
