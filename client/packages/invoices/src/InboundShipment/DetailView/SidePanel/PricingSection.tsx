@@ -152,7 +152,7 @@ export const PricingSectionComponent = () => {
                 });
               }}
               isDisabled={
-                !!otherParty.store && store?.preferences.issueInForeignCurrency
+                !!otherParty.store || !store?.preferences.issueInForeignCurrency
               }
               currency={currency as CurrencyRowFragment}
               currencyRate={currencyRate ?? 1}
