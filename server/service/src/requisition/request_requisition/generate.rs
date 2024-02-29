@@ -66,7 +66,7 @@ pub fn generate_requisition_lines(
             RequisitionLineRow {
                 id: uuid(),
                 requisition_id: requisition_row.id.clone(),
-                item_id: item_stats.item_id,
+                item_link_id: item_stats.item_id,
                 suggested_quantity,
                 available_stock_on_hand,
                 average_monthly_consumption,

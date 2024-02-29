@@ -1,8 +1,7 @@
-use super::{barcode_row::barcode::dsl as barcode_dsl, StorageConnection};
-
-use crate::{
-    db_diesel::{invoice_line_row::invoice_line, item_row::item},
-    repository_error::RepositoryError,
+use super::{
+    barcode_row::barcode::dsl as barcode_dsl, invoice_line_row::invoice_line,
+    item_link_row::item_link, item_row::item, name_link_row::name_link, RepositoryError,
+    StorageConnection,
 };
 
 use diesel::prelude::*;
@@ -12,7 +11,7 @@ table! {
         id -> Text,
         gtin -> Text,
         item_id -> Text,
-        manufacturer_id -> Nullable<Text>,
+        manufacturer_link_id -> Nullable<Text>,
         pack_size -> Nullable<Integer>,
         parent_id -> Nullable<Text>,
     }
@@ -28,31 +27,22 @@ table! {
 
 joinable!(barcode -> item (item_id));
 joinable!(barcode -> invoice_line (id));
+joinable!(barcode -> name_link (manufacturer_link_id));
+allow_tables_to_appear_in_same_query!(barcode, item_link);
+allow_tables_to_appear_in_same_query!(barcode, name_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "barcode"]
 pub struct BarcodeRow {
     pub id: String,
     pub gtin: String,
     pub item_id: String,
-    pub manufacturer_id: Option<String>,
+    pub manufacturer_link_id: Option<String>,
     pub pack_size: Option<i32>,
     pub parent_id: Option<String>,
 }
 
-impl Default for BarcodeRow {
-    fn default() -> Self {
-        BarcodeRow {
-            id: Default::default(),
-            gtin: Default::default(),
-            item_id: Default::default(),
-            manufacturer_id: None,
-            pack_size: None,
-            parent_id: None,
-        }
-    }
-}
 pub struct BarcodeRowRepository<'a> {
     connection: &'a StorageConnection,
 }

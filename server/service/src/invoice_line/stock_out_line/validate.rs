@@ -1,19 +1,19 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, ItemRow, LocationRowRepository, RepositoryError,
-    StockLineRow, StockLineRowRepository, StorageConnection,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, ItemRow, RepositoryError, StockLine,
+    StockLineFilter, StockLineRepository, StorageConnection,
 };
 
 pub fn check_batch_exists(
+    store_id: &str,
     batch_id: &str,
     connection: &StorageConnection,
-) -> Result<Option<StockLineRow>, RepositoryError> {
-    let batch_result = StockLineRowRepository::new(connection).find_one_by_id(batch_id);
-
-    match batch_result {
-        Ok(batch) => Ok(Some(batch)),
-        Err(RepositoryError::NotFound) => Ok(None),
-        Err(error) => Err(error),
-    }
+) -> Result<Option<StockLine>, RepositoryError> {
+    Ok(StockLineRepository::new(connection)
+        .query_by_filter(
+            StockLineFilter::new().id(EqualFilter::equal_to(batch_id)),
+            Some(store_id.to_string()),
+        )?
+        .pop())
 }
 
 pub fn check_unique_stock_line(
@@ -43,15 +43,15 @@ pub fn check_unique_stock_line(
     }
 }
 
-pub fn check_item_matches_batch(batch: &StockLineRow, item: &ItemRow) -> bool {
-    if batch.item_id != item.id {
+pub fn check_item_matches_batch(batch: &StockLine, item: &ItemRow) -> bool {
+    if batch.item_row.id != item.id {
         return false;
     }
     return true;
 }
 
-pub fn check_batch_on_hold(batch: &StockLineRow) -> bool {
-    if batch.on_hold {
+pub fn check_batch_on_hold(batch: &StockLine) -> bool {
+    if batch.stock_line_row.on_hold {
         return false;
     }
     return true;
@@ -59,26 +59,17 @@ pub fn check_batch_on_hold(batch: &StockLineRow) -> bool {
 
 pub enum LocationIsOnHoldError {
     LocationIsOnHold,
-    LocationNotFound,
 }
 
-pub fn check_location_on_hold(
-    batch: &StockLineRow,
-    connection: &StorageConnection,
-) -> Result<(), LocationIsOnHoldError> {
+pub fn check_location_on_hold(batch: &StockLine) -> Result<(), LocationIsOnHoldError> {
     use LocationIsOnHoldError::*;
 
-    match &batch.location_id {
-        Some(location_id) => {
-            let location = LocationRowRepository::new(connection)
-                .find_one_by_id(&location_id)
-                .map_err(|_| LocationNotFound)?;
-
-            match location {
-                Some(location) if location.on_hold => Err(LocationIsOnHold),
-                Some(_) => Ok(()),
-                None => Err(LocationNotFound),
+    match &batch.location_row {
+        Some(location) => {
+            if location.on_hold {
+                return Err(LocationIsOnHold);
             }
+            Ok(())
         }
         None => Ok(()),
     }

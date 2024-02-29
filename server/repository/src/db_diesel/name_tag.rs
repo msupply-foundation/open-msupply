@@ -2,6 +2,7 @@ use diesel::prelude::*;
 
 use crate::{
     db_diesel::{
+        name_link_row::name_link::dsl as name_link_dsl,
         name_row::name::dsl as name_dsl,
         name_tag_join::name_tag_join::dsl as name_tag_join_dsl,
         name_tag_row::{name_tag, name_tag::dsl as name_tag_dsl},
@@ -49,7 +50,9 @@ impl<'a> NameTagRepository<'a> {
 
         if store_id.is_some() {
             let mut name_tag_query = name_tag_join_dsl::name_tag_join
-                .left_join(name_dsl::name.left_join(store_dsl::store))
+                .left_join(
+                    name_link_dsl::name_link.left_join(name_dsl::name.left_join(store_dsl::store)),
+                )
                 .into_boxed();
 
             apply_equal_filter!(name_tag_query, store_id, store_dsl::id);

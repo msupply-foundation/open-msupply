@@ -2,6 +2,7 @@ use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
 mod barcode;
+mod clinician;
 pub mod common;
 mod context;
 mod document;
@@ -50,6 +51,7 @@ mod unit;
 mod user_account;
 
 pub use barcode::*;
+pub use clinician::*;
 use common::*;
 pub use context::*;
 pub use document::*;
@@ -100,20 +102,21 @@ use crate::{
     ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
     DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
     InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
+    LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+    MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository,
+    NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow,
+    SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository,
+    StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow,
+    SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow,
+    TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow,
+    UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -130,6 +133,7 @@ pub struct MockData {
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
+    pub name_links: Vec<NameLinkRow>,
     pub period_schedules: Vec<PeriodScheduleRow>,
     pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
@@ -385,6 +389,11 @@ impl MockDataInserts {
         self
     }
 
+    pub fn requisitions(mut self) -> Self {
+        self.requisitions = true;
+        self
+    }
+
     pub fn full_requisitions(mut self) -> Self {
         self.full_requisitions = true;
         self
@@ -530,6 +539,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
+            name_links: mock_name_links(),
             name_tags: mock_name_tags(),
             period_schedules: mock_period_schedules(),
             periods: mock_periods(),
@@ -559,6 +569,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
+            clinicians: mock_clinicians(),
             ..Default::default()
         },
     );
@@ -625,9 +636,13 @@ pub fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.names {
-            let repo = NameRowRepository::new(connection);
+            let name_repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
-                repo.upsert_one(&row).unwrap();
+                name_repo.upsert_one(row).unwrap();
+            }
+            let name_link_repo = NameLinkRowRepository::new(connection);
+            for row in &mock_data.name_links {
+                name_link_repo.upsert_one(row).unwrap();
             }
         }
 
@@ -695,9 +710,14 @@ pub fn insert_mock_data(
         }
 
         if inserts.items {
-            let repo = ItemRowRepository::new(connection);
+            let item_repo = ItemRowRepository::new(connection);
+            let item_link_repo = ItemLinkRowRepository::new(connection);
+
             for row in &mock_data.items {
-                repo.upsert_one(&row).unwrap();
+                item_repo.upsert_one(&row).unwrap();
+                item_link_repo
+                    .upsert_one(&mock_item_link_from_item(&row))
+                    .unwrap();
             }
         }
 
@@ -947,6 +967,7 @@ impl MockData {
         let MockData {
             mut user_accounts,
             mut names,
+            mut name_links,
             mut name_tags,
             mut period_schedules,
             mut periods,
@@ -995,6 +1016,7 @@ impl MockData {
 
         self.user_accounts.append(&mut user_accounts);
         self.names.append(&mut names);
+        self.name_links.append(&mut name_links);
         self.name_tags.append(&mut name_tags);
         self.period_schedules.append(&mut period_schedules);
         self.periods.append(&mut periods);

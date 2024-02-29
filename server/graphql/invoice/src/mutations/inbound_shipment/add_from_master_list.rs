@@ -294,11 +294,11 @@ mod test {
                 invoice_line_row: inline_init(|r: &mut InvoiceLineRow| {
                     r.id = String::from("inbound_shipment_line_a");
                     r.invoice_id = String::from("inbound_shipment_c");
-                    r.item_id = String::from("item_a");
+                    r.item_link_id = String::from("item_a");
                     r.r#type = InvoiceLineRowType::StockIn;
                 }),
                 invoice_row: mock_empty_draft_inbound_shipment(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: None,
                 stock_line_option: None,
             }])

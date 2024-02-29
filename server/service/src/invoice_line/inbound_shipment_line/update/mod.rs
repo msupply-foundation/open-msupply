@@ -284,7 +284,7 @@ mod test {
             inbound_line_update,
             inline_edit(&inbound_line_update, |mut u| {
                 u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                u.item_id = mock_item_a().id.clone();
+                u.item_link_id = mock_item_a().id.clone();
                 u.pack_size = 2;
                 u.number_of_packs = 3.0;
                 u

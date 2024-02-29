@@ -150,7 +150,7 @@ impl TemperatureChartNode {
         let base: Vec<TemperaturePointNode> = intervals
             .iter()
             .map(|interval| TemperaturePointNode {
-                mid_point: DateTime::<Utc>::from_utc(
+                mid_point: DateTime::<Utc>::from_naive_utc_and_offset(
                     interval.from_datetime + interval_difference,
                     Utc,
                 ),

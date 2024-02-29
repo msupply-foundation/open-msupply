@@ -147,7 +147,8 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_request_draft_requisition, mock_sent_request_requisition_line, MockDataInserts,
+            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
+            MockDataInserts,
         },
         RequisitionLine, StorageConnectionManager,
     };
@@ -389,7 +390,7 @@ mod test {
                 input,
                 ServiceInput {
                     id: "new line id input".to_string(),
-                    item_id: "item id input".to_string(),
+                    item_id: mock_item_a().id,
                     requisition_id: "requisition id input".to_string(),
                     requested_quantity: Some(1),
                     comment: Some("comment".to_string())
@@ -398,6 +399,7 @@ mod test {
             Ok(RequisitionLine {
                 requisition_row: mock_request_draft_requisition(),
                 requisition_line_row: mock_sent_request_requisition_line(),
+                item_row: mock_item_a(),
             })
         }));
 
@@ -405,7 +407,7 @@ mod test {
           "input": {
             "id": "new line id input",
             "requisitionId": "requisition id input",
-            "itemId": "item id input",
+            "itemId": "item_a",
             "requestedQuantity": 1,
             "comment": "comment"
           },

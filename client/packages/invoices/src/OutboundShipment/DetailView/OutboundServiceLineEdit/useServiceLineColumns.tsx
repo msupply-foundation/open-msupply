@@ -7,7 +7,7 @@ import {
   XCircleIcon,
   CurrencyInputCell,
   ColumnAlign,
-  NonNegativeDecimalCell,
+  NumberInputCell,
   TextInputCell,
   useFormatCurrency,
   CellProps,
@@ -16,7 +16,7 @@ import { ServiceItemSearchInput } from '@openmsupply-client/system';
 import { DraftStockOutLine } from './../../../types';
 
 const TaxPercentageCell = (props: CellProps<DraftStockOutLine>) => (
-  <NonNegativeDecimalCell max={100} {...props} />
+  <NumberInputCell {...props} max={100} decimalLimit={2} />
 );
 
 export const useServiceLineColumns = (

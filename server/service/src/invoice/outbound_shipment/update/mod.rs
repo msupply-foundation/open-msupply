@@ -202,7 +202,7 @@ mod test {
         fn outbound_shipment_no_stock() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = String::from("outbound_shipment_no_stock");
-                r.name_id = String::from("name_store_a");
+                r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Allocated;
@@ -223,7 +223,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = String::from("outbound_shipment_no_stock_line_a");
                 r.invoice_id = String::from("outbound_shipment_no_stock");
-                r.item_id = String::from("item_a");
+                r.item_link_id = String::from("item_a");
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.batch = None;
@@ -333,7 +333,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
@@ -343,7 +343,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line".to_string();
                 r.invoice_id = invoice().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::UnallocatedStock;
                 r.pack_size = 1;
                 r.number_of_packs = 0.0;
@@ -390,7 +390,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
@@ -405,7 +405,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "customer_join".to_string();
-                r.name_id = customer().id;
+                r.name_link_id = customer().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_customer = true;
             })
@@ -548,7 +548,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
             })
@@ -561,7 +561,7 @@ mod test {
                 r.available_number_of_packs = 8.0;
                 r.total_number_of_packs = 10.0;
                 r.pack_size = 1;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
             })
         }
 
@@ -571,7 +571,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.stock_line_id = Some(stock_line().id);
                 r.number_of_packs = 2.0;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.r#type = InvoiceLineRowType::StockOut;
             })
         }

@@ -28,7 +28,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         let inventory_adjustment_reason_id = uuid();
         let base_invoice_row = InvoiceRow {
             id: uuid(),
-            name_id: uuid(),
+            name_link_id: uuid(),
             name_store_id: Some(uuid()),
             store_id: store_id.to_string(),
             user_id: Some("user 1".to_string()),
@@ -51,7 +51,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             colour: None,
             requisition_id: None,
             linked_invoice_id: None,
-            clinician_id: None,
+            clinician_link_id: None,
             // Tax on invoice/transact is not nullable in mSupply
             tax: Some(0.0),
         };
@@ -59,7 +59,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             id: uuid(),
             invoice_id: base_invoice_row.id.clone(),
             r#type: InvoiceLineRowType::StockIn,
-            item_id: uuid(),
+            item_link_id: uuid(),
             item_name: uuid(),
             item_code: uuid(),
             stock_line_id: None,
@@ -140,18 +140,18 @@ impl SyncRecordTester for InvoiceRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": base_invoice_line_row.item_id,
+                    "ID": base_invoice_line_row.item_link_id,
                     "name": base_invoice_line_row.item_name,
                     "code": base_invoice_line_row.item_code,
                     "type_of": "general"
                 }],
                 "name": [{
-                    "ID": base_invoice_row.name_id,
+                    "ID": base_invoice_row.name_link_id,
                     "type": "store"
                 }],
                 "store": [{
                     "ID": base_invoice_row.name_store_id.as_ref().unwrap(),
-                    "name_ID": base_invoice_row.name_id,
+                    "name_ID": base_invoice_row.name_link_id,
                     "store_mode": "store"
                 }],
                 "options": [{
@@ -180,7 +180,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         // STEP 2 - mutate
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
-            r.item_id = base_invoice_line_row.item_id;
+            r.item_link_id = base_invoice_line_row.item_link_id;
             r.store_id = new_site_properties.store_id.clone();
             r.batch = Some("some batch".to_string());
             r.pack_size = 20;
@@ -190,7 +190,7 @@ impl SyncRecordTester for InvoiceRecordTester {
         // create requisition and linked invoice
         let requisition_row = inline_edit(&mock_request_draft_requisition(), |mut r| {
             r.id = uuid();
-            r.name_id = invoice_row_1.name_id.clone();
+            r.name_link_id = invoice_row_1.name_link_id.clone();
             r.store_id = store_id.clone();
             r
         });

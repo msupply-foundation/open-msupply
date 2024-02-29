@@ -21,6 +21,7 @@ interface DialogButtonProps {
   variant: DialogButtonVariant;
   autoFocus?: boolean;
   color?: 'primary';
+  type?: 'button' | 'submit' | 'reset';
 }
 
 const getButtonProps = (
@@ -70,6 +71,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   disabled = false,
   autoFocus = false,
   color,
+  type,
 }) => {
   const t = useTranslation('common');
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
@@ -84,6 +86,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       variant={buttonVariant}
       label={t(labelKey)}
       tabIndex={variant === 'cancel' ? 1 : 0}
+      type={type}
       onKeyDown={e => {
         if (e.key === 'Enter') {
           onClick(e);

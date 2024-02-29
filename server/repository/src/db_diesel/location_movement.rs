@@ -121,7 +121,7 @@ fn create_filtered_query(filter: Option<LocationMovementFilter>) -> BoxedLocatio
     query
 }
 
-pub fn to_domain(location_movement_row: LocationMovementRow) -> LocationMovement {
+fn to_domain(location_movement_row: LocationMovementRow) -> LocationMovement {
     LocationMovement {
         location_movement_row,
     }

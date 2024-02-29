@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -17,30 +17,28 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { StocktakeSummaryItem } from '../../types';
-
 import { StocktakeLineEdit } from './modal/StocktakeLineEdit';
 import { ContentArea } from './ContentArea';
 import { AppRoute } from '@openmsupply-client/config';
-import { StocktakeLineFragment, useStocktake } from '../api';
+import { StocktakeFragment, StocktakeLineFragment, useStocktake } from '../api';
 import { StocktakeLineErrorProvider } from '../context';
+import { isStocktakeDisabled } from '../../utils';
 
-export const DetailView: FC = () => {
-  const isDisabled = useStocktake.utils.isDisabled();
-  const { isOpen, entity, onOpen, onClose, mode } =
-    useEditModal<ItemRowFragment>();
-  const { data, isLoading } = useStocktake.document.get();
-  const navigate = useNavigate();
-  const t = useTranslation('inventory');
-  const { HighlightStyles } = useRowHighlight();
-
+const StocktakeTabs = ({
+  id,
+  isDisabled,
+  onOpen,
+}: {
+  id: string | undefined;
+  isDisabled: boolean;
+  onOpen: (item?: ItemRowFragment | null | undefined) => void;
+}) => {
   const onRowClick = useCallback(
     (item: StocktakeLineFragment | StocktakeSummaryItem) => {
       if (item.item) onOpen(item.item);
     },
     [onOpen]
   );
-
-  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
@@ -53,23 +51,77 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={id ?? ''} />,
       value: 'Log',
     },
   ];
+  return <DetailTabs tabs={tabs} />;
+};
 
-  return !!data ? (
-    <TableProvider createStore={createTableStore}>
-      <StocktakeLineErrorProvider>
-        <HighlightStyles />
-        <AppBarButtons onAddItem={() => onOpen()} />
-        <Toolbar />
+const DetailViewComponent = ({
+  stocktake,
+  isDisabled,
+  onOpen,
+}: {
+  stocktake: StocktakeFragment;
+  isDisabled: boolean;
+  onOpen: () => void;
+}) => {
+  const { HighlightStyles } = useRowHighlight();
 
-        <DetailTabs tabs={tabs} />
+  return (
+    <>
+      <HighlightStyles />
+      <AppBarButtons onAddItem={() => onOpen()} />
 
-        <Footer />
-        <SidePanel />
+      <Footer />
+      <SidePanel />
 
+      <Toolbar />
+
+      <StocktakeTabs
+        id={stocktake?.id}
+        onOpen={onOpen}
+        isDisabled={isDisabled}
+      />
+    </>
+  );
+};
+
+export const DetailView = () => {
+  const { data: stocktake, isLoading } = useStocktake.document.get();
+  const isDisabled = !stocktake || isStocktakeDisabled(stocktake);
+  const t = useTranslation('inventory');
+  const navigate = useNavigate();
+  const { isOpen, entity, onOpen, onClose, mode } =
+    useEditModal<ItemRowFragment>();
+
+  if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
+
+  if (!stocktake?.lines || !stocktake)
+    return (
+      <AlertModal
+        open={true}
+        onOk={() =>
+          navigate(
+            RouteBuilder.create(AppRoute.Inventory)
+              .addPart(AppRoute.Stocktakes)
+              .build()
+          )
+        }
+        title={t('error.stocktake-not-found')}
+        message={t('messages.click-to-return')}
+      />
+    );
+
+  return (
+    <StocktakeLineErrorProvider>
+      <TableProvider createStore={createTableStore}>
+        <DetailViewComponent
+          stocktake={stocktake}
+          onOpen={onOpen}
+          isDisabled={isDisabled}
+        />
         {isOpen && (
           <StocktakeLineEdit
             isOpen={isOpen}
@@ -78,20 +130,7 @@ export const DetailView: FC = () => {
             item={entity}
           />
         )}
-      </StocktakeLineErrorProvider>
-    </TableProvider>
-  ) : (
-    <AlertModal
-      open={true}
-      onOk={() =>
-        navigate(
-          RouteBuilder.create(AppRoute.Inventory)
-            .addPart(AppRoute.Stocktakes)
-            .build()
-        )
-      }
-      title={t('error.stocktake-not-found')}
-      message={t('messages.click-to-return')}
-    />
+      </TableProvider>
+    </StocktakeLineErrorProvider>
   );
 };

@@ -40,7 +40,7 @@ pub fn generate(
             &existing_invoice_row.store_id,
             new_line.clone(),
             false,
-            &existing_invoice_row.name_id,
+            &existing_invoice_row.name_link_id,
         );
         new_line.stock_line_id = Some(new_batch.id.clone());
 
@@ -93,7 +93,7 @@ fn generate_line(
     InvoiceLineRow {
         id,
         invoice_id,
-        item_id,
+        item_link_id: item_id,
         location_id: location.map(|l| l.value).unwrap_or_default(),
         pack_size: u32_to_i32(pack_size),
         batch,

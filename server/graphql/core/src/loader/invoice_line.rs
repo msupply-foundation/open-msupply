@@ -73,7 +73,7 @@ impl Loader<RequisitionAndItemId> for InvoiceLineForRequisitionLine {
                 let list = map
                     .entry(RequisitionAndItemId::new(
                         &requisition_id,
-                        &line.invoice_line_row.item_id,
+                        &line.item_row.id,
                     ))
                     .or_insert_with(|| Vec::<InvoiceLine>::new());
                 list.push(line);

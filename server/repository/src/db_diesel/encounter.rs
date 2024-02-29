@@ -1,20 +1,27 @@
 use super::{
-    document::latest_document::dsl as latest_document_dsl,
-    encounter_row::encounter::{self, dsl as encounter_dsl},
-    name_row::name::dsl as name_dsl,
-    program_enrolment_row::program_enrolment::dsl as program_enrolment_dsl,
-    program_row::{program, program::dsl as program_dsl},
+    clinician_link_row::clinician_link,
+    clinician_row::clinician,
+    encounter_row::encounter::{self},
+    name_link_row::name_link,
+    name_row::name,
+    program_row::program,
     StorageConnection,
 };
 
 use crate::{
+    db_diesel::program_enrolment_row::program_enrolment,
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    latest_document, DBType, DatetimeFilter, EncounterRow, EncounterStatus, EqualFilter,
-    Pagination, PatientFilter, PatientRepository, ProgramEnrolmentFilter,
-    ProgramEnrolmentRepository, ProgramRow, RepositoryError, Sort, StringFilter,
+    latest_document, ClinicianLinkRow, ClinicianRow, DBType, DatetimeFilter, EncounterRow,
+    EncounterStatus, EqualFilter, NameLinkRow, NameRow, Pagination, PatientFilter,
+    PatientRepository, ProgramEnrolmentFilter, ProgramEnrolmentRepository, ProgramRow,
+    RepositoryError, Sort, StringFilter,
 };
 
-use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
+use diesel::{
+    dsl::IntoBoxed,
+    helper_types::{InnerJoin, LeftJoin},
+    prelude::*,
+};
 
 #[derive(Clone, Default)]
 pub struct EncounterFilter {
@@ -121,15 +128,49 @@ pub enum EncounterSortField {
     Status,
 }
 
-pub type Encounter = (EncounterRow, ProgramRow);
+type EncounterJoin = (
+    EncounterRow,
+    ProgramRow,
+    (NameLinkRow, NameRow),
+    Option<(ClinicianLinkRow, ClinicianRow)>,
+);
+
+#[derive(Clone)]
+pub struct Encounter {
+    pub row: EncounterRow,
+    pub program_row: ProgramRow,
+    pub patient_row: NameRow,
+    pub clinician_row: Option<ClinicianRow>,
+}
+
+fn to_domain((encounter_row, program_row, (_, name_row), clinician): EncounterJoin) -> Encounter {
+    Encounter {
+        row: encounter_row,
+        program_row,
+        patient_row: name_row,
+        clinician_row: clinician.map(|(_, clinician_row)| clinician_row),
+    }
+}
 
 pub type EncounterSort = Sort<EncounterSortField>;
 
-type BoxedProgramQuery = IntoBoxed<'static, InnerJoin<encounter::table, program::table>, DBType>;
+type BoxedEncounterQuery = IntoBoxed<
+    'static,
+    LeftJoin<
+        InnerJoin<
+            InnerJoin<encounter::table, program::table>,
+            InnerJoin<name_link::table, name::table>,
+        >,
+        InnerJoin<clinician_link::table, clinician::table>,
+    >,
+    DBType,
+>;
 
-fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQuery {
-    let mut query = encounter_dsl::encounter
-        .inner_join(program_dsl::program)
+fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
+    let mut query = encounter::table
+        .inner_join(program::table)
+        .inner_join(name_link::table.inner_join(name::table))
+        .left_join(clinician_link::table.inner_join(clinician::table))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -150,36 +191,36 @@ fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedProgramQue
             program_enrolment,
         } = f;
 
-        apply_equal_filter!(query, id, encounter_dsl::id);
-        apply_equal_filter!(query, document_type, encounter_dsl::document_type);
-        apply_equal_filter!(query, patient_id, encounter_dsl::patient_id);
-        apply_equal_filter!(query, program_context_id, program_dsl::context_id);
-        apply_equal_filter!(query, program_id, encounter_dsl::program_id);
-        apply_equal_filter!(query, name, encounter_dsl::document_name);
-        apply_date_time_filter!(query, created_datetime, encounter_dsl::created_datetime);
-        apply_date_time_filter!(query, start_datetime, encounter_dsl::start_datetime);
-        apply_date_time_filter!(query, end_datetime, encounter_dsl::end_datetime);
-        apply_equal_filter!(query, status, encounter_dsl::status);
-        apply_equal_filter!(query, clinician_id, encounter_dsl::clinician_id);
+        apply_equal_filter!(query, id, encounter::id);
+        apply_equal_filter!(query, document_type, encounter::document_type);
+        apply_equal_filter!(query, patient_id, name::id);
+        apply_equal_filter!(query, program_context_id, program::context_id);
+        apply_equal_filter!(query, program_id, encounter::program_id);
+        apply_equal_filter!(query, name, encounter::document_name);
+        apply_date_time_filter!(query, created_datetime, encounter::created_datetime);
+        apply_date_time_filter!(query, start_datetime, encounter::start_datetime);
+        apply_date_time_filter!(query, end_datetime, encounter::end_datetime);
+        apply_equal_filter!(query, status, encounter::status);
+        apply_equal_filter!(query, clinician_id, clinician::id);
 
         if document_data.is_some() {
-            let mut sub_query = latest_document_dsl::latest_document
-                .select(latest_document_dsl::name)
+            let mut sub_query = latest_document::table
+                .select(latest_document::name)
                 .into_boxed();
             apply_string_filter!(sub_query, document_data, latest_document::data);
-            query = query.filter(encounter_dsl::document_name.eq_any(sub_query));
+            query = query.filter(encounter::document_name.eq_any(sub_query));
         }
 
         if patient.is_some() {
             let patient_ids =
-                PatientRepository::create_filtered_query(patient, None).select(name_dsl::id);
-            query = query.filter(encounter_dsl::patient_id.eq_any(patient_ids));
+                PatientRepository::create_filtered_query(patient, None).select(name::id);
+            query = query.filter(name::id.eq_any(patient_ids));
         }
 
         if program_enrolment.is_some() {
             let program_ids = ProgramEnrolmentRepository::create_filtered_query(program_enrolment)
-                .select(program_enrolment_dsl::program_id);
-            query = query.filter(encounter_dsl::program_id.eq_any(program_ids));
+                .select(program_enrolment::program_id);
+            query = query.filter(encounter::program_id.eq_any(program_ids));
         }
     }
     query
@@ -218,34 +259,34 @@ impl<'a> EncounterRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 EncounterSortField::DocumentType => {
-                    apply_sort!(query, sort, encounter_dsl::document_type)
+                    apply_sort!(query, sort, encounter::document_type)
                 }
                 EncounterSortField::PatientId => {
-                    apply_sort!(query, sort, encounter_dsl::patient_id)
+                    apply_sort!(query, sort, name::id)
                 }
                 EncounterSortField::Context => {
-                    apply_sort!(query, sort, program_dsl::context_id)
+                    apply_sort!(query, sort, program::context_id)
                 }
                 EncounterSortField::CreatedDatetime => {
-                    apply_sort!(query, sort, encounter_dsl::created_datetime)
+                    apply_sort!(query, sort, encounter::created_datetime)
                 }
                 EncounterSortField::StartDatetime => {
-                    apply_sort!(query, sort, encounter_dsl::start_datetime)
+                    apply_sort!(query, sort, encounter::start_datetime)
                 }
                 EncounterSortField::EndDatetime => {
-                    apply_sort!(query, sort, encounter_dsl::end_datetime)
+                    apply_sort!(query, sort, encounter::end_datetime)
                 }
-                EncounterSortField::Status => apply_sort!(query, sort, encounter_dsl::status),
+                EncounterSortField::Status => apply_sort!(query, sort, encounter::status),
             }
         } else {
-            query = query.order(encounter_dsl::patient_id.asc())
+            query = query.order(name::id.asc())
         }
 
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<Encounter>(&self.connection.connection)?;
+            .load::<EncounterJoin>(&self.connection.connection)?;
 
-        Ok(result)
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }

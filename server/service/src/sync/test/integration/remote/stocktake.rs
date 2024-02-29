@@ -53,7 +53,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             comment: None,
             snapshot_number_of_packs: 100.13,
             counted_number_of_packs: None,
-            item_id: uuid(),
+            item_link_id: uuid(),
             batch: None,
             expiry_date: None,
             pack_size: Some(0),
@@ -64,7 +64,7 @@ impl SyncRecordTester for StocktakeRecordTester {
         };
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stocktake_line_row.item_id,
+                "ID": stocktake_line_row.item_link_id,
                 "type_of": "general"
             }]}),
             central_delete: json!({}),
@@ -77,7 +77,7 @@ impl SyncRecordTester for StocktakeRecordTester {
         // STEP 2 - mutate
         let invoice_row = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_id = new_site_properties.name_id.clone();
+            r.name_link_id = new_site_properties.name_id.clone();
             r.store_id = store_id.clone();
             r.name_store_id = Some(store_id.clone());
             r.tax = Some(0.0);
@@ -85,7 +85,7 @@ impl SyncRecordTester for StocktakeRecordTester {
 
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
-            r.item_id = uuid();
+            r.item_link_id = uuid();
             r.store_id = store_id.clone();
         });
 
@@ -98,7 +98,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             d.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
                 .unwrap()
                 .and_hms_opt(8, 15, 30);
-            // Not testing that logically invoices are correct inventory adjustments just testing they sync corrrectly
+            // Not testing that logically invoices are correct inventory adjustments just testing they sync correctly
             d.inventory_addition_id = Some(invoice_row.id.clone());
             d.inventory_reduction_id = Some(invoice_row.id.clone());
             d.is_locked = true;
@@ -110,7 +110,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             d.location_id = None;
             d.snapshot_number_of_packs = 110.12;
             d.counted_number_of_packs = Some(90.3219);
-            d.item_id = stock_line_row.item_id.clone();
+            d.item_link_id = stock_line_row.item_link_id.clone();
             d.stock_line_id = Some(stock_line_row.id.clone());
             d.batch = Some(uuid());
             d.expiry_date = NaiveDate::from_ymd_opt(2025, 03, 24);
@@ -123,7 +123,7 @@ impl SyncRecordTester for StocktakeRecordTester {
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_id,
+                "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
             central_delete: json!({}),

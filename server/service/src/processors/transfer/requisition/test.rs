@@ -150,7 +150,7 @@ async fn stock_on_deleted_requisitions() {
     let requisition = RequisitionRow {
         id: uuid(),
         requisition_number: 3,
-        name_id: store.name_id.clone(),
+        name_link_id: store.name_id.clone(),
         store_id: store.id.clone(),
         r#type: RequisitionRowType::Request,
         ..RequisitionRow::default()
@@ -213,7 +213,7 @@ impl RequisitionTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
             r.requisition_number = 3;
-            r.name_id = response_store.name_id.clone();
+            r.name_link_id = response_store.name_id.clone();
             r.store_id = request_store.id.clone();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
@@ -231,7 +231,7 @@ impl RequisitionTransferTester {
         let request_requisition_line1 = inline_init(|r: &mut RequisitionLineRow| {
             r.id = uuid();
             r.requisition_id = request_requisition.id.clone();
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.requested_quantity = 2;
             r.suggested_quantity = 3;
             r.comment = Some("line comment".to_string());
@@ -248,7 +248,7 @@ impl RequisitionTransferTester {
         let request_requisition_line2 = inline_init(|r: &mut RequisitionLineRow| {
             r.id = uuid();
             r.requisition_id = request_requisition.id.clone();
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.requested_quantity = 10;
             r.suggested_quantity = 20;
             r.available_stock_on_hand = 30;
@@ -324,7 +324,10 @@ impl RequisitionTransferTester {
         assert_eq!(response_requisition.r#type, RequisitionRowType::Response);
         assert_eq!(response_requisition.status, RequisitionRowStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
-        assert_eq!(response_requisition.name_id, self.request_store.name_id);
+        assert_eq!(
+            response_requisition.name_link_id,
+            self.request_store.name_id
+        );
         assert_eq!(
             response_requisition.their_reference,
             Some("From internal order 3 (some reference)".to_string())
@@ -435,7 +438,7 @@ fn check_line(
         .query_one(
             RequisitionLineFilter::new()
                 .requisition_id(EqualFilter::equal_to(response_requisition_id))
-                .item_id(EqualFilter::equal_to(&request_line.item_id)),
+                .item_id(EqualFilter::equal_to(&request_line.item_link_id)),
         )
         .unwrap();
 

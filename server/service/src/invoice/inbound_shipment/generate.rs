@@ -17,7 +17,7 @@ pub fn generate_empty_invoice_lines(
                 result.push(InvoiceLineRow {
                     id: uuid(),
                     invoice_id: invoice_row.id.clone(),
-                    item_id: item.id.clone(),
+                    item_link_id: item.id.clone(),
                     item_name: item.name.clone(),
                     item_code: item.code.clone(),
                     stock_line_id: None,

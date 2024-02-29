@@ -674,6 +674,16 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
   fullError: Scalars['String']['output'];
 };
 
+export type DatabaseSettingsNode = {
+  __typename: 'DatabaseSettingsNode';
+  databaseType: DatabaseType;
+};
+
+export enum DatabaseType {
+  Postgres = 'POSTGRES',
+  SqLite = 'SQ_LITE'
+}
+
 export type DateFilterInput = {
   afterOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
   beforeOrEqualTo?: InputMaybe<Scalars['NaiveDate']['input']>;
@@ -2273,6 +2283,7 @@ export type ItemFilterInput = {
   code?: InputMaybe<StringFilterInput>;
   codeOrName?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isVisible?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<EqualFilterItemTypeInput>;
@@ -3381,6 +3392,7 @@ export type PatientFilterInput = {
   name?: InputMaybe<StringFilterInput>;
   nameOrCode?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
+  programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
 
 export type PatientNode = {
@@ -3753,6 +3765,7 @@ export type Queries = {
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
   currencies: CurrenciesResponse;
+  databaseSettings: DatabaseSettingsNode;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
   documentHistory: DocumentHistoryResponse;
@@ -4852,6 +4865,7 @@ export type StocktakeLineConnector = {
 
 export type StocktakeLineFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   stocktakeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -4882,7 +4896,7 @@ export enum StocktakeLineSortFieldInput {
   ExpiryDate = 'expiryDate',
   ItemCode = 'itemCode',
   ItemName = 'itemName',
-  LocationName = 'locationName',
+  LocationCode = 'locationCode',
   PackSize = 'packSize'
 }
 

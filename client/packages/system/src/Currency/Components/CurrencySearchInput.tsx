@@ -6,7 +6,7 @@ import {
   Box,
   DefaultAutocompleteItemOption,
   InputWithLabelRow,
-  NonNegativeNumberInput,
+  NumericTextInput,
   Typography,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -85,9 +85,9 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
         label={t('heading.rate')}
         labelWidth="100%"
         Input={
-          <NonNegativeNumberInput
+          <NumericTextInput
             disabled={disabled}
-            value={String(rate ?? 1)}
+            value={rate}
             sx={{
               width: `${width}px`,
             }}
@@ -98,6 +98,7 @@ export const CurrencySearchInput: FC<CurrencySearchInputProps> = ({
                 rate: e,
               } as CurrencyRowFragment);
             }}
+            decimalLimit={10}
           />
         }
       />
