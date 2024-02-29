@@ -28,7 +28,7 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
     }
-    if patch.currency_id.is_some() && !check_can_issue_in_foreign_currency(connection, store_id)? {
+    if patch.currency_id.is_some() && !check_can_issue_in_foreign_currency(connection, store_id)? && other_party.store_row.is_some() {
         return Err(CannotIssueInForeignCurrency);
     }
 
