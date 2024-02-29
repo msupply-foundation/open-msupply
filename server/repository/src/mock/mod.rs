@@ -1,6 +1,8 @@
 use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
+mod asset;
+mod asset_log;
 mod barcode;
 mod clinician;
 pub mod common;
@@ -50,6 +52,8 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+pub use asset::*;
+pub use asset_log::*;
 pub use barcode::*;
 pub use clinician::*;
 use common::*;
@@ -97,6 +101,10 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
+    assets::{
+        asset_log_row::{AssetLogRow, AssetLogRowRepository},
+        asset_row::{AssetRow, AssetRowRepository},
+    },
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
     ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
@@ -130,6 +138,8 @@ use super::{
 #[derive(Default, Clone)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
+    pub asset_logs: Vec<AssetLogRow>,
+    pub assets: Vec<AssetRow>,
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
@@ -193,6 +203,8 @@ impl MockData {
 #[derive(Clone, Default, PartialEq)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
+    pub assets: bool,
+    pub asset_logs: bool,
     pub user_store_joins: bool,
     pub user_permissions: bool,
     pub names: bool,
@@ -243,6 +255,8 @@ impl MockDataInserts {
     pub fn all() -> Self {
         MockDataInserts {
             user_accounts: true,
+            assets: true,
+            asset_logs: true,
             user_store_joins: true,
             user_permissions: true,
             names: true,
@@ -292,6 +306,16 @@ impl MockDataInserts {
 
     pub fn none() -> Self {
         MockDataInserts::default()
+    }
+
+    pub fn assets(mut self) -> Self {
+        self.assets = true;
+        self
+    }
+
+    pub fn asset_logs(mut self) -> Self {
+        self.asset_logs = true;
+        self
     }
 
     pub fn user_accounts(mut self) -> Self {
@@ -537,6 +561,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
         "base",
         MockData {
             user_accounts: mock_user_accounts(),
+            assets: mock_assets(),
+            asset_logs: mock_asset_logs(),
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
@@ -578,6 +604,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
         "test_invoice_count_service_data",
         test_invoice_count_service_data(),
     );
+
     data.insert(
         "test_outbound_shipment_update_data",
         test_outbound_shipment_update_data(),
@@ -644,6 +671,20 @@ pub fn insert_mock_data(
             let name_link_repo = NameLinkRowRepository::new(connection);
             for row in &mock_data.name_links {
                 name_link_repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.assets {
+            let repo = AssetRowRepository::new(connection);
+            for row in &mock_data.assets {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.asset_logs {
+            let repo = AssetLogRowRepository::new(connection);
+            for row in &mock_data.asset_logs {
+                repo.upsert_one(&row).unwrap();
             }
         }
 
@@ -967,6 +1008,8 @@ impl MockData {
     pub fn join(mut self, other: MockData) -> MockData {
         let MockData {
             mut user_accounts,
+            mut assets,
+            mut asset_logs,
             mut names,
             mut name_links,
             mut name_tags,
@@ -1016,6 +1059,8 @@ impl MockData {
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
+        self.asset_logs.append(&mut asset_logs);
+        self.assets.append(&mut assets);
         self.names.append(&mut names);
         self.name_links.append(&mut name_links);
         self.name_tags.append(&mut name_tags);
