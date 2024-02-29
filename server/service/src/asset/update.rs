@@ -37,7 +37,7 @@ pub fn update_asset(
     let asset = ctx
         .connection
         .transaction_sync(|connection| {
-            let asset_row = validate(connection, &ctx.store_id, &input)?;
+            let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input, asset_row);
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
 
@@ -49,7 +49,6 @@ pub fn update_asset(
 
 pub fn validate(
     connection: &StorageConnection,
-    ctx_store_id: &str,
     input: &UpdateAsset,
 ) -> Result<AssetRow, UpdateAssetError> {
     let asset_row = match check_asset_exists(&input.id, connection)? {
