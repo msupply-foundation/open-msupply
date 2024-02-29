@@ -21,10 +21,10 @@ pub fn generate(
 
     updated_return.comment = input.comment.or(existing_return.comment.clone());
 
+    set_new_status_datetime(&mut updated_return, &input.status);
     if let Some(status) = input.status.clone() {
         updated_return.status = status.full_status().into()
     }
-    set_new_status_datetime(&mut updated_return, &input.status);
 
     let should_update_total_number_of_packs =
         should_update_stock_lines_total_number_of_packs(&existing_return, &input.status);

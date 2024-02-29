@@ -1,4 +1,6 @@
-use repository::{Invoice, InvoiceRowRepository, InvoiceRowStatus, RepositoryError};
+use repository::{
+    Invoice, InvoiceRowRepository, InvoiceRowStatus, RepositoryError, StockLineRowRepository,
+};
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
@@ -54,6 +56,13 @@ pub fn update_outbound_return(
             } = generate(connection, input.clone(), return_row)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&updated_return)?;
+
+            if let Some(stock_lines) = stock_lines_to_update {
+                let repository = StockLineRowRepository::new(connection);
+                for stock_line in stock_lines {
+                    repository.upsert_one(&stock_line)?;
+                }
+            }
 
             if status_changed {
                 activity_log_entry(
@@ -119,12 +128,13 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_return_a, mock_outbound_shipment_a,
-            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+            mock_item_a, mock_name_store_b, mock_outbound_return_b,
+            mock_outbound_return_b_invoice_line_a, mock_outbound_shipment_a, mock_store_a,
+            mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        ReturnReasonRow,
+        EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType,
+        InvoiceRow, InvoiceRowStatus, InvoiceRowType, ReturnReasonRow,
     };
 
     #[actix_rt::test]
@@ -262,7 +272,7 @@ mod test {
             }
         }
 
-        let (_, _, connection_manager, _) = setup_all_with_data(
+        let (_, connection, connection_manager, _) = setup_all_with_data(
             "test_update_outbound_return_success",
             MockDataInserts::all(),
             MockData {
@@ -277,15 +287,45 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
+        let line_repo = InvoiceLineRepository::new(&connection);
+
+        let original_stock_line = line_repo
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(
+                &mock_outbound_return_b_invoice_line_a().id,
+            )))
+            .unwrap()
+            .unwrap()
+            .stock_line_option
+            .unwrap();
+
         let result = service_provider
             .invoice_service
             .update_outbound_return(
                 &context,
                 UpdateOutboundReturn {
-                    outbound_return_id: mock_outbound_return_a().id,
+                    outbound_return_id: mock_outbound_return_b().id,
+                    status: Some(UpdateOutboundReturnStatus::Shipped),
                     ..Default::default()
                 },
             )
             .unwrap();
+
+        assert_eq!(result.invoice_row.status, InvoiceRowStatus::Shipped);
+        assert!(result.invoice_row.picked_datetime.is_some());
+        assert!(result.invoice_row.shipped_datetime.is_some());
+
+        let updated_stock_line = line_repo
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(
+                &mock_outbound_return_b_invoice_line_a().id,
+            )))
+            .unwrap()
+            .unwrap()
+            .stock_line_option
+            .unwrap();
+
+        assert_eq!(
+            updated_stock_line.total_number_of_packs,
+            original_stock_line.total_number_of_packs - 5.0 // invoice line has numberOfPacks = 5.0
+        );
     }
 }
