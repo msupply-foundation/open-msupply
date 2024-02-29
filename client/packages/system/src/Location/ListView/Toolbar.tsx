@@ -44,7 +44,7 @@ export const Toolbar: FC<{
           await deleteLocation(location).then(data => {
             if (data?.deleteLocation?.__typename === 'DeleteLocationError') {
               errors.push({
-                locationName: location.name,
+                locationName: location.code,
                 message: data?.deleteLocation?.error?.description ?? '',
               });
             }

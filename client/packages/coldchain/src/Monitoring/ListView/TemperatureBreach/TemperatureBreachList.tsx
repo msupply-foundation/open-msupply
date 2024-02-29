@@ -33,7 +33,7 @@ const ListView: FC = () => {
         key: 'sensor.name',
       },
       {
-        key: 'location.name',
+        key: 'location.code',
       },
       {
         key: 'type',

@@ -25,7 +25,7 @@ const temperatureLogFilterAndSort = {
       key: 'sensor.name',
     },
     {
-      key: 'location.name',
+      key: 'location.code',
     },
     {
       key: 'temperatureBreach.type',
