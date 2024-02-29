@@ -44,6 +44,7 @@ pub enum UpdateOutboundShipmentError {
     NotAnOutboundShipment,
     NotThisStoreInvoice,
     CannotIssueInForeignCurrency,
+    OtherPartyDoesNotExist,
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     // Internal
