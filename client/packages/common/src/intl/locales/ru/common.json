@@ -45,5 +45,18 @@
   "button.view": "Просмотреть",
   "description-last-reading-datetime": "Дата и время последнего считывания",
   "description.average-monthly-consumption": "Среднемесячное Потребление",
-  "description.breach-type": "Тип продолжающегося нарушения"
+  "description.breach-type": "Тип продолжающегося нарушения",
+  "description.counted-num-of-packs": "Подсчитанное количество (#) упаковок",
+  "description.customer-reference": "Идентификационный Номер Потребителя",
+  "description.customer-soh": "Клиентские Запасы в Наличии",
+  "description.default-pack-size": "Размер упаковки по умолчанию",
+  "description.entered": "Дата создания",
+  "description.forecast-quantity": "Прогноз Количества для Достижения Цели",
+  "description.invoice-number": "Номер отправки",
+  "description.months-of-stock": "Месяцы доступных запасов в наличии",
+  "description.our-soh": "Наши Запасы в наличии",
+  "description.pack-quantity": "Общее количество в упаковках",
+  "description.program": "Программы используются для управления группами товаров и графиками пополнения запасов.",
+  "heading.edit-item": "Редактировать Товар",
+  "heading.comment": "Комментарий"
 }

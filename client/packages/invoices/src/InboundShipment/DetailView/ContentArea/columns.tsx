@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   getRowExpandColumn,
   GenericColumnKey,
@@ -8,11 +9,11 @@ import {
   useCurrency,
   useUrlQueryParams,
   ColumnAlign,
-  PositiveNumberCell,
+  NumberInputCell,
   TooltipTextCell,
   useColumnUtils,
 } from '@openmsupply-client/common';
-import { InboundItem } from './../../../types';
+import { InboundItem } from '../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
 
@@ -204,7 +205,7 @@ export const useInboundShipmentColumns = () => {
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberCell,
+          Cell: props => <NumberInputCell {...props} min={1} />,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;

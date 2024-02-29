@@ -20,6 +20,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         // put DB test files into a test directory (also works for in-memory)
         database_name: format!("{}/{}.sqlite", TEST_OUTPUT_DIR, db_name),
         init_sql: None,
+        database_path: None,
     }
 }
 

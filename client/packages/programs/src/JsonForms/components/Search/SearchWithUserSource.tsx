@@ -39,18 +39,16 @@ export const SearchWithUserSource = (
     renderers,
   } = props;
   const t = useTranslation('programs');
-
   const isPatientSelected = !!data?.id;
-  const searchFilter = !isPatientSelected
-    ? createSearchFilter(options?.searchFields, data)
-    : undefined;
-
   const { results, error: queryError, mutateAsync } = usePatientSearchQuery();
 
   useEffect(() => {
+    const searchFilter = !isPatientSelected
+      ? createSearchFilter(options?.searchFields, data)
+      : undefined;
     if (!searchFilter) return;
     mutateAsync(searchFilter);
-  }, [data]);
+  }, [data, isPatientSelected, mutateAsync, options?.searchFields]);
 
   const getOptionLabel = (data: PatientSchema) =>
     options?.optionString

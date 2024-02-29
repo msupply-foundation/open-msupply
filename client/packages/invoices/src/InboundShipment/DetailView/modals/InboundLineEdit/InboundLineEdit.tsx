@@ -168,15 +168,12 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
         }
         height={height}
         width={1024}
+        enableAutocomplete /* Required for previously entered batches to be remembered and suggested in future shipments */
       >
         {isLoading ? (
           <BasicSpinner messageKey="saving" />
         ) : (
-          <form
-            autoComplete={
-              'on' /* Required for previously entered batches to be remembered and suggested in future shipments */
-            }
-          >
+          <>
             <InboundLineEditForm
               disabled={mode === ModalMode.Update}
               item={currentItem}
@@ -191,7 +188,7 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               currency={currency}
               isExternalSupplier={isExternalSupplier}
             />
-          </form>
+          </>
         )}
       </Modal>
     </TableProvider>

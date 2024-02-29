@@ -60,21 +60,20 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     'id',
   ]);
   const { mutateAsync } = usePrescription.line.save();
-  const { mutateAsync: mutateStatus } = usePrescription.document.update();
   const isDisabled = usePrescription.utils.isDisabled();
   const {
-    draftStockOutLines,
+    draftStockOutLines: draftPrescriptionLines,
     updateQuantity,
     setDraftStockOutLines,
     isLoading,
     updateNotes,
   } = useDraftPrescriptionLines(currentItem);
-  const packSizeController = usePackSizeController(draftStockOutLines);
+  const packSizeController = usePackSizeController(draftPrescriptionLines);
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
 
-  const placeholder = draftStockOutLines?.find(
+  const placeholder = draftPrescriptionLines?.find(
     ({ type, numberOfPacks }) =>
       type === InvoiceLineNodeType.UnallocatedStock && numberOfPacks !== 0
   );
@@ -93,21 +92,21 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     if (!isDirty) return;
 
     // needed since placeholders aren't being created for prescriptions yet, but still adding to array
-    const isOnHold = draftStockOutLines.some(
+    const isOnHold = draftPrescriptionLines.some(
       ({ stockLine, location }) => stockLine?.onHold || location?.onHold
     );
 
-    if (
+    const patch =
       status !== InvoiceNodeStatus.Picked &&
-      draftStockOutLines.length >= 1 &&
+      draftPrescriptionLines.length >= 1 &&
       !isOnHold
-    ) {
-      await mutateStatus({
-        id: invoiceId,
-        status: InvoiceNodeStatus.Picked,
-      });
-    }
-    await mutateAsync(draftStockOutLines);
+        ? {
+            id: invoiceId,
+            status: InvoiceNodeStatus.Picked,
+          }
+        : undefined;
+
+    await mutateAsync({ draftPrescriptionLines, patch });
 
     if (!draft) return;
   };
@@ -119,10 +118,10 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
   ) => {
     const newAllocateQuantities = allocateQuantities(
       status,
-      draftStockOutLines
+      draftPrescriptionLines
     )(newVal, packSize);
     setIsDirty(true);
-    setDraftStockOutLines(newAllocateQuantities ?? draftStockOutLines);
+    setDraftStockOutLines(newAllocateQuantities ?? draftPrescriptionLines);
     setIsAutoAllocated(autoAllocated);
     if (showZeroQuantityConfirmation && newVal !== 0)
       setShowZeroQuantityConfirmation(false);
@@ -130,13 +129,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     return newAllocateQuantities;
   };
 
-  const canAutoAllocate = !!(currentItem && draftStockOutLines.length);
+  const canAutoAllocate = !!(currentItem && draftPrescriptionLines.length);
   const okNextDisabled =
     (mode === ModalMode.Update && nextDisabled) || !currentItem;
 
   const handleSave = async (onSaved: () => boolean | void) => {
     if (
-      getAllocatedQuantity(draftStockOutLines) === 0 &&
+      getAllocatedQuantity(draftPrescriptionLines) === 0 &&
       !showZeroQuantityConfirmation
     ) {
       setShowZeroQuantityConfirmation(true);
@@ -173,11 +172,11 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
     return await handleSave(onSaved);
   };
 
-  const hasOnHold = draftStockOutLines.some(
+  const hasOnHold = draftPrescriptionLines.some(
     ({ stockLine }) =>
       (stockLine?.availableNumberOfPacks ?? 0) > 0 && !!stockLine?.onHold
   );
-  const hasExpired = draftStockOutLines.some(
+  const hasExpired = draftPrescriptionLines.some(
     ({ stockLine }) =>
       (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
       !!stockLine?.expiryDate &&
@@ -216,13 +215,13 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
             setCurrentItem(item);
           }}
           item={currentItem}
-          allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
-          availableQuantity={sumAvailableQuantity(draftStockOutLines)}
+          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
+          availableQuantity={sumAvailableQuantity(draftPrescriptionLines)}
           onChangeQuantity={onAllocate}
           canAutoAllocate={canAutoAllocate}
           isAutoAllocated={isAutoAllocated}
           updateNotes={onUpdateNotes}
-          draftPrescriptionLines={draftStockOutLines}
+          draftPrescriptionLines={draftPrescriptionLines}
           showZeroQuantityConfirmation={showZeroQuantityConfirmation}
           hasOnHold={hasOnHold}
           hasExpired={hasExpired}
@@ -234,8 +233,8 @@ export const PrescriptionLineEdit: React.FC<PrescriptionLineEditModalProps> = ({
           isLoading={isLoading}
           packSizeController={packSizeController}
           updateQuantity={onUpdateQuantity}
-          draftPrescriptionLines={draftStockOutLines}
-          allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
+          draftPrescriptionLines={draftPrescriptionLines}
+          allocatedQuantity={getAllocatedQuantity(draftPrescriptionLines)}
         />
       </Grid>
     </Modal>

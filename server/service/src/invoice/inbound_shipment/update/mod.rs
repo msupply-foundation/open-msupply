@@ -216,7 +216,7 @@ mod test {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_supplier_join".to_string();
-                r.name_id = not_a_supplier().id;
+                r.name_link_id = not_a_supplier().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = false;
             })
@@ -340,7 +340,7 @@ mod test {
         fn supplier_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "supplier_join".to_string();
-                r.name_id = supplier().id;
+                r.name_link_id = supplier().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = true;
             })
@@ -349,7 +349,7 @@ mod test {
         fn invoice_tax_test() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice_tax_test".to_string();
-                r.name_id = "name_store_b".to_string();
+                r.name_link_id = "name_store_b".to_string();
                 r.store_id = "store_a".to_string();
                 r.invoice_number = 123;
                 r.r#type = InvoiceRowType::InboundShipment;
@@ -365,7 +365,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line_for_tax_test".to_string();
                 r.invoice_id = "invoice_tax_test".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.pack_size = 1;
                 r.number_of_packs = 1.0;
                 r.r#type = InvoiceLineRowType::StockIn;
@@ -410,7 +410,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = supplier().id;
+                u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -629,7 +629,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(mock_name_linked_to_store_join().name_id.clone());
+                    r.other_party_id = Some(mock_name_linked_to_store_join().name_link_id.clone());
                 }),
             )
             .unwrap();
@@ -652,7 +652,8 @@ mod test {
                 &context,
                 inline_init(|r: &mut UpdateInboundShipment| {
                     r.id = mock_inbound_shipment_a().id;
-                    r.other_party_id = Some(mock_name_not_linked_to_store_join().name_id.clone());
+                    r.other_party_id =
+                        Some(mock_name_not_linked_to_store_join().name_link_id.clone());
                 }),
             )
             .unwrap();
@@ -704,6 +705,6 @@ mod test {
             })
         );
         assert_eq!(log.r#type, ActivityLogType::InvoiceStatusVerified);
-        assert_eq!(Some(invoice.name_id), stock_line.supplier_id);
+        assert_eq!(Some(invoice.name_link_id), stock_line.supplier_link_id);
     }
 }

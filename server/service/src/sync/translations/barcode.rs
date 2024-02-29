@@ -1,10 +1,10 @@
 use repository::{
-    BarcodeRow, BarcodeRowRepository, ChangelogRow, ChangelogTableName, StorageConnection,
-    SyncBufferRow,
+    barcode::{Barcode, BarcodeFilter, BarcodeRepository},
+    BarcodeRow, ChangelogRow, ChangelogTableName, EqualFilter, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::api::RemoteSyncRecordV5;
+use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
 
 use super::{
     IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
@@ -28,10 +28,12 @@ pub struct LegacyBarcodeRow {
     pub gtin: String,
     #[serde(rename = "itemID")]
     pub item_id: String,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "manufacturerID")]
     pub manufacturer_id: Option<String>,
     #[serde(rename = "packSize")]
     pub pack_size: Option<i32>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "parentID")]
     pub parent_id: Option<String>,
 }
@@ -74,7 +76,7 @@ impl SyncTranslation for BarcodeTranslation {
             id,
             gtin,
             item_id,
-            manufacturer_id,
+            manufacturer_link_id: manufacturer_id,
             pack_size,
             parent_id,
         };
@@ -93,25 +95,27 @@ impl SyncTranslation for BarcodeTranslation {
             return Ok(None);
         }
 
-        let BarcodeRow {
-            id,
-            gtin,
-            item_id,
-            manufacturer_id,
-            pack_size,
-            parent_id,
-        } = BarcodeRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Barcode row ({}) not found",
-                changelog.record_id
-            )))?;
+        let Barcode {
+            barcode_row:
+                BarcodeRow {
+                    id,
+                    gtin,
+                    item_id,
+                    manufacturer_link_id: _,
+                    pack_size,
+                    parent_id,
+                },
+            manufacturer_name_row,
+        } = BarcodeRepository::new(connection)
+            .query_by_filter(BarcodeFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Barcode not found"))?;
 
         let legacy_row = LegacyBarcodeRow {
             id,
             gtin,
             item_id,
-            manufacturer_id,
+            manufacturer_id: manufacturer_name_row.and_then(|name_row| Some(name_row.id)),
             pack_size,
             parent_id,
         };
@@ -125,8 +129,13 @@ impl SyncTranslation for BarcodeTranslation {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_name_links;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_barcode_translation() {
@@ -142,6 +151,35 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_barcode_push_merged() {
+        let (mock_data, connection, _, _) =
+            setup_all("test_barcode_push_merged", MockDataInserts::all()).await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Barcode.equal_to())),
+            )
+            .unwrap();
+
+        let translator = BarcodeTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            if translated[0].record.data["name_ID"] != json!(null) {
+                assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            }
         }
     }
 }

@@ -32,9 +32,10 @@ pub trait StocktakeLineServiceTrait: Sync + Send {
     fn get_stocktake_line(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         id: String,
     ) -> Result<Option<StocktakeLine>, RepositoryError> {
-        get_stocktake_line(ctx, id)
+        get_stocktake_line(ctx, id, store_id)
     }
 
     fn insert_stocktake_line(

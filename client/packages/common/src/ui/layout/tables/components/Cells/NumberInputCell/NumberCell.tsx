@@ -4,7 +4,10 @@ import { useFormatNumber } from '@common/intl';
 import { RecordWithId } from '@common/types';
 import { CellProps } from '../../../columns/types';
 
-export const PositiveNumberCell = <T extends RecordWithId>({
+// A non-interactive version of NumberInputCell. Basically the same as a plain
+// text display, but it formats the number nicely.
+
+export const NumberCell = <T extends RecordWithId>({
   column,
   rowData,
   isError,

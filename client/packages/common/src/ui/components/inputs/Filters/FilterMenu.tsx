@@ -29,7 +29,7 @@ interface GroupFilterDefinition {
   elements: FilterDefinition[];
 }
 
-type FilterDefinition =
+export type FilterDefinition =
   | TextFilterDefinition
   | EnumFilterDefinition
   | DateFilterDefinition

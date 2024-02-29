@@ -52,7 +52,7 @@ impl<'a> SyncBuffer<'a> {
         let order: Vec<&str> = match action {
             SyncBufferAction::Upsert => ordered_table_names.collect(),
             SyncBufferAction::Delete => ordered_table_names.rev().collect(),
-            SyncBufferAction::Merge => unimplemented!(),
+            SyncBufferAction::Merge => ordered_table_names.collect(),
         };
 
         let mut result = Vec::new();

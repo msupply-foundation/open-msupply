@@ -58,6 +58,13 @@ pub async fn put_sensors(
         Err(error) => return HttpResponse::InternalServerError().body(format!("{:#?}", error)),
     };
 
+    for result in &results {
+        if let Err(e) = result {
+            error!("Error upserting sensors {:#?}", e);
+            return HttpResponse::InternalServerError().body(format!("{:#?}", e));
+        }
+    }
+
     HttpResponse::Ok()
         .append_header(header::ContentType(mime::APPLICATION_JSON))
         .json(&results)

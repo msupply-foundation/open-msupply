@@ -1,4 +1,6 @@
 use super::{
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
+    name_row::{name, name::dsl as name_dsl},
     program_enrolment_row::program_enrolment::{self, dsl as program_enlrolment_dsl},
     program_row::{program, program::dsl as program_dsl},
     StorageConnection,
@@ -6,8 +8,8 @@ use super::{
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter},
-    DBType, DatetimeFilter, EqualFilter, Pagination, ProgramEnrolmentRow, ProgramRow,
-    RepositoryError, Sort, StringFilter,
+    DBType, DatetimeFilter, EqualFilter, NameLinkRow, NameRow, Pagination, ProgramEnrolmentRow,
+    ProgramRow, RepositoryError, Sort, StringFilter,
 };
 
 use diesel::{dsl::IntoBoxed, helper_types::InnerJoin, prelude::*};
@@ -94,12 +96,25 @@ pub enum ProgramEnrolmentSortField {
     Status,
 }
 
-pub type ProgramEnrolment = (ProgramEnrolmentRow, ProgramRow);
+type ProgramEnrolmentJoin = (ProgramEnrolmentRow, ProgramRow, (NameLinkRow, NameRow));
+
+#[derive(Clone)]
+pub struct ProgramEnrolment {
+    pub row: ProgramEnrolmentRow,
+    pub program_row: ProgramRow,
+    pub patient_row: NameRow,
+}
 
 pub type ProgramEnrolmentSort = Sort<ProgramEnrolmentSortField>;
 
-type BoxedProgramEnrolmentQuery =
-    IntoBoxed<'static, InnerJoin<program_enrolment::table, program::table>, DBType>;
+type BoxedProgramEnrolmentQuery = IntoBoxed<
+    'static,
+    InnerJoin<
+        InnerJoin<program_enrolment::table, program::table>,
+        InnerJoin<name_link::table, name::table>,
+    >,
+    DBType,
+>;
 
 pub struct ProgramEnrolmentRepository<'a> {
     connection: &'a StorageConnection,
@@ -134,7 +149,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 ProgramEnrolmentSortField::PatientId => {
-                    apply_sort!(query, sort, program_enlrolment_dsl::patient_id)
+                    apply_sort!(query, sort, name_dsl::id)
                 }
                 ProgramEnrolmentSortField::Type => {
                     apply_sort!(query, sort, program_enlrolment_dsl::document_type)
@@ -156,7 +171,15 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEnrolment>(&self.connection.connection)?;
+            .load::<ProgramEnrolmentJoin>(&self.connection.connection)?;
+        let result = result
+            .into_iter()
+            .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {
+                row,
+                program_row,
+                patient_row,
+            })
+            .collect();
 
         Ok(result)
     }
@@ -166,6 +189,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     ) -> BoxedProgramEnrolmentQuery {
         let mut query = program_enlrolment_dsl::program_enrolment
             .inner_join(program_dsl::program)
+            .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .into_boxed();
 
         if let Some(ProgramEnrolmentFilter {
@@ -180,7 +204,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
             program_name,
         }) = filter
         {
-            apply_equal_filter!(query, patient_id, program_enlrolment_dsl::patient_id);
+            apply_equal_filter!(query, patient_id, name_dsl::id);
             apply_equal_filter!(query, program_id, program_enlrolment_dsl::program_id);
             apply_equal_filter!(query, context, program_dsl::context_id);
             apply_date_time_filter!(

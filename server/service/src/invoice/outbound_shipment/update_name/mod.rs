@@ -124,7 +124,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_customer_join".to_string();
-                r.name_id = not_a_customer().id;
+                r.name_link_id = not_a_customer().id;
                 r.store_id = mock_store_b().id;
                 r.name_is_customer = false;
             })
@@ -226,7 +226,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_c().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Picked;
@@ -237,7 +237,7 @@ mod test {
             inline_init(|l: &mut InvoiceLineRow| {
                 l.id = "some_invoice_line_id_a".to_string();
                 l.invoice_id = invoice().id;
-                l.item_id = "item_a".to_string();
+                l.item_link_id = "item_a".to_string();
                 l.location_id = None;
                 l.stock_line_id = Some("stock_line_ci_d_siline_a".to_string());
                 l.batch = Some("stock_line_ci_d_siline_a".to_string());
@@ -248,7 +248,7 @@ mod test {
             inline_init(|l: &mut InvoiceLineRow| {
                 l.id = "some_invoice_line_id_b".to_string();
                 l.invoice_id = invoice().id;
-                l.item_id = "item_b".to_string();
+                l.item_link_id = "item_b".to_string();
                 l.location_id = None;
                 l.stock_line_id = Some("item_b_line_a".to_string());
                 l.batch = Some("item_b_line_a".to_string());
@@ -264,7 +264,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "customer_join".to_string();
-                r.name_id = customer().id;
+                r.name_link_id = customer().id;
                 r.store_id = mock_store_c().id;
                 r.name_is_customer = true;
             })
@@ -322,7 +322,10 @@ mod test {
                 .unwrap(),
             updated_invoice.invoice_row
         );
-        assert_ne!(updated_invoice.invoice_row.name_id, invoice().name_id);
+        assert_ne!(
+            updated_invoice.invoice_row.name_link_id,
+            invoice().name_link_id
+        );
         assert_eq!(
             updated_lines,
             vec![

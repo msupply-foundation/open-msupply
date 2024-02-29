@@ -5,8 +5,6 @@ import {
   DetailInputWithLabelRow,
   NumericTextInput,
   NumericTextInputProps,
-  NumUtils,
-  PositiveNumberInput,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
@@ -28,7 +26,6 @@ const UIComponent = (props: ControlProps) => {
   const inputProps: NumericTextInputProps & {
     onChange: (newValue: number) => void;
   } = {
-    type: 'number',
     InputProps: {
       sx: { '& .MuiInput-input': { textAlign: 'right' } },
     },
@@ -39,7 +36,7 @@ const UIComponent = (props: ControlProps) => {
     disabled: !props.enabled,
     error: error,
     helperText: errors,
-    value: localData ?? '',
+    value: localData,
   };
   return (
     <DetailInputWithLabelRow
@@ -48,15 +45,11 @@ const UIComponent = (props: ControlProps) => {
       labelWidthPercentage={FORM_LABEL_WIDTH}
       inputAlignment="start"
       Input={
-        schema.minimum !== undefined || schema.maximum !== undefined ? (
-          <PositiveNumberInput
-            {...inputProps}
-            min={schema.minimum ?? 0}
-            max={schema.maximum ?? NumUtils.MAX_SAFE_API_INTEGER}
-          />
-        ) : (
-          <NumericTextInput {...inputProps} />
-        )
+        <NumericTextInput
+          {...inputProps}
+          min={schema.minimum}
+          max={schema.maximum}
+        />
       }
     />
   );

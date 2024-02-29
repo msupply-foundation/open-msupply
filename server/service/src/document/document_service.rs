@@ -267,7 +267,7 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -295,7 +295,7 @@ mod document_service_test {
                     name: doc_name.to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    datetime: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -321,7 +321,7 @@ mod document_service_test {
                 name: doc_name.to_string(),
                 parents: vec!["invalid".to_string()],
                 author: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                     Utc,
                 ),
@@ -346,7 +346,7 @@ mod document_service_test {
                     name: doc_name.to_string(),
                     parents: vec![v1.id.clone()],
                     author: "me".to_string(),
-                    datetime: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                         NaiveDateTime::from_timestamp_opt(6000, 0).unwrap(),
                         Utc,
                     ),
@@ -375,7 +375,7 @@ mod document_service_test {
                     name: "test/noise".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    datetime: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                         NaiveDateTime::from_timestamp_opt(8000, 0).unwrap(),
                         Utc,
                     ),
@@ -419,7 +419,7 @@ mod document_service_test {
                     name: "test/doc1".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    datetime: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),
@@ -445,7 +445,7 @@ mod document_service_test {
                 name: "test/doc2".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -474,7 +474,7 @@ mod document_service_test {
                 name: "test/doc3".to_string(),
                 parents: vec![],
                 author: "me".to_string(),
-                datetime: DateTime::<Utc>::from_utc(
+                datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                     NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                     Utc,
                 ),
@@ -504,7 +504,7 @@ mod document_service_test {
                     name: "test/doc4".to_string(),
                     parents: vec![],
                     author: "me".to_string(),
-                    datetime: DateTime::<Utc>::from_utc(
+                    datetime: DateTime::<Utc>::from_naive_utc_and_offset(
                         NaiveDateTime::from_timestamp_opt(5000, 0).unwrap(),
                         Utc,
                     ),

@@ -4,7 +4,7 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemRowRepository, RequisitionLineRow,
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, ItemRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -81,7 +81,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let result = RequisitionLineRow {
             id: data.ID.to_string(),
             requisition_id: data.requisition_ID,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             requested_quantity: data.Cust_stock_order,
             suggested_quantity: data.suggested_quantity,
             supply_quantity: data.actualQuan,
@@ -127,7 +127,7 @@ impl SyncTranslation for RequisitionLineTranslation {
         let RequisitionLineRow {
             id,
             requisition_id,
-            item_id,
+            item_link_id,
             requested_quantity,
             suggested_quantity,
             supply_quantity,
@@ -143,6 +143,14 @@ impl SyncTranslation for RequisitionLineTranslation {
                 "Requisition line row not found: {}",
                 changelog.record_id
             )))?;
+
+        // The item_id from RequisitionLineRow is actually for an item_link_id, so we get the true item_id here
+        let item_id = ItemLinkRowRepository::new(connection)
+            .find_one_by_id(&item_link_id)?
+            .ok_or(anyhow::anyhow!(
+                "Item link ({item_link_id}) not found in requisition line ({id})"
+            ))?
+            .item_id;
 
         // Required for backward compatibility (authorisation web app uses this to display item name)
         let item_name = ItemRowRepository::new(connection)
@@ -189,8 +197,13 @@ impl SyncTranslation for RequisitionLineTranslation {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_item_links;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_requisition_line_translation() {
@@ -214,6 +227,41 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all stock_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (mock_data, connection, _, _) = setup_all(
+            "test_requisition_line_push_item_link_merged",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        merge_all_item_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(
+                    ChangelogFilter::new()
+                        .table_name(ChangelogTableName::RequisitionLine.equal_to()),
+                ),
+            )
+            .unwrap();
+
+        let translator = RequisitionLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }

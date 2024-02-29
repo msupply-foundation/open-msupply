@@ -1,5 +1,6 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLine,
+    StockLineRow,
 };
 
 use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
@@ -9,12 +10,16 @@ use super::{InsertStockOutLine, InsertStockOutLineError};
 pub fn generate(
     input: InsertStockOutLine,
     item_row: ItemRow,
-    batch: StockLineRow,
+    batch: StockLine,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
     let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
 
-    let update_batch = generate_batch_update(&input, batch.clone(), adjust_total_number_of_packs);
+    let update_batch = generate_batch_update(
+        &input,
+        batch.stock_line_row.clone(),
+        adjust_total_number_of_packs,
+    );
     let new_line = generate_line(input, item_row, batch, invoice);
 
     Ok((new_line, update_batch))
@@ -54,16 +59,20 @@ fn generate_line(
         code: item_code,
         ..
     }: ItemRow,
-    StockLineRow {
-        sell_price_per_pack,
-        cost_price_per_pack,
-        pack_size,
-        batch,
-        expiry_date,
-        location_id,
-        note: _,
+    StockLine {
+        stock_line_row:
+            StockLineRow {
+                sell_price_per_pack,
+                cost_price_per_pack,
+                pack_size,
+                batch,
+                expiry_date,
+                location_id,
+                note: _,
+                ..
+            },
         ..
-    }: StockLineRow,
+    }: StockLine,
     InvoiceRow {
         tax, currency_rate, ..
     }: InvoiceRow,
@@ -76,7 +85,7 @@ fn generate_line(
     InvoiceLineRow {
         id,
         invoice_id,
-        item_id,
+        item_link_id: item_id,
         location_id,
         pack_size,
         batch,

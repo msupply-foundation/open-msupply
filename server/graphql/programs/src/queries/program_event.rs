@@ -58,7 +58,7 @@ pub fn program_events(
         .into_iter()
         .map(|row| ProgramEventNode {
             store_id: store_id.clone(),
-            row,
+            program_event: row,
             allowed_ctx: allowed_ctx.clone(),
         })
         .collect();
@@ -116,7 +116,7 @@ pub fn active_program_events(
         .into_iter()
         .map(|row| ProgramEventNode {
             store_id: store_id.clone(),
-            row,
+            program_event: row,
             allowed_ctx: allowed_ctx.clone(),
         })
         .collect();

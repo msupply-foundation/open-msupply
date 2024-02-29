@@ -23,6 +23,11 @@ export type UpdateDisplaySettingsMutationVariables = Types.Exact<{
 
 export type UpdateDisplaySettingsMutation = { __typename: 'Mutations', updateDisplaySettings: { __typename: 'UpdateDisplaySettingsError', error: string } | { __typename: 'UpdateResult', theme?: string | null, logo?: string | null } };
 
+export type DatabaseSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type DatabaseSettingsQuery = { __typename: 'Queries', databaseSettings: { __typename: 'DatabaseSettingsNode', databaseType: Types.DatabaseType } };
+
 
 export const DisplaySettingsDocument = gql`
     query displaySettings($input: DisplaySettingsHash!) {
@@ -63,6 +68,15 @@ export const UpdateDisplaySettingsDocument = gql`
   }
 }
     `;
+export const DatabaseSettingsDocument = gql`
+    query databaseSettings {
+  databaseSettings {
+    ... on DatabaseSettingsNode {
+      databaseType
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -79,6 +93,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updateDisplaySettings(variables: UpdateDisplaySettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateDisplaySettingsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateDisplaySettingsMutation>(UpdateDisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateDisplaySettings', 'mutation');
+    },
+    databaseSettings(variables?: DatabaseSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DatabaseSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DatabaseSettingsQuery>(DatabaseSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'databaseSettings', 'query');
     }
   };
 }
@@ -131,5 +148,21 @@ export const mockPluginsQuery = (resolver: ResponseResolver<GraphQLRequest<Plugi
 export const mockUpdateDisplaySettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateDisplaySettingsMutationVariables>, GraphQLContext<UpdateDisplaySettingsMutation>, any>) =>
   graphql.mutation<UpdateDisplaySettingsMutation, UpdateDisplaySettingsMutationVariables>(
     'updateDisplaySettings',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDatabaseSettingsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ databaseSettings })
+ *   )
+ * })
+ */
+export const mockDatabaseSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DatabaseSettingsQueryVariables>, GraphQLContext<DatabaseSettingsQuery>, any>) =>
+  graphql.query<DatabaseSettingsQuery, DatabaseSettingsQueryVariables>(
+    'databaseSettings',
     resolver
   )

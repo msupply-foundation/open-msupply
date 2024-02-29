@@ -109,7 +109,7 @@ fn create_filtered_query(
     query
 }
 
-pub fn to_domain(
+fn to_domain(
     inventory_adjustment_reason_row: InventoryAdjustmentReasonRow,
 ) -> InventoryAdjustmentReason {
     InventoryAdjustmentReason {

@@ -225,7 +225,7 @@ impl NameNode {
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .created_datetime
-            .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
+            .map(|datetime| DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc))
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {

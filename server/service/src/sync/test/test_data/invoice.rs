@@ -12,7 +12,7 @@ use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::TestSyncPushRecord;
 
-const TRANSACT_1: (&'static str, &'static str) = (
+const TRANSACT_1: (&str, &str) = (
     "12e889c0f0d211eb8dddb54df6d741bc",
     r#"{
       "Colour": 0,
@@ -103,7 +103,7 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             id: TRANSACT_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
-            name_id: "name_store_a".to_string(),
+            name_link_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
             r#type: InvoiceRowType::InboundShipment,
@@ -132,9 +132,9 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
-            clinician_id: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: Some(1.32),
+            clinician_link_id: None,
         }),
     )
 }
@@ -191,7 +191,7 @@ fn transact_1_push_record() -> TestSyncPushRecord {
     }
 }
 
-const TRANSACT_2: (&'static str, &'static str) = (
+const TRANSACT_2: (&str, &str) = (
     "7c860d40f3f111eb9647790fe8518386",
     r#"{
         "Colour": 1710361,
@@ -276,7 +276,7 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             id: TRANSACT_2.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_id: "name_store_b".to_string(),
+            name_link_id: "name_store_b".to_string(),
             name_store_id: Some("store_b".to_string()),
             invoice_number: 4,
             r#type: InvoiceRowType::OutboundShipment,
@@ -299,9 +299,9 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
-            clinician_id: None,
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: Some(1.0),
+            clinician_link_id: None,
         }),
     )
 }
@@ -353,7 +353,7 @@ fn transact_2_push_record() -> TestSyncPushRecord {
     }
 }
 
-const TRANSACT_OM_FIELDS: (&'static str, &'static str) = (
+const TRANSACT_OM_FIELDS: (&str, &str) = (
     "Ac860d40f3f111eb9647790fe8518386",
     r#"{
         "Colour": 1710361,
@@ -448,7 +448,7 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             id: TRANSACT_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_id: "name_store_b".to_string(),
+            name_link_id: "name_store_b".to_string(),
             name_store_id: Some("store_b".to_string()),
             invoice_number: 4,
             r#type: InvoiceRowType::InventoryAddition,
@@ -495,9 +495,9 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
-            clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
+            clinician_link_id: None,
         }),
     )
 }
@@ -574,7 +574,7 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-const INVENTORY_ADDITION: (&'static str, &'static str) = (
+const INVENTORY_ADDITION: (&str, &str) = (
     "065AEF4C9C214C9AB4ED7BA0A1EC72C0",
     r#"{
         "name_ID": "invad",
@@ -670,16 +670,16 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             id: INVENTORY_ADDITION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
+            name_link_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
             invoice_number: 1,
             r#type: InvoiceRowType::InventoryAddition,
             status: InvoiceRowStatus::Verified,
-            created_datetime: NaiveDate::from_ymd_opt(2023, 01, 16)
+            created_datetime: NaiveDate::from_ymd_opt(2023, 1, 16)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             verified_datetime: Some(
-                NaiveDate::from_ymd_opt(2023, 01, 16)
+                NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -698,9 +698,9 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
-            clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
+            clinician_link_id: None,
         }),
     )
 }
@@ -720,18 +720,18 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             tax: Some(0.0),
             om_status: Some(InvoiceRowStatus::Verified),
             om_type: Some(InvoiceRowType::InventoryAddition),
-            entry_date: NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),
+            entry_date: NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
-            confirm_date: Some(NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2023, 01, 16)
+                NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
             verified_datetime: Some(
-                NaiveDate::from_ymd_opt(2023, 01, 16)
+                NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
@@ -758,7 +758,7 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
     }
 }
 
-const INVENTORY_REDUCTION: (&'static str, &'static str) = (
+const INVENTORY_REDUCTION: (&str, &str) = (
     "EE2EBC187C62453AADE221779FCFDABC",
     r#"{
         "name_ID": "invad",
@@ -854,16 +854,16 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             id: INVENTORY_REDUCTION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
-            name_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
+            name_link_id: INVENTORY_ADJUSTMENT_NAME_CODE.to_string(),
             invoice_number: 2,
             r#type: InvoiceRowType::InventoryReduction,
             status: InvoiceRowStatus::Verified,
-            created_datetime: NaiveDate::from_ymd_opt(2023, 01, 16)
+            created_datetime: NaiveDate::from_ymd_opt(2023, 1, 16)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             verified_datetime: Some(
-                NaiveDate::from_ymd_opt(2023, 01, 16)
+                NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -882,9 +882,9 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
-            clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
+            clinician_link_id: None,
         }),
     )
 }
@@ -904,18 +904,18 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             tax: Some(0.0),
             om_status: Some(InvoiceRowStatus::Verified),
             om_type: Some(InvoiceRowType::InventoryReduction),
-            entry_date: NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),
+            entry_date: NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),
             entry_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
-            confirm_date: Some(NaiveDate::from_ymd_opt(2023, 01, 16).unwrap(),),
+            confirm_date: Some(NaiveDate::from_ymd_opt(2023, 1, 16).unwrap(),),
             confirm_time: NaiveTime::from_hms_opt(0, 0, 0).unwrap(),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2023, 01, 16)
+                NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
             verified_datetime: Some(
-                NaiveDate::from_ymd_opt(2023, 01, 16)
+                NaiveDate::from_ymd_opt(2023, 1, 16)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
@@ -942,7 +942,7 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
     }
 }
 
-const PRESCRIPTION_1: (&'static str, &'static str) = (
+const PRESCRIPTION_1: (&str, &str) = (
     "prescription_1",
     r#"{
       "Colour": 0,
@@ -1033,7 +1033,7 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             id: PRESCRIPTION_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
-            name_id: "name_store_a".to_string(),
+            name_link_id: "name_store_a".to_string(),
             name_store_id: Some("store_a".to_string()),
             invoice_number: 1,
             r#type: InvoiceRowType::Prescription,
@@ -1062,9 +1062,9 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
-            clinician_id: None,
             currency_id: None,
             currency_rate: Some(1.0),
+            clinician_link_id: None,
         }),
     )
 }

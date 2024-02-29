@@ -60,12 +60,12 @@ impl SyncRecordTester for ClinicianRecordTester {
         let join_row = ClinicianStoreJoinRow {
             id: uuid(),
             store_id: store_row.id.clone(),
-            clinician_id: clinician_row.id.clone(),
+            clinician_link_id: clinician_row.id.clone(),
         };
         let join_json = json!({
             "ID": join_row.id,
             "store_ID": join_row.store_id,
-            "prescriber_ID": join_row.clinician_id,
+            "prescriber_ID": join_row.clinician_link_id,
         });
 
         result.push(TestStepData {

@@ -13,6 +13,7 @@ import {
   InsertStocktakeInput,
   setNullableInput,
   FilterByWithBoolean,
+  StocktakeLineSortFieldInput,
 } from '@openmsupply-client/common';
 import {
   Sdk,
@@ -27,6 +28,13 @@ export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<StocktakeRowFragment>;
+  filterBy: FilterByWithBoolean | null;
+};
+
+export type LinesParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<StocktakeLineFragment>;
   filterBy: FilterByWithBoolean | null;
 };
 
@@ -130,6 +138,27 @@ export const getStocktakeQueries = (sdk: Sdk, storeId: string) => ({
       }
 
       throw new Error('Could not find stocktake!');
+    },
+    lines: async (
+      id: string,
+      { first, offset, sortBy, filterBy }: LinesParams
+    ) => {
+      const result = await sdk.stocktakeLines({
+        stocktakeId: id,
+        storeId,
+        page: { offset, first },
+        sort: {
+          key: sortBy.key as StocktakeLineSortFieldInput,
+          desc: !!sortBy.isDesc,
+        },
+        filter: filterBy,
+      });
+
+      if (result?.stocktakeLines?.__typename === 'StocktakeLineConnector') {
+        return result.stocktakeLines;
+      }
+
+      throw new Error('Could not find stocktake lines!');
     },
   },
   updateLines: async (draftStocktakeLines: DraftStocktakeLine[]) => {

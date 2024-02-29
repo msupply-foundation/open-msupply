@@ -8,7 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineRowType};
+use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineRowType, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -65,7 +65,7 @@ impl InvoiceLineNode {
     }
     // Item
     pub async fn item_id(&self) -> &str {
-        &self.row().item_id
+        &self.item_row().id
     }
     pub async fn item_name(&self) -> &str {
         &self.row().item_name
@@ -75,12 +75,12 @@ impl InvoiceLineNode {
     }
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.row().item_id.clone()).await?;
+        let item_option = loader.load_one(self.item_row().id.clone()).await?;
 
         item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item ({}) linked to invoice_line ({})",
-                &self.row().item_id,
+                &self.item_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -212,6 +212,10 @@ impl InvoiceLineNode {
     pub fn row(&self) -> &InvoiceLineRow {
         &self.invoice_line.invoice_line_row
     }
+
+    pub fn item_row(&self) -> &ItemRow {
+        &self.invoice_line.item_row
+    }
 }
 
 #[cfg(test)]
@@ -251,7 +255,7 @@ mod test {
                             r.id = "line_id".to_string();
                             r.invoice_id = "line_invoice_id".to_string();
                             r.r#type = InvoiceLineRowType::Service;
-                            r.item_id = "line_item_id".to_string();
+                            r.item_link_id = "line_item_id".to_string();
                             r.item_name = "line_item_name".to_string();
                             r.item_code = "line_item_code".to_string();
                             r.pack_size = 1;
@@ -262,7 +266,7 @@ mod test {
                             r.note = None;
                         }),
                         invoice_row: InvoiceRow::default(),
-                        item_row_option: Some(ItemRow::default()),
+                        item_row: inline_init(|r: &mut ItemRow| r.id = "line_item_id".to_string()),
                         location_row_option: Some(inline_init(|r: &mut LocationRow| {
                             r.name = "line_location_name".to_string();
                         })),

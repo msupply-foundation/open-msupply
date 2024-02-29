@@ -1,6 +1,6 @@
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    StorageConnection,
+    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    Requisition, StorageConnection,
 };
 
 use crate::requisition::requisition_supply_status::RequisitionLineSupplyStatus;
@@ -14,10 +14,10 @@ pub fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &CreateRequisitionShipment,
-) -> Result<(RequisitionRow, Vec<RequisitionLineSupplyStatus>), OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.response_requisition_id)?
+) -> Result<(Requisition, Vec<RequisitionLineSupplyStatus>), OutError> {
+    let requisition = check_requisition_exists(connection, &input.response_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
-
+    let requisition_row = &requisition.requisition_row;
     if requisition_row.store_id != store_id {
         return Err(OutError::NotThisStoreRequisition);
     }
@@ -39,5 +39,5 @@ pub fn validate(
         return Err(OutError::NothingRemainingToSupply);
     }
 
-    Ok((requisition_row, remaing_to_supply))
+    Ok((requisition, remaing_to_supply))
 }

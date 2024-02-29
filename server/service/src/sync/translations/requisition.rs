@@ -2,8 +2,8 @@ use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
-    ProgramRowRepository, RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
-    StorageConnection, SyncBufferRow,
+    ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository, RequisitionRow,
+    RequisitionRowApprovalStatus, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -241,7 +241,7 @@ impl SyncTranslation for RequisitionTranslation {
             id: data.ID.to_string(),
             user_id: data.user_id,
             requisition_number: data.serial_number,
-            name_id: data.name_ID,
+            name_link_id: data.name_ID,
             store_id: data.store_ID,
             r#type,
             status,
@@ -291,34 +291,39 @@ impl SyncTranslation for RequisitionTranslation {
             return Ok(None);
         }
 
-        let RequisitionRow {
-            id,
-            user_id,
-            requisition_number,
-            name_id,
-            store_id,
-            r#type,
-            status,
-            created_datetime,
-            sent_datetime,
-            finalised_datetime,
-            colour,
-            comment,
-            their_reference,
-            max_months_of_stock,
-            min_months_of_stock,
-            linked_requisition_id,
-            expected_delivery_date,
-            approval_status,
-            program_id,
-            period_id,
-            order_type,
-        } = RequisitionRowRepository::new(connection)
-            .find_one_by_id(&changelog.record_id)?
-            .ok_or(anyhow::Error::msg(format!(
-                "Requisition row not found: {}",
-                changelog.record_id
-            )))?;
+        let Requisition {
+            requisition_row:
+                RequisitionRow {
+                    id,
+                    user_id,
+                    requisition_number,
+                    name_link_id: _,
+                    store_id,
+                    r#type,
+                    status,
+                    created_datetime,
+                    sent_datetime,
+                    finalised_datetime,
+                    colour,
+                    comment,
+                    their_reference,
+                    max_months_of_stock,
+                    min_months_of_stock,
+                    linked_requisition_id,
+                    expected_delivery_date,
+                    approval_status,
+                    program_id,
+                    period_id,
+                    order_type,
+                },
+            name_row,
+            ..
+        } = RequisitionRepository::new(connection)
+            .query_by_filter(
+                RequisitionFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
+            )?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
 
         let has_outbound_shipment = InvoiceRepository::new(&connection)
             .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
@@ -329,7 +334,7 @@ impl SyncTranslation for RequisitionTranslation {
             ID: id.clone(),
             user_id,
             serial_number: requisition_number,
-            name_ID: name_id,
+            name_ID: name_row.id,
             store_ID: store_id.clone(),
             r#type: to_legacy_type(&r#type),
             status: to_legacy_status(&r#type, &status, has_outbound_shipment).ok_or(
@@ -518,8 +523,13 @@ impl LegacyAuthorisationStatus {
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_name_links;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_requisition_translation() {
@@ -543,6 +553,36 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_push_merged() {
+        let (mock_data, connection, _, _) = setup_all(
+            "test_requisition_push_merged",
+            MockDataInserts::none().names().stores().requisitions(),
+        )
+        .await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Requisition.equal_to())),
+            )
+            .unwrap();
+
+        let translator = RequisitionTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
         }
     }
 }
