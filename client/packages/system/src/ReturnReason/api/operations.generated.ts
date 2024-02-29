@@ -6,10 +6,13 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type ReturnReasonFragment = { __typename: 'ReturnReasonNode', id: string, reason: string };
 
-export type ReturnReasonsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type ReturnReasonsQueryVariables = Types.Exact<{
+  sort?: Types.InputMaybe<Array<Types.ReturnReasonSortInput> | Types.ReturnReasonSortInput>;
+  filter?: Types.InputMaybe<Types.ReturnReasonFilterInput>;
+}>;
 
 
-export type ReturnReasonsQuery = { __typename: 'Queries', returnReasons: Array<{ __typename: 'ReturnReasonNode', id: string, reason: string }> };
+export type ReturnReasonsQuery = { __typename: 'Queries', returnReasons: { __typename: 'ReturnReasonConnector', totalCount: number, nodes: Array<{ __typename: 'ReturnReasonNode', id: string, reason: string }> } };
 
 export const ReturnReasonFragmentDoc = gql`
     fragment ReturnReason on ReturnReasonNode {
@@ -19,9 +22,16 @@ export const ReturnReasonFragmentDoc = gql`
 }
     `;
 export const ReturnReasonsDocument = gql`
-    query returnReasons {
-  returnReasons {
-    ...ReturnReason
+    query returnReasons($sort: [ReturnReasonSortInput!], $filter: ReturnReasonFilterInput) {
+  returnReasons(sort: $sort, filter: $filter) {
+    __typename
+    ... on ReturnReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ReturnReason
+      }
+    }
   }
 }
     ${ReturnReasonFragmentDoc}`;
@@ -45,6 +55,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockReturnReasonsQuery((req, res, ctx) => {
+ *   const { sort, filter } = req.variables;
  *   return res(
  *     ctx.data({ returnReasons })
  *   )

@@ -50,8 +50,8 @@ impl OutboundReturnLineNode {
         &self.return_line.id
     }
 
-    pub async fn comment(&self) -> &Option<String> {
-        &self.return_line.comment
+    pub async fn note(&self) -> &Option<String> {
+        &self.return_line.note
     }
 
     pub async fn reason_id(&self) -> &Option<String> {

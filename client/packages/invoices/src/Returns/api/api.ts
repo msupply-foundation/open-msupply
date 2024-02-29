@@ -177,6 +177,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
   insertOutboundReturn: async (input: OutboundReturnInput) => {
     const result = await sdk.insertOutboundReturn({
       input,
+      storeId,
     });
 
     const { insertOutboundReturn } = result;

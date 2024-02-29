@@ -404,8 +404,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
-            OutboundReturn => unimplemented!(),
-            InboundReturn => unimplemented!(),
+            OutboundReturn => InvoiceRowType::OutboundReturn,
+            InboundReturn => InvoiceRowType::InboundReturn,
         }
     }
 
