@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { CloseIcon, SearchIcon } from '@common/icons';
 import { useUrlQuery } from '@common/hooks';
 import { InlineSpinner } from '../../loading';
@@ -47,12 +47,7 @@ export const FILTER_WIDTH = 220;
 export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   const t = useTranslation();
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>(
-    flattenFilterDefinitions(filters).filter(
-      fil => Object.keys(urlQuery).includes(fil.urlParameter) || fil.isDefault
-    )
-  );
-
+  const [activeFilters, setActiveFilters] = useState<FilterDefinition[]>([]);
   const filterOptions = getFilterOptions(filters, activeFilters);
 
   const handleSelect = (
@@ -89,6 +84,21 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
   };
 
   const showRemoveOption = activeFilters.length > 0;
+
+  // updating active filters when the filters are changed
+  // this allows for dependent data to update the filter options
+  // i.e. choosing a filter option in one filter changes the options in another
+  useEffect(() => {
+    setActiveFilters(
+      flattenFilterDefinitions(filters).filter(
+        fil =>
+          Object.keys(urlQuery).includes(fil.urlParameter) ||
+          fil.isDefault ||
+          activeFilters.some(f => f.name === fil.name)
+      )
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
 
   return (
     <Box

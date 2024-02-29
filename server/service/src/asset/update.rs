@@ -72,12 +72,6 @@ pub fn validate(
             }
         }
     }
-    if let Some(store_id) = &asset_row.store_id {
-        // TODO: confirm, maybe people can just create them on central for any store
-        if ctx_store_id != store_id {
-            return Err(UpdateAssetError::AssetDoesNotBelongToCurrentStore);
-        }
-    }
 
     Ok(asset_row)
 }

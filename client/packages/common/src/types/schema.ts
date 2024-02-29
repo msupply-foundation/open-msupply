@@ -222,6 +222,114 @@ export type AllocateProgramNumberInput = {
 
 export type AllocateProgramNumberResponse = NumberNode;
 
+export type AssetCatalogueItemConnector = {
+  __typename: 'AssetCatalogueItemConnector';
+  nodes: Array<AssetCatalogueItemNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetCatalogueItemFilterInput = {
+  category?: InputMaybe<StringFilterInput>;
+  categoryId?: InputMaybe<EqualFilterStringInput>;
+  class?: InputMaybe<StringFilterInput>;
+  classId?: InputMaybe<EqualFilterStringInput>;
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  manufacturer?: InputMaybe<StringFilterInput>;
+  model?: InputMaybe<StringFilterInput>;
+  type?: InputMaybe<StringFilterInput>;
+  typeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type AssetCatalogueItemNode = {
+  __typename: 'AssetCatalogueItemNode';
+  assetCategoryId: Scalars['String']['output'];
+  assetClassId: Scalars['String']['output'];
+  assetTypeId: Scalars['String']['output'];
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  manufacturer?: Maybe<Scalars['String']['output']>;
+  model: Scalars['String']['output'];
+};
+
+export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
+
+export enum AssetCatalogueItemSortFieldInput {
+  Catalogue = 'catalogue',
+  Code = 'code',
+  Manufacturer = 'manufacturer',
+  Model = 'model'
+}
+
+export type AssetCatalogueItemSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetCatalogueItemSortFieldInput;
+};
+
+export type AssetCatalogueItemsResponse = AssetCatalogueItemConnector;
+
+export type AssetCategoriesResponse = AssetCategoryConnector;
+
+export type AssetCategoryConnector = {
+  __typename: 'AssetCategoryConnector';
+  nodes: Array<AssetCategoryNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetCategoryFilterInput = {
+  classId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetCategoryNode = {
+  __typename: 'AssetCategoryNode';
+  classId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AssetCategoryResponse = AssetCategoryNode | NodeError;
+
+export enum AssetCategorySortFieldInput {
+  Name = 'name'
+}
+
+export type AssetCategorySortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetCategorySortFieldInput;
+};
+
+export type AssetClassConnector = {
+  __typename: 'AssetClassConnector';
+  nodes: Array<AssetClassNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetClassFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetClassNode = {
+  __typename: 'AssetClassNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AssetClassResponse = AssetClassNode | NodeError;
+
+export enum AssetClassSortFieldInput {
+  Name = 'name'
+}
+
+export type AssetClassSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetClassSortFieldInput;
+};
+
+export type AssetClassesResponse = AssetClassConnector;
+
 export type AssetConnector = {
   __typename: 'AssetConnector';
   nodes: Array<AssetNode>;
@@ -272,6 +380,38 @@ export type AssetSortInput = {
   /** Sort query result by `key` */
   key: AssetSortFieldInput;
 };
+
+export type AssetTypeConnector = {
+  __typename: 'AssetTypeConnector';
+  nodes: Array<AssetTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetTypeFilterInput = {
+  categoryId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetTypeNode = {
+  __typename: 'AssetTypeNode';
+  categoryId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AssetTypeResponse = AssetTypeNode | NodeError;
+
+export enum AssetTypeSortFieldInput {
+  Name = 'name'
+}
+
+export type AssetTypeSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetTypeSortFieldInput;
+};
+
+export type AssetTypesResponse = AssetTypeConnector;
 
 export type AssetsResponse = AssetConnector;
 
@@ -3838,6 +3978,14 @@ export type Queries = {
   activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
+  assetCatalogueItem: AssetCatalogueItemResponse;
+  assetCatalogueItems: AssetCatalogueItemsResponse;
+  assetCategories: AssetCategoriesResponse;
+  assetCategory: AssetCategoryResponse;
+  assetClass: AssetClassResponse;
+  assetClasses: AssetClassesResponse;
+  assetType: AssetTypeResponse;
+  assetTypes: AssetTypesResponse;
   /** Query omSupply "assets" entries */
   assets: AssetsResponse;
   /**
@@ -3952,6 +4100,54 @@ export type QueriesActivityLogsArgs = {
   filter?: InputMaybe<ActivityLogFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ActivityLogSortInput>>;
+};
+
+
+export type QueriesAssetCatalogueItemArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetCatalogueItemsArgs = {
+  filter?: InputMaybe<AssetCatalogueItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetCatalogueItemSortInput>>;
+};
+
+
+export type QueriesAssetCategoriesArgs = {
+  filter?: InputMaybe<AssetCategoryFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetCategorySortInput>>;
+};
+
+
+export type QueriesAssetCategoryArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetClassArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetClassesArgs = {
+  filter?: InputMaybe<AssetClassFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetTypeArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetTypesArgs = {
+  filter?: InputMaybe<AssetTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetTypeSortInput>>;
 };
 
 

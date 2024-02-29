@@ -63,8 +63,6 @@ pub fn validate(
         }
     }
 
-    // TODO: Do we require Name, and or Code? I'm assuming user can leave them as empty strings if they want?
-
     Ok(())
 }
 

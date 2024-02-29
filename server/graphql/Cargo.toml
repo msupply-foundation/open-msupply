@@ -23,6 +23,7 @@ graphql_reports = { path = "reports" }
 graphql_sensor = { path = "sensor" }
 graphql_temperature_breach = { path = "temperature_breach" }
 graphql_temperature_log = { path = "temperature_log" }
+asset_catalogue = { path="catalogue" }
 graphql_temperature_notification = { path = "temperature_notification" }
 
 graphql_invoice = { path = "invoice" }
