@@ -1,2 +1,3 @@
 export * from './ListView';
-export { useAssetData } from './api';
+export { AssetCatalogueItemFragment, useAssetData } from './api';
+export { mapIdNameToOptions } from './utils';

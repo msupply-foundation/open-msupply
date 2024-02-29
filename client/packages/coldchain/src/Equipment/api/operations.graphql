@@ -47,3 +47,34 @@ query assetById($storeId: String!, $assetId: String!) {
     }
   }
 }
+
+mutation deleteAsset($assetId: String!, $storeId: String!) {
+  deleteAsset(assetId: $assetId, storeId: $storeId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation insertAsset($input: InsertAssetInput!, $storeId: String!) {
+  insertAsset(input: $input, storeId: $storeId) {
+    ... on InsertAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
+      name
+    }
+  }
+}
