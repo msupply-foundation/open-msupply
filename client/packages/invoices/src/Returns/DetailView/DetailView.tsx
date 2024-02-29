@@ -15,7 +15,7 @@ import {
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
-// import { Toolbar } from './Toolbar';
+import { Toolbar } from './Toolbar';
 // import { Footer } from './Footer';
 // import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
@@ -91,7 +91,7 @@ export const DetailView: FC = () => {
             />
           )} */}
 
-          {/* <Toolbar /> */}
+          <Toolbar />
           <DetailTabs tabs={tabs} />
           {/* <Footer /> */}
           {/* <SidePanel /> */}
