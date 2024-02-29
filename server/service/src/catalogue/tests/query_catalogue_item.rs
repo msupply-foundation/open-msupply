@@ -63,16 +63,20 @@ mod query_catalogue_item {
                 None,
                 Some(
                     AssetCatalogueItemFilter::new().id(EqualFilter::equal_any(vec![
-                        "f9e939e2-825d-4b22-a1d0-4983a8c4c2c0".to_owned(),
-                        "c3332de5-a553-4047-a7e4-8ad61325348f".to_owned(),
+                        "e2285ed2-1492-41c2-8933-79591c179ec5".to_owned(),
+                        "f04d5fd1-150d-4ee7-8011-151f74dc42e2".to_owned(),
                     ])),
                 ),
-                None,
+                Some(Sort {
+                    key: AssetCatalogueItemSortField::Code,
+                    desc: None,
+                }),
             )
             .unwrap();
 
         assert_eq!(result.count, 2);
         assert_eq!(result.rows[0].code, "E003/108");
+        assert_eq!(result.rows[1].code, "E003/116");
 
         // id equal_any - no matches
         result = service
@@ -97,7 +101,7 @@ mod query_catalogue_item {
                 None,
                 Some(
                     AssetCatalogueItemFilter::new()
-                        .category(StringFilter::equal_to("Refrigerators and Freezers")),
+                        .category(StringFilter::equal_to("Refrigerators and freezers")),
                 ),
                 None,
             )
@@ -140,13 +144,13 @@ mod query_catalogue_item {
                 None,
                 Some(
                     AssetCatalogueItemFilter::new()
-                        .r#type(StringFilter::equal_to("Icelined Refrigerator")),
+                        .r#type(StringFilter::equal_to("Ice-lined refrigerator")),
                 ),
                 None,
             )
             .unwrap();
 
-        assert_eq!(result.count, 15);
+        assert_eq!(result.count, 30);
 
         // type filter - equal like
         result = service
@@ -158,7 +162,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 151);
+        assert_eq!(result.count, 81);
 
         // type filter - no matches
         result = service
@@ -182,7 +186,7 @@ mod query_catalogue_item {
                 None,
                 Some(
                     AssetCatalogueItemFilter::new()
-                        .class(StringFilter::equal_to("Cold Chain Equipment")),
+                        .class(StringFilter::equal_to("Cold chain equipment")),
                 ),
                 None,
             )
@@ -237,7 +241,7 @@ mod query_catalogue_item {
                             "some string which does not match anything",
                         ))
                         .id(EqualFilter::equal_any(vec![
-                            "f9e939e2-825d-4b22-a1d0-4983a8c4c2c0".to_owned(),
+                            "9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8".to_owned(),
                         ])),
                 ),
                 None,
@@ -253,27 +257,31 @@ mod query_catalogue_item {
                 Some(
                     AssetCatalogueItemFilter::new()
                         .class(StringFilter::like("Cold Chain Equipment"))
-                        .category(StringFilter::equal_to("Refrigerators and Freezers"))
+                        .category(StringFilter::equal_to("Refrigerators and freezers"))
                         .r#type(StringFilter::equal_any(vec![
-                            "Icelined Refrigerator".to_owned(),
-                            "Vaccine Carrier LR 3L".to_owned(),
+                            "Ultralow freezer".to_owned(),
+                            "Vaccine carrier".to_owned(),
                         ])),
                 ),
-                None,
+                Some(Sort {
+                    key: AssetCatalogueItemSortField::Code,
+                    desc: None,
+                }),
             )
             .unwrap();
-        assert_eq!(result.count, 1);
-        assert_eq!(result.rows[0].code, "E003/108");
+        assert_eq!(result.count, 2);
+        assert_eq!(result.rows[0].code, "E003/125");
 
         // add query which combines special-type filters which conflict
+        // The category is "Refrigerators and freezers" but type queries are vaccine carrier related
         let result = service
             .get_asset_catalogue_items(
                 &context.connection,
                 None,
                 Some(
                     AssetCatalogueItemFilter::new()
-                        .class(StringFilter::like("Cold Chain Equipment"))
-                        .category(StringFilter::equal_to("Refrigerators and Freezers"))
+                        .class(StringFilter::like("Cold chain equipment"))
+                        .category(StringFilter::equal_to("Refrigerators and freezers"))
                         .r#type(StringFilter::equal_any(vec![
                             "Freeze-Free Vaccine Carrier Long Range".to_owned(),
                             "Vaccine Carrier LR 3L".to_owned(),
