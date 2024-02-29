@@ -49,7 +49,7 @@ pub fn update_asset(
 
 pub fn validate(
     connection: &StorageConnection,
-    ctx_store_id: &str,
+    _ctx_store_id: &str,
     input: &UpdateAsset,
 ) -> Result<AssetRow, UpdateAssetError> {
     let asset_row = match check_asset_exists(&input.id, connection)? {
