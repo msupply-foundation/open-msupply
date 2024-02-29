@@ -1,8 +1,8 @@
 use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
-mod asset;
-mod asset_log;
+pub mod asset;
+pub mod asset_log;
 mod barcode;
 mod clinician;
 pub mod common;
