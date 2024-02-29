@@ -31,6 +31,8 @@ type PricingGroupProps = {
 type CurrencyPricingProps = {
   pricing: PricingNode;
   currency?: CurrencyRowFragment | null;
+  otherPartyIsInternal: boolean;
+  currencyRate?: number | null;
   onChange: (value: CurrencyRowFragment | null) => void;
 };
 
@@ -150,6 +152,8 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
 export const ForeignCurrencyPrices = ({
   pricing,
   currency,
+  otherPartyIsInternal,
+  currencyRate,
   onChange,
 }: CurrencyPricingProps) => {
   const t = useTranslation('distribution');
@@ -165,8 +169,11 @@ export const ForeignCurrencyPrices = ({
         <PanelField>
           <CurrencyModal
             onChange={onChange}
-            isDisabled={!store?.preferences.issueInForeignCurrency}
+            isDisabled={
+              otherPartyIsInternal || !store?.preferences.issueInForeignCurrency
+            }
             currency={currency as CurrencyRowFragment}
+            currencyRate={currencyRate ?? 1}
           />
         </PanelField>
       </PanelRow>
@@ -176,7 +183,7 @@ export const ForeignCurrencyPrices = ({
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.rate')}</PanelLabel>
-        <PanelField>{currency?.rate ?? 1}</PanelField>
+        <PanelField>{currencyRate ?? 1}</PanelField>
       </PanelRow>
       <PanelRow>
         <PanelLabel>{t('heading.total')}</PanelLabel>
@@ -208,7 +215,9 @@ export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const { pricing, currency, update } = useOutbound.document.fields([
+  const { pricing, currency, otherParty, update, currencyRate } = useOutbound.document.fields([
+    'otherParty',
+    'currencyRate',
     'pricing',
     'currency',
   ]);
@@ -222,10 +231,11 @@ export const PricingSectionComponent = () => {
         <ForeignCurrencyPrices
           pricing={pricing}
           currency={currency}
+          otherPartyIsInternal={!!otherParty?.store}
+          currencyRate={currencyRate}
           onChange={value => {
             update({
               currency: value,
-              currencyRate: value?.rate,
             });
           }}
         />
