@@ -17,7 +17,7 @@ pub struct InboundReturnLine {
     pub pack_size: i32,
     pub number_of_packs_issued: f64,
     pub number_of_packs_returned: f64,
-    pub comment: String,
+    pub note: Option<String>,
     pub reason_id: Option<String>,
 }
 
@@ -36,7 +36,7 @@ pub fn generate_inbound_return_lines(
         pack_size: 20,
         number_of_packs_issued: 1000.0,
         number_of_packs_returned: 300.0,
-        comment: "Comment 1".to_string(),
+        note: Some("Comment 1".to_string()),
         reason_id: None,
         // No location or unit column for now
     }])

@@ -24,7 +24,6 @@ use super::{
 #[graphql(name = "UpdateOutboundShipmentLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    item_id: Option<String>,
     stock_line_id: Option<String>,
     number_of_packs: Option<f64>,
     total_before_tax: Option<f64>,
@@ -92,7 +91,6 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -101,7 +99,6 @@ impl UpdateInput {
         ServiceInput {
             id,
             r#type: Some(StockOutType::OutboundShipment),
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -173,8 +170,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | InvoiceTypeDoesNotMatch
         | NoInvoiceType
         | NumberOfPacksBelowOne
-        | ItemNotFound
-        | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) | UpdatedLineDoesNotExist => {
@@ -239,7 +234,6 @@ mod test {
         json!({
           "input": {
             "id": "n/a",
-            "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "totalBeforeTax": 0,
@@ -477,30 +471,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //ItemNotFound
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //ItemDoesNotMatchStockLine
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemDoesNotMatchStockLine)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //NotThisInvoiceLine
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::NotThisInvoiceLine(
@@ -575,7 +545,6 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     r#type: Some(StockOutType::OutboundShipment),
-                    item_id: Some("item_id input".to_string()),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     total_before_tax: Some(1.0),
@@ -588,7 +557,7 @@ mod test {
             Ok(InvoiceLine {
                 invoice_row: mock_outbound_shipment_c(),
                 invoice_line_row: mock_outbound_shipment_c_invoice_lines()[0].clone(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: Some(mock_location_1()),
                 stock_line_option: None,
             })
@@ -597,7 +566,6 @@ mod test {
         let variables = json!({
           "input": {
             "id": "id input",
-            "itemId": "item_id input",
             "stockLineId": "stock_line_id input",
             "numberOfPacks": 1.0,
             "totalBeforeTax": 1.0,

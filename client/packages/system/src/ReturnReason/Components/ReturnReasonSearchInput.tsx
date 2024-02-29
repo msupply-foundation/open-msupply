@@ -22,7 +22,7 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
   isError,
 }) => {
   const { data, isLoading } = useReturnReason.document.listAllActive();
-  const reasons = data ?? [];
+  const reasons = data?.nodes ?? [];
 
   const value = reasons.find(reason => reason.id === selectedReasonId);
 

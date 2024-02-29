@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import {
   FnUtils,
   OutboundReturnInput,
-  OutboundReturnLine,
+  OutboundReturnLineNode,
   OutboundReturnLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
@@ -13,9 +13,12 @@ export const useDraftOutboundReturnLines = (
   supplierId: string,
   itemId?: string
 ) => {
-  const [draftLines, setDraftLines] = React.useState<OutboundReturnLine[]>([]);
+  const [draftLines, setDraftLines] = React.useState<OutboundReturnLineNode[]>(
+    []
+  );
 
-  const lines = useReturns.lines.outboundReturnLines(stockLineIds, itemId);
+  const data = useReturns.lines.outboundReturnLines(stockLineIds, itemId);
+  const lines = data?.nodes;
 
   const { mutateAsync } = useReturns.document.insertOutboundReturn();
 
@@ -25,7 +28,7 @@ export const useDraftOutboundReturnLines = (
     setDraftLines(newDraftLines);
   }, [lines]);
 
-  const update = (patch: RecordPatch<OutboundReturnLine>) => {
+  const update = (patch: RecordPatch<OutboundReturnLineNode>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {
@@ -40,10 +43,9 @@ export const useDraftOutboundReturnLines = (
   const saveOutboundReturn = async () => {
     const outboundReturnLines: OutboundReturnLineInput[] = draftLines.map(
       line => {
-        const { id, reasonId, numberOfPacksToReturn, stockLineId, comment } =
-          line;
+        const { id, reasonId, numberOfPacksToReturn, stockLineId, note } = line;
 
-        return { id, stockLineId, reasonId, comment, numberOfPacksToReturn };
+        return { id, stockLineId, reasonId, note, numberOfPacksToReturn };
       }
     );
 

@@ -52,30 +52,30 @@ const AdditionalInfoSection: FC = () => {
   );
 };
 
-export const SidePanel: FC = () => {
+export const SidePanel = () => {
   const { success } = useNotification();
   const t = useTranslation('inventory');
-  const { data } = useStocktake.document.get();
   const { mutateAsync } = useStocktake.document.delete();
-  const canDelete = data ? canDeleteStocktake(data) : false;
+  const { data: stocktake } = useStocktake.document.get();
+  const canDelete = stocktake ? canDeleteStocktake(stocktake) : false;
 
   const copyToClipboard = () => {
     navigator.clipboard
-      .writeText(JSON.stringify(data, null, 4) ?? '')
+      .writeText(JSON.stringify(stocktake, null, 4) ?? '')
       .then(() => success('Copied to clipboard successfully')());
   };
 
   const deleteAction = async () => {
-    if (!data) return;
-    await mutateAsync([data]);
+    if (!stocktake) return;
+    await mutateAsync([stocktake]);
   };
 
   const onDelete = useDeleteConfirmation({
-    selectedRows: [data],
+    selectedRows: [stocktake],
     deleteAction,
     messages: {
       confirmMessage: t('messages.confirm-delete-stocktake', {
-        number: data?.stocktakeNumber,
+        number: stocktake?.stocktakeNumber,
       }),
       deleteSuccess: t('messages.deleted-stocktakes', {
         count: 1,

@@ -24,7 +24,7 @@ pub(crate) fn generate_inbound_shipment_lines(
             |InvoiceLineRow {
                  id: _,
                  invoice_id: _,
-                 item_id,
+                 item_link_id,
                  item_name,
                  item_code,
                  stock_line_id: _,
@@ -41,13 +41,14 @@ pub(crate) fn generate_inbound_shipment_lines(
                  total_before_tax: _,
                  tax,
                  inventory_adjustment_reason_id: _,
+                 return_reason_id: _,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
                 InvoiceLineRow {
                     id: uuid(),
                     invoice_id: inbound_shipment_id.to_string(),
-                    item_id,
+                    item_link_id,
                     item_name,
                     item_code,
                     batch,
@@ -70,6 +71,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                     location_id: None,
                     sell_price_per_pack: 0.0,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
                 }
             },
         )

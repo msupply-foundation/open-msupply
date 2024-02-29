@@ -13,7 +13,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, PricingRow};
+use repository::{ClinicianRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, PricingRow};
 
 use repository::{unknown_user, Invoice};
 use serde::Serialize;
@@ -153,37 +153,37 @@ impl InvoiceNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn allocated_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .allocated_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn picked_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .picked_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn shipped_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .shipped_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn delivered_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .delivered_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn verified_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .verified_datetime
-            .map(|v| DateTime::<Utc>::from_utc(v, Utc))
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn colour(&self) -> &Option<String> {
@@ -259,13 +259,13 @@ impl InvoiceNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to invoice ({})",
-                &self.row().name_id,
+                &self.name_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -273,8 +273,8 @@ impl InvoiceNode {
     }
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let clinician_id = if let Some(clinician_id) = &self.row().clinician_id {
-            clinician_id
+        let clinician_id = if let Some(clinician) = &self.clinician_row() {
+            &clinician.id
         } else {
             return Ok(None);
         };
@@ -289,15 +289,17 @@ impl InvoiceNode {
             .map(ClinicianNode::from_domain))
     }
 
-    pub async fn clinician_id(&self) -> &Option<String> {
-        &self.row().clinician_id
+    pub async fn clinician_id(&self) -> Option<String> {
+        self.clinician_row()
+            .as_ref()
+            .map(|clinician| clinician.id.clone())
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(self.row().name_id.clone())
+            .load_one(self.name_row().id.clone())
             .await?
             .map(|patient| PatientNode {
                 store_id: self.row().store_id.clone(),
@@ -306,7 +308,7 @@ impl InvoiceNode {
             })
             .ok_or(Error::new(format!(
                 "Failed to load patient: {}",
-                self.row().name_id
+                self.name_row().id
             )))?;
 
         Ok(Some(result))
@@ -319,6 +321,12 @@ impl InvoiceNode {
     }
     pub fn row(&self) -> &InvoiceRow {
         &self.invoice.invoice_row
+    }
+    pub fn name_row(&self) -> &NameRow {
+        &self.invoice.name_row
+    }
+    pub fn clinician_row(&self) -> &Option<ClinicianRow> {
+        &self.invoice.clinician_row
     }
 }
 
@@ -396,8 +404,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
-            OutboundReturn => unimplemented!(),
-            InboundReturn => unimplemented!(),
+            OutboundReturn => InvoiceRowType::OutboundReturn,
+            InboundReturn => InvoiceRowType::InboundReturn,
         }
     }
 
@@ -410,6 +418,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
+            InboundReturn => InvoiceNodeType::InboundReturn,
+            OutboundReturn => InvoiceNodeType::OutboundReturn,
         }
     }
 }
@@ -466,7 +476,7 @@ mod test {
         fn invoice() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_invoice_pricing".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
             })
         }
@@ -474,7 +484,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line1_id".to_string();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.total_after_tax = 110.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(10.0);
@@ -485,7 +495,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line2_id".to_string();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.total_after_tax = 50.0;
                 r.total_before_tax = 50.0;
                 r.tax = None;
@@ -496,7 +506,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.invoice_id = invoice().id;
                 r.id = "line3_id".to_string();
-                r.item_id = mock_item_c().id;
+                r.item_link_id = mock_item_c().id;
                 r.total_after_tax = 105.0;
                 r.total_before_tax = 100.0;
                 r.tax = Some(5.0);

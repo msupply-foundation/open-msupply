@@ -12,21 +12,22 @@ import {
   ItemRowFragment,
   ItemStockOnHandFragment,
 } from '@openmsupply-client/system';
-import { useStocktake } from '../../../api';
+import { StocktakeSummaryItem } from '../../../../types';
 
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
+  items: StocktakeSummaryItem[];
   mode: ModalMode | null;
   onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
 export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   item,
+  items,
   mode,
   onChangeItem,
 }) => {
   const t = useTranslation('inventory');
-  const { items } = useStocktake.line.rows();
   const disabled = mode === ModalMode.Update;
 
   return (

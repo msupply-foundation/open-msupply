@@ -3,15 +3,20 @@ use repository::{
         InventoryAdjustmentReason, InventoryAdjustmentReasonFilter,
         InventoryAdjustmentReasonRepository,
     },
-    EqualFilter, InventoryAdjustmentReasonType, RepositoryError, StockLineRow, StocktakeLineRow,
-    StocktakeLineRowRepository, StorageConnection,
+    EqualFilter, InventoryAdjustmentReasonType, RepositoryError, StockLineRow, StocktakeLine,
+    StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow, StorageConnection,
 };
 
 pub fn check_stocktake_line_exist(
     connection: &StorageConnection,
     id: &str,
-) -> Result<Option<StocktakeLineRow>, RepositoryError> {
-    StocktakeLineRowRepository::new(&connection).find_one_by_id(id)
+) -> Result<Option<StocktakeLine>, RepositoryError> {
+    Ok(StocktakeLineRepository::new(&connection)
+        .query_by_filter(
+            StocktakeLineFilter::new().id(EqualFilter::equal_to(id)),
+            None,
+        )?
+        .pop())
 }
 
 pub fn stocktake_reduction_amount(

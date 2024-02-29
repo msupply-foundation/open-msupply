@@ -8,7 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{StockLine, StockLineRow};
+use repository::{ItemRow, StockLine, StockLineRow};
 use service::{
     service_provider::ServiceContext, stock_line::query::get_stock_line, usize_to_u32, ListResult,
 };
@@ -29,7 +29,7 @@ impl StockLineNode {
         &self.row().id
     }
     pub async fn item_id(&self) -> &str {
-        &self.row().item_id
+        &self.item_row().id
     }
     pub async fn store_id(&self) -> &str {
         &self.row().store_id
@@ -81,12 +81,12 @@ impl StockLineNode {
     }
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.row().item_id.clone()).await?;
+        let item_option = loader.load_one(self.item_row().id.clone()).await?;
 
         item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item ({}) linked to stock_line ({})",
-                &self.row().item_id,
+                &self.item_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -126,6 +126,10 @@ impl StockLineNode {
 
     pub fn row(&self) -> &StockLineRow {
         &self.stock_line.stock_line_row
+    }
+
+    pub fn item_row(&self) -> &ItemRow {
+        &self.stock_line.item_row
     }
 }
 

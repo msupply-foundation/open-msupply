@@ -26,6 +26,7 @@ import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
 import { OutboundReturnEditModal } from '../../Returns';
+import { canReturnInboundLines } from '../../utils';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -52,7 +53,10 @@ export const DetailView: FC = () => {
   );
 
   const onReturn = async (selectedStockLineIds: string[]) => {
-    if (!selectedStockLineIds.length) {
+    if (!data || !canReturnInboundLines(data)) {
+      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      cantReturnSnack();
+    } else if (!selectedStockLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
     } else onOpenReturns(selectedStockLineIds);

@@ -24,7 +24,7 @@ pub fn generate(
         tax,
         note,
         item_code: item.code,
-        item_id: item.id,
+        item_link_id: item.id,
         item_name: name.unwrap_or(item.name),
         r#type: InvoiceLineRowType::Service,
         // Default
@@ -37,5 +37,6 @@ pub fn generate(
         sell_price_per_pack: 0.0,
         number_of_packs: 0.0,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
     })
 }

@@ -261,8 +261,8 @@ pub fn batch_outbound_shipment(
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_item_a, mock_name_store_b, mock_stock_line_a,
-            mock_store_a, MockDataInserts,
+            mock_inbound_shipment_a, mock_name_store_b, mock_stock_line_a, mock_store_a,
+            MockDataInserts,
         },
         test_db::setup_all,
         InvoiceLineRowRepository, InvoiceRowRepository,
@@ -301,7 +301,6 @@ mod test {
                 input.invoice_id = "new_id".to_string();
                 input.r#type = Some(StockOutType::OutboundShipment);
                 input.id = "new_line_id".to_string();
-                input.item_id = mock_item_a().id;
                 input.stock_line_id = mock_stock_line_a().id;
                 input.number_of_packs = 1.0
             })]),
