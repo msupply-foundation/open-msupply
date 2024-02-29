@@ -1,3 +1,4 @@
+use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
@@ -57,7 +58,7 @@ pub fn validate(
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
 
-    if patch.currency_id.is_some() && other_party.store_row.is_some() {
+    if patch.currency_id.is_some() && other_party.store_row.is_some() && !check_can_issue_in_foreign_currency(connection, store_id)? {
         return Err(CannotIssueForeignCurrencyForInternalSuppliers);
     }
 
