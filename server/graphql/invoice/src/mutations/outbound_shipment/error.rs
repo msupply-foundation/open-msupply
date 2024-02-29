@@ -76,11 +76,11 @@ impl LineDoesNotReferenceStockLine {
     }
 }
 
-pub struct CannotChangeForeignCurrency;
+pub struct CannotIssueInForeignCurrency;
 
 #[Object]
-impl CannotChangeForeignCurrency {
+impl CannotIssueInForeignCurrency {
     pub async fn description(&self) -> &'static str {
-        "Cannot change foreign currency"
+        "Cannot issue invoice in foreign currency"
     }
 }
