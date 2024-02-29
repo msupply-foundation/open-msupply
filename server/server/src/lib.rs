@@ -63,11 +63,16 @@ pub async fn start_server(
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
-        "Server starting in {} mode",
+        "{} server starting in {} mode on port {}",
+        match is_central_server() {
+            true => "Central",
+            false => "Remote",
+        },
         match is_develop() {
             true => "Development",
             false => "Production",
-        }
+        },
+        settings.server.port
     );
 
     // INITIALISE DATABASE AND CONNECTION
