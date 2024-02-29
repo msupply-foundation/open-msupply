@@ -24,7 +24,6 @@ pub struct UpdateInput {
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
 pub enum UpdateOutboundReturnStatusInput {
-    Allocated,
     Picked,
     Shipped,
 }
@@ -76,11 +75,12 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::NotAnOutboundReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
+        | ServiceError::CannotReverseInvoiceStatus
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
 
-        ServiceError::UpdatedReturnDoesNotExist | ServiceError::DatabaseError(_) => {
-            InternalError(formatted_error)
-        }
+        ServiceError::InvoiceLineHasNoStockLine
+        | ServiceError::UpdatedReturnDoesNotExist
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -106,7 +106,6 @@ impl UpdateOutboundReturnStatusInput {
     pub fn to_domain(&self) -> UpdateOutboundReturnStatus {
         use UpdateOutboundReturnStatus::*;
         match self {
-            UpdateOutboundReturnStatusInput::Allocated => Allocated,
             UpdateOutboundReturnStatusInput::Picked => Picked,
             UpdateOutboundReturnStatusInput::Shipped => Shipped,
         }

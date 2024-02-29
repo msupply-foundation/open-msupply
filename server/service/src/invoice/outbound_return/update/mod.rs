@@ -15,7 +15,6 @@ use self::generate::GenerateResult;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum UpdateOutboundReturnStatus {
-    Allocated,
     Picked,
     Shipped,
 }
@@ -34,8 +33,8 @@ pub enum UpdateOutboundReturnError {
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
     NotAnOutboundReturn,
-    // InvoiceLineHasNoStockLine,
-    // CannotReverseInvoiceStatus,
+    InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
+    CannotReverseInvoiceStatus,
     UpdatedReturnDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -47,8 +46,7 @@ pub fn update_outbound_return(
     let outbound_return = ctx
         .connection
         .transaction_sync(|connection| {
-            let (return_row, status_changed) =
-                validate(connection, &ctx.store_id, &input.outbound_return_id)?;
+            let (return_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
             let GenerateResult { updated_return } =
                 generate(connection, input.clone(), return_row)?;
 
