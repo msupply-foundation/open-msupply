@@ -117,7 +117,7 @@ export const Toolbar: FC<ToolbarProps> = ({
       ),
       value: encounter.clinician as Clinician,
     });
-  }, [encounter]);
+  }, [encounter, getLocalisedFullName]);
 
   const getDeleteConfirmation = useConfirmationModal({
     message: t('message.confirm-delete-encounter'),
