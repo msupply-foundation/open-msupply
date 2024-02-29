@@ -1,25 +1,19 @@
-use super::{
-    asset_catalogue_item_row::{
-        asset_catalogue_item, asset_catalogue_item::dsl as asset_catalogue_item_dsl,
-        AssetCatalogueItemRow,
-    },
-    asset_category::{AssetCategoryFilter, AssetCategoryRepository},
-    asset_class::{AssetClassFilter, AssetClassRepository},
-    asset_type::{AssetTypeFilter, AssetTypeRepository},
+use super::asset_catalogue_item_row::{
+    asset_catalogue_item, asset_catalogue_item::dsl as asset_catalogue_item_dsl,
+    AssetCatalogueItemRow,
 };
 
 use crate::{
+    asset_class_row::asset_class::dsl as asset_class_dsl,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     StorageConnection, StringFilter,
 };
 
+use crate::asset_category_row::asset_category::dsl as asset_category_dsl;
+use crate::asset_type_row::asset_type::dsl as asset_type_dsl;
+
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
-
-#[derive(PartialEq, Debug, Clone)]
-pub struct AssetCatalogueItem {
-    pub asset_catalogue_item_row: AssetCatalogueItemRow,
-}
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct AssetCatalogueItemFilter {
@@ -39,7 +33,7 @@ pub struct AssetCatalogueItemFilter {
 pub enum AssetCatalogueItemSortField {
     Catalogue,
     Code,
-    Make,
+    Manufacturer,
     Model,
 }
 
@@ -63,7 +57,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
     pub fn query_by_filter(
         &self,
         filter: AssetCatalogueItemFilter,
-    ) -> Result<Vec<AssetCatalogueItem>, RepositoryError> {
+    ) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -72,7 +66,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetCatalogueItemFilter>,
         sort: Option<AssetCatalogueItemSort>,
-    ) -> Result<Vec<AssetCatalogueItem>, RepositoryError> {
+    ) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
 
         if let Some(sort) = sort {
@@ -83,7 +77,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
                 AssetCatalogueItemSortField::Code => {
                     apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::code)
                 }
-                AssetCatalogueItemSortField::Make => {
+                AssetCatalogueItemSortField::Manufacturer => {
                     apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::manufacturer)
                 }
                 AssetCatalogueItemSortField::Model => {
@@ -93,41 +87,10 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         } else {
             query = query.order(asset_catalogue_item_dsl::id.asc())
         }
-        if let Some(f) = filter {
-            let AssetCatalogueItemFilter {
-                category,
-                class,
-                r#type,
-                ..
-            } = f;
-            if let Some(category) = category {
-                let category_ids = AssetCategoryRepository::new(&self.connection)
-                    .query_by_filter(AssetCategoryFilter::new().name(category))?
-                    .iter()
-                    .map(|c| c.id.clone())
-                    .collect::<Vec<String>>();
-                query =
-                    query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(category_ids));
-            }
 
-            if let Some(class) = class {
-                let class_ids = AssetClassRepository::new(&self.connection)
-                    .query_by_filter(AssetClassFilter::new().name(class))?
-                    .iter()
-                    .map(|c| c.id.clone())
-                    .collect::<Vec<String>>();
-                query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(class_ids));
-            }
+        // // Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
-            if let Some(asset_type) = r#type {
-                let type_ids = AssetTypeRepository::new(&self.connection)
-                    .query_by_filter(AssetTypeFilter::new().name(asset_type))?
-                    .iter()
-                    .map(|c| c.id.clone())
-                    .collect::<Vec<String>>();
-                query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(type_ids));
-            }
-        }
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
@@ -139,10 +102,8 @@ impl<'a> AssetCatalogueItemRepository<'a> {
 
 type BoxedAssetCatalogueItemQuery = asset_catalogue_item::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalogueItem {
-    AssetCatalogueItem {
-        asset_catalogue_item_row,
-    }
+pub fn to_domain(asset_catalogue_item_row: AssetCatalogueItemRow) -> AssetCatalogueItemRow {
+    asset_catalogue_item_row
 }
 
 fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAssetCatalogueItemQuery {
@@ -154,11 +115,11 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             code,
             manufacturer,
             model,
-            category: _, // Handled in query() function
+            category,
             category_id,
-            class: _, // Handled in query() function
+            class,
             class_id,
-            r#type: _, // Handled in query() function
+            r#type,
             type_id,
         } = f;
 
@@ -173,6 +134,29 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
         );
         apply_equal_filter!(query, class_id, asset_catalogue_item_dsl::asset_class_id);
         apply_equal_filter!(query, type_id, asset_catalogue_item_dsl::asset_type_id);
+
+        if let Some(class_filter) = class {
+            let mut sub_query = asset_class_dsl::asset_class
+                .select(asset_class_dsl::id)
+                .into_boxed();
+            apply_string_filter!(sub_query, Some(class_filter), asset_class_dsl::name);
+            query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(sub_query));
+        }
+
+        if let Some(r#type_filter) = r#type {
+            let mut sub_query = asset_type_dsl::asset_type
+                .select(asset_type_dsl::id)
+                .into_boxed();
+            apply_string_filter!(sub_query, Some(r#type_filter), asset_type_dsl::name);
+            query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(sub_query));
+        }
+        if let Some(category_filter) = category {
+            let mut sub_query = asset_category_dsl::asset_category
+                .select(asset_category_dsl::id)
+                .into_boxed();
+            apply_string_filter!(sub_query, Some(category_filter), asset_category_dsl::name);
+            query = query.filter(asset_catalogue_item_dsl::asset_category_id.eq_any(sub_query));
+        }
     }
     query
 }

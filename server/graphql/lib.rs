@@ -7,6 +7,7 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
+use asset_catalogue::AssetCatalogueQueries;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use async_graphql::{MergedObject, Response};
@@ -20,6 +21,8 @@ use graphql_general::{
     DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
     InitialisationQueries,
 };
+
+use graphql_asset::{AssetMutations, AssetQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -72,6 +75,8 @@ pub struct Queries(
     pub FormSchemaQueries,
     pub ClinicianQueries,
     pub PluginQueries,
+    pub AssetCatalogueQueries,
+    pub AssetQueries,
 );
 
 impl Queries {
@@ -95,6 +100,8 @@ impl Queries {
             FormSchemaQueries,
             ClinicianQueries,
             PluginQueries,
+            AssetCatalogueQueries,
+            AssetQueries,
         )
     }
 }
@@ -117,6 +124,7 @@ pub struct Mutations(
     pub FormSchemaMutations,
     pub PluginMutations,
     pub TemperatureBreachMutations,
+    pub AssetMutations,
 );
 
 impl Mutations {
@@ -138,6 +146,7 @@ impl Mutations {
             FormSchemaMutations,
             PluginMutations,
             TemperatureBreachMutations,
+            AssetMutations,
         )
     }
 }

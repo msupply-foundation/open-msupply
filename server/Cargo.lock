@@ -596,6 +596,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "asset_catalogue"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anymap",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.196",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
 name = "astro-dnssd"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2252,10 +2275,12 @@ dependencies = [
  "actix-web",
  "anymap",
  "assert-json-diff",
+ "asset_catalogue",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
+ "graphql_asset",
  "graphql_batch_mutations",
  "graphql_clinician",
  "graphql_core",
@@ -2285,6 +2310,29 @@ dependencies = [
  "service",
  "thiserror",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_asset"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anymap",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.196",
+ "serde_json",
+ "service",
+ "thiserror",
  "util",
 ]
 

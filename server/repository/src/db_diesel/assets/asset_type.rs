@@ -11,8 +11,6 @@ use crate::{
     DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type AssetType = AssetTypeRow;
-
 pub enum AssetTypeSortField {
     Name,
 }
@@ -66,14 +64,17 @@ impl<'a> AssetTypeRepository<'a> {
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: AssetTypeFilter) -> Result<Option<AssetType>, RepositoryError> {
+    pub fn query_one(
+        &self,
+        filter: AssetTypeFilter,
+    ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
         &self,
         filter: AssetTypeFilter,
-    ) -> Result<Vec<AssetType>, RepositoryError> {
+    ) -> Result<Vec<AssetTypeRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
@@ -82,7 +83,7 @@ impl<'a> AssetTypeRepository<'a> {
         pagination: Pagination,
         filter: Option<AssetTypeFilter>,
         sort: Option<AssetTypeSort>,
-    ) -> Result<Vec<AssetType>, RepositoryError> {
+    ) -> Result<Vec<AssetTypeRow>, RepositoryError> {
         let mut query = create_filtered_query(filter);
 
         if let Some(sort) = sort {
@@ -105,13 +106,13 @@ impl<'a> AssetTypeRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetType>(&self.connection.connection)?;
+        let result = final_query.load::<AssetTypeRow>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(asset_type_row: AssetTypeRow) -> AssetType {
+fn to_domain(asset_type_row: AssetTypeRow) -> AssetTypeRow {
     asset_type_row
 }
 
@@ -138,10 +139,8 @@ fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery
 mod tests {
     use crate::{
         assets::{
-            asset_category_row::AssetCategoryRow,
-            asset_category_row::AssetCategoryRowRepository,
-            asset_class_row::AssetClassRow,
-            asset_class_row::AssetClassRowRepository,
+            asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
+            asset_class_row::{AssetClassRow, AssetClassRowRepository},
             asset_type::AssetTypeRepository,
             asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
         },

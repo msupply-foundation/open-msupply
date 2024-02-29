@@ -1,6 +1,7 @@
 {
   "admin": "Admin",
   "app": "mSupply",
+  "assets": "Assets",
   "auth.alert-title": "Authentication Error",
   "auth.no-store-assigned": "You are not assigned to any stores. Please login as a different user, or contact your administrator.",
   "auth.permission-denied": "Permission denied",
