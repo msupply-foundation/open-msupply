@@ -13,6 +13,7 @@ pub mod asset;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
+pub mod catalogue;
 pub mod clinician;
 mod common_stock;
 pub mod dashboard;
