@@ -76,9 +76,10 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
         | ServiceError::CannotReverseInvoiceStatus
+        | ServiceError::CannotChangeStatusOfInvoiceOnHold
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
 
-        ServiceError::InvoiceLineHasNoStockLine
+        ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedReturnDoesNotExist
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
