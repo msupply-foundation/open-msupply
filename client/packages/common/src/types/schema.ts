@@ -1471,11 +1471,11 @@ export type InboundReturnInput = {
 export type InboundReturnLine = {
   __typename: 'InboundReturnLine';
   batch?: Maybe<Scalars['String']['output']>;
-  comment: Scalars['String']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
   numberOfPacksIssued: Scalars['Float']['output'];
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
@@ -1484,8 +1484,8 @@ export type InboundReturnLine = {
 };
 
 export type InboundReturnLineInput = {
-  comment: Scalars['String']['input'];
   id: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
@@ -2175,6 +2175,7 @@ export type InvoiceLineNode = {
   numberOfPacks: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   pricing: PricingNode;
+  returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
   taxPercentage?: Maybe<Scalars['Float']['output']>;
@@ -2955,6 +2956,7 @@ export type MutationsInsertLocationArgs = {
 
 export type MutationsInsertOutboundReturnArgs = {
   input: OutboundReturnInput;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -3453,8 +3455,8 @@ export type OutboundReturnLineConnector = {
 };
 
 export type OutboundReturnLineInput = {
-  comment: Scalars['String']['input'];
   id: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksToReturn: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
@@ -3464,11 +3466,11 @@ export type OutboundReturnLineNode = {
   __typename: 'OutboundReturnLineNode';
   availableNumberOfPacks: Scalars['Float']['output'];
   batch?: Maybe<Scalars['String']['output']>;
-  comment?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
   numberOfPacksToReturn: Scalars['Int']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
@@ -3950,7 +3952,7 @@ export type Queries = {
   requisitionLineChart: RequisitionLineChartResponse;
   requisitions: RequisitionsResponse;
   responseRequisitionStats: RequisitionLineStatsResponse;
-  returnReasons: Array<ReturnReasonNode>;
+  returnReasons: ReturnReasonResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
   stockCounts: StockCounts;
@@ -4309,6 +4311,13 @@ export type QueriesRequisitionsArgs = {
 export type QueriesResponseRequisitionStatsArgs = {
   requisitionLineId: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesReturnReasonsArgs = {
+  filter?: InputMaybe<ReturnReasonFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<ReturnReasonSortInput>>;
 };
 
 
@@ -4778,11 +4787,39 @@ export type ResponseStoreStatsNode = {
   stockOnOrder: Scalars['Int']['output'];
 };
 
+export type ReturnReasonConnector = {
+  __typename: 'ReturnReasonConnector';
+  nodes: Array<ReturnReasonNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ReturnReasonFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
 export type ReturnReasonNode = {
   __typename: 'ReturnReasonNode';
   id: Scalars['String']['output'];
   isActive: Scalars['Boolean']['output'];
   reason: Scalars['String']['output'];
+};
+
+export type ReturnReasonResponse = ReturnReasonConnector;
+
+export enum ReturnReasonSortFieldInput {
+  Id = 'id',
+  Reason = 'reason'
+}
+
+export type ReturnReasonSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: ReturnReasonSortFieldInput;
 };
 
 export type SensorAxisNode = {

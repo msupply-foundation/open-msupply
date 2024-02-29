@@ -309,8 +309,15 @@ impl GeneralQueries {
         generate_outbound_return_lines(ctx, store_id, input)
     }
 
-    pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
-        return_reasons()
+    pub async fn return_reasons(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ReturnReasonFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ReturnReasonSortInput>>,
+    ) -> Result<ReturnReasonResponse> {
+        return_reasons(&ctx, page, filter, sort)
     }
 
     pub async fn generate_inbound_return_lines(

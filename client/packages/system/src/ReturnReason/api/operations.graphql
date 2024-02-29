@@ -4,8 +4,18 @@ fragment ReturnReason on ReturnReasonNode {
   reason
 }
 
-query returnReasons {
-  returnReasons {
-    ...ReturnReason
+query returnReasons(
+  $sort: [ReturnReasonSortInput!]
+  $filter: ReturnReasonFilterInput
+) {
+  returnReasons(sort: $sort, filter: $filter) {
+    __typename
+    ... on ReturnReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ReturnReason
+      }
+    }
   }
 }
