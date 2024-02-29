@@ -2,13 +2,13 @@ import {
   useTableStore,
   useTranslation,
   useQueryClient,
-  InvoiceNodeStatus,
   useDeleteConfirmation,
   useUrlQueryParams,
   useMutation,
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { useReturnsApi } from '../utils/useReturnsApi';
+import { canDeleteOutboundReturn } from 'packages/invoices/src/utils';
 
 export const useOutboundDeleteRows = () => {
   const queryClient = useQueryClient();
@@ -36,15 +36,12 @@ export const useOutboundDeleteRows = () => {
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction,
-    // TODO: can probably use something like the outboundShipment canDeleteInvoice method once we know what statuses we'll allow here
-    canDelete: selectedRows.every(
-      ({ status }) => status === InvoiceNodeStatus.New
-    ),
+    canDelete: selectedRows.every(canDeleteOutboundReturn),
     messages: {
       confirmMessage: t('messages.confirm-delete-returns', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-shipments', {
+      deleteSuccess: t('messages.deleted-returns', {
         count: selectedRows.length,
       }),
     },
