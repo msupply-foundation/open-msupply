@@ -11,7 +11,7 @@ import {
   Platform,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
-import { assetCategoryListItemsToCsv } from '../utils';
+import { assetsToCsv } from '../utils';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
@@ -25,8 +25,8 @@ export const AppBarButtonsComponent = () => {
       return;
     }
 
-    const csv = assetCategoryListItemsToCsv(data.nodes, t);
-    FileUtils.exportCSV(csv, t('filename.asset-categories'));
+    const csv = assetsToCsv(data.nodes, t);
+    FileUtils.exportCSV(csv, t('filename.cold-chain-equipment'));
     success(t('success'))();
   };
 

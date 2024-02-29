@@ -52,8 +52,8 @@ query assetCatalogueItemById(
   }
 }
 
-query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
-  assetClasses(storeId: $storeId, sort: $sort) {
+query assetClasses($sort: AssetClassSortInput) {
+  assetClasses(sort: $sort) {
     ... on AssetClassConnector {
       nodes {
         id
@@ -64,8 +64,8 @@ query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
   }
 }
 
-query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
-  assetTypes(storeId: $storeId, sort: $sort) {
+query assetTypes($sort: AssetTypeSortInput) {
+  assetTypes(sort: $sort) {
     ... on AssetTypeConnector {
       nodes {
         id
@@ -77,8 +77,8 @@ query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
   }
 }
 
-query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
-  assetCategories(storeId: $storeId, sort: $sort) {
+query assetCategories($sort: AssetCategorySortInput) {
+  assetCategories(sort: $sort) {
     ... on AssetCategoryConnector {
       nodes {
         id

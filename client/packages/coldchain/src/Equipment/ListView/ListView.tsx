@@ -8,7 +8,7 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
-  TooltipTextCell,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -20,32 +20,47 @@ const AssetListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'code', dir: 'asc' },
-    filters: [
-      { key: 'manufacturer' },
-      { key: 'model' },
-      { key: 'category' },
-      { key: 'class' },
-      { key: 'type' },
-    ],
+    initialSort: { key: 'name', dir: 'asc' },
   });
+
   const { data, isError, isLoading } = useAssets.document.list();
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
+  const { localisedDate } = useFormatDateTime();
 
   const columns = useColumns<AssetFragment>(
     [
-      ['code', { width: 150 }],
+      ['code', { width: 150, sortable: false }],
+      // {
+      //   key: 'manufacturer',
+      //   Cell: TooltipTextCell,
+      //   maxWidth: 350,
+      //   label: 'label.manufacturer',
+      //   sortable: false,
+      // },
+      // {
+      //   key: 'model',
+      //   label: 'label.model',
+      //   sortable: false,
+      // },
       {
-        key: 'manufacturer',
-        Cell: TooltipTextCell,
-        maxWidth: 350,
-        label: 'label.manufacturer',
+        key: 'name',
+        label: 'label.name',
       },
       {
-        key: 'model',
-        label: 'label.model',
+        key: 'status',
+        label: 'label.status',
+        sortable: false,
+      },
+      {
+        key: 'serialNumber',
+        label: 'label.serial',
+      },
+      {
+        key: 'installationDate',
+        label: 'label.installation-date',
+        formatter: dateString => localisedDate(String(dateString)),
       },
     ],
     {

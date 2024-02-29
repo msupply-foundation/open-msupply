@@ -7,11 +7,11 @@ export const useAssets = () => {
       { key: 'name' },
       { key: 'model' },
       { key: 'code' },
-      { key: 'installationDate' },
-      { key: 'replacementDate' },
+      { key: 'installationDate', condition: 'equalTo' },
+      { key: 'replacementDate', condition: 'equalTo' },
       { key: 'serialNumber' },
-      { key: 'categoryId' },
-      { key: 'typeId' },
+      { key: 'categoryId', condition: 'equalTo' },
+      { key: 'typeId', condition: 'equalTo' },
     ],
   });
   const api = useAssetApi();
