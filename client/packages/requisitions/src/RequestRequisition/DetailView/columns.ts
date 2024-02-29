@@ -54,7 +54,7 @@ export const useRequestColumns = () => {
     [
       'itemCode',
       {
-        width: 100,
+        width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
       },
@@ -76,7 +76,6 @@ export const useRequestColumns = () => {
         getItemId: r => r.itemId,
         getUnitName: r => r.item.unitName || null,
       }),
-      width: 130,
     },
     {
       key: 'defaultPackSize',
