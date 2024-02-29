@@ -56,8 +56,8 @@ query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
   assetClasses(storeId: $storeId, sort: $sort) {
     ... on AssetClassConnector {
       nodes {
-        name
         id
+        name
       }
       totalCount
     }
@@ -81,9 +81,9 @@ query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
   assetCategories(storeId: $storeId, sort: $sort) {
     ... on AssetCategoryConnector {
       nodes {
-        classId
         id
         name
+        classId
       }
       totalCount
     }
