@@ -4,13 +4,14 @@ import {
   ExpiryDateCell,
   CheckCell,
   CurrencyCell,
-  Column,
   useCurrency,
   LocationCell,
+  Column,
   NumberCell,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { PackVariantCell } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
   onChange,
@@ -43,15 +44,6 @@ export const useOutboundLineEditColumns = ({
           Cell: LocationCell,
         },
       ],
-      ['packSize', { width: 90 }],
-      [
-        'sellPricePerPack',
-        {
-          Cell: CurrencyCell,
-          formatter: sellPrice => c(Number(sellPrice)).format(),
-          width: 120,
-        },
-      ],
       {
         label: 'label.on-hold',
         key: 'onHold',
@@ -60,6 +52,14 @@ export const useOutboundLineEditColumns = ({
         align: ColumnAlign.Center,
         width: 80,
       },
+      [
+        'sellPricePerPack',
+        {
+          Cell: CurrencyCell,
+          formatter: sellPrice => c(Number(sellPrice)).format(),
+          width: 120,
+        },
+      ],
       {
         Cell: NumberCell,
         label: 'label.in-store',
@@ -75,6 +75,16 @@ export const useOutboundLineEditColumns = ({
         align: ColumnAlign.Right,
         width: 85,
         accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+      },
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => row?.item.id,
+          getPackSizes: row => [row.packSize ?? 1],
+          getUnitName: row => row?.item.unitName ?? null,
+        }),
       },
       [
         'unitQuantity',

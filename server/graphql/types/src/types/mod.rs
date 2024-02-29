@@ -105,6 +105,8 @@ pub use self::repack::*;
 pub mod program;
 pub use self::program::*;
 
+pub mod pack_variant;
+pub use self::pack_variant::*;
 pub mod plugin_data;
 pub use self::plugin_data::*;
 

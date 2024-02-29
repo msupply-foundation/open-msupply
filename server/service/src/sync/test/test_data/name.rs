@@ -1,13 +1,12 @@
 use crate::sync::{
     test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{
-        name::{LegacyNameRow, LegacyNameType},
-        LegacyTableName, PullUpsertRecord,
-    },
+    translations::name::{LegacyNameRow, LegacyNameType},
 };
 use chrono::NaiveDate;
-use repository::{Gender, NameRow, NameType};
+use repository::{Gender, NameRow, NameRowDelete, NameType};
 use serde_json::json;
+
+const TABLE_NAME: &'static str = "name";
 
 const NAME_1: (&'static str, &'static str) = (
     "1FB32324AF8049248D929CFB35F255BA",
@@ -109,9 +108,9 @@ const NAME_1: (&'static str, &'static str) = (
 
 fn name_1() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+        TABLE_NAME,
         NAME_1,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_1.0.to_owned(),
             name: "General".to_owned(),
             code: "GEN".to_owned(),
@@ -145,7 +144,7 @@ fn name_1() -> TestSyncPullRecord {
             ),
             date_of_death: None,
             custom_data_string: None,
-        }),
+        },
     )
 }
 
@@ -249,9 +248,9 @@ const NAME_2: (&'static str, &'static str) = (
 
 fn name_2() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+        TABLE_NAME,
         NAME_2,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_2.0.to_owned(),
             name: "Birch Store".to_owned(),
             code: "SNA".to_owned(),
@@ -279,7 +278,7 @@ fn name_2() -> TestSyncPullRecord {
             national_health_number: None,
             date_of_death: None,
             custom_data_string: None,
-        }),
+        },
     )
 }
 
@@ -383,9 +382,9 @@ const NAME_3: (&'static str, &'static str) = (
 
 fn name_3() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+        TABLE_NAME,
         NAME_3,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_3.0.to_owned(),
             name: "Birch Store 2".to_owned(),
             code: "SNA".to_owned(),
@@ -413,7 +412,7 @@ fn name_3() -> TestSyncPullRecord {
             national_health_number: Some("NHN002".to_string()),
             date_of_death: None,
             custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
-        }),
+        },
     )
 }
 
@@ -518,9 +517,9 @@ const NAME_4: (&'static str, &'static str) = (
 
 fn name_4() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+        TABLE_NAME,
         NAME_4,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_4.0.to_string(),
             name: "Moemoe, Alex".to_string(),
             code: "00102/19/00".to_string(),
@@ -553,13 +552,13 @@ fn name_4() -> TestSyncPullRecord {
             national_health_number: Some("NHN003".to_string()),
             date_of_death: None,
             custom_data_string: None,
-        }),
+        },
     )
 }
 
 fn name_push_record_1() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::NAME.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: NAME_1.0.to_string(),
         push_data: json!(LegacyNameRow {
             id: NAME_1.0.to_owned(),
@@ -602,7 +601,7 @@ fn name_push_record_1() -> TestSyncPushRecord {
 
 fn name_push_record_2() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::NAME.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: NAME_4.0.to_string(),
         push_data: json!(LegacyNameRow {
             id: NAME_4.0.to_string(),
@@ -645,6 +644,14 @@ fn name_push_record_2() -> TestSyncPushRecord {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![name_1(), name_2(), name_3(), name_4()]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+    vec![TestSyncPullRecord::new_pull_delete(
+        TABLE_NAME,
+        NAME_4.0,
+        NameRowDelete(NAME_4.0.to_string()),
+    )]
 }
 
 pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {

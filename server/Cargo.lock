@@ -2289,6 +2289,7 @@ dependencies = [
  "graphql_invoice",
  "graphql_invoice_line",
  "graphql_location",
+ "graphql_pack_variant",
  "graphql_plugin",
  "graphql_programs",
  "graphql_repack",
@@ -2508,6 +2509,29 @@ dependencies = [
 
 [[package]]
 name = "graphql_location"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anymap",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.196",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_pack_variant"
 version = "0.1.0"
 dependencies = [
  "actix-rt",

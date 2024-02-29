@@ -5,9 +5,9 @@ use repository::{
     ClinicianStoreJoinRowRepository, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::{api::RemoteSyncRecordV5, translations::LegacyTableName};
+use crate::sync::translations::{clinician::ClinicianTranslation, store::StoreTranslation};
 
-use super::{IntegrationRecords, PullDependency, PullUpsertRecord, SyncTranslation};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianStoreJoinRow {
@@ -19,30 +19,34 @@ pub struct LegacyClinicianStoreJoinRow {
     pub prescriber_id: String,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::CLINICIAN_STORE_JOIN
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::ClinicianStoreJoin
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ClinicianStoreJoinTranslation)
 }
 
-pub(crate) struct ClinicianStoreJoinTranslation {}
+pub(super) struct ClinicianStoreJoinTranslation;
 impl SyncTranslation for ClinicianStoreJoinTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::CLINICIAN_STORE_JOIN,
-            dependencies: vec![LegacyTableName::STORE, LegacyTableName::CLINICIAN],
-        }
+    fn table_name(&self) -> &'static str {
+        "clinician_store_join"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            StoreTranslation.table_name(),
+            ClinicianTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::ClinicianStoreJoin)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyClinicianStoreJoinRow {
             id,
             store_id,
@@ -54,20 +58,14 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             store_id,
             clinician_link_id: prescriber_id,
         };
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::ClinicianStoreJoin(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let ClinicianStoreJoinRow {
             id,
             store_id,
@@ -94,25 +92,18 @@ impl SyncTranslation for ClinicianStoreJoinTranslation {
             prescriber_id: clinician_link_row.clinician_id,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LegacyTableName::CLINICIAN_STORE_JOIN,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog).then(|| {
-            vec![RemoteSyncRecordV5::new_delete(
-                changelog,
-                LegacyTableName::CLINICIAN_STORE_JOIN,
-            )]
-        });
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }

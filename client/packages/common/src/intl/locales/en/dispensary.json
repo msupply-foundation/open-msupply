@@ -17,6 +17,7 @@
   "filename.patients": "patients",
   "filename.prescriptions": "Prescriptions",
   "heading.dispensary-details": "Dispensary Details",
+  "label.any": "Any",
   "label.additional-info": "Additional Info",
   "label.age": "Age",
   "label.clinician": "Clinician",
