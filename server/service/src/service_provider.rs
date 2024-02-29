@@ -1,7 +1,9 @@
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
+    asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
     barcode::{BarcodeService, BarcodeServiceTrait},
+    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -64,11 +66,14 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+
+    // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
     pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
     pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
     pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
+
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -119,6 +124,10 @@ pub struct ServiceProvider {
     pub log_service: Box<dyn LogServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
+    // Asset catalogue
+    pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
+    // Assets
+    pub asset_service: Box<dyn AssetServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -194,6 +203,8 @@ impl ServiceProvider {
             log_service: Box::new(LogService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
+            catalogue_service: Box::new(CatalogueService {}),
+            asset_service: Box::new(crate::asset::AssetService {}),
         }
     }
 

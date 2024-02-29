@@ -9,9 +9,11 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+pub mod asset;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
+pub mod catalogue;
 pub mod clinician;
 mod common_stock;
 pub mod dashboard;
@@ -274,8 +276,11 @@ fn check_location_exists(
     store_id: &str,
     location_input: &Option<NullableUpdate<String>>,
 ) -> Result<bool, RepositoryError> {
-    let Some(NullableUpdate{ value: Some(location_id) }) = location_input else {
-        return Ok(true)
+    let Some(NullableUpdate {
+        value: Some(location_id),
+    }) = location_input
+    else {
+        return Ok(true);
     };
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()
