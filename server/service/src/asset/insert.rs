@@ -84,6 +84,8 @@ pub fn generate(
         name,
         code,
         serial_number,
+        asset_category_id: None,
+        asset_type_id: None,
         catalogue_item_id,
         installation_date,
         replacement_date,
