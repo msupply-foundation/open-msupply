@@ -4,7 +4,7 @@ use crate::service_provider::ServiceContext;
 use chrono::Duration;
 use repository::{
     ConsumptionFilter, ConsumptionRepository, ConsumptionRow, DateFilter, EqualFilter,
-    RepositoryError, RequisitionLineRow, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
+    RepositoryError, RequisitionLine, StockOnHandFilter, StockOnHandRepository, StockOnHandRow,
     StorageConnection,
 };
 use util::{
@@ -122,11 +122,12 @@ impl ItemStats {
             .collect()
     }
 
-    pub fn from_requisition_line(requisition_line: &RequisitionLineRow) -> Self {
+    pub fn from_requisition_line(requisition_line: &RequisitionLine) -> Self {
+        let row = &requisition_line.requisition_line_row;
         ItemStats {
-            average_monthly_consumption: requisition_line.average_monthly_consumption as f64,
-            available_stock_on_hand: requisition_line.available_stock_on_hand as u32,
-            item_id: requisition_line.item_id.clone(),
+            average_monthly_consumption: row.average_monthly_consumption as f64,
+            available_stock_on_hand: row.available_stock_on_hand as u32,
+            item_id: requisition_line.item_row.id.clone(),
         }
     }
 }

@@ -1,6 +1,5 @@
 import {
   useColumns,
-  PositiveNumberCell,
   ColumnAlign,
   ExpiryDateCell,
   CheckCell,
@@ -8,6 +7,7 @@ import {
   Column,
   useCurrency,
   LocationCell,
+  NumberCell,
   ColumnDescription,
   useAuthContext,
 } from '@openmsupply-client/common';
@@ -89,7 +89,7 @@ export const useOutboundLineEditColumns = ({
       width: 80,
     },
     {
-      Cell: PositiveNumberCell,
+      Cell: NumberCell,
       label: 'label.in-store',
       key: 'totalNumberOfPacks',
       align: ColumnAlign.Right,
@@ -97,7 +97,7 @@ export const useOutboundLineEditColumns = ({
       accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
     },
     {
-      Cell: PositiveNumberCell,
+      Cell: NumberCell,
       label: 'label.available-packs',
       key: 'availableNumberOfPacks',
       align: ColumnAlign.Right,

@@ -42,6 +42,7 @@ import javax.net.ssl.SSLHandshakeException;
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
+    private static final String DB_FILE_NAME = "omsupply-database.sqlite";
     public static final String OM_SUPPLY = "omSupply";
     private static final Integer DEFAULT_PORT = DiscoveryConstants.PORT;
     private static final String DEFAULT_URL = "https://localhost:" + DEFAULT_PORT + "/";
@@ -349,24 +350,30 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
     // Attempt to get a non-loopback address for the local server
     // and fallback to loopback if there is an error
-    private String getHostAddress(NsdServiceInfo serviceInfo, Boolean isLocal){
-        if (!isLocal){
+    private String getHostAddress(NsdServiceInfo serviceInfo, Boolean isLocal) {
+        if (!isLocal) {
             return serviceInfo.getHost().getHostAddress();
         }
         try {
-                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                    NetworkInterface ni = en.nextElement();
-                    for (Enumeration<InetAddress> enumIpAddr = ni.getInetAddresses(); enumIpAddr.hasMoreElements(); ) {
-                        InetAddress inetAddress = enumIpAddr.nextElement();
-                        if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
-                            return inetAddress.getHostAddress();
-                        }
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface ni = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = ni.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
+                            && inetAddress.isSiteLocalAddress()) {
+                        return inetAddress.getHostAddress();
                     }
                 }
+            }
         } catch (Exception ex) {
             Log.e(OM_SUPPLY, ex.toString());
         }
-        return serviceInfo.getHost().getHostAddress();
+        InetAddress host = serviceInfo.getHost();
+        // this will happen if there is no network interface available
+        if (host == null) {
+            return "127.0.0.1";
+        }
+        return host.getHostAddress();
     }
 
     private JSObject serviceInfoToObject(NsdServiceInfo serviceInfo) {
@@ -408,7 +415,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             }
         }
     }
-
 
     private String parseAttribute(NsdServiceInfo serviceInfo, String name) {
         byte[] attributeBytes = serviceInfo.getAttributes().get(name);
@@ -481,10 +487,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         String filename = data.getString("filename", LOG_FILE_NAME);
         String content = data.getString("content");
 
-        if(content == null){
+        if (content == null) {
             response.put("error", "No content");
             response.put("success", false);
-        }else{
+        } else {
             MainActivity mainActivity = (MainActivity) getActivity();
             mainActivity.SaveFile(filename, content);
             response.put("success", true);
@@ -493,7 +499,21 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(response);
     }
 
-        /** Helper class to get access to the JS FrontEndHost data */
+    @PluginMethod()
+    public void saveDatabase(@NonNull PluginCall call) {
+        JSObject data = call.getData();
+        JSObject response = new JSObject();
+
+        MainActivity mainActivity = (MainActivity) getActivity();
+
+        File file = new File(getContext().getFilesDir(), DB_FILE_NAME);
+        mainActivity.SaveDatabase(file);
+        response.put("success", true);
+
+        call.resolve(response);
+    }
+
+    /** Helper class to get access to the JS FrontEndHost data */
     public class FrontEndHost {
         JSObject data;
 
@@ -513,7 +533,8 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
          * e.g. https://127.0.0.1:8000
          */
         public String getUrl() {
-            return data.getString("protocol") + "://" + data.getString("ip") + ":" + data.getString("port");
+            String host = data.getBool("isLocal") ? "localhost" : data.getString("ip");
+            return data.getString("protocol") + "://" + host + ":" + data.getString("port");
         }
 
         /**

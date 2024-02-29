@@ -16,7 +16,7 @@ use super::{
     Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord,
 };
 
-const DESCRIPTION: &'static str = "Create inbound shipment from outbound shipment";
+const DESCRIPTION: &str = "Create inbound shipment from outbound shipment";
 
 pub(crate) struct CreateInboundShipmentProcessor;
 
@@ -122,7 +122,7 @@ fn generate_inbound_shipment(
     request_requisition: &Option<Requisition>,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
-    let name_id = outbound_shipment.store_row.name_id.clone();
+    let name_link_id = outbound_shipment.store_row.name_id.clone();
 
     let outbound_shipment_row = &outbound_shipment.invoice_row;
 
@@ -156,7 +156,7 @@ fn generate_inbound_shipment(
         id: uuid(),
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
         r#type: InvoiceRowType::InboundShipment,
-        name_id,
+        name_link_id,
         store_id,
         status,
         requisition_id: request_requisition_id,
@@ -179,7 +179,7 @@ fn generate_inbound_shipment(
         allocated_datetime: None,
         delivered_datetime: None,
         verified_datetime: None,
-        clinician_id: None,
+        clinician_link_id: None,
     };
 
     Ok(result)

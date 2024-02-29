@@ -2,7 +2,7 @@ use crate::{
     activity_log::activity_log_entry,
     number::next_number,
     requisition::{
-        common::check_requisition_exists, program_settings::get_program_requisition_settings,
+        common::check_requisition_row_exists, program_settings::get_program_requisition_settings,
         query::get_requisition,
     },
     service_provider::ServiceContext,
@@ -83,7 +83,7 @@ fn validate(
 ) -> Result<(ProgramRow, ProgramRequisitionOrderTypeRow), OutError> {
     let connection = &ctx.connection;
 
-    if let Some(_) = check_requisition_exists(connection, &input.id)? {
+    if let Some(_) = check_requisition_row_exists(connection, &input.id)? {
         return Err(OutError::RequisitionAlreadyExists);
     }
 
@@ -147,7 +147,7 @@ fn generate(
             &NumberRowType::RequestRequisition,
             &ctx.store_id,
         )?,
-        name_id: other_party_id,
+        name_link_id: other_party_id,
         store_id: ctx.store_id.clone(),
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,

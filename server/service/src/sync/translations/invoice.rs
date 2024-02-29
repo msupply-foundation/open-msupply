@@ -7,9 +7,9 @@ use crate::sync::{
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, NameRow, NameRowRepository, StorageConnection, StoreRowRepository,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository, StorageConnection,
+    StoreRowRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -19,7 +19,7 @@ use super::{
     SyncTranslation,
 };
 
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANSACT;
+const LEGACY_TABLE_NAME: &str = LegacyTableName::TRANSACT;
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LEGACY_TABLE_NAME
@@ -234,7 +234,7 @@ impl SyncTranslation for InvoiceTranslation {
             id: data.ID,
             user_id: data.user_id,
             store_id: data.store_ID,
-            name_id: data.name_ID,
+            name_link_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
@@ -243,9 +243,9 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            clinician_id: data.clinician_id,
             currency_id: data.currency_id,
             currency_rate: data.currency_rate,
+            clinician_link_id: data.clinician_id,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -288,40 +288,50 @@ impl SyncTranslation for InvoiceTranslation {
             return Ok(None);
         }
 
-        let invoice_row =
-            InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice) = InvoiceRepository::new(connection)
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Invoice not found"));
+        };
 
         // log::info!("Translating invoice row: {:#?}", invoice_row);
 
-        let confirm_datetime = to_legacy_confirm_time(&invoice_row);
+        let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
 
-        let InvoiceRow {
-            id,
-            user_id,
-            name_id,
-            name_store_id: _,
-            store_id,
-            invoice_number,
-            r#type,
-            status,
-            on_hold,
-            comment,
-            their_reference,
-            created_datetime,
-            allocated_datetime,
-            picked_datetime,
-            shipped_datetime,
-            delivered_datetime,
-            verified_datetime,
-            colour,
-            requisition_id,
-            linked_invoice_id,
-            transport_reference,
-            tax,
-            clinician_id,
-            currency_id,
-            currency_rate,
-        } = invoice_row;
+        let Invoice {
+            invoice_row:
+                InvoiceRow {
+                    id,
+                    user_id,
+                    name_link_id: _,
+                    name_store_id: _,
+                    store_id,
+                    invoice_number,
+                    r#type,
+                    status,
+                    on_hold,
+                    comment,
+                    their_reference,
+                    created_datetime,
+                    allocated_datetime,
+                    picked_datetime,
+                    shipped_datetime,
+                    delivered_datetime,
+                    verified_datetime,
+                    colour,
+                    requisition_id,
+                    linked_invoice_id,
+                    transport_reference,
+                    tax,
+                    clinician_link_id: _,
+                    currency_id,
+                    currency_rate,
+                },
+            name_row,
+            clinician_row,
+            ..
+        } = invoice;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Invalid invoice type: {:?}",
@@ -334,7 +344,7 @@ impl SyncTranslation for InvoiceTranslation {
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
             user_id,
-            name_ID: name_id,
+            name_ID: name_row.id,
             store_ID: store_id,
             invoice_num: invoice_number,
             _type,
@@ -368,9 +378,9 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            clinician_id,
             currency_id,
             currency_rate,
+            clinician_id: clinician_row.map(|row| row.id),
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;
@@ -648,8 +658,13 @@ fn legacy_invoice_status(
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_name_links;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_invoice_translation() {
@@ -676,6 +691,33 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_push_merged() {
+        let (mock_data, connection, _, _) =
+            setup_all("test_invoice_push_merged", MockDataInserts::all()).await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
+            )
+            .unwrap();
+
+        let translator = InvoiceTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
         }
     }
 }

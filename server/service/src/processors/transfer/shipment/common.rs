@@ -24,7 +24,7 @@ pub(crate) fn generate_inbound_shipment_lines(
             |InvoiceLineRow {
                  id: _,
                  invoice_id: _,
-                 item_id,
+                 item_link_id,
                  item_name,
                  item_code,
                  stock_line_id: _,
@@ -48,7 +48,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                 InvoiceLineRow {
                     id: uuid(),
                     invoice_id: inbound_shipment_id.to_string(),
-                    item_id,
+                    item_link_id,
                     item_name,
                     item_code,
                     batch,

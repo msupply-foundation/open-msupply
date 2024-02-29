@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Grid,
   BasicTextInput,
@@ -7,12 +7,13 @@ import {
   Select,
   useTranslation,
   InputLabel,
-  NonNegativeIntegerInput,
   Divider,
   Box,
   Typography,
   useFormatNumber,
   useDebounceCallback,
+  NumericTextInput,
+  useDebouncedValueCallback,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -46,6 +47,8 @@ interface OutboundLineEditFormProps {
   showZeroQuantityConfirmation: boolean;
   hasOnHold: boolean;
   hasExpired: boolean;
+  setOkDisabled: (disabled: boolean) => void;
+  draftStockOutLines: DraftStockOutLine[];
 }
 
 export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
@@ -61,10 +64,12 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
   showZeroQuantityConfirmation,
   hasOnHold,
   hasExpired,
+  setOkDisabled,
+  draftStockOutLines,
 }) => {
   const t = useTranslation('distribution');
   const [allocationAlerts, setAllocationAlerts] = useState<StockOutAlert[]>([]);
-  const [issueQuantity, setIssueQuantity] = useState(0);
+  const [issueQuantity, setIssueQuantity] = useState<number>();
   const { format } = useFormatNumber();
   const { items } = useOutbound.line.rows();
 
@@ -79,13 +84,16 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
   const unit = item?.unitName ?? t('label.unit');
 
-  const updateIssueQuantity = (quantity: number) => {
-    setIssueQuantity(
-      Math.round(
-        quantity / Math.abs(Number(packSizeController.selected?.value || 1))
-      )
-    );
-  };
+  const updateIssueQuantity = useCallback(
+    (quantity: number) => {
+      setIssueQuantity(
+        Math.round(
+          quantity / Math.abs(Number(packSizeController.selected?.value || 1))
+        )
+      );
+    },
+    [packSizeController.selected?.value]
+  );
 
   const debouncedSetAllocationAlerts = useDebounceCallback(
     warning => setAllocationAlerts(warning),
@@ -117,14 +125,38 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     updateIssueQuantity(allocatedQuantity);
   };
 
-  const handleIssueQuantityChange = (quantity: number) => {
-    setIssueQuantity(quantity);
-    allocate(quantity, Number(packSizeController.selected?.value));
+  // using a debounced value for the allocation. In the scenario where
+  // you have only pack sizes > 1 available, and try to type a quantity which starts with 1
+  // e.g. 10, 12, 100.. then the allocation rounds the 1 up immediately to the available
+  // pack size which stops you entering the required quantity.
+  // See https://github.com/msupply-foundation/open-msupply/issues/2727
+  const debouncedAllocate = useDebouncedValueCallback(
+    (quantity, packSize) => {
+      allocate(quantity, packSize);
+      setOkDisabled(false);
+    },
+    [],
+    500,
+    [draftStockOutLines] // this is needed to prevent a captured enclosure of onChangeQuantity
+  );
+
+  const handleIssueQuantityChange = (quantity: number | undefined) => {
+    setIssueQuantity(quantity ?? 0);
+    setOkDisabled(true);
+    debouncedAllocate(
+      quantity ?? 0,
+      Number(packSizeController.selected?.value)
+    );
   };
 
   useEffect(() => {
     if (!isAutoAllocated) updateIssueQuantity(allocatedQuantity);
-  }, [packSizeController.selected?.value, allocatedQuantity]);
+  }, [
+    packSizeController.selected?.value,
+    allocatedQuantity,
+    isAutoAllocated,
+    updateIssueQuantity,
+  ]);
 
   return (
     <Grid container gap="4px">
@@ -182,13 +214,11 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
           />
           <Grid container>
             <ModalLabel label={t('label.issue')} />
-            <NonNegativeIntegerInput
+            <NumericTextInput
               autoFocus
               value={issueQuantity}
               onChange={handleIssueQuantityChange}
-              defaultValue={0}
             />
-
             <Box marginLeft={1} />
 
             {packSizeController.options.length ? (

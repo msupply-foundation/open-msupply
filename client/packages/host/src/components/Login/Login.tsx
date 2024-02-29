@@ -23,7 +23,6 @@ export const Login = () => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-
   const passwordRef = React.useRef(null);
   const {
     isValid,

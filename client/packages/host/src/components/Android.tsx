@@ -126,7 +126,7 @@ export const Android = () => {
     // this page is not for web users! begone!
     if (!getNativeAPI()) navigate(RouteBuilder.create(AppRoute.Login).build());
     getPreference('mode', '"none"').then(setLocalMode);
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
     if (mode === NativeMode.Server) {
@@ -145,7 +145,7 @@ export const Android = () => {
           .build()
       );
     }
-  }, [mode, previousServer, connectToPreviousFailed]);
+  }, [mode, previousServer, connectToPreviousFailed, navigate]);
 
   if (mode === NativeMode.None)
     return (

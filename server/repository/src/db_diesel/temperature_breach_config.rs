@@ -120,9 +120,7 @@ fn create_filtered_query(filter: Option<TemperatureBreachConfigFilter>) -> Boxed
     query
 }
 
-pub fn to_domain(
-    temperature_breach_config_row: TemperatureBreachConfigRow,
-) -> TemperatureBreachConfig {
+fn to_domain(temperature_breach_config_row: TemperatureBreachConfigRow) -> TemperatureBreachConfig {
     TemperatureBreachConfig {
         temperature_breach_config_row,
     }
