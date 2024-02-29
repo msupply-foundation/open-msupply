@@ -9,6 +9,7 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+pub mod asset;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;

@@ -13,6 +13,8 @@ repository = { path = "../repository" }
 service = { path = "../service" }
 util = { path = "../util" }
 graphql_core = { path = "core" }
+
+graphql_asset = { path = "asset" }
 graphql_programs = { path = "programs" }
 graphql_types = { path = "types" }
 graphql_general = { path = "general" }
