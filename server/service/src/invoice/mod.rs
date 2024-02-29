@@ -207,12 +207,12 @@ pub trait InvoiceServiceTrait: Sync + Send {
         insert_outbound_return(ctx, input)
     }
 
-    fn delete_outbound_return(
+    fn delete_outbound_returns(
         &self,
         ctx: &ServiceContext,
-        id: String,
-    ) -> Result<String, DeleteOutboundReturnError> {
-        delete_outbound_return(ctx, id)
+        ids: Vec<String>,
+    ) -> Result<Vec<String>, DeleteOutboundReturnError> {
+        delete_outbound_returns(ctx, ids)
     }
 }
 
