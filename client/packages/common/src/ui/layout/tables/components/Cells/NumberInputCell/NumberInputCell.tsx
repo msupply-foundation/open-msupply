@@ -14,7 +14,9 @@ export const NumberInputCell = <T extends RecordWithId>({
   rowIndex,
   columnIndex,
   isDisabled = false,
-  min,
+  // Make the default min=1 as this is the typical implementation
+  // in Data Tables
+  min = 1,
   max,
   decimalLimit,
   step,
@@ -44,13 +46,11 @@ export const NumberInputCell = <T extends RecordWithId>({
         ...TextInputProps?.InputProps,
       }}
       onChange={num => {
-        const newValue = num === undefined ? 0 : num;
+        const newValue = num === undefined ? min : num;
         setBuffer(newValue);
         updater({ ...rowData, [column.key]: Number(newValue) });
       }}
-      // Make the default min=1 as this is the typical implementation
-      // in Data Tables
-      min={min ?? 1}
+      min={min}
       max={max}
       decimalLimit={decimalLimit}
       step={step}
