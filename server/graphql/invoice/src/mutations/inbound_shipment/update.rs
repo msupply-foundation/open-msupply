@@ -82,7 +82,7 @@ pub enum UpdateErrorInterface {
     CannotEditInvoice(CannotEditInvoice),
     CannotReverseInvoiceStatus(CannotReverseInvoiceStatus),
     CannotChangeStatusOfInvoiceOnHold(CannotChangeStatusOfInvoiceOnHold),
-    CannotIssueInForeignCurrency(CannotIssueInForeignCurrency),
+    CannotIssueForeignCurrencyForInternalSuppliers(CannotIssueInForeignCurrency),
 }
 
 impl UpdateInput {
@@ -163,10 +163,12 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
                 OtherPartyNotVisible,
             ))
         }
-        ServiceError::CannotIssueInForeignCurrency => {
-            return Ok(UpdateErrorInterface::CannotIssueInForeignCurrency(
-                CannotIssueInForeignCurrency,
-            ))
+        ServiceError::CannotIssueForeignCurrencyForInternalSuppliers => {
+            return Ok(
+                UpdateErrorInterface::CannotIssueForeignCurrencyForInternalSuppliers(
+                    CannotIssueInForeignCurrency,
+                ),
+            )
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),

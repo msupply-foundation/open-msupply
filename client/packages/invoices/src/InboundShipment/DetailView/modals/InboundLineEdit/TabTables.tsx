@@ -13,9 +13,12 @@ import {
   createQueryParamsStore,
   NonNegativeIntegerCell,
   CellProps,
+  CurrencyCell,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
+  CurrencyRowFragment,
   getLocationInputColumn,
   LocationRowFragment,
 } from '@openmsupply-client/system';
@@ -24,6 +27,8 @@ interface TableProps {
   lines: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   isDisabled?: boolean;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -117,37 +122,110 @@ export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
+  currency,
+  isExternalSupplier,
 }) => {
-  const theme = useTheme();
-  const columns = useColumns<DraftInboundLine>(
+  const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
-      getBatchColumn(updateDraftLine, theme),
-      getExpiryColumn(updateDraftLine, theme),
-      [
-        'sellPricePerPack',
-        { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
-      ],
-      [
-        'costPricePerPack',
-        { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
-      ],
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+      'batch',
+      {
+        accessor: ({ rowData }) => {
+          return rowData.batch || '';
         },
-      ],
-      [
-        'lineTotal',
-        {
-          accessor: ({ rowData }) =>
-            rowData.numberOfPacks * rowData.costPricePerPack,
-        },
-      ],
+      },
     ],
-    {},
-    [updateDraftLine, lines]
+    [
+      'sellPricePerPack',
+      {
+        Cell: CurrencyInputCell,
+        width: 100,
+        setter: updateDraftLine,
+      },
+    ],
+  ];
+
+  if (isExternalSupplier) {
+    columnDefinitions.push({
+      key: 'foreignCurrencySellPricePerPack',
+      label: 'label.fc-sell-price',
+      description: 'description.fc-sell-price',
+      width: 100,
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell({ currency: currency?.code }),
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return rowData.sellPricePerPack / currency.rate;
+        }
+        return null;
+      },
+    });
+  }
+
+  columnDefinitions.push([
+    'costPricePerPack',
+    {
+      Cell: CurrencyInputCell,
+      width: 100,
+      setter: updateDraftLine,
+    },
+  ]);
+
+  if (isExternalSupplier) {
+    columnDefinitions.push({
+      key: 'foreignCurrencyCostPricePerPack',
+      label: 'label.fc-cost-price',
+      description: 'description.fc-cost-price',
+      width: 100,
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell({ currency: currency?.code }),
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return rowData.costPricePerPack / currency.rate;
+        }
+        return null;
+      },
+    });
+  }
+
+  columnDefinitions.push(
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+      },
+    ],
+    [
+      'lineTotal',
+      {
+        accessor: ({ rowData }) =>
+          rowData.numberOfPacks * rowData.costPricePerPack,
+      },
+    ]
   );
+
+  if (isExternalSupplier) {
+    columnDefinitions.push({
+      key: 'foreignCurrencyLineTotal',
+      label: 'label.fc-line-total',
+      description: 'description.fc-line-total',
+      width: 100,
+      Cell: CurrencyCell({ currency: currency?.code }),
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return (
+            (rowData.numberOfPacks * rowData.costPricePerPack) / currency.rate
+          );
+        }
+        return null;
+      },
+    });
+  }
+
+  const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
+    updateDraftLine,
+    lines,
+  ]);
 
   return (
     <DataTable
@@ -168,12 +246,17 @@ export const LocationTableComponent: FC<TableProps> = ({
   updateDraftLine,
   isDisabled,
 }) => {
-  const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
     [
-      getBatchColumn(updateDraftLine, theme),
-      getExpiryColumn(updateDraftLine, theme),
-      [getLocationInputColumn(), { setter: updateDraftLine }],
+      [
+        'batch',
+        {
+          accessor: ({ rowData }) => {
+            return rowData.batch || '';
+          },
+        },
+      ],
+      [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],
     ],
     {},
     [updateDraftLine, lines]

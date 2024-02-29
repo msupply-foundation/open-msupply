@@ -416,6 +416,11 @@ export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type CannotIssueInForeignCurrency = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
+  __typename: 'CannotIssueInForeignCurrency';
+  description: Scalars['String']['output'];
+};
+
 export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdatePrescriptionErrorInterface & {
   __typename: 'CannotReverseInvoiceStatus';
   description: Scalars['String']['output'];
@@ -2090,6 +2095,7 @@ export type InvoiceLineNode = {
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
@@ -2150,7 +2156,6 @@ export type InvoiceNode = {
   currency?: Maybe<CurrencyNode>;
   currencyRate?: Maybe<Scalars['Float']['output']>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
-  foreignCurrencyTotal?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
   lines: InvoiceLineConnector;
@@ -3534,6 +3539,7 @@ export type PluginNode = {
 
 export type PricingNode = {
   __typename: 'PricingNode';
+  foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
   serviceTotalAfterTax: Scalars['Float']['output'];
   serviceTotalBeforeTax: Scalars['Float']['output'];
   stockTotalAfterTax: Scalars['Float']['output'];
@@ -5334,6 +5340,8 @@ export type UpdateInboundShipmentErrorInterface = {
 export type UpdateInboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  currencyId?: InputMaybe<Scalars['String']['input']>;
+  currencyRate?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -5442,6 +5450,8 @@ export type UpdateOutboundShipmentError = {
 export type UpdateOutboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  currencyId?: InputMaybe<Scalars['String']['input']>;
+  currencyRate?: InputMaybe<Scalars['Float']['input']>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;

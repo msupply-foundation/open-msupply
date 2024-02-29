@@ -25,9 +25,6 @@ pub fn validate(
     if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
-    if patch.currency_id.is_some() && !check_can_issue_in_foreign_currency(connection, store_id)? {
-        return Err(CannotIssueInForeignCurrency);
-    }
 
     // Status check
     let status_changed = check_status_change(&invoice, patch.full_status());
@@ -60,6 +57,10 @@ pub fn validate(
         OtherPartyErrors::TypeMismatched => OtherPartyNotASupplier,
         OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
     })?;
+
+    if patch.currency_id.is_some() && other_party.store_row.is_some() && !check_can_issue_in_foreign_currency(connection, store_id)? {
+        return Err(CannotIssueForeignCurrencyForInternalSuppliers);
+    }
 
     Ok((invoice, Some(other_party), status_changed))
 }
