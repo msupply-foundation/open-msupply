@@ -10,13 +10,13 @@ import {
   EnvUtils,
   Platform,
 } from '@openmsupply-client/common';
-import { useAssets } from '../api';
+import { useAssetData } from '../api';
 import { assetCategoryListItemsToCsv } from '../utils';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
   const t = useTranslation(['catalogue']);
-  const { fetchAsync, isLoading } = useAssets.document.listAll();
+  const { fetchAsync, isLoading } = useAssetData.document.listAll();
 
   const csvExport = async () => {
     const data = await fetchAsync();

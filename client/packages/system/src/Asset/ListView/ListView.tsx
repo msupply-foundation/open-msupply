@@ -10,7 +10,7 @@ import {
   useUrlQueryParams,
   TooltipTextCell,
 } from '@openmsupply-client/common';
-import { AssetCatalogueItemFragment, useAssets } from '../api';
+import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 
@@ -29,7 +29,7 @@ const AssetListComponent: FC = () => {
       { key: 'type' },
     ],
   });
-  const { data, isError, isLoading } = useAssets.document.list();
+  const { data, isError, isLoading } = useAssetData.document.list();
   const pagination = { page, first, offset };
   // const navigate = useNavigate();
   const t = useTranslation('catalogue');

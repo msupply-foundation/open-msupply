@@ -25,7 +25,11 @@ const itemParsers = {
   },
 };
 
-export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
+export const getAssetQueries = (
+  sdk: Sdk,
+  storeId: string,
+  classId: string
+) => ({
   get: {
     byId: async (assetId: string) => {
       const result = await sdk.assetById({
@@ -53,7 +57,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy },
+        filter: { ...filterBy, classId: { equalTo: classId } },
       });
 
       const items = result?.assets;
@@ -65,7 +69,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: {},
+        filter: { classId: { equalTo: classId } },
       });
 
       const items = result?.assets;
