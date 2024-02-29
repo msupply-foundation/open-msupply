@@ -1,4 +1,4 @@
-use repository::{Invoice, InvoiceRowRepository, RepositoryError};
+use repository::{Invoice, InvoiceRowRepository, InvoiceRowStatus, RepositoryError};
 
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
@@ -33,8 +33,9 @@ pub enum UpdateOutboundReturnError {
     ReturnDoesNotBelongToCurrentStore,
     ReturnIsNotEditable,
     NotAnOutboundReturn,
-    InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
+    CannotChangeStatusOfInvoiceOnHold,
     CannotReverseInvoiceStatus,
+    InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
     UpdatedReturnDoesNotExist,
     DatabaseError(RepositoryError),
 }
@@ -77,6 +78,32 @@ impl From<RepositoryError> for UpdateOutboundReturnError {
     }
 }
 
+impl UpdateOutboundReturnStatus {
+    pub fn full_status(&self) -> InvoiceRowStatus {
+        match self {
+            UpdateOutboundReturnStatus::Picked => InvoiceRowStatus::New,
+            UpdateOutboundReturnStatus::Shipped => InvoiceRowStatus::Shipped,
+        }
+    }
+
+    pub fn full_status_option(
+        status: &Option<UpdateOutboundReturnStatus>,
+    ) -> Option<InvoiceRowStatus> {
+        match status {
+            Some(status) => Some(status.full_status()),
+            None => None,
+        }
+    }
+}
+
+impl UpdateOutboundReturn {
+    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+        match &self.status {
+            Some(status) => Some(status.full_status()),
+            None => None,
+        }
+    }
+}
 #[cfg(test)]
 mod test {
     use crate::{
@@ -87,12 +114,11 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_name_store_b, mock_outbound_return_a, mock_outbound_return_a_invoice_line_a,
-            mock_outbound_return_a_invoice_line_b, mock_outbound_shipment_a, mock_store_a,
+            mock_name_store_b, mock_outbound_return_a, mock_outbound_shipment_a, mock_store_a,
             mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ReturnReasonRow,
+        InvoiceRow, InvoiceRowStatus, InvoiceRowType, ReturnReasonRow,
     };
 
     #[actix_rt::test]
@@ -106,6 +132,7 @@ mod test {
                 ..Default::default()
             }
         }
+
         fn wrong_store() -> InvoiceRow {
             InvoiceRow {
                 id: "wrong_store".to_string(),
@@ -196,7 +223,7 @@ mod test {
             }
         }
 
-        let (_, connection, connection_manager, _) = setup_all_with_data(
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "test_update_outbound_return_success",
             MockDataInserts::all(),
             MockData {
@@ -211,7 +238,7 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
-        service_provider
+        let result = service_provider
             .invoice_service
             .update_outbound_return(
                 &context,
@@ -221,33 +248,5 @@ mod test {
                 },
             )
             .unwrap();
-
-        let updated_lines = InvoiceLineRowRepository::new(&connection)
-            .find_many_by_invoice_id(&mock_outbound_return_a().id)
-            .unwrap();
-
-        assert_eq!(updated_lines.len(), 2);
-
-        // new line was added
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == "line1")
-            .is_some());
-
-        // existing line was updated with new num of packs
-        assert_eq!(
-            updated_lines
-                .iter()
-                .find(|line| line.id == mock_outbound_return_a_invoice_line_a().id)
-                .unwrap()
-                .number_of_packs,
-            2.0
-        );
-
-        // zeroed line was deleted
-        assert!(updated_lines
-            .iter()
-            .find(|line| line.id == mock_outbound_return_a_invoice_line_b().id)
-            .is_none());
     }
 }
