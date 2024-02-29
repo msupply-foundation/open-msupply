@@ -152,9 +152,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
 
 mod tests {
     use crate::{
-        assets::{asset_log::AssetLogRepository, asset_log_row::AssetLogRowRepository},
-        mock::MockDataInserts,
-        test_db, Pagination,
+        assets::asset_log::AssetLogRepository, mock::MockDataInserts, test_db, Pagination,
     };
 
     use super::{AssetLogSort, AssetLogSortField};
