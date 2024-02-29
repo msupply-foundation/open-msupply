@@ -80,6 +80,17 @@ const getSeparatorAndDecimal = (locale: string) => {
   return { separator, decimal };
 };
 
+const getPatterns = (locale: string) => {
+  switch (locale) {
+    case 'fr-DJ':
+    case 'fr':
+    case 'ru':
+      return { pattern: '# !', negativePattern: '-# !' };
+    default:
+      return { pattern: '!#', negativePattern: '-!#' };
+  }
+};
+
 export type Currencies =
   | 'USD'
   | 'EUR'
@@ -99,10 +110,9 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         // eslint-disable-next-line no-irregular-whitespace
         // separator: " " decimal = ","
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '€',
         precision: 2,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     case 'DJF':
@@ -110,39 +120,35 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         // eslint-disable-next-line no-irregular-whitespace
         // separator: " " decimal = ","
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'DJF',
         precision: 0,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     case 'QAR':
       return {
         // separator: "," decimal = "."
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'ر.ق.',
         precision: 2,
-        pattern: '!#',
-        negativePattern: '-!#',
         format,
       };
     case 'RUB':
       return {
         // separator: "." decimal = ","
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '₽',
         precision: 2,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     case 'SSP': {
       return {
         // separator: "," decimal = "."
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'SSP',
-        pattern: '# !',
-        negativePattern: '-# !',
         precision: 2,
         format,
       };
@@ -151,10 +157,9 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
       return {
         // separator: "." decimal = ","
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'K',
         precision: 2,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     }
@@ -162,9 +167,8 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
       return {
         // separator: "." decimal = ","
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '$',
-        pattern: '# !',
-        negativePattern: '-# !',
         precision: 2,
         format,
       };
@@ -173,9 +177,8 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
       return {
         // separator: "," decimal = "."
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'SI$',
-        pattern: '# !',
-        negativePattern: '-# !',
         precision: 2,
         format,
       };
@@ -186,10 +189,9 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
       return {
         // separator: "," decimal = "."
         ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '$',
         precision: 2,
-        pattern: '!#',
-        negativePattern: '-!#',
         format,
       };
   }
