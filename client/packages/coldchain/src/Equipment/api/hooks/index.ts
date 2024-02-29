@@ -9,6 +9,8 @@ export const useAssets = {
     listAll: Document.useAssetsAll,
 
     fields: Document.useAssetFields,
+
+    insert: Document.useAssetInsert,
   },
 
   line: {},

@@ -15,13 +15,11 @@ query assetCatalogueItems(
   $key: AssetCatalogueItemSortFieldInput!
   $desc: Boolean
   $filter: ItemFilterInput
-  $storeId: String!
 ) {
   assetCatalogueItems(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
-    storeId: $storeId
   ) {
     ... on AssetCatalogueItemConnector {
       __typename
@@ -33,14 +31,8 @@ query assetCatalogueItems(
   }
 }
 
-query assetCatalogueItemById(
-  $storeId: String!
-  $assetCatalogueItemId: String!
-) {
-  assetCatalogueItems(
-    storeId: $storeId
-    filter: { id: { equalTo: $assetCatalogueItemId } }
-  ) {
+query assetCatalogueItemById($assetCatalogueItemId: String!) {
+  assetCatalogueItems(filter: { id: { equalTo: $assetCatalogueItemId } }) {
     ... on AssetCatalogueItemConnector {
       __typename
       nodes {

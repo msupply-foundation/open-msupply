@@ -9,10 +9,12 @@ import {
   useTranslation,
   useUrlQueryParams,
   useFormatDateTime,
+  useToggle,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { CreateAssetModal } from './CreateAssetModal';
 
 const AssetListComponent: FC = () => {
   const {
@@ -28,6 +30,7 @@ const AssetListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const { localisedDate } = useFormatDateTime();
+  const modalController = useToggle();
 
   const columns = useColumns<AssetFragment>(
     [
@@ -72,7 +75,11 @@ const AssetListComponent: FC = () => {
 
   return (
     <>
-      <AppBarButtons />
+      <CreateAssetModal
+        isOpen={modalController.isOn}
+        onClose={modalController.toggleOff}
+      />
+      <AppBarButtons modalController={modalController} />
       <Toolbar />
       <DataTable
         id="item-list"
@@ -83,7 +90,7 @@ const AssetListComponent: FC = () => {
         isError={isError}
         isLoading={isLoading}
         onRowClick={row => {
-          navigate(`/catalogue/assets/${row.id}`);
+          navigate(`/cold-chain/equipment/${row.id}`);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
       />

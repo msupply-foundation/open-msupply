@@ -7,6 +7,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { useAssetData } from '../api/hooks';
+import { mapIdNameToOptions } from '../utils';
 
 type ReferenceData = {
   id: string;
@@ -27,11 +28,6 @@ export const Toolbar = () => {
 
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
-  const mapOptions = (items: { id: string; name: string }[]) =>
-    items.map(item => ({
-      label: item.name,
-      value: item.id,
-    }));
 
   useEffect(() => {
     // only show type options in the filter which are relevant for the selected category
@@ -66,13 +62,13 @@ export const Toolbar = () => {
               type: 'enum',
               name: t('label.category'),
               urlParameter: 'categoryId',
-              options: mapOptions(categories),
+              options: mapIdNameToOptions(categories),
             },
             // {
             //   type: 'enum',
             //   name: t('label.class'),
             //   urlParameter: 'classId',
-            //   options: mapOptions(classes?.nodes || []),
+            //   options: mapIdNameToOptions(classes?.nodes || []),
             // },
             {
               type: 'text',
@@ -95,7 +91,7 @@ export const Toolbar = () => {
               type: 'enum',
               name: t('label.type'),
               urlParameter: 'typeId',
-              options: mapOptions(types),
+              options: mapIdNameToOptions(types),
             },
           ]}
         />

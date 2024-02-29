@@ -2,6 +2,7 @@ import {
   SortBy,
   FilterByWithBoolean,
   AssetSortFieldInput,
+  InsertAssetInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 
@@ -76,5 +77,27 @@ export const getAssetQueries = (
 
       return items;
     },
+  },
+  insert: async (input: InsertAssetInput): Promise<string> => {
+    const result = await sdk.insertAsset({
+      input,
+      storeId,
+    });
+    const { insertAsset } = result;
+
+    if (insertAsset?.__typename === 'AssetNode') {
+      return insertAsset.id;
+    }
+
+    throw new Error('Could not insert asset');
+  },
+  delete: async (assetId: string, storeId: string): Promise<string> => {
+    const result = await sdk.deleteAsset({ assetId, storeId });
+    const { deleteAsset } = result;
+    if (deleteAsset?.__typename === 'DeleteResponse') {
+      return deleteAsset.id;
+    }
+
+    throw new Error('Could not delete asset');
   },
 });

@@ -12,14 +12,12 @@ export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   key: Types.AssetCatalogueItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String']['input'];
 }>;
 
 
 export type AssetCatalogueItemsQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string }> } };
 
 export type AssetCatalogueItemByIdQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
   assetCatalogueItemId: Types.Scalars['String']['input'];
 }>;
 
@@ -60,12 +58,11 @@ export const AssetCatalogueItemFragmentDoc = gql`
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
-    query assetCatalogueItems($first: Int, $offset: Int, $key: AssetCatalogueItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
+    query assetCatalogueItems($first: Int, $offset: Int, $key: AssetCatalogueItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
   assetCatalogueItems(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
-    storeId: $storeId
   ) {
     ... on AssetCatalogueItemConnector {
       __typename
@@ -78,11 +75,8 @@ export const AssetCatalogueItemsDocument = gql`
 }
     ${AssetCatalogueItemFragmentDoc}`;
 export const AssetCatalogueItemByIdDocument = gql`
-    query assetCatalogueItemById($storeId: String!, $assetCatalogueItemId: String!) {
-  assetCatalogueItems(
-    storeId: $storeId
-    filter: {id: {equalTo: $assetCatalogueItemId}}
-  ) {
+    query assetCatalogueItemById($assetCatalogueItemId: String!) {
+  assetCatalogueItems(filter: {id: {equalTo: $assetCatalogueItemId}}) {
     ... on AssetCatalogueItemConnector {
       __typename
       nodes {
@@ -167,7 +161,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCatalogueItemsQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
+ *   const { first, offset, key, desc, filter } = req.variables;
  *   return res(
  *     ctx.data({ assetCatalogueItems })
  *   )
@@ -184,7 +178,7 @@ export const mockAssetCatalogueItemsQuery = (resolver: ResponseResolver<GraphQLR
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCatalogueItemByIdQuery((req, res, ctx) => {
- *   const { storeId, assetCatalogueItemId } = req.variables;
+ *   const { assetCatalogueItemId } = req.variables;
  *   return res(
  *     ctx.data({ assetCatalogueItems })
  *   )
