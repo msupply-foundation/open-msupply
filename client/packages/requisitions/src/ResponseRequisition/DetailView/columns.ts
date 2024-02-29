@@ -51,6 +51,7 @@ export const useResponseColumns = () => {
         if (variantsControl) return variantsControl.activeVariant.longName;
         else return rowData.item.unitName;
       },
+      width: 130,
     },
     [
       'stockOnHand',
@@ -130,6 +131,7 @@ export const useResponseColumns = () => {
       getItemId: row => row.itemId,
       getQuantity: row => NumUtils.round(row.remainingQuantityToSupply),
     }),
+    width: 100,
   });
   columnDefinitions.push(GenericColumnKey.Selection);
 

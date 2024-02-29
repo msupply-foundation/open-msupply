@@ -43,12 +43,13 @@ const ItemListComponent: FC = () => {
       ],
       {
         key: 'packUnit',
-        label: 'label.pack',
+        label: 'label.unit',
         align: ColumnAlign.Right,
         Cell: PackVariantSelectCell({
           getItemId: r => r.id,
           getUnitName: r => r.unitName || null,
         }),
+        width: 130,
       },
       [
         'stockOnHand',
@@ -60,6 +61,7 @@ const ItemListComponent: FC = () => {
           label: 'label.soh',
           description: 'description.soh',
           sortable: false,
+          width: 100,
         },
       ],
       [
@@ -72,6 +74,7 @@ const ItemListComponent: FC = () => {
           }),
           align: ColumnAlign.Right,
           sortable: false,
+          width: 100,
         },
       ],
       {

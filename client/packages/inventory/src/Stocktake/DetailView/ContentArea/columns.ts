@@ -129,6 +129,20 @@ export const useStocktakeColumns = ({
           ]),
       },
       {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => row?.item?.id ?? '',
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
+          },
+          getUnitName: row => row?.item?.unitName ?? null,
+        }),
+        width: 130,
+      },
+      {
         key: 'snapshotNumPacks',
         label: 'label.snapshot-num-of-packs',
         description: 'description.snapshot-num-of-packs',
@@ -152,19 +166,6 @@ export const useStocktakeColumns = ({
             return rowData.snapshotNumberOfPacks;
           }
         },
-      },
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: PackVariantCell({
-          getItemId: row => row?.item?.id ?? '',
-          getPackSizes: row => {
-            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-            else return [row.packSize ?? 1];
-          },
-          getUnitName: row => row?.item?.unitName ?? null,
-        }),
       },
       {
         key: 'countedNumPacks',
@@ -245,6 +246,12 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   return useColumns([
     'batch',
     'expiryDate',
+    [
+      'location',
+      {
+        accessor: ({ rowData }) => rowData.location?.code,
+      },
+    ],
     {
       key: 'packUnit',
       label: 'label.pack',
@@ -256,13 +263,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
         },
         getUnitName: row => row?.item.unitName ?? null,
       }),
+      width: 130,
     },
-    [
-      'location',
-      {
-        accessor: ({ rowData }) => rowData.location?.code,
-      },
-    ],
     {
       key: 'snapshotNumPacks',
       width: 150,

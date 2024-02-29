@@ -132,6 +132,7 @@ const StockListComponent: FC = () => {
         getPackSizes: r => [r.packSize],
         getUnitName: r => r.item.unitName || null,
       }),
+      width: 130,
     },
     [
       'numberOfPacks',

@@ -70,12 +70,13 @@ export const useRequestColumns = () => {
     ],
     {
       key: 'packUnit',
-      label: 'label.pack',
+      label: 'label.unit',
       align: ColumnAlign.Right,
       Cell: PackVariantSelectCell({
         getItemId: r => r.itemId,
         getUnitName: r => r.item.unitName || null,
       }),
+      width: 130,
     },
     {
       key: 'defaultPackSize',

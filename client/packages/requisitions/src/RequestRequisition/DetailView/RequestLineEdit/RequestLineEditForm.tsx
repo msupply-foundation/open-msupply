@@ -140,8 +140,13 @@ export const RequestLineEditForm = ({
             variantsControl ? (
               <Grid paddingTop={2}>
                 <InputWithLabelRow
-                  Input={<PackVariantSelect variantControl={variantsControl} />}
-                  label={t('label.pack')}
+                  Input={
+                    <PackVariantSelect
+                      sx={{ minWidth: 110 }}
+                      variantControl={variantsControl}
+                    />
+                  }
+                  label={t('label.unit')}
                 />
               </Grid>
             ) : (
