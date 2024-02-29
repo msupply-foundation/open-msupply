@@ -19,6 +19,7 @@ import { DraftInboundLine } from '../../../../types';
 import {
   getLocationInputColumn,
   LocationRowFragment,
+  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
   PackVariantEntryCell,
   usePackVariant,
 } from '@openmsupply-client/system';
@@ -100,11 +101,14 @@ export const QuantityTableComponent: FC<
         },
       ],
       getColumnLookupWithOverrides('packSize', {
-        label: packVariantExists
-          ? 'label.unit-variant-and-pack-size'
-          : 'label.pack-size',
         Cell: PackUnitEntryCell,
         setter: updateDraftLine,
+        ...(packVariantExists
+          ? {
+              label: 'label.unit-variant-and-pack-size',
+              minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+            }
+          : { label: 'label.pack-size' }),
       }),
       [
         'unitQuantity',

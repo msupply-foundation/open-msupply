@@ -16,6 +16,7 @@ import {
   CellProps,
   getColumnLookupWithOverrides,
   NumberInputCell,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -23,6 +24,7 @@ import {
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
+  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
   PackVariantEntryCell,
   usePackVariant,
 } from '@openmsupply-client/system';
@@ -171,9 +173,20 @@ export const BatchTable: FC<
   const columns = useColumns<DraftStocktakeLine>([
     getCountThisLineColumn(update, theme),
     getBatchColumn(update, theme),
+    getColumnLookupWithOverrides('packSize', {
+      Cell: PackUnitEntryCell,
+      setter: update,
+      ...(packVariantExists
+        ? {
+            label: 'label.unit-variant-and-pack-size',
+            minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+          }
+        : { label: 'label.pack-size' }),
+    }),
     {
       key: 'snapshotNumberOfPacks',
       label: 'label.snapshot-num-of-packs',
+      align: ColumnAlign.Right,
       minWidth: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
@@ -181,13 +194,7 @@ export const BatchTable: FC<
       setter: patch => update({ ...patch, countThisLine: true }),
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks || '0',
     },
-    getColumnLookupWithOverrides('packSize', {
-      label: packVariantExists
-        ? 'label.unit-variant-and-pack-size'
-        : 'label.pack-size',
-      Cell: PackUnitEntryCell,
-      setter: update,
-    }),
+
     {
       key: 'countedNumberOfPacks',
       label: 'label.counted-num-of-packs',

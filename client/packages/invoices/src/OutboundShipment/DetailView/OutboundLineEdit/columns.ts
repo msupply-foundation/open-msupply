@@ -85,6 +85,7 @@ export const useOutboundLineEditColumns = ({
           getPackSizes: row => [row.packSize ?? 1],
           getUnitName: row => row?.item.unitName ?? null,
         }),
+        width: 130,
       },
       [
         'unitQuantity',
@@ -123,14 +124,18 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item?.unitName,
-      },
-    ],
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackVariantCell({
+        getItemId: row => row?.item.id,
+        getPackSizes: row => [row.packSize ?? 1],
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+      width: 130,
+    },
     'numberOfPacks',
-    'packSize',
     [
       'unitQuantity',
       {
