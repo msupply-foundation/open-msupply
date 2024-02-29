@@ -48,8 +48,10 @@ pub fn update_outbound_return(
         .connection
         .transaction_sync(|connection| {
             let (return_row, status_changed) = validate(connection, &ctx.store_id, &input)?;
-            let GenerateResult { updated_return } =
-                generate(connection, input.clone(), return_row)?;
+            let GenerateResult {
+                updated_return,
+                stock_lines_to_update,
+            } = generate(connection, input.clone(), return_row)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&updated_return)?;
 
@@ -81,7 +83,7 @@ impl From<RepositoryError> for UpdateOutboundReturnError {
 impl UpdateOutboundReturnStatus {
     pub fn full_status(&self) -> InvoiceRowStatus {
         match self {
-            UpdateOutboundReturnStatus::Picked => InvoiceRowStatus::New,
+            UpdateOutboundReturnStatus::Picked => InvoiceRowStatus::Picked,
             UpdateOutboundReturnStatus::Shipped => InvoiceRowStatus::Shipped,
         }
     }
@@ -107,18 +109,22 @@ impl UpdateOutboundReturn {
 #[cfg(test)]
 mod test {
     use crate::{
-        invoice::outbound_return::update::{
-            UpdateOutboundReturn, UpdateOutboundReturnError as ServiceError,
+        invoice::{
+            outbound_return::update::{
+                UpdateOutboundReturn, UpdateOutboundReturnError as ServiceError,
+            },
+            UpdateOutboundReturnStatus,
         },
         service_provider::ServiceProvider,
     };
     use repository::{
         mock::{
-            mock_name_store_b, mock_outbound_return_a, mock_outbound_shipment_a, mock_store_a,
-            mock_store_b, mock_user_account_a, MockData, MockDataInserts,
+            mock_item_a, mock_name_store_b, mock_outbound_return_a, mock_outbound_shipment_a,
+            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceRow, InvoiceRowStatus, InvoiceRowType, ReturnReasonRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        ReturnReasonRow,
     };
 
     #[actix_rt::test]
@@ -149,11 +155,29 @@ mod test {
             }
         }
 
+        fn new_return() -> InvoiceRow {
+            InvoiceRow {
+                id: "new_return".to_string(),
+                ..base_test_return()
+            }
+        }
+
+        fn new_return_line_no_stock_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "new_return_line_no_stock_line".to_string(),
+                invoice_id: new_return().id,
+                item_link_id: mock_item_a().id,
+                r#type: InvoiceLineRowType::StockOut,
+                ..Default::default()
+            }
+        }
+
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_update_outbound_return_errors",
             MockDataInserts::all(),
             MockData {
-                invoices: vec![wrong_store(), shipped_return()],
+                invoices: vec![wrong_store(), shipped_return(), new_return()],
+                invoice_lines: vec![new_return_line_no_stock_line()],
                 ..Default::default()
             },
         )
@@ -210,6 +234,21 @@ mod test {
                 }
             ),
             Err(ServiceError::ReturnIsNotEditable)
+        );
+
+        // InvoiceLineHasNoStockLine
+        assert_eq!(
+            service_provider.invoice_service.update_outbound_return(
+                &context,
+                UpdateOutboundReturn {
+                    outbound_return_id: new_return().id,
+                    status: Some(UpdateOutboundReturnStatus::Shipped),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::InvoiceLineHasNoStockLine(
+                new_return_line_no_stock_line().id
+            ))
         );
     }
 
