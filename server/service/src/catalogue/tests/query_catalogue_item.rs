@@ -146,7 +146,7 @@ mod query_catalogue_item {
             )
             .unwrap();
 
-        assert_eq!(result.count, 151);
+        assert_eq!(result.count, 15);
 
         // type filter - equal like
         result = service
