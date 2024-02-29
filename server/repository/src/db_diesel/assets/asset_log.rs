@@ -11,7 +11,7 @@ use crate::{
     DBType, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
-type AssetLog = AssetLogRow;
+pub type AssetLog = AssetLogRow;
 
 pub enum AssetLogSortField {
     Status,
