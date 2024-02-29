@@ -93,7 +93,7 @@ impl Loader<StockLineByItemAndStoreIdLoaderInput> for StockLineByItemAndStoreIdL
             result_map
                 .entry(StockLineByItemAndStoreIdLoaderInput::new(
                     &store_id,
-                    &stock_line.stock_line_row.item_id,
+                    &stock_line.item_row.id,
                 ))
                 .or_insert(Vec::new())
                 .push(stock_line);

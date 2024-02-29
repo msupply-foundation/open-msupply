@@ -25,7 +25,7 @@ pub fn create_patient_name_store_join(
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
             id: uuid(),
-            name_id: name_id.to_string(),
+            name_link_id: name_id.to_string(),
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
@@ -228,8 +228,8 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
             .date_of_death
             .map(|date| date.format("%Y-%m-%d").to_string()),
 
-        middle_name: middle_name,
-        date_of_birth_is_estimated: date_of_birth_is_estimated,
+        middle_name,
+        date_of_birth_is_estimated,
         is_deceased: Some(patient.is_deceased || is_deceased.unwrap_or(false)),
         notes,
         passport_number,

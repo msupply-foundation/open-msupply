@@ -1,7 +1,8 @@
 use super::{
     inventory_adjustment_reason_row::inventory_adjustment_reason,
-    invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_row::item,
-    location_row::location, stock_line_row::stock_line, StorageConnection,
+    invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
+    location_row::location, name_link_row::name_link, return_reason_row::return_reason,
+    stock_line_row::stock_line, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -15,7 +16,7 @@ table! {
     invoice_line (id) {
         id -> Text,
         invoice_id -> Text,
-        item_id -> Text,
+        item_link_id -> Text,
         item_name -> Text,
         item_code -> Text,
         stock_line_id -> Nullable<Text>,
@@ -32,14 +33,18 @@ table! {
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
+        return_reason_id -> Nullable<Text>,
     }
 }
 
-joinable!(invoice_line -> item (item_id));
+joinable!(invoice_line -> item_link (item_link_id));
 joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
+joinable!(invoice_line -> return_reason (return_reason_id));
+allow_tables_to_appear_in_same_query!(invoice_line, item_link);
+allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -62,7 +67,7 @@ impl Default for InvoiceLineRowType {
 pub struct InvoiceLineRow {
     pub id: String,
     pub invoice_id: String,
-    pub item_id: String,
+    pub item_link_id: String,
     pub item_name: String,
     pub item_code: String,
     pub stock_line_id: Option<String>,
@@ -82,6 +87,7 @@ pub struct InvoiceLineRow {
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub return_reason_id: Option<String>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -124,6 +130,18 @@ impl<'a> InvoiceLineRowRepository<'a> {
                 tax.eq(tax_input),
                 total_after_tax.eq(total_after_tax_calculation),
             ))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_return_reason_id(
+        &self,
+        record_id: &str,
+        reason_id: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(return_reason_id.eq(reason_id))
             .execute(&self.connection.connection)?;
         Ok(())
     }

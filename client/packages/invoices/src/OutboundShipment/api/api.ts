@@ -98,7 +98,6 @@ const outboundParsers = {
   toInsertLine: (line: DraftStockOutLine): InsertOutboundShipmentLineInput => {
     return {
       id: line.id,
-      itemId: line.item.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,

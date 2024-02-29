@@ -94,6 +94,7 @@
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.no-stock-available": "There is no stock available",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
+  "messages.cant-return-shipment": "Cannot process return of lines until the status is 'Delivered'",
   "messages.click-to-return-to-requisitions": "Unable to find a requisition with that ID. Click OK to return to the requisition list",
   "messages.click-to-return-to-shipments": "Unable to find a shipment with that ID. Click OK to return to the shipment list",
   "messages.confirm-add-from-master-list": "Do you want to add all of the items from this master list?",

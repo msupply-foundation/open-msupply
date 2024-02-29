@@ -31,7 +31,7 @@ const UIComponent = (props: ControlProps) => {
   const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
   const t = useTranslation('common');
-  const dateFormatter = useFormatDateTime().customDate;
+  const formatDateTime = useFormatDateTime();
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
     'Date of Birth'
@@ -50,14 +50,14 @@ const UIComponent = (props: ControlProps) => {
     setCustomError(undefined);
     setAge(DateUtils.age(dateOfBirth));
     setDoB(dateOfBirth);
-    handleChange(dobPath, dateFormatter(dateOfBirth, 'yyyy-MM-dd'));
+    handleChange(dobPath, formatDateTime.customDate(dateOfBirth, 'yyyy-MM-dd'));
     handleChange(estimatedPath, false);
   };
 
   const onChangeAge = (newAge: number = 0) => {
     const dob = DateUtils.startOfYear(DateUtils.addYears(new Date(), -newAge));
     setDoB(dob);
-    handleChange(dobPath, dateFormatter(dob, 'yyyy-MM-dd'));
+    handleChange(dobPath, formatDateTime.customDate(dob, 'yyyy-MM-dd'));
     handleChange(estimatedPath, true);
     setCustomError(undefined);
     setAge(newAge);
@@ -87,7 +87,7 @@ const UIComponent = (props: ControlProps) => {
         <Box display="flex" alignItems="center" gap={FORM_GAP} width="100%">
           <BaseDatePickerInput
             // undefined is displayed as "now" and null as unset
-            value={dob ?? null}
+            value={formatDateTime.getLocalDate(dob)}
             onChange={onChangeDoB}
             format="P"
             width={135}

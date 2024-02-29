@@ -1,7 +1,9 @@
 use super::{
+    item_link_row::item_link::dsl as item_link_dsl,
     master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
     master_list_row::{master_list, master_list::dsl as master_list_dsl},
+    name_link_row::name_link::dsl as name_link_dsl,
     name_row::name::dsl as name_dsl,
     program_row::program::dsl as program_dsl,
     store_row::store::dsl as store_dsl,
@@ -84,7 +86,10 @@ impl<'a> MasterListRepository<'a> {
                 let mut name_join_query = master_list_name_join_dsl::master_list_name_join
                     .select(master_list_name_join_dsl::master_list_id)
                     .distinct()
-                    .left_join(name_dsl::name.left_join(store_dsl::store))
+                    .left_join(
+                        name_link_dsl::name_link
+                            .left_join(name_dsl::name.left_join(store_dsl::store)),
+                    )
                     .into_boxed();
 
                 apply_string_filter!(name_join_query, f.exists_for_name, name_dsl::name_);
@@ -110,14 +115,11 @@ impl<'a> MasterListRepository<'a> {
             if f.item_id.is_some() {
                 let mut master_list_line_query = master_list_line_dsl::master_list_line
                     .select(master_list_line_dsl::master_list_id)
+                    .left_join(item_link_dsl::item_link)
                     .distinct()
                     .into_boxed::<DBType>();
 
-                apply_equal_filter!(
-                    master_list_line_query,
-                    f.item_id,
-                    master_list_line_dsl::item_id
-                );
+                apply_equal_filter!(master_list_line_query, f.item_id, item_link_dsl::item_id);
 
                 query = query.filter(master_list_dsl::id.eq_any(master_list_line_query));
             }

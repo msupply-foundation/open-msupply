@@ -51,6 +51,9 @@ pub enum Permission {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
+    // outbound return
+    OutboundReturnQuery,
+    OutboundReturnMutate,
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,

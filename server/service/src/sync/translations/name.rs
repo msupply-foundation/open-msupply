@@ -15,8 +15,7 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
@@ -248,18 +247,6 @@ impl SyncTranslation for NameTranslation {
         )))
     }
 
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Name)
-        });
-
-        Ok(result)
-    }
-
     fn try_translate_push_upsert(
         &self,
         connection: &StorageConnection,
@@ -349,17 +336,6 @@ impl SyncTranslation for NameTranslation {
             serde_json::to_value(&legacy_row)?,
         )]))
     }
-
-    fn try_translate_push_delete(
-        &self,
-        _: &StorageConnection,
-        changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
-    }
 }
 
 #[cfg(test)]
@@ -378,14 +354,6 @@ mod tests {
         for record in test_data::test_pull_upsert_records() {
             let translation_result = translator
                 .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
-                .unwrap();
-
-            assert_eq!(translation_result, record.translated_record);
-        }
-
-        for record in test_data::test_pull_delete_records() {
-            let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

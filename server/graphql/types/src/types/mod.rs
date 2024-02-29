@@ -99,6 +99,12 @@ pub use self::plugin_data::*;
 pub mod program_node;
 pub use self::program_node::*;
 
+pub mod outbound_return_line;
+pub use self::outbound_return_line::*;
+
+pub mod return_reason;
+pub use self::return_reason::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

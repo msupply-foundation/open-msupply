@@ -78,7 +78,7 @@ impl RequisitionNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row().created_datetime.clone(), Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime.clone(), Utc)
     }
 
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
@@ -114,12 +114,12 @@ impl RequisitionNode {
     /// Applicable to request requisition only
     pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
         let sent_datetime = self.row().sent_datetime.clone();
-        sent_datetime.map(|v| DateTime::<Utc>::from_utc(v, Utc))
+        sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         let finalised_datetime = self.row().finalised_datetime.clone();
-        finalised_datetime.map(|v| DateTime::<Utc>::from_utc(v, Utc))
+        finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn requisition_number(&self) -> &i64 {
@@ -146,13 +146,13 @@ impl RequisitionNode {
         let loader = ctx.get_loader::<DataLoader<NameByIdLoader>>();
 
         let response_option = loader
-            .load_one(NameByIdLoaderInput::new(&store_id, &self.row().name_id))
+            .load_one(NameByIdLoaderInput::new(&store_id, &self.name_row().id))
             .await?;
 
         response_option.map(NameNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find name ({}) linked to requisition ({})",
-                &self.row().name_id,
+                &self.name_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -164,7 +164,7 @@ impl RequisitionNode {
     }
 
     pub async fn other_party_id(&self) -> &str {
-        &self.row().name_id
+        &self.name_row().id
     }
 
     /// Maximum calculated quantity, used to deduce calculated quantity for each line, see calculated in requisition line

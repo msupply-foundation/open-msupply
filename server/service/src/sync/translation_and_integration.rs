@@ -57,7 +57,9 @@ impl<'a> TranslationAndIntegration<'a> {
                 SyncBufferAction::Delete => {
                     translator.try_translate_pull_delete(self.connection, &sync_record)?
                 }
-                SyncBufferAction::Merge => return Err(anyhow::anyhow!("Merge not implemented")),
+                SyncBufferAction::Merge => {
+                    translator.try_translate_pull_merge(self.connection, &sync_record)?
+                }
             };
 
             if let Some(translation_result) = translation_result {
@@ -249,6 +251,9 @@ impl PullUpsertRecord {
             FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
             DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
             Document(record) => sync_upsert_document(con, record),
+            ItemLink(record) => ItemLinkRowRepository::new(con).upsert_one(record),
+            NameLink(record) => NameLinkRowRepository::new(con).upsert_one(record),
+            ClinicianLink(record) => ClinicianLinkRowRepository::new(con).upsert_one(record),
         }
     }
 }
@@ -259,7 +264,6 @@ impl PullDeleteRecord {
         let id = &self.id;
         match self.table {
             UserPermission => UserPermissionRowRepository::new(con).delete(id),
-            Name => NameRowRepository::new(con).delete(id),
             NameTagJoin => NameTagJoinRepository::new(con).delete(id),
             Unit => UnitRowRepository::new(con).delete(id),
             Item => ItemRowRepository::new(con).delete(id),

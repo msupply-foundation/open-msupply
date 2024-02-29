@@ -7,8 +7,8 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError, StockLineRow,
-    StorageConnection,
+    InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
+    StockLineRow, StorageConnection,
 };
 
 use super::UpdateInboundShipmentLine;
@@ -17,7 +17,7 @@ pub fn generate(
     connection: &StorageConnection,
     user_id: &str,
     input: UpdateInboundShipmentLine,
-    current_line: InvoiceLineRow,
+    current_line: InvoiceLine,
     new_item_option: Option<ItemRow>,
     existing_invoice_row: InvoiceRow,
 ) -> Result<
@@ -33,7 +33,7 @@ pub fn generate(
 
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
-    let update_line = generate_line(input, current_line, new_item_option);
+    let update_line = generate_line(input, current_line.invoice_line_row, new_item_option);
 
     let mut update_line = match store_preferences.pack_to_one {
         true => convert_invoice_line_to_single_pack(update_line),
@@ -45,7 +45,7 @@ pub fn generate(
             &existing_invoice_row.store_id,
             update_line.clone(),
             batch_to_delete_id.is_none(),
-            &existing_invoice_row.name_id,
+            &existing_invoice_row.name_link_id,
         );
         update_line.stock_line_id = Some(new_batch.id.clone());
         Some(new_batch)
@@ -62,11 +62,14 @@ pub fn generate(
 }
 
 fn get_batch_to_delete_id(
-    current_line: &InvoiceLineRow,
+    current_line: &InvoiceLine,
     new_item_option: &Option<ItemRow>,
 ) -> Option<String> {
-    if let (Some(new_item), Some(stock_line_id)) = (new_item_option, &current_line.stock_line_id) {
-        if new_item.id != current_line.item_id {
+    if let (Some(new_item), Some(stock_line_id)) = (
+        new_item_option,
+        &current_line.invoice_line_row.stock_line_id,
+    ) {
+        if new_item.id != current_line.item_row.id {
             return Some(stock_line_id.clone());
         }
     }
@@ -104,7 +107,7 @@ fn generate_line(
     update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
 
     if let Some(item) = new_item_option {
-        update_line.item_id = item.id;
+        update_line.item_link_id = item.id;
         update_line.item_code = item.code;
         update_line.item_name = item.name;
     }

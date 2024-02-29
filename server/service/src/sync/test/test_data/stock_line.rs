@@ -59,7 +59,7 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
         PullUpsertRecord::StockLine(StockLineRow {
             id: ITEM_LINE_1.0.to_string(),
             store_id: "store_a".to_string(),
-            item_id: "item_a".to_string(),
+            item_link_id: "item_a".to_string(),
             location_id: None,
             batch: Some("stocktake_1".to_string()),
             pack_size: 1,
@@ -70,7 +70,7 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
             expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 17).unwrap()),
             on_hold: false,
             note: Some("test note".to_string()),
-            supplier_id: Some("name_store_b".to_string()),
+            supplier_link_id: Some("name_store_b".to_string()),
             barcode_id: None,
         }),
     )
@@ -149,7 +149,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
         PullUpsertRecord::StockLine(StockLineRow {
             id: ITEM_LINE_2.0.to_string(),
             store_id: "store_a".to_string(),
-            item_id: "item_b".to_string(),
+            item_link_id: "item_b".to_string(),
             location_id: None,
             batch: Some("none".to_string()),
             pack_size: 1,
@@ -160,7 +160,7 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             expiry_date: None,
             on_hold: false,
             note: None,
-            supplier_id: None,
+            supplier_link_id: None,
             barcode_id: None,
         }),
     )

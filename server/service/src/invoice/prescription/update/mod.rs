@@ -164,7 +164,7 @@ mod test {
         fn prescription_no_stock() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = String::from("prescription_no_stock");
-                r.name_id = String::from("name_store_a");
+                r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
                 r.r#type = InvoiceRowType::Prescription;
                 r.status = InvoiceRowStatus::New;
@@ -185,7 +185,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = String::from("prescription_no_stock_line_a");
                 r.invoice_id = String::from("prescription_no_stock");
-                r.item_id = String::from("item_a");
+                r.item_link_id = String::from("item_a");
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.batch = None;
@@ -282,7 +282,7 @@ mod test {
         fn prescription() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "test_prescription_pricing".to_string();
-                r.name_id = mock_patient().id;
+                r.name_link_id = mock_patient().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::Prescription;
             })
@@ -300,7 +300,7 @@ mod test {
             ClinicianStoreJoinRow {
                 id: "test_clinician_store_join".to_string(),
                 store_id: mock_store_a().id,
-                clinician_id: clinician().id,
+                clinician_link_id: clinician().id,
             }
         }
 
@@ -352,8 +352,8 @@ mod test {
                     comment,
                     colour,
                 } = get_update();
-                u.name_id = patient_id.unwrap();
-                u.clinician_id = clinician_id;
+                u.name_link_id = patient_id.unwrap();
+                u.clinician_link_id = clinician_id;
                 u.comment = comment;
                 u.colour = colour;
                 u

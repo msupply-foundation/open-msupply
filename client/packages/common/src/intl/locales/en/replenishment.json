@@ -82,6 +82,7 @@
   "messages.off-hold-confirmation": "This will re-enable status changes",
   "messages.on-hold-confirmation": "This will prevent any further status changes until the hold is removed",
   "messages.cant-delete-requisitions": "Can only delete requisitions with a status of 'Draft'",
+  "messages.cant-return-shipment": "Cannot return lines until the status is 'Delivered'",
   "messages.changing-max-mos": "This will change the target months of stock.",
   "messages.changing-min-mos": "This will change the reorder threshold months of stock.",
   "messages.unassign-min-mos": "This will remove the stock reorder threshold. Reorder threshold will now default to be the same as target months of stock.",

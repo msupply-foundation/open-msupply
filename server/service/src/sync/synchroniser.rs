@@ -189,12 +189,13 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes) =
+        let (upserts, deletes, merges) =
             integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
                 .await
                 .map_err(SyncError::IntegrationError)?;
         warn!("Upsert Integration result: {:?}", upserts);
         warn!("Delete Integration result: {:?}", deletes);
+        warn!("Merge Integration result: {:?}", merges);
 
         logger.done_step(SyncStep::Integrate)?;
 
@@ -220,6 +221,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
+    TranslationAndIntegrationResults,
 )> {
     // Integration is done inside a transaction, to make sure all records are available at the same time
     // and maintain logical data integrity. During initialisation nested transactions cause significant
@@ -232,6 +234,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
     // Closure, to be run in a transaction or without a transaction
     let integrate_and_translate = |connection: &StorageConnection| -> Result<
         (
+            TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
         ),
@@ -265,7 +268,20 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 None,
             )?;
 
-        Ok((upsert_integration_result, delete_integration_result))
+        let merge_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+        let merge_integration_result: TranslationAndIntegrationResults =
+            translation_and_integration.translate_and_integrate_sync_records(
+                merge_sync_buffer_records,
+                &translators,
+                None,
+            )?;
+
+        Ok((
+            upsert_integration_result,
+            delete_integration_result,
+            merge_integration_result,
+        ))
     };
 
     let result = if is_initialised {

@@ -7,7 +7,6 @@ use anyhow::Context;
 use chrono::NaiveDateTime;
 use log::error;
 use mime_guess::mime;
-use openssl::error;
 use repository::RepositoryError;
 use service::temperature_breach::insert::InsertTemperatureBreach;
 use service::{

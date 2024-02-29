@@ -296,16 +296,28 @@ impl GeneralQueries {
         )
     }
 
-    pub async fn generate_outbound_return_lines(
-        &self,
-        store_id: String,
-        input: GenerateOutboundReturnLinesInput,
-    ) -> Result<Vec<OutboundReturnLine>> {
-        generate_outbound_return_lines(store_id, input)
+    pub async fn database_settings(&self, ctx: &Context<'_>) -> Result<DatabaseSettingsNode> {
+        database_settings(ctx)
     }
 
-    pub async fn return_reasons(&self) -> Result<Vec<ReturnReasonNode>> {
-        return_reasons()
+    pub async fn generate_outbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: GenerateOutboundReturnLinesInput,
+    ) -> Result<GenerateOutboundReturnLinesResponse> {
+        generate_outbound_return_lines(ctx, store_id, input)
+    }
+
+    pub async fn return_reasons(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ReturnReasonFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ReturnReasonSortInput>>,
+    ) -> Result<ReturnReasonResponse> {
+        return_reasons(&ctx, page, filter, sort)
     }
 
     pub async fn generate_inbound_return_lines(

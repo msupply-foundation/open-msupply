@@ -125,7 +125,7 @@ mod test {
         fn not_a_customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_customer_join".to_string();
-                r.name_id = not_a_customer().id;
+                r.name_link_id = not_a_customer().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_customer = false;
             })
@@ -205,7 +205,7 @@ mod test {
         fn customer_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "customer_join".to_string();
-                r.name_id = customer().id;
+                r.name_link_id = customer().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_customer = true;
             })
@@ -245,7 +245,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = customer().id;
+                u.name_link_id = customer().id;
                 u.user_id = Some(mock_user_account_a().id);
                 u
             })
@@ -270,7 +270,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&invoice, |mut u| {
-                u.name_id = customer().id;
+                u.name_link_id = customer().id;
                 u.on_hold = true;
                 u
             })
@@ -282,7 +282,7 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertOutboundShipment| {
                     r.id = "test_name_store_id_linked".to_string();
-                    r.other_party_id = mock_name_linked_to_store_join().name_id.clone();
+                    r.other_party_id = mock_name_linked_to_store_join().name_link_id.clone();
                 }),
             )
             .unwrap();

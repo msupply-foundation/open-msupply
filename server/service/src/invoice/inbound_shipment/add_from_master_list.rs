@@ -91,7 +91,7 @@ fn generate(
 
     let item_ids_in_invoice: Vec<String> = invoice_lines
         .into_iter()
-        .map(|invoice_line| invoice_line.invoice_line_row.item_id)
+        .map(|invoice_line| invoice_line.item_row.id)
         .collect();
 
     let master_list_lines_not_in_invoice = MasterListLineRepository::new(&ctx.connection)
@@ -224,27 +224,27 @@ mod test {
                 joins: vec![MasterListNameJoinRow {
                     id: join1,
                     master_list_id: id.clone(),
-                    name_id: mock_name_store_a().id,
+                    name_link_id: mock_name_store_a().id,
                 }],
                 lines: vec![
                     MasterListLineRow {
                         id: line1.clone(),
-                        item_id: mock_item_a().id,
+                        item_link_id: mock_item_a().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line2.clone(),
-                        item_id: mock_item_b().id,
+                        item_link_id: mock_item_b().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line3.clone(),
-                        item_id: mock_item_c().id,
+                        item_link_id: mock_item_c().id,
                         master_list_id: id.clone(),
                     },
                     MasterListLineRow {
                         id: line4.clone(),
-                        item_id: mock_item_d().id,
+                        item_link_id: mock_item_d().id,
                         master_list_id: id.clone(),
                     },
                 ],
@@ -282,7 +282,7 @@ mod test {
         let mut item_ids: Vec<String> = result
             .clone()
             .into_iter()
-            .map(|invoice_line| invoice_line.item_id)
+            .map(|invoice_line| invoice_line.item_link_id)
             .collect();
         item_ids.sort_by(|a, b| a.cmp(&b));
 
@@ -297,7 +297,7 @@ mod test {
         assert_eq!(item_ids, test_item_ids);
         let line = result
             .iter()
-            .find(|line| line.item_id == mock_item_a().id)
+            .find(|line| line.item_link_id == mock_item_a().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);
@@ -306,7 +306,7 @@ mod test {
 
         let line = result
             .iter()
-            .find(|line| line.item_id == mock_item_b().id)
+            .find(|line| line.item_link_id == mock_item_b().id)
             .unwrap();
 
         assert_eq!(line.number_of_packs, 0.0);

@@ -28,16 +28,11 @@ machine-uid = { version = "0.2.0", optional = true }
 actix-cors = "0.6.1"
 actix-web = { version = "4.0.1", features = ["rustls"] }
 actix-files = "0.6.0"
-# OpenSSL is currently only used indirectly by external crates. For the Android build we need to use actix-cors = "0.6.1"
-# the "openssl/vendored" feature to make the cross compilation work, i.e. to avoid linking against
-# the openssl shared lib which is not easily available on the host platform. To enable the
-# "openssl/vendored" feature on Android (see below) the openssl crate needs to be a dependency.
-openssl = { version = "0.10", features = ["v110"] }
 anyhow.workspace = true
 config = "0.11.0"
 chrono = { workspace = true }
 log = "0.4.14"
-reqwest = { version = "0.11.10", features = ["json"] }
+reqwest = { workspace = true }
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
 serde = "1.0.137"
@@ -68,5 +63,4 @@ astro-dnssd = { version = "0.3.2" }
 default = ["sqlite", "dep:machine-uid"]
 sqlite = ["repository/sqlite"]
 postgres = ["repository/postgres"]
-# See openssl comment regarding the "openssl/vendored" feature
-android = ["repository/sqlite", "openssl/vendored"]
+android = ["repository/sqlite"]

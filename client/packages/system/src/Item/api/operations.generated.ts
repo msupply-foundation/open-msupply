@@ -265,7 +265,7 @@ export const ItemsWithStatsDocument = gql`
     `;
 export const ItemByIdDocument = gql`
     query itemById($storeId: String!, $itemId: String!) {
-  items(storeId: $storeId, filter: {id: {equalTo: $itemId}}) {
+  items(storeId: $storeId, filter: {id: {equalTo: $itemId}, isActive: true}) {
     ... on ItemConnector {
       __typename
       nodes {

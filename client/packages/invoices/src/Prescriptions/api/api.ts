@@ -79,7 +79,6 @@ const prescriptionParsers = {
   toInsertLine: (line: DraftStockOutLine): InsertPrescriptionLineInput => {
     return {
       id: line.id,
-      itemId: line.item.id,
       numberOfPacks: line.numberOfPacks,
       stockLineId: line.stockLine?.id ?? '',
       invoiceId: line.invoiceId,
@@ -189,9 +188,15 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete invoices');
   },
-  updateLines: async (draftPrescriptionLine: DraftStockOutLine[]) => {
+  updateLines: async ({
+    draftPrescriptionLines,
+    patch,
+  }: {
+    draftPrescriptionLines: DraftStockOutLine[];
+    patch?: RecordPatch<PrescriptionRowFragment>;
+  }) => {
     const input = {
-      insertPrescriptionLines: draftPrescriptionLine
+      insertPrescriptionLines: draftPrescriptionLines
         .filter(
           ({ type, isCreated, numberOfPacks }) =>
             isCreated &&
@@ -199,7 +204,7 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks > 0
         )
         .map(prescriptionParsers.toInsertLine),
-      updatePrescriptionLines: draftPrescriptionLine
+      updatePrescriptionLines: draftPrescriptionLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
             !isCreated &&
@@ -208,7 +213,7 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks > 0
         )
         .map(prescriptionParsers.toUpdateLine),
-      deletePrescriptionLines: draftPrescriptionLine
+      deletePrescriptionLines: draftPrescriptionLines
         .filter(
           ({ type, isCreated, isUpdated, numberOfPacks }) =>
             !isCreated &&
@@ -217,7 +222,11 @@ export const getPrescriptionQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks === 0
         )
         .map(prescriptionParsers.toDeleteLine),
+      updatePrescriptions: !!patch
+        ? [prescriptionParsers.toUpdate(patch)]
+        : undefined,
     };
+
     const result = await sdk.upsertPrescription({ storeId, input });
 
     return result;

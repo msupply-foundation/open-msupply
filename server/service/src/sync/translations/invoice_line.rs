@@ -4,8 +4,9 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType,
-    ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowType, ItemRowRepository,
+    StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +15,7 @@ use super::{
     PullDeleteRecordTable, PullDependency, PullUpsertRecord, SyncTranslation,
 };
 
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANS_LINE;
+const LEGACY_TABLE_NAME: &str = LegacyTableName::TRANS_LINE;
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LEGACY_TABLE_NAME
@@ -204,7 +205,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         let result = InvoiceLineRow {
             id,
             invoice_id,
-            item_id,
+            item_link_id: item_id,
             item_name,
             item_code,
             stock_line_id,
@@ -221,6 +222,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            return_reason_id: None, // TODO
         };
 
         Ok(Some(IntegrationRecords::from_upsert(
@@ -253,32 +255,44 @@ impl SyncTranslation for InvoiceLineTranslation {
             return Ok(None);
         }
 
-        let InvoiceLineRow {
-            id,
-            invoice_id,
-            item_id,
-            item_name,
-            item_code,
-            stock_line_id,
-            location_id,
-            batch,
-            expiry_date,
-            pack_size,
-            cost_price_per_pack,
-            sell_price_per_pack,
-            total_before_tax,
-            total_after_tax,
-            tax,
-            r#type,
-            number_of_packs,
-            note,
-            inventory_adjustment_reason_id,
-        } = InvoiceLineRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice_line) = InvoiceLineRepository::new(connection)
+            .query_one(InvoiceLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+        else {
+            return Err(anyhow::anyhow!("invoice_line row not found"));
+        };
+
+        let InvoiceLine {
+            invoice_line_row:
+                InvoiceLineRow {
+                    id,
+                    invoice_id,
+                    item_link_id: _,
+                    item_name,
+                    item_code,
+                    stock_line_id,
+                    location_id,
+                    batch,
+                    expiry_date,
+                    pack_size,
+                    cost_price_per_pack,
+                    sell_price_per_pack,
+                    total_before_tax,
+                    total_after_tax,
+                    tax,
+                    r#type,
+                    number_of_packs,
+                    note,
+                    inventory_adjustment_reason_id,
+                    return_reason_id: _, // TODO
+                },
+            item_row,
+            ..
+        } = invoice_line;
 
         let legacy_row = LegacyTransLineRow {
             id: id.clone(),
             invoice_id,
-            item_id,
+            item_id: item_row.id,
             item_name,
             stock_line_id,
             location_id,
@@ -338,12 +352,15 @@ fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineTyp
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_item_links;
+
     use super::*;
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
-        test_db::setup_all_with_data,
-        KeyValueStoreRow, KeyValueType,
+        test_db::{setup_all, setup_all_with_data},
+        ChangelogFilter, ChangelogRepository, KeyValueStoreRow, KeyValueType,
     };
+    use serde_json::json;
     use util::inline_init;
 
     #[actix_rt::test]
@@ -384,6 +401,38 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_push_merged() {
+        // The item_links_merged function will merge ALL items into item_a, so all invoice_lines should have an item_id of "item_a" regardless of their original item_id.
+        let (mock_data, connection, _, _) = setup_all(
+            "test_invoice_line_push_item_link_merged",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        merge_all_item_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::InvoiceLine.equal_to())),
+            )
+            .unwrap();
+
+        let translator = InvoiceLineTranslation {};
+        for changelog in changelogs {
+            // Translate and sort
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
         }
     }
 }

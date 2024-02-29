@@ -107,13 +107,13 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
 #[cfg(test)]
 #[cfg(feature = "postgres")]
 fn get_exclude_date_fields() -> Vec<TableAndFieldName> {
-    vec![("invoice_line_stock_movement", "expiry_date")]
-        .iter()
-        .map(|(table_name, field_name)| TableAndFieldName {
-            table_name,
-            field_name,
-        })
-        .collect()
+    vec![]
+    // .iter()
+    // .map(|(table_name, field_name)| TableAndFieldName {
+    //     table_name,
+    //     field_name,
+    // })
+    // .collect()
 }
 
 #[derive(QueryableByName, Debug, PartialEq)]
@@ -347,7 +347,10 @@ fn serialise_date(date: NaiveDate) -> String {
 mod tests {
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_item_a, mock_name_a, mock_store_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
         test_db::setup_all_with_data,
         InvoiceRow, InvoiceRowRepository, StockLineRow, StockLineRowRepository,
     };
@@ -360,7 +363,7 @@ mod tests {
         fn invoice1() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice1".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
                     .unwrap()
@@ -372,7 +375,7 @@ mod tests {
         fn invoice2() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = mock_name_a().id;
+                r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.created_datetime = NaiveDate::from_ymd_opt(2021, 02, 01)
                     .unwrap()
@@ -390,7 +393,7 @@ mod tests {
         fn stock_line1() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line1".to_string();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_link_from_item(&mock_item_a()).id;
                 r.store_id = mock_store_a().id;
                 r.expiry_date = Some(NaiveDate::from_ymd_opt(2023, 02, 01).unwrap());
             })

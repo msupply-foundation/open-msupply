@@ -1,8 +1,10 @@
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { useStocktake } from '../../../../api';
+import { StocktakeSummaryItem } from 'packages/inventory/src/types';
 
-export const useNextItem = (currentItemId?: string): ItemRowFragment | null => {
-  const { items } = useStocktake.line.rows();
+export const useNextItem = (
+  items: StocktakeSummaryItem[],
+  currentItemId?: string
+): ItemRowFragment | null => {
   if (!items || !currentItemId) return null;
 
   const numberOfItems = items.length;

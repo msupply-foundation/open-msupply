@@ -1,4 +1,5 @@
 use super::{
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
     name_row::{name, name::dsl as name_dsl},
     name_store_join::{name_store_join, name_store_join::dsl as name_store_join_dsl},
     store_row::{store, store::dsl as store_dsl},
@@ -8,11 +9,12 @@ use super::{
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    EqualFilter, NameType, Pagination, Sort, StringFilter,
+    EqualFilter, NameLinkRow, NameType, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
     dsl::{And, Eq, IntoBoxed, LeftJoin},
+    helper_types::InnerJoin,
     prelude::*,
     query_source::joins::OnClauseWrapper,
 };
@@ -65,7 +67,11 @@ pub enum NameSortField {
 
 pub type NameSort = Sort<NameSortField>;
 
-type NameAndNameStoreJoin = (NameRow, Option<NameStoreJoinRow>, Option<StoreRow>);
+type NameAndNameStoreJoin = (
+    NameRow,
+    (NameLinkRow, Option<NameStoreJoinRow>),
+    Option<StoreRow>,
+);
 
 pub struct NameRepository<'a> {
     connection: &'a StorageConnection,
@@ -149,12 +155,14 @@ impl<'a> NameRepository<'a> {
     /// but it's considered invisible in subseqent filters.
     pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
         let mut query = name_dsl::name
-            .left_join(
-                name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_id
-                    .eq(name_dsl::id)
-                    .and(name_store_join_dsl::store_id.eq(store_id.clone()))), // if the name is visible to the `store_id` passed into this function, attach its `name store_join` information
+            .inner_join(
+                name_link_dsl::name_link.left_join(
+                    name_store_join_dsl::name_store_join.on(name_store_join_dsl::name_link_id
+                        .eq(name_link_dsl::id)
+                        .and(name_store_join_dsl::store_id.eq(store_id.clone()))),
+                ),
             )
-            .left_join(store_dsl::store.on(store_dsl::name_id.eq(name_dsl::id)))
+            .left_join(store_dsl::store)
             .into_boxed();
 
         if let Some(f) = filter {
@@ -227,7 +235,9 @@ impl<'a> NameRepository<'a> {
 }
 
 impl Name {
-    pub fn from_join((name_row, name_store_join_row, store_row): NameAndNameStoreJoin) -> Name {
+    pub fn from_join(
+        (name_row, (_name_link_row, name_store_join_row), store_row): NameAndNameStoreJoin,
+    ) -> Name {
         Name {
             name_row,
             name_store_join_row,
@@ -245,21 +255,18 @@ impl Name {
 }
 
 // name_store_join_dsl::name_id.eq(name_dsl::id)
-type NameIdEqualToId = Eq<name_store_join_dsl::name_id, name_dsl::id>;
+type NameLinkIdEqualToId = Eq<name_store_join_dsl::name_link_id, name_link_dsl::id>;
 // name_store_join_dsl::store_id.eq(store_id)
 type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
-// name_store_join_dsl::name_id.eq(name_dsl::id).and(name_store_join_dsl::store_id.eq(store_id))
-type OnNameStoreJoinToNameJoin =
-    OnClauseWrapper<name_store_join::table, And<NameIdEqualToId, StoreIdEqualToStr>>;
-
-// store_dsl::id.eq(store_id))
-type StoreNameIdEqualToId = Eq<store_dsl::name_id, name_dsl::id>;
-// store.on(id.eq(store_id))
-type OnStoreJoinToNameStoreJoin = OnClauseWrapper<store::table, StoreNameIdEqualToId>;
+type OnNameStoreJoinToNameLinkJoin =
+    OnClauseWrapper<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
 
 type BoxedNameQuery = IntoBoxed<
     'static,
-    LeftJoin<LeftJoin<name::table, OnNameStoreJoinToNameJoin>, OnStoreJoinToNameStoreJoin>,
+    LeftJoin<
+        InnerJoin<name::table, LeftJoin<name_link::table, OnNameStoreJoinToNameLinkJoin>>,
+        store::table,
+    >,
     DBType,
 >;
 
@@ -424,17 +431,15 @@ mod tests {
         let repository = NameRepository::new(&storage_connection);
 
         let (rows, queries) = data();
+        let name_repo = NameRowRepository::new(&storage_connection);
         for row in rows {
-            NameRowRepository::new(&storage_connection)
-                .upsert_one(&row)
-                .unwrap();
+            name_repo.upsert_one(&row).unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
         let store_id = "store_a";
 
         // Test
-
         // .count()
         assert_eq!(
             usize::try_from(repository.count(store_id, None).unwrap()).unwrap(),

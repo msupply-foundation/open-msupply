@@ -146,7 +146,7 @@ impl<'a> TemperatureLogRepository<'a> {
 
 type BoxedTemperatureLogQuery = temperature_log::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
+fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
     TemperatureLog {
         temperature_log_row,
     }
