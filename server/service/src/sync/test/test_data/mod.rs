@@ -17,6 +17,7 @@ pub(crate) mod name;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
@@ -55,6 +56,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut barcode::test_pull_upsert_records());
+    test_records.append(&mut pack_variant::test_pull_upsert_records());
     test_records
 }
 
@@ -124,6 +126,13 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records.append(&mut barcode::test_push_records());
     test_records.append(&mut name_store_join::test_push_upsert());
     test_records.append(&mut name_to_name_store_join::test_push_records());
+
+    test_records
+}
+
+pub(crate) fn get_all_omsupply_central_push_records() -> Vec<TestSyncPushRecord> {
+    let mut test_records = Vec::new();
+    test_records.append(&mut pack_variant::test_omsupply_central_push_records());
 
     test_records
 }

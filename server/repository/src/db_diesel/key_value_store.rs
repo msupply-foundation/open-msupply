@@ -21,6 +21,7 @@ table! {
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyValueType {
     CentralSyncPullCursor,
+    SyncPullCursorV6,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,

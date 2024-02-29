@@ -1,18 +1,19 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{
-        invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
-        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
+    translations::invoice::{
+        LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use repository::{InvoiceRow, InvoiceRowDelete, InvoiceRowStatus, InvoiceRowType};
 use serde_json::json;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::TestSyncPushRecord;
 
-const TRANSACT_1: (&str, &str) = (
+const TABLE_NAME: &'static str = "transact";
+
+const TRANSACT_1: (&'static str, &'static str) = (
     "12e889c0f0d211eb8dddb54df6d741bc",
     r#"{
       "Colour": 0,
@@ -97,9 +98,9 @@ const TRANSACT_1: (&str, &str) = (
 );
 fn transact_1_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_1,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: TRANSACT_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
@@ -133,12 +134,12 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn transact_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
@@ -266,9 +267,9 @@ const TRANSACT_2: (&str, &str) = (
 );
 fn transact_2_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_2,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: TRANSACT_2.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -296,12 +297,12 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn transact_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_2.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_2.0.to_string(),
@@ -434,9 +435,9 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
 
 fn transact_om_fields_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_OM_FIELDS,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: TRANSACT_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -488,12 +489,12 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn transact_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_OM_FIELDS.0.to_string(),
@@ -652,9 +653,9 @@ const INVENTORY_ADDITION: (&str, &str) = (
 
 fn inventory_addition_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         INVENTORY_ADDITION,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: INVENTORY_ADDITION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -687,13 +688,13 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             colour: None,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 
 fn inventory_addition_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: INVENTORY_ADDITION.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: INVENTORY_ADDITION.0.to_string(),
@@ -832,9 +833,9 @@ const INVENTORY_REDUCTION: (&str, &str) = (
 
 fn inventory_reduction_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         INVENTORY_REDUCTION,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: INVENTORY_REDUCTION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -867,13 +868,13 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             colour: None,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 
 fn inventory_reduction_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: INVENTORY_REDUCTION.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: INVENTORY_REDUCTION.0.to_string(),
@@ -1007,9 +1008,9 @@ const PRESCRIPTION_1: (&str, &str) = (
 );
 fn prescription_1_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         PRESCRIPTION_1,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: PRESCRIPTION_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
@@ -1043,12 +1044,12 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             linked_invoice_id: None,
             tax: Some(0.0),
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn prescription_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: PRESCRIPTION_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: PRESCRIPTION_1.0.to_string(),
@@ -1110,9 +1111,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_OM_FIELDS.0,
-        PullDeleteRecordTable::Invoice,
+        InvoiceRowDelete(TRANSACT_OM_FIELDS.0.to_string()),
     )]
 }
 

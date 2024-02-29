@@ -12,13 +12,17 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
   CellProps,
+  getColumnLookupWithOverrides,
   NumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
   getLocationInputColumn,
   LocationRowFragment,
+  PackVariantEntryCell,
+  usePackVariant,
 } from '@openmsupply-client/system';
+import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -68,12 +72,20 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   />
 );
 
-export const QuantityTableComponent: FC<TableProps> = ({
-  lines,
-  updateDraftLine,
-  isDisabled = false,
-}) => {
+// If this is not extracted to it's own component and used directly in Cell:
+// cell will be re rendered anytime rowData changes, which causes it to loose focus
+// if number of packs is changed and tab is pressed (in quick succession)
+const PackUnitEntryCell = PackVariantEntryCell<DraftInboundLine>({
+  getItemId: r => r.item.id,
+  getUnitName: r => r.item.unitName || null,
+});
+
+export const QuantityTableComponent: FC<
+  TableProps & { item: InboundLineFragment['item'] | null }
+> = ({ item, lines, updateDraftLine, isDisabled = false }) => {
+  const { packVariantExists } = usePackVariant(item?.id || '', null);
   const theme = useTheme();
+
   const columns = useColumns<DraftInboundLine>(
     [
       getBatchColumn(updateDraftLine, theme),
@@ -87,13 +99,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
           setter: updateDraftLine,
         },
       ],
-      [
-        'packSize',
-        {
-          Cell: NumberInputCell,
-          setter: updateDraftLine,
-        },
-      ],
+      getColumnLookupWithOverrides('packSize', {
+        label: packVariantExists
+          ? 'label.unit-variant-and-pack-size'
+          : 'label.pack-size',
+        Cell: PackUnitEntryCell,
+        setter: updateDraftLine,
+      }),
       [
         'unitQuantity',
         {

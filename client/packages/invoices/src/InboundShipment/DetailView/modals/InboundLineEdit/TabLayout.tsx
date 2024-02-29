@@ -16,12 +16,14 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
+import { InboundLineFragment } from '../../../api';
 
 interface TabLayoutProps {
   addDraftLine: () => void;
   draftLines: DraftInboundLine[];
   isDisabled: boolean;
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  item: InboundLineFragment['item'] | null;
 }
 
 enum Tabs {
@@ -31,6 +33,7 @@ enum Tabs {
 }
 
 export const TabLayout: FC<TabLayoutProps> = ({
+  item,
   addDraftLine,
   draftLines,
   isDisabled,
@@ -100,6 +103,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
       >
         <InboundLineEditPanel value={Tabs.Batch}>
           <QuantityTable
+            item={item}
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
