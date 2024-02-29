@@ -34,11 +34,13 @@ export const Toolbar = () => {
     }));
 
   useEffect(() => {
+    // only show type options in the filter which are relevant for the selected category
     const newTypes = (typeData?.nodes || []).filter(
       type => !categoryId || type.categoryId === categoryId
     );
     setTypes(newTypes);
 
+    // reset the selected type if it is not under the selected category
     if (newTypes.find(t => t.name === typeId) === null) {
       updateQuery({ categoryId: '' });
     }
