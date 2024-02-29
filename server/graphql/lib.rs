@@ -100,9 +100,11 @@ impl Queries {
             FormSchemaQueries,
             ClinicianQueries,
             PluginQueries,
-            AssetQueries,
             AssetCatalogueQueries,
+            AssetQueries,
+        )
     }
+}
 
 #[derive(MergedObject, Default, Clone)]
 pub struct Mutations(
