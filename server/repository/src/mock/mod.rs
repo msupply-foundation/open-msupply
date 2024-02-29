@@ -186,7 +186,6 @@ pub struct MockData {
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
     pub plugin_data: Vec<PluginDataRow>,
-    pub assets: Vec<AssetRow>,
 }
 
 impl MockData {
@@ -250,7 +249,6 @@ pub struct MockDataInserts {
     pub clinician_store_joins: bool,
     pub contexts: bool,
     pub plugin_data: bool,
-    pub assets: bool,
 }
 
 impl MockDataInserts {
@@ -1127,7 +1125,6 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
-        self.assets.append(&mut assets);
 
         self
     }
