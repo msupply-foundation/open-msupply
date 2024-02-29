@@ -380,11 +380,6 @@ export type CanOnlyChangeToPickedWhenNoUnallocatedLines = UpdatePrescriptionErro
   invoiceLines: InvoiceLineConnector;
 };
 
-export type CannotChangeForeignCurrency = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
-  __typename: 'CannotChangeForeignCurrency';
-  description: Scalars['String']['output'];
-};
-
 export type CannotChangeStatusOfInvoiceOnHold = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
   __typename: 'CannotChangeStatusOfInvoiceOnHold';
   description: Scalars['String']['output'];
@@ -418,6 +413,11 @@ export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktak
 
 export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
   __typename: 'CannotHaveFractionalPack';
+  description: Scalars['String']['output'];
+};
+
+export type CannotIssueInForeignCurrency = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
+  __typename: 'CannotIssueInForeignCurrency';
   description: Scalars['String']['output'];
 };
 

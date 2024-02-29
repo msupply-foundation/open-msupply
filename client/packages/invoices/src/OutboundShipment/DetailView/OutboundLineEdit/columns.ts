@@ -67,6 +67,7 @@ export const useOutboundLineEditColumns = ({
       description: 'description.fc-sell-price',
       width: 100,
       align: ColumnAlign.Right,
+      // eslint-disable-next-line new-cap
       Cell: CurrencyCell({ currency: currency?.code }),
       accessor: ({ rowData }) => {
         if (currency) {
