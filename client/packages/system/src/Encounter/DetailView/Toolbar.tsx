@@ -286,6 +286,9 @@ export const Toolbar: FC<ToolbarProps> = ({
                 labelWidth="60px"
                 Input={
                   <TimePickerInput
+                    minTime={
+                      startDatetime ? new Date(startDatetime) : undefined
+                    }
                     value={DateUtils.getDateOrNull(endDatetime ?? null)}
                     onChange={date => {
                       const endDatetime = date
