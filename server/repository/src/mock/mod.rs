@@ -1,6 +1,7 @@
 use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
+pub mod asset;
 mod barcode;
 mod clinician;
 pub mod common;
@@ -97,6 +98,7 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
+    assets::asset_row::{AssetRow, AssetRowRepository},
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
     ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
@@ -119,7 +121,7 @@ use crate::{
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
-use self::{activity_log::mock_activity_logs, unit::mock_units};
+use self::{activity_log::mock_activity_logs, asset::mock_assets, unit::mock_units};
 
 use super::{
     InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,
@@ -176,6 +178,7 @@ pub struct MockData {
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
     pub plugin_data: Vec<PluginDataRow>,
+    pub assets: Vec<AssetRow>,
 }
 
 impl MockData {
@@ -237,6 +240,7 @@ pub struct MockDataInserts {
     pub clinician_store_joins: bool,
     pub contexts: bool,
     pub plugin_data: bool,
+    pub assets: bool,
 }
 
 impl MockDataInserts {
@@ -287,6 +291,7 @@ impl MockDataInserts {
             clinician_store_joins: true,
             contexts: true,
             plugin_data: true,
+            assets: true,
         }
     }
 
@@ -499,6 +504,13 @@ impl MockDataInserts {
         self.plugin_data = true;
         self
     }
+
+    pub fn assets(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -571,6 +583,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
             clinicians: mock_clinicians(),
+            assets: mock_assets(),
             ..Default::default()
         },
     );
@@ -959,6 +972,13 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
+
+        if inserts.assets {
+            for row in &mock_data.assets {
+                let repo = AssetRowRepository::new(connection);
+                repo.upsert_one(&row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1012,6 +1032,7 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
+            mut assets,
             plugin_data: _,
         } = other;
 
@@ -1063,6 +1084,7 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
+        self.assets.append(&mut assets);
 
         self
     }
