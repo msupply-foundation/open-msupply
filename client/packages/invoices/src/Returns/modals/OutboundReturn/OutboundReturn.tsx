@@ -67,6 +67,7 @@ export const OutboundReturnEditModal = ({
     }
   };
 
+  // TODO: show/hide logic clean up :)
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
@@ -77,6 +78,7 @@ export const OutboundReturnEditModal = ({
             <DialogButton
               onClick={() => onChangeTab(Tabs.Reason)}
               variant="next"
+              disabled={!lines.length}
             />
           ) : undefined
         }

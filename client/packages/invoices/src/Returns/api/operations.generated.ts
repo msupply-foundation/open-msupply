@@ -33,9 +33,8 @@ export type InboundReturnsQueryVariables = Types.Exact<{
 export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null }> } };
 
 export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
-  stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  input: Types.GenerateOutboundReturnLinesInput;
   storeId: Types.Scalars['String']['input'];
-  itemId?: Types.InputMaybe<Types.Scalars['String']['input']>;
 }>;
 
 
@@ -149,11 +148,8 @@ export const InboundReturnsDocument = gql`
 }
     ${InboundReturnRowFragmentDoc}`;
 export const GenerateOutboundReturnLinesDocument = gql`
-    query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!, $itemId: String) {
-  generateOutboundReturnLines(
-    input: {stockLineIds: $stockLineIds}
-    storeId: $storeId
-  ) {
+    query generateOutboundReturnLines($input: GenerateOutboundReturnLinesInput!, $storeId: String!) {
+  generateOutboundReturnLines(input: $input, storeId: $storeId) {
     ... on OutboundReturnLineConnector {
       nodes {
         availableNumberOfPacks
@@ -352,7 +348,7 @@ export const mockInboundReturnsQuery = (resolver: ResponseResolver<GraphQLReques
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockGenerateOutboundReturnLinesQuery((req, res, ctx) => {
- *   const { stockLineIds, storeId, itemId } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ generateOutboundReturnLines })
  *   )

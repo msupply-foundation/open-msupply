@@ -9,6 +9,7 @@ import {
   RouteBuilder,
   useTranslation,
   createQueryParamsStore,
+  useEditModal,
   // DetailTabs,
   // ModalMode,
 } from '@openmsupply-client/common';
@@ -23,12 +24,12 @@ import { useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
+import { OutboundReturnEditModal } from '../modals';
 // import { OutboundLineEdit } from './OutboundLineEdit';
 
 export const DetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
-  // const { entity, mode, onOpen, onClose, isOpen, setMode } =
-  //   useEditModal<Draft>();
+  const { onOpen, onClose, isOpen } = useEditModal();
   const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
@@ -78,14 +79,16 @@ export const DetailView: FC = () => {
         >
           {JSON.stringify(data)}
           {/* <AppBarButtons onAddItem={onAddItem} /> */}
-          {/* {isOpen && (
-            <OutboundLineEdit
-              draft={entity}
-              mode={mode}
+          <button onClick={() => onOpen()}>HERE</button>
+          {isOpen && (
+            <OutboundReturnEditModal
               isOpen={isOpen}
               onClose={onClose}
+              stockLineIds={[]}
+              // supplierId={data.otherParty.id}
+              supplierId={'F81D5559210840C78E6CE455D4798414'}
             />
-          )} */}
+          )}
 
           {/* <Toolbar /> */}
           {/* <DetailTabs tabs={tabs} /> */}

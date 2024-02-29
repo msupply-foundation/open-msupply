@@ -7,7 +7,7 @@ export const useOutboundReturnLines = (
 ) => {
   const api = useReturnsApi();
 
-  const { data } = useQuery(api.keys.newReturns(), () =>
+  const { data } = useQuery(api.keys.newReturns(itemId), () =>
     api.get.outboundReturnLines(stockLineIds, itemId)
   );
 

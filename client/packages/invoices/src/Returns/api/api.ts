@@ -151,9 +151,11 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     },
     outboundReturnLines: async (stockLineIds: string[], itemId?: string) => {
       const result = await sdk.generateOutboundReturnLines({
-        stockLineIds,
         storeId,
-        itemId,
+        input: {
+          stockLineIds,
+          itemId,
+        },
       });
 
       return result?.generateOutboundReturnLines;
