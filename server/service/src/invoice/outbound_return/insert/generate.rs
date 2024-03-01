@@ -5,11 +5,12 @@ use repository::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
 
+use crate::invoice::outbound_return::OutboundReturnLineInput;
 use crate::invoice_line::stock_out_line::{InsertStockOutLine, StockOutType};
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
 
-use super::{InsertOutboundReturn, InsertOutboundReturnLine};
+use super::InsertOutboundReturn;
 
 pub fn generate(
     connection: &StorageConnection,
@@ -54,7 +55,7 @@ pub fn generate(
         clinician_link_id: None,
     };
 
-    let lines_with_packs: Vec<&InsertOutboundReturnLine> = input
+    let lines_with_packs: Vec<&OutboundReturnLineInput> = input
         .outbound_return_lines
         .iter()
         .filter(|line| line.number_of_packs > 0.0)
