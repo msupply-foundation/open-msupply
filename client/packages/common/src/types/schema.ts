@@ -2696,6 +2696,8 @@ export type Mutations = {
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
+  updateOutboundReturn: UpdateOutboundReturnResponse;
+  updateOutboundReturnLines: UpdateOutboundReturnLinesResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
@@ -3117,6 +3119,18 @@ export type MutationsUpdateLocationArgs = {
 
 export type MutationsUpdateLogLevelArgs = {
   input: UpsertLogLevelInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateOutboundReturnArgs = {
+  input: UpdateOutboundReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateOutboundReturnLinesArgs = {
+  input: UpdateOutboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5621,6 +5635,26 @@ export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 export type UpdateNameErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type UpdateOutboundReturnInput = {
+  comment?: InputMaybe<Scalars['String']['input']>;
+  outboundReturnId: Scalars['String']['input'];
+  status?: InputMaybe<UpdateOutboundReturnStatusInput>;
+};
+
+export type UpdateOutboundReturnLinesInput = {
+  outboundReturnId: Scalars['String']['input'];
+  outboundReturnLines: Array<OutboundReturnLineInput>;
+};
+
+export type UpdateOutboundReturnLinesResponse = InvoiceNode;
+
+export type UpdateOutboundReturnResponse = InvoiceNode;
+
+export enum UpdateOutboundReturnStatusInput {
+  Picked = 'PICKED',
+  Shipped = 'SHIPPED'
+}
 
 export type UpdateOutboundShipmentError = {
   __typename: 'UpdateOutboundShipmentError';

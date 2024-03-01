@@ -87,6 +87,7 @@ export const DetailView: FC = () => {
               stockLineIds={[]}
               // supplierId={data.otherParty.id}
               supplierId={'F81D5559210840C78E6CE455D4798414'}
+              returnId={(data as any).id}
             />
           )}
 

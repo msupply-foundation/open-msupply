@@ -17,6 +17,8 @@ export const useReturns = {
   },
   lines: {
     outboundReturnLines: Lines.useOutboundReturnLines,
+    updateOutboundLines: Lines.useUpdateOutboundReturnLines,
+
     inboundReturnLines: Lines.useInboundReturnLines,
   },
   utils: {
