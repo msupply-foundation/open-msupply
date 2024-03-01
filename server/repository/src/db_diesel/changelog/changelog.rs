@@ -72,6 +72,7 @@ pub enum ChangelogTableName {
     TemperatureBreachConfig,
     TemperatureLog,
     PackVariant,
+    AssetClass,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]

@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset_class;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -93,6 +94,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::name_merge::boxed(),
         special::item_merge::boxed(),
         special::clinician_merge::boxed(),
+        asset_class::boxed(),
     ]
 }
 
