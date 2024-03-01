@@ -115,7 +115,7 @@ export const OutboundReturnEditModal = ({
               </TabPanel>
               <TabPanel value={Tabs.Reason}>
                 <ReturnReasonsTable
-                  lines={lines}
+                  lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
                   updateLine={line => update(line)}
                 />
               </TabPanel>
