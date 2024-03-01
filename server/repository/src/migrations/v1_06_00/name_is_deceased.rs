@@ -20,6 +20,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             PRAGMA foreign_keys = 0;
 
 CREATE TABLE temp_table AS SELECT * FROM name;
+UPDATE temp_table set is_deceased = false WHERE is_deceased is null;
 
 DROP TABLE name;
 
