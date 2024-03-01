@@ -4,3 +4,6 @@ mod insert;
 mod query;
 #[cfg(test)]
 mod update;
+
+#[cfg(test)]
+mod query_log;
