@@ -25,9 +25,6 @@ export const useDraftOutboundReturnLines = ({
   const data = useReturns.lines.outboundReturnLines(stockLineIds, itemId);
   const lines = data?.nodes;
 
-  const { mutateAsync: insert } = useReturns.document.insertOutboundReturn();
-  const { mutateAsync: updateLines } = useReturns.lines.updateOutboundLines();
-
   useEffect(() => {
     const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
 
@@ -45,6 +42,9 @@ export const useDraftOutboundReturnLines = ({
       return newLines;
     });
   };
+
+  const { mutateAsync: insert } = useReturns.document.insertOutboundReturn();
+  const { mutateAsync: updateLines } = useReturns.lines.updateOutboundLines();
 
   const save = async () => {
     const outboundReturnLines: OutboundReturnLineInput[] = draftLines.map(
