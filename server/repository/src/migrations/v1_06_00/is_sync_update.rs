@@ -199,7 +199,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // will have failed, as the clinician table was only added in 1.2, while the migration
     // was added in 1.1.14. Unable to use IF EXISTS in sqlite, so we are catching errors
 
-    println!("............Migrating is_sync_update");
     if sql!(
         connection,
         r#"
