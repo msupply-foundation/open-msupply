@@ -10,6 +10,7 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
 } from '@openmsupply-client/system';
+import { useReturns } from '../../api';
 
 interface ItemSelectorProps {
   item: ItemStockOnHandFragment | null;
@@ -23,8 +24,13 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
   onChangeItem,
 }) => {
   const t = useTranslation();
-  // TODO: filter out items that are already included
-  // const { data: items } = useReturns.lines.items();
+
+  const { data } = useReturns.document.outboundReturn();
+
+  // tODO: remove any
+  const existingItemIds = (data as any).lines.nodes.map(
+    (line: any) => line.stockLine.item.id
+  );
 
   return (
     <>
@@ -41,9 +47,11 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
             currentItemId={item?.id}
             onChange={newItem => newItem && onChangeItem(newItem)}
             extraFilter={
-              disabled ? undefined : item => item.availableStockOnHand !== 0
-              // TODO: filter out items that are already included
-              // : item => !items?.some(({ id }) => id === item.id)
+              disabled
+                ? undefined
+                : item =>
+                    item.availableStockOnHand !== 0 &&
+                    !existingItemIds?.some((id: string) => id === item.id)
             }
           />
         </Grid>
