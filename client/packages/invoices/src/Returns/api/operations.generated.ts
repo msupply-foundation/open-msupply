@@ -54,7 +54,7 @@ export type InvoiceByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, returnReasonId?: string | null, stockLine?: { __typename: 'StockLineNode', id: string, packSize: number, item: { __typename: 'ItemNode', id: string, code: string, name: string } } | null }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
+export type InvoiceByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, otherPartyId: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, returnReasonId?: string | null, stockLine?: { __typename: 'StockLineNode', id: string, packSize: number, item: { __typename: 'ItemNode', id: string, code: string, name: string } } | null }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -222,6 +222,7 @@ export const InvoiceByNumberDocument = gql`
         }
       }
       otherPartyName
+      otherPartyId
       otherPartyStore {
         code
       }

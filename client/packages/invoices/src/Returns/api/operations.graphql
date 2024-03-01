@@ -133,6 +133,7 @@ query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
         }
       }
       otherPartyName
+      otherPartyId
       otherPartyStore {
         code
       }
