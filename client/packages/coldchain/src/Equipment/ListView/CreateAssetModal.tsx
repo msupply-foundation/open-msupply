@@ -10,6 +10,8 @@ import {
   Select,
   Autocomplete,
   FnUtils,
+  InsertAssetInput,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -23,11 +25,35 @@ interface CreateAssetModalProps {
   onClose: () => void;
 }
 
+const mapCatalogueItem = (catalogueItem: AssetCatalogueItemFragment) => ({
+  label: `${catalogueItem.code} Type Manufacturer Model`,
+  value: catalogueItem.id,
+});
+
 const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
-  catalogueItems.map(item => ({
-    label: `${item.code} Type Manufacturer Model`,
-    value: item.id,
-  }));
+  catalogueItems.map(mapCatalogueItem);
+
+const EmptyAssetInput = {
+  id: FnUtils.generateUUID(),
+  name: '',
+  code: '',
+  catalogueItemId: '',
+};
+
+const InputRow = ({
+  label,
+  Input,
+}: {
+  label: string;
+  Input: React.ReactNode;
+}) => (
+  <InputWithLabelRow
+    labelWidth="150"
+    sx={{ marginTop: 2 }}
+    label={label}
+    Input={Input}
+  />
+);
 
 export const CreateAssetModal = ({
   isOpen,
@@ -37,18 +63,26 @@ export const CreateAssetModal = ({
   const { error, success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
   const [categoryId, setCategoryId] = useState('');
-  const [catalogueItemId, setCatalogueItemId] = useState('');
+  const [draft, setDraft] = useState<InsertAssetInput>({ ...EmptyAssetInput });
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetData.utils.categories();
-  const { data: catalogueItems } = useAssetData.document.list(categoryId);
+  const { data: catalogueItemData } = useAssetData.document.list(categoryId);
   const { mutateAsync: save } = useAssets.document.insert();
 
   const handleClose = () => {
     setCategoryId('');
-    setCatalogueItemId('');
+    setDraft({ ...EmptyAssetInput });
     onClose();
   };
 
+  const updateDraft = (patch: Partial<InsertAssetInput>) => {
+    setDraft({ ...draft, ...patch });
+  };
+
+  const catalogueItems = catalogueItemData?.nodes ?? [];
+  const selectedCatalogueItem = catalogueItems.find(
+    ci => ci.id === draft.catalogueItemId
+  );
   return (
     <Modal
       title={t('heading.add-cold-chain-equipment')}
@@ -58,15 +92,10 @@ export const CreateAssetModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!catalogueItemId || !categoryId}
+          disabled={!draft.catalogueItemId || !draft.name || !draft.code}
           onClick={async () => {
             try {
-              await save({
-                id: FnUtils.generateUUID(),
-                name: 'test',
-                code: '000000000',
-                catalogueItemId,
-              });
+              await save(draft);
               success(t('message.cce-created'))();
               handleClose();
             } catch (e) {
@@ -80,8 +109,7 @@ export const CreateAssetModal = ({
         <BasicSpinner messageKey="loading" />
       ) : (
         <Box>
-          <InputWithLabelRow
-            labelWidth="150"
+          <InputRow
             label={t('label.category')}
             Input={
               <Select
@@ -91,18 +119,41 @@ export const CreateAssetModal = ({
               />
             }
           />
-          <InputWithLabelRow
-            labelWidth="150"
-            sx={{ marginTop: 2 }}
+          <InputRow
             label={t('label.catalogue-item')}
             Input={
               <Autocomplete
-                options={mapCatalogueItems(catalogueItems?.nodes ?? [])}
+                value={
+                  !!selectedCatalogueItem
+                    ? mapCatalogueItem(selectedCatalogueItem)
+                    : undefined
+                }
+                options={mapCatalogueItems(catalogueItems)}
                 width="100%"
                 sx={{ width: '100%' }}
                 onChange={(_event, selected) =>
-                  setCatalogueItemId(selected?.value ?? '')
+                  updateDraft({ catalogueItemId: selected?.value ?? '' })
                 }
+              />
+            }
+          />
+          <InputRow
+            label={t('label.code')}
+            Input={
+              <BasicTextInput
+                fullWidth
+                value={draft.code}
+                onChange={e => updateDraft({ code: e.target.value })}
+              />
+            }
+          />
+          <InputRow
+            label={t('label.name')}
+            Input={
+              <BasicTextInput
+                fullWidth
+                value={draft.name}
+                onChange={e => updateDraft({ name: e.target.value })}
               />
             }
           />
