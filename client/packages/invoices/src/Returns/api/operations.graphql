@@ -19,6 +19,17 @@ fragment InboundReturnRow on InvoiceNode {
   deliveredDatetime
 }
 
+fragment OutboundReturnDetailRow on InvoiceLineNode {
+  id
+  itemCode
+  itemName
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  sellPricePerPack
+}
+
 query outboundReturns(
   $first: Int
   $offset: Int
@@ -119,14 +130,7 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
       invoiceNumber
       lines {
         nodes {
-          id
-          itemCode
-          itemName
-          batch
-          expiryDate
-          numberOfPacks
-          packSize
-          sellPricePerPack
+          ...OutboundReturnDetailRow
         }
       }
       otherPartyName

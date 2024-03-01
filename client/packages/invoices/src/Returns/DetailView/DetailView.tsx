@@ -55,7 +55,7 @@ export const DetailView: FC = () => {
         <ContentArea
           onRowClick={onRowClick}
           onAddItem={onAddItem}
-          rows={data?.lines?.nodes}
+          rows={data?.lines?.nodes ?? []}
         />
       ),
       value: 'Details',

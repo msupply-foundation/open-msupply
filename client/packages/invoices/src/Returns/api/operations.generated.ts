@@ -8,6 +8,8 @@ export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string,
 
 export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null };
 
+export type OutboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
+
 export type OutboundReturnsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -111,6 +113,18 @@ export const InboundReturnRowFragmentDoc = gql`
   deliveredDatetime
 }
     `;
+export const OutboundReturnDetailRowFragmentDoc = gql`
+    fragment OutboundReturnDetailRow on InvoiceLineNode {
+  id
+  itemCode
+  itemName
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  sellPricePerPack
+}
+    `;
 export const OutboundReturnsDocument = gql`
     query outboundReturns($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -203,14 +217,7 @@ export const OutboundReturnByNumberDocument = gql`
       invoiceNumber
       lines {
         nodes {
-          id
-          itemCode
-          itemName
-          batch
-          expiryDate
-          numberOfPacks
-          packSize
-          sellPricePerPack
+          ...OutboundReturnDetailRow
         }
       }
       otherPartyName
@@ -220,7 +227,7 @@ export const OutboundReturnByNumberDocument = gql`
     }
   }
 }
-    `;
+    ${OutboundReturnDetailRowFragmentDoc}`;
 export const InsertOutboundReturnDocument = gql`
     mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
   insertOutboundReturn(storeId: $storeId, input: $input) {
