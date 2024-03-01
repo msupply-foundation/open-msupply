@@ -246,7 +246,7 @@ impl AssetLogNode {
 }
 
 #[derive(Union)]
-pub enum AssetsLogResponse {
+pub enum AssetLogsResponse {
     Response(AssetLogConnector),
 }
 
