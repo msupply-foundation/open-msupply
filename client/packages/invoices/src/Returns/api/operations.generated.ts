@@ -64,6 +64,14 @@ export type InsertOutboundReturnMutationVariables = Types.Exact<{
 
 export type InsertOutboundReturnMutation = { __typename: 'Mutations', insertOutboundReturn: { __typename: 'InsertOutboundReturnError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
+export type UpdateOutboundReturnLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateOutboundReturnLinesInput;
+}>;
+
+
+export type UpdateOutboundReturnLinesMutation = { __typename: 'Mutations', updateOutboundReturnLines: { __typename: 'InvoiceNode', id: string } };
+
 export type InsertInboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.InboundReturnInput;
@@ -239,6 +247,16 @@ export const InsertOutboundReturnDocument = gql`
   }
 }
     `;
+export const UpdateOutboundReturnLinesDocument = gql`
+    mutation updateOutboundReturnLines($storeId: String!, $input: UpdateOutboundReturnLinesInput!) {
+  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
 export const InsertInboundReturnDocument = gql`
     mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
   insertInboundReturn(storeId: $storeId, input: $input) {
@@ -295,6 +313,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertOutboundReturn(variables: InsertOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertOutboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundReturnMutation>(InsertOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundReturn', 'mutation');
+    },
+    updateOutboundReturnLines(variables: UpdateOutboundReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnLinesMutation>(UpdateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnLines', 'mutation');
     },
     insertInboundReturn(variables: InsertInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertInboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundReturnMutation>(InsertInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundReturn', 'mutation');
@@ -408,6 +429,23 @@ export const mockInvoiceByNumberQuery = (resolver: ResponseResolver<GraphQLReque
 export const mockInsertOutboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundReturnMutationVariables>, GraphQLContext<InsertOutboundReturnMutation>, any>) =>
   graphql.mutation<InsertOutboundReturnMutation, InsertOutboundReturnMutationVariables>(
     'insertOutboundReturn',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateOutboundReturnLinesMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateOutboundReturnLines })
+ *   )
+ * })
+ */
+export const mockUpdateOutboundReturnLinesMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundReturnLinesMutationVariables>, GraphQLContext<UpdateOutboundReturnLinesMutation>, any>) =>
+  graphql.mutation<UpdateOutboundReturnLinesMutation, UpdateOutboundReturnLinesMutationVariables>(
+    'updateOutboundReturnLines',
     resolver
   )
 

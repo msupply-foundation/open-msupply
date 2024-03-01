@@ -22,6 +22,7 @@ interface OutboundReturnEditModalProps {
   stockLineIds: string[];
   onClose: () => void;
   supplierId: string;
+  returnId?: string;
 }
 
 enum Tabs {
@@ -34,6 +35,7 @@ export const OutboundReturnEditModal = ({
   stockLineIds,
   onClose,
   supplierId,
+  returnId,
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -52,15 +54,16 @@ export const OutboundReturnEditModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update, saveOutboundReturn } = useDraftOutboundReturnLines(
-    stockLineIds,
+  const { lines, update, save } = useDraftOutboundReturnLines({
     supplierId,
-    item?.id
-  );
+    stockLineIds,
+    returnId,
+    itemId: item?.id,
+  });
 
   const onOk = async () => {
     try {
-      await saveOutboundReturn();
+      await save();
       onClose();
     } catch {
       // TODO: handle error display...

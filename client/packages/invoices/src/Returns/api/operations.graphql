@@ -158,6 +158,18 @@ mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
   }
 }
 
+mutation updateOutboundReturnLines(
+  $storeId: String!
+  $input: UpdateOutboundReturnLinesInput!
+) {
+  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
 mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
   insertInboundReturn(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
