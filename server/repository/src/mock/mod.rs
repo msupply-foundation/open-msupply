@@ -127,7 +127,7 @@ use crate::{
     UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
 
-use self::{activity_log::mock_activity_logs, asset::mock_assets, unit::mock_units};
+use self::{activity_log::mock_activity_logs, unit::mock_units};
 
 use super::{
     InvoiceRowRepository, ItemRowRepository, NameRow, NameRowRepository, NameStoreJoinRepository,

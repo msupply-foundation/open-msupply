@@ -78,6 +78,24 @@ mod query_catalogue_item {
         assert_eq!(result.rows[0].code, "E003/108");
         assert_eq!(result.rows[1].code, "E003/116");
 
+        // id equal_to
+        result = service
+            .get_asset_catalogue_items(
+                &context.connection,
+                None,
+                Some(AssetCatalogueItemFilter::new().id(EqualFilter::equal_to(
+                    "4f13efbe-4349-4fc3-ac22-584728003e63",
+                ))),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.count, 1);
+        assert_eq!(
+            result.rows[0].id,
+            "4f13efbe-4349-4fc3-ac22-584728003e63".to_string()
+        );
+
         // id equal_any - no matches
         result = service
             .get_asset_catalogue_items(
@@ -207,7 +225,7 @@ mod query_catalogue_item {
         assert_eq!(result.count, 158);
 
         // class filter - no matches
-        let result_1 = service
+        result = service
             .get_asset_catalogue_items(
                 &context.connection,
                 None,
@@ -215,10 +233,10 @@ mod query_catalogue_item {
                 None,
             )
             .unwrap();
-        assert_eq!(result_1.count, 158);
+        assert_eq!(result.count, 158);
 
         // class filter - no matches
-        let result = service
+        result = service
             .get_asset_catalogue_items(
                 &context.connection,
                 None,
@@ -231,7 +249,7 @@ mod query_catalogue_item {
         assert_eq!(result.count, 0);
 
         // add query with multiple filters of different types with one not passing
-        let result = service
+        result = service
             .get_asset_catalogue_items(
                 &context.connection,
                 None,
@@ -250,7 +268,7 @@ mod query_catalogue_item {
         assert_eq!(result.count, 0);
 
         // add query with multiple filters of different types with one type passing
-        let result = service
+        result = service
             .get_asset_catalogue_items(
                 &context.connection,
                 None,
@@ -274,7 +292,7 @@ mod query_catalogue_item {
 
         // add query which combines special-type filters which conflict
         // The category is "Refrigerators and freezers" but type queries are vaccine carrier related
-        let result = service
+        result = service
             .get_asset_catalogue_items(
                 &context.connection,
                 None,
@@ -291,6 +309,41 @@ mod query_catalogue_item {
             )
             .unwrap();
         assert_eq!(result.count, 0);
+
+        // In mock data we have
+        // asset_a - Class:Cold Chain Equipment Category:Refrigerators and freezers	Type:Vaccine/Waterpacks freezer
+        // asset_b - Class:Cold Chain Equipment Category:Insulated Containers	Type:Vaccine Carrier LR 3L
+
+        // 1. Get assets with category = Refrigerators and freezers
+        // We expect just 98 results from default data
+
+        result = service
+            .get_asset_catalogue_items(
+                &context.connection,
+                None,
+                Some(
+                    AssetCatalogueItemFilter::new().category_id(EqualFilter::equal_to(
+                        "02cbea92-d5bf-4832-863b-c04e093a7760",
+                    )),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.count, 98);
+        // assert_eq!(result.rows[0].id, mock_asset_a().id);
+
+        // 2. Get assets with category string = %ted conta% (Insulated containers)
+        result = service
+            .get_asset_catalogue_items(
+                &context.connection,
+                None,
+                Some(AssetCatalogueItemFilter::new().category(StringFilter::like("ted conta"))),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.count, 60);
     }
 
     #[actix_rt::test]
