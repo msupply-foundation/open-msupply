@@ -6,16 +6,12 @@ import {
   TableProvider,
   createTableStore,
   useKeyboardHeightAdjustment,
-  WizardStepper,
   useTabs,
-  TabPanel,
-  TabContext,
 } from '@openmsupply-client/common';
-import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
-import { ReturnReasonsTable } from '../ReturnReasonsTable';
 import { ItemSelector } from './ItemSelector';
 import { ItemStockOnHandFragment } from 'packages/system/src';
+import { ReturnSteps, Tabs } from './ReturnSteps';
 
 interface OutboundReturnEditModalProps {
   isOpen: boolean;
@@ -23,11 +19,6 @@ interface OutboundReturnEditModalProps {
   onClose: () => void;
   supplierId: string;
   returnId?: string;
-}
-
-enum Tabs {
-  Quantity = 'Quantity',
-  Reason = 'Reason',
 }
 
 export const OutboundReturnEditModal = ({
@@ -40,16 +31,6 @@ export const OutboundReturnEditModal = ({
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
   const [item, setItem] = useState<ItemStockOnHandFragment | null>(null);
-
-  const returnsSteps = [
-    { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
-    { tab: Tabs.Reason, label: t('label.reason'), description: '' },
-  ];
-
-  const getActiveStep = () => {
-    const step = returnsSteps.findIndex(step => step.tab === currentTab);
-    return step === -1 ? 0 : step;
-  };
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -70,7 +51,6 @@ export const OutboundReturnEditModal = ({
     }
   };
 
-  // TODO: show/hide logic clean up :)
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
@@ -94,7 +74,7 @@ export const OutboundReturnEditModal = ({
         width={1024}
       >
         <>
-          {!stockLineIds.length && (
+          {returnId && (
             <ItemSelector
               disabled={!!item}
               item={item}
@@ -102,24 +82,11 @@ export const OutboundReturnEditModal = ({
             />
           )}
           {lines.length > 0 && (
-            <TabContext value={currentTab}>
-              <WizardStepper
-                activeStep={getActiveStep()}
-                steps={returnsSteps}
-              />
-              <TabPanel value={Tabs.Quantity}>
-                <QuantityToReturnTable
-                  lines={lines}
-                  updateLine={line => update(line)}
-                />
-              </TabPanel>
-              <TabPanel value={Tabs.Reason}>
-                <ReturnReasonsTable
-                  lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
-                  updateLine={line => update(line)}
-                />
-              </TabPanel>
-            </TabContext>
+            <ReturnSteps
+              currentTab={currentTab}
+              lines={lines}
+              update={update}
+            />
           )}
         </>
       </Modal>
