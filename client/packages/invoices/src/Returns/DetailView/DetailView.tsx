@@ -11,6 +11,7 @@ import {
   createQueryParamsStore,
   useEditModal,
   DetailTabs,
+  AppBarButtonsPortal,
   // ModalMode,
 } from '@openmsupply-client/common';
 // import { toItemRow } from '@openmsupply-client/system';
@@ -75,7 +76,10 @@ export const DetailView: FC = () => {
           )}
         >
           {/* <AppBarButtons onAddItem={onAddItem} /> */}
-          <button onClick={() => onOpen()}>HERE</button>
+          {/* TEMP: this will go in the AppBarButtons once they exist */}
+          <AppBarButtonsPortal>
+            <button onClick={() => onOpen()}>ADD ITEM</button>
+          </AppBarButtonsPortal>
           {isOpen && (
             <OutboundReturnEditModal
               isOpen={isOpen}
