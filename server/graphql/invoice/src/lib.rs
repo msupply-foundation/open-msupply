@@ -177,9 +177,10 @@ impl InvoiceMutations {
     async fn insert_outbound_return(
         &self,
         ctx: &Context<'_>,
+        store_id: String,
         input: outbound_return::insert::InsertInput,
     ) -> Result<outbound_return::insert::InsertResponse> {
-        outbound_return::insert::insert(ctx, input)
+        outbound_return::insert::insert(ctx, &store_id, input)
     }
 
     async fn insert_inbound_return(
