@@ -49,7 +49,7 @@ pub fn calculate_foreign_currency_total(
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
-    if currency_id.is_none() && currency.currency_row.id != currency_id.unwrap_or_default() {
+    if currency_id.is_none() && currency.currency_row.id == currency_id.unwrap_or_default() {
         Ok(None)
     } else {
         Ok(Some(total / currency_rate))
