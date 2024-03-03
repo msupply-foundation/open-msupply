@@ -6,6 +6,6 @@ export const useOutboundReturn = () => {
   const api = useReturnsApi();
 
   return useQuery(api.keys.detail(invoiceNumber ?? ''), () =>
-    api.get.invoiceByNumber(Number(invoiceNumber))
+    api.get.outboundReturnByNumber(Number(invoiceNumber))
   );
 };
