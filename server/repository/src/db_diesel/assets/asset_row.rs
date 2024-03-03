@@ -31,8 +31,6 @@ pub struct AssetRow {
     pub name: String,
     pub code: String,
     pub serial_number: Option<String>,
-    pub asset_category_id: Option<String>,
-    pub asset_type_id: Option<String>,
     #[column_name = "asset_catalogue_item_id"]
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,

@@ -18,7 +18,7 @@ mod query {
     async fn asset_log_service_pagination() {
         let (_, connection, connection_manager, _) = setup_all(
             "test_asset_log_service_pagination",
-            MockDataInserts::none().asset_logs(),
+            MockDataInserts::none().assets().asset_logs(),
         )
         .await;
 
@@ -56,7 +56,7 @@ mod query {
     async fn asset_log_service_single_record() {
         let (_, _, connection_manager, _) = setup_all(
             "test_asset_log_single_record",
-            MockDataInserts::none().asset_logs(),
+            MockDataInserts::none().assets().asset_logs(),
         )
         .await;
 
