@@ -3,6 +3,7 @@ use self::special::name_to_name_store_join;
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 
 pub(crate) mod activity_log;
+pub(crate) mod asset_category;
 pub(crate) mod asset_class;
 pub(crate) mod barcode;
 pub(crate) mod inventory_adjustment_reason;
@@ -135,6 +136,7 @@ pub(crate) fn get_all_omsupply_central_push_records() -> Vec<TestSyncPushRecord>
     let mut test_records = Vec::new();
     test_records.append(&mut pack_variant::test_omsupply_central_push_records());
     test_records.append(&mut asset_class::test_omsupply_central_push_records());
+    test_records.append(&mut asset_category::test_omsupply_central_push_records());
 
     test_records
 }
