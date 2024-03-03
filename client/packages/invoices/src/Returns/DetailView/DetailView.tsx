@@ -81,9 +81,8 @@ export const DetailView: FC = () => {
               isOpen={isOpen}
               onClose={onClose}
               stockLineIds={[]}
-              // TODO: remove anys
-              supplierId={(data as any).otherPartyId}
-              returnId={(data as any).id}
+              supplierId={data.otherPartyId}
+              returnId={data.id}
             />
           )}
 
