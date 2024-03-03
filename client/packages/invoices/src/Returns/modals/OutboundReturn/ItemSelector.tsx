@@ -27,10 +27,7 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
 
   const { data } = useReturns.document.outboundReturn();
 
-  // tODO: remove any
-  const existingItemIds = (data as any).lines.nodes.map(
-    (line: any) => line.stockLine.item.id
-  );
+  const existingItemIds = data?.lines.nodes.map(line => line.itemId);
 
   return (
     <>
@@ -51,7 +48,7 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
                 ? undefined
                 : item =>
                     item.availableStockOnHand !== 0 &&
-                    !existingItemIds?.some((id: string) => id === item.id)
+                    !existingItemIds?.some(id => id === item.id)
             }
           />
         </Grid>

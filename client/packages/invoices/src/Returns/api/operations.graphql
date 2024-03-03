@@ -23,6 +23,7 @@ fragment OutboundReturnDetailRow on InvoiceLineNode {
   id
   itemCode
   itemName
+  itemId
   batch
   expiryDate
   numberOfPacks
