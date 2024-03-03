@@ -2,6 +2,8 @@ use chrono::{NaiveDate, NaiveDateTime};
 
 use crate::assets::asset_row::AssetRow;
 
+use super::mock_store_a;
+
 /*
 Catalogue Code	Class name	Category name	Type name	Manufacturer	Model	Catalogue
 E003/002	Cold Chain Equipment	Refrigerators and freezers	Vaccine/Waterpacks freezer	Qingdao Haier Biomedical Co., Ltd	HBD 116	WHO PQS Catalogue
