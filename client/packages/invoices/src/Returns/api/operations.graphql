@@ -126,6 +126,7 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
     type: OUTBOUND_RETURN
   ) {
     ... on InvoiceNode {
+      __typename
       id
       invoiceNumber
       lines {
