@@ -1,0 +1,91 @@
+fragment AssetCatalogueItem on AssetCatalogueItemNode {
+  __typename
+  assetCategoryId
+  assetClassId
+  assetTypeId
+  code
+  id
+  manufacturer
+  model
+}
+
+query assetCatalogueItems(
+  $first: Int
+  $offset: Int
+  $key: AssetCatalogueItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+  $storeId: String!
+) {
+  assetCatalogueItems(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on AssetCatalogueItemConnector {
+      __typename
+      nodes {
+        ...AssetCatalogueItem
+      }
+      totalCount
+    }
+  }
+}
+
+query assetCatalogueItemById(
+  $storeId: String!
+  $assetCatalogueItemId: String!
+) {
+  assetCatalogueItems(
+    storeId: $storeId
+    filter: { id: { equalTo: $assetCatalogueItemId } }
+  ) {
+    ... on AssetCatalogueItemConnector {
+      __typename
+      nodes {
+        __typename
+        ...AssetCatalogueItem
+      }
+      totalCount
+    }
+  }
+}
+
+query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
+  assetClasses(storeId: $storeId, sort: $sort) {
+    ... on AssetClassConnector {
+      nodes {
+        id
+        name
+      }
+      totalCount
+    }
+  }
+}
+
+query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
+  assetTypes(storeId: $storeId, sort: $sort) {
+    ... on AssetTypeConnector {
+      nodes {
+        id
+        name
+        categoryId
+      }
+      totalCount
+    }
+  }
+}
+
+query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
+  assetCategories(storeId: $storeId, sort: $sort) {
+    ... on AssetCategoryConnector {
+      nodes {
+        id
+        name
+        classId
+      }
+      totalCount
+    }
+  }
+}
