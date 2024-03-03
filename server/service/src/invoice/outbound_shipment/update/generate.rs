@@ -58,7 +58,7 @@ pub(crate) fn generate(
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax);
     update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
-    update_invoice.currency_rate = input_currency_rate.or(update_invoice.currency_rate);
+    update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status().into()
@@ -87,12 +87,13 @@ pub(crate) fn generate(
         None
     };
 
-    let update_lines = if update_invoice.tax.is_some() || update_invoice.currency_id.is_some() {
+    let update_lines = if update_invoice.tax.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
             update_invoice.tax,
-            update_invoice.currency_rate,
+            update_invoice.currency_id.clone(),
+            &update_invoice.currency_rate,
         )?)
     } else {
         None
@@ -222,7 +223,8 @@ fn generate_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
     tax: Option<f64>,
-    currency_rate: Option<f64>,
+    currency_id: Option<String>,
+    currency_rate: &f64,
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -240,10 +242,12 @@ fn generate_update_for_lines(
                 calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
         }
 
-        if currency_rate.is_some() {
-            invoice_line_row.foreign_currency_price_before_tax =
-                calculate_foreign_currency_total(invoice_line_row.total_before_tax, currency_rate);
-        }
+        invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            invoice_line_row.total_before_tax,
+            currency_id.clone(),
+            currency_rate,
+        )?;
 
         result.push(invoice_line_row);
     }

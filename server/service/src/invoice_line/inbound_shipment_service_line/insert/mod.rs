@@ -28,7 +28,13 @@ pub fn insert_inbound_shipment_service_line(
         .connection
         .transaction_sync(|connection| {
             let (item_row, invoice_row) = validate(&input, &ctx.store_id, &connection)?;
-            let new_line = generate(input, item_row, invoice_row.currency_rate)?;
+            let new_line = generate(
+                connection,
+                input,
+                item_row,
+                invoice_row.currency_id,
+                &invoice_row.currency_rate,
+            )?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             get_invoice_line(ctx, &new_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
