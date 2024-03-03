@@ -17,7 +17,6 @@ export {
   useQuery,
   UseQueryResult,
   QueryClient,
-  QueryClientProvider,
 } from 'react-query';
 
 export {
