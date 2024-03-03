@@ -1,5 +1,8 @@
 use crate::{service_provider::ServiceContext, ListError, ListResult};
-use repository::{EqualFilter, StockLine, StockLineFilter, StockLineRepository};
+use repository::{
+    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, StockLine, StockLineFilter,
+    StockLineRepository,
+};
 use util::uuid::uuid;
 
 #[derive(Debug, Clone)]
@@ -7,7 +10,7 @@ pub struct OutboundReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
     pub note: Option<String>,
-    pub number_of_packs: u32,
+    pub number_of_packs: f64,
     pub stock_line: StockLine,
 }
 
@@ -40,9 +43,9 @@ pub fn generate_outbound_return_lines(
             stock_line_ids.iter().map(String::clone).collect(),
         ))
     }
-    match item_id {
+    match &item_id {
         Some(item_id) => {
-            filter.item_id = Some(EqualFilter::equal_to(&item_id));
+            filter.item_id = Some(EqualFilter::equal_to(item_id));
             filter.is_available = Some(true);
         }
         None => {}
@@ -51,7 +54,7 @@ pub fn generate_outbound_return_lines(
     let stock_lines = StockLineRepository::new(&ctx.connection)
         .query_by_filter(filter, Some(store_id.to_string()))?;
 
-    let return_lines: Vec<OutboundReturnLine> = stock_lines
+    let new_return_lines: Vec<OutboundReturnLine> = stock_lines
         .iter()
         .map(|stock_line| OutboundReturnLine {
             id: uuid(),
@@ -59,12 +62,56 @@ pub fn generate_outbound_return_lines(
 
             reason_id: None,
             note: None,
-            number_of_packs: 0,
+            number_of_packs: 0.0,
         })
         .collect();
 
-    // TODO:
-    // if return_id, query for return lines by return id
+    let existing_return_lines = if let Some(return_id) = return_id {
+        let mut return_line_filter = InvoiceLineFilter::new().id(EqualFilter::equal_to(&return_id));
+
+        if let Some(item_id) = &item_id {
+            return_line_filter.item_id = Some(EqualFilter::equal_to(item_id));
+        }
+
+        let existing_return_lines: Result<Vec<OutboundReturnLine>, ListError> =
+            InvoiceLineRepository::new(&ctx.connection)
+                .query_by_filter(return_line_filter)?
+                .iter()
+                .map(|line| -> Result<OutboundReturnLine, ListError> {
+                    let invoice_line_row = line.invoice_line_row.clone();
+
+                    let stock_line_id = match line.stock_line_option.clone() {
+                        Some(stock_line) => stock_line.id,
+                        None => return Err(ListError::LimitBelowMin(1)),
+                    };
+
+                    let stock_line = StockLineRepository::new(&ctx.connection)
+                        .query_by_filter(
+                            StockLineFilter::new().id(EqualFilter::equal_to(&stock_line_id)),
+                            Some(store_id.to_string()),
+                        )?
+                        .pop();
+
+                    let stock_line = match stock_line {
+                        Some(stock_line) => stock_line,
+                        None => return Err(ListError::LimitBelowMin(1)),
+                    };
+                    Ok(OutboundReturnLine {
+                        id: invoice_line_row.id,
+                        reason_id: invoice_line_row.return_reason_id,
+                        note: invoice_line_row.note,
+                        number_of_packs: invoice_line_row.number_of_packs,
+                        stock_line,
+                    })
+                })
+                .collect();
+        existing_return_lines
+    } else {
+        Ok(vec![])
+    }?;
+
+    let mut return_lines = new_return_lines;
+    return_lines.extend(existing_return_lines);
 
     Ok(ListResult {
         count: return_lines.len() as u32,
