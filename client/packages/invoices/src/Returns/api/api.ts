@@ -165,13 +165,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.generateInboundReturnLines;
     },
-    invoiceByNumber: async (invoiceNumber: number) => {
-      const result = await sdk.invoiceByNumber({
+    outboundReturnByNumber: async (invoiceNumber: number) => {
+      const result = await sdk.outboundReturnByNumber({
         invoiceNumber,
         storeId,
       });
 
-      return result?.invoiceByNumber;
+      const invoice = result?.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
     },
   },
   insertOutboundReturn: async (input: OutboundReturnInput) => {
