@@ -4,6 +4,8 @@ use repository::{
     StockLineRepository,
 };
 use util::uuid::uuid;
+mod validate;
+use validate::validate;
 
 #[derive(Debug, Clone)]
 pub struct OutboundReturnLine {
@@ -51,6 +53,7 @@ pub fn generate_outbound_return_lines(
         None => {}
     }
 
+    // TODO... if only return id, we shouldn't do this query...
     let stock_lines = StockLineRepository::new(&ctx.connection)
         .query_by_filter(filter, Some(store_id.to_string()))?;
 
@@ -65,6 +68,17 @@ pub fn generate_outbound_return_lines(
             number_of_packs: 0.0,
         })
         .collect();
+
+    // if stock_line_ids - generate lines for each (no availability filter)
+
+    // if item_id - generate lines for available stock_lines of that item
+
+    // if return_id & item_id - return lines for that item in that return... and the other available stock lines
+
+    // wanna validate return id and item id exist... and are for this store etc...? its a query maybe it don't be mattering too much?
+    // ah damn
+    // if return id
+    // and item id
 
     let existing_return_lines = if let Some(return_id) = return_id {
         let mut return_line_filter = InvoiceLineFilter::new().id(EqualFilter::equal_to(&return_id));
