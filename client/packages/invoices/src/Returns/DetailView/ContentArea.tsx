@@ -12,13 +12,14 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 // import { useOutbound } from '../api';
-import { OutboundReturnLine, useOutboundReturnColumns } from './columns';
+import { useOutboundReturnColumns } from './columns';
+import { OutboundReturnDetailRowFragment } from '../api';
 // import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: OutboundReturnLine) => void);
-  rows: OutboundReturnLine[];
+  onRowClick?: null | ((rowData: OutboundReturnDetailRowFragment) => void);
+  rows: OutboundReturnDetailRowFragment[];
 }
 
 // const Expand: FC<{
@@ -31,52 +32,6 @@ interface ContentAreaProps {
 //   } else {
 //     return null;
 //   }
-// };
-
-// const useHighlightPlaceholderRows = (
-//   rows: StockOutLineFragment[] | StockOutItem[] | undefined
-// ) => {
-//   const { setRowStyles } = useRowStyle();
-
-//   useEffect(() => {
-//     if (!rows) return;
-//     const placeholders = [];
-
-//     // This is a verbose .filter() on `rows` to find the placeholder lines.
-//     // There is an issue with using `filter()` on a type which is
-//     // A[] | B[]
-//     // https://github.com/microsoft/TypeScript/issues/44373
-//     for (const row of rows) {
-//       if ('type' in row) {
-//         if (
-//           row.type === InvoiceLineNodeType.UnallocatedStock ||
-//           row.numberOfPacks === 0
-//         ) {
-//           placeholders.push(row.id);
-//         }
-//       } else {
-//         const hasPlaceholder = row.lines.some(
-//           line => line.type === InvoiceLineNodeType.UnallocatedStock
-//         );
-//         if (hasPlaceholder) {
-//           // Add both the OutboundItem and the individual lines, as
-//           // this will cause the item to be highlighted as well as the
-//           // lines within the expansion when grouped.
-//           row.lines.forEach(line => {
-//             if (line.type === InvoiceLineNodeType.UnallocatedStock) {
-//               placeholders.push(line.id);
-//             }
-//           });
-//           placeholders.push(row.id);
-//         }
-//       }
-//     }
-
-//     const style: AppSxProp = {
-//       color: theme => theme.palette.secondary.light,
-//     };
-//     setRowStyles(placeholders, style);
-//   }, [rows, setRowStyles]);
 // };
 
 export const ContentAreaComponent: FC<ContentAreaProps> = ({

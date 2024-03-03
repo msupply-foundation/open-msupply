@@ -171,12 +171,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         storeId,
       });
 
-      return result?.invoiceByNumber;
+      const invoice = result?.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
     },
   },
   insertOutboundReturn: async (input: OutboundReturnInput) => {
     const result = await sdk.insertOutboundReturn({
       input,
+      storeId,
     });
 
     const { insertOutboundReturn } = result;

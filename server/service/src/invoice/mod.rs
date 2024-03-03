@@ -11,6 +11,9 @@ use crate::ListError;
 use crate::ListResult;
 pub mod query;
 use self::outbound_return::generate_outbound_return_lines::*;
+use self::outbound_return::insert::insert_outbound_return;
+use self::outbound_return::insert::InsertOutboundReturn;
+use self::outbound_return::insert::InsertOutboundReturnError;
 use self::outbound_shipment::batch_outbound_shipment;
 use self::outbound_shipment::BatchOutboundShipment;
 use self::outbound_shipment::BatchOutboundShipmentResult;
@@ -18,11 +21,10 @@ use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 
-pub mod outbound_shipment;
-use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
-
 pub mod outbound_return;
 
+pub mod outbound_shipment;
+use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
 
@@ -194,6 +196,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: GenerateOutboundReturnLinesInput,
     ) -> Result<ListResult<OutboundReturnLine>, ListError> {
         generate_outbound_return_lines(ctx, store_id, input)
+    }
+
+    fn insert_outbound_return(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertOutboundReturn,
+    ) -> Result<Invoice, InsertOutboundReturnError> {
+        insert_outbound_return(ctx, input)
     }
 }
 
