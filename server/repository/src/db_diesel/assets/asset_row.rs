@@ -14,8 +14,6 @@ table! {
         name -> Text,
         code -> Text,
         serial_number -> Nullable<Text>,
-        asset_category_id -> Nullable<Text>,
-        asset_type_id -> Nullable<Text>,
         asset_catalogue_item_id -> Nullable<Text>,
         installation_date -> Nullable<Date>,
         replacement_date -> Nullable<Date>,
