@@ -25,7 +25,7 @@ Steps to reproduce the behaviour:
 <!-- e.g. 1.2.3 -->
 - Version: 
 - mSupply version: 
-- <!-- e.g. android, browser (plus version), desktop (windows), desktop (macOS), server (windows) -->
+- <!-- e.g. android, browser (extra points if you tell us which one), desktop (windows), desktop (macOS), server (windows) -->
 - Platform:
 <!-- PostgreSQL or SQLite3 -->
 - Database type: 
