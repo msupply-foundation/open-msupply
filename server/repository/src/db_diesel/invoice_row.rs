@@ -38,7 +38,7 @@ table! {
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
         currency_id -> Nullable<Text>,
-        currency_rate -> Nullable<Double>,
+        currency_rate -> Double,
         clinician_link_id -> Nullable<Text>,
     }
 }
@@ -106,7 +106,7 @@ pub struct InvoiceRow {
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
     pub currency_id: Option<String>,
-    pub currency_rate: Option<f64>,
+    pub currency_rate: f64,
     pub clinician_link_id: Option<String>,
 }
 

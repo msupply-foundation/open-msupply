@@ -12,7 +12,7 @@ pub mod consumption;
 pub mod contact_trace;
 pub mod contact_trace_row;
 mod context_row;
-mod currency;
+pub mod currency;
 mod currency_row;
 pub mod diesel_schema;
 pub mod document;
