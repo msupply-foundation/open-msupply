@@ -522,10 +522,6 @@ impl MockDataInserts {
     }
 
     pub fn asset_logs(mut self) -> Self {
-        self.assets = true;
-        self.names = true;
-        self.stores = true;
-        self.assets = true;
         self.asset_logs = true;
         self
     }
