@@ -19,6 +19,17 @@ fragment InboundReturnRow on InvoiceNode {
   deliveredDatetime
 }
 
+fragment OutboundReturnDetailRow on InvoiceLineNode {
+  id
+  itemCode
+  itemName
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  sellPricePerPack
+}
+
 query outboundReturns(
   $first: Int
   $offset: Int
@@ -108,28 +119,19 @@ query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   }
 }
 
-query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
+query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
     type: OUTBOUND_RETURN
   ) {
     ... on InvoiceNode {
+      __typename
       id
       invoiceNumber
       lines {
         nodes {
-          id
-          returnReasonId
-          stockLine {
-            id
-            packSize
-            item {
-              id
-              code
-              name
-            }
-          }
+          ...OutboundReturnDetailRow
         }
       }
       otherPartyName
