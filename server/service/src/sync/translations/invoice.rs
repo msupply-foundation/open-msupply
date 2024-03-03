@@ -105,7 +105,7 @@ pub struct LegacyTransactRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
-    pub currency_rate: Option<f64>,
+    pub currency_rate: f64,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
