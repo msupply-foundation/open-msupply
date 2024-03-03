@@ -8,7 +8,7 @@ const TABLE_NAME: &'static str = "asset_category";
 const ASSET_CATEGORY1: (&'static str, &'static str) = (
     "035d2847-1eec-4595-a161-b7cfefc17381",
     r#"{
-        "id": "a6625bba-052b-4cf8-9e0f-b96ebba0a31f",
+        "id": "035d2847-1eec-4595-a161-b7cfefc17381",
         "name": "Asset Category 1",
         "class_id": "6f075ab5-4aa0-46b9-9184-159d62126f86"
     }"#,
