@@ -12,13 +12,13 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 // import { useOutbound } from '../api';
-import { OutboundReturnLine, useOutboundReturnColumns } from './columns';
+import { useOutboundReturnColumns } from './columns';
 import { OutboundReturnDetailRowFragment } from '../api';
 // import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: OutboundReturnLine) => void);
+  onRowClick?: null | ((rowData: OutboundReturnDetailRowFragment) => void);
   rows: OutboundReturnDetailRowFragment[];
 }
 

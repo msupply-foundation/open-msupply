@@ -213,6 +213,7 @@ export const OutboundReturnByNumberDocument = gql`
     type: OUTBOUND_RETURN
   ) {
     ... on InvoiceNode {
+      __typename
       id
       invoiceNumber
       lines {

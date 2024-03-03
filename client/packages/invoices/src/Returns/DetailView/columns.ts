@@ -7,28 +7,15 @@ import {
   SortBy,
   Column,
   useCurrency,
-  InvoiceLineNodeType,
   TooltipTextCell,
   useColumnUtils,
   NumberCell,
 } from '@openmsupply-client/common';
+import { OutboundReturnDetailRowFragment } from '../api';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<OutboundReturnLine>;
-  onChangeSortBy: (column: Column<OutboundReturnLine>) => void;
-}
-
-// TO-DO: Replace with generated once query is live
-export interface OutboundReturnLine {
-  id: string;
-  itemCode: string;
-  itemName: string;
-  batch: string | null;
-  expiryDate: string | null;
-  numberOfPacks: number;
-  packSize: number;
-  sellPricePerPack: number;
-  type: InvoiceLineNodeType;
+  sortBy: SortBy<OutboundReturnDetailRowFragment>;
+  onChangeSortBy: (column: Column<OutboundReturnDetailRowFragment>) => void;
 }
 
 // const expansionColumn = getRowExpandColumn<
@@ -38,22 +25,18 @@ export interface OutboundReturnLine {
 //   StockOutLineFragment | StockOutItem
 // >();
 
-const isDefaultPlaceholderRow = (row: OutboundReturnLine) =>
-  row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
+const getPackSize = (row: OutboundReturnDetailRowFragment) => row.packSize;
 
-const getPackSize = (row: OutboundReturnLine) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
+const getNumberOfPacks = (row: OutboundReturnDetailRowFragment) =>
+  row.numberOfPacks;
 
-const getNumberOfPacks = (row: OutboundReturnLine) =>
-  isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
-
-const getUnitQuantity = (row: OutboundReturnLine) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize * row.numberOfPacks;
+const getUnitQuantity = (row: OutboundReturnDetailRowFragment) =>
+  row.packSize * row.numberOfPacks;
 
 export const useOutboundReturnColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<OutboundReturnLine>[] => {
+}: UseOutboundColumnOptions): Column<OutboundReturnDetailRowFragment>[] => {
   const { c } = useCurrency();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
@@ -83,7 +66,7 @@ export const useOutboundReturnColumns = ({
       [
         'itemCode',
         {
-          getSortValue: (row: OutboundReturnLine) =>
+          getSortValue: (row: OutboundReturnDetailRowFragment) =>
             getColumnPropertyAsString(row, [
               { path: ['itemCode'], default: '' },
             ]),
@@ -95,7 +78,7 @@ export const useOutboundReturnColumns = ({
         'itemName',
         {
           Cell: TooltipTextCell,
-          getSortValue: (row: OutboundReturnLine) =>
+          getSortValue: (row: OutboundReturnDetailRowFragment) =>
             getColumnPropertyAsString(row, [{ path: ['itemName'] }]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [{ path: ['itemName'] }]),
@@ -186,7 +169,6 @@ export const useOutboundReturnColumns = ({
         key: 'sellPricePerUnit',
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
-          if (isDefaultPlaceholderRow(rowData)) return '';
           return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
         },
         getSortValue: rowData => {
@@ -198,7 +180,6 @@ export const useOutboundReturnColumns = ({
         key: 'lineTotal',
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
-          if (isDefaultPlaceholderRow(rowData)) return '';
           const x = c(
             rowData.sellPricePerPack * rowData.numberOfPacks
           ).format();

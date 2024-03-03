@@ -14,15 +14,13 @@ import {
 } from '@openmsupply-client/common';
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
-import { StockOutItem } from '../../types';
 // import { Toolbar } from './Toolbar';
 // import { Footer } from './Footer';
 // import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
-import { useReturns } from '../api';
+import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
-import { StockOutLineFragment } from '../../StockOut';
 // import { OutboundLineEdit } from './OutboundLineEdit';
 
 export const DetailView: FC = () => {
@@ -30,17 +28,11 @@ export const DetailView: FC = () => {
   // const { entity, mode, onOpen, onClose, isOpen, setMode } =
   //   useEditModal<Draft>();
   const { data, isLoading } = useReturns.document.outboundReturn();
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
   const onRowClick = () => {};
 
-  // useCallback(
-  //   (item: StockOutLineFragment | StockOutItem) => {
-  //     onOpen({ item: toItemRow(item) });
-  //   },
-  //   [toItemRow]
-  // );
   const onAddItem = () => {};
   //  (draft?: Draft) => {
   //   onOpen(draft);
@@ -73,13 +65,13 @@ export const DetailView: FC = () => {
       {data ? (
         <TableProvider
           createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<
-            StockOutLineFragment | StockOutItem
-          >({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
+          queryParamsStore={createQueryParamsStore<OutboundReturnDetailRowFragment>(
+            {
+              initialSortBy: {
+                key: 'itemName',
+              },
+            }
+          )}
         >
           {/* <AppBarButtons onAddItem={onAddItem} /> */}
           {/* {isOpen && (
@@ -101,13 +93,13 @@ export const DetailView: FC = () => {
           open={true}
           onOk={() =>
             navigate(
-              RouteBuilder.create(AppRoute.Distribution)
+              RouteBuilder.create(AppRoute.Replenishment)
                 .addPart(AppRoute.OutboundReturn)
                 .build()
             )
           }
-          title={t('error.shipment-not-found')}
-          message={t('messages.click-to-return-to-shipments')}
+          title={t('error.return-not-found')}
+          message={t('messages.click-to-return-to-returns')}
         />
       )}
     </React.Suspense>
