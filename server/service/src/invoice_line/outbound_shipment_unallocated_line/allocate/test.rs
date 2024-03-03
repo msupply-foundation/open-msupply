@@ -104,7 +104,12 @@ mod test {
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "allocate_unallocated_line_basic_success",
-            MockDataInserts::none().stores().items().names().units(),
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .names()
+                .units()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.invoice_lines = vec![line()];
@@ -205,7 +210,12 @@ mod test {
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "allocate_unallocated_line_partial_allocate_and_fefo",
-            MockDataInserts::none().stores().items().names().units(),
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .names()
+                .units()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.invoice_lines = vec![line()];
@@ -357,7 +367,12 @@ mod test {
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "allocate_unallocated_line_partial_allocate",
-            MockDataInserts::none().stores().items().names().units(),
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .names()
+                .units()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.invoice_lines = vec![line()];
@@ -510,7 +525,12 @@ mod test {
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "allocate_unallocated_line_add_to_existing_lines",
-            MockDataInserts::none().stores().items().names().units(),
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .names()
+                .units()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.invoice_lines = vec![line(), allocated_line(), allocated_line2()];
@@ -597,7 +617,12 @@ mod test {
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "allocate_unallocated_line_round_up",
-            MockDataInserts::none().stores().items().names().units(),
+            MockDataInserts::none()
+                .stores()
+                .items()
+                .names()
+                .units()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.invoice_lines = vec![line()];
