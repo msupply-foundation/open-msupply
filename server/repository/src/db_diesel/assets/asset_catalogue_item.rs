@@ -142,6 +142,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             apply_string_filter!(sub_query, Some(class_filter), asset_class_dsl::name);
             query = query.filter(asset_catalogue_item_dsl::asset_class_id.eq_any(sub_query));
         }
+
         if let Some(r#type_filter) = r#type {
             let mut sub_query = asset_type_dsl::asset_type
                 .select(asset_type_dsl::id)
