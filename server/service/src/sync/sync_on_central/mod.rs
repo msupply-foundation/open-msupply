@@ -17,6 +17,7 @@ fn create_filter() -> ChangelogFilter {
         equal_any: Some(vec![
             ChangelogTableName::PackVariant,
             ChangelogTableName::AssetClass,
+            ChangelogTableName::AssetCategory,
         ]),
         ..Default::default()
     })

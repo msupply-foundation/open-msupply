@@ -1,7 +1,11 @@
 use super::asset_category_row::asset_category::dsl::*;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
 use diesel::prelude::*;
 
@@ -13,7 +17,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+)]
 #[table_name = "asset_category"]
 pub struct AssetCategoryRow {
     pub id: String,
@@ -88,5 +94,19 @@ impl<'a> AssetCategoryRowRepository<'a> {
             .filter(id.eq(asset_category_id))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for AssetCategoryRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        AssetCategoryRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetCategoryRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
