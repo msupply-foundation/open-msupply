@@ -1440,9 +1440,13 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
-export type GenerateInboundReturnInput = {
-  stockLineIds: Array<Scalars['String']['input']>;
+export type GenerateInboundReturnLinesInput = {
+  itemId?: InputMaybe<Scalars['String']['input']>;
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
+  returnId?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type GenerateInboundReturnLinesResponse = InboundReturnLineConnector;
 
 /**
  * At least one input is required.
@@ -1468,8 +1472,22 @@ export type InboundReturnInput = {
   inboundReturnLines: Array<InboundReturnLineInput>;
 };
 
-export type InboundReturnLine = {
-  __typename: 'InboundReturnLine';
+export type InboundReturnLineConnector = {
+  __typename: 'InboundReturnLineConnector';
+  nodes: Array<InboundReturnLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type InboundReturnLineInput = {
+  id: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
+  numberOfPacksReturned: Scalars['Float']['input'];
+  reasonId?: InputMaybe<Scalars['String']['input']>;
+  stockLineId: Scalars['String']['input'];
+};
+
+export type InboundReturnLineNode = {
+  __typename: 'InboundReturnLineNode';
   batch?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
@@ -1481,14 +1499,6 @@ export type InboundReturnLine = {
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
-};
-
-export type InboundReturnLineInput = {
-  id: Scalars['String']['input'];
-  note?: InputMaybe<Scalars['String']['input']>;
-  numberOfPacksReturned: Scalars['Float']['input'];
-  reasonId?: InputMaybe<Scalars['String']['input']>;
-  stockLineId: Scalars['String']['input'];
 };
 
 export type InitialisationStatusNode = {
@@ -3892,7 +3902,7 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
-  generateInboundReturnLines: Array<InboundReturnLine>;
+  generateInboundReturnLines: GenerateInboundReturnLinesResponse;
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -4083,7 +4093,7 @@ export type QueriesFormSchemasArgs = {
 
 
 export type QueriesGenerateInboundReturnLinesArgs = {
-  input: GenerateInboundReturnInput;
+  input: GenerateInboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
