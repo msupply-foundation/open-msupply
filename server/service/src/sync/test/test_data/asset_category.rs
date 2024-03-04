@@ -10,7 +10,7 @@ const ASSET_CATEGORY1: (&'static str, &'static str) = (
     r#"{
         "id": "035d2847-1eec-4595-a161-b7cfefc17381",
         "name": "Asset Category 1",
-        "class_id": "6f075ab5-4aa0-46b9-9184-159d62126f86"
+        "class_id": "32608ef9-dce5-41a7-b3e9-92b0fe086c7e"
     }"#,
 );
 
@@ -18,7 +18,7 @@ fn asset_category1() -> AssetCategoryRow {
     AssetCategoryRow {
         id: ASSET_CATEGORY1.0.to_string(),
         name: "Asset Category 1".to_string(),
-        class_id: "6f075ab5-4aa0-46b9-9184-159d62126f86".to_string(),
+        class_id: "32608ef9-dce5-41a7-b3e9-92b0fe086c7e".to_string(),
     }
 }
 

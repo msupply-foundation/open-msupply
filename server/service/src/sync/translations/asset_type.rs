@@ -1,9 +1,9 @@
 use repository::{
-    asset_category_row::{AssetCategoryRow, AssetCategoryRowRepository},
+    asset_type_row::{AssetTypeRow, AssetTypeRowRepository},
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::asset_class::AssetClassTranslation;
+use crate::sync::translations::asset_category::AssetCategoryTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -12,18 +12,18 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(AssetCategoryTranslation)
+    Box::new(AssetTypeTranslation)
 }
 
-pub(crate) struct AssetCategoryTranslation;
+struct AssetTypeTranslation;
 
-impl SyncTranslation for AssetCategoryTranslation {
+impl SyncTranslation for AssetTypeTranslation {
     fn table_name(&self) -> &'static str {
-        "asset_category"
+        "asset_type"
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![AssetClassTranslation.table_name()]
+        vec![AssetCategoryTranslation.table_name()]
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -32,12 +32,12 @@ impl SyncTranslation for AssetCategoryTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            AssetCategoryRow,
+            AssetTypeRow,
         >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::AssetCategory)
+        Some(ChangelogTableName::AssetType)
     }
 
     // Only translating and pushing on central server
@@ -59,10 +59,10 @@ impl SyncTranslation for AssetCategoryTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetCategoryRowRepository::new(connection)
+        let row = AssetTypeRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "AssetCategory row ({}) not found",
+                "AssetType row ({}) not found",
                 changelog.record_id
             )))?;
 
@@ -80,12 +80,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_asset_category_translation() {
-        use crate::sync::test::test_data::asset_category as test_data;
-        let translator = AssetCategoryTranslation;
+    async fn test_asset_type_translation() {
+        use crate::sync::test::test_data::asset_type as test_data;
+        let translator = AssetTypeTranslation;
 
         let (_, connection, _, _) =
-            setup_all("test_asset_category_translation", MockDataInserts::none()).await;
+            setup_all("test_asset_type_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));

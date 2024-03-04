@@ -18,6 +18,7 @@ fn create_filter() -> ChangelogFilter {
             ChangelogTableName::PackVariant,
             ChangelogTableName::AssetClass,
             ChangelogTableName::AssetCategory,
+            ChangelogTableName::AssetType,
         ]),
         ..Default::default()
     })

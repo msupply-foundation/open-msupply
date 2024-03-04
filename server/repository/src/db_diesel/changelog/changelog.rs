@@ -74,6 +74,7 @@ pub enum ChangelogTableName {
     PackVariant,
     AssetClass,
     AssetCategory,
+    AssetType,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
