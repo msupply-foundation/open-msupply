@@ -270,7 +270,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_inbound_return_lines_item_id() {
+    async fn generate_outbound_return_lines_item_id() {
         let (_, _, connection_manager, _) = setup_all(
             "generate_inbound_return_lines_item_id",
             MockDataInserts::all(),
@@ -306,7 +306,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn generate_inbound_return_lines_item_id_and_return_id() {
+    async fn generate_outbound_return_lines_item_id_and_return_id() {
         fn unavailable_stock_line() -> StockLineRow {
             StockLineRow {
                 id: "unavailable_stock_line".to_string(),
