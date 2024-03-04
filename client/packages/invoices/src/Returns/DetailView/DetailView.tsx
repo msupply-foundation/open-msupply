@@ -17,7 +17,7 @@ import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 // import { Toolbar } from './Toolbar';
 // import { Footer } from './Footer';
-// import { AppBarButtons } from './AppBarButtons';
+import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -74,7 +74,7 @@ export const DetailView: FC = () => {
             }
           )}
         >
-          {/* <AppBarButtons onAddItem={onAddItem} /> */}
+          <AppBarButtons onAddItem={onAddItem} />
           {/* {isOpen && (
             <OutboundLineEdit
               draft={entity}
