@@ -6,7 +6,7 @@ use graphql_core::{
 use graphql_types::types::OutboundReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
-use service::invoice::outbound_return::generate_outbound_return_lines::GenerateOutboundReturnLinesInput as ServiceInput;
+use service::invoice::outbound_return::generate_lines::GenerateOutboundReturnLinesInput as ServiceInput;
 
 #[derive(InputObject, Clone)]
 /// At least one input is required.
