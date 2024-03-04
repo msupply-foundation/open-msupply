@@ -1,12 +1,12 @@
 #[cfg(test)]
 
 mod query {
+    use repository::PaginationOption;
     use repository::{
         assets::asset_log::{AssetLogFilter, AssetLogSort, AssetLogSortField},
         mock::{asset_log::mock_asset_log_a, MockDataInserts},
         test_db::setup_all,
     };
-    use repository::{EqualFilter, PaginationOption};
 
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
