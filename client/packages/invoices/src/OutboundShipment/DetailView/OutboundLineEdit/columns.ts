@@ -53,7 +53,8 @@ export const useOutboundLineEditColumns = ({
     [
       'sellPricePerPack',
       {
-        Cell: CurrencyCell({}),
+        // eslint-disable-next-line new-cap
+        Cell: CurrencyCell(),
         formatter: sellPrice => c(Number(sellPrice)).format(),
         width: 120,
       },
