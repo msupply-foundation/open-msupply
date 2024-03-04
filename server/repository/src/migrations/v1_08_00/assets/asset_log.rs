@@ -8,7 +8,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE TABLE asset_log (
             id TEXT NOT NULL PRIMARY KEY,
             asset_id TEXT NOT NULL REFERENCES asset(id),
+            user_id TEXT REFERENCES user(id),
             status TEXT, 
+            comment TEXT,
+            type TEXT,
+            reason TEXT,
             log_datetime {DATETIME} NOT NULL
           );
         "#,
