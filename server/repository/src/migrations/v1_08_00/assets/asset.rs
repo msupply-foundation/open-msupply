@@ -45,7 +45,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TYPE context_type ADD VALUE 'ASSET' AFTER 'REPACK';
+            ALTER TYPE context_type ADD VALUE 'ASSET' BEFORE 'INBOUND_SHIPMENT';
             "#,
         )?;
     }
