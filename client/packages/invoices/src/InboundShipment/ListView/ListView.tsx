@@ -12,6 +12,7 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -69,8 +70,13 @@ export const InboundListView: FC = () => {
       ['invoiceNumber', { maxWidth: 80 }],
       'createdDatetime',
       'deliveredDatetime',
-      ['comment', { width: '100%' }],
-      'theirReference',
+      ['comment', { width: '100%', Cell: TooltipTextCell }],
+      [
+        'theirReference',
+        {
+          Cell: TooltipTextCell,
+        },
+      ],
       [
         'totalAfterTax',
         {
