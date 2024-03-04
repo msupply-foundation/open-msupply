@@ -60,7 +60,7 @@ mod query {
                     status: Some("test_status".to_string()),
                 },
             ),
-            Err(InsertAssetLogError::AssetLogAlreadyExists)
+            Err(InsertAssetLogError::AssetDoesNotExist)
         )
     }
 }
