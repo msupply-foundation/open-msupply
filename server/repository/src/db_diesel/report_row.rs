@@ -17,6 +17,7 @@ pub enum ReportType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportContext {
+    Asset,
     InboundShipment,
     OutboundShipment,
     Requisition,
