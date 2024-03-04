@@ -3,10 +3,7 @@
 mod query {
     use repository::{
         assets::asset_log::{AssetLogFilter, AssetLogSort, AssetLogSortField},
-        mock::{
-            asset_log::{mock_asset_log_a, mock_asset_log_b, mock_asset_log_c},
-            MockDataInserts,
-        },
+        mock::{asset_log::mock_asset_log_a, MockDataInserts},
         test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption};
@@ -18,7 +15,7 @@ mod query {
     async fn asset_log_service_pagination() {
         let (_, connection, connection_manager, _) = setup_all(
             "test_asset_log_service_pagination",
-            MockDataInserts::none().assets().asset_logs(),
+            MockDataInserts::none().asset_logs(),
         )
         .await;
 
@@ -56,7 +53,7 @@ mod query {
     async fn asset_log_service_single_record() {
         let (_, _, connection_manager, _) = setup_all(
             "test_asset_log_single_record",
-            MockDataInserts::none().assets().asset_logs(),
+            MockDataInserts::none().asset_logs(),
         )
         .await;
 

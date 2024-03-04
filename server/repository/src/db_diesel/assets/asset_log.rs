@@ -163,7 +163,7 @@ mod tests {
         let (_, storage_connection, _, _) = test_db::setup_all(
             "test_asset_log_sort_query_repository",
             // TODO add logs
-            MockDataInserts::all(),
+            MockDataInserts::none().assets().asset_logs(),
         )
         .await;
         let asset_log_repository = AssetLogRepository::new(&storage_connection);
@@ -182,6 +182,11 @@ mod tests {
                 }),
             )
             .unwrap();
+
+        // println!(
+        //     "logs then logs sorted: {:?} {:?}",
+        //     logs, logs_sorted_by_datetime
+        // );
 
         assert_eq!(logs[0], logs_sorted_by_datetime[1]);
     }

@@ -522,6 +522,9 @@ impl MockDataInserts {
     }
 
     pub fn asset_logs(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
         self.asset_logs = true;
         self
     }
@@ -563,8 +566,6 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
         "base",
         MockData {
             user_accounts: mock_user_accounts(),
-            assets: mock_assets(),
-            asset_logs: mock_asset_logs(),
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
@@ -599,6 +600,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
             clinicians: mock_clinicians(),
+            assets: mock_assets(),
+            asset_logs: mock_asset_logs(),
             ..Default::default()
         },
     );
@@ -673,20 +676,6 @@ pub fn insert_mock_data(
             let name_link_repo = NameLinkRowRepository::new(connection);
             for row in &mock_data.name_links {
                 name_link_repo.upsert_one(row).unwrap();
-            }
-        }
-
-        if inserts.assets {
-            let repo = AssetRowRepository::new(connection);
-            for row in &mock_data.assets {
-                repo.upsert_one(&row).unwrap();
-            }
-        }
-
-        if inserts.asset_logs {
-            let repo = AssetLogRowRepository::new(connection);
-            for row in &mock_data.asset_logs {
-                repo.upsert_one(&row).unwrap();
             }
         }
 
@@ -1009,6 +998,15 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
+
+        if inserts.asset_logs {
+            let repo = AssetLogRowRepository::new(connection);
+            for row in &mock_data.asset_logs {
+                println!("row: {:?}", row);
+                println!("asset: {:?}", &mock_data.assets);
+                repo.upsert_one(&row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1017,8 +1015,6 @@ impl MockData {
     pub fn join(mut self, other: MockData) -> MockData {
         let MockData {
             mut user_accounts,
-            mut assets,
-            mut asset_logs,
             mut names,
             mut name_links,
             mut name_tags,
@@ -1064,12 +1060,12 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
+            mut assets,
+            mut asset_logs,
             plugin_data: _,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
-        self.asset_logs.append(&mut asset_logs);
-        self.assets.append(&mut assets);
         self.names.append(&mut names);
         self.name_links.append(&mut name_links);
         self.name_tags.append(&mut name_tags);
@@ -1117,6 +1113,8 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
+        self.assets.append(&mut assets);
+        self.asset_logs.append(&mut asset_logs);
 
         self
     }
