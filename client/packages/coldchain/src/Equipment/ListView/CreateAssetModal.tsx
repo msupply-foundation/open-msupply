@@ -130,7 +130,11 @@ export const CreateAssetModal = ({
               <Select
                 options={mapIdNameToOptions(categoryData?.nodes ?? [])}
                 fullWidth
-                onChange={e => setCategoryId(e.target.value)}
+                onChange={e => {
+                  updateDraft({ catalogueItemId: '' });
+                  setCategoryId(e.target.value);
+                }}
+                value={categoryId}
               />
             }
           />
@@ -141,7 +145,10 @@ export const CreateAssetModal = ({
                 value={
                   !!selectedCatalogueItem
                     ? mapCatalogueItem(selectedCatalogueItem)
-                    : undefined
+                    : null
+                }
+                isOptionEqualToValue={option =>
+                  option.value === selectedCatalogueItem?.id
                 }
                 options={mapCatalogueItems(catalogueItems)}
                 width="100%"
