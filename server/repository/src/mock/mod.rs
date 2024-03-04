@@ -138,8 +138,6 @@ use super::{
 #[derive(Default, Clone)]
 pub struct MockData {
     pub user_accounts: Vec<UserAccountRow>,
-    pub asset_logs: Vec<AssetLogRow>,
-    pub assets: Vec<AssetRow>,
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
@@ -186,6 +184,8 @@ pub struct MockData {
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
     pub plugin_data: Vec<PluginDataRow>,
+    pub assets: Vec<AssetRow>,
+    pub asset_logs: Vec<AssetLogRow>,
 }
 
 impl MockData {
@@ -203,8 +203,6 @@ impl MockData {
 #[derive(Clone, Default, PartialEq)]
 pub struct MockDataInserts {
     pub user_accounts: bool,
-    pub assets: bool,
-    pub asset_logs: bool,
     pub user_store_joins: bool,
     pub user_permissions: bool,
     pub names: bool,
@@ -249,14 +247,14 @@ pub struct MockDataInserts {
     pub clinician_store_joins: bool,
     pub contexts: bool,
     pub plugin_data: bool,
+    pub assets: bool,
+    pub asset_logs: bool,
 }
 
 impl MockDataInserts {
     pub fn all() -> Self {
         MockDataInserts {
             user_accounts: true,
-            assets: true,
-            asset_logs: true,
             user_store_joins: true,
             user_permissions: true,
             names: true,
@@ -301,6 +299,8 @@ impl MockDataInserts {
             clinician_store_joins: true,
             contexts: true,
             plugin_data: true,
+            assets: true,
+            asset_logs: true,
         }
     }
 
