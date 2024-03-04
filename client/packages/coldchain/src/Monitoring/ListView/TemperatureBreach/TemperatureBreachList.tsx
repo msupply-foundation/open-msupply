@@ -6,6 +6,7 @@ import {
   DataTable,
   Formatter,
   NothingHere,
+  NumUtils,
   TableProvider,
   createTableStore,
   useColumns,
@@ -18,6 +19,7 @@ import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
 import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
 import { DurationCell, IconCell } from './TempereatureBreachCells';
+import { useFormatTemperature } from '../../../common/utils';
 
 const ListView: FC = () => {
   const {
@@ -58,6 +60,7 @@ const ListView: FC = () => {
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
+  const formatTemperature = useFormatTemperature;
 
   const columns = useColumns<TemperatureBreachFragment>(
     [
@@ -131,7 +134,9 @@ const ListView: FC = () => {
         width: 125,
         accessor: ({ rowData }) => {
           return !!rowData.maxOrMinTemperature
-            ? `${rowData.maxOrMinTemperature} ${t('label.temperature-unit')}`
+            ? `${formatTemperature(
+                NumUtils.round(rowData.maxOrMinTemperature, 2)
+              )}`
             : null;
         },
         sortable: false,
