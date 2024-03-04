@@ -1,8 +1,15 @@
 use async_graphql::*;
 
-use graphql_core::simple_generic_errors::NodeError;
+use async_graphql::dataloader::DataLoader;
+use graphql_core::ContextExt;
+use graphql_core::{
+    loader::{AssetCategoryLoader, AssetClassLoader, AssetTypeLoader},
+    simple_generic_errors::NodeError,
+};
 use repository::assets::asset_catalogue_item_row::AssetCatalogueItemRow;
 use service::ListResult;
+
+use super::{AssetCategoryNode, AssetClassNode, AssetTypeNode};
 
 #[derive(PartialEq, Debug)]
 pub struct AssetCatalogueItemNode {
@@ -35,11 +42,37 @@ impl AssetCatalogueItemNode {
     pub async fn code(&self) -> &str {
         &self.row().code
     }
+
     pub async fn manufacturer(&self) -> Option<String> {
         self.row().manufacturer.as_ref().map(|it| it.clone())
     }
+
     pub async fn model(&self) -> &str {
         &self.row().model
+    }
+
+    pub async fn asset_class(&self, ctx: &Context<'_>) -> Result<Option<AssetClassNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetClassLoader>>();
+        Ok(loader
+            .load_one(self.row().class_id.clone())
+            .await?
+            .map(AssetClassNode::from_domain))
+    }
+
+    pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetCategoryLoader>>();
+        Ok(loader
+            .load_one(self.row().category_id.clone())
+            .await?
+            .map(AssetCategoryNode::from_domain))
+    }
+
+    pub async fn asset_type(&self, ctx: &Context<'_>) -> Result<Option<AssetTypeNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetTypeLoader>>();
+        Ok(loader
+            .load_one(self.row().type_id.clone())
+            .await?
+            .map(AssetTypeNode::from_domain))
     }
 }
 
