@@ -7,3 +7,6 @@ mod update;
 
 #[cfg(test)]
 mod query_log;
+
+#[cfg(test)]
+mod insert_log;
