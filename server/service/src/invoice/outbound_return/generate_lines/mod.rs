@@ -137,8 +137,12 @@ pub fn generate_outbound_return_lines(
 mod test {
     use crate::service_provider::ServiceProvider;
     use repository::{
-        mock::{mock_item_a_lines, MockDataInserts},
-        test_db::setup_all,
+        mock::{
+            mock_item_a, mock_item_a_lines, mock_outbound_return_a, mock_stock_line_a,
+            mock_store_a, MockData, MockDataInserts,
+        },
+        test_db::{setup_all, setup_all_with_data},
+        InvoiceLineRow,
     };
 
     type ServiceInput = super::GenerateOutboundReturnLinesInput;
@@ -245,5 +249,72 @@ mod test {
             result.rows[0].stock_line.stock_line_row.id,
             "item_query_test1"
         );
+    }
+
+    #[actix_rt::test]
+    async fn generate_inbound_return_lines_item_id_and_return_id() {
+        fn item_a_return_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "item_a_return_line".to_string(),
+                invoice_id: mock_outbound_return_a().id,
+                item_link_id: mock_item_a().id,
+                stock_line_id: Some(mock_stock_line_a().id),
+                number_of_packs: 1.0,
+                note: Some("test note".to_string()),
+                ..Default::default()
+            }
+        }
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "generate_inbound_return_lines_item_id_and_return_id",
+            MockDataInserts::all(),
+            MockData {
+                invoice_lines: vec![item_a_return_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let store_id = mock_store_a().id;
+        let stock_line_ids = vec![];
+        let item_id = Some(mock_item_a().id); // has 2 stock lines
+        let return_id = Some(mock_outbound_return_a().id); // has 1 item_a line, 1 item_b line
+
+        let result = service
+            .generate_outbound_return_lines(
+                &context,
+                &store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            )
+            .unwrap();
+
+        // all are item_a stock lines
+        assert!(result
+            .rows
+            .iter()
+            .all(|line| line.stock_line.item_row.id == "item_a"));
+
+        // the stock line that is already in the return should be included, even though it
+        // has no available packs
+        // it should also have the correct number of packs/note/return_reason_id mapped
+        assert!(result.rows.iter().any(|line| {
+            line.stock_line.stock_line_row.id == "item_a_line_a"
+                && line.number_of_packs == 1.0
+                && line.note.as_ref().unwrap() == "test note"
+        }));
+
+        assert!(result.rows.iter().all(|line| {
+            // except for the line that is already in the return
+            line.stock_line.stock_line_row.id == "item_a_line_a"
+                // all lines have available packs
+                || line.stock_line.stock_line_row.available_number_of_packs > 0.0
+        }));
     }
 }
