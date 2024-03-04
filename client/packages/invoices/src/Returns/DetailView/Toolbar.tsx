@@ -13,9 +13,8 @@ import {
 import { useReturns } from '../api';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const onDelete = useReturns.document.deleteOutboundRows();
-  //   const { onAllocate } = useOutbound.line.allocateSelected();
   const { data } = useReturns.document.outboundReturn();
   const { otherPartyName } = data ?? {};
   // const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
@@ -38,7 +37,7 @@ export const Toolbar: FC = () => {
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherPartyName && (
               <InputWithLabelRow
-                label={t('label.customer-name')}
+                label={t('label.supplier-name')}
                 Input={<BasicTextInput value={otherPartyName} disabled />}
               />
             )}
@@ -79,9 +78,6 @@ export const Toolbar: FC = () => {
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
-            {/* <DropdownMenuItem IconComponent={ZapIcon} onClick={onAllocate}>
-              {t('button.allocate-lines')}
-            </DropdownMenuItem> */}
           </DropdownMenu>
         </Grid>
       </Grid>
