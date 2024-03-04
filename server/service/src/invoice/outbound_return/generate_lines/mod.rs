@@ -5,7 +5,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct OutboundReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
@@ -144,17 +144,62 @@ fn invoice_line_to_new_return_line(
 
 #[cfg(test)]
 mod test {
-    use crate::service_provider::ServiceProvider;
+    use crate::{service_provider::ServiceProvider, ListError};
     use repository::{
         mock::{
             mock_item_a, mock_item_a_lines, mock_outbound_return_a, mock_store_a, MockData,
             MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, StockLineRow,
+        InvoiceLineRow, RepositoryError, StockLineRow,
     };
 
     type ServiceInput = super::GenerateOutboundReturnLinesInput;
+
+    #[actix_rt::test]
+    async fn generate_outbound_return_lines_errors() {
+        fn no_stock_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "no_stock_line".to_string(),
+                invoice_id: mock_outbound_return_a().id,
+                item_link_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "generate_outbound_return_lines_errors",
+            MockDataInserts::all(),
+            MockData {
+                invoice_lines: vec![no_stock_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let store_id = mock_store_a().id;
+        let stock_line_ids = vec![];
+        let item_id = Some(mock_item_a().id);
+        let return_id = Some(mock_outbound_return_a().id);
+
+        // NotFound
+        assert_eq!(
+            service.generate_outbound_return_lines(
+                &context,
+                &store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            ),
+            Err(ListError::DatabaseError(RepositoryError::NotFound))
+        );
+    }
 
     #[actix_rt::test]
     async fn generate_outbound_return_lines_nothing_supplied() {
