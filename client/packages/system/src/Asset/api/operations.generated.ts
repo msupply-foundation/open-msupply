@@ -40,6 +40,7 @@ export type AssetTypesQuery = { __typename: 'Queries', assetTypes: { __typename:
 
 export type AssetCategoriesQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Types.AssetCategorySortInput>;
+  filter?: Types.InputMaybe<Types.AssetCategoryFilterInput>;
 }>;
 
 
@@ -116,8 +117,8 @@ export const AssetTypesDocument = gql`
 }
     `;
 export const AssetCategoriesDocument = gql`
-    query assetCategories($sort: AssetCategorySortInput) {
-  assetCategories(sort: $sort) {
+    query assetCategories($sort: AssetCategorySortInput, $filter: AssetCategoryFilterInput) {
+  assetCategories(sort: $sort, filter: $filter) {
     ... on AssetCategoryConnector {
       nodes {
         id
@@ -229,7 +230,7 @@ export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<As
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCategoriesQuery((req, res, ctx) => {
- *   const { sort } = req.variables;
+ *   const { sort, filter } = req.variables;
  *   return res(
  *     ctx.data({ assetCategories })
  *   )

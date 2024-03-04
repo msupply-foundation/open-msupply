@@ -19,6 +19,7 @@ import {
   useAssetData,
 } from '@openmsupply-client/system';
 import { useAssets } from '../api';
+import { CCE_CLASS_ID } from '../utils';
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -33,12 +34,12 @@ const mapCatalogueItem = (catalogueItem: AssetCatalogueItemFragment) => ({
 const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
   catalogueItems.map(mapCatalogueItem);
 
-const EmptyAssetInput = {
+const getEmptyAsset = () => ({
   id: FnUtils.generateUUID(),
   name: '',
   code: '',
   catalogueItemId: '',
-};
+});
 
 const InputRow = ({
   label,
@@ -55,6 +56,20 @@ const InputRow = ({
   />
 );
 
+const parseInsertError = (e: unknown) => {
+  const message = (e as Error).message;
+  if (
+    message.includes('DatabaseError(') &&
+    message.includes('UniqueViolation(') &&
+    message.includes('asset_code_key') &&
+    message.includes('duplicate key')
+  ) {
+    return 'error.cce-code-already-used';
+  }
+
+  return 'error.unable-to-create-cce';
+};
+
 export const CreateAssetModal = ({
   isOpen,
   onClose,
@@ -63,15 +78,15 @@ export const CreateAssetModal = ({
   const { error, success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
   const [categoryId, setCategoryId] = useState('');
-  const [draft, setDraft] = useState<InsertAssetInput>({ ...EmptyAssetInput });
+  const [draft, setDraft] = useState<InsertAssetInput>(getEmptyAsset());
   const { data: categoryData, isLoading: isLoadingCategories } =
-    useAssetData.utils.categories();
+    useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
   const { data: catalogueItemData } = useAssetData.document.list(categoryId);
   const { mutateAsync: save } = useAssets.document.insert();
 
   const handleClose = () => {
     setCategoryId('');
-    setDraft({ ...EmptyAssetInput });
+    setDraft(getEmptyAsset());
     onClose();
   };
 
@@ -99,7 +114,7 @@ export const CreateAssetModal = ({
               success(t('message.cce-created'))();
               handleClose();
             } catch (e) {
-              error(t('error.unable-to-create-cce'))();
+              error(t(parseInsertError(e)))();
             }
           }}
         />
@@ -115,7 +130,11 @@ export const CreateAssetModal = ({
               <Select
                 options={mapIdNameToOptions(categoryData?.nodes ?? [])}
                 fullWidth
-                onChange={e => setCategoryId(e.target.value)}
+                onChange={e => {
+                  updateDraft({ catalogueItemId: '' });
+                  setCategoryId(e.target.value);
+                }}
+                value={categoryId}
               />
             }
           />
@@ -126,7 +145,10 @@ export const CreateAssetModal = ({
                 value={
                   !!selectedCatalogueItem
                     ? mapCatalogueItem(selectedCatalogueItem)
-                    : undefined
+                    : null
+                }
+                isOptionEqualToValue={option =>
+                  option.value === selectedCatalogueItem?.id
                 }
                 options={mapCatalogueItems(catalogueItems)}
                 width="100%"
