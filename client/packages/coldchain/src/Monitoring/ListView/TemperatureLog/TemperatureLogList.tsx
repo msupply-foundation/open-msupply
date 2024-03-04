@@ -14,7 +14,7 @@ import {
   createTableStore,
   useColumns,
 } from '@openmsupply-client/common';
-import { BreachTypeCell } from '../../../common';
+import { BreachTypeCell, useFormatTemperature } from '../../../common';
 import { Toolbar } from './Toolbar';
 
 const temperatureLogFilterAndSort = {
@@ -52,6 +52,7 @@ const ListView: FC = () => {
     useTemperatureLog.document.list(queryParams);
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
+  const formatTemperature = useFormatTemperature;
 
   const columns = useColumns<TemperatureLogFragment>(
     [
@@ -83,9 +84,7 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${NumUtils.round(rowData.temperature, 2)} ${t(
-            'label.temperature-unit'
-          )}`;
+          return `${formatTemperature(NumUtils.round(rowData.temperature, 2))}`;
         },
       },
       {
