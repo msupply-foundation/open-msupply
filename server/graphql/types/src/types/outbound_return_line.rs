@@ -1,7 +1,9 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use repository::{ItemRow, StockLineRow};
-use service::{invoice::outbound_return::generate_lines::OutboundReturnLine, ListResult};
+use service::{
+    invoice::outbound_return::generate_outbound_return_lines::OutboundReturnLine, ListResult,
+};
 
 #[derive(SimpleObject)]
 pub struct OutboundReturnLineConnector {
