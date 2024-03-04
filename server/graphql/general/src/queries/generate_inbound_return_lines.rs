@@ -1,43 +1,65 @@
 use async_graphql::*;
-use chrono::NaiveDate;
+
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use graphql_types::types::InboundReturnLineConnector;
+use service::auth::{Resource, ResourceAccessRequest};
+
+use service::invoice::inbound_return::GenerateInboundReturnLinesInput as ServiceInput;
 
 #[derive(InputObject, Clone)]
-pub struct GenerateInboundReturnInput {
+pub struct GenerateInboundReturnLinesInput {
     pub stock_line_ids: Vec<String>,
+    pub item_id: Option<String>,
+    pub return_id: Option<String>,
 }
 
-#[derive(SimpleObject, Clone)]
-pub struct InboundReturnLine {
-    pub id: String,
-    pub item_code: String,
-    pub item_name: String,
-    pub stock_line_id: String,
-    pub batch: Option<String>,
-    pub expiry_date: Option<NaiveDate>,
-    pub pack_size: i32,
-    pub number_of_packs_issued: f64,
-    pub number_of_packs_returned: f64,
-    pub note: Option<String>,
-    pub reason_id: Option<String>,
+#[derive(Union)]
+pub enum GenerateInboundReturnLinesResponse {
+    Response(InboundReturnLineConnector),
 }
 
 pub fn generate_inbound_return_lines(
-    _store_id: String,
-    _input: GenerateInboundReturnInput,
-) -> Result<Vec<InboundReturnLine>> {
-    Ok(vec![InboundReturnLine {
-        id: "new_inbound_return_line1".to_string(),
-        // Below, don't have to match atm
-        item_code: "abc".to_string(),
-        item_name: "Item name 1".to_string(),
-        stock_line_id: "stock_line_id".to_string(),
-        batch: Some("batch A".to_string()),
-        expiry_date: NaiveDate::from_ymd_opt(2024, 05, 10),
-        pack_size: 20,
-        number_of_packs_issued: 1000.0,
-        number_of_packs_returned: 300.0,
-        note: Some("Comment 1".to_string()),
-        reason_id: None,
-        // No location or unit column for now
-    }])
+    ctx: &Context<'_>,
+    store_id: String,
+    input: GenerateInboundReturnLinesInput,
+) -> Result<GenerateInboundReturnLinesResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            // resource: Resource::MutateInboundReturn, // TODO: later...
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.clone()),
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+    let return_lines = service_provider
+        .invoice_service
+        .generate_inbound_return_lines(&service_context, &store_id, input.to_domain())
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(GenerateInboundReturnLinesResponse::Response(
+        InboundReturnLineConnector::from_domain(return_lines),
+    ))
+}
+
+impl GenerateInboundReturnLinesInput {
+    fn to_domain(self) -> ServiceInput {
+        let GenerateInboundReturnLinesInput {
+            stock_line_ids,
+            item_id,
+            return_id,
+        } = self;
+
+        ServiceInput {
+            stock_line_ids,
+            item_id,
+            return_id,
+        }
+    }
 }
