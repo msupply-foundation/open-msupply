@@ -6,9 +6,9 @@ use super::{TestSyncPullRecord, TestSyncPushRecord};
 const TABLE_NAME: &'static str = "asset_class";
 
 const ASSET_CLASS1: (&'static str, &'static str) = (
-    "6f075ab5-4aa0-46b9-9184-159d62126f86",
+    "32608ef9-dce5-41a7-b3e9-92b0fe086c7e",
     r#"{
-        "id": "6f075ab5-4aa0-46b9-9184-159d62126f86",
+        "id": "32608ef9-dce5-41a7-b3e9-92b0fe086c7e",
         "name": "Asset Class 1"
     }"#,
 );

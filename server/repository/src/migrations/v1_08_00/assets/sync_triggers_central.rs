@@ -76,5 +76,42 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         )?;
     }
 
+    // Asset Type triggers
+    if cfg!(feature = "postgres") {
+        sql!(
+            connection,
+            r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'asset_type';
+                CREATE TRIGGER asset_type_trigger
+                AFTER INSERT OR UPDATE ON asset_type
+                FOR EACH ROW EXECUTE PROCEDURE update_changelog();
+            "#
+        )?;
+    } else {
+        sql!(
+            connection,
+            r#"
+                CREATE TRIGGER asset_type_insert_trigger
+                AFTER INSERT ON asset_type
+                BEGIN
+                    INSERT INTO changelog (table_name, record_id, row_action)
+                    VALUES ("asset_type", NEW.id, "UPSERT");
+                END;
+            "#
+        )?;
+
+        sql!(
+            connection,
+            r#"
+                CREATE TRIGGER asset_type_update_trigger
+                AFTER UPDATE ON asset_type
+                BEGIN
+                INSERT INTO changelog (table_name, record_id, row_action)
+                    VALUES ('asset_type', NEW.id, 'UPSERT');
+                END;
+            "#
+        )?;
+    }
+
     Ok(())
 }
