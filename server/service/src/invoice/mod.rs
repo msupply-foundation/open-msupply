@@ -10,7 +10,7 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
-use self::outbound_return::generate_lines::*;
+use self::outbound_return::generate_outbound_return_lines::*;
 use self::outbound_return::insert::insert_outbound_return;
 use self::outbound_return::insert::InsertOutboundReturn;
 use self::outbound_return::insert::InsertOutboundReturnError;
