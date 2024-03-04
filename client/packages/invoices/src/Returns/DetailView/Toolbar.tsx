@@ -7,15 +7,9 @@ import {
   Grid,
   DropdownMenu,
   useTranslation,
-  useBufferState,
   DropdownMenuItem,
   DeleteIcon,
-  ZapIcon,
-  Switch,
-  useIsGrouped,
-  ArrowLeftIcon,
 } from '@openmsupply-client/common';
-import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useReturns } from '../api';
 
 export const Toolbar: FC = () => {
@@ -23,23 +17,13 @@ export const Toolbar: FC = () => {
   const onDelete = useReturns.document.deleteOutboundRows();
   //   const { onAllocate } = useOutbound.line.allocateSelected();
   const { data } = useReturns.document.outboundReturn();
-  const { otherPartyName } = data;
-  //   const { id, otherParty, theirReference, update, requisition } =
-  //     useOutbound.document.fields([
-  //       'id',
-  //       'otherParty',
-  //       'theirReference',
-  //       'requisition',
-  //     ]);
+  const { otherPartyName } = data ?? {};
   // const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
   //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
   //     useBufferState(theirReference);
   //   const { mutateAsync: updateName } = useOutbound.document.updateName();
 
   //   const isDisabled = useOutbound.utils.isDisabled();
-
-  //   const selectedStockLineIds: string[] =
-  //     useOutbound.utils.selectedStockLineIds();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
