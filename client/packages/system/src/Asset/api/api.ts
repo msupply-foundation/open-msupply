@@ -55,7 +55,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
         offset,
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
-        storeId,
         filter: filterBy,
       });
 
@@ -67,7 +66,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.assetCatalogueItems({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
-        storeId,
       });
 
       const items = result?.assetCatalogueItems;
@@ -76,7 +74,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     },
     categories: async () => {
       const result = await sdk.assetCategories({
-        storeId,
         sort: { key: AssetCategorySortFieldInput.Name, desc: false },
       });
       const categories = result?.assetCategories;
@@ -85,7 +82,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     },
     classes: async () => {
       const result = await sdk.assetClasses({
-        storeId,
         sort: { key: AssetClassSortFieldInput.Name, desc: false },
       });
       const classes = result?.assetClasses;
@@ -94,7 +90,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     },
     types: async () => {
       const result = await sdk.assetTypes({
-        storeId,
         sort: { key: AssetTypeSortFieldInput.Name, desc: false },
       });
       const types = result?.assetTypes;
