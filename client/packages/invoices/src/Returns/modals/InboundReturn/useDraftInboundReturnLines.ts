@@ -2,19 +2,23 @@ import React, { useEffect } from 'react';
 import {
   FnUtils,
   InboundReturnInput,
-  InboundReturnLine,
+  InboundReturnLineNode,
   InboundReturnLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
 export const useDraftInboundReturnLines = (
-  stockLineIds: string[],
+  outboundReturnLineIds: string[],
   customerId: string
 ) => {
-  const [draftLines, setDraftLines] = React.useState<InboundReturnLine[]>([]);
+  const [draftLines, setDraftLines] = React.useState<InboundReturnLineNode[]>(
+    []
+  );
 
-  const lines = useReturns.lines.inboundReturnLines(stockLineIds);
+  const data = useReturns.lines.inboundReturnLines(outboundReturnLineIds);
+  const lines = data?.nodes;
+
   const { mutateAsync } = useReturns.document.insertInboundReturn();
 
   useEffect(() => {
@@ -23,7 +27,7 @@ export const useDraftInboundReturnLines = (
     setDraftLines(newDraftLines);
   }, [lines]);
 
-  const update = (patch: RecordPatch<InboundReturnLine>) => {
+  const update = (patch: RecordPatch<InboundReturnLineNode>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {
