@@ -95,8 +95,8 @@ pub fn generate_outbound_return_lines(
         .collect::<Vec<OutboundReturnLine>>();
 
     let mut return_lines = from_stock_line_ids;
-    return_lines.extend(new_item_lines);
     return_lines.extend(existing_return_lines);
+    return_lines.extend(new_item_lines);
 
     Ok(ListResult {
         count: return_lines.len() as u32,
