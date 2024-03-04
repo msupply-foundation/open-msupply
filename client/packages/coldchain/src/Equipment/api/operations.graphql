@@ -10,6 +10,19 @@ fragment Asset on AssetNode {
   replacementDate
   serialNumber
   storeId
+  catalogueItem {
+    manufacturer
+    model
+    assetType {
+      name
+    }
+    assetClass {
+      name
+    }
+    assetCategory {
+      name
+    }
+  }
 }
 
 query assets(
