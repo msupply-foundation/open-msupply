@@ -7,6 +7,15 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   id
   manufacturer
   model
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
+  }
+  assetType {
+    name
+  }
 }
 
 query assetCatalogueItems(

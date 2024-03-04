@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   useFormatDateTime,
   useToggle,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -35,18 +36,20 @@ const AssetListComponent: FC = () => {
   const columns = useColumns<AssetFragment>(
     [
       ['code', { width: 150, sortable: false }],
-      // {
-      //   key: 'manufacturer',
-      //   Cell: TooltipTextCell,
-      //   maxWidth: 350,
-      //   label: 'label.manufacturer',
-      //   sortable: false,
-      // },
-      // {
-      //   key: 'model',
-      //   label: 'label.model',
-      //   sortable: false,
-      // },
+      {
+        key: 'manufacturer',
+        Cell: TooltipTextCell,
+        maxWidth: 200,
+        label: 'label.manufacturer',
+        sortable: false,
+        accessor: ({ rowData }) => rowData.catalogueItem?.manufacturer,
+      },
+      {
+        key: 'model',
+        label: 'label.model',
+        sortable: false,
+        accessor: ({ rowData }) => rowData.catalogueItem?.model,
+      },
       {
         key: 'name',
         label: 'label.name',

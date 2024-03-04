@@ -40,13 +40,26 @@ const AssetListComponent: FC = () => {
       {
         key: 'manufacturer',
         Cell: TooltipTextCell,
-        width: 350,
+        width: 300,
         label: 'label.manufacturer',
       },
-
       {
+        Cell: TooltipTextCell,
         key: 'model',
         label: 'label.model',
+        width: 200,
+      },
+      {
+        key: 'class',
+        label: 'label.class',
+        sortable: false,
+        accessor: ({ rowData }) => rowData.assetClass?.name,
+      },
+      {
+        key: 'category',
+        label: 'label.category',
+        sortable: false,
+        accessor: ({ rowData }) => rowData.assetCategory?.name,
       },
     ],
     {

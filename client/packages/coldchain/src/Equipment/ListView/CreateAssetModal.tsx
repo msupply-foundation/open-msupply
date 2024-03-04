@@ -27,7 +27,7 @@ interface CreateAssetModalProps {
 }
 
 const mapCatalogueItem = (catalogueItem: AssetCatalogueItemFragment) => ({
-  label: `${catalogueItem.code} Type Manufacturer Model`,
+  label: `${catalogueItem.code} ${catalogueItem.assetType?.name} ${catalogueItem.manufacturer} ${catalogueItem.model}`,
   value: catalogueItem.id,
 });
 
