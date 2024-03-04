@@ -12,6 +12,7 @@ use repository::{PaginationOption, StorageConnection};
 
 pub mod delete;
 pub mod insert;
+pub mod insert_log;
 pub mod query;
 pub mod query_log;
 pub mod update;
