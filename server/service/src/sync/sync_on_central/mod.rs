@@ -19,6 +19,7 @@ fn create_filter() -> ChangelogFilter {
             ChangelogTableName::AssetClass,
             ChangelogTableName::AssetCategory,
             ChangelogTableName::AssetType,
+            ChangelogTableName::AssetCatalogueItem,
         ]),
         ..Default::default()
     })
