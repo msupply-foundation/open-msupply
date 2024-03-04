@@ -1,3 +1,8 @@
+use self::{
+    asset_catalogue_item::AssetCatalogueItemLoader, asset_category::AssetCategoryLoader,
+    asset_class::AssetClassLoader, asset_type::AssetTypeLoader,
+};
+
 use super::{json_schema::JsonSchemaLoader, *};
 use crate::loader::{ItemLoader, StoreByIdLoader, UserLoader};
 use actix_web::web::Data;
@@ -276,6 +281,31 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         SensorByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        AssetClassLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetCategoryLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetTypeLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetCatalogueItemLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

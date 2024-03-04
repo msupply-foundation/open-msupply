@@ -243,8 +243,11 @@ export type AssetCatalogueItemFilterInput = {
 
 export type AssetCatalogueItemNode = {
   __typename: 'AssetCatalogueItemNode';
+  assetCategory?: Maybe<AssetCategoryNode>;
   assetCategoryId: Scalars['String']['output'];
+  assetClass?: Maybe<AssetClassNode>;
   assetClassId: Scalars['String']['output'];
+  assetType?: Maybe<AssetTypeNode>;
   assetTypeId: Scalars['String']['output'];
   code: Scalars['String']['output'];
   id: Scalars['String']['output'];
@@ -351,6 +354,7 @@ export type AssetFilterInput = {
 
 export type AssetNode = {
   __typename: 'AssetNode';
+  catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   code: Scalars['String']['output'];
   createdDatetime: Scalars['NaiveDateTime']['output'];
@@ -360,6 +364,7 @@ export type AssetNode = {
   name: Scalars['String']['output'];
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
+  store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
 
