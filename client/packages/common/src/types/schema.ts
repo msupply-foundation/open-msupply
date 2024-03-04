@@ -1444,13 +1444,13 @@ export type GenerateInboundReturnInput = {
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
-/**
- * At least one input is required.
- * Note that if you provide multiple inputs, they will be applied as an AND filter.
- */
+/** At least one input is required. */
 export type GenerateOutboundReturnLinesInput = {
+  /** Generate return lines for all the available stock lines of a specific item */
   itemId?: InputMaybe<Scalars['String']['input']>;
+  /** Include existing return lines in the response. Only has an effect when `item_id` is set. */
   returnId?: InputMaybe<Scalars['String']['input']>;
+  /** The stock line ids to generate new return lines for */
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
@@ -3471,7 +3471,7 @@ export type OutboundReturnLineNode = {
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksToReturn: Scalars['Int']['output'];
+  numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
