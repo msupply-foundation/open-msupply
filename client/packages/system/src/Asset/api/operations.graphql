@@ -69,8 +69,11 @@ query assetTypes($sort: AssetTypeSortInput) {
   }
 }
 
-query assetCategories($sort: AssetCategorySortInput) {
-  assetCategories(sort: $sort) {
+query assetCategories(
+  $sort: AssetCategorySortInput
+  $filter: AssetCategoryFilterInput
+) {
+  assetCategories(sort: $sort, filter: $filter) {
     ... on AssetCategoryConnector {
       nodes {
         id

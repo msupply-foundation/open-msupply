@@ -2,6 +2,9 @@ import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetFragment } from './api';
 import { Formatter } from '@common/utils';
 
+// the reference data is loaded in migrations so the id here is hardcoded
+export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
+
 export const assetsToCsv = (
   items: AssetFragment[],
   t: TypedTFunction<LocaleKey>

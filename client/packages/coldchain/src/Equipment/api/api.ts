@@ -5,6 +5,7 @@ import {
   InsertAssetInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
+import { CCE_CLASS_ID } from '../utils';
 
 export type ListParams<T> = {
   first: number;
@@ -26,11 +27,7 @@ const itemParsers = {
   },
 };
 
-export const getAssetQueries = (
-  sdk: Sdk,
-  storeId: string,
-  classId: string
-) => ({
+export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (assetId: string) => {
       const result = await sdk.assetById({
@@ -58,7 +55,7 @@ export const getAssetQueries = (
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, classId: { equalTo: classId } },
+        filter: { ...filterBy, classId: { equalTo: CCE_CLASS_ID } },
       });
 
       const items = result?.assets;
@@ -70,7 +67,7 @@ export const getAssetQueries = (
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { classId: { equalTo: classId } },
+        filter: { classId: { equalTo: CCE_CLASS_ID } },
       });
 
       const items = result?.assets;

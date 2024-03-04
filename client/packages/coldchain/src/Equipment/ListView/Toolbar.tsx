@@ -7,6 +7,7 @@ import {
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
+import { CCE_CLASS_ID } from '../utils';
 
 type ReferenceData = {
   id: string;
@@ -15,7 +16,9 @@ type ReferenceData = {
 };
 
 export const Toolbar = () => {
-  const { data: categoryData } = useAssetData.utils.categories();
+  const { data: categoryData } = useAssetData.utils.categories({
+    classId: { equalTo: CCE_CLASS_ID },
+  });
   const { data: typeData } = useAssetData.utils.types();
   const t = useTranslation('catalogue');
   const { urlQuery, updateQuery } = useUrlQuery({
