@@ -322,10 +322,11 @@ impl GeneralQueries {
 
     pub async fn generate_inbound_return_lines(
         &self,
+        ctx: &Context<'_>,
         store_id: String,
-        input: GenerateInboundReturnInput,
-    ) -> Result<Vec<InboundReturnLine>> {
-        generate_inbound_return_lines(store_id, input)
+        input: GenerateInboundReturnLinesInput,
+    ) -> Result<GenerateInboundReturnLinesResponse> {
+        generate_inbound_return_lines(&ctx, store_id, input)
     }
 }
 
