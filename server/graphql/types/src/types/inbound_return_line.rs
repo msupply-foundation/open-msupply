@@ -32,11 +32,11 @@ impl InboundReturnLineNode {
     }
 
     pub fn item_row(&self) -> &ItemRow {
-        &self.return_line.stock_line.item_row
+        &self.return_line.item_row
     }
 
     pub fn stock_line_row(&self) -> &StockLineRow {
-        &self.return_line.stock_line.stock_line_row
+        &self.return_line.stock_line_row
     }
 }
 
@@ -54,8 +54,12 @@ impl InboundReturnLineNode {
         &self.return_line.reason_id
     }
 
-    pub async fn number_of_packs_returned(&self) -> &u32 {
+    pub async fn number_of_packs_returned(&self) -> &f64 {
         &self.return_line.number_of_packs
+    }
+
+    pub async fn number_of_packs_issued(&self) -> &f64 {
+        &self.return_line.packs_issued
     }
 
     pub async fn item_code(&self) -> &str {
@@ -78,10 +82,9 @@ impl InboundReturnLineNode {
         &self.stock_line_row().expiry_date
     }
 
-    // i think this means it would have to be outbound shipment line ids
-    pub async fn number_of_packs_issued(&self) -> &f64 {
-        &self.stock_line_row().total_number_of_packs // TODO... from invoice, else empty
-    }
+    // pub async fn available_number_of_packs(&self) -> &f64 {
+    //     &self.stock_line_row().available_number_of_packs
+    // }
 
     pub async fn pack_size(&self) -> &i32 {
         &self.stock_line_row().pack_size
