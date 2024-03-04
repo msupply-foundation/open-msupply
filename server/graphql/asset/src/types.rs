@@ -1,8 +1,13 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
+use graphql_core::generic_filters::{DateFilterInput, EqualFilterStringInput, StringFilterInput};
+use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader};
 use graphql_core::simple_generic_errors::NodeError;
+use graphql_core::ContextExt;
+use graphql_types::types::{AssetCatalogueItemNode, StoreNode};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 use repository::{
@@ -115,6 +120,35 @@ impl AssetNode {
 
     pub async fn modified_datetime(&self) -> &chrono::NaiveDateTime {
         &self.row().modified_datetime
+    }
+
+    pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
+        let store_id = match &self.row().store_id {
+            Some(store_id) => store_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<StoreByIdLoader>>();
+        Ok(loader
+            .load_one(store_id.clone())
+            .await?
+            .map(StoreNode::from_domain))
+    }
+
+    pub async fn catalogue_item(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<AssetCatalogueItemNode>> {
+        let catalogue_item_id = match &self.row().catalogue_item_id {
+            Some(catalogue_item_id) => catalogue_item_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemLoader>>();
+        Ok(loader
+            .load_one(catalogue_item_id.clone())
+            .await?
+            .map(AssetCatalogueItemNode::from_domain))
     }
 }
 

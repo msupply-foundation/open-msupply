@@ -12,7 +12,6 @@ export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   key: Types.AssetCatalogueItemSortFieldInput;
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
   filter?: Types.InputMaybe<Types.ItemFilterInput>;
-  storeId: Types.Scalars['String']['input'];
 }>;
 
 
@@ -27,15 +26,13 @@ export type AssetCatalogueItemByIdQueryVariables = Types.Exact<{
 export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string }> } };
 
 export type AssetClassesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Types.AssetClassSortInput>;
 }>;
 
 
-export type AssetClassesQuery = { __typename: 'Queries', assetClasses: { __typename: 'AssetClassConnector', totalCount: number, nodes: Array<{ __typename: 'AssetClassNode', name: string, id: string }> } };
+export type AssetClassesQuery = { __typename: 'Queries', assetClasses: { __typename: 'AssetClassConnector', totalCount: number, nodes: Array<{ __typename: 'AssetClassNode', id: string, name: string }> } };
 
 export type AssetTypesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Types.AssetTypeSortInput>;
 }>;
 
@@ -43,12 +40,11 @@ export type AssetTypesQueryVariables = Types.Exact<{
 export type AssetTypesQuery = { __typename: 'Queries', assetTypes: { __typename: 'AssetTypeConnector', totalCount: number, nodes: Array<{ __typename: 'AssetTypeNode', id: string, name: string, categoryId: string }> } };
 
 export type AssetCategoriesQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
   sort?: Types.InputMaybe<Types.AssetCategorySortInput>;
 }>;
 
 
-export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', classId: string, id: string, name: string }> } };
+export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', id: string, name: string, classId: string }> } };
 
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
@@ -63,12 +59,11 @@ export const AssetCatalogueItemFragmentDoc = gql`
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
-    query assetCatalogueItems($first: Int, $offset: Int, $key: AssetCatalogueItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput, $storeId: String!) {
+    query assetCatalogueItems($first: Int, $offset: Int, $key: AssetCatalogueItemSortFieldInput!, $desc: Boolean, $filter: ItemFilterInput) {
   assetCatalogueItems(
     page: {first: $first, offset: $offset}
     sort: {key: $key, desc: $desc}
     filter: $filter
-    storeId: $storeId
   ) {
     ... on AssetCatalogueItemConnector {
       __typename
@@ -82,10 +77,7 @@ export const AssetCatalogueItemsDocument = gql`
     ${AssetCatalogueItemFragmentDoc}`;
 export const AssetCatalogueItemByIdDocument = gql`
     query assetCatalogueItemById($storeId: String!, $assetCatalogueItemId: String!) {
-  assetCatalogueItems(
-    storeId: $storeId
-    filter: {id: {equalTo: $assetCatalogueItemId}}
-  ) {
+  assetCatalogueItems(filter: {id: {equalTo: $assetCatalogueItemId}}) {
     ... on AssetCatalogueItemConnector {
       __typename
       nodes {
@@ -98,12 +90,12 @@ export const AssetCatalogueItemByIdDocument = gql`
 }
     ${AssetCatalogueItemFragmentDoc}`;
 export const AssetClassesDocument = gql`
-    query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
+    query assetClasses($sort: AssetClassSortInput) {
   assetClasses(storeId: $storeId, sort: $sort) {
     ... on AssetClassConnector {
       nodes {
-        name
         id
+        name
       }
       totalCount
     }
@@ -111,8 +103,8 @@ export const AssetClassesDocument = gql`
 }
     `;
 export const AssetTypesDocument = gql`
-    query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
-  assetTypes(storeId: $storeId, sort: $sort) {
+    query assetTypes($sort: AssetTypeSortInput) {
+  assetTypes(sort: $sort) {
     ... on AssetTypeConnector {
       nodes {
         id
@@ -125,13 +117,13 @@ export const AssetTypesDocument = gql`
 }
     `;
 export const AssetCategoriesDocument = gql`
-    query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
-  assetCategories(storeId: $storeId, sort: $sort) {
+    query assetCategories($sort: AssetCategorySortInput) {
+  assetCategories(sort: $sort) {
     ... on AssetCategoryConnector {
       nodes {
-        classId
         id
         name
+        classId
       }
       totalCount
     }
@@ -152,13 +144,13 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     assetCatalogueItemById(variables: AssetCatalogueItemByIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCatalogueItemByIdQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCatalogueItemByIdQuery>(AssetCatalogueItemByIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueItemById', 'query');
     },
-    assetClasses(variables: AssetClassesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetClassesQuery> {
+    assetClasses(variables?: AssetClassesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetClassesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetClassesQuery>(AssetClassesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetClasses', 'query');
     },
-    assetTypes(variables: AssetTypesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetTypesQuery> {
+    assetTypes(variables?: AssetTypesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetTypesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetTypesQuery>(AssetTypesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetTypes', 'query');
     },
-    assetCategories(variables: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
+    assetCategories(variables?: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
     }
   };
@@ -170,7 +162,7 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCatalogueItemsQuery((req, res, ctx) => {
- *   const { first, offset, key, desc, filter, storeId } = req.variables;
+ *   const { first, offset, key, desc, filter } = req.variables;
  *   return res(
  *     ctx.data({ assetCatalogueItems })
  *   )
@@ -204,7 +196,7 @@ export const mockAssetCatalogueItemByIdQuery = (resolver: ResponseResolver<Graph
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetClassesQuery((req, res, ctx) => {
- *   const { storeId, sort } = req.variables;
+ *   const { sort } = req.variables;
  *   return res(
  *     ctx.data({ assetClasses })
  *   )
@@ -221,7 +213,7 @@ export const mockAssetClassesQuery = (resolver: ResponseResolver<GraphQLRequest<
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetTypesQuery((req, res, ctx) => {
- *   const { storeId, sort } = req.variables;
+ *   const { sort } = req.variables;
  *   return res(
  *     ctx.data({ assetTypes })
  *   )
@@ -238,7 +230,7 @@ export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<As
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCategoriesQuery((req, res, ctx) => {
- *   const { storeId, sort } = req.variables;
+ *   const { sort } = req.variables;
  *   return res(
  *     ctx.data({ assetCategories })
  *   )
