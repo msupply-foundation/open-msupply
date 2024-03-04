@@ -1,5 +1,6 @@
 import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
+import { useIntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
   const trimmed = Number(`.${centsString}`);
@@ -79,6 +80,17 @@ const getSeparatorAndDecimal = (locale: string) => {
   return { separator, decimal };
 };
 
+const getPatterns = (locale: string) => {
+  switch (locale) {
+    case 'fr-DJ':
+    case 'fr':
+    case 'ru':
+      return { pattern: '# !', negativePattern: '-# !' };
+    default:
+      return { pattern: '!#', negativePattern: '-!#' };
+  }
+};
+
 export type Currencies =
   | 'USD'
   | 'EUR'
@@ -91,55 +103,52 @@ export type Currencies =
   | 'COP'
   | 'SBD';
 
-export const currencyOptions = (code?: Currencies) => {
+export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
     case 'EUR':
       return {
+        // eslint-disable-next-line no-irregular-whitespace
         // separator: " " decimal = ","
-        ...getSeparatorAndDecimal('fr'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '€',
         precision: 2,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     case 'DJF':
       return {
+        // eslint-disable-next-line no-irregular-whitespace
         // separator: " " decimal = ","
-        ...getSeparatorAndDecimal('fr-DJ'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'DJF',
         precision: 0,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     case 'QAR':
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('ar'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'ر.ق.',
         precision: 2,
-        pattern: '!#',
-        negativePattern: '-!#',
         format,
       };
     case 'RUB':
       return {
         // separator: "." decimal = ","
-        ...getSeparatorAndDecimal('ru'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '₽',
         precision: 2,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     case 'SSP': {
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('en-ss'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'SSP',
-        pattern: '# !',
-        negativePattern: '-# !',
         precision: 2,
         format,
       };
@@ -147,21 +156,19 @@ export const currencyOptions = (code?: Currencies) => {
     case 'PGK': {
       return {
         // separator: "." decimal = ","
-        ...getSeparatorAndDecimal('pg'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'K',
         precision: 2,
-        pattern: '# !',
-        negativePattern: '-# !',
         format,
       };
     }
     case 'COP': {
       return {
         // separator: "." decimal = ","
-        ...getSeparatorAndDecimal('co'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '$',
-        pattern: '# !',
-        negativePattern: '-# !',
         precision: 2,
         format,
       };
@@ -169,10 +176,9 @@ export const currencyOptions = (code?: Currencies) => {
     case 'SBD': {
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('sb'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: 'SI$',
-        pattern: '# !',
-        negativePattern: '-# !',
         precision: 2,
         format,
       };
@@ -182,11 +188,10 @@ export const currencyOptions = (code?: Currencies) => {
     default:
       return {
         // separator: "," decimal = "."
-        ...getSeparatorAndDecimal('en'),
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
         symbol: '$',
         precision: 2,
-        pattern: '!#',
-        negativePattern: '-!#',
         format,
       };
   }
@@ -194,9 +199,10 @@ export const currencyOptions = (code?: Currencies) => {
 
 export const useCurrency = (code?: Currencies) => {
   const { store } = useAuthContext();
+  const { currentLanguage: language } = useIntlUtils();
   const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
 
-  const options = currencyOptions(currencyCode);
+  const options = currencyOptions(language, currencyCode);
   const precision = options.precision;
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
