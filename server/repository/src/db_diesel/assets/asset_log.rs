@@ -153,7 +153,9 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
 
 mod tests {
     use crate::{
-        assets::asset_log::AssetLogRepository, mock::MockDataInserts, test_db, Pagination,
+        assets::asset_log::{AssetLogFilter, AssetLogRepository},
+        mock::MockDataInserts,
+        test_db, EqualFilter, Pagination,
     };
 
     use super::{AssetLogSort, AssetLogSortField};
@@ -162,15 +164,30 @@ mod tests {
     async fn test_asset_log_query_repository() {
         let (_, storage_connection, _, _) = test_db::setup_all(
             "test_asset_log_sort_query_repository",
-            // TODO add logs
             MockDataInserts::none().assets().asset_logs(),
         )
         .await;
         let asset_log_repository = AssetLogRepository::new(&storage_connection);
 
+        // test query by one
+
+        let asset_log_id = "log_a".to_string();
+        let log = asset_log_repository
+            .query_one(AssetLogFilter::new().id(EqualFilter::equal_to(&asset_log_id)))
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(log.id, asset_log_id);
+
+        // test query multiple
+
         let logs = asset_log_repository
             .query(Pagination::new(), None, None)
             .unwrap();
+
+        assert_eq!(logs.len(), 3);
+
+        // test query multiple with sort
 
         let logs_sorted_by_datetime = asset_log_repository
             .query(
@@ -182,11 +199,6 @@ mod tests {
                 }),
             )
             .unwrap();
-
-        // println!(
-        //     "logs then logs sorted: {:?} {:?}",
-        //     logs, logs_sorted_by_datetime
-        // );
 
         assert_eq!(logs[0], logs_sorted_by_datetime[1]);
     }
