@@ -11,7 +11,7 @@ use service::invoice::inbound_return::GenerateInboundReturnLinesInput as Service
 
 #[derive(InputObject, Clone)]
 pub struct GenerateInboundReturnLinesInput {
-    pub stock_line_ids: Vec<String>,
+    pub outbound_shipment_line_ids: Vec<String>,
     pub item_id: Option<String>,
     pub return_id: Option<String>,
 }
@@ -51,13 +51,13 @@ pub fn generate_inbound_return_lines(
 impl GenerateInboundReturnLinesInput {
     fn to_domain(self) -> ServiceInput {
         let GenerateInboundReturnLinesInput {
-            stock_line_ids,
+            outbound_shipment_line_ids,
             item_id,
             return_id,
         } = self;
 
         ServiceInput {
-            stock_line_ids,
+            outbound_shipment_line_ids,
             item_id,
             return_id,
         }
