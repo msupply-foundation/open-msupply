@@ -17,7 +17,7 @@ import { ReturnReasonsTable } from '../ReturnReasonsTable';
 
 interface InboundReturnEditModalProps {
   isOpen: boolean;
-  stockLineIds: string[];
+  outboundShipmentLineIds: string[];
   customerId: string;
   onClose: () => void;
 }
@@ -29,7 +29,7 @@ enum Tabs {
 
 export const InboundReturnEditModal = ({
   isOpen,
-  stockLineIds,
+  outboundShipmentLineIds,
   customerId,
   onClose,
 }: InboundReturnEditModalProps) => {
@@ -50,7 +50,7 @@ export const InboundReturnEditModal = ({
   const height = useKeyboardHeightAdjustment(600);
 
   const { lines, update, saveInboundReturn } = useDraftInboundReturnLines(
-    stockLineIds,
+    outboundShipmentLineIds,
     customerId
   );
 
