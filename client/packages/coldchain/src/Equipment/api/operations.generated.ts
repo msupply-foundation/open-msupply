@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, name: string, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null };
+export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, name: string, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null };
 
 export type AssetsQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
@@ -16,7 +16,7 @@ export type AssetsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, name: string, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null }> } };
+export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, name: string, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null }> } };
 
 export type AssetByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -24,7 +24,7 @@ export type AssetByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, name: string, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null }> } };
+export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, name: string, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null }> } };
 
 export type DeleteAssetMutationVariables = Types.Exact<{
   assetId: Types.Scalars['String']['input'];
@@ -55,6 +55,19 @@ export const AssetFragmentDoc = gql`
   replacementDate
   serialNumber
   storeId
+  catalogueItem {
+    manufacturer
+    model
+    assetType {
+      name
+    }
+    assetClass {
+      name
+    }
+    assetCategory {
+      name
+    }
+  }
 }
     `;
 export const AssetsDocument = gql`

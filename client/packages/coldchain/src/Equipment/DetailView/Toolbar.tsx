@@ -9,7 +9,7 @@ import { useAssets } from '../api';
 export const Toolbar: FC = () => {
   const { data } = useAssets.document.get();
 
-  const { code } = useAssets.document.fields();
+  const { catalogueItem } = useAssets.document.fields();
   const t = useTranslation('coldchain');
 
   if (!data) return null;
@@ -36,8 +36,8 @@ export const Toolbar: FC = () => {
           alignItems="flex-start"
           flexDirection="column"
         >
-          <Box flex={1}>{code}</Box>
-          <Box flex={1}>{code}</Box>
+          <Box flex={1}>{catalogueItem?.manufacturer}</Box>
+          <Box flex={1}>{catalogueItem?.model}</Box>
         </Box>
       </Box>
     </AppBarContentPortal>
