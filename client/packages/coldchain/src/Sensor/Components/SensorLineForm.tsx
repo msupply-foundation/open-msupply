@@ -68,7 +68,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
         labelProps={labelWrap}
         label={t('label.last-reading')}
         text={
-          draft.latestTemperatureLog?.nodes[0]?.temperature
+          !!draft.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
                 NumUtils.round(
                   draft.latestTemperatureLog?.nodes[0]?.temperature,
