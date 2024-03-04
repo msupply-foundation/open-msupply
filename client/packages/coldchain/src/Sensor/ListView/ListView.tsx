@@ -64,7 +64,7 @@ export const SensorListView: FC = () => {
         key: 'lastReading',
         label: 'label.last-reading',
         accessor: ({ rowData }) => {
-          return rowData.latestTemperatureLog?.nodes[0]?.temperature
+          return !!rowData.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
                 NumUtils.round(
                   rowData.latestTemperatureLog?.nodes[0]?.temperature,
