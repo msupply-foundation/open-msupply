@@ -5,6 +5,7 @@ import {
   AssetCategorySortFieldInput,
   AssetClassSortFieldInput,
   AssetTypeSortFieldInput,
+  AssetCategoryFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -71,8 +72,9 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
       return items;
     },
-    categories: async () => {
+    categories: async (filter: AssetCategoryFilterInput | undefined) => {
       const result = await sdk.assetCategories({
+        filter,
         sort: { key: AssetCategorySortFieldInput.Name, desc: false },
       });
       const categories = result?.assetCategories;
