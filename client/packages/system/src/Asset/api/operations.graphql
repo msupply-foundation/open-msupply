@@ -15,13 +15,11 @@ query assetCatalogueItems(
   $key: AssetCatalogueItemSortFieldInput!
   $desc: Boolean
   $filter: ItemFilterInput
-  $storeId: String!
 ) {
   assetCatalogueItems(
     page: { first: $first, offset: $offset }
     sort: { key: $key, desc: $desc }
     filter: $filter
-    storeId: $storeId
   ) {
     ... on AssetCatalogueItemConnector {
       __typename
@@ -37,10 +35,7 @@ query assetCatalogueItemById(
   $storeId: String!
   $assetCatalogueItemId: String!
 ) {
-  assetCatalogueItems(
-    storeId: $storeId
-    filter: { id: { equalTo: $assetCatalogueItemId } }
-  ) {
+  assetCatalogueItems(filter: { id: { equalTo: $assetCatalogueItemId } }) {
     ... on AssetCatalogueItemConnector {
       __typename
       nodes {
@@ -52,7 +47,7 @@ query assetCatalogueItemById(
   }
 }
 
-query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
+query assetClasses($sort: AssetClassSortInput) {
   assetClasses(storeId: $storeId, sort: $sort) {
     ... on AssetClassConnector {
       nodes {
@@ -64,8 +59,8 @@ query assetClasses($storeId: String!, $sort: AssetClassSortInput) {
   }
 }
 
-query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
-  assetTypes(storeId: $storeId, sort: $sort) {
+query assetTypes($sort: AssetTypeSortInput) {
+  assetTypes(sort: $sort) {
     ... on AssetTypeConnector {
       nodes {
         id
@@ -77,8 +72,8 @@ query assetTypes($storeId: String!, $sort: AssetTypeSortInput) {
   }
 }
 
-query assetCategories($storeId: String!, $sort: AssetCategorySortInput) {
-  assetCategories(storeId: $storeId, sort: $sort) {
+query assetCategories($sort: AssetCategorySortInput) {
+  assetCategories(sort: $sort) {
     ... on AssetCategoryConnector {
       nodes {
         id
