@@ -4650,6 +4650,7 @@ export type ReportConnector = {
 };
 
 export enum ReportContext {
+  Asset = 'ASSET',
   Dispensary = 'DISPENSARY',
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
