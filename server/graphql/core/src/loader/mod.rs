@@ -1,3 +1,7 @@
+mod asset_catalogue_item;
+mod asset_category;
+mod asset_class;
+mod asset_type;
 mod clinician;
 mod document;
 mod document_registry;
@@ -28,6 +32,10 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use asset_catalogue_item::*;
+pub use asset_category::*;
+pub use asset_class::*;
+pub use asset_type::*;
 pub use clinician::*;
 pub use document::*;
 pub use document_registry::*;
