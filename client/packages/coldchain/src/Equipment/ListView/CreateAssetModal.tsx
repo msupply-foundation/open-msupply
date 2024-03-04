@@ -19,6 +19,7 @@ import {
   useAssetData,
 } from '@openmsupply-client/system';
 import { useAssets } from '../api';
+import { CCE_CLASS_ID } from '../utils';
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -79,7 +80,7 @@ export const CreateAssetModal = ({
   const [categoryId, setCategoryId] = useState('');
   const [draft, setDraft] = useState<InsertAssetInput>(getEmptyAsset());
   const { data: categoryData, isLoading: isLoadingCategories } =
-    useAssetData.utils.categories();
+    useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
   const { data: catalogueItemData } = useAssetData.document.list(categoryId);
   const { mutateAsync: save } = useAssets.document.insert();
 
