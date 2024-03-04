@@ -70,6 +70,14 @@ pub trait AssetServiceTrait: Sync + Send {
     ) -> Result<AssetLog, SingleRecordError> {
         get_asset_log(ctx, id)
     }
+
+    fn insert_asset_log(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertAssetLog,
+    ) -> Result<AssetLog, InsertAssetLogError> {
+        insert_asset_log(ctx, input)
+    }
 }
 
 pub struct AssetService {}
