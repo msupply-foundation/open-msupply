@@ -27,8 +27,10 @@ export const useReturnsApi = () => {
       [...keys.outboundList(), params] as const,
     detail: (invoiceNumber: string) =>
       [...keys.base(), storeId, invoiceNumber] as const,
-    newReturns: (itemId?: string) =>
-      [...keys.base(), storeId, 'newReturns', itemId] as const,
+    generatedOutboundLines: (itemId?: string) =>
+      [...keys.base(), storeId, 'generatedOutboundLines', itemId] as const,
+    generatedInboundLines: (itemId?: string) =>
+      [...keys.base(), storeId, 'generatedInboundLines', itemId] as const,
   };
 
   const { client } = useGql();
