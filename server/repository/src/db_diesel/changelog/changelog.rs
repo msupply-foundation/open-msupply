@@ -76,6 +76,7 @@ pub enum ChangelogTableName {
     AssetCategory,
     AssetType,
     AssetCatalogueItem,
+    Asset,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
