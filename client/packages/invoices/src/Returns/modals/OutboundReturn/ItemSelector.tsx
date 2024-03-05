@@ -4,24 +4,21 @@ import {
   ModalLabel,
   Grid,
   useTranslation,
-  BasicTextInput,
+  Box,
 } from '@openmsupply-client/common';
-import {
-  ItemStockOnHandFragment,
-  StockItemSearchInput,
-} from '@openmsupply-client/system';
+import { StockItemSearchInput } from '@openmsupply-client/system';
 import { useReturns } from '../../api';
 
 interface ItemSelectorProps {
-  item: ItemStockOnHandFragment | null;
+  itemId: string | undefined;
   disabled: boolean;
-  onChangeItem: (item: ItemStockOnHandFragment) => void;
+  onChangeItemId: (item: string) => void;
 }
 
 export const ItemSelector: FC<ItemSelectorProps> = ({
-  item,
+  itemId,
   disabled,
-  onChangeItem,
+  onChangeItemId,
 }) => {
   const t = useTranslation();
 
@@ -30,7 +27,7 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
   const existingItemIds = data?.lines.nodes.map(line => line.itemId);
 
   return (
-    <>
+    <Box marginBottom="14px">
       <ModalRow>
         <ModalLabel
           label={t('label.item', { count: 1 })}
@@ -38,11 +35,11 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
         />
         <Grid item flex={1}>
           <StockItemSearchInput
-            autoFocus={!item}
-            openOnFocus={!item}
+            autoFocus={!itemId}
+            openOnFocus={!itemId}
             disabled={disabled}
-            currentItemId={item?.id}
-            onChange={newItem => newItem && onChangeItem(newItem)}
+            currentItemId={itemId}
+            onChange={newItem => newItem && onChangeItemId(newItem.id)}
             extraFilter={
               disabled
                 ? undefined
@@ -53,12 +50,6 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
           />
         </Grid>
       </ModalRow>
-      {item && (
-        <ModalRow margin={5}>
-          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
-          <BasicTextInput disabled sx={{ width: 150 }} value={item.unitName} />
-        </ModalRow>
-      )}
-    </>
+    </Box>
   );
 };
