@@ -54,11 +54,11 @@ export const ItemSelector: FC<ItemSelectorProps> = ({
         </Grid>
       </ModalRow>
       {item && (
-        <ModalRow margin={3}>
+        <ModalRow margin={5}>
           <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
           <BasicTextInput
             disabled
-            sx={{ width: 150, marginBottom: '10px' }}
+            sx={{ width: 150 }}
             value={item.unitName ?? ''}
           />
         </ModalRow>
