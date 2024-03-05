@@ -196,6 +196,6 @@ mod tests {
             )
             .unwrap();
 
-        assert_eq!(logs[0], logs_sorted_by_datetime[1]);
+         assert_eq!(logs_sorted_by_datetime[0], mock_asset_log_c());
     }
 }
