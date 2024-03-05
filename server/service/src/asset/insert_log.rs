@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists, check_user_is_user_or_server_admin},
+    validate::{check_asset_exists, check_asset_log_exists, check_user_is_user},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
@@ -37,7 +37,7 @@ pub fn insert_asset_log(
     let asset_log = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&input, connection)?;
+            validate(ctx, &input, connection)?;
             let new_asset_log = generate(input);
             AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
 
@@ -48,10 +48,11 @@ pub fn insert_asset_log(
 }
 
 pub fn validate(
+    ctx: &ServiceContext,
     input: &InsertAssetLog,
     connection: &StorageConnection,
 ) -> Result<(), InsertAssetLogError> {
-    if !check_user_is_user_or_server_admin(&input, connection) {
+    if !check_user_is_user(ctx, &input) {
         return Err(InsertAssetLogError::UnableToEditOtherUsersLog);
     }
 
