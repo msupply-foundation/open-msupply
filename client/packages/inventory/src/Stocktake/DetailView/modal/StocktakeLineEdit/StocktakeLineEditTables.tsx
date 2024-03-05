@@ -187,7 +187,7 @@ export const BatchTable: FC<
       key: 'snapshotNumberOfPacks',
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
-      minWidth: 100,
+      width: 100,
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'SnapshotCountCurrentCountMismatch',
@@ -219,7 +219,7 @@ export const BatchTable: FC<
     [
       expiryDateColumn,
       {
-        minWidth: 140,
+        width: 150,
         setter: patch => update({ ...patch, countThisLine: true }),
       },
     ],
