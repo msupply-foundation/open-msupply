@@ -13,11 +13,11 @@ import {
 // import { ContentArea } from './ContentArea';
 // import { Toolbar } from './Toolbar';
 // import { AppBarButtons } from './AppBarButtons';
-import { OutboundReturnDetailRowFragment, useReturns } from '../api';
+import { InboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const InboundReturnDetailView: FC = () => {
-  const { data, isLoading } = useReturns.document.outboundReturn();
+  const { data, isLoading } = useReturns.document.inboundReturn();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
 
@@ -53,7 +53,7 @@ export const InboundReturnDetailView: FC = () => {
         <TableProvider
           createStore={createTableStore}
           // tODO: types
-          queryParamsStore={createQueryParamsStore<OutboundReturnDetailRowFragment>(
+          queryParamsStore={createQueryParamsStore<InboundReturnDetailRowFragment>(
             {
               initialSortBy: {
                 key: 'itemName',
