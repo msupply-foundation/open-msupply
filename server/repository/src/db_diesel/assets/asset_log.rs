@@ -181,7 +181,7 @@ mod tests {
             .query(Pagination::new(), None, None)
             .unwrap();
 
-        assert_eq!(logs.len(), 3);
+        assert_eq!(logs.len(), mock_asset_logs().len());
 
         // test query multiple with sort
 
