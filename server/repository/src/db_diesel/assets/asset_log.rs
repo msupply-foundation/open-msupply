@@ -5,7 +5,6 @@ use super::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    assets::asset_row::asset::dsl as asset_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -148,21 +147,8 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
         apply_string_filter!(query, status, asset_log_dsl::status);
         apply_date_filter!(query, log_datetime, asset_log_dsl::log_datetime);
 
-        if let Some(asset_id) = asset_id {
-            let mut sub_query = asset_dsl::asset.select(asset_dsl::id).into_boxed();
-            apply_equal_filter!(sub_query, Some(asset_id), asset_dsl::id);
-            query = query.filter(asset_log_dsl::asset_id.eq_any(sub_query));
-        }
-
-        if let Some(user_filter) = user {
-            let mut sub_query = user_account_dsl::user_account
-                .select(user_account_dsl::id)
-                .into_boxed();
-            apply_string_filter!(sub_query, Some(user_filter), user_account_dsl::id);
-            query = query.filter(asset_log_dsl::user_id.eq_any(sub_query));
-        }
+        apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
     }
-
     query
 }
 
@@ -171,7 +157,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
 mod tests {
     use crate::{
         assets::asset_log::{AssetLogFilter, AssetLogRepository},
-        mock::MockDataInserts,
+        mock::{mock_asset_log_c, mock_asset_logs, MockDataInserts},
         test_db, EqualFilter, Pagination,
     };
 
@@ -202,7 +188,7 @@ mod tests {
             .query(Pagination::new(), None, None)
             .unwrap();
 
-        assert_eq!(logs.len(), 3);
+        assert_eq!(logs.len(), mock_asset_logs().len());
 
         // test query multiple with sort
 
@@ -217,6 +203,6 @@ mod tests {
             )
             .unwrap();
 
-        assert_eq!(logs[0], logs_sorted_by_datetime[1]);
+        assert_eq!(logs_sorted_by_datetime[0], mock_asset_log_c());
     }
 }

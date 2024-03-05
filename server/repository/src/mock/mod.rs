@@ -1002,8 +1002,6 @@ pub fn insert_mock_data(
         if inserts.asset_logs {
             let repo = AssetLogRowRepository::new(connection);
             for row in &mock_data.asset_logs {
-                println!("row: {:?}", row);
-                println!("asset: {:?}", &mock_data.assets);
                 repo.upsert_one(&row).unwrap();
             }
         }
