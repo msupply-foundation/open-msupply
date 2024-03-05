@@ -118,7 +118,7 @@
   "messages.shipment-saved": "Shipment saved 🥳",
   "messages.confirm-not-fully-supplied": "Not all items in this requisition have been supplied to the customer.  If you finalise you will not be able to supply any more items to the customer from this requisition. Would you still like to continue?",
   "messages.stock-on-hold": "Some stock lines are hold and cannot be allocated.",
-  "messages.stock-expired": "Some stock lines are expired and cannot be allocated.",
+  "messages.stock-expired": "Some stock lines are expired and will not be auto-allocated.",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "info.no-shipment": "Finalising this requisition will prevent you from creating a shipment for it."
