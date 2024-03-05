@@ -140,7 +140,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
         apply_string_filter!(query, status, asset_log_dsl::status);
         apply_date_filter!(query, log_datetime, asset_log_dsl::log_datetime);
 
-apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
+        apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
     }
     query
 }
@@ -150,7 +150,7 @@ apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
 mod tests {
     use crate::{
         assets::asset_log::{AssetLogFilter, AssetLogRepository},
-        mock::MockDataInserts,
+        mock::{mock_asset_log_c, mock_asset_logs, MockDataInserts},
         test_db, EqualFilter, Pagination,
     };
 
@@ -196,6 +196,6 @@ mod tests {
             )
             .unwrap();
 
-         assert_eq!(logs_sorted_by_datetime[0], mock_asset_log_c());
+        assert_eq!(logs_sorted_by_datetime[0], mock_asset_log_c());
     }
 }

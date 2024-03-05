@@ -40,5 +40,4 @@ pub fn mock_asset_log_c() -> AssetLogRow {
 
 pub fn mock_asset_logs() -> Vec<AssetLogRow> {
     vec![mock_asset_log_a(), mock_asset_log_b(), mock_asset_log_c()]
-    // vec![mock_asset_log_a()]
 }
