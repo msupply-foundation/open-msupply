@@ -17,7 +17,7 @@ pub enum InsertAssetLogError {
     AssetDoesNotExist,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
-    UnableToEditOtherUsersLog,
+    InsufficientPermission,
 }
 
 pub struct InsertAssetLog {
@@ -53,7 +53,7 @@ pub fn validate(
     connection: &StorageConnection,
 ) -> Result<(), InsertAssetLogError> {
     if !check_user_is_user(ctx, &input) {
-        return Err(InsertAssetLogError::UnableToEditOtherUsersLog);
+        return Err(InsertAssetLogError::InsufficientPermission);
     }
 
     if check_asset_log_exists(&input.id, connection)?.is_some() {
