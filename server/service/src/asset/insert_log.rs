@@ -22,7 +22,11 @@ pub enum InsertAssetLogError {
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
+    pub user_id: String,
     pub status: Option<String>,
+    pub comment: Option<String>,
+    pub r#type: Option<String>,
+    pub reason: Option<String>,
 }
 
 pub fn insert_asset_log(
@@ -62,13 +66,21 @@ pub fn generate(
     InsertAssetLog {
         id,
         asset_id,
+        user_id,
         status,
+        comment,
+        r#type,
+        reason,
     }: InsertAssetLog,
 ) -> AssetLogRow {
     AssetLogRow {
         id,
         asset_id,
+        user_id,
         status,
+        comment,
+        r#type,
+        reason,
         log_datetime: Utc::now().naive_utc(),
     }
 }
