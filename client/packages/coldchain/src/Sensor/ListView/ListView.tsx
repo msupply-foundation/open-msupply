@@ -11,7 +11,6 @@ import {
   useEditModal,
   useUrlQuery,
   SensorNodeType,
-  NumUtils,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
@@ -66,10 +65,7 @@ export const SensorListView: FC = () => {
         accessor: ({ rowData }) => {
           return !!rowData.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
-                NumUtils.round(
-                  rowData.latestTemperatureLog?.nodes[0]?.temperature,
-                  2
-                )
+                rowData.latestTemperatureLog?.nodes[0]?.temperature
               )}`
             : '-';
         },

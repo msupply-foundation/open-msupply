@@ -9,7 +9,6 @@ import {
   DataTable,
   Formatter,
   NothingHere,
-  NumUtils,
   TableProvider,
   createTableStore,
   useColumns,
@@ -84,7 +83,7 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${formatTemperature(NumUtils.round(rowData.temperature, 2))}`;
+          return `${formatTemperature(rowData.temperature)}`;
         },
       },
       {
