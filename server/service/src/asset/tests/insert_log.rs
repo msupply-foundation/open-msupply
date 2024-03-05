@@ -25,7 +25,7 @@ mod query {
             .unwrap();
         let service = service_provider.asset_service;
 
-        // check we can create an asset_lod
+        // check we can create an asset_log
         let id = "test_id".to_string();
         let asset_log = service
             .insert_asset_log(

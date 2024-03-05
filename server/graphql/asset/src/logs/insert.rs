@@ -79,7 +79,6 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
 }
 
 #[derive(SimpleObject)]
-
 pub struct InsertAssetLogError {
     pub error: InsertAssetLogErrorInterface,
 }
@@ -92,7 +91,6 @@ pub enum InsertAssetLogResponse {
 
 #[derive(Interface)]
 #[graphql(field(name = "description", type = "String"))]
-
 pub enum InsertAssetLogErrorInterface {
     AssetLogAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
