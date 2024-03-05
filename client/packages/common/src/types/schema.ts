@@ -4976,8 +4976,8 @@ export type StringFilterInput = {
 
 export type SuggestedNextEncounterNode = {
   __typename: 'SuggestedNextEncounterNode';
-  datetime: Scalars['DateTime']['output'];
   label?: Maybe<Scalars['String']['output']>;
+  startDatetime: Scalars['DateTime']['output'];
 };
 
 export type SuggestedQuantityCalculationNode = {

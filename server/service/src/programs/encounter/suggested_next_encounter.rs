@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub struct SuggestedNextEncounter {
-    pub datetime: NaiveDateTime,
+    pub start_datetime: NaiveDateTime,
     pub label: Option<String>,
 }
 
@@ -61,7 +61,7 @@ pub fn suggested_next_encounter(
         return Ok(None);
     };
 
-    let Some(Ok(datetime)) = program_event
+    let Some(Ok(start_datetime)) = program_event
         .program_event_row
         .data
         .map(|date_string| DateTime::parse_from_rfc3339(&date_string))
@@ -69,7 +69,7 @@ pub fn suggested_next_encounter(
         return Ok(None);
     };
     Ok(Some(SuggestedNextEncounter {
-        datetime: datetime.naive_utc(),
+        start_datetime: start_datetime.naive_utc(),
         label: config.label,
     }))
 }
