@@ -74,6 +74,17 @@ public class FileManager {
             Uri uri = data.getData();
             Context context = activity.getApplicationContext();
 
+            // The db file name can be either `omsupply-database` or
+            // `omsupply-database.sqlite`
+            // The rust code automatically appends .sqlite to the file name if it doesn't
+            // already exist but uses the old file name it is is still present.
+            // We need to repeat the same logic here for older databases that don't have the
+            // .sqlite extension
+
+            if (!dbFile.isFile()) {
+                dbFile = new File(dbFile + ".sqlite");
+            }
+
             InputStream inputStream = null;
             OutputStream outputStream = null;
             ZipOutputStream zipStream = null;
