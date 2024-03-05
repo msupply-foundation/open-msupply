@@ -32,6 +32,8 @@ pub struct UpdateInboundShipment {
     pub their_reference: Option<String>,
     pub colour: Option<String>,
     pub tax: Option<ShipmentTaxUpdate>,
+    pub currency_id: Option<String>,
+    pub currency_rate: Option<f64>,
 }
 
 type OutError = UpdateInboundShipmentError;
@@ -50,7 +52,7 @@ pub fn update_inbound_shipment(
                 update_invoice,
                 empty_lines_to_trim,
                 location_movements,
-                update_tax_for_lines,
+                update_lines,
             } = generate(
                 connection,
                 &ctx.store_id,
@@ -87,9 +89,9 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if let Some(update_tax) = update_tax_for_lines {
-                for line in update_tax {
-                    invoice_line_repository.update_tax(&line.id, line.tax, line.total_after_tax)?;
+            if let Some(update_lines) = update_lines {
+                for line in update_lines {
+                    invoice_line_repository.upsert_one(&line)?;
                 }
             }
 
@@ -123,6 +125,7 @@ pub enum UpdateInboundShipmentError {
     CannotReverseInvoiceStatus,
     CannotEditFinalised,
     CannotChangeStatusOfInvoiceOnHold,
+    CannotIssueForeignCurrencyForInternalSuppliers,
     // Name validation
     OtherPartyDoesNotExist,
     OtherPartyNotVisible,
@@ -176,13 +179,13 @@ mod test {
             mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
             mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
             mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
-            mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_store_linked_to_name,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
+            mock_store_linked_to_name, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRow,
-        InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-        NameRow, NameStoreJoinRow, StockLineRowRepository,
+        InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
+        InvoiceRowStatus, InvoiceRowType, NameRow, NameStoreJoinRow, StockLineRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -364,6 +367,7 @@ mod test {
                 r.invoice_id = "invoice_tax_test".to_string();
                 r.item_link_id = "item_a".to_string();
                 r.pack_size = 1;
+                r.number_of_packs = 1.0;
                 r.r#type = InvoiceLineRowType::StockIn;
             })
         }
@@ -455,6 +459,15 @@ mod test {
         }
 
         // Test delivered status change with tax
+        let updated_line = InvoiceLineRow {
+            stock_line_id: Some(mock_stock_line_a().id),
+            ..invoice_line_for_tax_test()
+        };
+
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&updated_line)
+            .unwrap();
+
         service
             .update_inbound_shipment(
                 &context,

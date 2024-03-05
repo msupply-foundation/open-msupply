@@ -9,10 +9,12 @@ mod changelog_add_name_link_id;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
 mod contact_trace_link_id;
+mod currency;
 mod document_owner_name_link_id;
 mod encounter_add_clinician_link_id;
 mod encounter_add_patient_link_id;
 mod invoice_add_clinician_link_id;
+mod invoice_add_currency_fields;
 mod invoice_add_name_link_id;
 mod invoice_line_add_item_link_id;
 mod item_add_is_active;
@@ -28,6 +30,7 @@ mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
+mod store_preference_add_issue_in_foreign_currency;
 mod sync_log;
 mod unit_add_is_active;
 
@@ -40,6 +43,9 @@ impl Migration for V1_07_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        currency::migrate(connection)?;
+        store_preference_add_issue_in_foreign_currency::migrate(connection)?;
+        invoice_add_currency_fields::migrate(connection)?;
         sync_log::migrate(connection)?;
         migrate_merge_feature(connection)?;
 

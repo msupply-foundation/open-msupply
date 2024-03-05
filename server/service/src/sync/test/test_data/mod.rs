@@ -4,6 +4,7 @@ use super::{TestSyncPullRecord, TestSyncPushRecord};
 
 pub(crate) mod activity_log;
 pub(crate) mod barcode;
+pub(crate) mod currency;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -77,6 +78,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecor
     test_records.append(&mut program_requisition_settings::test_pull_upsert_records());
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
+    test_records.append(&mut currency::test_pull_upsert_records());
     test_records
 }
 
@@ -124,6 +126,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records.append(&mut barcode::test_push_records());
     test_records.append(&mut name_store_join::test_push_upsert());
     test_records.append(&mut name_to_name_store_join::test_push_records());
+    test_records.append(&mut currency::test_push_records());
 
     test_records
 }
