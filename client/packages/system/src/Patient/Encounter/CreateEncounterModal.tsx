@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import {
   AlertIcon,
   BasicSpinner,
@@ -15,6 +15,7 @@ import {
   useAuthContext,
   TextArea,
   DateTimePickerInput,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import {
@@ -33,6 +34,42 @@ import {
   ClinicianSearchInput,
 } from '../../Clinician';
 import { PatientTabValue } from '../PatientView/PatientView';
+import { PickersDay, PickersDayProps } from '@mui/x-date-pickers';
+import Badge from '@mui/material/Badge';
+
+type HighlightedDay = { datetime: Date; label?: string | null };
+type BadgePickersDayProps = {
+  highlightedDays: HighlightedDay[];
+};
+const BadgePickersDay = (
+  props: PickersDayProps<Date> & BadgePickersDayProps
+) => {
+  const { highlightedDays = [], day, outsideCurrentMonth, ...other } = props;
+
+  const matchingDay = highlightedDays.find(it =>
+    DateUtils.isSameDay(it.datetime, day)
+  );
+  const isSelected = !props.outsideCurrentMonth && !!matchingDay;
+  return (
+    <Badge
+      key={props.day.toString()}
+      overlap="circular"
+      badgeContent={
+        isSelected ? (
+          <Tooltip title={matchingDay?.label ?? ''}>
+            <span>⚠️</span>
+          </Tooltip>
+        ) : undefined
+      }
+    >
+      <PickersDay
+        {...other}
+        outsideCurrentMonth={outsideCurrentMonth}
+        day={day}
+      />
+    </Badge>
+  );
+};
 
 export const CreateEncounterModal: FC = () => {
   const patientId = usePatient.utils.id();
@@ -49,13 +86,22 @@ export const CreateEncounterModal: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const [startDateTimeError, setStartDateTimeError] = useState<string>();
-  const [note] = useState<NoteSchema | undefined>(undefined);
 
   const handleSave = useEncounter.document.upsert(
     patientId,
     encounterRegistry?.encounter.documentType ?? ''
   );
 
+  const { data: latestEncounterData } =
+    usePatient.document.latestPatientEncounter(
+      patientId,
+      encounterRegistry?.encounter.documentType
+    );
+  const latestEncounter = latestEncounterData?.nodes[0];
+  const suggestedNextEncounter = latestEncounter?.suggestedNextEncounter;
+  const suggestedNextInFuture = suggestedNextEncounter
+    ? new Date(suggestedNextEncounter.startDatetime).getTime() > Date.now()
+    : false;
   const reset = () => {
     selectModal(undefined);
     setEncounterRegistry(undefined);
@@ -72,9 +118,10 @@ export const CreateEncounterModal: FC = () => {
   const onChangeEncounter = (entry: EncounterRegistryByProgram) => {
     setDataError(false);
     setEncounterRegistry(entry);
+    setDraft(undefined);
   };
 
-  const currentOrNewDraft = (): EncounterSchema => {
+  const currentOrNewDraft = useCallback((): EncounterSchema => {
     return (
       draft ?? {
         createdDatetime,
@@ -85,7 +132,44 @@ export const CreateEncounterModal: FC = () => {
         },
       }
     );
-  };
+  }, [createdDatetime, draft, storeId, user?.id, user?.name]);
+  // set the startDatetime from the suggestedNextEncounter
+  useEffect(() => {
+    // don't suggest date if there is already an encounter for this day
+    if (
+      latestEncounter?.suggestedNextEncounter?.startDatetime &&
+      latestEncounter?.startDatetime &&
+      DateUtils.isSameDay(
+        new Date(latestEncounter.suggestedNextEncounter.startDatetime),
+        new Date(latestEncounter.startDatetime)
+      )
+    ) {
+      return;
+    }
+    if (
+      !latestEncounter?.suggestedNextEncounter ||
+      encounterRegistry?.encounter.documentType !== latestEncounter.type
+    ) {
+      return;
+    }
+    // don't suggest date if already selected
+    if (!!draft?.startDatetime) {
+      return;
+    }
+
+    if (!suggestedNextInFuture) return;
+    setDraft({
+      ...currentOrNewDraft(),
+      startDatetime: latestEncounter.suggestedNextEncounter?.startDatetime,
+    });
+  }, [
+    draft,
+    currentOrNewDraft,
+    encounterRegistry?.encounter.documentType,
+    latestEncounter,
+    suggestedNextInFuture,
+  ]);
+
   const setStartDatetime = (date: Date | null): void => {
     const startDatetime = DateUtils.formatRFC3339(
       DateUtils.addCurrentTime(date)
@@ -112,6 +196,16 @@ export const CreateEncounterModal: FC = () => {
 
   const canSubmit = () =>
     draft !== undefined && draft.startDatetime && !startDateTimeError;
+
+  const getHighlightedDays = (): HighlightedDay[] => {
+    if (!suggestedNextInFuture || !suggestedNextEncounter) return [];
+    return [
+      {
+        datetime: new Date(suggestedNextEncounter.startDatetime),
+        label: suggestedNextEncounter.label,
+      },
+    ];
+  };
 
   return (
     <Modal
@@ -163,7 +257,7 @@ export const CreateEncounterModal: FC = () => {
             Input={
               <EncounterSearchInput
                 onChange={onChangeEncounter}
-                value={null}
+                lastEncounterType={latestEncounter?.type}
                 width={250}
               />
             }
@@ -185,6 +279,14 @@ export const CreateEncounterModal: FC = () => {
                       }
                       error={startDateTimeError}
                       width={250}
+                      slots={{
+                        day: BadgePickersDay as React.FC<PickersDayProps<Date>>,
+                      }}
+                      slotProps={{
+                        day: {
+                          highlightedDays: getHighlightedDays(),
+                        } as any,
+                      }}
                     />
                   }
                 />
@@ -211,7 +313,7 @@ export const CreateEncounterModal: FC = () => {
                           backgroundColor: 'background.drawer',
                         },
                       }}
-                      value={note}
+                      value={draft?.notes?.[0]?.text ?? ''}
                       onChange={e => {
                         setNote([
                           {
