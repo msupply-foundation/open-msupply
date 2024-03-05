@@ -441,7 +441,7 @@
   "message.confirm-delete-encounter": "¿Estás seguro?",
   "messages.logout-confirm": "Esto te desconectará.",
   "messages.no-lines": "No se puede cambiar el estado porque no hay líneas",
-  "placeholder.search-by-location-name": "Buscar por ubicación",
+  "placeholder.search-by-location-code": "Buscar por código de ubicación",
   "success.data-deleted": "Eliminado exitosamente",
   "sync-info.syncing": "Sincronizando...",
   "sync-info.updating-user": "Actualizando usuario...",
