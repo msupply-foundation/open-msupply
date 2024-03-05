@@ -10,7 +10,6 @@ import {
 } from '@openmsupply-client/common';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ItemSelector } from './ItemSelector';
-import { ItemStockOnHandFragment } from 'packages/system/src';
 import { ReturnSteps, Tabs } from './ReturnSteps';
 
 interface OutboundReturnEditModalProps {
@@ -19,6 +18,7 @@ interface OutboundReturnEditModalProps {
   onClose: () => void;
   supplierId: string;
   returnId?: string;
+  initialItemId?: string;
 }
 
 export const OutboundReturnEditModal = ({
@@ -27,10 +27,11 @@ export const OutboundReturnEditModal = ({
   onClose,
   supplierId,
   returnId,
+  initialItemId,
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
-  const [item, setItem] = useState<ItemStockOnHandFragment | null>(null);
+  const [itemId, setItemId] = useState<string | undefined>(initialItemId);
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -39,7 +40,7 @@ export const OutboundReturnEditModal = ({
     supplierId,
     stockLineIds,
     returnId,
-    itemId: item?.id,
+    itemId,
   });
 
   const onOk = async () => {
@@ -76,9 +77,9 @@ export const OutboundReturnEditModal = ({
         <>
           {returnId && (
             <ItemSelector
-              disabled={!!item}
-              item={item}
-              onChangeItem={setItem}
+              disabled={!!itemId}
+              itemId={itemId}
+              onChangeItemId={setItemId}
             />
           )}
           {lines.length > 0 && (
