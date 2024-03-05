@@ -88,7 +88,7 @@
   "messages.results-found": "{{totalCount}} results found",
   "messages.results-over-limit": "Showing the first {{limit}} results only - please refine your search",
   "messages.save-encounter-as-visited": "Save encounter as Visited?",
-  "messages.stock-expired": "Some stock lines are expired and cannot be allocated.",
+  "messages.stock-expired": "Some stock lines are expired and will not be auto-allocated.",
   "messages.stock-on-hold": "Some stock lines are hold and cannot be allocated.",
   "placeholder.search-by-first-name": "Search by first name",
   "placeholder.search-by-identifier": "Search by ID",
