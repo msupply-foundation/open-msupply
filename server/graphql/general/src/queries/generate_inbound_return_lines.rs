@@ -7,13 +7,21 @@ use graphql_core::{
 use graphql_types::types::InboundReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
-use service::invoice::inbound_return::GenerateInboundReturnLinesInput as ServiceInput;
+use service::invoice::inbound_return::{
+    ExistingLinesInput as ExistingLinesServiceInput,
+    GenerateInboundReturnLinesInput as ServiceInput,
+};
+
+#[derive(InputObject, Clone)]
+pub struct ExistingLinesInput {
+    pub item_id: String,
+    pub return_id: String,
+}
 
 #[derive(InputObject, Clone)]
 pub struct GenerateInboundReturnLinesInput {
     pub outbound_shipment_line_ids: Vec<String>,
-    pub item_id: Option<String>,
-    pub return_id: Option<String>,
+    pub existing_lines_input: Option<ExistingLinesInput>,
 }
 
 #[derive(Union)]
@@ -52,14 +60,15 @@ impl GenerateInboundReturnLinesInput {
     fn to_domain(self) -> ServiceInput {
         let GenerateInboundReturnLinesInput {
             outbound_shipment_line_ids,
-            item_id,
-            return_id,
+            existing_lines_input,
         } = self;
 
         ServiceInput {
             outbound_shipment_line_ids,
-            item_id,
-            return_id,
+            existing_lines_input: existing_lines_input.map(|input| ExistingLinesServiceInput {
+                item_id: input.item_id,
+                return_id: input.return_id,
+            }),
         }
     }
 }
