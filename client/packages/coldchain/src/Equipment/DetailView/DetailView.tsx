@@ -32,7 +32,7 @@ export const EquipmentDetailView: FC = () => {
 
   const tabs = [
     {
-      Component: <Summary />,
+      Component: <Summary onChange={() => {}} draft={data} />,
       value: 'Summary',
     },
     {
