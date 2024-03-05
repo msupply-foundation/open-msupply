@@ -13,7 +13,7 @@ import {
 import { useRequest } from '../api';
 
 export const useRequestColumns = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
   const {
     updateSortQuery,

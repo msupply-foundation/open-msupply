@@ -4,7 +4,7 @@ import { ColumnAlign, ColumnDefinition } from '../types';
 import { useTranslation } from '@common/intl';
 
 export const getLineLabelColumn = <
-  T extends RecordWithId
+  T extends RecordWithId,
 >(): ColumnDefinition<T> => ({
   key: 'lineLabel',
   sortable: false,
@@ -15,7 +15,7 @@ export const getLineLabelColumn = <
   },
 
   Cell: ({ rowIndex }) => {
-    const t = useTranslation('common');
+    const t = useTranslation();
     const label = t('label.line', { line: rowIndex + 1 });
 
     return <>{label}</>;

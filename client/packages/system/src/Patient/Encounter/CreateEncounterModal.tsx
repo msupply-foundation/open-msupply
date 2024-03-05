@@ -245,7 +245,7 @@ const RenderForm = ({
   isLoading: boolean;
   isProgram: boolean;
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   if (!isProgram) return null;
   if (isError)
     return (

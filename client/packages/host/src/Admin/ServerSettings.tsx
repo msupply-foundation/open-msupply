@@ -32,7 +32,7 @@ export const ServerSettings = () => {
   const { saveDatabase } = useNativeClient();
   const { data: databaseSettings } = useDatabaseSettings();
   const [isDownloading, setIsDownloading] = useState(false);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const {
     isOn: isLogShown,
     toggleOn: showLog,
