@@ -38,7 +38,7 @@ export const QuantityReturnedTableComponent = ({
             <NumberInputCell
               {...props}
               isRequired
-              max={props.rowData.numberOfPacksIssued}
+              max={props.rowData.numberOfPacksIssued ?? undefined}
               min={0}
             />
           ),

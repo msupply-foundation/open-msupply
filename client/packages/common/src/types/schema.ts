@@ -1344,6 +1344,11 @@ export type EqualFilterTypeInput = {
   notEqualTo?: InputMaybe<NameNodeType>;
 };
 
+export type ExistingLinesInput = {
+  itemId: Scalars['String']['input'];
+  returnId: Scalars['String']['input'];
+};
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
@@ -1441,9 +1446,8 @@ export enum GenderType {
 }
 
 export type GenerateInboundReturnLinesInput = {
-  itemId?: InputMaybe<Scalars['String']['input']>;
+  existingLinesInput?: InputMaybe<ExistingLinesInput>;
   outboundShipmentLineIds: Array<Scalars['String']['input']>;
-  returnId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type GenerateInboundReturnLinesResponse = InboundReturnLineConnector;
@@ -1494,7 +1498,7 @@ export type InboundReturnLineNode = {
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued: Scalars['Float']['output'];
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
   numberOfPacksReturned: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
