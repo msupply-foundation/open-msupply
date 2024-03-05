@@ -22,7 +22,6 @@ import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
 import { OutboundReturnEditModal } from '../modals';
-// import { OutboundLineEdit } from './OutboundLineEdit';
 
 export const DetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
