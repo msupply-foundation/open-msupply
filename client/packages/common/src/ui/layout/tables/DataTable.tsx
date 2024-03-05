@@ -247,6 +247,7 @@ const DataTableComponent = <T extends RecordWithId>({
                 sx={{
                   backgroundColor: 'transparent',
                   borderBottom: '0px',
+                  width: 30,
                 }}
               >
                 <ColumnPicker
