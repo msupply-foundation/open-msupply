@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   getRowExpandColumn,
   GenericColumnKey,
@@ -9,7 +8,6 @@ import {
   useCurrency,
   useUrlQueryParams,
   ColumnAlign,
-  NumberInputCell,
   TooltipTextCell,
   useColumnUtils,
 } from '@openmsupply-client/common';
@@ -205,7 +203,6 @@ export const useInboundShipmentColumns = () => {
       [
         'numberOfPacks',
         {
-          Cell: props => <NumberInputCell {...props} min={1} />,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;

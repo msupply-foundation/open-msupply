@@ -46,14 +46,14 @@ describe('currency formatting - eur for en', () => {
     const { result } = renderHookWithProvider(() => useCurrency('EUR'));
 
     const f1 = result.current.c(1.11111111111).format();
-    expect(f1).toBe('1.11 €');
+    expect(f1).toBe('€1.11');
   });
 
   it('formats a string with up to the precision number of decimal places, dropping decimal places where needed even with large numbers', () => {
     const { result } = renderHookWithProvider(() => useCurrency('EUR'));
 
     const f1 = result.current.c(111_111.11111111111).format();
-    expect(f1).toBe('111,111.11 €');
+    expect(f1).toBe('€111,111.11');
   });
 
   it('does drop trailing zeroes', () => {
@@ -62,18 +62,18 @@ describe('currency formatting - eur for en', () => {
     // Note: Using a string to pass into c as formatters will generally
     // auto clear trailing zeroes when literal numbers.
     const f1 = result.current.c('111.11000').format();
-    expect(f1).toBe('111.11 €');
+    expect(f1).toBe('€111.11');
   });
   it('has a minimum of two trailing zeroes, adding one if needed', () => {
     const { result } = renderHookWithProvider(() => useCurrency('EUR'));
 
     const f1 = result.current.c('111.100').format();
-    expect(f1).toBe('111.10 €');
+    expect(f1).toBe('€111.10');
   });
   it('has a minimum of two trailing zeroes, adding two if needed', () => {
     const { result } = renderHookWithProvider(() => useCurrency('EUR'));
 
     const f1 = result.current.c(111).format();
-    expect(f1).toBe('111.00 €');
+    expect(f1).toBe('€111.00');
   });
 });
