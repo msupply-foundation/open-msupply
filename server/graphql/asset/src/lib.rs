@@ -99,6 +99,15 @@ pub struct AssetLogs;
 
 #[Object]
 impl AssetLogs {
+    async fn insert_asset_log(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertAssetLogInput,
+    ) -> Result<InsertAssetLogResponse> {
+        insert_asset_log(ctx, &store_id, input)
+    }
+
     async fn asset_logs(
         &self,
         ctx: &Context<'_>,
