@@ -6,15 +6,18 @@ mod query {
         service_provider::ServiceProvider,
     };
     use repository::{
-        mock::{mock_asset_a, MockDataInserts},
+        mock::{mock_asset_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
     };
 
     #[actix_rt::test]
 
     async fn asset_log_service_insert() {
-        let (_, _connection, connection_manager, _) =
-            setup_all("asset_log_service_insert", MockDataInserts::none().assets()).await;
+        let (_, _connection, connection_manager, _) = setup_all(
+            "asset_log_service_insert",
+            MockDataInserts::none().user_accounts().assets(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let ctx = service_provider
@@ -30,7 +33,11 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
+                    user_id: mock_user_account_a().id,
                     status: Some("test_status".to_string()),
+                    comment: None,
+                    r#type: None,
+                    reason: None,
                 },
             )
             .unwrap();
@@ -44,7 +51,11 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
+                    user_id: mock_user_account_a().id,
                     status: Some("test_status".to_string()),
+                    comment: None,
+                    r#type: None,
+                    reason: None,
                 },
             ),
             Err(InsertAssetLogError::AssetLogAlreadyExists)
@@ -57,7 +68,11 @@ mod query {
                 InsertAssetLog {
                     id: "test_id_2".to_string(),
                     asset_id: "incorrect_asset_id".to_string(),
+                    user_id: mock_user_account_a().id,
                     status: Some("test_status".to_string()),
+                    comment: None,
+                    r#type: None,
+                    reason: None,
                 },
             ),
             Err(InsertAssetLogError::AssetDoesNotExist)
