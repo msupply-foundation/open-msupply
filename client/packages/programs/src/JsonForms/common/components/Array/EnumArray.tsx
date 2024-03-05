@@ -101,7 +101,7 @@ export const EnumArrayComponent: FC<EnumArrayControlCustomProps> = ({
   addItem,
   removeItems,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
 
   if (!visible) {

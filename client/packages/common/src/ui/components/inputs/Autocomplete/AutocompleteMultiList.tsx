@@ -61,7 +61,7 @@ export const AutocompleteMultiList = <T extends { id: string }>({
 
   const ItemInput: FC<AutocompleteRenderInputParams> = props => {
     const { InputProps, ...rest } = props;
-    const t = useTranslation('common');
+    const t = useTranslation();
     const filtered = options.filter(option =>
       RegexUtils.matchObjectProperties(inputValue, option, filterProperties)
     );
