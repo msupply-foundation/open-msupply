@@ -82,10 +82,6 @@ impl InboundReturnLineNode {
         &self.stock_line_row().expiry_date
     }
 
-    // pub async fn available_number_of_packs(&self) -> &f64 {
-    //     &self.stock_line_row().available_number_of_packs
-    // }
-
     pub async fn pack_size(&self) -> &i32 {
         &self.stock_line_row().pack_size
     }
