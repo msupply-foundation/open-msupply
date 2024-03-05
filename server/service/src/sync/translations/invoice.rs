@@ -16,7 +16,7 @@ use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyTransactType {
     /// Supplier invoice
     #[serde(rename = "si")]
@@ -165,13 +165,43 @@ pub struct LegacyTransactRow {
     #[serde(default)]
     pub om_colour: Option<String>,
 }
+
+/// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
+/// receiving store.
+/// In the current version of mSupply all om_ fields get copied though.
+/// When receiving the transferred invoice on the omSupply store the "si" get translated to
+/// outbound shipments because the om_type will override to legacy type field.
+/// In other word, the inbound shipment will have an outbound type!
+/// This function detect this case and removes all om_* fields from the incoming record.
+fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
+    let Some(Ok(om_type)) = data
+        .get("om_type")
+        .map(|value| serde_json::from_value::<InvoiceRowType>(value.clone()))
+    else {
+        return data;
+    };
+    let Some(Ok(legacy_type)) = data
+        .get("type")
+        .map(|value| serde_json::from_value::<LegacyTransactType>(value.clone()))
+    else {
+        return data;
+    };
+    if legacy_type == LegacyTransactType::Si && om_type == InvoiceRowType::OutboundShipment {
+        let Some(obj) = data.as_object_mut() else {
+            return data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+
+    data
+}
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(InvoiceTranslation)
 }
-
-pub(super) struct InvoiceTranslation;
+pub(crate) struct InvoiceTranslation;
 impl SyncTranslation for InvoiceTranslation {
     fn table_name(&self) -> &'static str {
         "transact"
@@ -190,7 +220,9 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTransactRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sanitize_legacy_record(data);
+        let data = serde_json::from_value::<LegacyTransactRow>(data)?;
 
         let name = NameRowRepository::new(connection)
             .find_one_by_id(&data.name_ID)
