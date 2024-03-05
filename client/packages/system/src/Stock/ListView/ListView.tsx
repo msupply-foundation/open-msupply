@@ -35,7 +35,7 @@ const StockListComponent: FC = () => {
     filters: [
       { key: 'itemCodeOrName' },
       {
-        key: 'location.name',
+        key: 'location.code',
       },
       {
         key: 'expiryDate',

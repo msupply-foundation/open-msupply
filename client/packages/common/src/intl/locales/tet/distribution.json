@@ -96,7 +96,7 @@
   "messages.deleted-shipments_other": "Hamos ona {{count}} Remessas",
   "messages.confirm-delete-shipments_one": "Ne'e sei hasai permanente remessa 1",
   "warning.nothing-to-supply": "Laiha buat ida atu distribui!",
-  "stocktake.description-template": "Kria husi {{naran ujuáriu}} iha {{date}}",
-  "messages.by-user": "Ho {{naran ujuáriu}}",
+  "stocktake.description-template": "Kria husi {{username}} iha {{date}}",
+  "messages.by-user": "Ho {{username}}",
   "info.no-shipment": "Finaliza requizisaun ida ne'e sei prevene ita husi kria remessa ida ba ida ne'e."
 }
