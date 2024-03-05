@@ -9,6 +9,7 @@ export const useReturns = {
     listOutbound: Document.useOutbounds,
     listAllOutbound: Document.useOutboundsAll,
     outboundReturn: Document.useOutboundReturn,
+    inboundReturn: Document.useInboundReturn,
 
     insertOutboundReturn: Document.useInsertOutboundReturn,
     insertInboundReturn: Document.useInsertInboundReturn,

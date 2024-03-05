@@ -177,6 +177,21 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
     },
+    inboundReturnByNumber: async (invoiceNumber: number) => {
+      const result = await sdk.inboundReturnByNumber({
+        invoiceNumber,
+        storeId,
+      });
+
+      const invoice = result?.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+
+      // TODO: needed?
+      // throw new Error('Could not get inbound return');
+    },
   },
   insertOutboundReturn: async (input: OutboundReturnInput) => {
     const result = await sdk.insertOutboundReturn({
