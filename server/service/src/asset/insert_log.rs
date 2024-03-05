@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists},
+    validate::{check_asset_exists, check_asset_log_exists, check_user_is_user_or_server_admin},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
@@ -17,6 +17,7 @@ pub enum InsertAssetLogError {
     AssetDoesNotExist,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
+    UnableToEditOtherUsersLog,
 }
 
 pub struct InsertAssetLog {
@@ -50,6 +51,10 @@ pub fn validate(
     input: &InsertAssetLog,
     connection: &StorageConnection,
 ) -> Result<(), InsertAssetLogError> {
+    if !check_user_is_user_or_server_admin(&input, connection) {
+        return Err(InsertAssetLogError::UnableToEditOtherUsersLog);
+    }
+
     if check_asset_log_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }

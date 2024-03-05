@@ -6,6 +6,8 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
+use super::insert_log::InsertAssetLog;
+
 pub fn check_asset_exists(
     id: &str,
     connection: &StorageConnection,
@@ -18,4 +20,11 @@ pub fn check_asset_log_exists(
     connection: &StorageConnection,
 ) -> Result<Option<AssetLogRow>, RepositoryError> {
     Ok(AssetLogRowRepository::new(connection).find_one_by_id(id)?)
+}
+
+pub fn check_user_is_user_or_server_admin(
+    input: &InsertAssetLog,
+    connection: &StorageConnection,
+) -> bool {
+    true
 }
