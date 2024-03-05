@@ -310,13 +310,6 @@ impl AssetLogConnector {
                 .collect(),
         }
     }
-
-    pub fn from_vec(assets: Vec<AssetLog>) -> AssetLogConnector {
-        AssetLogConnector {
-            total_count: usize_to_u32(assets.len()),
-            nodes: assets.into_iter().map(AssetLogNode::from_domain).collect(),
-        }
-    }
 }
 
 impl AssetLogSortInput {

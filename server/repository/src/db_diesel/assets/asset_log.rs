@@ -3,7 +3,6 @@ use super::asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogR
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    assets::asset_row::asset::dsl as asset_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
