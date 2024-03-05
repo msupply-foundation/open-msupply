@@ -46,14 +46,9 @@ const BadgePickersDay = (
 ) => {
   const { highlightedDays = [], day, outsideCurrentMonth, ...other } = props;
 
-  const matchingDay = highlightedDays.find(it => {
-    const date = it.datetime;
-    return (
-      day.getFullYear() === date.getFullYear() &&
-      day.getMonth() === date.getMonth() &&
-      day.getDate() === date.getDate()
-    );
-  });
+  const matchingDay = highlightedDays.find(it =>
+    DateUtils.isSameDay(it.datetime, day)
+  );
   const isSelected = !props.outsideCurrentMonth && !!matchingDay;
   return (
     <Badge
