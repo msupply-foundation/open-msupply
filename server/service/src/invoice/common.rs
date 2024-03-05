@@ -1,7 +1,7 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, NameLinkRowRepository,
-    RepositoryError, StockLineRow, StorageConnection,
+    CurrencyFilter, CurrencyRepository, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, MasterList, MasterListFilter,
+    MasterListRepository, NameLinkRowRepository, RepositoryError, StockLineRow, StorageConnection,
 };
 use util::inline_edit;
 
@@ -38,10 +38,21 @@ pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64
     }
 }
 
-pub fn calculate_foreign_currency_total(total: f64, currency_rate: Option<f64>) -> Option<f64> {
-    match currency_rate {
-        Some(currency_rate) => Some(total / currency_rate),
-        None => None,
+pub fn calculate_foreign_currency_total(
+    connection: &StorageConnection,
+    total: f64,
+    currency_id: Option<String>,
+    currency_rate: &f64,
+) -> Result<Option<f64>, RepositoryError> {
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
+
+    if currency_id.is_none() && currency.currency_row.id == currency_id.unwrap_or_default() {
+        Ok(None)
+    } else {
+        Ok(Some(total / currency_rate))
     }
 }
 
