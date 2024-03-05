@@ -70,7 +70,7 @@ export const InboundListView: FC = () => {
       ['invoiceNumber', { maxWidth: 80 }],
       'createdDatetime',
       'deliveredDatetime',
-      ['comment', { width: '100%', Cell: TooltipTextCell }],
+      ['comment', { width: 125, Cell: TooltipTextCell }],
       [
         'theirReference',
         {
