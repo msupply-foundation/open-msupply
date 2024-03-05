@@ -20,6 +20,7 @@ pub struct ExistingLinesInput {
 
 #[derive(InputObject, Clone)]
 pub struct GenerateInboundReturnLinesInput {
+    /// The ids of the outbound shipment lines to generate new return lines for
     pub outbound_shipment_line_ids: Vec<String>,
     pub existing_lines_input: Option<ExistingLinesInput>,
 }

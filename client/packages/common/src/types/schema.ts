@@ -1447,6 +1447,7 @@ export enum GenderType {
 
 export type GenerateInboundReturnLinesInput = {
   existingLinesInput?: InputMaybe<ExistingLinesInput>;
+  /** The ids of the outbound shipment lines to generate new return lines for */
   outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
 
@@ -3906,7 +3907,17 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
+  /**
+   * Generates new inbound return lines in memory, based on outbound return line ids.
+   * Optionally includes existing inbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
   generateInboundReturnLines: GenerateInboundReturnLinesResponse;
+  /**
+   * Generates new outbound return lines in memory, based on either stock line ids, or an item id.
+   * Optionally includes existing outbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
