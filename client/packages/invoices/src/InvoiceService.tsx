@@ -12,6 +12,7 @@ import {
   DetailView as InboundShipmentDetailView,
 } from './InboundShipment';
 import { PrescriptionListView, PrescriptionDetailView } from './Prescriptions';
+import { InboundReturnDetailView } from './Returns/InboundDetailView';
 
 const InvoiceService: FC = () => {
   const outboundShipmentsRoute = RouteBuilder.create(
@@ -48,6 +49,10 @@ const InvoiceService: FC = () => {
     AppRoute.InboundReturn
   ).build();
 
+  const inboundReturnRoute = RouteBuilder.create(AppRoute.InboundReturn)
+    .addPart(':invoiceNumber')
+    .build();
+
   return (
     <Routes>
       <Route
@@ -73,6 +78,7 @@ const InvoiceService: FC = () => {
       />
 
       <Route path={inboundReturnsRoute} element={<InboundReturnListView />} />
+      <Route path={inboundReturnRoute} element={<InboundReturnDetailView />} />
     </Routes>
   );
 };
