@@ -3,6 +3,7 @@ import {
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
+  UpdateOutboundReturnLinesInput,
 } from '@common/types';
 import {
   InboundReturnRowFragment,
@@ -149,10 +150,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    outboundReturnLines: async (stockLineIds: string[]) => {
+    outboundReturnLines: async (stockLineIds: string[], itemId?: string) => {
       const result = await sdk.generateOutboundReturnLines({
-        stockLineIds,
         storeId,
+        input: {
+          stockLineIds,
+          itemId,
+        },
       });
 
       return result?.generateOutboundReturnLines;
@@ -191,6 +195,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert outbound return');
+  },
+  updateOutboundReturnLines: async (input: UpdateOutboundReturnLinesInput) => {
+    const result = await sdk.updateOutboundReturnLines({
+      input,
+      storeId,
+    });
+
+    const { updateOutboundReturnLines } = result;
+
+    if (updateOutboundReturnLines.__typename === 'InvoiceNode') {
+      return updateOutboundReturnLines;
+    }
+
+    throw new Error('Could not update outbound return');
   },
   insertInboundReturn: async (input: InboundReturnInput) => {
     const result = await sdk.insertInboundReturn({

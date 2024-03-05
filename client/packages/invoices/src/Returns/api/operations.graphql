@@ -23,6 +23,7 @@ fragment OutboundReturnDetailRow on InvoiceLineNode {
   id
   itemCode
   itemName
+  itemId
   batch
   expiryDate
   numberOfPacks
@@ -77,11 +78,11 @@ query inboundReturns(
   }
 }
 
-query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
-  generateOutboundReturnLines(
-    input: { stockLineIds: $stockLineIds }
-    storeId: $storeId
-  ) {
+query generateOutboundReturnLines(
+  $input: GenerateOutboundReturnLinesInput!
+  $storeId: String!
+) {
+  generateOutboundReturnLines(input: $input, storeId: $storeId) {
     ... on OutboundReturnLineConnector {
       nodes {
         availableNumberOfPacks
@@ -135,6 +136,7 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
         }
       }
       otherPartyName
+      otherPartyId
       otherPartyStore {
         code
       }
@@ -156,6 +158,18 @@ mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
         __typename
         description
       }
+    }
+  }
+}
+
+mutation updateOutboundReturnLines(
+  $storeId: String!
+  $input: UpdateOutboundReturnLinesInput!
+) {
+  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
     }
   }
 }
