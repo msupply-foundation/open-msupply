@@ -89,7 +89,7 @@ export type LatestPatientEncounterQueryVariables = Types.Exact<{
 }>;
 
 
-export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', datetime: string, label?: string | null } | null }> } };
+export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
 
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
@@ -302,8 +302,9 @@ export const LatestPatientEncounterDocument = gql`
       nodes {
         id
         type
+        startDatetime
         suggestedNextEncounter {
-          datetime
+          startDatetime
           label
         }
       }

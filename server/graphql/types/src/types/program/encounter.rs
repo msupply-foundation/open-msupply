@@ -246,8 +246,8 @@ pub struct SuggestedNextEncounterNode {
 
 #[Object]
 impl SuggestedNextEncounterNode {
-    async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.suggested.datetime, Utc)
+    async fn start_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_utc(self.suggested.start_datetime, Utc)
     }
 
     async fn label(&self) -> &Option<String> {

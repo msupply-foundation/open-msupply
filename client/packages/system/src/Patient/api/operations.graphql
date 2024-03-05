@@ -218,8 +218,9 @@ query latestPatientEncounter(
       nodes {
         id
         type
+        startDatetime
         suggestedNextEncounter {
-          datetime
+          startDatetime
           label
         }
       }

@@ -100,7 +100,7 @@ export const CreateEncounterModal: FC = () => {
   const latestEncounter = latestEncounterData?.nodes[0];
   const suggestedNextEncounter = latestEncounter?.suggestedNextEncounter;
   const suggestedNextInFuture = suggestedNextEncounter
-    ? new Date(suggestedNextEncounter.datetime).getTime() > Date.now()
+    ? new Date(suggestedNextEncounter.startDatetime).getTime() > Date.now()
     : false;
   const reset = () => {
     selectModal(undefined);
@@ -149,7 +149,7 @@ export const CreateEncounterModal: FC = () => {
     if (!suggestedNextInFuture) return;
     setDraft({
       ...currentOrNewDraft(),
-      startDatetime: latestEncounter.suggestedNextEncounter?.datetime,
+      startDatetime: latestEncounter.suggestedNextEncounter?.startDatetime,
     });
   }, [
     draft,
@@ -190,7 +190,7 @@ export const CreateEncounterModal: FC = () => {
     if (!suggestedNextInFuture || !suggestedNextEncounter) return [];
     return [
       {
-        datetime: new Date(suggestedNextEncounter.datetime),
+        datetime: new Date(suggestedNextEncounter.startDatetime),
         label: suggestedNextEncounter.label,
       },
     ];
