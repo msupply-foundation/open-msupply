@@ -1,5 +1,7 @@
-use super::asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogRow};
-
+use super::{
+    super::user_row::user_account::dsl as user_account_dsl,
+    asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogRow},
+};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
@@ -26,6 +28,7 @@ pub struct AssetLogFilter {
     pub asset_id: Option<EqualFilter<String>>,
     pub status: Option<StringFilter>,
     pub log_datetime: Option<DatetimeFilter>,
+    pub user: Option<StringFilter>,
 }
 
 impl AssetLogFilter {
@@ -35,6 +38,7 @@ impl AssetLogFilter {
             asset_id: None,
             status: None,
             log_datetime: None,
+            user: None,
         }
     }
 
@@ -52,6 +56,10 @@ impl AssetLogFilter {
     }
     pub fn log_datetime(mut self, filter: DatetimeFilter) -> Self {
         self.log_datetime = Some(filter);
+        self
+    }
+    pub fn user(mut self, filter: StringFilter) -> Self {
+        self.user = Some(filter);
         self
     }
 }
@@ -133,6 +141,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             asset_id,
             status,
             log_datetime,
+            user,
         } = f;
 
         apply_equal_filter!(query, id, asset_log_dsl::id);
@@ -144,7 +153,16 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             apply_equal_filter!(sub_query, Some(asset_id), asset_dsl::id);
             query = query.filter(asset_log_dsl::asset_id.eq_any(sub_query));
         }
+
+        if let Some(user_filter) = user {
+            let mut sub_query = user_account_dsl::user_account
+                .select(user_account_dsl::id)
+                .into_boxed();
+            apply_string_filter!(sub_query, Some(user_filter), user_account_dsl::id);
+            query = query.filter(asset_log_dsl::user_id.eq_any(sub_query));
+        }
     }
+
     query
 }
 
