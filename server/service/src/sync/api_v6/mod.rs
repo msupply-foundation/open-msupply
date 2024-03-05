@@ -85,7 +85,7 @@ pub(crate) struct SyncRecordV6 {
     pub(crate) cursor: u64,
     pub(crate) record: CommonSyncRecord,
 }
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Default, Serialize)]
 pub struct SyncBatchV6 {
     // Latest changelog cursor in the 'records'
     // being pushed/pulled
@@ -106,8 +106,16 @@ impl From<PushSyncRecord> for SyncRecordV6 {
 }
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SyncRequestV6 {
+pub struct SyncPullRequestV6 {
     pub(crate) cursor: u64,
     pub(crate) batch_size: u32,
+    pub(crate) sync_v5_settings: SyncApiSettings,
+    pub(crate) is_initialised: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncPushRequestV6 {
+    pub(crate) batch: SyncBatchV6,
     pub(crate) sync_v5_settings: SyncApiSettings,
 }

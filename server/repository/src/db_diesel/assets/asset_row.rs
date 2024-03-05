@@ -1,7 +1,10 @@
 use super::asset_row::asset::dsl::*;
 
+use serde::{Deserialize, Serialize};
+
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
@@ -23,7 +26,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
+)]
 #[table_name = "asset"]
 pub struct AssetRow {
     pub id: String,
@@ -95,5 +100,19 @@ impl<'a> AssetRowRepository<'a> {
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for AssetRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        AssetRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

@@ -1,4 +1,6 @@
-use repository::{ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter};
+use repository::{
+    ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter, SyncBufferRowRepository,
+};
 
 use util::{format_error, is_central_server};
 
@@ -8,9 +10,13 @@ use crate::{
 };
 
 use super::{
-    api_v6::{SyncBatchV6, SyncParsedErrorV6, SyncRecordV6, SyncRequestV6},
+    api_v6::{SyncBatchV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPushRequestV6, SyncRecordV6},
     translations::translate_changelogs_to_sync_records,
 };
+
+// Asset should sync from central om to remote on when
+// It is in change log
+// In change log last_source_site_id is not the remote site id (on the record) & we're not initalising a site, where it does want to receive it's own records again...
 
 fn create_filter() -> ChangelogFilter {
     ChangelogFilter::new().table_name(EqualFilter {
@@ -20,6 +26,7 @@ fn create_filter() -> ChangelogFilter {
             ChangelogTableName::AssetCategory,
             ChangelogTableName::AssetType,
             ChangelogTableName::AssetCatalogueItem,
+            ChangelogTableName::Asset,
         ]),
         ..Default::default()
     })
@@ -27,7 +34,7 @@ fn create_filter() -> ChangelogFilter {
     // TODO, the idea for this method is to build a query in such a way as to allow
     // extracting all relevant records for a site from change_log, where resulting SQL would be
     // SELECT * FROM changelog_dedup
-    // WHERE cursor > {remote site SyncPullCursorV6} AND last_sync_site_id != {remote site id}
+    // WHERE cursor > {remote site SyncPullCursorV6} AND last_source_site_id != {remote site id}
     // AND
     // (
     // 	table_name in {central_record_names}
@@ -69,11 +76,12 @@ fn create_filter() -> ChangelogFilter {
 
 pub async fn pull(
     service_provider: &ServiceProvider,
-    SyncRequestV6 {
+    SyncPullRequestV6 {
         cursor,
         batch_size,
         sync_v5_settings,
-    }: SyncRequestV6,
+        is_initialised,
+    }: SyncPullRequestV6,
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
@@ -118,4 +126,51 @@ pub async fn pull(
         end_cursor,
         records,
     })
+}
+
+pub async fn push(
+    service_provider: &ServiceProvider,
+    SyncPushRequestV6 {
+        batch,
+        sync_v5_settings,
+    }: SyncPushRequestV6,
+) -> Result<SyncBatchV6, SyncParsedErrorV6> {
+    use SyncParsedErrorV6 as Error;
+    // TODO consolidate at top level ? As middleware ?
+    if !is_central_server() {
+        return Err(Error::NotACentralServer);
+    }
+    // Check credentials again mSupply central server
+    SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?
+        .get_site_status()
+        .await
+        .map_err(Error::from)?;
+
+    // TODO Versioning ?
+
+    let SyncBatchV6 {
+        records,
+        total_records,
+        ..
+    } = batch;
+
+    let ctx = service_provider.basic_context()?;
+    let repo = SyncBufferRowRepository::new(&ctx.connection);
+
+    let records_in_this_batch = records.len() as u64;
+    for SyncRecordV6 { record, .. } in records {
+        // TODO NO unwrap
+        let buffer_row = record.to_buffer_row().unwrap();
+
+        repo.upsert_one(&buffer_row)?;
+    }
+
+    // TODO seperate process ?
+    // TODO we need to integrate records for just 1 site?
+    if total_records <= records_in_this_batch {
+        service_provider.sync_trigger.trigger();
+    }
+
+    Ok(Default::default())
 }

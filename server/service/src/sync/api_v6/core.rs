@@ -52,6 +52,36 @@ async fn response_or_err(
     Ok(result)
 }
 
+async fn response_or_err_push(
+    result: Result<Response, reqwest::Error>,
+) -> Result<SyncPullResponseV6, SyncApiErrorVariantV6> {
+    let response = match result {
+        Ok(result) => result,
+        Err(error) => {
+            if error.is_connect() {
+                return Err(SyncApiErrorVariantV6::ConnectionError(error));
+            } else {
+                return Err(SyncApiErrorVariantV6::Other(error.into()));
+            }
+        }
+    };
+
+    // Not checking for status, expecting 200 only, even if there is error
+    let response_text = response
+        .text()
+        .await
+        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+
+    let result = serde_json::from_str(&response_text).map_err(|source| {
+        ParsingResponseError::ParseError {
+            source,
+            response_text,
+        }
+    })?;
+
+    Ok(result)
+}
+
 pub(crate) fn get_omsupply_central_url(sync_v5_url: &str) -> Result<Url, ParseError> {
     let mut url = Url::parse(sync_v5_url)?;
     // Unwrap is safe unless domain is not http or https, see port_or_know_default()
@@ -75,7 +105,12 @@ impl SyncApiV6 {
         })
     }
 
-    pub async fn pull(&self, cursor: u64, batch_size: u32) -> Result<SyncBatchV6, SyncApiErrorV6> {
+    pub async fn pull(
+        &self,
+        cursor: u64,
+        batch_size: u32,
+        is_initialised: bool,
+    ) -> Result<SyncBatchV6, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
             url,
@@ -84,9 +119,39 @@ impl SyncApiV6 {
         let route = "pull";
         let url = url.join(route).unwrap();
 
-        let request = SyncRequestV6 {
+        let request = SyncPullRequestV6 {
             cursor,
             batch_size,
+            sync_v5_settings: sync_v5_settings.clone(),
+            is_initialised,
+        };
+
+        let result = Client::new().post(url.clone()).json(&request).send().await;
+
+        let error = match response_or_err(result).await {
+            Ok(SyncPullResponseV6::Data(data)) => return Ok(data),
+            Ok(SyncPullResponseV6::Error(error)) => error.into(),
+            Err(error) => error.into(),
+        };
+
+        Err(SyncApiErrorV6 {
+            url,
+            route: route.to_string(),
+            source: error,
+        })
+    }
+
+    pub async fn push(&self, batch: SyncBatchV6) -> Result<SyncBatchV6, SyncApiErrorV6> {
+        let Self {
+            sync_v5_settings,
+            url,
+        } = self;
+
+        let route = "push";
+        let url = url.join(route).unwrap();
+
+        let request = SyncPushRequestV6 {
+            batch,
             sync_v5_settings: sync_v5_settings.clone(),
         };
 

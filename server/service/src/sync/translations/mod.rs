@@ -1,4 +1,5 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
@@ -97,6 +98,8 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::name_merge::boxed(),
         special::item_merge::boxed(),
         special::clinician_merge::boxed(),
+        // Assets
+        asset::boxed(),
         asset_class::boxed(),
         asset_category::boxed(),
         asset_type::boxed(),
@@ -264,10 +267,10 @@ pub(crate) enum ToSyncRecordTranslationType {
     /// When omSupply remote is pushing to og mSupply central
     PushToLegacyCentral,
     /// When omSupply remote is pushing to omSupply central
-    #[allow(dead_code)]
     PushToOmSupplyCentral,
     // When omSupply remote is pulling from omSupply central
     PullFromOmSupplyCentral,
+    PullFromOmSupplyCentralInitialisation,
 }
 
 /// This trait has collection of methods for sync operation translations
@@ -275,7 +278,7 @@ pub(crate) enum ToSyncRecordTranslationType {
 ///  * pulled from legacy and omSupply central servers
 ///  * pushed to legacy and omSupply central servers
 /// also used on central site when responding to pull requests
-/// from remote sites, to trasnalte to sync record sent in response
+/// from remote sites, to translate to sync record sent in response
 ///
 /// "sync_record" in this context refers to transport layer records (json representation of database record alongside metadata like table_name)
 pub(crate) trait SyncTranslation {
@@ -333,7 +336,8 @@ pub(crate) trait SyncTranslation {
             // Have to manually specify in the translation
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => false,
             // Have to manually specify in the translation
-            ToSyncRecordTranslationType::PushToOmSupplyCentral => unimplemented!(),
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => false,
+            ToSyncRecordTranslationType::PullFromOmSupplyCentralInitialisation => true,
         }
     }
 

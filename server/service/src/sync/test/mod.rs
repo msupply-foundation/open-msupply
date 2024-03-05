@@ -8,6 +8,7 @@ use super::translations::{IntegrationOperation, PullTranslateResult};
 use repository::{mock::MockData, *};
 use util::inline_init;
 
+// TODO this should be renamed to TestFromSyncRecord
 pub(crate) struct TestSyncPullRecord {
     /// Expected result for the imported data
     pub(crate) translated_record: PullTranslateResult,
@@ -67,6 +68,8 @@ impl TestSyncPullRecord {
         }
     }
 }
+
+// TODO re name to TestToSyncRecord
 
 /// To be used in combination with TestSyncPullRecord.
 /// I.e. first run and integrate a row from TestSyncPullRecord and then try to push this record out

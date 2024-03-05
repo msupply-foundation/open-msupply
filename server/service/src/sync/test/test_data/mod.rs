@@ -3,6 +3,7 @@ use self::special::name_to_name_store_join;
 use super::{TestSyncPullRecord, TestSyncPushRecord};
 
 pub(crate) mod activity_log;
+pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
@@ -148,3 +149,10 @@ pub(crate) fn get_all_omsupply_central_push_records() -> Vec<TestSyncPushRecord>
 
     test_records
 }
+
+// pub(crate) fn get_all_omsupply_central_pull_records() -> Vec<TestSyncPushRecord> {
+//     let mut test_records = Vec::new();
+//     test_records.append(&mut asset::test_omsupply_central_pull_records());
+
+//     test_records
+// }
