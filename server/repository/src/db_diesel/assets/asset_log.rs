@@ -8,8 +8,7 @@ use crate::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
     repository_error::RepositoryError,
-    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection,
-    StringFilter,
+    DBType, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub type AssetLog = AssetLogRow;
