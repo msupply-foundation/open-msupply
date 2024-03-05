@@ -79,10 +79,7 @@ export const IconCell = ({
       <PaperHoverPopover
         width={400}
         Content={
-          <PaperPopoverSection
-            label={t('label.comment')}
-            sx={{ wordBreak: 'break-word' }}
-          >
+          <PaperPopoverSection label={t('label.comment')}>
             {String(rowData?.comment)}
           </PaperPopoverSection>
         }
