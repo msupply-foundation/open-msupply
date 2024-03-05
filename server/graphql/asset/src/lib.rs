@@ -1,5 +1,7 @@
 mod mutations;
 use self::mutations::*;
+mod logs;
+use self::logs::*;
 
 use async_graphql::*;
 use graphql_core::{
@@ -10,6 +12,9 @@ use graphql_core::{
 mod types;
 use repository::{assets::asset::AssetFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
+use types::AssetLogFilterInput;
+use types::AssetLogSortInput;
+use types::AssetLogsResponse;
 use types::{AssetConnector, AssetFilterInput, AssetSortInput, AssetsResponse};
 
 #[derive(Default, Clone)]
@@ -86,6 +91,23 @@ impl AssetMutations {
         asset_id: String,
     ) -> Result<DeleteAssetResponse> {
         delete_asset(ctx, &store_id, &asset_id)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct AssetLogs;
+
+#[Object]
+impl AssetLogs {
+    async fn asset_logs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<AssetLogFilterInput>,
+        sort: Option<Vec<AssetLogSortInput>>,
+    ) -> Result<AssetLogsResponse> {
+        asset_logs(ctx, store_id, page, filter, sort)
     }
 }
 
