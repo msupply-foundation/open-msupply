@@ -501,6 +501,7 @@ pub fn mock_outbound_return_a_invoice_line_a() -> InvoiceLineRow {
         l.stock_line_id = Some(mock_stock_line_a().id);
         l.item_code = "item_b_code".to_string();
         l.note = Some("return_comment".to_string());
+        l.number_of_packs = 4.0;
         l.r#type = InvoiceLineRowType::StockOut
     })
 }

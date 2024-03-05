@@ -95,12 +95,16 @@ fn should_update_stock_lines_total_number_of_packs(
     existing_return: &InvoiceRow,
     status: &Option<UpdateOutboundReturnStatus>,
 ) -> bool {
-    if let Some(new_status) = UpdateOutboundReturnStatus::full_status_option(status) {
-        let existing_status_index = existing_return.status.index();
-        let new_status_index = new_status.index();
-
-        new_status_index >= InvoiceRowStatus::Picked.index()
-            && existing_status_index < InvoiceRowStatus::Picked.index()
+    if let Some(new_status) = status {
+        let existing_status = &existing_return.status;
+        match (existing_status, new_status) {
+            (
+                // From New to Picked, or New to Shipped
+                InvoiceRowStatus::New,
+                UpdateOutboundReturnStatus::Picked | UpdateOutboundReturnStatus::Shipped,
+            ) => true,
+            _ => false,
+        }
     } else {
         false
     }

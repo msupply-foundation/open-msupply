@@ -128,13 +128,14 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_return_b,
+            mock_item_a, mock_name_store_b, mock_outbound_return_a,
+            mock_outbound_return_a_invoice_line_a, mock_outbound_return_b,
             mock_outbound_return_b_invoice_line_a, mock_outbound_shipment_a, mock_store_a,
             mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
-        test_db::setup_all_with_data,
+        test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        ReturnReasonRow, StockLineRowRepository,
+        StockLineRowRepository,
     };
 
     #[actix_rt::test]
@@ -263,22 +264,10 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_success() {
-        fn return_reason() -> ReturnReasonRow {
-            ReturnReasonRow {
-                id: "return_reason".to_string(),
-                is_active: true,
-                ..Default::default()
-            }
-        }
-
-        let (_, connection, connection_manager, _) = setup_all_with_data(
-            "test_update_outbound_return_success",
+    async fn test_update_outbound_return_success_new_to_shipped() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_update_outbound_return_success_new_to_shipped",
             MockDataInserts::all(),
-            MockData {
-                return_reasons: vec![return_reason()],
-                ..Default::default()
-            },
         )
         .await;
 
@@ -299,7 +288,7 @@ mod test {
             .update_outbound_return(
                 &context,
                 UpdateOutboundReturn {
-                    outbound_return_id: mock_outbound_return_b().id,
+                    outbound_return_id: mock_outbound_return_b().id, // is NEW status
                     status: Some(UpdateOutboundReturnStatus::Shipped),
                     ..Default::default()
                 },
@@ -314,7 +303,50 @@ mod test {
 
         assert_eq!(
             updated_stock_line.total_number_of_packs,
-            original_stock_line.total_number_of_packs - 5.0 // invoice line has numberOfPacks = 5.0
+            original_stock_line.total_number_of_packs - 5.0 // stock has been reduced by the num of packs in the outbound return line
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_update_outbound_return_success_picked_to_shipped() {
+        let (_, connection, connection_manager, _) = setup_all(
+            "test_update_outbound_return_success_picked_to_shipped",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        let stock_line_row_repo = StockLineRowRepository::new(&connection);
+        let stock_line_id = mock_outbound_return_a_invoice_line_a()
+            .stock_line_id
+            .unwrap();
+
+        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+
+        let result = service_provider
+            .invoice_service
+            .update_outbound_return(
+                &context,
+                UpdateOutboundReturn {
+                    outbound_return_id: mock_outbound_return_a().id, // is PICKED status
+                    status: Some(UpdateOutboundReturnStatus::Shipped),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        assert_eq!(result.invoice_row.status, InvoiceRowStatus::Shipped);
+        assert!(result.invoice_row.shipped_datetime.is_some());
+
+        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+
+        assert_eq!(
+            updated_stock_line.total_number_of_packs,
+            original_stock_line.total_number_of_packs // total has not changed (stock would have already been reduced New -> Picked)
         );
     }
 }
