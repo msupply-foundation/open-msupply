@@ -58,7 +58,7 @@ impl InboundReturnLineNode {
         &self.return_line.number_of_packs
     }
 
-    pub async fn number_of_packs_issued(&self) -> &f64 {
+    pub async fn number_of_packs_issued(&self) -> &Option<f64> {
         &self.return_line.packs_issued
     }
 
