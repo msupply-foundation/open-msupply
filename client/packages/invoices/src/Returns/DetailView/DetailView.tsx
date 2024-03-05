@@ -25,12 +25,13 @@ import { OutboundReturnEditModal } from '../modals';
 
 export const DetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
-  const { onOpen, onClose, isOpen } = useEditModal();
+  const { onOpen, onClose, isOpen, entity: itemId } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
-  const onRowClick = () => {};
+  const onRowClick = (row: OutboundReturnDetailRowFragment) =>
+    onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
   //  (draft?: Draft) => {
@@ -80,6 +81,7 @@ export const DetailView: FC = () => {
               stockLineIds={[]}
               supplierId={data.otherPartyId}
               returnId={data.id}
+              initialItemId={itemId}
             />
           )}
 

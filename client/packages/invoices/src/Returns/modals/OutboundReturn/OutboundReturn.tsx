@@ -18,7 +18,7 @@ interface OutboundReturnEditModalProps {
   onClose: () => void;
   supplierId: string;
   returnId?: string;
-  initialItemId?: string;
+  initialItemId?: string | null;
 }
 
 export const OutboundReturnEditModal = ({
@@ -31,7 +31,9 @@ export const OutboundReturnEditModal = ({
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
-  const [itemId, setItemId] = useState<string | undefined>(initialItemId);
+  const [itemId, setItemId] = useState<string | undefined>(
+    initialItemId ?? undefined
+  );
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
