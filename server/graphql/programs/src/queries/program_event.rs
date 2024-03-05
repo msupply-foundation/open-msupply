@@ -11,7 +11,7 @@ use graphql_types::types::{
         ProgramEventConnector, ProgramEventNode, ProgramEventResponse, ProgramEventSortInput,
     },
 };
-use repository::{PaginationOption, ProgramEventFilter};
+use repository::PaginationOption;
 use service::auth::{Resource, ResourceAccessRequest};
 
 pub fn program_events(
@@ -30,17 +30,6 @@ pub fn program_events(
     )?;
     let allowed_ctx = user.capabilities();
 
-    let mut filter = filter
-        .map(|f| f.to_domain())
-        .unwrap_or(ProgramEventFilter::new());
-    // restrict query results to allowed entries
-    filter.context_id = Some(
-        filter
-            .context_id
-            .unwrap_or_default()
-            .restrict_results(&allowed_ctx),
-    );
-
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
@@ -49,8 +38,9 @@ pub fn program_events(
         .events(
             &context,
             page.map(PaginationOption::from),
-            Some(filter),
+            filter.map(ProgramEventFilterInput::to_domain),
             sort.map(ProgramEventSortInput::to_domain),
+            Some(allowed_ctx),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
     let nodes: Vec<ProgramEventNode> = list_result
@@ -85,18 +75,6 @@ pub fn active_program_events(
         },
     )?;
     let allowed_ctx = user.capabilities();
-
-    let mut filter = filter
-        .map(|f| f.to_domain())
-        .unwrap_or(ProgramEventFilter::new());
-    // restrict query results to allowed entries
-    filter.context_id = Some(
-        filter
-            .context_id
-            .unwrap_or_default()
-            .restrict_results(&allowed_ctx),
-    );
-
     let service_provider = ctx.service_provider();
     let context = service_provider.basic_context()?;
 
@@ -107,8 +85,9 @@ pub fn active_program_events(
             at.map(|at| at.naive_utc())
                 .unwrap_or(Utc::now().naive_utc()),
             page.map(PaginationOption::from),
-            Some(filter),
+            filter.map(ProgramEventFilterInput::to_domain),
             sort.map(ProgramEventSortInput::to_domain),
+            Some(allowed_ctx),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
     let nodes: Vec<ProgramEventNode> = list_result
