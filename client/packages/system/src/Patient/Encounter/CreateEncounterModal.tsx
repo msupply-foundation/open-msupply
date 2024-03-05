@@ -62,7 +62,7 @@ const BadgePickersDay = (
       badgeContent={
         isSelected ? (
           <Tooltip title={matchingDay?.label ?? ''}>
-            <span>⌛</span>
+            <span>⚠️</span>
           </Tooltip>
         ) : undefined
       }
