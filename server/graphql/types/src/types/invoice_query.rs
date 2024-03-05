@@ -339,7 +339,7 @@ impl InvoiceNode {
         Ok(Some(CurrencyNode::from_domain(currency)))
     }
 
-    pub async fn currency_rate(&self) -> &Option<f64> {
+    pub async fn currency_rate(&self) -> &f64 {
         &self.row().currency_rate
     }
 }

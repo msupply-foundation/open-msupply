@@ -99,6 +99,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                 LegacyTableName::ITEM_LINE,
                 LegacyTableName::LOCATION,
                 LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
+                LegacyTableName::CURRENCY,
             ],
         }
     }
