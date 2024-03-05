@@ -22,6 +22,7 @@ table! {
 pub enum KeyValueType {
     CentralSyncPullCursor,
     SyncPullCursorV6,
+    SyncPushCursorV6,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
