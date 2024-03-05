@@ -12,6 +12,7 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
 import { InboundRowFragment, useInbound } from '../api';
@@ -81,15 +82,17 @@ export const Toolbar: FC = () => {
             <InputWithLabelRow
               label={t('label.supplier-ref')}
               Input={
-                <BufferedTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReference ?? ''}
-                  onChange={event => {
-                    update({ theirReference: event.target.value });
-                  }}
-                />
+                <Tooltip title={theirReference} placement="bottom-start">
+                  <BufferedTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReference ?? ''}
+                    onChange={event => {
+                      update({ theirReference: event.target.value });
+                    }}
+                  />
+                </Tooltip>
               }
             />
             <InboundInfoPanel shipment={shipment} />
