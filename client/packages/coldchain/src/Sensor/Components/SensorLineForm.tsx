@@ -7,7 +7,6 @@ import {
   Formatter,
   TextWithLabelRow,
   SensorNodeType,
-  NumUtils,
 } from '@openmsupply-client/common';
 import { UseDraftSensorControl } from './SensorEditModal';
 import { isSensorNameEditDisabled } from '../utils';
@@ -70,10 +69,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
         text={
           !!draft.latestTemperatureLog?.nodes[0]?.temperature
             ? `${formatTemperature(
-                NumUtils.round(
-                  draft.latestTemperatureLog?.nodes[0]?.temperature,
-                  2
-                )
+                draft.latestTemperatureLog?.nodes[0]?.temperature
               )}`
             : '-'
         }

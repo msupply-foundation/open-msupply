@@ -6,7 +6,6 @@ import {
   DataTable,
   Formatter,
   NothingHere,
-  NumUtils,
   TableProvider,
   createTableStore,
   useColumns,
@@ -134,9 +133,7 @@ const ListView: FC = () => {
         width: 125,
         accessor: ({ rowData }) => {
           return !!rowData.maxOrMinTemperature
-            ? `${formatTemperature(
-                NumUtils.round(rowData.maxOrMinTemperature, 2)
-              )}`
+            ? `${formatTemperature(rowData.maxOrMinTemperature)}`
             : null;
         },
         sortable: false,
