@@ -24,7 +24,7 @@ import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
 // import { OutboundLineEdit } from './OutboundLineEdit';
 
-export const DetailView: FC = () => {
+export const OutboundReturnsDetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
   // const { entity, mode, onOpen, onClose, isOpen, setMode } =
   //   useEditModal<Draft>();

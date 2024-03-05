@@ -3,7 +3,7 @@ import { RouteBuilder, Routes, Route } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { DetailView, OutboundShipmentListView } from './OutboundShipment';
 import {
-  DetailView as OutboundReturnsDetailView,
+  OutboundReturnsDetailView,
   OutboundReturnListView,
   InboundReturnListView,
 } from './Returns';
