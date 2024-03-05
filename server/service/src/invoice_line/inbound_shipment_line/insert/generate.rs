@@ -28,7 +28,7 @@ pub fn generate(
 ) -> Result<(Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>), RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
-    let new_line = generate_line(input, item_row, existing_invoice_row.clone());
+    let new_line = generate_line(connection, input, item_row, existing_invoice_row.clone())?;
 
     let mut new_line = match store_preferences.pack_to_one {
         true => convert_invoice_line_to_single_pack(new_line),
@@ -62,6 +62,7 @@ pub fn generate(
 }
 
 fn generate_line(
+    connection: &StorageConnection,
     InsertInboundShipmentLine {
         id,
         invoice_id,
@@ -82,15 +83,22 @@ fn generate_line(
         ..
     }: ItemRow,
     InvoiceRow {
-        tax, currency_rate, ..
+        tax,
+        currency_id,
+        currency_rate,
+        ..
     }: InvoiceRow,
-) -> InvoiceLineRow {
+) -> Result<InvoiceLineRow, RepositoryError> {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
-    let foreign_currency_price_before_tax =
-        calculate_foreign_currency_total(total_before_tax, currency_rate);
+    let foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        total_before_tax,
+        currency_id,
+        &currency_rate,
+    )?;
 
-    InvoiceLineRow {
+    Ok(InvoiceLineRow {
         id,
         invoice_id,
         item_link_id: item_id,
@@ -111,5 +119,5 @@ fn generate_line(
         note: None,
         inventory_adjustment_reason_id: None,
         foreign_currency_price_before_tax,
-    }
+    })
 }

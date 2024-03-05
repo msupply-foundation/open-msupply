@@ -37,11 +37,13 @@ pub fn generate(
     let batch_to_delete_id = get_batch_to_delete_id(&current_line, &new_item_option);
 
     let update_line = generate_line(
+        connection,
         input,
         current_line.invoice_line_row,
         new_item_option,
-        existing_invoice_row.currency_rate,
-    );
+        existing_invoice_row.currency_id.clone(),
+        &existing_invoice_row.currency_rate,
+    )?;
 
     let mut update_line = match store_preferences.pack_to_one {
         true => convert_invoice_line_to_single_pack(update_line),
@@ -85,6 +87,7 @@ fn get_batch_to_delete_id(
 }
 
 fn generate_line(
+    connection: &StorageConnection,
     UpdateInboundShipmentLine {
         pack_size,
         batch,
@@ -100,8 +103,9 @@ fn generate_line(
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
-    currency_rate: Option<f64>,
-) -> InvoiceLineRow {
+    currency_id: Option<String>,
+    currency_rate: &f64,
+) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
 
     update_line.pack_size = pack_size.map(u32_to_i32).unwrap_or(update_line.pack_size);
@@ -114,8 +118,12 @@ fn generate_line(
         cost_price_per_pack.unwrap_or(update_line.cost_price_per_pack);
     update_line.number_of_packs = number_of_packs.unwrap_or(update_line.number_of_packs);
     update_line.tax = tax.map(|tax| tax.percentage).unwrap_or(update_line.tax);
-    update_line.foreign_currency_price_before_tax =
-        calculate_foreign_currency_total(update_line.total_before_tax, currency_rate);
+    update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        update_line.total_before_tax,
+        currency_id,
+        currency_rate,
+    )?;
 
     if let Some(item) = new_item_option {
         update_line.item_link_id = item.id;
@@ -134,5 +142,5 @@ fn generate_line(
     update_line.total_after_tax =
         calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
 
-    update_line
+    Ok(update_line)
 }

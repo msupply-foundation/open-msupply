@@ -1,14 +1,14 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
-    ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
-    InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    ItemLinkRowRepository, ItemRowRepository, LocationMovementRow, LocationMovementRowRepository,
-    NameLinkRowRepository, NameRowRepository, NumberRowType, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository, StockLineRow, StockLineRowRepository, Stocktake,
-    StocktakeLine, StocktakeLineFilter, StocktakeLineRepository, StocktakeLineRow,
-    StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus,
-    StorageConnection,
+    ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
+    InvoiceRowStatus, InvoiceRowType, ItemLinkRowRepository, ItemRowRepository,
+    LocationMovementRow, LocationMovementRowRepository, NameLinkRowRepository, NameRowRepository,
+    NumberRowType, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+    StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
+    StocktakeStatus, StorageConnection,
 };
 use util::{constants::INVENTORY_ADJUSTMENT_NAME_CODE, inline_edit, uuid::uuid};
 
@@ -538,6 +538,12 @@ fn generate(
         user_id,
         ..
     } = ctx;
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(UpdateStocktakeError::DatabaseError(
+            RepositoryError::NotFound,
+        ))?;
 
     let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
         u.description = input_description.or(u.description);
@@ -627,6 +633,8 @@ fn generate(
         status: InvoiceRowStatus::Verified,
         verified_datetime: Some(now),
         // Default
+        currency_id: Some(currency.currency_row.id),
+        currency_rate: 1.0,
         name_store_id: None,
         transport_reference: None,
         on_hold: false,
@@ -641,8 +649,6 @@ fn generate(
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
-        currency_id: None,
-        currency_rate: None,
         clinician_link_id: None,
     };
 

@@ -1,10 +1,11 @@
-use repository::{InvoiceLine, InvoiceLineRow, ItemRow};
+use repository::{InvoiceLine, InvoiceLineRow, ItemRow, StorageConnection};
 
 use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
 
 pub fn generate(
+    connection: &StorageConnection,
     UpdateInboundShipmentServiceLine {
         id: _,
         item_id: input_item_id,
@@ -20,7 +21,8 @@ pub fn generate(
         code: item_code,
         ..
     }: ItemRow,
-    currency_rate: Option<f64>,
+    currency_id: Option<String>,
+    currency_rate: &f64,
 ) -> Result<InvoiceLineRow, UpdateInboundShipmentServiceLineError> {
     // 1) Use name from input (if specified)
     // 2) else: if item has been updated use name from the updated item name
@@ -59,22 +61,36 @@ pub fn generate(
         update_line.note = Some(note);
     }
 
-    update_line.foreign_currency_price_before_tax =
-        calculate_foreign_currency_total(update_line.total_before_tax, currency_rate);
+    update_line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        update_line.total_before_tax,
+        currency_id,
+        &currency_rate,
+    )?;
 
     Ok(update_line)
 }
 
 #[cfg(test)]
 mod inbound_shipment_service_line_update_test {
-    use repository::mock::{
-        mock_inbound_shipment_a, mock_inbound_shipment_invoice_lines, mock_items,
+    use repository::{
+        mock::{
+            mock_inbound_shipment_a, mock_inbound_shipment_invoice_lines, mock_items,
+            MockDataInserts,
+        },
+        test_db::setup_all,
     };
 
     use super::*;
 
-    #[test]
-    fn test_name_update() {
+    #[actix_rt::test]
+    async fn test_name_update() {
+        let (_, connection, _, _) = setup_all(
+            "test_inbound_shipment_service_line_generation",
+            MockDataInserts::none().currencies(),
+        )
+        .await;
+
         let items = mock_items();
         let item1 = items.get(0).unwrap().clone();
         let item2 = items.get(1).unwrap().clone();
@@ -93,6 +109,7 @@ mod inbound_shipment_service_line_update_test {
 
         // no name change
         let result = generate(
+            &connection,
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
                 item_id: None,
@@ -103,13 +120,15 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1.clone(),
-            None,
+            Some("currency_a".to_string()),
+            &1.0,
         )
         .unwrap();
         assert_eq!(result.item_name, item1.name);
 
         // change name in input
         let result = generate(
+            &connection,
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
                 item_id: None,
@@ -120,13 +139,15 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1,
-            None,
+            Some("currency_a".to_string()),
+            &1.0,
         )
         .unwrap();
         assert_eq!(result.item_name, "input name");
 
         // change item id to item2 but still specify input name
         let result = generate(
+            &connection,
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
                 item_id: Some(item2.id.to_owned()),
@@ -137,13 +158,15 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
-            None,
+            Some("currency_a".to_string()),
+            &1.0,
         )
         .unwrap();
         assert_eq!(result.item_name, "input name 2");
 
         // change item id to item2 and no name in the input
         let result = generate(
+            &connection,
             UpdateInboundShipmentServiceLine {
                 id: "".to_string(),
                 item_id: Some(item2.id.to_owned()),
@@ -154,7 +177,8 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
-            None,
+            Some("currency_a".to_string()),
+            &1.0,
         )
         .unwrap();
         assert_eq!(result.item_name, item2.name);
