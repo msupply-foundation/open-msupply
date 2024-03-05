@@ -301,6 +301,7 @@ impl ProgramEnrolmentNode {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
                 })),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
         Ok(ProgramEventResponse::Response(ProgramEventConnector {
