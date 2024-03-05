@@ -65,7 +65,7 @@ describe('currency formatting - fr', () => {
     });
 
     const f1 = result.current.c(111_111.11111111111).format();
-    expect(f1).toBe('111.111,11 €');
+    expect(f1).toBe('111 111,11 €');
   });
 
   it('does drop trailing zeroes', () => {

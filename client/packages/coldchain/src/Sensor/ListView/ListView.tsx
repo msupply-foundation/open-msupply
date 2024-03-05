@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
-import { BreachTypeCell } from '../../common';
+import { BreachTypeCell, useFormatTemperature } from '../../common';
 
 export const SensorListView: FC = () => {
   const {
@@ -28,6 +28,7 @@ export const SensorListView: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
   const { urlQuery, updateQuery } = useUrlQuery();
+  const formatTemperature = useFormatTemperature;
 
   const columns = useColumns<SensorFragment>(
     [
@@ -54,9 +55,7 @@ export const SensorListView: FC = () => {
         accessor: ({ rowData }) => {
           const batteryLevel = rowData.batteryLevel;
 
-          return batteryLevel
-            ? `${batteryLevel}%`
-            : t('messages.not-initialised');
+          return batteryLevel ? `${batteryLevel}%` : '-';
         },
         sortable: false,
       },
@@ -64,9 +63,11 @@ export const SensorListView: FC = () => {
         key: 'lastReading',
         label: 'label.last-reading',
         accessor: ({ rowData }) => {
-          return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}${t(
-            'label.temperature-unit'
-          )}`;
+          return !!rowData.latestTemperatureLog?.nodes[0]?.temperature
+            ? `${formatTemperature(
+                rowData.latestTemperatureLog?.nodes[0]?.temperature
+              )}`
+            : '-';
         },
         sortable: false,
       },

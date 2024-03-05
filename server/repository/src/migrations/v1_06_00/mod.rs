@@ -6,7 +6,9 @@ mod changelog_deduped;
 mod contact_trace;
 mod encounter_status;
 mod indexes;
+mod is_sync_update;
 mod master_list;
+mod name_is_deceased;
 mod patient_id_indices;
 mod plugin_data;
 mod program_enrolment_status;
@@ -29,6 +31,8 @@ impl Migration for V1_06_00 {
         indexes::migrate(connection)?;
         encounter_status::migrate(connection)?;
         changelog_deduped::migrate(connection)?;
+        is_sync_update::migrate(connection)?;
+        name_is_deceased::migrate(connection)?;
         Ok(())
     }
 }

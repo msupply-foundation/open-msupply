@@ -435,7 +435,7 @@
   "multiple": "[multiple]",
   "placeholder.filter-by-status": "Filter by status",
   "placeholder.filter-items": "Filter items",
-  "placeholder.search-by-location-name": "Search by location name",
+  "placeholder.search-by-location-code": "Search by location code",
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
   "success": "Success!",
