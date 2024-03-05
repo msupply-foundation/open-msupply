@@ -235,13 +235,7 @@ mod test {
         assert_eq!(
             invoice,
             inline_edit(&inbound_created_before_store(), |mut i| {
-                i.status = InvoiceRowStatus::Verified;
-                i.delivered_datetime = invoice
-                    .delivered_datetime
-                    .or(Some(chrono::Utc::now().naive_utc()));
-                i.verified_datetime = invoice
-                    .verified_datetime
-                    .or(Some(chrono::Utc::now().naive_utc()));
+                i.status = InvoiceRowStatus::New;
                 i
             })
         )

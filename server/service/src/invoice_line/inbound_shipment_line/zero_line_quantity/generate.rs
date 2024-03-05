@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus};
+use repository::{InvoiceLineRow, InvoiceRow};
 
 pub struct GenerateResult {
     pub invoice_row: InvoiceRow,
