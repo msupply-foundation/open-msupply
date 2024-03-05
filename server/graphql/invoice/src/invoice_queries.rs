@@ -223,6 +223,11 @@ pub fn get_invoice_by_number(
     invoice_number: u32,
     r#type: InvoiceNodeType,
 ) -> Result<InvoiceResponse> {
+    if r#type == InvoiceNodeType::InboundReturn {
+        if let Some(invoice) = inbound_return(ctx, &r#type) {
+            return Ok(InvoiceResponse::Response(InvoiceNode::from_domain(invoice)));
+        }
+    }
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
