@@ -2,7 +2,6 @@ import React, { FC } from 'react';
 import {
   TableProvider,
   createTableStore,
-  // useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
@@ -11,14 +10,13 @@ import {
   createQueryParamsStore,
   useEditModal,
   DetailTabs,
-  AppBarButtonsPortal,
-  // ModalMode,
 } from '@openmsupply-client/common';
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
+import { Toolbar } from './Toolbar';
 // import { Toolbar } from './Toolbar';
 // import { Footer } from './Footer';
-// import { AppBarButtons } from './AppBarButtons';
+import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -35,7 +33,7 @@ export const DetailView: FC = () => {
 
   const onRowClick = () => {};
 
-  const onAddItem = () => {};
+  const onAddItem = () => onOpen();
   //  (draft?: Draft) => {
   //   onOpen(draft);
   //   setMode(ModalMode.Create);
@@ -75,11 +73,7 @@ export const DetailView: FC = () => {
             }
           )}
         >
-          {/* <AppBarButtons onAddItem={onAddItem} /> */}
-          {/* TEMP: this will go in the AppBarButtons once they exist */}
-          <AppBarButtonsPortal>
-            <button onClick={() => onOpen()}>ADD ITEM</button>
-          </AppBarButtonsPortal>
+          <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
             <OutboundReturnEditModal
               isOpen={isOpen}
@@ -90,7 +84,7 @@ export const DetailView: FC = () => {
             />
           )}
 
-          {/* <Toolbar /> */}
+          <Toolbar />
           <DetailTabs tabs={tabs} />
           {/* <Footer /> */}
           {/* <SidePanel /> */}
