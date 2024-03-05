@@ -60,7 +60,7 @@ pub(crate) fn generate(
     }
 
     update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
-    update_invoice.currency_rate = patch.currency_rate.or(update_invoice.currency_rate);
+    update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -69,7 +69,8 @@ pub(crate) fn generate(
             &update_invoice.id,
             update_invoice.tax,
             &update_invoice.name_link_id,
-            update_invoice.currency_rate,
+            update_invoice.currency_id.clone(),
+            &update_invoice.currency_rate,
         )?)
     } else {
         None
@@ -89,12 +90,13 @@ pub(crate) fn generate(
         None
     };
 
-    let update_lines = if update_invoice.tax.is_some() || update_invoice.currency_id.is_some() {
+    let update_lines = if update_invoice.tax.is_some() || patch.currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
             update_invoice.tax,
-            update_invoice.currency_rate,
+            update_invoice.currency_id.clone(),
+            &update_invoice.currency_rate,
         )?)
     } else {
         None
@@ -125,7 +127,8 @@ fn generate_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
     tax: Option<f64>,
-    currency_rate: Option<f64>,
+    currency_id: Option<String>,
+    currency_rate: &f64,
 ) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -139,8 +142,12 @@ fn generate_update_for_lines(
         invoice_line_row.tax = tax;
         invoice_line_row.total_after_tax =
             calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
-        invoice_line_row.foreign_currency_price_before_tax =
-            calculate_foreign_currency_total(invoice_line_row.total_before_tax, currency_rate);
+        invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            invoice_line_row.total_before_tax,
+            currency_id.clone(),
+            currency_rate,
+        )?;
         result.push(invoice_line_row);
     }
 
@@ -212,7 +219,8 @@ pub fn generate_lines_and_stock_lines(
     id: &str,
     tax: Option<f64>,
     supplier_id: &str,
-    currency_rate: Option<f64>,
+    currency_id: Option<String>,
+    currency_rate: &f64,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
@@ -225,8 +233,12 @@ pub fn generate_lines_and_stock_lines(
             line.tax = tax;
             line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax);
         }
-        line.foreign_currency_price_before_tax =
-            calculate_foreign_currency_total(line.total_before_tax, currency_rate);
+        line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            line.total_before_tax,
+            currency_id.clone(),
+            currency_rate,
+        )?;
 
         let InvoiceLineRow {
             id: _,
