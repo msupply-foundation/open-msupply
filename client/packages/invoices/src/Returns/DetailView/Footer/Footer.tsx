@@ -65,13 +65,11 @@ export const FooterComponent: FC = () => {
             height={64}
           >
             <OnHoldButton />
-
             <StatusCrumbs
               statuses={outboundStatuses}
               statusLog={createStatusLog(data)}
               statusFormatter={getStatusTranslator(t)}
             />
-
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
               <ButtonWithIcon
                 shrinkThreshold="lg"
