@@ -8,7 +8,10 @@ import {
   SplitButtonOption,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { getNextOutboundStatus, getStatusTranslation } from '../../../utils';
+import {
+  getNextOutboundReturnStatus,
+  getStatusTranslation,
+} from '../../../utils';
 import { useReturns } from '../../api';
 
 const getStatusOptions = (
@@ -21,16 +24,10 @@ const getStatusOptions = (
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
     SplitButtonOption<InvoiceNodeStatus>,
-    SplitButtonOption<InvoiceNodeStatus>,
   ] = [
     {
       value: InvoiceNodeStatus.New,
       label: getButtonLabel(InvoiceNodeStatus.New),
-      isDisabled: true,
-    },
-    {
-      value: InvoiceNodeStatus.Allocated,
-      label: getButtonLabel(InvoiceNodeStatus.Allocated),
       isDisabled: true,
     },
     {
@@ -79,7 +76,7 @@ const getNextStatusOption = (
 ): SplitButtonOption<InvoiceNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextOutboundStatus(status);
+  const nextStatus = getNextOutboundReturnStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
@@ -100,7 +97,7 @@ const useStatusChangeButton = () => {
   // ]);
 
   const { success, error } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const { data } = useReturns.document.outboundReturn();
 
   // TEMP until "fields" hook available:
@@ -108,10 +105,6 @@ const useStatusChangeButton = () => {
   const update = async (_: unknown) => true;
   const onHold = false;
   const lines: any = [];
-
-  const hasLinesToPrune =
-    data?.status === InvoiceNodeStatus.New &&
-    (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -127,26 +120,25 @@ const useStatusChangeButton = () => {
     if (!selectedOption) return null;
     try {
       await update({ status: selectedOption.value });
-      success(t('messages.shipment-saved'))();
+      success(t('messages.return-saved'))();
     } catch (e) {
-      error(t('messages.error-saving-shipment'))();
+      error(t('messages.error-saving-return'))();
     }
   };
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: hasLinesToPrune
-      ? t('messages.confirm-zero-quantity-status')
-      : t('messages.confirm-status-as', {
-          status: selectedOption?.value
-            ? getStatusTranslation(selectedOption?.value)
-            : '',
-        }),
+    message: t('messages.confirm-status-as', {
+      status: selectedOption?.value
+        ? getStatusTranslation(selectedOption?.value)
+        : '',
+    }),
     onConfirm: onConfirmStatusChange,
   });
 
-  // When the status of the invoice changes (after an update), set the selected option to the next status.
-  // It would be set to the current status, which is now a disabled option.
+  // When the status of the invoice changes (after an update), set the selected
+  // option to the next status. It would be set to the current status, which is
+  // now a disabled option.
   useEffect(() => {
     setSelectedOption(() => getNextStatusOption(status, options));
   }, [status, options]);

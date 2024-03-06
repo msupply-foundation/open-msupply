@@ -83,6 +83,16 @@ export const getNextOutboundStatus = (
   return nextStatus ?? null;
 };
 
+export const getNextOutboundReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = outboundReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = outboundReturnStatuses[currentStatusIdx + 1];
+  return nextStatus ?? null;
+};
+
 export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
