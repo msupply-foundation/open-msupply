@@ -13,7 +13,7 @@ use service::{
 };
 
 pub fn config_sync_on_central(cfg: &mut web::ServiceConfig) {
-    cfg.service(pull);
+    cfg.service(pull).service(push);
 }
 
 #[post("central/sync/pull")]
