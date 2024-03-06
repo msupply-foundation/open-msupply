@@ -3,13 +3,20 @@ import { LocaleKey, useTranslation } from '@common/intl';
 import {
   ArrowRightIcon,
   CheckIcon,
+  DeleteIcon,
   CopyIcon,
   SaveIcon,
   XCircleIcon,
 } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
-type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'save' | 'copy';
+type DialogButtonVariant =
+  | 'cancel'
+  | 'next'
+  | 'ok'
+  | 'save'
+  | 'copy'
+  | 'delete';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -54,6 +61,12 @@ const getButtonProps = (
       return {
         icon: <SaveIcon />,
         labelKey: 'button.save',
+        variant: 'contained',
+      };
+    case 'delete':
+      return {
+        icon: <DeleteIcon />,
+        labelKey: 'button.delete',
         variant: 'contained',
       };
     case 'copy':

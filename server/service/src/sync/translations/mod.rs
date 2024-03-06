@@ -19,6 +19,7 @@ pub(crate) mod name;
 pub(crate) mod name_store_join;
 pub(crate) mod name_tag;
 pub(crate) mod name_tag_join;
+pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
@@ -41,57 +42,59 @@ use repository::*;
 use thiserror::Error;
 use topological_sort::TopologicalSort;
 
-use super::api::{CommonSyncRecordV5, RemoteSyncRecordV5, SyncActionV5};
+use super::api::{CommonSyncRecord, SyncAction};
 
 pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 
 pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
-        Box::new(name::NameTranslation {}),
-        Box::new(name_tag::NameTagTranslation {}),
-        Box::new(name_tag_join::NameTagJoinTranslation {}),
-        Box::new(unit::UnitTranslation {}),
-        Box::new(item::ItemTranslation {}),
-        Box::new(store::StoreTranslation {}),
-        Box::new(master_list::MasterListTranslation {}),
-        Box::new(master_list_line::MasterListLineTranslation {}),
-        Box::new(master_list_name_join::MasterListNameJoinTranslation {}),
-        Box::new(period_schedule::PeriodScheduleTranslation {}),
-        Box::new(period::PeriodTranslation {}),
-        Box::new(program_requisition_settings::ProgramRequisitionSettingsTranslation {}),
-        Box::new(report::ReportTranslation {}),
-        Box::new(inventory_adjustment_reason::InventoryAdjustmentReasonTranslation {}),
-        Box::new(store_preference::StorePreferenceTranslation {}),
-        Box::new(form_schema::FormSchemaTranslation {}),
-        Box::new(document_registry::DocumentRegistryTranslation {}),
+        name::boxed(),
+        name_tag::boxed(),
+        name_tag_join::boxed(),
+        unit::boxed(),
+        item::boxed(),
+        store::boxed(),
+        master_list::boxed(),
+        master_list_line::boxed(),
+        master_list_name_join::boxed(),
+        period_schedule::boxed(),
+        period::boxed(),
+        program_requisition_settings::boxed(),
+        report::boxed(),
+        inventory_adjustment_reason::boxed(),
+        store_preference::boxed(),
+        form_schema::boxed(),
+        document_registry::boxed(),
         // Remote
-        Box::new(location::LocationTranslation {}),
-        Box::new(location_movement::LocationMovementTranslation {}),
-        Box::new(stock_line::StockLineTranslation {}),
-        Box::new(invoice::InvoiceTranslation {}),
-        Box::new(invoice_line::InvoiceLineTranslation {}),
-        Box::new(stocktake::StocktakeTranslation {}),
-        Box::new(stocktake_line::StocktakeLineTranslation {}),
-        Box::new(requisition::RequisitionTranslation {}),
-        Box::new(requisition_line::RequisitionLineTranslation {}),
-        Box::new(activity_log::ActivityLogTranslation {}),
-        Box::new(barcode::BarcodeTranslation {}),
-        Box::new(sensor::SensorTranslation {}),
-        Box::new(temperature_log::TemperatureLogTranslation {}),
-        Box::new(temperature_breach::TemperatureBreachTranslation {}),
-        Box::new(clinician::ClinicianTranslation {}),
-        Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
-        Box::new(currency::CurrencyTranslation {}),
-        // Remote-Central (site specific)
-        Box::new(name_store_join::NameStoreJoinTranslation {}),
-        Box::new(user_permission::UserPermissionTranslation {}),
-        Box::new(document::DocumentTranslation {}),
+        location::boxed(),
+        location_movement::boxed(),
+        stock_line::boxed(),
+        invoice::boxed(),
+        invoice_line::boxed(),
+        stocktake::boxed(),
+        stocktake_line::boxed(),
+        requisition::boxed(),
+        requisition_line::boxed(),
+        activity_log::boxed(),
+        barcode::boxed(),
+        clinician::boxed(),
+        clinician_store_join::boxed(),
+        name_store_join::boxed(),
+        user_permission::boxed(),
+        document::boxed(),
+        currency::boxed(),
+        // Cold chain
+        sensor::boxed(),
+        temperature_breach::boxed(),
+        temperature_log::boxed(),
+        pack_variant::boxed(),
         // Special translations
-        Box::new(special::NameToNameStoreJoinTranslation {}),
-        Box::new(special::ItemMergeTranslation {}),
-        Box::new(special::NameMergeTranslation {}),
-        Box::new(special::ClinicianMergeTranslation {}),
+        special::name_to_name_store_join::boxed(),
+        // Merge
+        special::name_merge::boxed(),
+        special::item_merge::boxed(),
+        special::clinician_merge::boxed(),
     ]
 }
 
@@ -102,13 +105,14 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
 
     let mut ts = TopologicalSort::<&str>::new();
     for translator in translators {
-        let pull_dep = translator.pull_dependencies();
-        if pull_dep.dependencies.len() == 0 {
-            ts.insert(pull_dep.table);
+        let pull_deps = translator.pull_dependencies();
+        let table = translator.table_name();
+        if pull_deps.len() == 0 {
+            ts.insert(table);
             continue;
         }
-        for dep in pull_dep.dependencies {
-            ts.add_dependency(dep, pull_dep.table);
+        for dep in pull_deps {
+            ts.add_dependency(dep, table);
         }
     }
 
@@ -126,272 +130,223 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
     output
 }
 
-#[allow(non_snake_case)]
-pub(crate) mod LegacyTableName {
-    // Central
-    pub(crate) const NAME: &str = "name";
-    pub(crate) const NAME_TAG: &str = "name_tag";
-    pub(crate) const UNIT: &str = "unit";
-    pub(crate) const ITEM: &str = "item";
-    pub(crate) const STORE: &str = "store";
-    pub(crate) const LIST_MASTER: &str = "list_master";
-    pub(crate) const LIST_MASTER_LINE: &str = "list_master_line";
-    pub(crate) const LIST_MASTER_NAME_JOIN: &str = "list_master_name_join";
-    pub(crate) const REPORT: &str = "report";
-    pub(crate) const INVENTORY_ADJUSTMENT_REASON: &str = "options";
-    pub(crate) const STORE_PREFERENCE: &str = "pref";
-    pub(crate) const FORM_SCHEMA: &str = "form_schema";
-    pub(crate) const PERIOD_SCHEDULE: &str = "periodSchedule";
-    pub(crate) const PERIOD: &str = "period";
-    pub(crate) const BARCODE: &str = "barcode";
-    // Remote
-    pub(crate) const LOCATION: &str = "Location";
-    pub(crate) const LOCATION_MOVEMENT: &str = "location_movement";
-    pub(crate) const ITEM_LINE: &str = "item_line";
-    pub(crate) const TRANSACT: &str = "transact";
-    pub(crate) const TRANS_LINE: &str = "trans_line";
-    pub(crate) const STOCKTAKE: &str = "Stock_take";
-    pub(crate) const STOCKTAKE_LINE: &str = "Stock_take_lines";
-    pub(crate) const REQUISITION: &str = "requisition";
-    pub(crate) const REQUISITION_LINE: &str = "requisition_line";
-    pub(crate) const OM_ACTIVITY_LOG: &str = "om_activity_log";
-    pub(crate) const SENSOR: &str = "sensor";
-    pub(crate) const TEMPERATURE_LOG: &str = "temperature_log";
-    pub(crate) const TEMPERATURE_BREACH: &str = "temperature_breach";
-    pub(crate) const CURRENCY: &str = "currency";
-    // Remote-Central (site specific)
-    pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
-    pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
-    pub(crate) const CLINICIAN: &str = "clinician";
-    pub(crate) const CLINICIAN_STORE_JOIN: &str = "clinician_store_join";
-    pub(crate) const USER_PERMISSION: &str = "om_user_permission";
-    pub(crate) const DOCUMENT: &str = "om_document";
-    pub(crate) const DOCUMENT_REGISTRY: &str = "om_document_registry";
+#[derive(Debug)]
+pub(crate) enum IntegrationOperation {
+    Upsert(Box<dyn Upsert>),
+    Delete(Box<dyn Delete>),
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub(crate) enum PullUpsertRecord {
-    UserPermission(UserPermissionRow),
-    Unit(UnitRow),
-    Name(NameRow),
-    NameTag(NameTagRow),
-    NameTagJoin(NameTagJoinRow),
-    Item(ItemRow),
-    Store(StoreRow),
-    MasterList(MasterListRow),
-    MasterListLine(MasterListLineRow),
-    MasterListNameJoin(MasterListNameJoinRow),
-    PeriodSchedule(PeriodScheduleRow),
-    Period(PeriodRow),
-    Context(ContextRow),
-    Program(ProgramRow),
-    ProgramRequisitionSettings(ProgramRequisitionSettingsRow),
-    ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow),
-    Report(ReportRow),
-    Location(LocationRow),
-    LocationMovement(LocationMovementRow),
-    StockLine(StockLineRow),
-    NameStoreJoin(NameStoreJoinRow),
-    Invoice(InvoiceRow),
-    InvoiceLine(InvoiceLineRow),
-    Stocktake(StocktakeRow),
-    StocktakeLine(StocktakeLineRow),
-    Requisition(RequisitionRow),
-    RequisitionLine(RequisitionLineRow),
-    ActivityLog(ActivityLogRow),
-    InventoryAdjustmentReason(InventoryAdjustmentReasonRow),
-    StorePreference(StorePreferenceRow),
-    Barcode(BarcodeRow),
-    Sensor(SensorRow),
-    TemperatureLog(TemperatureLogRow),
-    TemperatureBreach(TemperatureBreachRow),
-    Clinician(ClinicianRow),
-    ClinicianStoreJoin(ClinicianStoreJoinRow),
-    FormSchema(FormSchemaJson),
-    Document(Document),
-    DocumentRegistry(DocumentRegistryRow),
-    Currency(CurrencyRow),
-    ItemLink(ItemLinkRow),
-    NameLink(NameLinkRow),
-    ClinicianLink(ClinicianLinkRow),
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub(crate) struct PullDeleteRecord {
-    pub(crate) id: String,
-    pub(crate) table: PullDeleteRecordTable,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub(crate) enum PullDeleteRecordTable {
-    // Central
-    UserPermission,
-    Unit,
-    Item,
-    Store,
-    ProgramRequisitionSettings,
-    ProgramRequisitionOrderType,
-    MasterListNameJoin,
-    Report,
-    InventoryAdjustmentReason,
-    // Remote-Central (site specific)
-    NameStoreJoin,
-    NameTagJoin,
-    // Remote (for other party of transfers)
-    Invoice,
-    InvoiceLine,
-    Requisition,
-    RequisitionLine,
-    #[cfg(all(test, feature = "integration_test"))]
-    Location,
-    #[cfg(all(test, feature = "integration_test"))]
-    StockLine,
-    #[cfg(all(test, feature = "integration_test"))]
-    Stocktake,
-    #[cfg(all(test, feature = "integration_test"))]
-    StocktakeLine,
-    #[cfg(all(test, feature = "integration_test"))]
-    ActivityLog,
-    #[cfg(all(test, feature = "integration_test"))]
-    Currency,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub(crate) struct IntegrationRecords {
-    pub(crate) upserts: Vec<PullUpsertRecord>,
-    pub(crate) deletes: Vec<PullDeleteRecord>,
-}
-
-impl IntegrationRecords {
-    pub(crate) fn new() -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: Vec::new(),
-            deletes: Vec::new(),
-        }
-    }
-    pub(crate) fn from_upsert(r: PullUpsertRecord) -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: vec![r],
-            deletes: Vec::new(),
-        }
-    }
-    pub(crate) fn from_upserts(rows: Vec<PullUpsertRecord>) -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: rows,
-            deletes: Vec::new(),
-        }
+impl IntegrationOperation {
+    pub(crate) fn upsert<U>(upsert: U) -> Self
+    where
+        U: Upsert + 'static,
+    {
+        Self::Upsert(Box::new(upsert))
     }
 
-    pub(crate) fn from_delete(id: &str, table: PullDeleteRecordTable) -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: Vec::new(),
-            deletes: vec![PullDeleteRecord {
-                id: id.to_owned(),
-                table,
-            }],
-        }
-    }
-
-    pub(crate) fn join(self, other: IntegrationRecords) -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: vec![self.upserts, other.upserts].concat(),
-            deletes: vec![self.deletes, other.deletes].concat(),
-        }
-    }
-
-    pub(crate) fn is_empty(&self) -> bool {
-        self.upserts.is_empty() && self.deletes.is_empty()
+    pub(crate) fn delete<U>(delete: U) -> Self
+    where
+        U: Delete + 'static,
+    {
+        Self::Delete(Box::new(delete))
     }
 }
 
-/// Pull dependency description for a SyncTranslation
-pub(crate) struct PullDependency {
-    /// The legacy table name from where data is pulled for the SyncTranslation.
-    pub table: &'static str,
-    /// List of legacy tables that need to be integrated first before the SyncTranslation can run.
-    pub dependencies: Vec<&'static str>,
+#[derive(Debug)]
+pub(crate) enum PullTranslateResult {
+    IntegrationOperations(Vec<IntegrationOperation>),
+    // Translator was found for a record, but ignored because of unexpected data or error
+    // For example if store is a system store, or report context not found
+    Ignored(String),
+    // Translator doesn't translates this record
+    NotMatched,
 }
 
+impl PartialEq for PullTranslateResult {
+    fn eq(&self, other: &Self) -> bool {
+        format!("{self:?}") == format!("{other:?}")
+    }
+}
+
+impl PullTranslateResult {
+    pub(crate) fn upsert<U>(upsert: U) -> Self
+    where
+        U: Upsert + 'static,
+    {
+        Self::upserts(vec![upsert])
+    }
+
+    pub(crate) fn upserts<U>(upsert: Vec<U>) -> Self
+    where
+        U: Upsert + 'static,
+    {
+        Self::IntegrationOperations(
+            upsert
+                .into_iter()
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert)))
+                .collect(),
+        )
+    }
+
+    pub(crate) fn delete<U>(upsert: U) -> Self
+    where
+        U: Delete + 'static,
+    {
+        Self::deletes(vec![upsert])
+    }
+
+    pub(crate) fn deletes<U>(upsert: Vec<U>) -> Self
+    where
+        U: Delete + 'static,
+    {
+        Self::IntegrationOperations(
+            upsert
+                .into_iter()
+                .map(|upsert| IntegrationOperation::Delete(Box::new(upsert)))
+                .collect(),
+        )
+    }
+}
+
+pub(crate) struct PushSyncRecord {
+    pub(crate) cursor: i64,
+    pub(crate) record: CommonSyncRecord,
+}
+
+pub(crate) enum PushTranslateResult {
+    PushRecord(Vec<PushSyncRecord>),
+    Ignored(String),
+    NotMatched,
+}
+
+impl PushTranslateResult {
+    pub(crate) fn upsert(
+        changelog: &ChangelogRow,
+        table_name: &str,
+        record_data: serde_json::Value,
+    ) -> Self {
+        Self::PushRecord(vec![PushSyncRecord {
+            cursor: changelog.cursor,
+            record: CommonSyncRecord {
+                table_name: table_name.to_string(),
+                record_id: changelog.record_id.clone(),
+                action: SyncAction::Update,
+                record_data,
+            },
+        }])
+    }
+    pub(crate) fn delete(changelog: &ChangelogRow, table_name: &str) -> Self {
+        Self::PushRecord(vec![PushSyncRecord {
+            cursor: changelog.cursor,
+            record: CommonSyncRecord {
+                table_name: table_name.to_string(),
+                record_id: changelog.record_id.clone(),
+                action: SyncAction::Delete,
+                record_data: Default::default(),
+            },
+        }])
+    }
+}
+
+/// This enum is used in match_to_sync_record to determine
+/// if record needs to be translated and pushed or pulled
+/// since SyncTranslation is used for translating from database row
+/// to sync record when pushing remote records to Legacy Centra, omSupply Central
+/// and when omSupply central is preparing records in response to a pull requestion
+/// from omSupply remote sites
+pub(crate) enum ToSyncRecordTranslationType {
+    /// When omSupply remote is pushing to og mSupply central
+    PushToLegacyCentral,
+    /// When omSupply remote is pushing to omSupply central
+    #[allow(dead_code)]
+    PushToOmSupplyCentral,
+    // When omSupply remote is pulling from omSupply central
+    PullFromOmSupplyCentral,
+}
+
+/// This trait has collection of methods for sync operation translations
+/// it is used on remote site when translating records:
+///  * pulled from legacy and omSupply central servers
+///  * pushed to legacy and omSupply central servers
+/// also used on central site when responding to pull requests
+/// from remote sites, to trasnalte to sync record sent in response
+///
+/// "sync_record" in this context refers to transport layer records (json representation of database record alongside metadata like table_name)
 pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
-    fn pull_dependencies(&self) -> PullDependency;
+    fn pull_dependencies(&self) -> Vec<&'static str>;
+    fn table_name(&self) -> &'static str;
+    /// By default matching by table name
+    /// used to determine if translation applies when remote site pulls sync records from central
+    fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
+        self.table_name() == row.table_name
+    }
 
-    fn try_translate_pull_upsert(
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        Ok(None)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::NotMatched)
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_merge_sync_record(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        Ok(None)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::NotMatched)
     }
 
-    fn try_translate_pull_merge(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         _: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        Ok(None)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::NotMatched)
     }
 
-    /// Implementation should return three types of results
-    /// * Error - Something completely unexpected that is not recoverable
-    /// * None - Translator did not match record type
-    /// * Some - Translator did match and either translated record/records or
-    ///          empty array if record is deliberately ignored
-    fn try_translate_push_upsert(
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        None
+    }
+
+    /// By default matching by change log type, this methods also determines
+    /// if records needs to be pushed to legacy or omSupply central and which records
+    /// omSupply central should respond with when pull is requested by remote site
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            // By default will assume records needs to be pushed to central if change_log_type is implemented
+            ToSyncRecordTranslationType::PushToLegacyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            // Have to manually specify in the translation
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral => false,
+            // Have to manually specify in the translation
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => unimplemented!(),
+        }
+    }
+
+    fn try_translate_to_upsert_sync_record(
         &self,
         _: &StorageConnection,
         _: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        Ok(None)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::NotMatched)
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         _: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        Ok(None)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::NotMatched)
     }
 }
-
-impl RemoteSyncRecordV5 {
-    pub(crate) fn new_upsert(
-        changelog: &ChangelogRow,
-        table_name: &'static str,
-        data: serde_json::Value,
-    ) -> Self {
-        Self {
-            sync_id: changelog.cursor.to_string(),
-            record: CommonSyncRecordV5 {
-                table_name: table_name.to_string(),
-                record_id: changelog.record_id.clone(),
-                action: SyncActionV5::Update,
-                data,
-            },
-        }
-    }
-    pub(crate) fn new_delete(changelog: &ChangelogRow, table_name: &'static str) -> Self {
-        Self {
-            sync_id: changelog.cursor.to_string(),
-            record: CommonSyncRecordV5 {
-                table_name: table_name.to_string(),
-                record_id: changelog.record_id.clone(),
-                action: SyncActionV5::Delete,
-                data: Default::default(),
-            },
-        }
-    }
-}
-
 #[derive(Error, Debug)]
 #[error("Problem translation push record: {changelog:?}")]
 pub(crate) struct PushTranslationError {
@@ -399,15 +354,17 @@ pub(crate) struct PushTranslationError {
     source: anyhow::Error,
 }
 
-pub(crate) fn translate_changelogs_to_push_records(
+pub(crate) fn translate_changelogs_to_sync_records(
     connection: &StorageConnection,
     changelogs: Vec<ChangelogRow>,
-) -> Result<Vec<RemoteSyncRecordV5>, PushTranslationError> {
+    r#type: ToSyncRecordTranslationType,
+) -> Result<Vec<PushSyncRecord>, PushTranslationError> {
     let translators = all_translators();
     let mut out_records = Vec::new();
     for changelog in changelogs {
-        let mut translation_results = translate_changelog(connection, &translators, &changelog)
-            .map_err(|source| PushTranslationError { source, changelog })?;
+        let mut translation_results =
+            translate_changelog(connection, &translators, &changelog, &r#type)
+                .map_err(|source| PushTranslationError { source, changelog })?;
         out_records.append(&mut translation_results);
     }
 
@@ -418,25 +375,34 @@ fn translate_changelog(
     connection: &StorageConnection,
     translators: &SyncTranslators,
     changelog: &ChangelogRow,
-) -> Result<Vec<RemoteSyncRecordV5>, anyhow::Error> {
+    r#type: &ToSyncRecordTranslationType,
+) -> Result<Vec<PushSyncRecord>, anyhow::Error> {
     let mut translation_results = Vec::new();
 
     for translator in translators.iter() {
+        if !translator.should_translate_to_sync_record(&changelog, r#type) {
+            continue;
+        }
+
         let translation_result = match changelog.row_action {
             ChangelogAction::Upsert => {
-                translator.try_translate_push_upsert(connection, &changelog)?
+                translator.try_translate_to_upsert_sync_record(connection, &changelog)?
             }
             ChangelogAction::Delete => {
-                translator.try_translate_push_delete(connection, &changelog)?
+                translator.try_translate_to_delete_sync_record(connection, &changelog)?
             }
         };
 
-        if let Some(mut translation_result) = translation_result {
-            translation_results.append(&mut translation_result);
+        match translation_result {
+            PushTranslateResult::PushRecord(records) => translation_results.push(records),
+            PushTranslateResult::Ignored(ignore_message) => {
+                log::debug!("Ignored record in push translation: {}", ignore_message)
+            }
+            PushTranslateResult::NotMatched => {}
         }
     }
 
-    Ok(translation_results)
+    Ok(translation_results.into_iter().flatten().collect())
 }
 
 #[derive(Debug)]

@@ -4,15 +4,16 @@ import {
   ExpiryDateCell,
   CheckCell,
   CurrencyCell,
-  Column,
   useCurrency,
   LocationCell,
+  Column,
   NumberCell,
   ColumnDescription,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { PackVariantCell } from '@openmsupply-client/system';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
@@ -49,7 +50,60 @@ export const useOutboundLineEditColumns = ({
         Cell: LocationCell,
       },
     ],
-    ['packSize', { width: 90 }],
+    [
+      'sellPricePerPack',
+      {
+        Cell: CurrencyCell(),
+        formatter: sellPrice => c(Number(sellPrice)).format(),
+        width: 120,
+      },
+    ],
+    {
+      Cell: NumberCell,
+      label: 'label.in-store',
+      key: 'totalNumberOfPacks',
+      align: ColumnAlign.Right,
+      width: 80,
+      accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
+    },
+    {
+      Cell: NumberCell,
+      label: 'label.available-packs',
+      key: 'availableNumberOfPacks',
+      align: ColumnAlign.Right,
+      width: 85,
+      accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+    },
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackVariantCell({
+        getItemId: row => row?.item.id,
+        getPackSizes: row => [row.packSize ?? 1],
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+    },
+    [
+      'unitQuantity',
+      {
+        label: 'label.unit-quantity-issued',
+        labelProps: { unit },
+        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+        width: 120,
+      },
+    ],
+    [
+      'numberOfPacks',
+      {
+        Cell: PackQuantityCell,
+        width: 120,
+        label: 'label.pack-quantity-issued',
+        setter: ({ packSize, id, numberOfPacks }) =>
+          onChange(id, numberOfPacks ?? 0, packSize ?? 1),
+      },
+    ],
+
     [
       'sellPricePerPack',
       {

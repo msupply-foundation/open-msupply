@@ -267,7 +267,7 @@ fn generate_stock_line_update(
     };
 
     let stock_line_item =
-        match ItemRowRepository::new(connection).find_one_by_id(&stock_line_item_id)? {
+        match ItemRowRepository::new(connection).find_active_by_id(&stock_line_item_id)? {
             Some(item) => item,
             None => {
                 return Err(UpdateStocktakeError::InternalError(format!(
@@ -390,7 +390,7 @@ fn generate_new_stock_line(
         barcode_id: None,
     };
 
-    let item = match ItemRowRepository::new(connection).find_one_by_id(&item_id)? {
+    let item = match ItemRowRepository::new(connection).find_active_by_id(&item_id)? {
         Some(item) => item,
         None => {
             return Err(UpdateStocktakeError::InternalError(format!(

@@ -9,11 +9,12 @@ import {
   useTranslation,
   useUrlQueryParams,
   ColumnAlign,
-  useFormatNumber,
+  NumUtils,
   TooltipTextCell,
 } from '@openmsupply-client/common';
-import { useItems, ItemRowFragment } from '../api';
+import { useItems, ItemsWithStatsFragment } from '../api';
 import { Toolbar } from './Toolbar';
+import { PackVariantQuantityCell, PackVariantSelectCell } from '../Components';
 
 const ItemListComponent: FC = () => {
   const {
@@ -29,17 +30,8 @@ const ItemListComponent: FC = () => {
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const formatNumber = useFormatNumber();
 
-  type ItemWithStats = ItemRowFragment & {
-    stats: {
-      averageMonthlyConsumption?: number | null;
-      availableStockOnHand?: number | null;
-      availableMonthsOfStockOnHand?: number | null;
-    };
-  };
-
-  const columns = useColumns<ItemWithStats>(
+  const columns = useColumns<ItemsWithStatsFragment>(
     [
       ['code', { width: 75 }],
       [
@@ -50,18 +42,21 @@ const ItemListComponent: FC = () => {
         },
       ],
       {
-        accessor: ({ rowData }) => rowData.unitName ?? '',
+        key: 'packUnit',
+        label: 'label.pack',
         align: ColumnAlign.Right,
-        key: 'unitName',
-        label: 'label.unit',
-        sortable: false,
-        width: 100,
+        Cell: PackVariantSelectCell({
+          getItemId: r => r.id,
+          getUnitName: r => r.unitName || null,
+        }),
       },
       [
         'stockOnHand',
         {
-          accessor: ({ rowData }) =>
-            formatNumber.round(rowData.stats.availableStockOnHand ?? 0),
+          Cell: PackVariantQuantityCell({
+            getItemId: r => r.id,
+            getQuantity: r => NumUtils.round(r.stats.availableStockOnHand),
+          }),
           label: 'label.soh',
           description: 'description.soh',
           sortable: false,
@@ -70,18 +65,21 @@ const ItemListComponent: FC = () => {
       [
         'monthlyConsumption',
         {
-          accessor: ({ rowData }) =>
-            formatNumber.round(rowData.stats.averageMonthlyConsumption ?? 0, 2),
+          Cell: PackVariantQuantityCell({
+            getItemId: r => r.id,
+            getQuantity: r =>
+              NumUtils.round(r.stats.averageMonthlyConsumption, 2),
+          }),
           align: ColumnAlign.Right,
           sortable: false,
         },
       ],
       {
-        accessor: ({ rowData }) =>
-          formatNumber.round(
-            rowData.stats.availableMonthsOfStockOnHand ?? 0,
-            2
-          ),
+        Cell: PackVariantQuantityCell({
+          getItemId: r => r.id,
+          getQuantity: r =>
+            NumUtils.round(r.stats.availableMonthsOfStockOnHand ?? 0, 2),
+        }),
         align: ColumnAlign.Right,
         description: 'description.months-of-stock',
         key: 'availableMonthsOfStockOnHand',
