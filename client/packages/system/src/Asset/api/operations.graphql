@@ -7,6 +7,15 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   id
   manufacturer
   model
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
+  }
+  assetType {
+    name
+  }
 }
 
 query assetCatalogueItems(
@@ -31,10 +40,7 @@ query assetCatalogueItems(
   }
 }
 
-query assetCatalogueItemById(
-  $storeId: String!
-  $assetCatalogueItemId: String!
-) {
+query assetCatalogueItemById($assetCatalogueItemId: String!) {
   assetCatalogueItems(filter: { id: { equalTo: $assetCatalogueItemId } }) {
     ... on AssetCatalogueItemConnector {
       __typename
@@ -48,7 +54,7 @@ query assetCatalogueItemById(
 }
 
 query assetClasses($sort: AssetClassSortInput) {
-  assetClasses(storeId: $storeId, sort: $sort) {
+  assetClasses(sort: $sort) {
     ... on AssetClassConnector {
       nodes {
         id
@@ -72,8 +78,11 @@ query assetTypes($sort: AssetTypeSortInput) {
   }
 }
 
-query assetCategories($sort: AssetCategorySortInput) {
-  assetCategories(sort: $sort) {
+query assetCategories(
+  $sort: AssetCategorySortInput
+  $filter: AssetCategoryFilterInput
+) {
+  assetCategories(sort: $sort, filter: $filter) {
     ... on AssetCategoryConnector {
       nodes {
         id

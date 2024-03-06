@@ -21,3 +21,9 @@ export const assetCategoryListItemsToCsv = (
   ]);
   return Formatter.csv({ fields, data });
 };
+
+export const mapIdNameToOptions = (items: { id: string; name: string }[]) =>
+  items.map(item => ({
+    label: item.name,
+    value: item.id,
+  }));
