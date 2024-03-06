@@ -10,7 +10,7 @@ export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, 
 
 export type OutboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
 
-export type InboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number };
+export type InboundReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number };
 
 export type OutboundReturnsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -66,7 +66,7 @@ export type InboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
+export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -135,9 +135,10 @@ export const OutboundReturnDetailRowFragmentDoc = gql`
   sellPricePerPack
 }
     `;
-export const InboundReturnDetailRowFragmentDoc = gql`
-    fragment InboundReturnDetailRow on InvoiceLineNode {
+export const InboundReturnLineFragmentDoc = gql`
+    fragment InboundReturnLine on InvoiceLineNode {
   id
+  itemId
   itemCode
   itemName
   batch
@@ -263,7 +264,7 @@ export const InboundReturnByNumberDocument = gql`
       invoiceNumber
       lines {
         nodes {
-          ...InboundReturnDetailRow
+          ...InboundReturnLine
         }
       }
       otherPartyName
@@ -273,7 +274,7 @@ export const InboundReturnByNumberDocument = gql`
     }
   }
 }
-    ${InboundReturnDetailRowFragmentDoc}`;
+    ${InboundReturnLineFragmentDoc}`;
 export const InsertOutboundReturnDocument = gql`
     mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
   insertOutboundReturn(storeId: $storeId, input: $input) {
