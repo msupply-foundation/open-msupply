@@ -80,7 +80,6 @@ pub async fn pull(
         cursor,
         batch_size,
         sync_v5_settings,
-        is_initialised,
     }: SyncPullRequestV6,
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -121,6 +120,8 @@ pub async fn pull(
     .map(SyncRecordV6::from)
     .collect();
 
+    println!("Sending records as central server: {:#?}", records);
+
     Ok(SyncBatchV6 {
         total_records,
         end_cursor,
@@ -148,6 +149,8 @@ pub async fn push(
         .map_err(Error::from)?;
 
     // TODO Versioning ?
+
+    println!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
         records,

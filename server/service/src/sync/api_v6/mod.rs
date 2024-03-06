@@ -53,6 +53,18 @@ impl From<RepositoryError> for SyncParsedErrorV6 {
     }
 }
 
+#[derive(Deserialize, Debug, Default, Serialize)]
+pub struct SyncPushSuccessV6 {
+    pub(crate) records_pushed: u64,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SyncPushResponseV6 {
+    Data(SyncPushSuccessV6),
+    Error(SyncParsedErrorV6),
+}
+
 #[derive(Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SyncPullResponseV6 {
@@ -110,7 +122,6 @@ pub struct SyncPullRequestV6 {
     pub(crate) cursor: u64,
     pub(crate) batch_size: u32,
     pub(crate) sync_v5_settings: SyncApiSettings,
-    pub(crate) is_initialised: bool,
 }
 
 #[derive(Serialize, Deserialize)]
