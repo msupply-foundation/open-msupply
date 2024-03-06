@@ -38,6 +38,14 @@ export const PackVariantEntryCell =
       Number(column.accessor({ rowData }))
     );
 
+    // If pack size is 0 on load set it to most used varaint or 1 (ideally should be default item pack)
+    // for stocklines this is possible since server would set packSize to None when created from master list
+    useEffect(() => {
+      if (Number(column.accessor({ rowData })) == 0) {
+        setPackSize(variantsControl?.activeVariant?.packSize || 1);
+      }
+    }, []);
+
     const updater = useDebounceCallback(column.setter, [column.setter], 250);
     const disabled = getIsDisabled?.(rowData) || false;
 
