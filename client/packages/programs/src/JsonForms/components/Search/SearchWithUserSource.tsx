@@ -53,10 +53,12 @@ export const SearchWithUserSource = (
   const getOptionLabel = (data: PatientSchema) =>
     options?.optionString
       ? formatTemplateString(options?.optionString, data)
-      : `${data['code']} - ${data['firstName']} ${data['lastName']}`;
+      : `${data['code'] ? data['code'] + '-' : ''} ${data['firstName']} ${
+          data['lastName']
+        }`;
 
   const handlePatientSelect = (patientId: string) => {
-    const patient = results.find(p => (p.id = patientId));
+    const patient = results.find(p => p.id === patientId);
     if (!patient) return;
     if (!options?.saveFields) {
       handleChange(path, patient);
