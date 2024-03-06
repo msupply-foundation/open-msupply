@@ -11,7 +11,7 @@ import { MasterListRow } from '../types';
 export const Toolbar: FC<{
   filter: FilterController;
 }> = ({ filter }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   const key = 'name' as keyof MasterListRow;
   const filterString =

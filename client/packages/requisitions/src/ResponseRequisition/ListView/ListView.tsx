@@ -12,6 +12,7 @@ import {
   NothingHere,
   useUrlQueryParams,
   ColumnDescription,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -112,7 +113,7 @@ export const ResponseRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
-  columnDefinitions.push(['comment', { minWidth: 400 }]);
+  columnDefinitions.push(['comment', { minWidth: 400, Cell: TooltipTextCell }]);
 
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,

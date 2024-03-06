@@ -195,6 +195,7 @@ mod encounter_document_updated_test {
                 None,
                 Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
                 None,
+                None,
             )
             .unwrap();
         assert_eq!(events.count, 1);
@@ -237,6 +238,7 @@ mod encounter_document_updated_test {
                 &context,
                 None,
                 Some(ProgramEventFilter::new().patient_id(EqualFilter::equal_to(&patient.id))),
+                None,
                 None,
             )
             .unwrap();

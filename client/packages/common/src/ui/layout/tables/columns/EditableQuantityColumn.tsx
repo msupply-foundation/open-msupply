@@ -10,7 +10,7 @@ interface SomeQuantityEntity extends RecordWithId {
 }
 
 export const getEditableQuantityColumn = <
-  T extends SomeQuantityEntity
+  T extends SomeQuantityEntity,
 >(): ColumnDefinition<T> => ({
   key: 'quantity',
   width: 100,
@@ -64,6 +64,6 @@ export const getEditableQuantityColumn = <
       />
     );
   },
-  label: 'label.pack-quantity',
+  label: 'label.num-packs',
   accessor: ({ rowData }) => String(rowData.quantity),
 });

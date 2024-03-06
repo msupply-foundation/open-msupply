@@ -1,10 +1,7 @@
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{
-        item::ordered_simple_json, LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
-    },
-};
-use repository::{ItemRow, ItemRowType};
+use crate::sync::{test::TestSyncPullRecord, translations::item::ordered_simple_json};
+use repository::{ItemRow, ItemRowDelete, ItemRowType};
+
+const TABLE_NAME: &'static str = "item";
 
 const ITEM_1: (&'static str, &'static str) = (
     "8F252B5884B74888AAB73A0D42C09E7A",
@@ -169,9 +166,9 @@ const ITEM_2: (&'static str, &'static str) = (
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![
         TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::ITEM,
+            TABLE_NAME,
             (ITEM_1.0, &ordered_simple_json(ITEM_1.1).unwrap()),
-            PullUpsertRecord::Item(ItemRow {
+            ItemRow {
                 id: ITEM_1.0.to_owned(),
                 name: "Non stock items".to_owned(),
                 code: "NSI".to_owned(),
@@ -180,12 +177,12 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 legacy_record: ordered_simple_json(ITEM_1.1).unwrap(),
                 default_pack_size: 1,
                 is_active: true,
-            }),
+            },
         ),
         TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::ITEM,
+            TABLE_NAME,
             (ITEM_2.0, &ordered_simple_json(ITEM_2.1).unwrap()),
-            PullUpsertRecord::Item(ItemRow {
+            ItemRow {
                 id: ITEM_2.0.to_owned(),
                 name: "Non stock items 2".to_owned(),
                 code: "NSI".to_owned(),
@@ -194,15 +191,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 legacy_record: ordered_simple_json(ITEM_2.1).unwrap(),
                 default_pack_size: 2,
                 is_active: true,
-            }),
+            },
         ),
     ]
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::ITEM,
+        TABLE_NAME,
         ITEM_1.0,
-        PullDeleteRecordTable::Item,
+        ItemRowDelete(ITEM_1.0.to_string()),
     )]
 }

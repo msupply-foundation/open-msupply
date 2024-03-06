@@ -17,6 +17,7 @@ use repository::{
     ProgramEventSortField, Sort, StringFilter,
 };
 use serde::Serialize;
+use service::programs::encounter::suggested_next_encounter::SuggestedNextEncounter;
 
 use crate::types::ClinicianNode;
 
@@ -239,6 +240,21 @@ impl EncounterEventFilterInput {
     }
 }
 
+pub struct SuggestedNextEncounterNode {
+    suggested: SuggestedNextEncounter,
+}
+
+#[Object]
+impl SuggestedNextEncounterNode {
+    async fn start_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.suggested.start_datetime, Utc)
+    }
+
+    async fn label(&self) -> &Option<String> {
+        &self.suggested.label
+    }
+}
+
 #[Object]
 impl EncounterNode {
     pub async fn id(&self) -> &str {
@@ -396,6 +412,7 @@ impl EncounterNode {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
                 })),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -439,6 +456,7 @@ impl EncounterNode {
                 page.map(PaginationOption::from),
                 Some(program_filter),
                 sort.map(ProgramEventSortInput::to_domain),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -454,5 +472,25 @@ impl EncounterNode {
                 })
                 .collect(),
         }))
+    }
+
+    /// Tries to suggest a date for the next encounter
+    async fn suggested_next_encounter(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<SuggestedNextEncounterNode>> {
+        let service_provider = ctx.service_provider();
+        let context = service_provider.basic_context()?;
+        let suggested = service_provider
+            .encounter_service
+            .suggested_next_encounter(
+                &context,
+                service_provider,
+                &self.patient_row().id,
+                &self.encounter_row().document_type,
+                &self.allowed_ctx,
+            )?;
+
+        Ok(suggested.map(|suggested| SuggestedNextEncounterNode { suggested }))
     }
 }

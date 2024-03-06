@@ -134,6 +134,9 @@ impl InvoiceLineNode {
     pub async fn tax_percentage(&self) -> &Option<f64> {
         &self.row().tax
     }
+    pub async fn foreign_currency_price_before_tax(&self) -> &Option<f64> {
+        &self.row().foreign_currency_price_before_tax
+    }
     // Location
     pub async fn location_name(&self) -> Option<&str> {
         self.invoice_line.location_name()
