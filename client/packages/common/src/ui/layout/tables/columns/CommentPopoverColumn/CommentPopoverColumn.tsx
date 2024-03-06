@@ -17,7 +17,7 @@ export const getCommentPopoverColumn = <T extends RecordWithId>(
   },
 
   Cell: ({ column, rowData }) => {
-    const t = useTranslation('common');
+    const t = useTranslation();
     const value = column.accessor({ rowData });
 
     return value ? (

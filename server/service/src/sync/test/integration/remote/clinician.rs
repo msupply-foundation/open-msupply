@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreMode, StoreRow};
 use serde_json::json;
@@ -74,12 +74,12 @@ impl SyncRecordTester for ClinicianRecordTester {
                 "clinician": [clinician_json],
                 "clinician_store_join": [join_json],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Store(store_row),
-                PullUpsertRecord::Clinician(clinician_row.clone()),
-                PullUpsertRecord::ClinicianStoreJoin(join_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(store_row),
+                IntegrationOperation::upsert(clinician_row.clone()),
+                IntegrationOperation::upsert(join_row),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -98,11 +98,8 @@ impl SyncRecordTester for ClinicianRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Clinician(row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(row)],
+            ..Default::default()
         });
         result
     }

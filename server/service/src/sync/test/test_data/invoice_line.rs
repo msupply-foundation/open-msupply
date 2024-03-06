@@ -1,17 +1,15 @@
 use super::TestSyncPushRecord;
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{
-        invoice_line::{LegacyTransLineRow, LegacyTransLineType},
-        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
-    },
+    translations::invoice_line::{LegacyTransLineRow, LegacyTransLineType},
 };
 use chrono::NaiveDate;
 use repository::{
     mock::{mock_item_a, mock_stock_line_a},
-    InvoiceLineRow, InvoiceLineRowType,
+    InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineRowType,
 };
 use serde_json::json;
+const TABLE_NAME: &'static str = "trans_line";
 
 const TRANS_LINE_1: (&'static str, &'static str) = (
     "12ee2f10f0d211eb8dddb54df6d741bc",
@@ -72,9 +70,9 @@ const TRANS_LINE_1: (&'static str, &'static str) = (
 );
 fn trans_line_1_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANS_LINE,
+        TABLE_NAME,
         TRANS_LINE_1,
-        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+        InvoiceLineRow {
             id: TRANS_LINE_1.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -95,13 +93,14 @@ fn trans_line_1_pull_record() -> TestSyncPullRecord {
             note: None,
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
-        }),
+            foreign_currency_price_before_tax: Some(0.0),
+        },
     )
 }
 fn trans_line_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
         record_id: TRANS_LINE_1.0.to_string(),
-        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        table_name: TABLE_NAME.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_1.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
@@ -122,6 +121,7 @@ fn trans_line_1_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(10.0 * 700.36363636),
             total_after_tax: Some(10.0 * 700.36363636),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -185,9 +185,9 @@ const TRANS_LINE_2: (&'static str, &'static str) = (
 );
 fn trans_line_2_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANS_LINE,
+        TABLE_NAME,
         TRANS_LINE_2,
-        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+        InvoiceLineRow {
             id: TRANS_LINE_2.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -208,12 +208,13 @@ fn trans_line_2_pull_record() -> TestSyncPullRecord {
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
-        }),
+            foreign_currency_price_before_tax: Some(0.0),
+        },
     )
 }
 fn trans_line_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANS_LINE_2.0.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_2.0.to_string(),
@@ -235,6 +236,7 @@ fn trans_line_2_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(2.0 * 1000.9124798),
             total_after_tax: Some(2.0 * 1000.9124798),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -301,9 +303,9 @@ const TRANS_LINE_OM_FIELDS: (&'static str, &'static str) = (
 );
 fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANS_LINE,
+        TABLE_NAME,
         TRANS_LINE_OM_FIELDS,
-        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+        InvoiceLineRow {
             id: TRANS_LINE_OM_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -324,12 +326,13 @@ fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
-        }),
+            foreign_currency_price_before_tax: Some(0.0),
+        },
     )
 }
 fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANS_LINE_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_OM_FIELDS.0.to_string(),
@@ -351,6 +354,7 @@ fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(105.4),
             total_after_tax: Some(130.5),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -417,9 +421,9 @@ const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&'static str, &'static str) = (
 );
 fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANS_LINE,
+        TABLE_NAME,
         TRANS_LINE_OM_UNSET_TAX_FIELDS,
-        PullUpsertRecord::InvoiceLine(InvoiceLineRow {
+        InvoiceLineRow {
             id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
             invoice_id: "outbound_shipment_a".to_string(),
             item_link_id: mock_item_a().id,
@@ -440,12 +444,13 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
             return_reason_id: None,
-        }),
+            foreign_currency_price_before_tax: Some(0.0),
+        },
     )
 }
 fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANS_LINE.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
         push_data: json!(LegacyTransLineRow {
             id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
@@ -467,6 +472,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(105.4),
             total_after_tax: Some(130.5),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -482,9 +488,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::TRANS_LINE,
+        TABLE_NAME,
         TRANS_LINE_OM_UNSET_TAX_FIELDS.0,
-        PullDeleteRecordTable::InvoiceLine,
+        InvoiceLineRowDelete(TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string()),
     )]
 }
 

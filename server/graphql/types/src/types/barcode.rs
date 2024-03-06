@@ -85,7 +85,7 @@ impl BarcodeConnector {
 
 #[cfg(test)]
 mod test {
-    use async_graphql::{EmptyMutation, Object};
+    use async_graphql::Object;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
