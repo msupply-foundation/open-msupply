@@ -11,8 +11,8 @@ use repository::{
 };
 
 use crate::invoice::common::{
-    calculate_total_after_tax, generate_batches_total_number_of_packs_update,
-    InvoiceLineHasNoStockLine,
+    calculate_foreign_currency_total, calculate_total_after_tax,
+    generate_batches_total_number_of_packs_update, InvoiceLineHasNoStockLine,
 };
 
 use super::{UpdateOutboundShipment, UpdateOutboundShipmentError, UpdateOutboundShipmentStatus};
@@ -22,7 +22,7 @@ pub(crate) struct GenerateResult {
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
-    pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) update_lines: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -37,6 +37,8 @@ pub(crate) fn generate(
         colour: input_colour,
         transport_reference: input_transport_reference,
         tax: input_tax,
+        currency_id: input_currency_id,
+        currency_rate: input_currency_rate,
     }: UpdateOutboundShipment,
     connection: &StorageConnection,
 ) -> Result<GenerateResult, UpdateOutboundShipmentError> {
@@ -55,6 +57,8 @@ pub(crate) fn generate(
     update_invoice.tax = input_tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax);
+    update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
+    update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
 
     if let Some(status) = input_status.clone() {
         update_invoice.status = status.full_status().into()
@@ -83,11 +87,13 @@ pub(crate) fn generate(
         None
     };
 
-    let update_tax_for_lines = if update_invoice.tax.is_some() {
-        Some(generate_tax_update_for_lines(
+    let update_lines = if update_invoice.tax.is_some() || input_currency_rate.is_some() {
+        Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
             update_invoice.tax,
+            update_invoice.currency_id.clone(),
+            &update_invoice.currency_rate,
         )?)
     } else {
         None
@@ -100,7 +106,7 @@ pub(crate) fn generate(
         lines_to_trim,
         update_invoice,
         location_movements,
-        update_tax_for_lines,
+        update_lines,
     })
 }
 
@@ -213,10 +219,12 @@ fn set_new_status_datetime(
     }
 }
 
-fn generate_tax_update_for_lines(
+fn generate_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
     tax: Option<f64>,
+    currency_id: Option<String>,
+    currency_rate: &f64,
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -227,9 +235,20 @@ fn generate_tax_update_for_lines(
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
         let mut invoice_line_row = invoice_line.invoice_line_row;
-        invoice_line_row.tax = tax;
-        invoice_line_row.total_after_tax =
-            calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
+
+        if tax.is_some() {
+            invoice_line_row.tax = tax;
+            invoice_line_row.total_after_tax =
+                calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
+        }
+
+        invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            invoice_line_row.total_before_tax,
+            currency_id.clone(),
+            currency_rate,
+        )?;
+
         result.push(invoice_line_row);
     }
 

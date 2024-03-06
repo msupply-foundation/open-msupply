@@ -2,6 +2,7 @@ pub(crate) mod activity_log;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod currency;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
@@ -82,6 +83,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         name_store_join::boxed(),
         user_permission::boxed(),
         document::boxed(),
+        currency::boxed(),
         // Cold chain
         sensor::boxed(),
         temperature_breach::boxed(),

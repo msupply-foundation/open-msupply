@@ -34,6 +34,7 @@ table! {
         service_total_before_tax -> Double,
         service_total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
+        foreign_currency_total_after_tax -> Nullable<Double>,
     }
 }
 
@@ -48,6 +49,7 @@ pub struct PricingRow {
     pub service_total_before_tax: f64,
     pub service_total_after_tax: f64,
     pub tax_percentage: Option<f64>,
+    pub foreign_currency_total_after_tax: Option<f64>,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -338,6 +340,11 @@ impl InvoiceLine {
             service_total_before_tax: is_service.then(|| row.total_before_tax).unwrap_or(0.0),
             service_total_after_tax: is_service.then(|| row.total_after_tax).unwrap_or(0.0),
             tax_percentage: row.tax,
+            foreign_currency_total_after_tax: row.foreign_currency_price_before_tax.map(|price| {
+                row.tax
+                    .map(|tax| price + (price * tax / 100.0))
+                    .unwrap_or(price)
+            }),
         }
     }
 }

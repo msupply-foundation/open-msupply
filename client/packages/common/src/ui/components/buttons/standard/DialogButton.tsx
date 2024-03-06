@@ -86,7 +86,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   color,
   type,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
 
   return (

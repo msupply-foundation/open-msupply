@@ -53,6 +53,10 @@ fragment Outbound on InvoiceNode {
     isCustomer
     isSupplier
     isOnHold
+    store {
+      id
+      code
+    }
   }
 
   pricing {
@@ -64,7 +68,17 @@ fragment Outbound on InvoiceNode {
     serviceTotalAfterTax
     serviceTotalBeforeTax
     taxPercentage
+    foreignCurrencyTotalAfterTax
   }
+
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+
+  currencyRate
 }
 
 fragment OutboundRow on InvoiceNode {
@@ -90,7 +104,15 @@ fragment OutboundRow on InvoiceNode {
     __typename
     totalAfterTax
     taxPercentage
+    foreignCurrencyTotalAfterTax
   }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+  currencyRate
 }
 
 fragment Barcode on BarcodeNode {

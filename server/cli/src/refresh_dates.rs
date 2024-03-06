@@ -2,9 +2,8 @@ use chrono::Duration;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_query;
 use diesel::sql_types::*;
-use diesel::QueryDsl;
-use diesel::{sql_query, RunQueryDsl};
 use repository::DBType;
 use repository::RepositoryError;
 use repository::StorageConnection;
@@ -97,6 +96,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("stocktake_line", "expiry_date"),
         ("period", "start_date"),
         ("period", "end_date"),
+        ("currency", "date_updated"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -347,7 +347,6 @@ fn serialise_date(date: NaiveDate) -> String {
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
     use repository::{
         mock::{
             mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,
