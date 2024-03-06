@@ -84,6 +84,8 @@ const inboundParsers = {
         'taxPercentage' in patch
           ? { percentage: patch.taxPercentage }
           : undefined,
+      currencyId: 'currency' in patch ? patch.currency?.id : undefined,
+      currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {

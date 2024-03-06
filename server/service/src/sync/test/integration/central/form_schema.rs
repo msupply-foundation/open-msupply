@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::FormSchemaJson;
 use serde_json::json;
@@ -31,10 +31,8 @@ impl SyncRecordTester for FormSchemaTester {
             central_upsert: json!({
                 "form_schema": [json1],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::FormSchema(row1),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(row1)],
+            ..Default::default()
         });
 
         result

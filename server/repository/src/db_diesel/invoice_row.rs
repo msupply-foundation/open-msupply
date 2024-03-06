@@ -1,9 +1,12 @@
+use std::any::Any;
+
 use super::{
-    clinician_link_row::clinician_link, invoice_row::invoice::dsl::*, item_link_row::item_link,
-    name_link_row::name_link, store_row::store, user_row::user_account, StorageConnection,
+    clinician_link_row::clinician_link, currency_row::currency, invoice_row::invoice::dsl::*,
+    item_link_row::item_link, name_link_row::name_link, store_row::store, user_row::user_account,
+    StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::{dsl::max, prelude::*};
 
@@ -36,6 +39,8 @@ table! {
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
+        currency_id -> Nullable<Text>,
+        currency_rate -> Double,
         clinician_link_id -> Nullable<Text>,
     }
 }
@@ -43,6 +48,7 @@ table! {
 joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
+joinable!(invoice -> currency (currency_id));
 joinable!(invoice -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(invoice, item_link);
 allow_tables_to_appear_in_same_query!(invoice, name_link);
@@ -101,6 +107,8 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
+    pub currency_id: Option<String>,
+    pub currency_rate: f64,
     pub clinician_link_id: Option<String>,
 }
 
@@ -130,6 +138,8 @@ impl Default for InvoiceRow {
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
             tax: Default::default(),
+            currency_id: Default::default(),
+            currency_rate: Default::default(),
             clinician_link_id: Default::default(),
         }
     }
@@ -204,5 +214,38 @@ impl<'a> InvoiceRowRepository<'a> {
             .select(max(invoice_number))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InvoiceRowDelete(pub String);
+impl Delete for InvoiceRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for InvoiceRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

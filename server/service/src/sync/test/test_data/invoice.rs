@@ -1,18 +1,19 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{
-        invoice::{LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode},
-        LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
+    translations::invoice::{
+        LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
     },
 };
 use chrono::{Duration, NaiveDate, NaiveTime};
-use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use repository::{InvoiceRow, InvoiceRowDelete, InvoiceRowStatus, InvoiceRowType};
 use serde_json::json;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::TestSyncPushRecord;
 
-const TRANSACT_1: (&str, &str) = (
+const TABLE_NAME: &'static str = "transact";
+
+const TRANSACT_1: (&'static str, &'static str) = (
     "12e889c0f0d211eb8dddb54df6d741bc",
     r#"{
       "Colour": 0,
@@ -30,8 +31,8 @@ const TRANSACT_1: (&str, &str) = (
       "confirm_date": "2021-07-30",
       "confirm_time": 47046,
       "contact_id": "",
-      "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
-      "currency_rate": 1,
+      "currency_ID": "NEW_ZEALAND_DOLLARS",
+      "currency_rate": 1.32,
       "custom_data": null,
       "diagnosis_ID": "",
       "donor_default_id": "",
@@ -97,9 +98,9 @@ const TRANSACT_1: (&str, &str) = (
 );
 fn transact_1_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_1,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: TRANSACT_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
@@ -132,13 +133,15 @@ fn transact_1_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            currency_rate: 1.32,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn transact_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_1.0.to_string(),
@@ -182,7 +185,9 @@ fn transact_1_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::InboundShipment),
             om_colour: None,
             tax: Some(0.0),
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
+            currency_rate: 1.32
         }),
     }
 }
@@ -205,7 +210,7 @@ const TRANSACT_2: (&str, &str) = (
         "confirm_date": "0000-00-00",
         "confirm_time": 44806,
         "contact_id": "",
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "AUSTRALIAN_DOLLARS",
         "currency_rate": 1,
         "custom_data": null,
         "diagnosis_ID": "",
@@ -266,9 +271,9 @@ const TRANSACT_2: (&str, &str) = (
 );
 fn transact_2_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_2,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: TRANSACT_2.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -295,13 +300,15 @@ fn transact_2_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
+            currency_rate: 1.0,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn transact_2_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_2.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_2.0.to_string(),
@@ -340,7 +347,9 @@ fn transact_2_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::OutboundShipment),
             om_colour: None,
             tax: Some(0.0),
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
+            currency_rate: 1.0,
         }),
     }
 }
@@ -363,7 +372,7 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
         "confirm_date": "0000-00-00",
         "confirm_time": 44806,
         "contact_id": "",
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "",
         "currency_rate": 1,
         "custom_data": null,
         "diagnosis_ID": "",
@@ -434,9 +443,9 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
 
 fn transact_om_fields_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_OM_FIELDS,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: TRANSACT_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -487,13 +496,15 @@ fn transact_om_fields_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            currency_id: None,
+            currency_rate: 1.0,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn transact_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: TRANSACT_OM_FIELDS.0.to_string(),
@@ -557,7 +568,9 @@ fn transact_om_fields_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::InventoryAddition),
             om_colour: Some("SomeColour".to_string()),
             tax: Some(0.0),
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: 1.0,
         }),
     }
 }
@@ -599,7 +612,7 @@ const INVENTORY_ADDITION: (&str, &str) = (
         "category_ID": "",
         "confirm_time": 0,
         "foreign_currency_total": 0,
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "",
         "hold": false,
         "currency_rate": 1,
         "supplier_charge_fc": 0,
@@ -652,9 +665,9 @@ const INVENTORY_ADDITION: (&str, &str) = (
 
 fn inventory_addition_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         INVENTORY_ADDITION,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: INVENTORY_ADDITION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -686,14 +699,16 @@ fn inventory_addition_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
+            currency_id: None,
+            currency_rate: 1.0,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 
 fn inventory_addition_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: INVENTORY_ADDITION.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: INVENTORY_ADDITION.0.to_string(),
@@ -737,7 +752,9 @@ fn inventory_addition_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
-            prescriber_ID: None
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: 1.0
         }),
     }
 }
@@ -779,7 +796,7 @@ const INVENTORY_REDUCTION: (&str, &str) = (
         "category_ID": "",
         "confirm_time": 0,
         "foreign_currency_total": 0,
-        "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+        "currency_ID": "",
         "hold": false,
         "currency_rate": 1,
         "supplier_charge_fc": 0,
@@ -832,9 +849,9 @@ const INVENTORY_REDUCTION: (&str, &str) = (
 
 fn inventory_reduction_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         INVENTORY_REDUCTION,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: INVENTORY_REDUCTION.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             store_id: "store_b".to_string(),
@@ -866,14 +883,16 @@ fn inventory_reduction_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             colour: None,
+            currency_id: None,
+            currency_rate: 1.0,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 
 fn inventory_reduction_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: INVENTORY_REDUCTION.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: INVENTORY_REDUCTION.0.to_string(),
@@ -917,7 +936,9 @@ fn inventory_reduction_push_record() -> TestSyncPushRecord {
             transport_reference: None,
             requisition_ID: None,
             linked_transaction_id: None,
-            prescriber_ID: None,
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: 1.0,
         }),
     }
 }
@@ -940,7 +961,7 @@ const PRESCRIPTION_1: (&str, &str) = (
       "confirm_date": "2021-07-30",
       "confirm_time": 47046,
       "contact_id": "",
-      "currency_ID": "8009D512AC0E4FD78625E3C8273B0171",
+      "currency_ID": "",
       "currency_rate": 1,
       "custom_data": null,
       "diagnosis_ID": "",
@@ -1007,9 +1028,9 @@ const PRESCRIPTION_1: (&str, &str) = (
 );
 fn prescription_1_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         PRESCRIPTION_1,
-        PullUpsertRecord::Invoice(InvoiceRow {
+        InvoiceRow {
             id: PRESCRIPTION_1.0.to_string(),
             user_id: None,
             store_id: "store_b".to_string(),
@@ -1042,13 +1063,15 @@ fn prescription_1_pull_record() -> TestSyncPullRecord {
             requisition_id: None,
             linked_invoice_id: None,
             tax: Some(0.0),
+            currency_id: None,
+            currency_rate: 1.0,
             clinician_link_id: None,
-        }),
+        },
     )
 }
 fn prescription_1_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::TRANSACT.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: PRESCRIPTION_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
             ID: PRESCRIPTION_1.0.to_string(),
@@ -1092,7 +1115,9 @@ fn prescription_1_push_record() -> TestSyncPushRecord {
             om_type: Some(InvoiceRowType::Prescription),
             om_colour: None,
             tax: Some(0.0),
-            prescriber_ID: None
+            clinician_id: None,
+            currency_id: None,
+            currency_rate: 1.0,
         }),
     }
 }
@@ -1110,9 +1135,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::TRANSACT,
+        TABLE_NAME,
         TRANSACT_OM_FIELDS.0,
-        PullDeleteRecordTable::Invoice,
+        InvoiceRowDelete(TRANSACT_OM_FIELDS.0.to_string()),
     )]
 }
 

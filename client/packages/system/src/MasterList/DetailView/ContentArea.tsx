@@ -3,7 +3,7 @@ import { DataTable, useTranslation } from '@openmsupply-client/common';
 import { useMasterList } from '../api';
 
 export const ContentArea = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { lines, columns } = useMasterList.line.rows();
   return (
     <DataTable

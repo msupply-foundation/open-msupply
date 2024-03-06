@@ -30,7 +30,7 @@ const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
   const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,

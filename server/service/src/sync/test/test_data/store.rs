@@ -1,15 +1,11 @@
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{
-        IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable,
-        PullUpsertRecord,
-    },
-};
+use crate::sync::{test::TestSyncPullRecord, translations::PullTranslateResult};
 use chrono::NaiveDate;
-use repository::{StoreRow, SyncBufferRow};
+use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
 use util::inline_init;
 
-const STORE_1: (&str, &str) = (
+const TABLE_NAME: &'static str = "store";
+
+const STORE_1: (&'static str, &'static str) = (
     "4E27CEB263354EB7B1B33CEA8F7884D8",
     r#"{
     "ID": "4E27CEB263354EB7B1B33CEA8F7884D8",
@@ -55,17 +51,17 @@ const STORE_1: (&str, &str) = (
 );
 
 fn store_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upserts(
-        LegacyTableName::STORE,
+    TestSyncPullRecord::new_pull_upsert(
+        TABLE_NAME,
         STORE_1,
-        vec![PullUpsertRecord::Store(inline_init(|s: &mut StoreRow| {
+        inline_init(|s: &mut StoreRow| {
             s.id = STORE_1.0.to_owned();
             s.name_id = "1FB32324AF8049248D929CFB35F255BA".to_string();
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
             s.created_date = NaiveDate::from_ymd_opt(2021, 9, 3);
-        }))],
+        }),
     )
 }
 
@@ -117,9 +113,11 @@ const STORE_2: (&str, &str) = (
 
 fn store_2() -> TestSyncPullRecord {
     TestSyncPullRecord {
-        translated_record: None,
+        translated_record: PullTranslateResult::Ignored(
+            "Ignoring not implemented system names".to_string(),
+        ),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = LegacyTableName::STORE.to_owned();
+            r.table_name = TABLE_NAME.to_owned();
             r.record_id = STORE_2.0.to_owned();
             r.data = STORE_2.1.to_owned();
         }),
@@ -175,9 +173,11 @@ const STORE_3: (&str, &str) = (
 
 fn store_3() -> TestSyncPullRecord {
     TestSyncPullRecord {
-        translated_record: None,
+        translated_record: PullTranslateResult::Ignored(
+            "Ignoring not implemented system names".to_string(),
+        ),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = LegacyTableName::STORE.to_owned();
+            r.table_name = TABLE_NAME.to_owned();
             r.record_id = STORE_3.0.to_owned();
             r.data = STORE_3.1.to_owned();
         }),
@@ -233,9 +233,11 @@ const STORE_4: (&str, &str) = (
 
 fn store_4() -> TestSyncPullRecord {
     TestSyncPullRecord {
-        translated_record: None,
+        translated_record: PullTranslateResult::Ignored(
+            "Ignoring not implemented system names".to_string(),
+        ),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = LegacyTableName::STORE.to_owned();
+            r.table_name = TABLE_NAME.to_owned();
             r.record_id = STORE_4.0.to_owned();
             r.data = STORE_4.1.to_owned();
         }),
@@ -248,15 +250,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_deletes(
-        LegacyTableName::STORE,
+    vec![TestSyncPullRecord::new_pull_delete(
+        TABLE_NAME,
         STORE_4.0,
-        IntegrationRecords {
-            upserts: Vec::new(),
-            deletes: vec![PullDeleteRecord {
-                id: STORE_4.0.to_owned(),
-                table: PullDeleteRecordTable::Store,
-            }],
-        },
+        StoreRowDelete(STORE_4.0.to_string()),
     )]
 }

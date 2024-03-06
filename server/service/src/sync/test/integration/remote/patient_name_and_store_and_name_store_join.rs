@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameStoreJoinRow, NameType, StoreMode, StoreRow};
@@ -85,17 +85,17 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
 
         result.push(TestStepData {
             central_upsert: json!({
-                "store": [store_json ],
+                "store": [store_json],
                 "name": [patient_name_json, facility_name_json],
                 "name_store_join": [patient_name_store_join_json],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Name(patient_name_row.clone()),
-                PullUpsertRecord::Name(facility_name_row),
-                PullUpsertRecord::NameStoreJoin(patient_name_store_join_row),
-                PullUpsertRecord::Store(store_row),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(patient_name_row.clone()),
+                IntegrationOperation::upsert(facility_name_row),
+                IntegrationOperation::upsert(patient_name_store_join_row),
+                IntegrationOperation::upsert(store_row),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - update patient name
@@ -107,11 +107,8 @@ impl SyncRecordTester for PatientNameAndStoreAndNameStoreJoinTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![PullUpsertRecord::Name(
-                patient_row,
-            )]),
+            integration_records: vec![IntegrationOperation::upsert(patient_row)],
+            ..Default::default()
         });
 
         result

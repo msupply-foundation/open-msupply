@@ -1,11 +1,10 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   Autocomplete,
   AutocompleteOptionRenderer,
   Box,
   DefaultAutocompleteItemOption,
   Typography,
-  useBufferState,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -17,7 +16,7 @@ import {
 interface EncounterSearchInputProps {
   onChange: (type: EncounterRegistryByProgram) => void;
   width?: number;
-  value: EncounterRegistryByProgram | null;
+  lastEncounterType: string | undefined;
   disabled?: boolean;
 }
 
@@ -38,8 +37,8 @@ export const getEncounterOptionRenderer =
 export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   onChange,
   width = 250,
-  value,
   disabled = false,
+  lastEncounterType: encounterType,
 }) => {
   const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
@@ -52,9 +51,19 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
     useDocumentRegistry.get.encounterRegistriesByPrograms(
       enrolmentData?.nodes ?? []
     );
-  const [buffer, setBuffer] = useBufferState(value);
-  const EncounterOptionRenderer = getEncounterOptionRenderer();
+  const [buffer, setBuffer] = useState<EncounterRegistryByProgram | null>(null);
 
+  useEffect(() => {
+    if (!encounterData || !!buffer) return;
+
+    const registry = encounterData.find(
+      it => it.encounter.documentType === encounterType
+    );
+    setBuffer(registry ?? null);
+    registry && onChange(registry);
+  }, [buffer, encounterData, encounterType, setBuffer, onChange]);
+
+  const EncounterOptionRenderer = getEncounterOptionRenderer();
   return (
     <Autocomplete
       disabled={disabled}
@@ -66,9 +75,9 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
         }
       }
       loading={isEnrolmentDataLoading || isEncounterLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        name && onChange(name);
+      onChange={(_, registry) => {
+        setBuffer(registry ?? null);
+        registry && onChange(registry);
       }}
       options={encounterData ?? []}
       renderOption={EncounterOptionRenderer}

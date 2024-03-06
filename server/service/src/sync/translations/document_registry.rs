@@ -1,11 +1,12 @@
-use crate::sync::sync_serde::empty_str_as_option_string;
+use crate::sync::{
+    sync_serde::empty_str_as_option_string,
+    translations::{form_schema::FormSchemaTranslation, master_list::MasterListTranslation},
+};
 use repository::{DocumentRegistryCategory, DocumentRegistryRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -33,28 +34,31 @@ struct LegacyDocumentRegistryRow {
     pub config: Option<Value>,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::DOCUMENT_REGISTRY
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(DocumentRegistryTranslation)
 }
 
-pub(crate) struct DocumentRegistryTranslation {}
+pub(super) struct DocumentRegistryTranslation;
 impl SyncTranslation for DocumentRegistryTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::DOCUMENT_REGISTRY,
-            dependencies: vec![LegacyTableName::FORM_SCHEMA, LegacyTableName::LIST_MASTER],
-        }
+    fn table_name(&self) -> &'static str {
+        "om_document_registry"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            FormSchemaTranslation.table_name(),
+            // The program context is synced via the program master list
+            MasterListTranslation.table_name(),
+        ]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRegistryRow {
             id,
             document_type,
@@ -69,6 +73,7 @@ impl SyncTranslation for DocumentRegistryTranslation {
             Some(config) => Some(serde_json::to_string(&config)?),
             None => None,
         };
+
         let result = DocumentRegistryRow {
             id,
             document_type,
@@ -87,8 +92,6 @@ impl SyncTranslation for DocumentRegistryTranslation {
             config: config_str,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::DocumentRegistry(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 }

@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType};
 
@@ -67,13 +67,13 @@ impl SyncRecordTester for InventoryAdjustmentReasonTester {
                     "type": "negativeInventoryAdjustment"
                   }],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::InventoryAdjustmentReason(pos_1),
-                PullUpsertRecord::InventoryAdjustmentReason(pos_2),
-                PullUpsertRecord::InventoryAdjustmentReason(neg_1),
-                PullUpsertRecord::InventoryAdjustmentReason(neg_2),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(pos_1),
+                IntegrationOperation::upsert(pos_2),
+                IntegrationOperation::upsert(neg_1),
+                IntegrationOperation::upsert(neg_2),
+            ],
+            ..Default::default()
         });
         // STEP 2 - deletes
         // TODO should be soft deleted

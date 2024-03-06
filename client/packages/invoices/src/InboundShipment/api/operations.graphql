@@ -14,6 +14,7 @@ fragment InboundLine on InvoiceLineNode {
   totalBeforeTax
   totalAfterTax
   taxPercentage
+  foreignCurrencyPriceBeforeTax
 
   item {
     __typename
@@ -109,6 +110,10 @@ fragment Inbound on InvoiceNode {
     isCustomer
     isSupplier
     isOnHold
+    store {
+      id
+      code
+    }
   }
 
   pricing {
@@ -120,7 +125,17 @@ fragment Inbound on InvoiceNode {
     serviceTotalAfterTax
     serviceTotalBeforeTax
     taxPercentage
+    foreignCurrencyTotalAfterTax
   }
+
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+
+  currencyRate
 }
 
 fragment InboundRow on InvoiceNode {
@@ -140,10 +155,19 @@ fragment InboundRow on InvoiceNode {
     __typename
     totalAfterTax
     taxPercentage
+    foreignCurrencyTotalAfterTax
   }
   linkedShipment {
     id
   }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+
+  currencyRate
 }
 
 query invoices(

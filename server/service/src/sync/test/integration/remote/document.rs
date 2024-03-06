@@ -1,8 +1,9 @@
 use crate::sync::{
+    integrate_document::DocumentUpsert,
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::{Timelike, Utc};
 use repository::{ContextRow, Document, DocumentStatus};
@@ -71,10 +72,8 @@ impl SyncRecordTester for DocumentRecordTester {
                 "name_store_join": [patient_name_store_join_json],
                 "form_schema": [schema_json],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Document(row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(DocumentUpsert(row))],
+            ..Default::default()
         });
 
         result

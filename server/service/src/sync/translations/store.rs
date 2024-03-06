@@ -1,13 +1,13 @@
 use chrono::NaiveDate;
-use repository::{StorageConnection, StoreMode, StoreRow, SyncBufferRow};
+use repository::{StorageConnection, StoreMode, StoreRow, StoreRowDelete, SyncBufferRow};
 
-use crate::sync::sync_serde::{empty_str_as_option_string, zero_date_as_option};
+use crate::sync::{
+    sync_serde::{empty_str_as_option_string, zero_date_as_option},
+    translations::name::NameTranslation,
+};
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyStoreMode {
@@ -34,28 +34,27 @@ pub struct LegacyStoreRow {
     #[serde(serialize_with = "date_option_to_isostring")]
     pub created_date: Option<NaiveDate>,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::STORE
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(StoreTranslation)
 }
-pub(crate) struct StoreTranslation {}
+
+pub(super) struct StoreTranslation;
 impl SyncTranslation for StoreTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::STORE,
-            dependencies: vec![LegacyTableName::NAME],
-        }
+    fn table_name(&self) -> &'static str {
+        "store"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![NameTranslation.table_name()]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyStoreRow>(&sync_record.data)?;
 
         // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
@@ -65,12 +64,15 @@ impl SyncTranslation for StoreTranslation {
         // TODO: Ideally we want another state, `Ignored`
         // (i.e. return type) Translation Not Matches, Translation Ignored (with message ?) and Translated records
         if let "HIS" | "DRG" | "SM" = &data.code[..] {
-            return Ok(None);
+            return Ok(PullTranslateResult::Ignored(
+                "Ignoring not implemented system names".to_string(),
+            ));
         }
 
-        // ignore stores without name
-        if data.name_id.is_empty() {
-            return Ok(None);
+        if data.name_id == "" {
+            return Ok(PullTranslateResult::Ignored(
+                "Ignore stores without name".to_string(),
+            ));
         }
 
         let store_mode = match data.store_mode {
@@ -88,21 +90,17 @@ impl SyncTranslation for StoreTranslation {
             created_date: data.created_date,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Store(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
-
-    fn try_translate_pull_delete(
+    // TODO soft delete
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Store)
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(StoreRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
@@ -120,16 +118,18 @@ mod tests {
             setup_all("test_store_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -30,7 +30,7 @@ pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ItemRow>, RepositoryError> {
-    ItemRowRepository::new(connection).find_one_by_id(id)
+    ItemRowRepository::new(connection).find_active_by_id(id)
 }
 
 pub fn check_line_row_exists_option(
