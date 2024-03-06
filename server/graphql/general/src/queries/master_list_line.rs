@@ -1,11 +1,10 @@
 use async_graphql::*;
 use dataloader::DataLoader;
+use graphql_types::types::ItemNode;
 use repository::MasterListLine;
-use service::usize_to_u32;
+use service::ListResult;
 
-use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
-
-use super::ItemNode;
+use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError};
 
 #[derive(PartialEq, Debug)]
 pub struct MasterListLineNode {
@@ -19,17 +18,11 @@ pub struct MasterListLineConnector {
 }
 
 impl MasterListLineConnector {
-    pub fn empty() -> MasterListLineConnector {
+    pub fn from_domain(from: ListResult<MasterListLine>) -> MasterListLineConnector {
         MasterListLineConnector {
-            total_count: 0,
-            nodes: Vec::new(),
-        }
-    }
-
-    pub fn from_domain_vec(from: Vec<MasterListLine>) -> MasterListLineConnector {
-        MasterListLineConnector {
-            total_count: usize_to_u32(from.len()),
+            total_count: from.count,
             nodes: from
+                .rows
                 .into_iter()
                 .map(MasterListLineNode::from_domain)
                 .collect(),
