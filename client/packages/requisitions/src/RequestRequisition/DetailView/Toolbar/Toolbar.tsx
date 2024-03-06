@@ -9,6 +9,7 @@ import {
   Typography,
   Box,
   Alert,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { InternalSupplierSearchInput } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
@@ -65,13 +66,15 @@ export const Toolbar: FC = () => {
           <InputWithLabelRow
             label={t('label.supplier-ref')}
             Input={
-              <BufferedTextInput
-                disabled={isDisabled}
-                size="small"
-                sx={{ width: 250 }}
-                value={theirReference ?? null}
-                onChange={e => update({ theirReference: e.target.value })}
-              />
+              <Tooltip title={theirReference} placement="bottom-start">
+                <BufferedTextInput
+                  disabled={isDisabled}
+                  size="small"
+                  sx={{ width: 250 }}
+                  value={theirReference ?? null}
+                  onChange={e => update({ theirReference: e.target.value })}
+                />
+              </Tooltip>
             }
           />
           {usesRemoteAuthorisation && (

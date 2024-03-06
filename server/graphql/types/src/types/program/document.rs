@@ -1,5 +1,5 @@
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use async_graphql::{dataloader::DataLoader, Context};
 use chrono::{DateTime, Utc};
 
 use graphql_core::loader::{

@@ -9,6 +9,7 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+
 pub mod asset;
 pub mod auth;
 pub mod auth_data;
@@ -16,6 +17,7 @@ pub mod barcode;
 pub mod catalogue;
 pub mod clinician;
 mod common_stock;
+pub mod currency;
 pub mod cursor_controller;
 pub mod dashboard;
 pub mod display_settings_service;

@@ -9,6 +9,9 @@ use crate::service_provider::ServiceContext;
 
 use super::ItemPackVariant;
 
+// TODO should only search for items with active variants
+// TODO should use SQL aggregate functions
+
 /// For a particular store, this method returns all pack units grouped by item_id and a reference to the most
 /// used pack unit for each item (see ItemPackVariant return type).
 pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, RepositoryError> {
