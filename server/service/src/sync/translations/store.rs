@@ -69,7 +69,7 @@ impl SyncTranslation for StoreTranslation {
             ));
         }
 
-        if data.name_id == "" {
+        if data.name_id.is_empty() {
             return Ok(PullTranslateResult::Ignored(
                 "Ignore stores without name".to_string(),
             ));
