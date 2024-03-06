@@ -135,7 +135,7 @@ impl SyncApiV6 {
         })
     }
 
-    pub async fn push(&self, batch: SyncBatchV6) -> Result<SyncBatchV6, SyncApiErrorV6> {
+    pub async fn push(&self, batch: SyncBatchV6) -> Result<SyncPushSuccessV6, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
             url,
@@ -151,9 +151,9 @@ impl SyncApiV6 {
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
 
-        let error = match response_or_err(result).await {
-            Ok(SyncPullResponseV6::Data(data)) => return Ok(data),
-            Ok(SyncPullResponseV6::Error(error)) => error.into(),
+        let error = match response_or_err_push(result).await {
+            Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
+            Ok(SyncPushResponseV6::Error(error)) => error.into(),
             Err(error) => error.into(),
         };
 
