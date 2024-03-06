@@ -11,7 +11,7 @@ import {
   DetailTabs,
 } from '@openmsupply-client/common';
 import { ContentArea } from './ContentArea';
-// import { Toolbar } from './Toolbar';
+import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { InboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -54,7 +54,7 @@ export const InboundReturnDetailView: FC = () => {
         >
           <AppBarButtons onAddItem={onAddItem} />
 
-          {/* <Toolbar /> */}
+          <Toolbar />
           <DetailTabs tabs={tabs} />
           <SidePanel />
         </TableProvider>
