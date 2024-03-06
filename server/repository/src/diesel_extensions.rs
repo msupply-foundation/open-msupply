@@ -109,7 +109,7 @@ pub mod date_coalesce {
 #[cfg(test)]
 mod tests {
     use chrono::NaiveDate;
-    use diesel::{debug_query, prelude::*, sqlite::Sqlite, QueryDsl};
+    use diesel::{debug_query, prelude::*, sqlite::Sqlite};
 
     use crate::diesel_extensions::{date_coalesce, OrderByExtensions};
 

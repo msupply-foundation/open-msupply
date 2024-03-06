@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 use chrono::{Duration, NaiveDateTime};
 use diesel::prelude::*;
