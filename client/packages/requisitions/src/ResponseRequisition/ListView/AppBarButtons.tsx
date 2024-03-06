@@ -15,7 +15,7 @@ import { responsesToCsv } from '../../utils';
 
 export const AppBarButtons = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { mutateAsync, isLoading } = useResponse.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',

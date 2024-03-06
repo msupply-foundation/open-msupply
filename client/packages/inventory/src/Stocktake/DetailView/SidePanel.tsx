@@ -20,7 +20,7 @@ import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
 
 const AdditionalInfoSection: FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   const { comment, user, update } = useStocktake.document.fields([
     'comment',

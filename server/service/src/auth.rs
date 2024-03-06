@@ -1053,14 +1053,11 @@ mod permission_validation_test {
     use std::sync::{Arc, RwLock};
 
     use super::*;
-    use crate::{
-        auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket,
-    };
+    use crate::{service_provider::ServiceProvider, token_bucket::TokenBucket};
     use repository::{
         mock::{mock_user_account_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        NameRow, Permission, StoreRow, UserAccountRow, UserPermissionRow,
-        UserPermissionRowRepository,
+        NameRow, StoreRow, UserAccountRow, UserPermissionRowRepository,
     };
     use util::inline_init;
 

@@ -27,7 +27,7 @@ export const ColumnPicker = <T extends RecordWithId>({
   columns,
   onChange,
 }: ColumnPickerProps<T>) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [hiddenColumnsConfig, setHiddenColumnsConfig] =
     useLocalStorage('/columns/hidden');
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(

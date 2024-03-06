@@ -34,6 +34,7 @@ pub fn generate_empty_invoice_lines(
                     number_of_packs: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    foreign_currency_price_before_tax: None,
                 });
             }
             Ok(None) => {}
