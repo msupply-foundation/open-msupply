@@ -104,7 +104,10 @@ const useStatusChangeButton = () => {
   const status = data?.status ?? InvoiceNodeStatus.New;
   const update = async (_: unknown) => true;
   const onHold = false;
-  const lines: any = [];
+  const lines: { totalCount: number; nodes: unknown[] } = {
+    totalCount: 0,
+    nodes: [],
+  };
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
