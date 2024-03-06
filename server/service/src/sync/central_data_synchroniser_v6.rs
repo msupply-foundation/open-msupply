@@ -17,6 +17,7 @@ use super::{
     GetActiveStoresOnSiteError,
 };
 
+use log::debug;
 use repository::{
     ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
@@ -122,6 +123,10 @@ impl CentralDataSynchroniserV6 {
 
             logger.progress(SyncStepProgress::PushCentralV6, change_logs_total)?;
 
+            if change_logs_total == 0 {
+                break; // Nothing more to do, break out of the loop
+            };
+
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
 
             let records = translate_changelogs_to_sync_records(
@@ -135,22 +140,16 @@ impl CentralDataSynchroniserV6 {
 
             let batch = SyncBatchV6 {
                 total_records: change_logs_total,
-                end_cursor: 0, // TODO: Different shape?
+                end_cursor: last_pushed_cursor.unwrap_or(0) as u64,
                 records,
             };
 
-            // TODO different response shape?
-            let _response = self.sync_api_v6.push(batch).await?;
+            let response = self.sync_api_v6.push(batch).await?;
+            debug!("V6 Push response: {:#?}", response);
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
                 cursor_controller.update(connection, last_pushed_cursor_id as u64 + 1)?;
-            };
-
-            // For now we'll just check we have no more records to push
-            match change_logs_total {
-                0 => break, // Nothing more to do, break out of the loop
-                _ => continue,
             };
 
             // TODO Wait for integration to start??? Or somehow control when/if we should continue to do pull and other actions...

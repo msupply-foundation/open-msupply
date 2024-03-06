@@ -10,7 +10,10 @@ use crate::{
 };
 
 use super::{
-    api_v6::{SyncBatchV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPushRequestV6, SyncRecordV6},
+    api_v6::{
+        SyncBatchV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
+        SyncRecordV6,
+    },
     translations::translate_changelogs_to_sync_records,
 };
 
@@ -135,7 +138,7 @@ pub async fn push(
         batch,
         sync_v5_settings,
     }: SyncPushRequestV6,
-) -> Result<SyncBatchV6, SyncParsedErrorV6> {
+) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
     // TODO consolidate at top level ? As middleware ?
     if !is_central_server() {
@@ -147,8 +150,6 @@ pub async fn push(
         .get_site_status()
         .await
         .map_err(Error::from)?;
-
-    // TODO Versioning ?
 
     println!("Receiving records as central server: {:#?}", batch);
 
@@ -175,5 +176,7 @@ pub async fn push(
         service_provider.sync_trigger.trigger();
     }
 
-    Ok(Default::default())
+    Ok(SyncPushSuccessV6 {
+        records_pushed: records_in_this_batch,
+    })
 }
