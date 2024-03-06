@@ -1,7 +1,6 @@
-use super::{
-    super::user_row::user_account::dsl as user_account_dsl,
-    asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogRow},
-};
+use super::super::user_row::user_account::dsl as user_account_dsl;
+use super::asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogRow};
+
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
@@ -148,6 +147,14 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
         apply_date_filter!(query, log_datetime, asset_log_dsl::log_datetime);
 
         apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
+
+        if let Some(user) = user {
+            let mut sub_query = user_account_dsl::user_account
+                .select(user_account_dsl::id)
+                .into_boxed();
+            apply_equal_filter!(sub_query, Some(user), user_account_dsl::id);
+            query = query.filter(asset_log_dsl::user_id.eq_any(sub_query));
+        }
     }
     query
 }
