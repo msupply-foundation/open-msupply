@@ -10,6 +10,8 @@ pub mod refresh_token;
 pub use self::refresh_token::*;
 pub mod master_list;
 pub use self::master_list::*;
+pub mod master_list_line;
+pub use self::master_list_line::*;
 pub mod invoice_counts;
 pub use self::invoice_counts::*;
 pub mod names;
