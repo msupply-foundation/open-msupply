@@ -6,14 +6,15 @@ import {
   XCircleIcon,
   useTranslation,
   AppFooterPortal,
-  //   InvoiceNodeStatus,
   useBreadcrumbs,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { getStatusTranslator, outboundStatuses } from '../../../utils';
+import {
+  getStatusTranslator,
+  outboundReturnStatuses,
+  outboundStatuses,
+} from '../../../utils';
 import { OutboundReturnRowFragment, useReturns } from '../../api';
-
-// import { useOutbound, OutboundFragment } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
@@ -21,17 +22,15 @@ const createStatusLog = (invoice: OutboundReturnRowFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
-    [InvoiceNodeStatus.Allocated]: null,
     [InvoiceNodeStatus.Picked]: null,
     [InvoiceNodeStatus.Shipped]: null,
     [InvoiceNodeStatus.Delivered]: null,
     [InvoiceNodeStatus.Verified]: null,
+    // Not used for Outbound return
+    [InvoiceNodeStatus.Allocated]: null,
   };
   if (statusIdx >= 0) {
     statusLog[InvoiceNodeStatus.New] = invoice.createdDatetime;
-  }
-  if (statusIdx >= 1) {
-    statusLog[InvoiceNodeStatus.Allocated] = invoice.allocatedDatetime;
   }
   if (statusIdx >= 2) {
     statusLog[InvoiceNodeStatus.Picked] = invoice.pickedDatetime;
@@ -66,7 +65,7 @@ export const FooterComponent: FC = () => {
           >
             <OnHoldButton />
             <StatusCrumbs
-              statuses={outboundStatuses}
+              statuses={outboundReturnStatuses}
               statusLog={createStatusLog(data)}
               statusFormatter={getStatusTranslator(t)}
             />

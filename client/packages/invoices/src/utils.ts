@@ -52,6 +52,14 @@ export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export const outboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
