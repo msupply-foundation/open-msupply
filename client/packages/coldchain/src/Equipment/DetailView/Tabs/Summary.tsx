@@ -6,8 +6,7 @@ import {
   Typography,
 } from '@common/components';
 import { DateUtils, useTranslation } from '@common/intl';
-// import { InsertAssetInput } from '@common/types';
-import { Box } from '@openmsupply-client/common';
+import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
 
 interface SummaryProps {
@@ -21,7 +20,6 @@ const Container = ({ children }: { children: React.ReactNode }) => (
     flex={1}
     flexDirection="column"
     alignContent="center"
-    flexWrap="wrap"
     padding={4}
   >
     {children}
@@ -115,8 +113,9 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
           <Row label={t('label.installation-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.installationDate)}
+              format="P"
               onChange={date =>
-                onChange({ installationDate: DateUtils.formatRFC3339(date) })
+                onChange({ installationDate: Formatter.naiveDate(date) })
               }
               textFieldProps={{ fullWidth: true }}
             />
@@ -124,8 +123,9 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
           <Row label={t('label.replacement-date')}>
             <DateTimePickerInput
               value={DateUtils.getDateOrNull(draft.replacementDate)}
+              format="P"
               onChange={date =>
-                onChange({ replacementDate: DateUtils.formatRFC3339(date) })
+                onChange({ replacementDate: Formatter.naiveDate(date) })
               }
               textFieldProps={{ fullWidth: true }}
             />
