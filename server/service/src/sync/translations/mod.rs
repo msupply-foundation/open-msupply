@@ -270,7 +270,6 @@ pub(crate) enum ToSyncRecordTranslationType {
     PushToOmSupplyCentral,
     // When omSupply remote is pulling from omSupply central
     PullFromOmSupplyCentral,
-    PullFromOmSupplyCentralInitialisation,
 }
 
 /// This trait has collection of methods for sync operation translations
@@ -337,7 +336,6 @@ pub(crate) trait SyncTranslation {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => false,
             // Have to manually specify in the translation
             ToSyncRecordTranslationType::PushToOmSupplyCentral => false,
-            ToSyncRecordTranslationType::PullFromOmSupplyCentralInitialisation => true,
         }
     }
 

@@ -47,11 +47,6 @@ impl SyncTranslation for AssetTranslation {
     ) -> bool {
         match r#type {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
-                // BUG: if an asset gets assigned to my store, I still want to download it.
-                // We need the last_synced_from_site_id thing perhaps?
-                false // We don't want to pull from central for assets unless we're initialising
-            }
-            ToSyncRecordTranslationType::PullFromOmSupplyCentralInitialisation => {
                 self.change_log_type().as_ref() == Some(&row.table_name)
             }
             ToSyncRecordTranslationType::PushToOmSupplyCentral => {

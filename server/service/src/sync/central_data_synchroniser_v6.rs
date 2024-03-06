@@ -65,7 +65,6 @@ impl CentralDataSynchroniserV6 {
         &self,
         connection: &StorageConnection,
         batch_size: u32,
-        is_initialised: bool,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralPullErrorV6> {
         let cursor_controller = CursorController::new(KeyValueType::SyncPullCursorV6);
@@ -77,10 +76,7 @@ impl CentralDataSynchroniserV6 {
                 end_cursor,
                 total_records,
                 records,
-            } = self
-                .sync_api_v6
-                .pull(cursor, batch_size, is_initialised)
-                .await?;
+            } = self.sync_api_v6.pull(cursor, batch_size).await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
