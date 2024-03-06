@@ -172,7 +172,7 @@ impl Synchroniser {
         // We'll push records to open-mSupply first, then push to Legacy mSupply
         // At this stage, it's not clear if one needs to be done first??
         logger.start_step(SyncStep::PushCentralV6)?;
-        if is_initialised {
+        if is_initialised && !is_central_server() {
             self.central_v6
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await?;
