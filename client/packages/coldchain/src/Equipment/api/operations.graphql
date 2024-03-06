@@ -1,0 +1,93 @@
+fragment Asset on AssetNode {
+  __typename
+  catalogueItemId
+  code
+  createdDatetime
+  id
+  installationDate
+  modifiedDatetime
+  name
+  replacementDate
+  serialNumber
+  storeId
+  catalogueItem {
+    manufacturer
+    model
+    assetType {
+      name
+    }
+    assetClass {
+      name
+    }
+    assetCategory {
+      name
+    }
+  }
+}
+
+query assets(
+  $desc: Boolean
+  $filter: AssetFilterInput!
+  $first: Int
+  $key: AssetSortFieldInput!
+  $offset: Int
+  $storeId: String!
+) {
+  assets(
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    storeId: $storeId
+  ) {
+    ... on AssetConnector {
+      nodes {
+        ...Asset
+      }
+      totalCount
+    }
+  }
+}
+
+query assetById($storeId: String!, $assetId: String!) {
+  assets(storeId: $storeId, filter: { id: { equalTo: $assetId } }) {
+    ... on AssetConnector {
+      __typename
+      nodes {
+        __typename
+        ...Asset
+      }
+      totalCount
+    }
+  }
+}
+
+mutation deleteAsset($assetId: String!, $storeId: String!) {
+  deleteAsset(assetId: $assetId, storeId: $storeId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation insertAsset($input: InsertAssetInput!, $storeId: String!) {
+  insertAsset(input: $input, storeId: $storeId) {
+    ... on InsertAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
+      name
+    }
+  }
+}

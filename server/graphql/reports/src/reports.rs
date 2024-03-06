@@ -33,6 +33,7 @@ pub struct ReportSortInput {
 #[derive(Debug, Enum, Copy, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum ReportContext {
+    Asset,
     InboundShipment,
     OutboundShipment,
     Requisition,
@@ -165,6 +166,7 @@ impl ReportSortInput {
 impl ReportContext {
     pub fn to_domain(self) -> ReportContextDomain {
         match self {
+            ReportContext::Asset => ReportContextDomain::Asset,
             ReportContext::InboundShipment => ReportContextDomain::InboundShipment,
             ReportContext::OutboundShipment => ReportContextDomain::OutboundShipment,
             ReportContext::Requisition => ReportContextDomain::Requisition,
@@ -178,6 +180,7 @@ impl ReportContext {
 
     pub fn from_domain(context: &ReportContextDomain) -> ReportContext {
         match context {
+            ReportContextDomain::Asset => ReportContext::Asset,
             ReportContextDomain::InboundShipment => ReportContext::InboundShipment,
             ReportContextDomain::OutboundShipment => ReportContext::OutboundShipment,
             ReportContextDomain::Requisition => ReportContext::Requisition,

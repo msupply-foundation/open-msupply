@@ -1,7 +1,7 @@
 import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
-export const useAssets = () => {
+export const useAssets = (categoryId?: string) => {
   const { queryParams } = useUrlQueryParams({
     filters: [
       { key: 'code' },
@@ -13,8 +13,12 @@ export const useAssets = () => {
     ],
   });
   const api = useAssetApi();
+  const filterBy =
+    categoryId === undefined
+      ? queryParams.filterBy
+      : { ...queryParams.filterBy, categoryId: { equalTo: categoryId } };
 
-  return useQuery(api.keys.paramList(queryParams), () =>
-    api.get.list(queryParams)
-  );
+  const params = { ...queryParams, filterBy };
+
+  return useQuery(api.keys.paramList(params), () => api.get.list(params));
 };
