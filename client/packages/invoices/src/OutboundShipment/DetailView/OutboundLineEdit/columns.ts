@@ -59,6 +59,16 @@ export const useOutboundLineEditColumns = ({
       },
     ],
     {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackVariantCell({
+        getItemId: row => row?.item.id,
+        getPackSizes: row => [row.packSize ?? 1],
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+    },
+    {
       Cell: NumberCell,
       label: 'label.in-store',
       key: 'totalNumberOfPacks',
@@ -74,25 +84,6 @@ export const useOutboundLineEditColumns = ({
       width: 85,
       accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
     },
-    {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: PackVariantCell({
-        getItemId: row => row?.item.id,
-        getPackSizes: row => [row.packSize ?? 1],
-        getUnitName: row => row?.item.unitName ?? null,
-      }),
-    },
-    [
-      'unitQuantity',
-      {
-        label: 'label.unit-quantity-issued',
-        labelProps: { unit },
-        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-        width: 120,
-      },
-    ],
     [
       'numberOfPacks',
       {
@@ -103,13 +94,12 @@ export const useOutboundLineEditColumns = ({
           onChange(id, numberOfPacks ?? 0, packSize ?? 1),
       },
     ],
-
     [
-      'sellPricePerPack',
+      'unitQuantity',
       {
-        // eslint-disable-next-line new-cap
-        Cell: CurrencyCell(),
-        formatter: sellPrice => c(Number(sellPrice)).format(),
+        label: 'label.unit-quantity-issued',
+        labelProps: { unit },
+        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
         width: 120,
       },
     ],
@@ -196,14 +186,18 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    [
-      'itemUnit',
-      {
-        accessor: ({ rowData }) => rowData.item?.unitName,
-      },
-    ],
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackVariantCell({
+        getItemId: row => row?.item.id,
+        getPackSizes: row => [row.packSize ?? 1],
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+      width: 130,
+    },
     'numberOfPacks',
-    'packSize',
     [
       'unitQuantity',
       {

@@ -144,27 +144,26 @@ export const useOutboundColumns = ({
             ]),
         },
       ],
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return getUnitQuantity(rowData);
-            }
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
           },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return getUnitQuantity(rowData);
-            }
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
           },
-        },
-      ],
+          getUnitName: row => {
+            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+        width: 130,
+      },
       [
         'numberOfPacks',
         {
@@ -211,25 +210,27 @@ export const useOutboundColumns = ({
           },
         },
       ],
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: PackVariantCell({
-          getItemId: row => {
-            if ('lines' in row) return '';
-            else return row?.item?.id;
+      [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
           },
-          getPackSizes: row => {
-            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-            else return [row.packSize ?? 1];
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
           },
-          getUnitName: row => {
-            if ('lines' in row) return null;
-            else return row?.item?.unitName ?? null;
-          },
-        }),
-      },
+        },
+      ],
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',

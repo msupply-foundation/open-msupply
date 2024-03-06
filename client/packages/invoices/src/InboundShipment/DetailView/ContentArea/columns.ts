@@ -141,6 +141,7 @@ export const useInboundShipmentColumns = () => {
             else return row?.item?.unitName ?? null;
           },
         }),
+        width: 130,
       },
       [
         'numberOfPacks',
@@ -159,6 +160,27 @@ export const useInboundShipmentColumns = () => {
               return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
               return rowData.numberOfPacks;
+            }
+          },
+        },
+      ],
+      [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
             }
           },
         },
@@ -191,27 +213,6 @@ export const useInboundShipmentColumns = () => {
           }
         },
       },
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return getUnitQuantity(rowData);
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return getUnitQuantity(rowData);
-            }
-          },
-        },
-      ],
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
@@ -236,6 +237,7 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
         getPackSizes: row => [row?.packSize ?? 1],
         getUnitName: row => row?.item?.unitName ?? null,
       }),
+      width: 130,
     },
     'numberOfPacks',
     'costPricePerPack',
