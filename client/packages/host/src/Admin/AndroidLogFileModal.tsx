@@ -12,7 +12,7 @@ export const AndroidLogFileModal = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { Modal } = useDialog({ isOpen });
   const { readLog, saveFile } = useNativeClient();
   const [logText, setLogText] = useState('');

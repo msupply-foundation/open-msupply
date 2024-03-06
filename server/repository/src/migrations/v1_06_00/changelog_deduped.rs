@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(

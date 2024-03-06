@@ -74,6 +74,7 @@ export const usePrescriptionLineEditColumns = ({
           getPackSizes: row => [row.packSize ?? 1],
           getUnitName: row => row?.item.unitName ?? null,
         }),
+        width: 130,
       },
       [
         'unitQuantity',

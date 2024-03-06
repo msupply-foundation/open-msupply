@@ -25,7 +25,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   disabled,
   onChangeItem,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { data: items } = useInbound.lines.items();
 
   return (

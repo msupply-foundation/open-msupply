@@ -54,7 +54,7 @@ export const useRequestColumns = () => {
     [
       'itemCode',
       {
-        width: 100,
+        width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
       },
@@ -70,7 +70,7 @@ export const useRequestColumns = () => {
     ],
     {
       key: 'packUnit',
-      label: 'label.pack',
+      label: 'label.unit',
       align: ColumnAlign.Right,
       Cell: PackVariantSelectCell({
         getItemId: r => r.itemId,

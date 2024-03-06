@@ -137,6 +137,47 @@ export const usePrescriptionColumn = ({
         },
       ],
       [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return rowData.packSize * rowData.numberOfPacks;
+            }
+          },
+        },
+      ],
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
+          },
+          getUnitName: row => {
+            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+        width: 130,
+      },
+      [
         'numberOfPacks',
         {
           Cell: NumberCell,
@@ -182,46 +223,7 @@ export const usePrescriptionColumn = ({
           },
         },
       ],
-      {
-        key: 'packUnit',
-        label: 'label.pack',
-        sortable: false,
-        Cell: PackVariantCell({
-          getItemId: row => {
-            if ('lines' in row) return '';
-            else return row?.item?.id;
-          },
-          getPackSizes: row => {
-            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
-            else return [row.packSize ?? 1];
-          },
-          getUnitName: row => {
-            if ('lines' in row) return null;
-            else return row?.item?.unitName ?? null;
-          },
-        }),
-      },
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return rowData.packSize * rowData.numberOfPacks;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getUnitQuantity(lines);
-            } else {
-              return rowData.packSize * rowData.numberOfPacks;
-            }
-          },
-        },
-      ],
+
       {
         label: 'label.unit-price',
         key: 'sellPricePerUnit',

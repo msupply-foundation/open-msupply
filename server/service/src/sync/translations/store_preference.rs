@@ -31,6 +31,8 @@ pub struct LegacyPrefData {
     pub om_program_module: bool,
     #[serde(rename = "usesVaccineModule")]
     pub vaccine_module: bool,
+    #[serde(rename = "can_issue_in_foreign_currency")]
+    pub issue_in_foreign_currency: bool,
 }
 
 // Needs to be added to all_translators()
@@ -68,6 +70,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             request_requisition_requires_authorisation,
             om_program_module,
             vaccine_module,
+            issue_in_foreign_currency,
         } = data;
 
         let result = StorePreferenceRow {
@@ -78,6 +81,7 @@ impl SyncTranslation for StorePreferenceTranslation {
             request_requisition_requires_authorisation,
             om_program_module,
             vaccine_module,
+            issue_in_foreign_currency,
         };
 
         Ok(PullTranslateResult::upsert(result))

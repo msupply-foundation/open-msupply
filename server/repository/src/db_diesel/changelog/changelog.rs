@@ -72,6 +72,7 @@ pub enum ChangelogTableName {
     TemperatureBreachConfig,
     TemperatureLog,
     PackVariant,
+    Currency,
     AssetClass,
     AssetCategory,
     AssetType,
