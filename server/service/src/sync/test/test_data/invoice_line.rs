@@ -92,6 +92,7 @@ fn trans_line_1_pull_record() -> TestSyncPullRecord {
             number_of_packs: 700.36363636,
             note: None,
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         },
     )
 }
@@ -119,6 +120,7 @@ fn trans_line_1_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(10.0 * 700.36363636),
             total_after_tax: Some(10.0 * 700.36363636),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -204,6 +206,7 @@ fn trans_line_2_pull_record() -> TestSyncPullRecord {
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         },
     )
 }
@@ -231,6 +234,7 @@ fn trans_line_2_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(2.0 * 1000.9124798),
             total_after_tax: Some(2.0 * 1000.9124798),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -319,6 +323,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         },
     )
 }
@@ -346,6 +351,7 @@ fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(105.4),
             total_after_tax: Some(130.5),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }
@@ -434,6 +440,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
             number_of_packs: 1000.9124798,
             note: Some("every FOUR to SIX hours when necessary ".to_string()),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         },
     )
 }
@@ -461,6 +468,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
             total_before_tax: Some(105.4),
             total_after_tax: Some(130.5),
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: Some(0.0),
         }),
     }
 }

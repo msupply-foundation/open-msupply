@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 pub(crate) struct V1_00_05;
 
 impl Migration for V1_00_05 {

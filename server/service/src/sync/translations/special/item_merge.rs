@@ -68,8 +68,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRowRepository, SyncBufferAction,
-        SyncBufferRow, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncBufferAction, SyncBufferRowRepository,
     };
 
     #[actix_rt::test]

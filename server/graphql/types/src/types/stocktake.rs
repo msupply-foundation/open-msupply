@@ -1,4 +1,4 @@
-use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
+use async_graphql::{dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{unknown_user, StocktakeRow, StocktakeStatus};
 use serde::Serialize;
