@@ -1,6 +1,4 @@
-use super::MasterListLineConnector;
-use async_graphql::{dataloader::DataLoader, Context, Object, Result};
-use graphql_core::{loader::MasterListLineByMasterListId, ContextExt};
+use async_graphql::Object;
 use repository::MasterList;
 
 #[derive(PartialEq, Debug)]
@@ -24,19 +22,6 @@ impl MasterListNode {
 
     pub async fn description(&self) -> &str {
         &self.master_list.description
-    }
-
-    pub async fn lines(&self, ctx: &Context<'_>) -> Result<MasterListLineConnector> {
-        let loader = ctx.get_loader::<DataLoader<MasterListLineByMasterListId>>();
-
-        let lines_option = loader.load_one(self.master_list.id.clone()).await?;
-
-        let result = match lines_option {
-            None => MasterListLineConnector::empty(),
-            Some(lines) => MasterListLineConnector::from_domain_vec(lines),
-        };
-
-        Ok(result)
     }
 }
 
