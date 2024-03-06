@@ -4,7 +4,7 @@ use crate::sync::{
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
-        test_data::{get_all_omsupply_central_push_records, get_all_push_test_records},
+        test_data::{get_all_omsupply_central_records, get_all_push_test_records},
         TestSyncPushRecord,
     },
     translations::{
@@ -29,7 +29,7 @@ use super::{
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
     // Uncomment to see logs such as Foreign key constraint failed in test
-    // util::init_logger(util::LogLevel::Warn);
+    util::init_logger(util::LogLevel::Warn);
 
     let (_, connection, _, _) = test_db::setup_all_with_data(
         "test_sync_pull_and_push",
@@ -77,7 +77,7 @@ async fn test_sync_pull_and_push() {
     // PUSH UPSERT
     let mut test_records = vec![
         get_all_push_test_records(),
-        get_all_omsupply_central_push_records(),
+        get_all_omsupply_central_records(),
     ]
     .into_iter()
     .flatten()
@@ -105,14 +105,26 @@ async fn test_sync_pull_and_push() {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral,
         )
         .unwrap(),
+        translate_changelogs_to_sync_records(
+            &connection,
+            changelogs.clone(),
+            ToSyncRecordTranslationType::PushToOmSupplyCentral,
+        )
+        .unwrap(),
     ]
     .into_iter()
     .flatten()
     .collect::<Vec<PushSyncRecord>>();
 
     // Combine and sort
-    translated.sort_by(|a, b| a.record.record_id.cmp(&b.record.record_id));
-    test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
+    translated.sort_by(|a, b| match a.record.table_name.cmp(&b.record.table_name) {
+        std::cmp::Ordering::Equal => a.record.record_id.cmp(&b.record.record_id),
+        other => other,
+    });
+    test_records.sort_by(|a, b| match a.table_name.cmp(&b.table_name) {
+        std::cmp::Ordering::Equal => a.record_id.cmp(&b.record_id),
+        other => other,
+    });
 
     // Test ids and table names
     assert_eq!(

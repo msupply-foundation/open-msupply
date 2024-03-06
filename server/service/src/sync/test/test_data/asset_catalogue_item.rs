@@ -10,7 +10,7 @@ const ASSET_CATALOGUE_ITEM1: (&'static str, &'static str) = (
     r#"{
         "id": "0dda9346-b79f-4f0f-a375-ae778240043a",
         "name": "Asset Catalogue Item 1",
-        "class_id": "32608ef9-dce5-41a7-b3e9-92b0fe086c7e"
+        "class_id": "32608ef9-dce5-41a7-b3e9-92b0fe086c7e",
         "category_id": "035d2847-1eec-4595-a161-b7cfefc17381",
         "code": "A1",
         "manufacturer": "Manufacturer 1",

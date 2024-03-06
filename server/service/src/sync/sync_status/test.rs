@@ -341,6 +341,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     r.integration = current_status.integration.clone();
                     // TODO update with proper v6 tests
                     r.pull_v6 = current_status.pull_v6.clone();
+                    r.push_v6 = current_status.push_v6.clone();
                     r
                 });
 

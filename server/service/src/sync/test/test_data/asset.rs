@@ -13,8 +13,8 @@ const ASSET1: (&'static str, &'static str) = (
         "name": "Asset 1",
         "code": "AT1",
         "store_id": "store_a",
-        "created_datetime": "2021-06-22T12:00:00",
-        "modified_datetime": "2021-06-22T12:00:00",   
+        "created_datetime": "2020-01-22T15:16:00",
+        "modified_datetime": "2020-01-22T15:16:00"   
     }"#,
 );
 
@@ -42,8 +42,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     )]
 }
 
-pub(crate) fn test_omsupply_central_push_records() -> Vec<TestSyncPushRecord> {
-    // TODO: Refactor test_omsupply_central_pull_records
+pub(crate) fn test_omsupply_central_records() -> Vec<TestSyncPushRecord> {
     // New type for TestSyncToSyncRecord
     vec![TestSyncPushRecord {
         table_name: TABLE_NAME.to_string(),
