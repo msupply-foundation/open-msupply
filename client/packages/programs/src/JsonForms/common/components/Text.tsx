@@ -100,7 +100,7 @@ const UIComponent = (props: ControlProps) => {
     data,
     (value: string | undefined) => handleChange(path, value)
   );
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   const examples =
     (props.schema as Record<string, string[]>)['examples'] ??

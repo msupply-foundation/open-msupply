@@ -20,6 +20,7 @@ import { DraftInboundLine } from '../../../../types';
 import { CreateDraft } from '../utils';
 import { TabLayout } from './TabLayout';
 import { usePackVariant } from '@openmsupply-client/system';
+import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
@@ -28,6 +29,8 @@ interface InboundLineEditProps {
   isOpen: boolean;
   onClose: () => void;
   isDisabled?: boolean;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
 }
 
 const useDraftInboundLines = (item: InboundLineItem | null) => {
@@ -111,6 +114,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
   isOpen,
   onClose,
   isDisabled = false,
+  currency,
+  isExternalSupplier,
 }) => {
   const t = useTranslation('replenishment');
   const { error } = useNotification();
@@ -193,6 +198,8 @@ export const InboundLineEdit: FC<InboundLineEditProps> = ({
               addDraftLine={addDraftLine}
               updateDraftLine={updateDraftLine}
               isDisabled={isDisabled}
+              currency={currency}
+              isExternalSupplier={isExternalSupplier}
             />
           </>
         )}

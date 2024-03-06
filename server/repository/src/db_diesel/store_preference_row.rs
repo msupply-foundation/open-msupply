@@ -19,6 +19,7 @@ table! {
         request_requisition_requires_authorisation -> Bool,
         om_program_module -> Bool,
         vaccine_module -> Bool,
+        issue_in_foreign_currency -> Bool,
     }
 }
 
@@ -45,6 +46,7 @@ pub struct StorePreferenceRow {
     pub request_requisition_requires_authorisation: bool,
     pub om_program_module: bool,
     pub vaccine_module: bool,
+    pub issue_in_foreign_currency: bool,
 }
 
 impl Default for StorePreferenceRow {
@@ -57,6 +59,7 @@ impl Default for StorePreferenceRow {
             request_requisition_requires_authorisation: Default::default(),
             om_program_module: Default::default(),
             vaccine_module: Default::default(),
+            issue_in_foreign_currency: Default::default(),
         }
     }
 }

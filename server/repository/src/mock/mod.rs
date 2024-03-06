@@ -5,6 +5,7 @@ mod barcode;
 mod clinician;
 pub mod common;
 mod context;
+mod currency;
 mod document;
 mod document_registry;
 mod form_schema;
@@ -55,6 +56,7 @@ pub use barcode::*;
 pub use clinician::*;
 use common::*;
 pub use context::*;
+pub use currency::*;
 pub use document::*;
 pub use document_registry::*;
 pub use form_schema::*;
@@ -99,26 +101,7 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
-    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
-    ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
-    DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow,
-    LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
-    MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository,
-    NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository,
-    PackVariantRow, PackVariantRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
-    StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
-    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
-    TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
-    UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
+    ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow, ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow, ContextRowRepository, CurrencyRow, Document, DocumentRegistryRow, DocumentRegistryRowRepository, DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository, MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameLinkRow, NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow, NumberRowRepository, PackVariantRow, PackVariantRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository, ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository, StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository, SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow, TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository, UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository
 };
 
 use self::{activity_log::mock_activity_logs, unit::mock_units};
@@ -140,6 +123,7 @@ pub struct MockData {
     pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
+    pub currencies: Vec<CurrencyRow>,
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
@@ -241,6 +225,7 @@ pub struct MockDataInserts {
     pub contexts: bool,
     pub pack_variants: bool,
     pub plugin_data: bool,
+    pub currencies: bool,
 }
 
 impl MockDataInserts {
@@ -292,6 +277,7 @@ impl MockDataInserts {
             contexts: true,
             pack_variants: true,
             plugin_data: true,
+            currencies: true,
         }
     }
 
@@ -508,6 +494,11 @@ impl MockDataInserts {
         self.plugin_data = true;
         self
     }
+
+    pub fn currencies(mut self) -> Self {
+        self.currencies = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -554,6 +545,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             period_schedules: mock_period_schedules(),
             periods: mock_periods(),
             stores: mock_stores(),
+            currencies: mock_currencies(),
             units: mock_units(),
             items: mock_items(),
             locations: mock_locations(),
@@ -716,6 +708,13 @@ pub fn insert_mock_data(
         if inserts.units {
             let repo = UnitRowRepository::new(connection);
             for row in &mock_data.units {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.currencies {
+            let repo = crate::CurrencyRowRepository::new(connection);
+            for row in &mock_data.currencies {
                 repo.upsert_one(&row).unwrap();
             }
         }
@@ -1031,6 +1030,7 @@ impl MockData {
             mut contexts,
             mut pack_variants,
             plugin_data: _,
+            mut currencies,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
@@ -1082,6 +1082,7 @@ impl MockData {
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
         self.pack_variants.append(&mut pack_variants);
+        self.currencies.append(&mut currencies);
 
         self
     }

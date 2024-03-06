@@ -3,7 +3,10 @@ use crate::sync::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
         empty_str_as_option_string, naive_time, zero_date_as_option,
     },
-    translations::{name::NameTranslation, store::StoreTranslation},
+    translations::{
+        clinician::ClinicianTranslation, currency::CurrencyTranslation, name::NameTranslation,
+        store::StoreTranslation,
+    },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -88,7 +91,12 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub prescriber_ID: Option<String>,
+    #[serde(rename = "prescriber_ID")]
+    pub clinician_id: Option<String>,
+    #[serde(rename = "currency_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub currency_id: Option<String>,
+    pub currency_rate: f64,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
@@ -208,7 +216,12 @@ impl SyncTranslation for InvoiceTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![NameTranslation.table_name(), StoreTranslation.table_name()]
+        vec![
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            ClinicianTranslation.table_name(),
+            CurrencyTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -259,7 +272,9 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            clinician_link_id: data.prescriber_ID,
+            currency_id: data.currency_id,
+            currency_rate: data.currency_rate,
+            clinician_link_id: data.clinician_id,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -331,6 +346,8 @@ impl SyncTranslation for InvoiceTranslation {
                     transport_reference,
                     tax,
                     clinician_link_id: _,
+                    currency_id,
+                    currency_rate,
                 },
             name_row,
             clinician_row,
@@ -382,7 +399,9 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            prescriber_ID: clinician_row.map(|row| row.id),
+            currency_id,
+            currency_rate,
+            clinician_id: clinician_row.map(|row| row.id),
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;
