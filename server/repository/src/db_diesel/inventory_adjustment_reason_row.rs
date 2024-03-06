@@ -3,7 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -91,5 +91,35 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
             .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InventoryAdjustmentReasonRowDelete(pub String);
+// TODO soft delete
+impl Delete for InventoryAdjustmentReasonRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InventoryAdjustmentReasonRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InventoryAdjustmentReasonRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for InventoryAdjustmentReasonRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InventoryAdjustmentReasonRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InventoryAdjustmentReasonRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

@@ -2,9 +2,8 @@ use chrono::Duration;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_query;
 use diesel::sql_types::*;
-use diesel::QueryDsl;
-use diesel::{sql_query, RunQueryDsl};
 use repository::DBType;
 use repository::RepositoryError;
 use repository::StorageConnection;
@@ -43,23 +42,9 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sensor", "last_connection_datetime"),
         ("stocktake", "created_datetime"),
         ("stocktake", "finalised_datetime"),
-        ("sync_log", "started_datetime"),
-        ("sync_log", "finished_datetime"),
-        ("sync_log", "prepare_initial_started_datetime"),
-        ("sync_log", "prepare_initial_finished_datetime"),
-        ("sync_log", "push_started_datetime"),
-        ("sync_log", "push_finished_datetime"),
-        ("sync_log", "pull_central_started_datetime"),
-        ("sync_log", "pull_central_finished_datetime"),
-        ("sync_log", "pull_remote_started_datetime"),
-        ("sync_log", "pull_remote_finished_datetime"),
-        ("sync_log", "integration_started_datetime"),
-        ("sync_log", "integration_finished_datetime"),
         ("temperature_breach", "start_datetime"),
         ("temperature_breach", "end_datetime"),
         ("temperature_log", "datetime"),
-        ("activity_log", "datetime"),
-        ("user_account", "last_successful_sync"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -75,6 +60,22 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
     vec![
         ("sync_buffer", "received_datetime"),
         ("sync_buffer", "integration_datetime"),
+        ("sync_log", "started_datetime"),
+        ("sync_log", "finished_datetime"),
+        ("sync_log", "prepare_initial_started_datetime"),
+        ("sync_log", "prepare_initial_finished_datetime"),
+        ("sync_log", "push_started_datetime"),
+        ("sync_log", "push_finished_datetime"),
+        ("sync_log", "pull_central_started_datetime"),
+        ("sync_log", "pull_central_finished_datetime"),
+        ("sync_log", "pull_remote_started_datetime"),
+        ("sync_log", "pull_remote_finished_datetime"),
+        ("sync_log", "integration_started_datetime"),
+        ("sync_log", "integration_finished_datetime"),
+        ("sync_log", "pull_v6_started_datetime"),
+        ("sync_log", "pull_v6_finished_datetime"),
+        ("user_account", "last_successful_sync"),
+        ("activity_log", "datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -96,6 +97,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("period", "start_date"),
         ("period", "end_date"),
         ("store", "created_date"),
+        ("currency", "date_updated"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -346,7 +348,6 @@ fn serialise_date(date: NaiveDate) -> String {
 
 #[cfg(test)]
 mod tests {
-    use chrono::NaiveDate;
     use repository::{
         mock::{
             mock_item_a, mock_item_link_from_item, mock_name_a, mock_store_a, MockData,

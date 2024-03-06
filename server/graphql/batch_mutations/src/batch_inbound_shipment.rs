@@ -6,7 +6,6 @@ use graphql_invoice_line::mutations::inbound_shipment_line;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
-use service::invoice::inbound_shipment::{BatchInboundShipment, BatchInboundShipmentResult};
 
 use crate::to_standard_error;
 use crate::VecOrNone;

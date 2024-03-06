@@ -2,9 +2,9 @@ use repository::{MasterListLineRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use crate::sync::translations::{item::ItemTranslation, master_list::MasterListTranslation};
+
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -14,27 +14,30 @@ pub struct LegacyListMasterLineRow {
     item_ID: String,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::LIST_MASTER_LINE
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(MasterListLineTranslation)
 }
-pub(crate) struct MasterListLineTranslation {}
+
+pub(super) struct MasterListLineTranslation;
 impl SyncTranslation for MasterListLineTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::LIST_MASTER_LINE,
-            dependencies: vec![LegacyTableName::ITEM, LegacyTableName::LIST_MASTER],
-        }
+    fn table_name(&self) -> &'static str {
+        "list_master_line"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            MasterListTranslation.table_name(),
+            ItemTranslation.table_name(),
+        ]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)?;
         let result = MasterListLineRow {
             id: data.ID,
@@ -42,9 +45,7 @@ impl SyncTranslation for MasterListLineTranslation {
             master_list_id: data.item_master_ID,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::MasterListLine(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 }
 
@@ -62,8 +63,9 @@ mod tests {
             setup_all("test_master_list_line_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -6,7 +6,6 @@ use crate::{
 };
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use diesel::{QueryDsl, RunQueryDsl};
 use util::Defaults;
 
 table! {

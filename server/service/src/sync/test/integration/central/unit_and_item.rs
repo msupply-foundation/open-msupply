@@ -5,9 +5,9 @@ use crate::sync::{
         },
         test_data::item::test_pull_upsert_records,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
-use repository::{ItemRow, ItemRowType, UnitRow};
+use repository::{ItemRow, ItemRowDelete, ItemRowType, UnitRow, UnitRowDelete};
 
 use serde_json::json;
 use util::{merge_json, uuid::uuid};
@@ -108,29 +108,23 @@ impl SyncRecordTester for UnitAndItemTester {
                 "item": [item_json1, item_json2, item_json3],
                 "unit": [unit_json1, unit_json2]
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Unit(unit_row1.clone()),
-                PullUpsertRecord::Unit(unit_row2),
-                PullUpsertRecord::Item(item_row1),
-                PullUpsertRecord::Item(item_row2.clone()),
-                PullUpsertRecord::Item(item_row3),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(unit_row1.clone()),
+                IntegrationOperation::upsert(unit_row2),
+                IntegrationOperation::upsert(item_row1),
+                IntegrationOperation::upsert(item_row2.clone()),
+                IntegrationOperation::upsert(item_row3),
+            ],
+            ..Default::default()
         });
         // STEP 2 - deletes
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({ "item": [item_row2.id], "unit": [unit_row1.id] }),
-            integration_records: IntegrationRecords::from_deletes(vec![
-                PullDeleteRecord {
-                    id: unit_row1.id,
-                    table: PullDeleteRecordTable::Unit,
-                },
-                PullDeleteRecord {
-                    id: item_row2.id,
-                    table: PullDeleteRecordTable::Item,
-                },
-            ]),
+            integration_records: vec![
+                IntegrationOperation::delete(UnitRowDelete(unit_row1.id)),
+                IntegrationOperation::delete(ItemRowDelete(item_row2.id)),
+            ],
+            ..Default::default()
         });
         result
     }

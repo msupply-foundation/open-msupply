@@ -1,6 +1,8 @@
 use super::{activity_log_row::activity_log::dsl as activity_log_dsl, StorageConnection};
 
-use crate::{db_diesel::store_row::store, repository_error::RepositoryError, user_account};
+use crate::{
+    db_diesel::store_row::store, repository_error::RepositoryError, user_account, Delete, Upsert,
+};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -103,5 +105,36 @@ impl<'a> ActivityLogRowRepository<'a> {
             .filter(activity_log_dsl::record_id.eq(id))
             .get_results(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+impl Upsert for ActivityLogRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ActivityLogRowRepository::new(con).insert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ActivityLogRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+// Only used in tests
+pub struct ActivityLogRowDelete(pub String);
+impl Delete for ActivityLogRowDelete {
+    fn delete(&self, _: &StorageConnection) -> Result<(), RepositoryError> {
+        // Not deleting in tests, just want to check asserted_deleted
+        Ok(())
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ActivityLogRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
     }
 }

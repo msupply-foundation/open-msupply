@@ -4,11 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type InboundLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null };
+export type InboundLineFragment = { __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, foreignCurrencyPriceBeforeTax?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null };
 
-export type InboundFragment = { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null } };
+export type InboundFragment = { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, currencyRate?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, foreignCurrencyPriceBeforeTax?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null, foreignCurrencyTotalAfterTax?: number | null }, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null };
 
-export type InboundRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, deliveredDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, status: Types.InvoiceNodeStatus, colour?: string | null, theirReference?: string | null, taxPercentage?: number | null, onHold: boolean, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null }, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null };
+export type InboundRowFragment = { __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, deliveredDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, status: Types.InvoiceNodeStatus, colour?: string | null, theirReference?: string | null, taxPercentage?: number | null, onHold: boolean, currencyRate?: number | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null, foreignCurrencyTotalAfterTax?: number | null }, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null };
 
 export type InvoicesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -20,7 +20,7 @@ export type InvoicesQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, deliveredDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, status: Types.InvoiceNodeStatus, colour?: string | null, theirReference?: string | null, taxPercentage?: number | null, onHold: boolean, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null }, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null }> } };
+export type InvoicesQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', comment?: string | null, createdDatetime: string, deliveredDatetime?: string | null, id: string, invoiceNumber: number, otherPartyName: string, status: Types.InvoiceNodeStatus, colour?: string | null, theirReference?: string | null, taxPercentage?: number | null, onHold: boolean, currencyRate?: number | null, pricing: { __typename: 'PricingNode', totalAfterTax: number, taxPercentage?: number | null, foreignCurrencyTotalAfterTax?: number | null }, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null }> } };
 
 export type InvoiceQueryVariables = Types.Exact<{
   id: Types.Scalars['String']['input'];
@@ -28,7 +28,7 @@ export type InvoiceQueryVariables = Types.Exact<{
 }>;
 
 
-export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InvoiceQuery = { __typename: 'Queries', invoice: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, currencyRate?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, foreignCurrencyPriceBeforeTax?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null, foreignCurrencyTotalAfterTax?: number | null }, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type InboundByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -36,7 +36,7 @@ export type InboundByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null } } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
+export type InboundByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, comment?: string | null, createdDatetime: string, allocatedDatetime?: string | null, deliveredDatetime?: string | null, pickedDatetime?: string | null, shippedDatetime?: string | null, verifiedDatetime?: string | null, invoiceNumber: number, colour?: string | null, onHold: boolean, otherPartyId: string, otherPartyName: string, status: Types.InvoiceNodeStatus, theirReference?: string | null, transportReference?: string | null, type: Types.InvoiceNodeType, taxPercentage?: number | null, currencyRate?: number | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, requisition?: { __typename: 'RequisitionNode', id: string, requisitionNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, type: Types.InvoiceLineNodeType, batch?: string | null, costPricePerPack: number, sellPricePerPack: number, expiryDate?: string | null, numberOfPacks: number, packSize: number, note?: string | null, invoiceId: string, totalBeforeTax: number, totalAfterTax: number, taxPercentage?: number | null, foreignCurrencyPriceBeforeTax?: number | null, item: { __typename: 'ItemNode', id: string, name: string, code: string, unitName?: string | null, defaultPackSize: number }, location?: { __typename: 'LocationNode', name: string, id: string, code: string, onHold: boolean } | null, stockLine?: { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, onHold: boolean, note?: string | null } | null }> }, otherParty: { __typename: 'NameNode', id: string, name: string, code: string, isCustomer: boolean, isSupplier: boolean, isOnHold: boolean, store?: { __typename: 'StoreNode', id: string, code: string } | null }, pricing: { __typename: 'PricingNode', totalAfterTax: number, totalBeforeTax: number, stockTotalBeforeTax: number, stockTotalAfterTax: number, serviceTotalAfterTax: number, serviceTotalBeforeTax: number, taxPercentage?: number | null, foreignCurrencyTotalAfterTax?: number | null }, currency?: { __typename: 'CurrencyNode', id: string, code: string, rate: number, isHomeCurrency: boolean } | null } | { __typename: 'NodeError', error: { __typename: 'DatabaseError', description: string, fullError: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type UpdateInboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -44,7 +44,7 @@ export type UpdateInboundShipmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateInboundShipmentMutation = { __typename: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
+export type UpdateInboundShipmentMutation = { __typename: 'Mutations', updateInboundShipment: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotIssueInForeignCurrency', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } };
 
 export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -71,21 +71,13 @@ export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
 
 export type DeleteInboundShipmentLinesMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type ZeroLinesQuantityMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.BatchInboundShipmentInput;
-}>;
-
-
-export type ZeroLinesQuantityMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', zeroLinesQuantity?: Array<{ __typename: 'ZeroInboundShipmentLineQuantityResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'ZeroInboundShipmentLineQuantityError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceWasCreatedAfterStore', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null } };
-
 export type UpsertInboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchInboundShipmentInput;
 }>;
 
 
-export type UpsertInboundShipmentMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipments?: Array<{ __typename: 'InsertInboundShipmentResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } }> | null, deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, updateInboundShipmentServiceLines?: Array<{ __typename: 'UpdateInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, zeroLinesQuantity?: Array<{ __typename: 'ZeroInboundShipmentLineQuantityResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'ZeroInboundShipmentLineQuantityError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'InvoiceWasCreatedAfterStore', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipmentServiceLines?: Array<{ __typename: 'InsertInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteInboundShipmentServiceLines?: Array<{ __typename: 'DeleteInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+export type UpsertInboundShipmentMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotIssueInForeignCurrency', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipments?: Array<{ __typename: 'InsertInboundShipmentResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } }> | null, deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, updateInboundShipmentServiceLines?: Array<{ __typename: 'UpdateInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipmentServiceLines?: Array<{ __typename: 'InsertInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteInboundShipmentServiceLines?: Array<{ __typename: 'DeleteInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type AddToInboundShipmentFromMasterListMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -113,6 +105,7 @@ export const InboundLineFragmentDoc = gql`
   totalBeforeTax
   totalAfterTax
   taxPercentage
+  foreignCurrencyPriceBeforeTax
   item {
     __typename
     id
@@ -200,6 +193,10 @@ export const InboundFragmentDoc = gql`
     isCustomer
     isSupplier
     isOnHold
+    store {
+      id
+      code
+    }
   }
   pricing {
     __typename
@@ -210,7 +207,15 @@ export const InboundFragmentDoc = gql`
     serviceTotalAfterTax
     serviceTotalBeforeTax
     taxPercentage
+    foreignCurrencyTotalAfterTax
   }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+  currencyRate
 }
     ${InboundLineFragmentDoc}`;
 export const InboundRowFragmentDoc = gql`
@@ -231,10 +236,18 @@ export const InboundRowFragmentDoc = gql`
     __typename
     totalAfterTax
     taxPercentage
+    foreignCurrencyTotalAfterTax
   }
   linkedShipment {
     id
   }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+  currencyRate
 }
     `;
 export const InvoicesDocument = gql`
@@ -428,47 +441,6 @@ export const DeleteInboundShipmentLinesDocument = gql`
   }
 }
     `;
-export const ZeroLinesQuantityDocument = gql`
-    mutation zeroLinesQuantity($storeId: String!, $input: BatchInboundShipmentInput!) {
-  batchInboundShipment(storeId: $storeId, input: $input) {
-    zeroLinesQuantity {
-      id
-      response {
-        ... on ZeroInboundShipmentLineQuantityError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-            ... on InvoiceWasCreatedAfterStore {
-              __typename
-              description
-            }
-          }
-        }
-        ... on InvoiceLineNode {
-          id
-        }
-      }
-    }
-  }
-}
-    `;
 export const UpsertInboundShipmentDocument = gql`
     mutation upsertInboundShipment($storeId: String!, $input: BatchInboundShipmentInput!) {
   batchInboundShipment(storeId: $storeId, input: $input) {
@@ -605,41 +577,6 @@ export const UpsertInboundShipmentDocument = gql`
               key
             }
             ... on NotAnInboundShipment {
-              __typename
-              description
-            }
-          }
-        }
-        ... on InvoiceLineNode {
-          id
-        }
-      }
-    }
-    zeroLinesQuantity {
-      id
-      response {
-        ... on ZeroInboundShipmentLineQuantityError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-            ... on InvoiceWasCreatedAfterStore {
               __typename
               description
             }
@@ -817,9 +754,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines', 'mutation');
     },
-    zeroLinesQuantity(variables: ZeroLinesQuantityMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ZeroLinesQuantityMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ZeroLinesQuantityMutation>(ZeroLinesQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'zeroLinesQuantity', 'mutation');
-    },
     upsertInboundShipment(variables: UpsertInboundShipmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertInboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment', 'mutation');
     },
@@ -946,23 +880,6 @@ export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
   graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
     'deleteInboundShipmentLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockZeroLinesQuantityMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ batchInboundShipment })
- *   )
- * })
- */
-export const mockZeroLinesQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<ZeroLinesQuantityMutationVariables>, GraphQLContext<ZeroLinesQuantityMutation>, any>) =>
-  graphql.mutation<ZeroLinesQuantityMutation, ZeroLinesQuantityMutationVariables>(
-    'zeroLinesQuantity',
     resolver
   )
 

@@ -49,7 +49,7 @@ const useUpsertProgramEnrolment = (
 };
 
 export const ProgramDetailModal: FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const patientId = usePatient.utils.id();
 
   const { current, document, reset } = usePatientModalStore();

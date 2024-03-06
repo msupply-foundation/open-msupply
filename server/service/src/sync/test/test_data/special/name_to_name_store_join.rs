@@ -4,11 +4,10 @@ use util::{inline_edit, inline_init};
 
 use crate::sync::{
     test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{
-        name_store_join::LegacyNameStoreJoinRow, IntegrationRecords, LegacyTableName,
-        PullUpsertRecord,
-    },
+    translations::{name_store_join::LegacyNameStoreJoinRow, PullTranslateResult},
 };
+
+const TABLE_NAME: &'static str = "name_store_join";
 
 const NAME_1: (&'static str, &'static str) = (
     "BEB2D69692C44B32B24BEBD5020BCD14",
@@ -161,20 +160,20 @@ pub fn name_store_join3() -> NameStoreJoinRow {
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord {
-        translated_record: Some(IntegrationRecords::from_upserts(vec![
-            PullUpsertRecord::NameStoreJoin(inline_edit(&name_store_join1(), |mut r| {
+        translated_record: PullTranslateResult::upserts(vec![
+            inline_edit(&name_store_join1(), |mut r| {
                 r.name_is_customer = true;
                 r.name_is_supplier = false;
                 r
-            })),
-            PullUpsertRecord::NameStoreJoin(inline_edit(&name_store_join2(), |mut r| {
+            }),
+            inline_edit(&name_store_join2(), |mut r| {
                 r.name_is_customer = true;
                 r.name_is_supplier = false;
                 r
-            })),
-        ])),
+            }),
+        ]),
         sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
-            r.table_name = LegacyTableName::NAME.to_owned();
+            r.table_name = "name".to_string();
             r.record_id = NAME_1.0.to_owned();
             r.data = NAME_1.1.to_owned();
         }),
@@ -190,19 +189,20 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
     vec![
         TestSyncPushRecord {
             record_id: name_store_join1().id,
-            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
                 id: name_store_join1().id,
                 store_id: name_store_join1().store_id,
                 name_id: name_store_join1().name_link_id,
                 inactive: Some(false),
                 name_is_customer: Some(true),
+
                 name_is_supplier: Some(false),
             }),
         },
         TestSyncPushRecord {
             record_id: name_store_join2().id,
-            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
                 id: name_store_join2().id,
                 store_id: name_store_join2().store_id,
@@ -214,7 +214,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
         },
         TestSyncPushRecord {
             record_id: name_store_join3().id,
-            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
                 id: name_store_join3().id,
                 store_id: name_store_join3().store_id,

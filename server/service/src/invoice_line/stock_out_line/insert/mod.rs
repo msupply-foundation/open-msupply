@@ -70,7 +70,7 @@ pub fn insert_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&input, &ctx.store_id, &connection)?;
-            let (new_line, update_batch) = generate(input, item, batch, invoice)?;
+            let (new_line, update_batch) = generate(connection, input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
             get_invoice_line(ctx, &new_line.id)

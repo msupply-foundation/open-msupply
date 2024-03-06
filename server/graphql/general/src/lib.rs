@@ -7,9 +7,13 @@ use self::queries::*;
 
 use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
+use util::is_central_server;
 
 use crate::store_preference::store_preferences;
-use graphql_types::types::{StorePreferenceNode, TemperatureLogFilterInput};
+use graphql_types::types::{
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, StorePreferenceNode,
+    TemperatureLogFilterInput,
+};
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
@@ -23,6 +27,7 @@ use mutations::{
     update_user,
 };
 use queries::{
+    currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
@@ -62,6 +67,10 @@ impl GeneralQueries {
 
     pub async fn me(&self, ctx: &Context<'_>) -> Result<UserResponse> {
         me(ctx)
+    }
+
+    pub async fn is_central_server(&self) -> bool {
+        is_central_server()
     }
 
     /// Query omSupply "name" entries
@@ -294,6 +303,16 @@ impl GeneralQueries {
             number_of_data_points,
             filter,
         )
+    }
+
+    pub async fn currencies(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Filter option")] filter: Option<CurrencyFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<CurrencySortInput>>,
+    ) -> Result<CurrenciesResponse> {
+        currencies(ctx, filter, sort)
     }
 
     pub async fn database_settings(&self, ctx: &Context<'_>) -> Result<DatabaseSettingsNode> {
