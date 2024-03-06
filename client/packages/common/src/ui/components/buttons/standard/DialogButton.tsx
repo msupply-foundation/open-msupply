@@ -3,13 +3,20 @@ import { LocaleKey, useTranslation } from '@common/intl';
 import {
   ArrowRightIcon,
   CheckIcon,
+  DeleteIcon,
   CopyIcon,
   SaveIcon,
   XCircleIcon,
 } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
-type DialogButtonVariant = 'cancel' | 'next' | 'ok' | 'save' | 'copy';
+type DialogButtonVariant =
+  | 'cancel'
+  | 'next'
+  | 'ok'
+  | 'save'
+  | 'copy'
+  | 'delete';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -56,6 +63,12 @@ const getButtonProps = (
         labelKey: 'button.save',
         variant: 'contained',
       };
+    case 'delete':
+      return {
+        icon: <DeleteIcon />,
+        labelKey: 'button.delete',
+        variant: 'contained',
+      };
     case 'copy':
       return {
         icon: <CopyIcon />,
@@ -73,7 +86,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   color,
   type,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
 
   return (

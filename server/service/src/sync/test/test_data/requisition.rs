@@ -1,17 +1,15 @@
 use super::{TestSyncPullRecord, TestSyncPushRecord};
-use crate::sync::translations::{
-    requisition::{
-        LegacyAuthorisationStatus, LegacyRequisitionRow, LegacyRequisitionStatus,
-        LegacyRequisitionType,
-    },
-    LegacyTableName, PullDeleteRecordTable, PullUpsertRecord,
+use crate::sync::translations::requisition::{
+    LegacyAuthorisationStatus, LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType,
 };
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    RequisitionRow, RequisitionRowApprovalStatus,
+    RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowDelete,
 };
 use serde_json::json;
+
+const TABLE_NAME: &'static str = "requisition";
 
 const REQUISITION_REQUEST: (&'static str, &'static str) = (
     "B3D3761753DB42A7B3286ACF89FBCA1C",
@@ -54,9 +52,9 @@ const REQUISITION_REQUEST: (&'static str, &'static str) = (
 );
 fn requisition_request_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REQUISITION,
+        TABLE_NAME,
         REQUISITION_REQUEST,
-        PullUpsertRecord::Requisition(RequisitionRow {
+        RequisitionRow {
             id: REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
@@ -86,12 +84,12 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
             program_id: None,
             period_id: None,
             order_type: None,
-        }),
+        },
     )
 }
 fn requisition_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::REQUISITION.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_REQUEST.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_REQUEST.0.to_string(),
@@ -167,9 +165,9 @@ const REQUISITION_RESPONSE: (&'static str, &'static str) = (
 );
 fn requisition_response_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REQUISITION,
+        TABLE_NAME,
         REQUISITION_RESPONSE,
-        PullUpsertRecord::Requisition(RequisitionRow {
+        RequisitionRow {
             id: REQUISITION_RESPONSE.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
@@ -199,12 +197,12 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
             program_id: Some("missing_program".to_string()),
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
-        }),
+        },
     )
 }
 fn requisition_response_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::REQUISITION.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_RESPONSE.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_RESPONSE.0.to_string(),
@@ -287,9 +285,9 @@ const REQUISITION_OM_FIELDS: (&'static str, &'static str) = (
 );
 fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REQUISITION,
+        TABLE_NAME,
         REQUISITION_OM_FIELDS,
-        PullUpsertRecord::Requisition(RequisitionRow {
+        RequisitionRow {
             id: REQUISITION_OM_FIELDS.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 1,
@@ -324,12 +322,12 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
             program_id: None,
             period_id: Some("641A3560C84A44BC9E6DDC01F3D75923".to_string()),
             order_type: Some("Normal".to_string()),
-        }),
+        },
     )
 }
 fn requisition_om_fields_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::REQUISITION.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: REQUISITION_OM_FIELDS.0.to_string(),
@@ -417,9 +415,9 @@ const PROGRAM_REQUISITION_REQUEST: (&'static str, &'static str) = (
 );
 fn program_requisition_request_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REQUISITION,
+        TABLE_NAME,
         PROGRAM_REQUISITION_REQUEST,
-        PullUpsertRecord::Requisition(RequisitionRow {
+        RequisitionRow {
             id: PROGRAM_REQUISITION_REQUEST.0.to_string(),
             user_id: Some("0763E2E3053D4C478E1E6B6B03FEC207".to_string()),
             requisition_number: 8,
@@ -449,12 +447,12 @@ fn program_requisition_request_pull_record() -> TestSyncPullRecord {
             program_id: Some("missing_program".to_string()),
             period_id: Some("772B3984DBA14A5F941ED0EF857FDB31".to_string()),
             order_type: Some("Normal".to_string()),
-        }),
+        },
     )
 }
 fn program_requisition_request_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::REQUISITION.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: PROGRAM_REQUISITION_REQUEST.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
             ID: PROGRAM_REQUISITION_REQUEST.0.to_string(),
@@ -507,9 +505,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::REQUISITION,
+        TABLE_NAME,
         REQUISITION_OM_FIELDS.0,
-        PullDeleteRecordTable::Requisition,
+        RequisitionRowDelete(REQUISITION_OM_FIELDS.0.to_string()),
     )]
 }
 

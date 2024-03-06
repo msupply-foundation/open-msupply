@@ -188,7 +188,7 @@ const Row: React.FC<PropsWithChildren<RowProps>> = ({ title, children }) => (
 );
 
 const FormattedSyncDate = ({ date }: { date: Date | null }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { localisedDistanceToNow, relativeDateTime } = useFormatDateTime();
 
   if (!date) return null;

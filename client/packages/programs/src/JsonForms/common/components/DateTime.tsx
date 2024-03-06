@@ -85,7 +85,7 @@ const UIComponent = (props: ControlProps) => {
 
   const dateOnly = options?.dateOnly ?? false;
 
-  const inputFormat = !dateOnly ? 'dd/MM/yyyy hh:mm' : 'dd/MM/yyyy';
+  const inputFormat = !dateOnly ? 'P p' : 'P';
 
   const onChange = (e: Date | null) => {
     if (!e) return;
@@ -100,7 +100,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const sharedComponentProps = {
-    value: DateUtils.getDateOrNull(data),
+    value: DateUtils.getDateOrNull(data, inputFormat),
     onChange: (e: Date | null) => onChange(e),
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],

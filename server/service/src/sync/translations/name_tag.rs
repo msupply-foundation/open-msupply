@@ -2,9 +2,7 @@ use repository::{NameTagRow, StorageConnection, SyncBufferRow};
 
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -12,29 +10,27 @@ pub struct LegacyNameTagRow {
     pub ID: String,
     pub description: String,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::NAME_TAG
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(NameTagTranslation)
 }
 
-pub(crate) struct NameTagTranslation {}
+pub(super) struct NameTagTranslation;
 impl SyncTranslation for NameTagTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::NAME_TAG,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &'static str {
+        "name_tag"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameTagRow { ID, description } =
             serde_json::from_str::<LegacyNameTagRow>(&sync_record.data)?;
 
@@ -43,19 +39,7 @@ impl SyncTranslation for NameTagTranslation {
             name: description,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::NameTag(result),
-        )))
-    }
-
-    fn try_translate_pull_delete(
-        &self,
-        _: &StorageConnection,
-        _sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        // Name tags are not deleted in mSupply.
-
-        Ok(None)
+        Ok(PullTranslateResult::upsert(result))
     }
 }
 
@@ -67,14 +51,15 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_tag_translation() {
         use crate::sync::test::test_data::name_tag as test_data;
-        let translator = NameTagTranslation {};
+        let translator = NameTagTranslation;
 
         let (_, connection, _, _) =
             setup_all("test_name_tag_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

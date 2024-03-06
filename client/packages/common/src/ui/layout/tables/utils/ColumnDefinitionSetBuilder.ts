@@ -47,6 +47,14 @@ export type ColumnKey =
   | 'stockOnHand'
   | 'theirReference';
 
+export const getColumnLookupWithOverrides = <T extends RecordWithId>(
+  columnKey: ColumnKey,
+  overrides: Partial<ColumnDefinition<T>>
+): ColumnDefinition<T> => ({
+  ...getColumnLookup<T>()[columnKey],
+  ...overrides,
+});
+
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
   ColumnDefinition<T>
@@ -64,7 +72,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Integer,
     align: ColumnAlign.Right,
     description: 'description.pack-quantity',
-    label: 'label.pack-quantity',
+    label: 'label.num-packs',
     width: 100,
     Cell: NumberCell,
   },
@@ -181,7 +189,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   quantity: {
     description: 'description.pack-quantity',
-    label: 'label.pack-quantity',
+    label: 'label.num-packs',
     key: 'quantity',
     width: 100,
     align: ColumnAlign.Right,
