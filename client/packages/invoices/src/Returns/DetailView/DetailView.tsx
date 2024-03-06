@@ -15,8 +15,7 @@ import {
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
-// import { Toolbar } from './Toolbar';
-// import { Footer } from './Footer';
+import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
@@ -86,7 +85,7 @@ export const DetailView: FC = () => {
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          {/* <Footer /> */}
+          <Footer />
           {/* <SidePanel /> */}
         </TableProvider>
       ) : (
