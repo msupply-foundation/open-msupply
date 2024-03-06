@@ -10,6 +10,9 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
+use self::inbound_return::insert::insert_inbound_return;
+use self::inbound_return::insert::InsertInboundReturn;
+use self::inbound_return::insert::InsertInboundReturnError;
 use self::outbound_return::generate_outbound_return_lines::*;
 use self::outbound_return::insert::insert_outbound_return;
 use self::outbound_return::insert::InsertOutboundReturn;
@@ -21,6 +24,7 @@ use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 
+pub mod inbound_return;
 pub mod outbound_return;
 
 pub mod outbound_shipment;
@@ -204,6 +208,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: InsertOutboundReturn,
     ) -> Result<Invoice, InsertOutboundReturnError> {
         insert_outbound_return(ctx, input)
+    }
+
+    fn insert_inbound_return(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertInboundReturn,
+    ) -> Result<Invoice, InsertInboundReturnError> {
+        insert_inbound_return(ctx, input)
     }
 }
 
