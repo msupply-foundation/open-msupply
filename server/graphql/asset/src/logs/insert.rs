@@ -108,7 +108,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::UnableToEditOtherUsersLog => BadUserInput(formatted_error),
+        ServiceError::InsufficientPermission => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
