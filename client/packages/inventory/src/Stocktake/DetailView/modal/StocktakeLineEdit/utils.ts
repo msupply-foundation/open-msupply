@@ -15,7 +15,6 @@ export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;
-  isNewLine?: boolean;
 };
 
 export const DraftLine = {
@@ -30,7 +29,6 @@ export const DraftLine = {
       countThisLine: true,
       isCreated: true,
       isUpdated: false,
-      isNewLine: true,
       id: FnUtils.generateUUID(),
       expiryDate: null,
       itemId: item.id,
@@ -56,7 +54,6 @@ export const DraftLine = {
       stocktakeId,
       isCreated: true,
       isUpdated: false,
-      isNewLine: false,
       countThisLine,
       stockLine,
       ...stockLine,

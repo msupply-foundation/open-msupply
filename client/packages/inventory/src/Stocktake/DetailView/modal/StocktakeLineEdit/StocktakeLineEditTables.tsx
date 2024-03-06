@@ -157,7 +157,7 @@ const getInventoryAdjustmentReasonInputColumn = (
 const PackUnitEntryCell = PackVariantEntryCell<DraftStocktakeLine>({
   getItemId: r => r.item.id,
   getUnitName: r => r.item.unitName || null,
-  getIsDisabled: r => !r.isNewLine,
+  getIsDisabled: r => !!r?.stockLine,
 });
 
 export const BatchTable: FC<
