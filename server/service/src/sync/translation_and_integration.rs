@@ -1,15 +1,9 @@
-use crate::{
-    sync::{integrate_document::sync_upsert_document, translations::PullDeleteRecordTable},
-    usize_to_u64,
-};
-
+use super::sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress};
 use super::{
     sync_buffer::SyncBuffer,
-    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
-    translations::{
-        IntegrationRecords, PullDeleteRecord, PullUpsertRecord, SyncTranslation, SyncTranslators,
-    },
+    translations::{IntegrationOperation, PullTranslateResult, SyncTranslation, SyncTranslators},
 };
+use crate::usize_to_u64;
 use log::warn;
 use repository::*;
 use std::collections::HashMap;
@@ -46,31 +40,38 @@ impl<'a> TranslationAndIntegration<'a> {
         &self,
         sync_record: &SyncBufferRow,
         translators: &SyncTranslators,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let mut translation_results = IntegrationRecords::new();
+    ) -> Result<Option<Vec<IntegrationOperation>>, anyhow::Error> {
+        let mut translation_results = Vec::new();
 
         for translator in translators.iter() {
+            if !translator.should_translate_from_sync_record(&sync_record) {
+                continue;
+            }
+
             let translation_result = match sync_record.action {
-                SyncBufferAction::Upsert => {
-                    translator.try_translate_pull_upsert(self.connection, &sync_record)?
-                }
-                SyncBufferAction::Delete => {
-                    translator.try_translate_pull_delete(self.connection, &sync_record)?
-                }
-                SyncBufferAction::Merge => {
-                    translator.try_translate_pull_merge(self.connection, &sync_record)?
-                }
+                SyncBufferAction::Upsert => translator
+                    .try_translate_from_upsert_sync_record(self.connection, &sync_record)?,
+                SyncBufferAction::Delete => translator
+                    .try_translate_from_delete_sync_record(self.connection, &sync_record)?,
+                SyncBufferAction::Merge => translator
+                    .try_translate_from_merge_sync_record(self.connection, &sync_record)?,
             };
 
-            if let Some(translation_result) = translation_result {
-                translation_results = translation_results.join(translation_result);
+            match translation_result {
+                PullTranslateResult::IntegrationOperations(records) => {
+                    translation_results.push(records)
+                }
+                PullTranslateResult::Ignored(ignore_message) => {
+                    log::debug!("Ignored record in push translation: {}", ignore_message)
+                }
+                PullTranslateResult::NotMatched => {}
             }
         }
 
         if translation_results.is_empty() {
             Ok(None)
         } else {
-            Ok(Some(translation_results))
+            Ok(Some(translation_results.into_iter().flatten().collect()))
         }
     }
 
@@ -83,6 +84,7 @@ impl<'a> TranslationAndIntegration<'a> {
         let step_progress = SyncStepProgress::Integrate;
         let mut result = TranslationAndIntegrationResults::new();
 
+        // Try translate
         // Record initial progress (will be set as total progress)
         let total_to_integrate = sync_records.len();
 
@@ -131,7 +133,7 @@ impl<'a> TranslationAndIntegration<'a> {
             };
 
             // Integrate
-            let integration_result = integration_records.integrate(self.connection);
+            let integration_result = integrate(self.connection, &integration_records);
             match integration_result {
                 Ok(_) => {
                     self.sync_buffer
@@ -163,142 +165,35 @@ impl<'a> TranslationAndIntegration<'a> {
     }
 }
 
-impl IntegrationRecords {
-    pub(crate) fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
-        // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-        let start_nested_transaction = { connection.transaction_level.get() > 0 };
-
-        for delete in self.deletes.iter() {
-            // Integrate every record in a sub transaction. This is mainly for Postgres where the
-            // whole transaction fails when there is a DB error (not a problem in sqlite).
-            if start_nested_transaction {
-                connection
-                    .transaction_sync_etc(|sub_tx| delete.delete(sub_tx), false)
-                    .map_err(|e| e.to_inner_error())?;
-            } else {
-                delete.delete(&connection)?;
-            }
-        }
-
-        for upsert in self.upserts.iter() {
-            // Integrate every record in a sub transaction. This is mainly for Postgres where the
-            // whole transaction fails when there is a DB error (not a problem in sqlite).
-            if start_nested_transaction {
-                connection
-                    .transaction_sync_etc(|sub_tx| upsert.upsert(sub_tx), false)
-                    .map_err(|e| e.to_inner_error())?;
-            } else {
-                upsert.upsert(&connection)?;
-            }
-        }
-
-        Ok(())
-    }
-}
-
-impl PullUpsertRecord {
-    pub(crate) fn upsert(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        use PullUpsertRecord::*;
+impl IntegrationOperation {
+    fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
         match self {
-            UserPermission(record) => UserPermissionRowRepository::new(con).upsert_one(record),
-            Name(record) => NameRowRepository::new(con).sync_upsert_one(record),
-            NameTag(record) => NameTagRowRepository::new(con).upsert_one(record),
-            NameTagJoin(record) => NameTagJoinRepository::new(con).upsert_one(record),
-            Unit(record) => UnitRowRepository::new(con).upsert_one(record),
-            Item(record) => ItemRowRepository::new(con).upsert_one(record),
-            Store(record) => StoreRowRepository::new(con).upsert_one(record),
-            MasterList(record) => MasterListRowRepository::new(con).upsert_one(record),
-            MasterListLine(record) => MasterListLineRowRepository::new(con).upsert_one(record),
-            MasterListNameJoin(record) => MasterListNameJoinRepository::new(con).upsert_one(record),
-            PeriodSchedule(record) => PeriodScheduleRowRepository::new(con).upsert_one(record),
-            Period(record) => PeriodRowRepository::new(con).upsert_one(record),
-            Context(record) => ContextRowRepository::new(con).upsert_one(record),
-            Program(record) => ProgramRowRepository::new(con).upsert_one(record),
-            ProgramRequisitionSettings(record) => {
-                ProgramRequisitionSettingsRowRepository::new(con).upsert_one(record)
-            }
-            ProgramRequisitionOrderType(record) => {
-                ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(record)
-            }
-            Report(record) => ReportRowRepository::new(con).upsert_one(record),
-            Location(record) => LocationRowRepository::new(con).upsert_one(record),
-            LocationMovement(record) => LocationMovementRowRepository::new(con).upsert_one(record),
-            StockLine(record) => StockLineRowRepository::new(con).upsert_one(record),
-            NameStoreJoin(record) => NameStoreJoinRepository::new(con).sync_upsert_one(record),
-            Invoice(record) => InvoiceRowRepository::new(con).upsert_one(record),
-            InvoiceLine(record) => InvoiceLineRowRepository::new(con).upsert_one(record),
-            Stocktake(record) => StocktakeRowRepository::new(con).upsert_one(record),
-            StocktakeLine(record) => StocktakeLineRowRepository::new(con).upsert_one(record),
-            Requisition(record) => RequisitionRowRepository::new(con).sync_upsert_one(record),
-            RequisitionLine(record) => {
-                RequisitionLineRowRepository::new(con).sync_upsert_one(record)
-            }
-            ActivityLog(record) => ActivityLogRowRepository::new(con).insert_one(record),
-            InventoryAdjustmentReason(record) => {
-                InventoryAdjustmentReasonRowRepository::new(con).upsert_one(record)
-            }
-            StorePreference(record) => StorePreferenceRowRepository::new(con).upsert_one(record),
-            Barcode(record) => BarcodeRowRepository::new(con).sync_upsert_one(record),
-            Sensor(record) => SensorRowRepository::new(con).upsert_one(record),
-            TemperatureLog(record) => TemperatureLogRowRepository::new(con).upsert_one(record),
-            TemperatureBreach(record) => {
-                TemperatureBreachRowRepository::new(con).upsert_one(record)
-            }
-            Clinician(record) => ClinicianRowRepository::new(con).sync_upsert_one(record),
-            ClinicianStoreJoin(record) => {
-                ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(record)
-            }
-            FormSchema(record) => FormSchemaRowRepository::new(con).upsert_one(record),
-            DocumentRegistry(record) => DocumentRegistryRowRepository::new(con).upsert_one(record),
-            Document(record) => sync_upsert_document(con, record),
-            Currency(record) => CurrencyRowRepository::new(con).upsert_one(record),
-            ItemLink(record) => ItemLinkRowRepository::new(con).upsert_one(record),
-            NameLink(record) => NameLinkRowRepository::new(con).upsert_one(record),
-            ClinicianLink(record) => ClinicianLinkRowRepository::new(con).upsert_one(record),
+            IntegrationOperation::Upsert(upsert) => upsert.upsert_sync(connection),
+            IntegrationOperation::Delete(delete) => delete.delete(connection),
         }
     }
 }
 
-impl PullDeleteRecord {
-    pub(crate) fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        use PullDeleteRecordTable::*;
-        let id = &self.id;
-        match self.table {
-            UserPermission => UserPermissionRowRepository::new(con).delete(id),
-            NameTagJoin => NameTagJoinRepository::new(con).delete(id),
-            Unit => UnitRowRepository::new(con).delete(id),
-            Item => ItemRowRepository::new(con).delete(id),
-            Store => StoreRowRepository::new(con).delete(id),
-            ProgramRequisitionOrderType => {
-                ProgramRequisitionOrderTypeRowRepository::new(con).delete(id)
-            }
-            ProgramRequisitionSettings => {
-                ProgramRequisitionSettingsRowRepository::new(con).delete(id)
-            }
-            MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
-            Report => ReportRowRepository::new(con).delete(id),
-            NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
-            Invoice => InvoiceRowRepository::new(con).delete(id),
-            InvoiceLine => InvoiceLineRowRepository::new(con).delete(id),
-            Requisition => RequisitionRowRepository::new(con).delete(id),
-            RequisitionLine => RequisitionLineRowRepository::new(con).delete(id),
-            InventoryAdjustmentReason => {
-                InventoryAdjustmentReasonRowRepository::new(con).delete(id)
-            }
-            #[cfg(all(test, feature = "integration_test"))]
-            Location => LocationRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
-            StockLine => StockLineRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
-            Stocktake => StocktakeRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
-            StocktakeLine => StocktakeLineRowRepository::new(con).delete(id),
-            #[cfg(all(test, feature = "integration_test"))]
-            ActivityLog => Ok(()),
-            #[cfg(all(test, feature = "integration_test"))]
-            Currency => CurrencyRowRepository::new(con).delete(id),
+pub(crate) fn integrate(
+    connection: &StorageConnection,
+    integration_records: &Vec<IntegrationOperation>,
+) -> Result<(), RepositoryError> {
+    // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
+    let start_nested_transaction = { connection.transaction_level.get() > 0 };
+
+    for integration_record in integration_records.iter() {
+        // Integrate every record in a sub transaction. This is mainly for Postgres where the
+        // whole transaction fails when there is a DB error (not a problem in sqlite).
+        if start_nested_transaction {
+            connection
+                .transaction_sync_etc(|sub_tx| integration_record.integrate(sub_tx), false)
+                .map_err(|e| e.to_inner_error())?;
+        } else {
+            integration_record.integrate(connection)?;
         }
     }
+
+    Ok(())
 }
 
 impl TranslationAndIntegrationResults {
@@ -325,12 +220,13 @@ impl TranslationAndIntegrationResults {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use repository::{
         mock::MockDataInserts, test_db, ItemRow, ItemRowRepository, UnitRow, UnitRowRepository,
     };
     use util::{assert_matches, inline_init};
 
-    use crate::sync::translations::{IntegrationRecords, PullUpsertRecord};
+    use crate::sync::translations::IntegrationOperation;
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
@@ -343,23 +239,27 @@ mod test {
         connection
             .transaction_sync(|connection| {
                 // Doesn't fail
-                let result = IntegrationRecords::from_upsert(PullUpsertRecord::Unit(inline_init(
-                    |r: &mut UnitRow| {
-                        r.id = "unit".to_string();
-                    },
-                )))
-                .integrate(connection);
+                let result = integrate(
+                    connection,
+                    &vec![IntegrationOperation::upsert(inline_init(
+                        |r: &mut UnitRow| {
+                            r.id = "unit".to_string();
+                        },
+                    ))],
+                );
 
                 assert_eq!(result, Ok(()));
 
                 // Fails due to referencial constraint
-                let result = IntegrationRecords::from_upsert(PullUpsertRecord::Item(inline_init(
-                    |r: &mut ItemRow| {
-                        r.id = "item".to_string();
-                        r.unit_id = Some("invalid".to_string());
-                    },
-                )))
-                .integrate(connection);
+                let result = integrate(
+                    connection,
+                    &vec![IntegrationOperation::upsert(inline_init(
+                        |r: &mut ItemRow| {
+                            r.id = "item".to_string();
+                            r.unit_id = Some("invalid".to_string());
+                        },
+                    ))],
+                );
 
                 assert_ne!(result, Ok(()));
 
@@ -375,7 +275,7 @@ mod test {
 
         // Record should not exist
         assert_matches!(
-            ItemRowRepository::new(&connection).find_one_by_id("item"),
+            ItemRowRepository::new(&connection).find_active_by_id("item"),
             Ok(None)
         );
     }

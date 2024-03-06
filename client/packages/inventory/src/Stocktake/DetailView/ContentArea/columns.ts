@@ -14,7 +14,10 @@ import {
   useColumnUtils,
   NumberCell,
 } from '@openmsupply-client/common';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import {
+  InventoryAdjustmentReasonRowFragment,
+  PackVariantCell,
+} from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
@@ -91,18 +94,6 @@ export const useStocktakeColumns = ({
         },
       ],
       [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            return row.item?.unitName ?? '';
-          },
-          accessor: ({ rowData }) => {
-            return rowData.item?.unitName ?? '';
-          },
-          sortable: false,
-        },
-      ],
-      [
         'batch',
         {
           getSortValue: row =>
@@ -137,16 +128,20 @@ export const useStocktakeColumns = ({
             { path: ['location', 'code'] },
           ]),
       },
-      [
-        'packSize',
-        {
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'packSize'] },
-              { path: ['packSize'] },
-            ]),
-        },
-      ],
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => row?.item?.id ?? '',
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
+          },
+          getUnitName: row => row?.item?.unitName ?? null,
+        }),
+        width: 130,
+      },
       {
         key: 'snapshotNumPacks',
         label: 'label.snapshot-num-of-packs',
@@ -257,7 +252,19 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    'packSize',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: PackVariantCell({
+        getItemId: row => row?.itemId,
+        getPackSizes: row => {
+          return [row?.packSize ?? 1];
+        },
+        getUnitName: row => row?.item.unitName ?? null,
+      }),
+      width: 130,
+    },
     {
       key: 'snapshotNumPacks',
       width: 150,

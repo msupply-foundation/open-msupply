@@ -66,7 +66,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : draft.item ?? null;
-  const t = useTranslation(['distribution']);
+  const t = useTranslation('distribution');
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -86,7 +86,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setDraftStockOutLines,
     isLoading,
   } = useDraftOutboundLines(currentItem);
-  const packSizeController = usePackSizeController(draftStockOutLines);
+  const packSizeController = usePackSizeController(
+    currentItem,
+    draftStockOutLines
+  );
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);

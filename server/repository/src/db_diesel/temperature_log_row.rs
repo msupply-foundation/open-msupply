@@ -3,7 +3,7 @@ use super::{
     temperature_log_row::temperature_log::dsl as temperature_log_dsl, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -17,14 +17,6 @@ table! {
         store_id -> Text,
         datetime -> Timestamp,
         temperature_breach_id -> Nullable<Text>,
-    }
-}
-
-table! {
-    #[sql_name = "temperature_log"]
-    temperature_log_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
     }
 }
 
@@ -94,5 +86,19 @@ impl<'a> TemperatureLogRowRepository<'a> {
         Ok(temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)
+    }
+}
+
+impl Upsert for TemperatureLogRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        TemperatureLogRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            TemperatureLogRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

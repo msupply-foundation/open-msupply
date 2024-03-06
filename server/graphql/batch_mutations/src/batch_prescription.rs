@@ -6,7 +6,6 @@ use graphql_invoice_line::mutations::prescription_line;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::prescription::*;
-use service::invoice::prescription::{BatchPrescription, BatchPrescriptionResult};
 
 use crate::{to_standard_error, VecOrNone};
 

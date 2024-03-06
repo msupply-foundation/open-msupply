@@ -3,7 +3,7 @@ use super::{
     user_store_join_row::user_store_join, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use super::{store_row::store, user_row::user_account};
 use diesel::prelude::*;
@@ -108,5 +108,19 @@ impl<'a> StorePreferenceRowRepository<'a> {
             .filter(store_preference_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+impl Upsert for StorePreferenceRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StorePreferenceRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StorePreferenceRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

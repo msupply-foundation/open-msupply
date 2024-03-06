@@ -311,7 +311,7 @@ mod test_insert {
         // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
         let item = ItemRowRepository::new(&connection)
-            .find_one_by_id(&mock_unallocated_line2().item_link_id)
+            .find_active_by_id(&mock_unallocated_line2().item_link_id)
             .unwrap()
             .unwrap();
 

@@ -1,4 +1,5 @@
 use crate::{
+    cursor_controller::CursorController,
     processors::transfer::{
         get_requisition_and_linked_requisition,
         shipment::{
@@ -15,8 +16,8 @@ use crate::{
 };
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueStoreRepository, KeyValueType,
-    RepositoryError, Requisition, StorageConnection,
+    EqualFilter, Invoice, InvoiceFilter, InvoiceRepository, KeyValueType, RepositoryError,
+    Requisition, StorageConnection,
 };
 use thiserror::Error;
 
@@ -103,7 +104,7 @@ pub(crate) fn process_shipment_transfers(
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
+    let cursor_controller = CursorController::new(KeyValueType::ShipmentTransferProcessorCursor);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
@@ -111,10 +112,10 @@ pub(crate) fn process_shipment_transfers(
         .name_id(EqualFilter::equal_any(active_stores.name_ids().clone()));
 
     loop {
-        let cursor = key_value_store_repo
-            .get_i64(KeyValueType::ShipmentTransferProcessorCursor)
-            .map_err(Error::DatabaseError)?
-            .unwrap_or(0) as u64;
+        let cursor = cursor_controller
+            .get(&ctx.connection)
+            .map_err(Error::DatabaseError)?;
+
         let logs = changelog_repo
             .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
             .map_err(Error::DatabaseError)?;
@@ -153,11 +154,8 @@ pub(crate) fn process_shipment_transfers(
                     .map_err(Error::ProcessorError)?;
             }
 
-            key_value_store_repo
-                .set_i64(
-                    KeyValueType::ShipmentTransferProcessorCursor,
-                    Some(log.cursor + 1),
-                )
+            cursor_controller
+                .update(&ctx.connection, (log.cursor + 1) as u64)
                 .map_err(Error::DatabaseError)?;
         }
     }

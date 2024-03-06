@@ -3,7 +3,7 @@ use super::{
     stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 
-use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError};
+use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -112,5 +112,42 @@ impl<'a> StockLineRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
+        stock_line_dsl::stock_line
+            .filter(stock_line_dsl::store_id.eq(store_id))
+            .load::<StockLineRow>(&self.connection.connection)
+            .map_err(RepositoryError::from)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StockLineRowDelete(pub String);
+// For tests only
+impl Delete for StockLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StockLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StockLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StockLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

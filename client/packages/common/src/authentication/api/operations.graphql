@@ -65,6 +65,10 @@ query me {
   }
 }
 
+query isCentralServer {
+  isCentralServer
+}
+
 query refreshToken {
   refreshToken {
     ... on RefreshToken {

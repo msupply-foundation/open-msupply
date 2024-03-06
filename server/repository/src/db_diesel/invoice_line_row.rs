@@ -6,6 +6,7 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
+use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -168,5 +169,34 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .filter(invoice_id.eq(invoice_id_param))
             .get_results(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InvoiceLineRowDelete(pub String);
+impl Delete for InvoiceLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for InvoiceLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
