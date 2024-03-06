@@ -2,7 +2,7 @@ use super::{
     clinician_row::clinician, invoice_line_row::invoice_line, invoice_row::invoice, name_row::name,
     program_row::program, store_row::store, StorageConnection,
 };
-use crate::{name_link, repository_error::RepositoryError};
+use crate::{name_link, repository_error::RepositoryError, Upsert};
 
 use self::clinician_link::dsl as clinician_link_dsl;
 use diesel::prelude::*;
@@ -123,5 +123,19 @@ impl<'a> ClinicianLinkRowRepository<'a> {
         )
         .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for ClinicianLinkRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ClinicianLinkRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ClinicianLinkRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

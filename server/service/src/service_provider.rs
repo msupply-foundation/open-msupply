@@ -5,6 +5,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
+    currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -25,6 +26,7 @@ use crate::{
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
     name::get_names,
+    pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
     programs::{
@@ -122,8 +124,11 @@ pub struct ServiceProvider {
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
     // Log
     pub log_service: Box<dyn LogServiceTrait>,
+    pub pack_variant_service: Box<dyn PackVariantServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
+    // Currency
+    pub currency_service: Box<dyn CurrencyServiceTrait>,
     // Asset catalogue
     pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
     // Assets
@@ -201,8 +206,10 @@ impl ServiceProvider {
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
             log_service: Box::new(LogService {}),
+            pack_variant_service: Box::new(crate::pack_variant::PackVariantService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
+            currency_service: Box::new(CurrencyService {}),
             catalogue_service: Box::new(CatalogueService {}),
             asset_service: Box::new(crate::asset::AssetService {}),
         }
