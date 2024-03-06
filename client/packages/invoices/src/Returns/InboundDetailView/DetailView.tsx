@@ -10,7 +10,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
 } from '@openmsupply-client/common';
-// import { ContentArea } from './ContentArea';
+import { ContentArea } from './ContentArea';
 // import { Toolbar } from './Toolbar';
 // import { AppBarButtons } from './AppBarButtons';
 import { InboundReturnDetailRowFragment, useReturns } from '../api';
@@ -21,21 +21,20 @@ export const InboundReturnDetailView: FC = () => {
   const t = useTranslation('distribution');
   const navigate = useNavigate();
 
-  // const onRowClick = () => {};
+  const onRowClick = () => {};
 
-  // const onAddItem = () => {};
+  const onAddItem = () => {};
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
       Component: (
-        <>TOOD</>
-        // <ContentArea
-        //   onRowClick={onRowClick}
-        //   onAddItem={onAddItem}
-        //   rows={data?.lines?.nodes ?? []}
-        // />
+        <ContentArea
+          onRowClick={onRowClick}
+          onAddItem={onAddItem}
+          rows={data?.lines?.nodes ?? []}
+        />
       ),
       value: 'Details',
     },
@@ -52,7 +51,6 @@ export const InboundReturnDetailView: FC = () => {
       {data ? (
         <TableProvider
           createStore={createTableStore}
-          // tODO: types
           queryParamsStore={createQueryParamsStore<InboundReturnDetailRowFragment>(
             {
               initialSortBy: {
