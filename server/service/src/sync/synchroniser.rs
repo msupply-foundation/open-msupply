@@ -170,19 +170,14 @@ impl Synchroniser {
         // and overwriting existing records waiting to be pulled
 
         // We'll push records to open-mSupply first, then push to Legacy mSupply
-        // At this stage, it's not clear if one needs to be done first??
+
+        // PUSH V6
         logger.start_step(SyncStep::PushCentralV6)?;
         if is_initialised && !is_central_server() {
             self.central_v6
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await?;
-
-            self.remote
-                .wait_for_sync_operation(
-                    INTEGRATION_POLL_PERIOD_SECONDS,
-                    INTEGRATION_TIMEOUT_SECONDS,
-                )
-                .await?;
+            // TODO: Wait for OMS Central integration?
         }
         logger.done_step(SyncStep::PushCentralV6)?;
 
