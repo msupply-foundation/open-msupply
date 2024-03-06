@@ -1,7 +1,7 @@
 import { Utils } from './utils';
 import { Document } from './document';
 
-export const useAssets = {
+export const useAssetData = {
   utils: {
     classes: Utils.useAssetClasses,
     categories: Utils.useAssetCategories,

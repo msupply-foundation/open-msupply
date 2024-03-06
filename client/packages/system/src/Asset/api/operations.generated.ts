@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string };
+export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
 export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -15,15 +15,14 @@ export type AssetCatalogueItemsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetCatalogueItemsQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string }> } };
+export type AssetCatalogueItemsQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
 
 export type AssetCatalogueItemByIdQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
   assetCatalogueItemId: Types.Scalars['String']['input'];
 }>;
 
 
-export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string }> } };
+export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
 
 export type AssetClassesQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Types.AssetClassSortInput>;
@@ -41,6 +40,7 @@ export type AssetTypesQuery = { __typename: 'Queries', assetTypes: { __typename:
 
 export type AssetCategoriesQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Types.AssetCategorySortInput>;
+  filter?: Types.InputMaybe<Types.AssetCategoryFilterInput>;
 }>;
 
 
@@ -56,6 +56,15 @@ export const AssetCatalogueItemFragmentDoc = gql`
   id
   manufacturer
   model
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
+  }
+  assetType {
+    name
+  }
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
@@ -76,7 +85,7 @@ export const AssetCatalogueItemsDocument = gql`
 }
     ${AssetCatalogueItemFragmentDoc}`;
 export const AssetCatalogueItemByIdDocument = gql`
-    query assetCatalogueItemById($storeId: String!, $assetCatalogueItemId: String!) {
+    query assetCatalogueItemById($assetCatalogueItemId: String!) {
   assetCatalogueItems(filter: {id: {equalTo: $assetCatalogueItemId}}) {
     ... on AssetCatalogueItemConnector {
       __typename
@@ -91,7 +100,7 @@ export const AssetCatalogueItemByIdDocument = gql`
     ${AssetCatalogueItemFragmentDoc}`;
 export const AssetClassesDocument = gql`
     query assetClasses($sort: AssetClassSortInput) {
-  assetClasses(storeId: $storeId, sort: $sort) {
+  assetClasses(sort: $sort) {
     ... on AssetClassConnector {
       nodes {
         id
@@ -117,8 +126,8 @@ export const AssetTypesDocument = gql`
 }
     `;
 export const AssetCategoriesDocument = gql`
-    query assetCategories($sort: AssetCategorySortInput) {
-  assetCategories(sort: $sort) {
+    query assetCategories($sort: AssetCategorySortInput, $filter: AssetCategoryFilterInput) {
+  assetCategories(sort: $sort, filter: $filter) {
     ... on AssetCategoryConnector {
       nodes {
         id
@@ -179,7 +188,7 @@ export const mockAssetCatalogueItemsQuery = (resolver: ResponseResolver<GraphQLR
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCatalogueItemByIdQuery((req, res, ctx) => {
- *   const { storeId, assetCatalogueItemId } = req.variables;
+ *   const { assetCatalogueItemId } = req.variables;
  *   return res(
  *     ctx.data({ assetCatalogueItems })
  *   )
@@ -230,7 +239,7 @@ export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<As
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetCategoriesQuery((req, res, ctx) => {
- *   const { sort } = req.variables;
+ *   const { sort, filter } = req.variables;
  *   return res(
  *     ctx.data({ assetCategories })
  *   )
