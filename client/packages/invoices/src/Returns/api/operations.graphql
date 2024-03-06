@@ -167,6 +167,7 @@ query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
           ...InboundReturnLine
         }
       }
+      status
       otherPartyName
       otherPartyStore {
         code
