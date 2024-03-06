@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "8c8dff87-6b5d-4a53-a67f-062d837c78ff",
+		"_postman_id": "c1b1be23-bf07-4fc2-8d9c-7803ba415230",
 		"name": "Open mSupply REST",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "813354"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -16,7 +15,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"cursor\": 0,\n  \"batchSize\": 100,\n  \"syncV5Settings\": {\n    \"serverUrl\": \"http://localhost:2048\",\n    \"username\": \"test\",\n    \"//\": \"d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = pass\",\n    \"passwordSha256\": \"d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1\",\n    \"siteUuid\": \"hardwareid\",\n    \"appVersion\": \"1.7.0\",\n    \"appName\": \"Open mSupply Desktop\",\n    \"syncVersion\": \"3\"\n  }\n}",
+							"raw": "{\n  \"cursor\": 0,\n  \"batchSize\": 100,\n  \"syncV5Settings\": {\n    \"serverUrl\": \"http://localhost:2048\",\n    \"username\": \"test\",\n    \"//\": \"d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = pass\",\n    \"passwordSha256\": \"d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1\",\n    \"siteUuid\": \"hardwareid\",\n    \"appVersion\": \"1.7.0\",\n    \"appName\": \"Open mSupply Desktop\",\n    \"syncVersion\": \"3\"\n  },\n  \"isInitialised\": false\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -24,15 +23,46 @@
 							}
 						},
 						"url": {
-							"raw": "http://localhost:2050/sync/pull",
+							"raw": "http://localhost:2050/central/sync/pull",
 							"protocol": "http",
 							"host": [
 								"localhost"
 							],
 							"port": "2050",
 							"path": [
+								"central",
 								"sync",
 								"pull"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "push",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"syncV5Settings\": {\n    \"serverUrl\": \"http://localhost:2048\",\n    \"username\": \"test\",\n    \"//\": \"d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1 = pass\",\n    \"passwordSha256\": \"d74ff0ee8da3b9806b18c877dbf29bbde50b5bd8e4dad7a3a725000feb82e8f1\",\n    \"siteUuid\": \"hardwareid\",\n    \"appVersion\": \"1.7.0\",\n    \"appName\": \"Open mSupply Desktop\",\n    \"syncVersion\": \"3\"\n  },\n  \"batch\": {\n    \"end_cursor\": 1,\n    \"total_records\": 1,\n    \"records\": [\n      {\n        \"cursor\": 1,\n        \"record\": {\n          \"tableName\": \"asset\",\n          \"action\": \"insert\",\n          \"recordId\": \"3de161ed-93ef-4210-aa31-3ae9e53748e8\",\n          \"recordData\": {\n            \"id\": \"3de161ed-93ef-4210-aa31-3ae9e53748e8\",\n            \"name\": \"Asset 1\",\n            \"code\": \"AT1\",\n            \"store_id\": \"store_a\",\n            \"created_datetime\": \"2021-06-22T12:00:00\",\n            \"modified_datetime\": \"2021-06-22T12:00:00\"\n          }\n        }\n      }\n    ]\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:2050/central/sync/push",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "2050",
+							"path": [
+								"central",
+								"sync",
+								"push"
 							]
 						}
 					},
