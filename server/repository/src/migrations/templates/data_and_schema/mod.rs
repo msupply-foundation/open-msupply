@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
