@@ -11,7 +11,6 @@ import {
   NothingHere,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
-// import { useOutbound } from '../api';
 import { useInboundReturnColumns } from './columns';
 import { InboundReturnDetailRowFragment } from '../api';
 // import { useExpansionColumns } from './OutboundLineEdit/columns';
@@ -44,13 +43,12 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     queryParams: { sortBy },
   } = useUrlQueryParams();
   //   const { isGrouped } = useIsGrouped('inboundReturn');
-  //   const { rows } = useOutbound.line.rows(isGrouped);
+  //   const { rows } = useReturns.line.inboundRows(isGrouped);
   const columns = useInboundReturnColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
   //   const isDisabled = useOutbound.utils.isDisabled();
-  //   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
 
