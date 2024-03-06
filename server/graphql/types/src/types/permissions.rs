@@ -44,6 +44,7 @@ pub enum UserPermission {
     DocumentQuery,
     DocumentMutate,
     ColdChainApi,
+    AssetMutate,
 }
 
 #[Object]
@@ -115,6 +116,7 @@ impl UserPermission {
             Permission::DocumentQuery => UserPermission::DocumentQuery,
             Permission::DocumentMutate => UserPermission::DocumentMutate,
             Permission::ColdChainApi => UserPermission::ColdChainApi,
+            Permission::AssetMutate => UserPermission::AssetMutate,
         }
     }
 
@@ -149,6 +151,7 @@ impl UserPermission {
             UserPermission::DocumentQuery => Permission::DocumentQuery,
             UserPermission::DocumentMutate => Permission::DocumentMutate,
             UserPermission::ColdChainApi => Permission::ColdChainApi,
+            UserPermission::AssetMutate => Permission::AssetMutate,
         }
     }
 }
