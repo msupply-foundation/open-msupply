@@ -132,7 +132,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::AssetLogs;
+    use crate::AssetLogMutations;
 
     type InsertAssetLogMethod =
         dyn Fn(InsertAssetLog) -> Result<AssetLog, InsertAssetLogError> + Sync + Send;
@@ -161,7 +161,7 @@ mod test {
     async fn test_graphql_insert_asset_log_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
-            AssetLogs,
+            AssetLogMutations,
             "test_graphql_insert_asset_log_success",
             MockDataInserts::all(),
         )

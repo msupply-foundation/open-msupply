@@ -22,7 +22,7 @@ use graphql_general::{
     InitialisationQueries,
 };
 
-use graphql_asset::{AssetLogs, AssetMutations, AssetQueries};
+use graphql_asset::{AssetLogMutations, AssetLogQueries, AssetMutations, AssetQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -77,7 +77,7 @@ pub struct Queries(
     pub PluginQueries,
     pub AssetCatalogueQueries,
     pub AssetQueries,
-    pub AssetLogs,
+    pub AssetLogQueries,
 );
 
 impl Queries {
@@ -103,7 +103,7 @@ impl Queries {
             PluginQueries,
             AssetCatalogueQueries,
             AssetQueries,
-            AssetLogs,
+            AssetLogQueries,
         )
     }
 }
@@ -127,7 +127,7 @@ pub struct Mutations(
     pub PluginMutations,
     pub TemperatureBreachMutations,
     pub AssetMutations,
-    pub AssetLogs,
+    pub AssetLogMutations,
 );
 
 impl Mutations {
@@ -150,7 +150,7 @@ impl Mutations {
             PluginMutations,
             TemperatureBreachMutations,
             AssetMutations,
-            AssetLogs,
+            AssetLogMutations,
         )
     }
 }
