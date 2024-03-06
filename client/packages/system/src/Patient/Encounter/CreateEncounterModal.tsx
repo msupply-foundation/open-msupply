@@ -86,6 +86,7 @@ export const CreateEncounterModal: FC = () => {
   const navigate = useNavigate();
   const { error } = useNotification();
   const [startDateTimeError, setStartDateTimeError] = useState<string>();
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleSave = useEncounter.document.upsert(
     patientId,
@@ -214,15 +215,17 @@ export const CreateEncounterModal: FC = () => {
       okButton={
         <DialogButton
           variant={'save'}
-          disabled={!canSubmit()}
+          disabled={!canSubmit() || isCreating}
           onClick={async () => {
             if (encounterRegistry !== undefined) {
+              setIsCreating(true);
               const { id } = await handleSave(
                 draft,
                 encounterRegistry.encounter.formSchemaId
               );
 
               if (!id) {
+                setIsCreating(false);
                 error(t('error.encounter-not-created'))();
                 return;
               }
@@ -347,7 +350,7 @@ const RenderForm = ({
   isLoading: boolean;
   isProgram: boolean;
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   if (!isProgram) return null;
   if (isError)
     return (

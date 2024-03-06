@@ -161,7 +161,7 @@ const ErrorStringComponent: FC<{
   category: Category;
   errorPaths: string[];
 }> = ({ category, errorPaths }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   if (errorPaths.length === 0) {
     return null;

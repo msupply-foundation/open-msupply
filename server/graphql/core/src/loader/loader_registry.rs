@@ -1,5 +1,4 @@
-use super::{json_schema::JsonSchemaLoader, *};
-use crate::loader::{ItemLoader, StoreByIdLoader, UserLoader};
+use crate::loader::*;
 use actix_web::web::Data;
 use anymap::{any::Any, Map};
 use async_graphql::dataloader::DataLoader;

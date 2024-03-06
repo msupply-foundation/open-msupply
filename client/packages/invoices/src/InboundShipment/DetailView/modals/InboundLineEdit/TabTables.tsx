@@ -12,6 +12,7 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
   CellProps,
+  getColumnLookupWithOverrides,
   CurrencyCell,
   ColumnAlign,
   NumberInputCell,
@@ -21,7 +22,11 @@ import {
   CurrencyRowFragment,
   getLocationInputColumn,
   LocationRowFragment,
+  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+  PackVariantEntryCell,
+  usePackVariant,
 } from '@openmsupply-client/system';
+import { InboundLineFragment } from '../../../api';
 
 interface TableProps {
   lines: DraftInboundLine[];
@@ -73,12 +78,20 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   />
 );
 
-export const QuantityTableComponent: FC<TableProps> = ({
-  lines,
-  updateDraftLine,
-  isDisabled = false,
-}) => {
+// If this is not extracted to it's own component and used directly in Cell:
+// cell will be re rendered anytime rowData changes, which causes it to loose focus
+// if number of packs is changed and tab is pressed (in quick succession)
+const PackUnitEntryCell = PackVariantEntryCell<DraftInboundLine>({
+  getItemId: r => r.item.id,
+  getUnitName: r => r.item.unitName || null,
+});
+
+export const QuantityTableComponent: FC<
+  TableProps & { item: InboundLineFragment['item'] | null }
+> = ({ item, lines, updateDraftLine, isDisabled = false }) => {
+  const { packVariantExists } = usePackVariant(item?.id || '', null);
   const theme = useTheme();
+
   const columns = useColumns<DraftInboundLine>(
     [
       getBatchColumn(updateDraftLine, theme),
@@ -92,13 +105,16 @@ export const QuantityTableComponent: FC<TableProps> = ({
           setter: updateDraftLine,
         },
       ],
-      [
-        'packSize',
-        {
-          Cell: NumberInputCell,
-          setter: updateDraftLine,
-        },
-      ],
+      getColumnLookupWithOverrides('packSize', {
+        Cell: PackUnitEntryCell,
+        setter: updateDraftLine,
+        ...(packVariantExists
+          ? {
+              label: 'label.unit-variant-and-pack-size',
+              minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+            }
+          : { label: 'label.pack-size' }),
+      }),
       [
         'unitQuantity',
         {
@@ -157,6 +173,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       description: 'description.fc-sell-price',
       width: 100,
       align: ColumnAlign.Right,
+      // eslint-disable-next-line new-cap
       Cell: CurrencyCell({ currency: currency?.code }),
       accessor: ({ rowData }) => {
         if (currency) {
@@ -183,6 +200,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       description: 'description.fc-cost-price',
       width: 100,
       align: ColumnAlign.Right,
+      // eslint-disable-next-line new-cap
       Cell: CurrencyCell({ currency: currency?.code }),
       accessor: ({ rowData }) => {
         if (currency) {
@@ -215,6 +233,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       label: 'label.fc-line-total',
       description: 'description.fc-line-total',
       width: 100,
+      // eslint-disable-next-line new-cap
       Cell: CurrencyCell({ currency: currency?.code }),
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => {

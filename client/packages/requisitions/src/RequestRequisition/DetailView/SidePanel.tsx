@@ -35,7 +35,7 @@ const AdditionalInfoSection: FC = () => {
       'user',
     ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
 
   return (

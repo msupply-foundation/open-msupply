@@ -42,6 +42,7 @@ export interface ModalProps {
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
+  deleteButton?: JSX.Element;
   disableOkKeyBinding?: boolean;
   enableAutocomplete?: boolean;
 }
@@ -152,6 +153,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     disableOkKeyBinding,
     enableAutocomplete,
     sx = {},
+    deleteButton,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -248,6 +250,7 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
             }}
           >
             {cancelButton}
+            {deleteButton}
             {saveButton}
             {copyButton}
             {WrappedOkButton}
