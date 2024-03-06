@@ -139,20 +139,14 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records
 }
 
-pub(crate) fn get_all_omsupply_central_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn get_all_omsupply_central_records() -> Vec<TestSyncPushRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut pack_variant::test_omsupply_central_push_records());
     test_records.append(&mut asset_class::test_omsupply_central_push_records());
     test_records.append(&mut asset_category::test_omsupply_central_push_records());
     test_records.append(&mut asset_type::test_omsupply_central_push_records());
     test_records.append(&mut asset_catalogue_item::test_omsupply_central_push_records());
+    test_records.append(&mut asset::test_omsupply_central_records());
 
     test_records
 }
-
-// pub(crate) fn get_all_omsupply_central_pull_records() -> Vec<TestSyncPushRecord> {
-//     let mut test_records = Vec::new();
-//     test_records.append(&mut asset::test_omsupply_central_pull_records());
-
-//     test_records
-// }
