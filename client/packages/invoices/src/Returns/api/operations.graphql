@@ -30,8 +30,9 @@ fragment OutboundReturnDetailRow on InvoiceLineNode {
   sellPricePerPack
 }
 
-fragment InboundReturnDetailRow on InvoiceLineNode {
+fragment InboundReturnLine on InvoiceLineNode {
   id
+  itemId
   itemCode
   itemName
   batch
@@ -163,7 +164,7 @@ query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
       invoiceNumber
       lines {
         nodes {
-          ...InboundReturnDetailRow
+          ...InboundReturnLine
         }
       }
       otherPartyName

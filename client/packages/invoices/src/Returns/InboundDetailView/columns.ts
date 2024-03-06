@@ -1,38 +1,42 @@
 import {
   useColumns,
-  //   getRowExpandColumn,
   //   getNotePopoverColumn,
-  // ColumnAlign,
   GenericColumnKey,
   SortBy,
   Column,
-  // useCurrency,
   TooltipTextCell,
   useColumnUtils,
   NumberCell,
+  getRowExpandColumn,
+  ArrayUtils,
 } from '@openmsupply-client/common';
-import { InboundReturnDetailRowFragment } from '../api';
+import { InboundReturnLineFragment } from '../api';
+import { InboundReturnItem } from '../../types';
 
 interface UseInboundReturnColumnOptions {
-  sortBy: SortBy<InboundReturnDetailRowFragment>;
-  onChangeSortBy: (column: Column<InboundReturnDetailRowFragment>) => void;
+  sortBy: SortBy<InboundReturnLineFragment | InboundReturnItem>;
+  onChangeSortBy: (
+    column: Column<InboundReturnLineFragment | InboundReturnItem>
+  ) => void;
 }
 
-// const expansionColumn = getRowExpandColumn<
-//   StockOutLineFragment | StockOutItem
-// >();
+const expansionColumn = getRowExpandColumn<
+  InboundReturnLineFragment | InboundReturnItem
+>();
+
 // const notePopoverColumn = getNotePopoverColumn<
 //   StockOutLineFragment | StockOutItem
 // >();
 
-const getUnitQuantity = (row: InboundReturnDetailRowFragment) =>
+const getUnitQuantity = (row: InboundReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
 
 export const useInboundReturnColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseInboundReturnColumnOptions): Column<InboundReturnDetailRowFragment>[] => {
-  // const { c } = useCurrency();
+}: UseInboundReturnColumnOptions): Column<
+  InboundReturnLineFragment | InboundReturnItem
+>[] => {
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   return useColumns(
@@ -61,22 +65,32 @@ export const useInboundReturnColumns = ({
       [
         'itemCode',
         {
-          getSortValue: (row: InboundReturnDetailRowFragment) =>
+          getSortValue: row =>
             getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemCode'] },
               { path: ['itemCode'], default: '' },
             ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['itemCode'], default: '' }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemCode'] },
+              { path: ['itemCode'], default: '' },
+            ]),
         },
       ],
       [
         'itemName',
         {
           Cell: TooltipTextCell,
-          getSortValue: (row: InboundReturnDetailRowFragment) =>
-            getColumnPropertyAsString(row, [{ path: ['itemName'] }]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['itemName'] }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
         },
       ],
       //   [
@@ -98,18 +112,30 @@ export const useInboundReturnColumns = ({
         'batch',
         {
           getSortValue: row =>
-            getColumnPropertyAsString(row, [{ path: ['batch'] }]),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'] },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['batch'] }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'batch'] },
+              { path: ['batch'] },
+            ]),
         },
       ],
       [
         'expiryDate',
         {
           getSortValue: row =>
-            getColumnPropertyAsString(row, [{ path: ['expiryDate'] }]),
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'] },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['expiryDate'] }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'] },
+            ]),
         },
       ],
       //   [
@@ -131,64 +157,67 @@ export const useInboundReturnColumns = ({
         'numberOfPacks',
         {
           Cell: NumberCell,
-          getSortValue: row => {
-            return row.numberOfPacks;
-          },
           accessor: ({ rowData }) => {
-            return rowData.numberOfPacks;
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
           },
         },
       ],
       [
         'packSize',
         {
-          getSortValue: row => {
-            return row.packSize;
-          },
-          accessor: ({ rowData }) => {
-            return rowData.packSize;
-          },
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
         },
       ],
       [
         'unitQuantity',
         {
-          Cell: NumberCell,
           accessor: ({ rowData }) => {
-            return getUnitQuantity(rowData);
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
           },
         },
       ],
-      // {
-      //   label: 'label.unit-price',
-      //   key: 'sellPricePerUnit',
-      //   align: ColumnAlign.Right,
-      //   accessor: ({ rowData }) => {
-      //     return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
-      //   },
-      //   getSortValue: rowData => {
-      //     return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
-      //   },
-      // },
-      // {
-      //   label: 'label.line-total',
-      //   key: 'lineTotal',
-      //   align: ColumnAlign.Right,
-      //   accessor: ({ rowData }) => {
-      //     const x = c(
-      //       rowData.sellPricePerPack * rowData.numberOfPacks
-      //     ).format();
-      //     return x;
-      //   },
-      //   getSortValue: row => {
-      //     const x = c(row.sellPricePerPack * row.numberOfPacks).format();
-      //     return x;
-      //   },
-      // },
-      //   expansionColumn,
+      expansionColumn,
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
 };
+
+export const useExpansionColumns = (): Column<InboundReturnLineFragment>[] =>
+  useColumns(['batch', 'expiryDate', 'numberOfPacks', 'packSize']);
