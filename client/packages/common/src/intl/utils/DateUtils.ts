@@ -18,6 +18,7 @@ import {
   isAfter,
   isBefore,
   isEqual,
+  isSameDay,
   format,
   parse,
   parseISO,
@@ -118,6 +119,7 @@ export const DateUtils = {
     expiryDate: Date,
     threshold = MINIMUM_EXPIRY_MONTHS
   ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
+  isSameDay,
   isThisWeek,
   isToday,
   isThisMonth,

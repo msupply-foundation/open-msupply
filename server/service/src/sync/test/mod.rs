@@ -317,6 +317,9 @@ pub(crate) async fn check_records_against_database(
                 record,
                 "DocumentRegistry"
             ),
+            Currency(record) => {
+                check_record_by_id!(CurrencyRowRepository, con, record, "Currency")
+            }
             ItemLink(_) => todo!(),
             NameLink(_) => todo!(),
             ClinicianLink(_) => todo!(),
@@ -366,6 +369,8 @@ pub(crate) async fn check_records_against_database(
             StocktakeLine => check_delete_record_by_id!(StocktakeLineRowRepository, con, id),
             #[cfg(all(test, feature = "integration_test"))]
             ActivityLog => check_delete_record_by_id!(ActivityLogRowRepository, con, id),
+            #[cfg(all(test, feature = "integration_test"))]
+            Currency => check_delete_record_by_id!(CurrencyRowRepository, con, id),
         }
     }
 }

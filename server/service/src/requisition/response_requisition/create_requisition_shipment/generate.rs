@@ -5,8 +5,9 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, NumberRowType, Requisition, StorageConnection,
+    CurrencyFilter, CurrencyRepository, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
+    InvoiceRowStatus, InvoiceRowType, ItemRowRepository, NumberRowType, Requisition,
+    StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -20,6 +21,13 @@ pub fn generate(
     let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
     let requisition_row = requisition.requisition_row;
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(OutError::DatabaseError(
+            repository::RepositoryError::NotFound,
+        ))?;
+
     let new_invoice = InvoiceRow {
         id: uuid(),
         user_id: Some(user_id.to_string()),
@@ -33,6 +41,8 @@ pub fn generate(
         requisition_id: Some(requisition_row.id),
 
         // Default
+        currency_id: Some(currency.currency_row.id),
+        currency_rate: 1.0,
         on_hold: false,
         comment: None,
         their_reference: None,
@@ -86,6 +96,7 @@ pub fn generate_invoice_lines(
             cost_price_per_pack: 0.0,
             stock_line_id: None,
             inventory_adjustment_reason_id: None,
+            foreign_currency_price_before_tax: None,
         });
     }
 

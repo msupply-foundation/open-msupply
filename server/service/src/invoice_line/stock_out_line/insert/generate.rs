@@ -1,13 +1,14 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, StockLine,
-    StockLineRow,
+    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
+    StockLine, StockLineRow, StorageConnection,
 };
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{InsertStockOutLine, InsertStockOutLineError};
 
 pub fn generate(
+    connection: &StorageConnection,
     input: InsertStockOutLine,
     item_row: ItemRow,
     batch: StockLine,
@@ -20,7 +21,7 @@ pub fn generate(
         batch.stock_line_row.clone(),
         adjust_total_number_of_packs,
     );
-    let new_line = generate_line(input, item_row, batch, invoice);
+    let new_line = generate_line(connection, input, item_row, batch, invoice)?;
 
     Ok((new_line, update_batch))
 }
@@ -43,6 +44,7 @@ fn generate_batch_update(
 }
 
 fn generate_line(
+    connection: &StorageConnection,
     InsertStockOutLine {
         id,
         r#type: _,
@@ -73,12 +75,23 @@ fn generate_line(
             },
         ..
     }: StockLine,
-    InvoiceRow { tax, .. }: InvoiceRow,
-) -> InvoiceLineRow {
+    InvoiceRow {
+        tax,
+        currency_id,
+        currency_rate,
+        ..
+    }: InvoiceRow,
+) -> Result<InvoiceLineRow, RepositoryError> {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+    let foreign_currency_price_before_tax = calculate_foreign_currency_total(
+        connection,
+        total_before_tax,
+        currency_id,
+        &currency_rate,
+    )?;
 
-    InvoiceLineRow {
+    Ok(InvoiceLineRow {
         id,
         invoice_id,
         item_link_id: item_id,
@@ -98,5 +111,6 @@ fn generate_line(
         tax,
         note,
         inventory_adjustment_reason_id: None,
-    }
+        foreign_currency_price_before_tax,
+    })
 }

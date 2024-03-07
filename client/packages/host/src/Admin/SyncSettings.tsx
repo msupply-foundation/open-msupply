@@ -43,7 +43,7 @@ const SyncSettingsForm = ({
   onSave: () => void;
   setSyncSettings: (syncSettings: SyncSettingsInput) => void;
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const setSettings = (
     property: keyof SyncSettingsInput,
     value: number | string

@@ -33,7 +33,10 @@ import {
   usePackSizeController,
 } from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -71,7 +74,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const [okDisabled, setOkDisabled] = useState(false);
 
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
-  const { status } = useOutbound.document.fields('status');
+  const { status, currency } = useOutbound.document.fields([
+    'status',
+    'currency',
+  ]);
   const { mutateAsync } = useOutbound.line.save(status);
   const isDisabled = useOutbound.utils.isDisabled();
   const {
@@ -258,6 +264,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           draftOutboundLines={draftStockOutLines}
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           batch={draft?.barcode?.batch}
+          currency={currency}
         />
       </Grid>
     </Modal>
@@ -273,6 +280,7 @@ interface TableProps {
   draftOutboundLines: DraftStockOutLine[];
   allocatedQuantity: number;
   batch?: string;
+  currency?: CurrencyRowFragment | null;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -284,6 +292,7 @@ const TableWrapper: React.FC<TableProps> = ({
   draftOutboundLines,
   allocatedQuantity,
   batch,
+  currency,
 }) => {
   const t = useTranslation('distribution');
 
@@ -323,6 +332,7 @@ const TableWrapper: React.FC<TableProps> = ({
         item={currentItem}
         batch={batch}
         allocatedQuantity={allocatedQuantity}
+        currency={currency}
       />
     </TableProvider>
   );
