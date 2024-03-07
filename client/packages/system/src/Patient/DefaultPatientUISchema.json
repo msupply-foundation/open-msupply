@@ -37,12 +37,18 @@
         {
           "type": "Control",
           "scope": "#/properties/firstName",
-          "label": "First Name"
+          "label": "First Name",
+          "options": {
+            "required": true
+          }
         },
         {
           "type": "Control",
           "scope": "#/properties/lastName",
-          "label": "Last Name"
+          "label": "Last Name",
+          "options": {
+            "required": true
+          }
         },
         {
           "type": "Control",

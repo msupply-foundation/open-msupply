@@ -17,6 +17,8 @@ const Options = z
      * Additional pattern to be matched that can be defined in ui schema
      */
     pattern: z.string().optional(),
+    /** Overwrite the schema definition, e.g. to make a non-required field required in the UI. */
+    required: z.boolean().optional(),
     /**
      * Examples for the correct pattern
      */
@@ -71,7 +73,7 @@ const usePatternValidation = (
   const { customError, setCustomError } = useJSONFormsCustomError(path, 'Text');
 
   useEffect(() => {
-    if (!pattern || !value) {
+    if (!pattern || value === undefined) {
       setCustomError(undefined);
       return;
     }
@@ -81,7 +83,7 @@ const usePatternValidation = (
     } else {
       setCustomError(undefined);
     }
-  }, [pattern, value]);
+  }, [pattern, setCustomError, value]);
   return customError;
 };
 
@@ -95,22 +97,31 @@ const UIComponent = (props: ControlProps) => {
     pattern,
   } = useOptions(props.uischema.options);
   const customErrors = usePatternValidation(path, pattern, data);
-  const error = !!errors || !!zErrors || !!customErrors;
   const { text, onChange } = useDebouncedTextInput(
     data,
     (value: string | undefined) => handleChange(path, value)
   );
   const t = useTranslation();
 
+  const missingRequired = !!schemaOptions?.required && !text;
+  const error = !!errors || !!zErrors || !!customErrors || missingRequired;
+
   const examples =
-    (props.schema as Record<string, string[]>)['examples'] ??
-    schemaOptions?.examples;
-  const helperText =
-    (!!customErrors || !!errors) && examples && Array.isArray(examples)
-      ? t('error.json-bad-format-with-examples', {
-          examples: examples.join('", "'),
-        })
-      : zErrors ?? errors ?? customErrors;
+    schemaOptions?.examples ??
+    (props.schema as Record<string, string[]>)['examples'];
+  const helperText = (() => {
+    if (!error) {
+      return;
+    }
+
+    if (examples) {
+      return t('error.json-bad-format-with-examples', {
+        examples: examples.join('", "'),
+      });
+    }
+
+    return zErrors ?? errors ?? customErrors;
+  })();
 
   if (!props.visible) {
     return null;
@@ -136,7 +147,6 @@ const UIComponent = (props: ControlProps) => {
         FormHelperTextProps: error
           ? { sx: { color: 'error.main' } }
           : undefined,
-        required: props.required,
         multiline,
         rows,
       }}
