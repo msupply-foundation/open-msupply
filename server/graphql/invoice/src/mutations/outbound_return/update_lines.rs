@@ -55,13 +55,6 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // TODO - are any of the below actually structured errors?
-        // ServiceError::OtherPartyNotVisible => {
-        //     return Ok(UpdateErrorInterface::OtherPartyNotVisible(
-        //         OtherPartyNotVisible,
-        //     ))
-        // }
-
         // Standard Graphql Errors
         ServiceError::NotAnOutboundReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
