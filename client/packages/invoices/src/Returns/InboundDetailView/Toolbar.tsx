@@ -16,7 +16,7 @@ import { useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
-  const onDelete = useReturns.document.deleteOutboundRows();
+  const onDelete = useReturns.lines.deleteSelectedInboundLines();
   const { data } = useReturns.document.outboundReturn();
   const { otherPartyName } = data ?? {};
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
