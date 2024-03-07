@@ -36,7 +36,6 @@ const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
 
 const getEmptyAsset = () => ({
   id: FnUtils.generateUUID(),
-  name: '',
   code: '',
   catalogueItemId: '',
 });
@@ -174,8 +173,8 @@ export const CreateAssetModal = ({
             Input={
               <BasicTextInput
                 fullWidth
-                value={draft.name}
-                onChange={e => updateDraft({ name: e.target.value })}
+                value={draft.notes}
+                onChange={e => updateDraft({ notes: e.target.value })}
                 multiline
                 rows={2}
               />
