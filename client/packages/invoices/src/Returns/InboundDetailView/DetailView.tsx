@@ -17,6 +17,7 @@ import { InboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SidePanel } from './SidePanel';
 import { ActivityLogList } from 'packages/system/src';
+import { Footer } from './Footer';
 
 export const InboundReturnDetailView: FC = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
@@ -58,6 +59,7 @@ export const InboundReturnDetailView: FC = () => {
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <SidePanel />
+          <Footer />
         </TableProvider>
       ) : (
         <AlertModal

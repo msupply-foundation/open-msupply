@@ -60,6 +60,14 @@ export const outboundReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export const inboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -97,6 +105,16 @@ export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMap[currentStatus];
+  return nextStatus ?? null;
+};
+
+export const getNextInboundReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = inboundReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = inboundReturnStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 

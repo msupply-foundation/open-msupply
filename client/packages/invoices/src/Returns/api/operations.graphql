@@ -6,7 +6,6 @@ fragment OutboundReturnRow on InvoiceNode {
   invoiceNumber
   colour
   createdDatetime
-  createdDatetime
   pickedDatetime
   shippedDatetime
   deliveredDatetime
@@ -21,7 +20,10 @@ fragment InboundReturnRow on InvoiceNode {
   invoiceNumber
   colour
   createdDatetime
+  pickedDatetime
+  shippedDatetime
   deliveredDatetime
+  verifiedDatetime
 }
 
 fragment OutboundReturnDetailRow on InvoiceLineNode {
