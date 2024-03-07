@@ -49,8 +49,6 @@ impl Migration for V1_07_00 {
         currency::migrate(connection)?;
         store_preference_add_issue_in_foreign_currency::migrate(connection)?;
         invoice_add_currency_fields::migrate(connection)?;
-        pack_variant::migrate(connection)?;
-        central_omsupply::migrate(connection)?;
 
         // We don't want merge-migration updates to sync back.
         run_without_change_log_updates(connection, || {
