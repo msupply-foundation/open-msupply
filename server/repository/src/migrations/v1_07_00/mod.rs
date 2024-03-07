@@ -4,7 +4,6 @@ use crate::StorageConnection;
 
 mod activity_log_add_clear_invoice_created_before_store;
 mod barcode_add_manufacturer_link_id;
-mod central_omsupply;
 mod changelog_add_name_link_id;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
@@ -24,7 +23,6 @@ mod master_list_name_join_add_name_link_id;
 mod name_link;
 mod name_store_join_add_name_link_id;
 mod name_tag_join_add_name_link_id;
-mod pack_variant;
 mod program_enrolment_add_patient_link_id;
 mod program_event_patient_link_id;
 mod requisition_add_name_link_id;
@@ -91,7 +89,6 @@ impl Migration for V1_07_00 {
 
             Ok(())
         })?;
-
         Ok(())
     }
 }
