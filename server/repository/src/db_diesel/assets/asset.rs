@@ -17,7 +17,6 @@ use crate::{
 pub type Asset = AssetRow;
 
 pub enum AssetSortField {
-    Name,
     SerialNumber,
     InstallationDate,
     ReplacementDate,
@@ -29,7 +28,7 @@ pub type AssetSort = Sort<AssetSortField>;
 #[derive(Clone)]
 pub struct AssetFilter {
     pub id: Option<EqualFilter<String>>,
-    pub name: Option<StringFilter>,
+    pub notes: Option<StringFilter>,
     pub code: Option<StringFilter>,
     pub serial_number: Option<StringFilter>,
     pub class_id: Option<EqualFilter<String>>,
@@ -44,7 +43,7 @@ impl AssetFilter {
     pub fn new() -> AssetFilter {
         AssetFilter {
             id: None,
-            name: None,
+            notes: None,
             code: None,
             serial_number: None,
             class_id: None,
@@ -61,8 +60,8 @@ impl AssetFilter {
         self
     }
 
-    pub fn name(mut self, filter: StringFilter) -> Self {
-        self.name = Some(filter);
+    pub fn notes(mut self, filter: StringFilter) -> Self {
+        self.notes = Some(filter);
         self
     }
 
@@ -140,9 +139,6 @@ impl<'a> AssetRepository<'a> {
 
         if let Some(sort) = sort {
             match sort.key {
-                AssetSortField::Name => {
-                    apply_sort_no_case!(query, sort, asset_dsl::name);
-                }
                 AssetSortField::SerialNumber => {
                     apply_sort_no_case!(query, sort, asset_dsl::serial_number);
                 }
@@ -188,7 +184,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
     if let Some(f) = filter {
         let AssetFilter {
             id,
-            name,
+            notes,
             code,
             serial_number,
             class_id,
@@ -200,7 +196,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
-        apply_string_filter!(query, name, asset_dsl::name);
+        apply_string_filter!(query, notes, asset_dsl::notes);
         apply_string_filter!(query, code, asset_dsl::code);
         apply_string_filter!(query, serial_number, asset_dsl::serial_number);
 
@@ -277,7 +273,7 @@ mod tests {
         let serial_number = "test_serial_number".to_string();
         let asset = AssetRow {
             id: asset_id.clone(),
-            name: "test_name".to_string(),
+            notes: Some("test_note".to_string()),
             store_id: Some(mock_store_a().id),
             serial_number: Some(serial_number.clone()),
             ..Default::default()

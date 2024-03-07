@@ -19,20 +19,19 @@ export type ListParams<T> = {
 const assetParsers = {
   toSortField: (sortBy: SortBy<AssetFragment>) => {
     const fields: Record<string, AssetSortFieldInput> = {
-      name: AssetSortFieldInput.Name,
       installationDate: AssetSortFieldInput.InstallationDate,
       replacementData: AssetSortFieldInput.ReplacementDate,
       serialNumber: AssetSortFieldInput.SerialNumber,
     };
 
-    return fields[sortBy.key] ?? AssetSortFieldInput.Name;
+    return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
   toUpdate: (input: AssetFragment): UpdateAssetInput => ({
     id: input.id,
     catalogueItemId: setNullableInput('catalogueItemId', input),
     code: input.code,
     installationDate: setNullableInput('installationDate', input),
-    name: input.name,
+    notes: input.notes,
     replacementDate: setNullableInput('replacementDate', input),
     serialNumber: setNullableInput('serialNumber', input),
     storeId: input.storeId,

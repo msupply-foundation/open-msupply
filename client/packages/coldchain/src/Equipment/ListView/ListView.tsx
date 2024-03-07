@@ -23,7 +23,7 @@ const AssetListComponent: FC = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
+    initialSort: { key: 'installationDate', dir: 'desc' },
   });
 
   const { data, isError, isLoading } = useAssets.document.list();
@@ -51,10 +51,6 @@ const AssetListComponent: FC = () => {
         accessor: ({ rowData }) => rowData.catalogueItem?.model,
       },
       {
-        key: 'name',
-        label: 'label.name',
-      },
-      {
         key: 'status',
         label: 'label.status',
         sortable: false,
@@ -67,6 +63,11 @@ const AssetListComponent: FC = () => {
         key: 'installationDate',
         label: 'label.installation-date',
         formatter: dateString => localisedDate(String(dateString)),
+      },
+      {
+        key: 'notes',
+        label: 'label.notes',
+        sortable: false,
       },
     ],
     {
