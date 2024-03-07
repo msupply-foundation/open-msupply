@@ -2296,11 +2296,6 @@ export type InvoiceSortInput = {
   key: InvoiceSortFieldInput;
 };
 
-export type InvoiceWasCreatedAfterStore = ZeroInboundShipmentLineQuantityErrorInterface & {
-  __typename: 'InvoiceWasCreatedAfterStore';
-  description: Scalars['String']['output'];
-};
-
 export type InvoicesResponse = InvoiceConnector;
 
 export type ItemChartNode = {

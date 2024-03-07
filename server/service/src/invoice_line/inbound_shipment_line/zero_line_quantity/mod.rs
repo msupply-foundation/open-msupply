@@ -30,7 +30,6 @@ pub enum ZeroInboundShipmentLineQuantityError {
     NotThisStoreInvoice,
     CannotEditFinalised,
     BatchIsReserved,
-    InvoiceWasCreatedAfterStore,
     NotThisInvoiceLine(String),
 }
 
@@ -176,17 +175,6 @@ mod test {
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.invoice_line_service;
-
-        // InvoiceWasCreatedAfterStore
-        assert_eq!(
-            service.zero_inbound_shipment_line_quantity(
-                &context,
-                ZeroInboundShipmentLineQuantity {
-                    id: inbound_created_after_store_line_a().id.clone(),
-                },
-            ),
-            Err(ServiceError::InvoiceWasCreatedAfterStore)
-        );
     }
 
     #[actix_rt::test]
