@@ -1,5 +1,7 @@
-use super::TestSyncPushRecord;
-use crate::sync::{test::TestSyncPullRecord, translations::stocktake_line::LegacyStocktakeLineRow};
+use super::TestSyncOutgoingRecord;
+use crate::sync::{
+    test::TestSyncIncomingRecord, translations::stocktake_line::LegacyStocktakeLineRow,
+};
 use repository::StocktakeLineRow;
 use serde_json::json;
 
@@ -30,8 +32,8 @@ const STOCKTAKE_LINE_1: (&'static str, &'static str) = (
       "vaccine_vial_monitor_status_ID": ""
     }"#,
 );
-fn stocktake_line_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_LINE_1,
         StocktakeLineRow {
@@ -53,8 +55,8 @@ fn stocktake_line_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn stocktake_line_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_LINE_1.0.to_string(),
         push_data: json!(LegacyStocktakeLineRow {
@@ -104,8 +106,8 @@ const STOCKTAKE_LINE_OM_FIELDS: (&'static str, &'static str) = (
       "om_note": "om note"
     }"#,
 );
-fn stocktake_line_om_field_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_LINE_OM_FIELDS,
         StocktakeLineRow {
@@ -127,8 +129,8 @@ fn stocktake_line_om_field_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_LINE_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyStocktakeLineRow {
@@ -152,14 +154,14 @@ fn stocktake_line_om_field_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         stocktake_line_pull_record(),
         stocktake_line_om_field_pull_record(),
     ]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         stocktake_line_push_record(),
         stocktake_line_om_field_push_record(),

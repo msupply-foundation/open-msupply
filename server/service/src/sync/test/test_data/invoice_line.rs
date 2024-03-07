@@ -1,6 +1,6 @@
-use super::TestSyncPushRecord;
+use super::TestSyncOutgoingRecord;
 use crate::sync::{
-    test::TestSyncPullRecord,
+    test::TestSyncIncomingRecord,
     translations::invoice_line::{LegacyTransLineRow, LegacyTransLineType},
 };
 use chrono::NaiveDate;
@@ -68,8 +68,8 @@ const TRANS_LINE_1: (&'static str, &'static str) = (
         }
     "#,
 );
-fn trans_line_1_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_1,
         InvoiceLineRow {
@@ -96,8 +96,8 @@ fn trans_line_1_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn trans_line_1_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         record_id: TRANS_LINE_1.0.to_string(),
         table_name: TABLE_NAME.to_string(),
         push_data: json!(LegacyTransLineRow {
@@ -182,8 +182,8 @@ const TRANS_LINE_2: (&'static str, &'static str) = (
         "volume_per_pack": 0
     }"#,
 );
-fn trans_line_2_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_2,
         InvoiceLineRow {
@@ -210,8 +210,8 @@ fn trans_line_2_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn trans_line_2_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANS_LINE_2.0.to_string(),
         push_data: json!(LegacyTransLineRow {
@@ -299,8 +299,8 @@ const TRANS_LINE_OM_FIELDS: (&'static str, &'static str) = (
         "om_total_after_tax": 130.5
     }"#,
 );
-fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_OM_FIELDS,
         InvoiceLineRow {
@@ -327,8 +327,8 @@ fn trans_line_om_fields_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn trans_line_om_fields_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANS_LINE_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransLineRow {
@@ -416,8 +416,8 @@ const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&'static str, &'static str) = (
         "om_total_after_tax": 130.5
     }"#,
 );
-fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANS_LINE_OM_UNSET_TAX_FIELDS,
         InvoiceLineRow {
@@ -444,8 +444,8 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string(),
         push_data: json!(LegacyTransLineRow {
@@ -473,7 +473,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         trans_line_1_pull_record(),
         trans_line_2_pull_record(),
@@ -482,15 +482,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         TRANS_LINE_OM_UNSET_TAX_FIELDS.0,
         InvoiceLineRowDelete(TRANS_LINE_OM_UNSET_TAX_FIELDS.0.to_string()),
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         trans_line_1_push_record(),
         trans_line_2_push_record(),
