@@ -159,6 +159,17 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
             <BasicTextInput value={''} disabled fullWidth />
           </Row>
         </Section>
+        <Section heading={t('label.additional-info')}>
+          <Row label={t('label.notes')}>
+            <BasicTextInput
+              value={draft.name}
+              onChange={e => onChange({ name: e.target.value })}
+              fullWidth
+              multiline
+              rows={4}
+            />
+          </Row>
+        </Section>
       </Container>
     </Box>
   );
