@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, MasterListLine, MasterListLineFilter, MasterListLineRepository,
-    MasterListLineSort, PaginationOption,
+    MasterListLineSort, PaginationOption, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -26,4 +26,14 @@ pub fn get_master_list_lines(
         rows: repository.query(pagination, Some(filter.clone()), sort)?,
         count: i64_to_u32(repository.count(Some(filter))?),
     })
+}
+
+pub fn get_master_list_lines_count(
+    connection: &StorageConnection,
+    master_list_id: &str,
+) -> Result<u32, RepositoryError> {
+    let repository = MasterListLineRepository::new(&connection);
+    let filter = MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id));
+
+    Ok(i64_to_u32(repository.count(Some(filter))?))
 }

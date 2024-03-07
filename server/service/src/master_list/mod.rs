@@ -1,11 +1,11 @@
 use self::query::get_master_lists;
-use self::query_lines::get_master_list_lines;
+use self::query_lines::{get_master_list_lines, get_master_list_lines_count};
 
 use super::{ListError, ListResult};
 use crate::service_provider::ServiceContext;
 use repository::{
     MasterList, MasterListFilter, MasterListLine, MasterListLineFilter, MasterListLineSort,
-    MasterListSort, PaginationOption,
+    MasterListSort, PaginationOption, RepositoryError, StorageConnection,
 };
 
 pub mod query;
@@ -31,6 +31,14 @@ pub trait MasterListServiceTrait: Sync + Send {
         sort: Option<MasterListLineSort>,
     ) -> Result<ListResult<MasterListLine>, ListError> {
         get_master_list_lines(ctx, master_list_id, pagination, filter, sort)
+    }
+
+    fn get_master_list_lines_count(
+        &self,
+        connection: &StorageConnection,
+        master_list_id: &str,
+    ) -> Result<u32, RepositoryError> {
+        get_master_list_lines_count(connection, master_list_id)
     }
 }
 
