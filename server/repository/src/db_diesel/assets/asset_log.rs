@@ -152,7 +152,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             let mut sub_query = user_account_dsl::user_account
                 .select(user_account_dsl::id)
                 .into_boxed();
-            apply_equal_filter!(sub_query, Some(user), user_account_dsl::id);
+            apply_string_filter!(sub_query, Some(user), user_account_dsl::username);
             query = query.filter(asset_log_dsl::user_id.eq_any(sub_query));
         }
     }
