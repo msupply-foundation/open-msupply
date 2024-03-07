@@ -6435,6 +6435,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetMutate = 'ASSET_MUTATE',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',

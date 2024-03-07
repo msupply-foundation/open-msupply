@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   Box,
   ButtonWithIcon,
@@ -6,14 +6,28 @@ import {
   AppFooterPortal,
   XCircleIcon,
   useBreadcrumbs,
+  LoadingButton,
+  // useAuthContext,
+  // UserPermission,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../../api';
 
-export const FooterComponent: FC = () => {
+interface FooterProps {
+  isSaving: boolean;
+  isDirty?: boolean;
+  showSaveConfirmation: () => void;
+}
+
+export const FooterComponent = ({
+  isDirty,
+  isSaving,
+  showSaveConfirmation,
+}: FooterProps) => {
   const t = useTranslation('coldchain');
   const { navigateUpOne } = useBreadcrumbs();
   const { data } = useAssets.document.get();
+  // const { userHasPermission } = useAuthContext();
 
   return (
     <AppFooterPortal
@@ -35,6 +49,17 @@ export const FooterComponent: FC = () => {
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigateUpOne()}
               />
+              <LoadingButton
+                color="secondary"
+                disabled={
+                  !isDirty // ||
+                  // !userHasPermission(UserPermission.AssetMutate)
+                }
+                isLoading={isSaving}
+                onClick={showSaveConfirmation}
+              >
+                {t('button.save')}
+              </LoadingButton>
             </Box>
           </Box>
         ) : null
