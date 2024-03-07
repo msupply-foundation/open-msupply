@@ -16,6 +16,9 @@ use repository::{
 use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
+use repository::asset_log_row::Reason;
+use serde::Serialize;
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum AssetSortFieldInput {
@@ -250,6 +253,75 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
     }
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum ReasonInput {
+    AwaitingInstallation,
+    Stored,
+    OffsiteForRepairs,
+    AwaitingDecomissioning,
+    NeedsServicing,
+    MultipleTemperatureBreaches,
+    Unknown,
+    NeedsSpareParts,
+    LackOfPower,
+    Functioning,
+    Decomissioned,
+}
+
+impl ReasonInput {
+    pub fn to_domain(self) -> Reason {
+        match self {
+            ReasonInput::AwaitingInstallation => Reason::AwaitingInstallation,
+            ReasonInput::Stored => Reason::Stored,
+            ReasonInput::OffsiteForRepairs => Reason::OffsiteForRepairs,
+            ReasonInput::AwaitingDecomissioning => Reason::AwaitingDecomissioning,
+            ReasonInput::NeedsServicing => Reason::NeedsServicing,
+            ReasonInput::MultipleTemperatureBreaches => Reason::MultipleTemperatureBreaches,
+            ReasonInput::Unknown => Reason::Unknown,
+            ReasonInput::NeedsSpareParts => Reason::NeedsSpareParts,
+            ReasonInput::LackOfPower => Reason::LackOfPower,
+            ReasonInput::Functioning => Reason::Functioning,
+            ReasonInput::Decomissioned => Reason::Decomissioned,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum ReasonType {
+    AwaitingInstallation,
+    Stored,
+    OffsiteForRepairs,
+    AwaitingDecomissioning,
+    NeedsServicing,
+    MultipleTemperatureBreaches,
+    Unknown,
+    NeedsSpareParts,
+    LackOfPower,
+    Functioning,
+    Decomissioned,
+}
+impl ReasonType {
+    pub fn from_domain(reason: &Reason) -> Self {
+        match reason {
+            Reason::AwaitingInstallation => ReasonType::AwaitingInstallation,
+            Reason::Stored => ReasonType::Stored,
+            Reason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
+            Reason::AwaitingDecomissioning => ReasonType::AwaitingDecomissioning,
+            Reason::NeedsServicing => ReasonType::NeedsServicing,
+            Reason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
+            Reason::Unknown => ReasonType::Unknown,
+            Reason::NeedsSpareParts => ReasonType::NeedsSpareParts,
+            Reason::LackOfPower => ReasonType::LackOfPower,
+            Reason::Functioning => ReasonType::Functioning,
+            Reason::Decomissioned => ReasonType::Decomissioned,
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct AssetLogNode {
     pub asset_log: AssetLog,
@@ -287,8 +359,8 @@ impl AssetLogNode {
         &self.row().r#type
     }
 
-    pub async fn reason(&self) -> &Option<String> {
-        &self.row().reason
+    pub async fn reason(&self) -> Option<ReasonType> {
+        self.row().reason.as_ref().map(ReasonType::from_domain)
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
