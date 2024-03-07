@@ -1518,7 +1518,7 @@ export type GenerateInboundReturnLinesInput = {
   outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
 
-export type GenerateInboundReturnLinesResponse = InboundReturnLineConnector;
+export type GenerateInboundReturnLinesResponse = GeneratedInboundReturnLineConnector;
 
 /**
  * At least one input is required.
@@ -1532,6 +1532,28 @@ export type GenerateOutboundReturnLinesInput = {
 
 export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
 
+export type GeneratedInboundReturnLineConnector = {
+  __typename: 'GeneratedInboundReturnLineConnector';
+  nodes: Array<GeneratedInboundReturnLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type GeneratedInboundReturnLineNode = {
+  __typename: 'GeneratedInboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
@@ -1544,33 +1566,12 @@ export type InboundReturnInput = {
   inboundReturnLines: Array<InboundReturnLineInput>;
 };
 
-export type InboundReturnLineConnector = {
-  __typename: 'InboundReturnLineConnector';
-  nodes: Array<InboundReturnLineNode>;
-  totalCount: Scalars['Int']['output'];
-};
-
 export type InboundReturnLineInput = {
   id: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
   stockLineId: Scalars['String']['input'];
-};
-
-export type InboundReturnLineNode = {
-  __typename: 'InboundReturnLineNode';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId: Scalars['String']['output'];
 };
 
 export type InitialisationStatusNode = {
