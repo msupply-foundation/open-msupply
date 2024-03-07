@@ -16,7 +16,9 @@ export const useDraftInboundReturnLines = (
     []
   );
 
-  const data = useReturns.lines.inboundReturnLines(outboundReturnLineIds);
+  const data = useReturns.lines.generateInboundReturnLines(
+    outboundReturnLineIds
+  );
   const lines = data?.nodes;
 
   const { mutateAsync } = useReturns.document.insertInboundReturn();
