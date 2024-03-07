@@ -20,10 +20,12 @@ export const useOutboundLineEditColumns = ({
   onChange,
   unit,
   currency,
+  isExternalSupplier
 }: {
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
 }) => {
   const { c } = useCurrency();
   const { store } = useAuthContext();
@@ -60,7 +62,7 @@ export const useOutboundLineEditColumns = ({
     ],
   ]
   
-  if (!!store?.preferences.issueInForeignCurrency) {
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencySellPricePerPack',
       label: 'label.fc-sell-price',
