@@ -176,6 +176,8 @@ export const CreateAssetModal = ({
                 fullWidth
                 value={draft.name}
                 onChange={e => updateDraft({ name: e.target.value })}
+                multiline
+                rows={2}
               />
             }
           />
