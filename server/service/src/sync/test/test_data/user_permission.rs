@@ -1,6 +1,6 @@
 use repository::{mock::context_program_a, Permission, UserPermissionRow, UserPermissionRowDelete};
 
-use crate::sync::test::TestFromSyncRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &'static str = "om_user_permission";
 
@@ -26,9 +26,9 @@ const USER_PERMISSION_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             USER_PERMISSION_1,
             UserPermissionRow {
@@ -39,7 +39,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 context_id: Some(context_program_a().id.to_string()),
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             USER_PERMISSION_2,
             UserPermissionRow {
@@ -53,8 +53,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         USER_PERMISSION_2.0,
         UserPermissionRowDelete(USER_PERMISSION_2.0.to_string()),

@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use repository::PeriodRow;
 
-use crate::sync::test::TestFromSyncRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &'static str = "period";
 
@@ -51,9 +51,9 @@ const PERIOD_4: (&'static str, &'static str) = (
 "#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_1,
             PeriodRow {
@@ -64,7 +64,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 end_date: NaiveDate::from_ymd_opt(2023, 01, 07).unwrap(),
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_2,
             PeriodRow {
@@ -75,7 +75,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 end_date: NaiveDate::from_ymd_opt(2023, 12, 31).unwrap(),
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_3,
             PeriodRow {
@@ -86,7 +86,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 end_date: NaiveDate::from_ymd_opt(2020, 06, 30).unwrap(),
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_4,
             PeriodRow {

@@ -1,6 +1,6 @@
 use crate::sync::translations::requisition_line::LegacyRequisitionLineRow;
 
-use super::{TestFromSyncRecord, TestToSyncRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
 use repository::{RequisitionLineRow, RequisitionLineRowDelete};
 use serde_json::json;
@@ -44,8 +44,8 @@ const REQUISITION_LINE_1: (&'static str, &'static str) = (
         "om_snapshot_datetime": ""
     }"#,
 );
-fn requisition_line_request_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_LINE_1,
         RequisitionLineRow {
@@ -64,8 +64,8 @@ fn requisition_line_request_pull_record() -> TestFromSyncRecord {
         },
     )
 }
-fn requisition_line_request_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_LINE_1.0.to_string(),
         push_data: json!(LegacyRequisitionLineRow {
@@ -122,8 +122,8 @@ const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
         "om_snapshot_datetime": "2022-04-04T14:48:11"
     }"#,
 );
-fn requisition_line_om_fields_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_LINE_OM_FIELD,
         RequisitionLineRow {
@@ -147,8 +147,8 @@ fn requisition_line_om_fields_pull_record() -> TestFromSyncRecord {
         },
     )
 }
-fn requisition_line_om_fields_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
         push_data: json!(LegacyRequisitionLineRow {
@@ -174,22 +174,22 @@ fn requisition_line_om_fields_push_record() -> TestToSyncRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         requisition_line_request_pull_record(),
         requisition_line_om_fields_pull_record(),
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         REQUISITION_LINE_OM_FIELD.0,
         RequisitionLineRowDelete(REQUISITION_LINE_OM_FIELD.0.to_string()),
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestToSyncRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         requisition_line_request_push_record(),
         requisition_line_om_fields_push_record(),
