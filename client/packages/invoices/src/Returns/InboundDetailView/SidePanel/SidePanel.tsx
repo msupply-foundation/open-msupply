@@ -9,7 +9,8 @@ import {
   useTranslation,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useReturns } from '../api';
+import { useReturns } from '../../api';
+import { AdditionalInfoSection } from './AdditionalInfoSection';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
@@ -26,8 +27,7 @@ export const SidePanelComponent = () => {
     selectedRows: [data],
     deleteAction,
     messages: {
-      // why no workie
-      confirmMessage: t('messages.confirm-delete-returns', {
+      confirmMessage: t('messages.confirm-delete-inbound-return', {
         number: data?.invoiceNumber,
       }),
       deleteSuccess: t('messages.deleted-returns', {
@@ -39,7 +39,7 @@ export const SidePanelComponent = () => {
   const copyToClipboard = () => {
     navigator.clipboard
       .writeText(JSON.stringify(data, null, 4) ?? '')
-      .then(() => success('Copied to clipboard successfully')());
+      .then(() => success(t('message.copy-success'))());
   };
 
   return (
@@ -60,10 +60,10 @@ export const SidePanelComponent = () => {
         </>
       }
     >
-      {/* <AdditionalInfoSection />
-      <RelatedDocumentsSection />
-      <PricingSection />
-      <TransportSection /> */}
+      <AdditionalInfoSection />
+      {/* <RelatedDocumentsSection /> */}
+      {/* <PricingSection /> */}
+      {/* <TransportSection /> */}
     </DetailPanelPortal>
   );
 };
