@@ -1,6 +1,6 @@
 use super::StorageConnection;
 
-use crate::RepositoryError;
+use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -126,5 +126,19 @@ impl<'a> FormSchemaRowRepository<'a> {
             result.push(schema_from_row(row)?);
         }
         Ok(result)
+    }
+}
+
+impl Upsert for FormSchemaJson {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        FormSchemaRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            FormSchemaRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

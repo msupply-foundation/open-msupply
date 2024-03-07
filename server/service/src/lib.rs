@@ -9,11 +9,14 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
 pub mod clinician;
 mod common_stock;
+pub mod currency;
+pub mod cursor_controller;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod document;
@@ -29,6 +32,7 @@ pub mod master_list;
 pub mod missing_program;
 pub mod name;
 pub mod number;
+pub mod pack_variant;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;
@@ -241,6 +245,10 @@ pub fn get_default_pagination(
 // TODO move the following methods to util
 
 pub fn i32_to_u32(num: i32) -> u32 {
+    num.try_into().unwrap_or(0)
+}
+
+pub fn i64_to_u64(num: i64) -> u64 {
     num.try_into().unwrap_or(0)
 }
 

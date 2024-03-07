@@ -41,7 +41,7 @@ export const HeaderCell = <T extends RecordWithId>({
   } = column;
 
   const { direction, key: currentSortKey } = sortBy ?? {};
-  const t = useTranslation('common');
+  const t = useTranslation();
   const isSorted = key === currentSortKey;
 
   const onSort = useDebounceCallback(

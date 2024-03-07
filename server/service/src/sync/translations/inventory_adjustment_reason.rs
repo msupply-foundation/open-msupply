@@ -1,18 +1,10 @@
 use repository::{
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType, StorageConnection, SyncBufferRow,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete,
+    InventoryAdjustmentReasonType, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::INVENTORY_ADJUSTMENT_REASON;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
+use super::{PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyOptionsType {
@@ -35,24 +27,27 @@ pub struct LegacyOptionsRow {
     pub reason: String,
 }
 
-pub(crate) struct InventoryAdjustmentReasonTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(InventoryAdjustmentReasonTranslation)
+}
+
+pub(super) struct InventoryAdjustmentReasonTranslation;
 impl SyncTranslation for InventoryAdjustmentReasonTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &'static str {
+        "options"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyOptionsRow>(&sync_record.data)?;
 
         let r#type = match data.r#type {
@@ -67,24 +62,18 @@ impl SyncTranslation for InventoryAdjustmentReasonTranslation {
             reason: data.reason,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::InventoryAdjustmentReason(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_pull_delete(
+    // TODO soft delete
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::InventoryAdjustmentReason,
-            )
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(
+            InventoryAdjustmentReasonRowDelete(sync_record.record_id.clone()),
+        ))
     }
 }
 
@@ -96,7 +85,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_inventory_adjustment_reason_translation() {
         use crate::sync::test::test_data::inventory_adjustment_reason as test_data;
-        let translator = InventoryAdjustmentReasonTranslation {};
+        let translator = InventoryAdjustmentReasonTranslation;
 
         let (_, connection, _, _) = setup_all(
             "test_inventory_adjustment_reason_translation",
@@ -105,8 +94,9 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

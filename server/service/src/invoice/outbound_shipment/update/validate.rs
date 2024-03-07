@@ -1,8 +1,10 @@
+use crate::invoice::common::check_can_issue_in_foreign_currency;
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, InvoiceRowStatusError,
 };
-use repository::EqualFilter;
+use crate::validate::get_other_party;
+use repository::{EqualFilter, NameLinkRowRepository};
 use repository::{
     InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
     InvoiceRowType, StorageConnection,
@@ -18,6 +20,10 @@ pub fn validate(
     use UpdateOutboundShipmentError::*;
 
     let invoice = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
+    let other_party_id = NameLinkRowRepository::new(connection).find_one_by_id(&invoice.name_link_id)?.ok_or(OtherPartyDoesNotExist)?.name_id;
+    let other_party = get_other_party(connection, store_id, &other_party_id)?
+        .ok_or(OtherPartyDoesNotExist)?;
+    
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
@@ -26,6 +32,9 @@ pub fn validate(
     }
     if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
+    }
+    if patch.currency_id.is_some() && !check_can_issue_in_foreign_currency(connection, store_id)? && other_party.store_row.is_some() {
+        return Err(CannotIssueInForeignCurrency);
     }
 
     // Status check

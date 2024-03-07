@@ -161,7 +161,6 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <NumericTextInput
-            type="number"
             InputProps={{
               sx: { '& .MuiInput-input': { textAlign: 'right' } },
             }}
@@ -188,7 +187,6 @@ const UIComponent = (props: ControlProps) => {
         Input={
           <Box flexBasis="100%" display="flex" alignItems="center" gap={2}>
             <NumericTextInput
-              type="number"
               InputProps={{
                 sx: { '& .MuiInput-input': { textAlign: 'right' } },
               }}

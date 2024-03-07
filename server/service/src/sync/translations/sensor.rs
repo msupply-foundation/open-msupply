@@ -1,9 +1,9 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{
         date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
         zero_date_as_option,
     },
+    translations::{location::LocationTranslation, store::StoreTranslation},
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 
@@ -13,19 +13,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::SENSOR;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Sensor
-}
-
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
 pub struct LegacySensorRow {
@@ -57,24 +45,34 @@ pub struct LegacySensorRow {
     pub last_connection_datetime: Option<NaiveDateTime>,
 }
 
-pub(crate) struct SensorTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(SensorTranslation)
+}
+
+pub(crate) struct SensorTranslation;
 impl SyncTranslation for SensorTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::SENSOR,
-            dependencies: vec![LegacyTableName::LOCATION, LegacyTableName::STORE],
-        }
+    fn table_name(&self) -> &'static str {
+        "sensor"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            LocationTranslation.table_name(),
+            StoreTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Sensor)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacySensorRow>(&sync_record.data)?;
 
         let LegacySensorRow {
@@ -110,20 +108,14 @@ impl SyncTranslation for SensorTranslation {
             r#type,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Sensor(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let SensorRow {
             id,
             name,
@@ -170,11 +162,12 @@ impl SyncTranslation for SensorTranslation {
             last_connection_time,
             last_connection_datetime,
         };
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 }
 
@@ -192,8 +185,9 @@ mod tests {
             setup_all("test_sensor_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

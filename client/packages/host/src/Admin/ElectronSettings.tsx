@@ -65,7 +65,7 @@ const Scanner = ({ scanner }: { scanner: BarcodeScanner | null }) => {
 
 export const ElectronSettings = () => {
   const { electronNativeAPI } = window;
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const { error, success } = useNotification();

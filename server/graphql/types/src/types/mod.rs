@@ -93,6 +93,8 @@ pub use self::repack::*;
 pub mod program;
 pub use self::program::*;
 
+pub mod pack_variant;
+pub use self::pack_variant::*;
 pub mod plugin_data;
 pub use self::plugin_data::*;
 
@@ -107,6 +109,9 @@ pub use self::inbound_return_line::*;
 
 pub mod return_reason;
 pub use self::return_reason::*;
+
+pub mod currency;
+pub use self::currency::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
