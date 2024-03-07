@@ -1,4 +1,4 @@
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestFromSyncRecord;
 use chrono::NaiveDate;
 use repository::CurrencyRow;
 
@@ -28,9 +28,9 @@ const CURRENCY_2: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
+        TestFromSyncRecord::new_pull_upsert(
             TABLE_NAME,
             CURRENCY_1,
             CurrencyRow {
@@ -41,7 +41,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 date_updated: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
             },
         ),
-        TestSyncPullRecord::new_pull_upsert(
+        TestFromSyncRecord::new_pull_upsert(
             TABLE_NAME,
             CURRENCY_2,
             CurrencyRow {

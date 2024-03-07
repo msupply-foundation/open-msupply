@@ -1,5 +1,5 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
+    test::{TestFromSyncRecord, TestToSyncRecord},
     translations::name_store_join::LegacyNameStoreJoinRow,
 };
 use repository::{NameStoreJoinRow, NameStoreJoinRowDelete};
@@ -20,8 +20,8 @@ const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
   }"#,
 );
 
-fn name_store_join_1_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_store_join_1_pull_record() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_STORE_JOIN_1,
         NameStoreJoinRow {
@@ -58,8 +58,8 @@ const NAME_STORE_JOIN_INACTIVE_2: (&'static str, &'static str) = (
       "store_ID": "store_b"
   }"#,
 );
-fn name_store_join_2_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_store_join_2_pull_record() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_STORE_JOIN_2,
         NameStoreJoinRow {
@@ -71,15 +71,15 @@ fn name_store_join_2_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn name_store_join_2_delete_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_delete(
+fn name_store_join_2_delete_record() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_delete(
         TABLE_NAME,
         NAME_STORE_JOIN_2.0,
         NameStoreJoinRowDelete(NAME_STORE_JOIN_2.0.to_string()),
     )
 }
 
-fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
+fn name_store_join_2_inactive_pull_record() -> TestFromSyncRecord {
     let mut record = name_store_join_2_delete_record();
     record.sync_buffer_row.data = NAME_STORE_JOIN_INACTIVE_2.1.to_string();
     record
@@ -101,8 +101,8 @@ fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
 //       "om_name_is_supplier": true
 //   }"#,
 // );
-// fn name_store_join_3_pull_record() -> TestSyncPullRecord {
-//     TestSyncPullRecord::new_pull_upsert(
+// fn name_store_join_3_pull_record() -> TestFromSyncRecord {
+//     TestFromSyncRecord::new_pull_upsert(
 //         TABLE_NAME,
 //         NAME_STORE_JOIN_3,
 //         NameStoreJoinRow {
@@ -115,7 +115,7 @@ fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
 //     )
 // }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![
         name_store_join_1_pull_record(),
         name_store_join_2_pull_record(),
@@ -123,17 +123,17 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
     vec![name_store_join_2_delete_record()]
 }
 
-pub(crate) fn test_pull_upsert_inactive_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_inactive_records() -> Vec<TestFromSyncRecord> {
     vec![name_store_join_2_inactive_pull_record()]
 }
 
-pub(crate) fn test_push_upsert() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_upsert() -> Vec<TestToSyncRecord> {
     vec![
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: NAME_STORE_JOIN_1.0.to_string(),
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
@@ -145,7 +145,7 @@ pub(crate) fn test_push_upsert() -> Vec<TestSyncPushRecord> {
                 name_is_supplier: Some(true),
             }),
         },
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: NAME_STORE_JOIN_2.0.to_string(),
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {

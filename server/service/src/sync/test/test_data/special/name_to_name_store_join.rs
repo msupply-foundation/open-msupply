@@ -3,7 +3,7 @@ use serde_json::json;
 use util::{inline_edit, inline_init};
 
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
+    test::{TestFromSyncRecord, TestToSyncRecord},
     translations::{name_store_join::LegacyNameStoreJoinRow, PullTranslateResult},
 };
 
@@ -158,8 +158,8 @@ pub fn name_store_join3() -> NameStoreJoinRow {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+    vec![TestFromSyncRecord {
         translated_record: PullTranslateResult::upserts(vec![
             inline_edit(&name_store_join1(), |mut r| {
                 r.name_is_customer = true;
@@ -185,9 +185,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     }]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestToSyncRecord> {
     vec![
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: name_store_join1().id,
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
@@ -200,7 +200,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 name_is_supplier: Some(false),
             }),
         },
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: name_store_join2().id,
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
@@ -212,7 +212,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 name_is_supplier: Some(false),
             }),
         },
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: name_store_join3().id,
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {

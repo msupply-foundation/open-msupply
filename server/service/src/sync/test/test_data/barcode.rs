@@ -1,5 +1,5 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
+    test::{TestFromSyncRecord, TestToSyncRecord},
     translations::barcode::LegacyBarcodeRow,
 };
 
@@ -32,9 +32,9 @@ const BARCODE_2: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
+        TestFromSyncRecord::new_pull_upsert(
             TABLE_NAME,
             BARCODE_1,
             BarcodeRow {
@@ -46,7 +46,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 parent_id: None,
             },
         ),
-        TestSyncPullRecord::new_pull_upsert(
+        TestFromSyncRecord::new_pull_upsert(
             TABLE_NAME,
             BARCODE_2,
             BarcodeRow {
@@ -61,9 +61,9 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     ]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestToSyncRecord> {
     vec![
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: BARCODE_1.0.to_string(),
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyBarcodeRow {
@@ -75,7 +75,7 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 parent_id: None,
             }),
         },
-        TestSyncPushRecord {
+        TestToSyncRecord {
             record_id: BARCODE_2.0.to_string(),
             table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyBarcodeRow {

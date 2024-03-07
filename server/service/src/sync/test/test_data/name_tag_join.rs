@@ -1,4 +1,4 @@
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestFromSyncRecord;
 
 use repository::{NameTagJoinRow, NameTagJoinRowDelete};
 
@@ -13,8 +13,8 @@ const NAME_TAG_JOIN_1: (&'static str, &'static str) = (
     }"#,
 );
 
-fn name_tag_join_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_tag_join_1() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_TAG_JOIN_1,
         NameTagJoinRow {
@@ -34,8 +34,8 @@ const NAME_TAG_JOIN_2: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_tag_join_2() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_tag_join_2() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_TAG_JOIN_2,
         NameTagJoinRow {
@@ -46,12 +46,12 @@ fn name_tag_join_2() -> TestSyncPullRecord {
     )
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![name_tag_join_1(), name_tag_join_2()]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
+    vec![TestFromSyncRecord::new_pull_delete(
         TABLE_NAME,
         NAME_TAG_JOIN_2.0,
         NameTagJoinRowDelete(NAME_TAG_JOIN_2.0.to_string()),

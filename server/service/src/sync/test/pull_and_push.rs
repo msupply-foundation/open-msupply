@@ -5,7 +5,7 @@ use crate::sync::{
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
         test_data::{get_all_omsupply_central_push_records, get_all_push_test_records},
-        TestSyncPushRecord,
+        TestToSyncRecord,
     },
     translations::{
         translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
@@ -81,7 +81,7 @@ async fn test_sync_pull_and_push() {
     ]
     .into_iter()
     .flatten()
-    .collect::<Vec<TestSyncPushRecord>>();
+    .collect::<Vec<TestToSyncRecord>>();
 
     // Not using get_sync_push_changelogs_filter, since this test uses record integrated via sync as push records
     // which are usually filtered out via is_sync_updated flag

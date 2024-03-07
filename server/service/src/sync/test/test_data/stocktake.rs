@@ -1,12 +1,12 @@
 use crate::sync::{
-    test::TestSyncPullRecord,
+    test::TestFromSyncRecord,
     translations::stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
 };
 use chrono::{NaiveDate, NaiveTime};
 use repository::{StocktakeRow, StocktakeStatus};
 use serde_json::json;
 
-use super::TestSyncPushRecord;
+use super::TestToSyncRecord;
 
 const TABLE_NAME: &'static str = "Stock_take";
 
@@ -32,8 +32,8 @@ const STOCKTAKE_1: (&'static str, &'static str) = (
       "om_created_datetime": ""
     }"#,
 );
-fn stocktake_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn stocktake_pull_record() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_1,
         StocktakeRow {
@@ -55,8 +55,8 @@ fn stocktake_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn stocktake_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn stocktake_push_record() -> TestToSyncRecord {
+    TestToSyncRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_1.0.to_string(),
         push_data: json!(LegacyStocktakeRow {
@@ -106,8 +106,8 @@ const STOCKTAKE_OM_FIELD: (&'static str, &'static str) = (
       "om_finalised_datetime": "2021-07-31T15:15:15"
     }"#,
 );
-fn stocktake_om_field_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn stocktake_om_field_pull_record() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         STOCKTAKE_OM_FIELD,
         StocktakeRow {
@@ -135,8 +135,8 @@ fn stocktake_om_field_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn stocktake_om_field_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn stocktake_om_field_push_record() -> TestToSyncRecord {
+    TestToSyncRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_OM_FIELD.0.to_string(),
         push_data: json!(LegacyStocktakeRow {
@@ -169,10 +169,10 @@ fn stocktake_om_field_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![stocktake_pull_record(), stocktake_om_field_pull_record()]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestToSyncRecord> {
     vec![stocktake_push_record(), stocktake_om_field_push_record()]
 }

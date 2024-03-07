@@ -1,4 +1,4 @@
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestFromSyncRecord;
 use repository::{StorePreferenceRow, StorePreferenceType};
 
 const TABLE_NAME: &'static str = "pref";
@@ -134,9 +134,9 @@ const STORE_PREFERENCE_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
+        TestFromSyncRecord::new_pull_upsert(
             TABLE_NAME,
             STORE_PREFERENCE_1,
             StorePreferenceRow {
@@ -150,7 +150,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 issue_in_foreign_currency: true,
             },
         ),
-        TestSyncPullRecord::new_pull_upsert(
+        TestFromSyncRecord::new_pull_upsert(
             TABLE_NAME,
             STORE_PREFERENCE_2,
             StorePreferenceRow {

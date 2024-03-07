@@ -1,4 +1,4 @@
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestFromSyncRecord;
 use repository::{MasterListNameJoinRow, MasterListNameJoinRowDelete};
 
 const TABLE_NAME: &'static str = "list_master_name_join";
@@ -17,8 +17,8 @@ const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
   }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+    vec![TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         LIST_MASTER_NAME_JOIN_1,
         MasterListNameJoinRow {
@@ -29,8 +29,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     )]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
+    vec![TestFromSyncRecord::new_pull_delete(
         TABLE_NAME,
         LIST_MASTER_NAME_JOIN_1.0,
         MasterListNameJoinRowDelete(LIST_MASTER_NAME_JOIN_1.0.to_string()),
