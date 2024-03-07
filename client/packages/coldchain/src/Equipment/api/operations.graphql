@@ -6,7 +6,7 @@ fragment Asset on AssetNode {
   id
   installationDate
   modifiedDatetime
-  name
+  notes
   replacementDate
   serialNumber
   storeId
@@ -87,7 +87,21 @@ mutation insertAsset($input: InsertAssetInput!, $storeId: String!) {
     ... on AssetNode {
       __typename
       id
-      name
+    }
+  }
+}
+
+mutation updateAsset($input: UpdateAssetInput!, $storeId: String!) {
+  updateAsset(input: $input, storeId: $storeId) {
+    ... on UpdateAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
     }
   }
 }

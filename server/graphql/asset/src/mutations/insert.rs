@@ -45,7 +45,7 @@ pub fn insert_asset(
 pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
-    pub name: String,
+    pub notes: Option<String>,
     pub code: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
@@ -58,7 +58,7 @@ impl From<InsertAssetInput> for InsertAsset {
         InsertAssetInput {
             id,
             store_id,
-            name,
+            notes,
             code,
             serial_number,
             catalogue_item_id,
@@ -69,7 +69,7 @@ impl From<InsertAssetInput> for InsertAsset {
         InsertAsset {
             id,
             store_id,
-            name,
+            notes,
             code,
             serial_number,
             catalogue_item_id,
@@ -169,7 +169,7 @@ mod test {
             insertAsset(input: $input, storeId: \"store_a\") {
               ... on AssetNode {
                 id
-                name
+                notes
                 code
               }
             }
@@ -179,7 +179,7 @@ mod test {
         let variables = Some(json!({
           "input": {
             "id": "n/a",
-            "name": "name",
+            "notes": "notes",
             "code": "code",
           }
         }));
@@ -188,7 +188,7 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(Asset {
                 id: "id".to_owned(),
-                name: "name".to_owned(),
+                notes: "notes".to_owned(),
                 code: "code".to_owned(),
                 ..Default::default()
             })
@@ -197,7 +197,7 @@ mod test {
         let expected = json!({
             "insertAsset": {
                 "id": "id",
-                "name": "name",
+                "notes": "notes",
                 "code": "code",
             }
           }

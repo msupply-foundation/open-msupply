@@ -70,11 +70,20 @@ export const Toolbar = () => {
               name: t('label.category'),
               urlParameter: 'categoryId',
               options: mapIdNameToOptions(categories),
+              isDefault: true,
+            },
+            {
+              type: 'enum',
+              name: t('label.type'),
+              urlParameter: 'typeId',
+              options: mapIdNameToOptions(types),
+              isDefault: true,
             },
             {
               type: 'text',
               name: t('label.code'),
               urlParameter: 'code',
+              isDefault: true,
             },
             {
               name: t('label.installation-date'),
@@ -83,10 +92,9 @@ export const Toolbar = () => {
             },
             {
               type: 'text',
-              name: t('label.name'),
-              urlParameter: 'name',
-              placeholder: t('placeholder.search-by-name'),
-              isDefault: true,
+              name: t('label.notes'),
+              urlParameter: 'notes',
+              placeholder: t('placeholder.search-by-notes'),
             },
             {
               name: t('label.replacement-date'),
@@ -97,12 +105,6 @@ export const Toolbar = () => {
               type: 'text',
               name: t('label.serial'),
               urlParameter: 'serialNumber',
-            },
-            {
-              type: 'enum',
-              name: t('label.type'),
-              urlParameter: 'typeId',
-              options: mapIdNameToOptions(types),
             },
           ]}
         />

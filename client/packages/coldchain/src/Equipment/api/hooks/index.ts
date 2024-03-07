@@ -13,6 +13,7 @@ export const useAssets = {
     insert: Document.useAssetInsert,
     delete: Document.useAssetDelete,
     deleteAssets: Document.useAssetsDelete,
+    update: Document.useAssetUpdate,
   },
 
   line: {},
