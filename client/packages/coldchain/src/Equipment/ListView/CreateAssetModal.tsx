@@ -107,7 +107,7 @@ export const CreateAssetModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!draft.catalogueItemId || !draft.name || !draft.code}
+          disabled={!draft.catalogueItemId || !draft.code}
           onClick={async () => {
             try {
               await save(draft);
@@ -170,7 +170,7 @@ export const CreateAssetModal = ({
             }
           />
           <InputRow
-            label={t('label.name')}
+            label={t('label.notes')}
             Input={
               <BasicTextInput
                 fullWidth
