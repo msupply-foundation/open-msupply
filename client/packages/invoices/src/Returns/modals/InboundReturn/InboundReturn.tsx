@@ -99,7 +99,7 @@ export const InboundReturnEditModal = ({
             </TabPanel>
             <TabPanel value={Tabs.Reason}>
               <ReturnReasonsTable
-                lines={lines}
+                lines={lines.filter(line => line.numberOfPacksReturned > 0)}
                 updateLine={line => update(line)}
               />
             </TabPanel>
