@@ -15,7 +15,7 @@ import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { InboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-import { SidePanel } from './SidePanel';
+import { SidePanel } from './SidePanel/SidePanel';
 import { ActivityLogList } from 'packages/system/src';
 import { Footer } from './Footer';
 

@@ -111,6 +111,7 @@
   "messages.deleted-shipments_few": "Deleted {{count}} shipments",
   "messages.deleted-shipments_other": "Deleted {{count}} shipments",
   "messages.click-to-return-to-inbound-returns": "Unable to find a return with that ID. Click OK to return to the Inbound Returns list",
+  "messages.confirm-delete-inbound-return": "This will permanently Inbound Return #{{number}}",
   "messages.confirm-delete-returns_one": "This will permanently remove 1 return",
   "messages.confirm-delete-returns_other": "This will permanently remove {{count}} returns",
   "messages.confirm-delete-shipments_one": "This will permanently remove 1 shipment",

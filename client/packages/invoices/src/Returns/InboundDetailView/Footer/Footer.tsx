@@ -14,11 +14,11 @@ import {
   inboundReturnStatuses,
   outboundStatuses,
 } from '../../../utils';
-import { InboundReturnRowFragment, useReturns } from '../../api';
+import { InboundReturnFragment, useReturns } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
 import { OnHoldButton } from './OnHoldButton';
 
-const createStatusLog = (invoice: InboundReturnRowFragment) => {
+const createStatusLog = (invoice: InboundReturnFragment) => {
   const statusIdx = outboundStatuses.findIndex(s => invoice.status === s);
   const statusLog: Record<InvoiceNodeStatus, null | undefined | string> = {
     [InvoiceNodeStatus.New]: null,
