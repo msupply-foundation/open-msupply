@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 
-use crate::assets::asset_log_row::AssetLogRow;
+use crate::{asset_log_row::Status, assets::asset_log_row::AssetLogRow};
 
 pub fn mock_asset_log_a() -> AssetLogRow {
     AssetLogRow {
@@ -39,7 +39,7 @@ pub fn mock_asset_log_c() -> AssetLogRow {
         id: String::from("log_c"),
         asset_id: String::from("asset_b"),
         user_id: String::from("user_account_a"),
-        status: Some(String::from("active")),
+        status: Some(Status::Functioning),
         comment: None,
         r#type: None,
         reason: None,

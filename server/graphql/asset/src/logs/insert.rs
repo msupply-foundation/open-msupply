@@ -1,4 +1,4 @@
-use crate::types::ReasonInput;
+use crate::types::{ReasonInput, StatusInput};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -49,7 +49,7 @@ pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
     pub user_id: String,
-    pub status: Option<String>,
+    pub status: Option<StatusInput>,
     pub reason: Option<ReasonInput>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
@@ -71,7 +71,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             id,
             asset_id,
             user_id,
-            status,
+            status: status.map(|s| s.to_domain()),
             reason: reason.map(|r| r.to_domain()),
             comment,
             r#type,
@@ -121,7 +121,8 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        assets::asset_log::AssetLog, mock::MockDataInserts, StorageConnectionManager,
+        asset_log_row::Status, assets::asset_log::AssetLog, mock::MockDataInserts,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -185,7 +186,7 @@ mod test {
             "input": {
                 "id": "n/a",
                 "assetId": "asset_a",
-                "status": "status",
+                "status": Status::Functioning,
                 "userId": "user_account_a"
             }
         }));
@@ -196,7 +197,7 @@ mod test {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
                 user_id: "user_account_a".to_owned(),
-                status: Some("status".to_owned()),
+                status: Some(Status::Functioning),
                 ..Default::default()
             })
         }));
@@ -205,7 +206,7 @@ mod test {
             "insertAssetLog": {
                 "id": "id",
                 "assetId": "asset_a",
-                "status": "status",
+                "status": Status::Functioning,
                 "userId": "user_account_a",
             }
         });
