@@ -36,7 +36,6 @@ export const ContentArea = () => {
       [
         'itemUnit',
         {
-          width: 150,
           accessor: ({ rowData }) => rowData.item.unitName,
           getSortValue: rowData => rowData.item.unitName ?? '',
         },
