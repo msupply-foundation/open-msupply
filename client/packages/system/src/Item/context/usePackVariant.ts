@@ -43,10 +43,11 @@ const commonAsPackVariant: CommonAsPackVariant = ({
 }) => {
   if (packVariantName) return packVariantName;
   if (defaultPackVariant) return defaultPackVariant;
-  if (variantName) return `${packSize} ${variantName}`;
+  const packSizeDispaly = packSize > 1 ? `${packSize} x ` : '';
+  if (variantName) return `${packSizeDispaly}${variantName}`;
 
   const defaultVariant = t('label.unit');
-  return `${packSize} ${defaultVariant}`;
+  return `${packSizeDispaly} ${defaultVariant}`;
 };
 
 export interface VariantControl {

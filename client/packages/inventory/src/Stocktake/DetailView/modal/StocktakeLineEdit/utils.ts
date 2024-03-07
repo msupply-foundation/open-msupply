@@ -15,13 +15,13 @@ export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;
-  isNewLine?: boolean;
 };
 
 export const DraftLine = {
   fromItem: (
     stocktakeId: string,
-    item: ItemRowFragment
+    item: ItemRowFragment,
+    defaultPackSize: number
   ): DraftStocktakeLine => {
     return {
       stocktakeId,
@@ -29,13 +29,12 @@ export const DraftLine = {
       countThisLine: true,
       isCreated: true,
       isUpdated: false,
-      isNewLine: true,
       id: FnUtils.generateUUID(),
       expiryDate: null,
       itemId: item.id,
       sellPricePerPack: 0,
       costPricePerPack: 0,
-      packSize: 1,
+      packSize: defaultPackSize,
       location: null,
       item: {
         __typename: 'ItemNode',
@@ -55,7 +54,6 @@ export const DraftLine = {
       stocktakeId,
       isCreated: true,
       isUpdated: false,
-      isNewLine: false,
       countThisLine,
       stockLine,
       ...stockLine,

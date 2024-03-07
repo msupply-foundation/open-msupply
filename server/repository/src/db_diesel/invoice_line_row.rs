@@ -34,6 +34,7 @@ table! {
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
+        foreign_currency_price_before_tax -> Nullable<Double>,
     }
 }
 
@@ -86,6 +87,7 @@ pub struct InvoiceLineRow {
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub foreign_currency_price_before_tax: Option<f64>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -112,22 +114,6 @@ impl<'a> InvoiceLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    pub fn update_tax(
-        &self,
-        record_id: &str,
-        tax_input: Option<f64>,
-        total_after_tax_calculation: f64,
-    ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
-            .set((
-                tax.eq(tax_input),
-                total_after_tax.eq(total_after_tax_calculation),
-            ))
             .execute(&self.connection.connection)?;
         Ok(())
     }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
@@ -63,13 +63,16 @@ export const useIntlUtils = () => {
   const { language: i18nLanguage } = i18n;
   const [language, setLanguage] = React.useState<string>(i18nLanguage);
 
-  const changeLanguage = (languageCode?: string) => {
-    if (!languageCode) return;
-    if (!locales.some(locale => languageCode === locale)) return;
+  const changeLanguage = useCallback(
+    (languageCode?: string) => {
+      if (!languageCode) return;
+      if (!locales.some(locale => languageCode === locale)) return;
 
-    i18n.changeLanguage(languageCode);
-    setLanguage(languageCode);
-  };
+      i18n.changeLanguage(languageCode);
+      setLanguage(languageCode);
+    },
+    [i18n]
+  );
 
   const isRtl = rtlLocales.includes(language);
 
@@ -95,23 +98,11 @@ export const useIntlUtils = () => {
     option => option.value === language
   )?.label;
 
-  const getLocaleCode = (language: LanguageType) => parseLanguage(language);
-
-  const getUserLocale = (username: string) => {
-    const locales = LocalStorage.getItem('/localisation/locale');
-    return !!locales ? locales[username] : undefined;
-  };
-
-  const setUserLocale = (username: string, locale: SupportedLocales) => {
-    const locales = LocalStorage.getItem('/localisation/locale') ?? {};
-    locales[username] = locale;
-    LocalStorage.setItem('/localisation/locale', locales);
-  };
-
-  const getLocalisedFullName = (
-    firstName: StringOrEmpty,
-    lastName: StringOrEmpty
-  ) => getFullName(language, firstName, lastName);
+  const getLocalisedFullName = useCallback(
+    (firstName: StringOrEmpty, lastName: StringOrEmpty) =>
+      getFullName(language, firstName, lastName),
+    [language]
+  );
 
   return {
     currentLanguage,
@@ -125,6 +116,19 @@ export const useIntlUtils = () => {
     setUserLocale,
     getLocalisedFullName,
   };
+};
+
+const getLocaleCode = (language: LanguageType) => parseLanguage(language);
+
+const getUserLocale = (username: string) => {
+  const locales = LocalStorage.getItem('/localisation/locale');
+  return !!locales ? locales[username] : undefined;
+};
+
+const setUserLocale = (username: string, locale: SupportedLocales) => {
+  const locales = LocalStorage.getItem('/localisation/locale') ?? {};
+  locales[username] = locale;
+  LocalStorage.setItem('/localisation/locale', locales);
 };
 
 const parseLanguage = (language?: string) => {

@@ -3,7 +3,10 @@ use crate::sync::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
         empty_str_as_option_string, naive_time, zero_date_as_option,
     },
-    translations::{name::NameTranslation, store::StoreTranslation},
+    translations::{
+        clinician::ClinicianTranslation, currency::CurrencyTranslation, name::NameTranslation,
+        store::StoreTranslation,
+    },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -16,7 +19,7 @@ use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyTransactType {
     /// Supplier invoice
     #[serde(rename = "si")]
@@ -88,7 +91,12 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub prescriber_ID: Option<String>,
+    #[serde(rename = "prescriber_ID")]
+    pub clinician_id: Option<String>,
+    #[serde(rename = "currency_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub currency_id: Option<String>,
+    pub currency_rate: f64,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
@@ -165,20 +173,55 @@ pub struct LegacyTransactRow {
     #[serde(default)]
     pub om_colour: Option<String>,
 }
+
+/// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
+/// receiving store.
+/// In the current version of mSupply all om_ fields get copied though.
+/// When receiving the transferred invoice on the omSupply store the "si" get translated to
+/// outbound shipments because the om_type will override to legacy type field.
+/// In other word, the inbound shipment will have an outbound type!
+/// This function detect this case and removes all om_* fields from the incoming record.
+fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
+    let Some(Ok(om_type)) = data
+        .get("om_type")
+        .map(|value| serde_json::from_value::<InvoiceRowType>(value.clone()))
+    else {
+        return data;
+    };
+    let Some(Ok(legacy_type)) = data
+        .get("type")
+        .map(|value| serde_json::from_value::<LegacyTransactType>(value.clone()))
+    else {
+        return data;
+    };
+    if legacy_type == LegacyTransactType::Si && om_type == InvoiceRowType::OutboundShipment {
+        let Some(obj) = data.as_object_mut() else {
+            return data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+
+    data
+}
+
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(InvoiceTranslation)
 }
-
-pub(super) struct InvoiceTranslation;
+pub(crate) struct InvoiceTranslation;
 impl SyncTranslation for InvoiceTranslation {
     fn table_name(&self) -> &'static str {
         "transact"
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![NameTranslation.table_name(), StoreTranslation.table_name()]
+        vec![
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            ClinicianTranslation.table_name(),
+            CurrencyTranslation.table_name(),
+        ]
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
@@ -190,7 +233,9 @@ impl SyncTranslation for InvoiceTranslation {
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyTransactRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sanitize_legacy_record(data);
+        let data = serde_json::from_value::<LegacyTransactRow>(data)?;
 
         let name = NameRowRepository::new(connection)
             .find_one_by_id(&data.name_ID)
@@ -227,7 +272,9 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            clinician_link_id: data.prescriber_ID,
+            currency_id: data.currency_id,
+            currency_rate: data.currency_rate,
+            clinician_link_id: data.clinician_id,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -299,6 +346,8 @@ impl SyncTranslation for InvoiceTranslation {
                     transport_reference,
                     tax,
                     clinician_link_id: _,
+                    currency_id,
+                    currency_rate,
                 },
             name_row,
             clinician_row,
@@ -350,7 +399,9 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            prescriber_ID: clinician_row.map(|row| row.id),
+            currency_id,
+            currency_rate,
+            clinician_id: clinician_row.map(|row| row.id),
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;
