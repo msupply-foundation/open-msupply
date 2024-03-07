@@ -1,11 +1,12 @@
-use repository::{MasterListNameJoinRow, StorageConnection, SyncBufferRow};
+use repository::{
+    MasterListNameJoinRow, MasterListNameJoinRowDelete, StorageConnection, SyncBufferRow,
+};
 
 use serde::Deserialize;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use crate::sync::translations::{master_list::MasterListTranslation, name::NameTranslation};
+
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -14,32 +15,33 @@ pub struct LegacyListMasterNameJoinRow {
     name_ID: String,
     list_master_ID: String,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::LIST_MASTER_NAME_JOIN
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(MasterListNameJoinTranslation)
 }
 
-pub(crate) struct MasterListNameJoinTranslation {}
+pub(super) struct MasterListNameJoinTranslation;
 impl SyncTranslation for MasterListNameJoinTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::LIST_MASTER_NAME_JOIN,
-            dependencies: vec![LegacyTableName::NAME, LegacyTableName::LIST_MASTER],
-        }
+    fn table_name(&self) -> &'static str {
+        "list_master_name_join"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            NameTranslation.table_name(),
+            MasterListTranslation.table_name(),
+        ]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
         if data.name_ID == "" {
-            return Ok(None);
+            return Ok(PullTranslateResult::Ignored("Missing name_id".to_string()));
         }
 
         let result = MasterListNameJoinRow {
@@ -48,24 +50,17 @@ impl SyncTranslation for MasterListNameJoinTranslation {
             name_link_id: data.name_ID,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::MasterListNameJoin(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::MasterListNameJoin,
-            )
-        });
-
-        Ok(result)
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::delete(MasterListNameJoinRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
@@ -86,16 +81,18 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

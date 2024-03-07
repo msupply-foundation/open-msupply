@@ -6,6 +6,7 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
+use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -33,6 +34,7 @@ table! {
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
+        foreign_currency_price_before_tax -> Nullable<Double>,
     }
 }
 
@@ -85,6 +87,7 @@ pub struct InvoiceLineRow {
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub foreign_currency_price_before_tax: Option<f64>,
 }
 
 pub struct InvoiceLineRowRepository<'a> {
@@ -111,22 +114,6 @@ impl<'a> InvoiceLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
-    pub fn update_tax(
-        &self,
-        record_id: &str,
-        tax_input: Option<f64>,
-        total_after_tax_calculation: f64,
-    ) -> Result<(), RepositoryError> {
-        diesel::update(invoice_line)
-            .filter(id.eq(record_id))
-            .set((
-                tax.eq(tax_input),
-                total_after_tax.eq(total_after_tax_calculation),
-            ))
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -182,5 +169,34 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .filter(invoice_id.eq(invoice_id_param))
             .get_results(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InvoiceLineRowDelete(pub String);
+impl Delete for InvoiceLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for InvoiceLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceLineRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

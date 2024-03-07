@@ -1,53 +1,46 @@
-use crate::{
-    service_provider::ServiceProvider,
-    sync::{settings::SyncSettings, sync_api_credentials::SyncCredentials},
-};
+use std::{collections::HashMap, convert::TryInto};
+
+use crate::{service_provider::ServiceProvider, sync::settings::SyncSettings};
 use repository::migrations::Version;
-use reqwest::{
-    header::{HeaderMap, HeaderName},
-    Client, Response, Url,
-};
-use serde::{de::DeserializeOwned, Serialize};
+use reqwest::{header::HeaderMap, Client, Response, Url};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
 use url::ParseError;
 
 use super::*;
 
-#[derive(Debug, Clone)]
-pub(crate) struct SyncApiV5 {
-    pub(crate) server_url: Url,
-    pub(crate) credentials: SyncCredentials,
-    pub(crate) headers: HeaderMap,
+#[cfg(target_os = "android")]
+const APP_NAME: &'static str = "Open mSupply Android";
+
+#[cfg(not(target_os = "android"))]
+const APP_NAME: &'static str = "Open mSupply Desktop";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncApiSettings {
+    pub server_url: String,
+    pub username: String,
+    pub password_sha256: String,
+    pub site_uuid: String,
+    pub app_version: String,
+    pub app_name: String,
+    pub sync_version: String,
 }
 
-fn generate_headers(hardware_id: &str, sync_version: u32) -> HeaderMap {
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        HeaderName::from_static("msupply-site-uuid"),
-        format!("{}", hardware_id).parse().unwrap(),
-    );
-    headers.insert(
-        HeaderName::from_static("app-version"),
-        Version::from_package_json().to_string().parse().unwrap(),
-    );
+#[derive(Debug, Clone)]
+pub struct SyncApiV5 {
+    pub url: Url,
+    pub settings: SyncApiSettings,
+}
 
-    #[cfg(target_os = "android")]
-    headers.insert(
-        HeaderName::from_static("app-name"),
-        "Open mSupply Android".parse().unwrap(),
-    );
-    #[cfg(not(target_os = "android"))]
-    headers.insert(
-        HeaderName::from_static("app-name"),
-        "Open mSupply Desktop".parse().unwrap(),
-    );
-
-    headers.insert(
-        HeaderName::from_static("version"),
-        sync_version.to_string().parse().unwrap(),
-    );
-    headers
+fn tuple_vec_to_header(tuple_vec: Vec<(&str, &str)>) -> HeaderMap {
+    let map = tuple_vec
+        .into_iter()
+        .map(|(s1, s2)| (s1.to_string(), s2.to_string()))
+        .collect::<HashMap<String, String>>();
+    // Can unwrap here, will be caught in unit tests
+    (&map).try_into().unwrap()
 }
 
 #[derive(Error, Debug)]
@@ -59,25 +52,40 @@ pub enum SyncApiV5CreatingError {
 }
 
 impl SyncApiV5 {
-    pub fn new(
+    pub fn new_settings(
         settings: &SyncSettings,
         service_provider: &ServiceProvider,
         sync_version: u32,
-    ) -> Result<Self, SyncApiV5CreatingError> {
+    ) -> Result<SyncApiSettings, SyncApiV5CreatingError> {
         use SyncApiV5CreatingError as Error;
-        let hardware_id = service_provider
-            .app_data_service
-            .get_hardware_id()
-            .map_err(|error| Error::Other(error.into()))?;
 
-        Ok(SyncApiV5 {
-            server_url: Url::parse(&settings.url)
-                .map_err(|error| Error::CannotParseSyncUrl(settings.url.clone(), error))?,
-            credentials: SyncCredentials {
-                username: settings.username.clone(),
-                password_sha256: settings.password_sha256.clone(),
-            },
-            headers: generate_headers(&hardware_id, sync_version),
+        let SyncSettings {
+            username,
+            password_sha256,
+            url,
+            ..
+        } = settings.clone();
+
+        Ok(SyncApiSettings {
+            server_url: url,
+            site_uuid: service_provider
+                .app_data_service
+                .get_hardware_id()
+                .map_err(|error| Error::Other(error.into()))?,
+            app_version: Version::from_package_json().to_string(),
+            app_name: APP_NAME.to_string(),
+            sync_version: sync_version.to_string(),
+            username,
+            password_sha256,
+        })
+    }
+
+    pub fn new(settings: SyncApiSettings) -> Result<Self, SyncApiV5CreatingError> {
+        Ok(Self {
+            url: Url::parse(&settings.server_url).map_err(|error| {
+                SyncApiV5CreatingError::CannotParseSyncUrl(settings.server_url.clone(), error)
+            })?,
+            settings,
         })
     }
 
@@ -87,12 +95,16 @@ impl SyncApiV5 {
         use util::hash::sha256;
 
         SyncApiV5 {
-            server_url: Url::parse(&url).unwrap(),
-            credentials: SyncCredentials {
+            url: Url::parse(&url).unwrap(),
+            settings: SyncApiSettings {
+                server_url: url.to_string(),
                 username: site_name.to_string(),
                 password_sha256: sha256(&password),
+                site_uuid: hardware_id.to_string(),
+                sync_version: SYNC_VERSION.to_string(),
+                app_version: Version::from_package_json().to_string(),
+                app_name: APP_NAME.to_string(),
             },
-            headers: generate_headers(hardware_id, SYNC_VERSION),
         }
     }
 
@@ -100,17 +112,30 @@ impl SyncApiV5 {
     where
         T: Serialize + ?Sized,
     {
+        let SyncApiSettings {
+            server_url: _,
+            username,
+            password_sha256,
+            site_uuid,
+            app_version,
+            app_name,
+            sync_version,
+        } = &self.settings;
+
         let url = self
-            .server_url
+            .url
             .join(route)
             .map_err(|error| self.api_error(route, error.into()))?;
+
         let result = Client::new()
             .get(url.clone())
-            .basic_auth(
-                &self.credentials.username,
-                Some(&self.credentials.password_sha256),
-            )
-            .headers(self.headers.clone())
+            .headers(tuple_vec_to_header(vec![
+                ("msupply-site-uuid", site_uuid),
+                ("app-version", app_version),
+                ("app-name", app_name),
+                ("version", sync_version),
+            ]))
+            .basic_auth(username, Some(password_sha256))
             .query(query)
             .send()
             .await;
@@ -120,25 +145,34 @@ impl SyncApiV5 {
             .map_err(|error| self.api_error(route, error))
     }
 
-    pub(crate) async fn do_get_no_query(&self, route: &str) -> Result<Response, SyncApiError> {
-        self.do_get(route, &()).await
-    }
-
     pub(crate) async fn do_post<T>(&self, route: &str, body: &T) -> Result<Response, SyncApiError>
     where
         T: Serialize,
     {
+        let SyncApiSettings {
+            server_url: _,
+            username,
+            password_sha256,
+            site_uuid,
+            app_version,
+            app_name,
+            sync_version,
+        } = &self.settings;
+
         let url = self
-            .server_url
+            .url
             .join(route)
             .map_err(|error| self.api_error(route, error.into()))?;
+
         let result = Client::new()
             .post(url.clone())
-            .basic_auth(
-                &self.credentials.username,
-                Some(&self.credentials.password_sha256),
-            )
-            .headers(self.headers.clone())
+            .headers(tuple_vec_to_header(vec![
+                ("msupply-site-uuid", site_uuid),
+                ("app-version", app_version),
+                ("app-name", app_name),
+                ("version", sync_version),
+            ]))
+            .basic_auth(username, Some(password_sha256))
             // Re unwrap, from to_string documentation:
             // Serialization can fail if T's implementation of Serialize decides to fail, or if T contains a map with non-string keys.
             .body(serde_json::to_string(&body).unwrap())
@@ -182,14 +216,14 @@ pub(crate) async fn to_json<T: DeserializeOwned>(
 
 async fn response_or_err(
     result: Result<Response, reqwest::Error>,
-) -> Result<Response, SyncApiErrorVariant> {
+) -> Result<Response, SyncApiErrorVariantV5> {
     let response = match result {
         Ok(result) => result,
         Err(error) => {
             if error.is_connect() {
-                return Err(SyncApiErrorVariant::ConnectionError(error));
+                return Err(SyncApiErrorVariantV5::ConnectionError(error));
             } else {
-                return Err(SyncApiErrorVariant::Other(error.into()));
+                return Err(SyncApiErrorVariantV5::Other(error.into()));
             }
         }
     };
@@ -198,7 +232,7 @@ async fn response_or_err(
         return Ok(response);
     }
 
-    Err(SyncApiErrorVariant::from_response_and_status(response.status(), response).await)
+    Err(SyncApiErrorVariantV5::from_response_and_status(response.status(), response).await)
 }
 
 #[cfg(test)]

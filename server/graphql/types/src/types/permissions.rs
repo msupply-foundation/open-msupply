@@ -39,11 +39,13 @@ pub enum UserPermission {
     LogQuery,
     StockLineMutate,
     ItemMutate,
+    ItemNamesCodesAndUnitsMutate,
     PatientQuery,
     PatientMutate,
     DocumentQuery,
     DocumentMutate,
     ColdChainApi,
+    AssetMutate,
 }
 
 #[Object]
@@ -114,7 +116,12 @@ impl UserPermission {
             Permission::PatientMutate => UserPermission::PatientMutate,
             Permission::DocumentQuery => UserPermission::DocumentQuery,
             Permission::DocumentMutate => UserPermission::DocumentMutate,
+            Permission::ItemNamesCodesAndUnitsMutate => {
+                UserPermission::ItemNamesCodesAndUnitsMutate
+            }
+
             Permission::ColdChainApi => UserPermission::ColdChainApi,
+            Permission::AssetMutate => UserPermission::AssetMutate,
         }
     }
 
@@ -148,7 +155,12 @@ impl UserPermission {
             UserPermission::PatientMutate => Permission::PatientMutate,
             UserPermission::DocumentQuery => Permission::DocumentQuery,
             UserPermission::DocumentMutate => Permission::DocumentMutate,
+            UserPermission::ItemNamesCodesAndUnitsMutate => {
+                Permission::ItemNamesCodesAndUnitsMutate
+            }
+
             UserPermission::ColdChainApi => Permission::ColdChainApi,
+            UserPermission::AssetMutate => Permission::AssetMutate,
         }
     }
 }
