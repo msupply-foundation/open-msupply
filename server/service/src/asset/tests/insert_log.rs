@@ -21,7 +21,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let ctx = service_provider
-            .context(mock_asset_a().id, "".to_string())
+            .context(mock_asset_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.asset_service;
 
