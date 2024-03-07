@@ -16,6 +16,7 @@ import { AppBarButtons } from './AppBarButtons';
 import { InboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { SidePanel } from './SidePanel';
+import { ActivityLogList } from 'packages/system/src';
 
 export const InboundReturnDetailView: FC = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
@@ -31,11 +32,11 @@ export const InboundReturnDetailView: FC = () => {
   const tabs = [
     {
       Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
-      value: 'Details',
+      value: t('label.details'),
     },
     {
-      Component: <p>To-do</p>,
-      value: 'Log',
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
+      value: t('label.log'),
     },
   ];
 
