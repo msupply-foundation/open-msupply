@@ -69,7 +69,7 @@ pub enum InsertStockInLineError {
     LineAlreadyExists,
     DatabaseError(RepositoryError),
     InvoiceDoesNotExist,
-    NotAnStockIn,
+    NotAStockIn,
     NotThisStoreInvoice,
     CannotEditFinalised,
     LocationDoesNotExist,
