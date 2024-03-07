@@ -46,6 +46,7 @@ export const ReturnReasonsComponent = ({
         Cell: TextInputCell,
         width: 200,
         setter: updateLine,
+        accessor: ({ rowData }) => rowData.note ?? '',
       },
     ],
     {},
