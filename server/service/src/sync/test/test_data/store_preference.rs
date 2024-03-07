@@ -19,7 +19,7 @@ const STORE_PREFERENCE_1: (&'static str, &'static str) = (
         "can_enter_total_distribution_quantities": false,
         "round_up_distribute_quantities": false,
         "can_pack_items_into_multiple_boxes": false,
-        "can_issue_in_foreign_currency": false,
+        "can_issue_in_foreign_currency": true,
         "edit_sell_price_on_customer_invoice_lines": false,
         "purchase_order_must_be_authorised": false,
         "finalise_customer_invoices_automatically": false,
@@ -148,6 +148,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 request_requisition_requires_authorisation: false,
                 om_program_module: true,
                 vaccine_module: false,
+                issue_in_foreign_currency: true,
             }),
         ),
         TestSyncPullRecord::new_pull_upsert(
@@ -162,6 +163,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 // This one is missing, should default to false
                 om_program_module: false,
                 vaccine_module: true,
+                issue_in_foreign_currency: false,
             }),
         ),
     ]

@@ -99,6 +99,9 @@ pub use self::plugin_data::*;
 pub mod program_node;
 pub use self::program_node::*;
 
+pub mod currency;
+pub use self::currency::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

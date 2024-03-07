@@ -2,6 +2,7 @@ pub(crate) mod activity_log;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod currency;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
@@ -81,6 +82,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(temperature_breach::TemperatureBreachTranslation {}),
         Box::new(clinician::ClinicianTranslation {}),
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
+        Box::new(currency::CurrencyTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         Box::new(user_permission::UserPermissionTranslation {}),
@@ -156,6 +158,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const SENSOR: &str = "sensor";
     pub(crate) const TEMPERATURE_LOG: &str = "temperature_log";
     pub(crate) const TEMPERATURE_BREACH: &str = "temperature_breach";
+    pub(crate) const CURRENCY: &str = "currency";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
@@ -207,6 +210,7 @@ pub(crate) enum PullUpsertRecord {
     FormSchema(FormSchemaJson),
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
+    Currency(CurrencyRow),
     ItemLink(ItemLinkRow),
     NameLink(NameLinkRow),
     ClinicianLink(ClinicianLinkRow),
@@ -248,6 +252,8 @@ pub(crate) enum PullDeleteRecordTable {
     StocktakeLine,
     #[cfg(all(test, feature = "integration_test"))]
     ActivityLog,
+    #[cfg(all(test, feature = "integration_test"))]
+    Currency,
 }
 
 #[derive(Debug, PartialEq, Clone)]

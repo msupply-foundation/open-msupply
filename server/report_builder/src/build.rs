@@ -4,7 +4,6 @@ use service::report::definition::{
     ReportOutputType, TeraTemplate,
 };
 use std::{
-    self,
     collections::HashMap,
     fs,
     path::{Path, PathBuf},

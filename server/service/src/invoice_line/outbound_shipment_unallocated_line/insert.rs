@@ -122,6 +122,7 @@ fn generate(
         cost_price_per_pack: 0.0,
         stock_line_id: None,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     Ok(new_line)
@@ -351,6 +352,7 @@ mod test_insert {
                 cost_price_per_pack: 0.0,
                 stock_line_id: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             }
         )
     }

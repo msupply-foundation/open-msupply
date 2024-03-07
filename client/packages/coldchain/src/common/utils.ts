@@ -1,4 +1,6 @@
+import { useIntlUtils } from '@common/intl';
 import { TemperatureBreachNodeType } from '@common/types';
+import { NumUtils } from '@common/utils';
 
 export const parseBreachType = (
   breachType: TemperatureBreachNodeType | null
@@ -7,4 +9,13 @@ export const parseBreachType = (
   const type = breachType?.split('_')[1];
 
   return { temperature, type };
+};
+
+export const useFormatTemperature = (temperature: number) => {
+  const { currentLanguage: language } = useIntlUtils();
+  return new Intl.NumberFormat(language, {
+    style: 'unit',
+    unit: 'celsius',
+    unitDisplay: 'short',
+  }).format(NumUtils.round(temperature, 2));
 };

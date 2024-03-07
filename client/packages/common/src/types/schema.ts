@@ -416,6 +416,11 @@ export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
   description: Scalars['String']['output'];
 };
 
+export type CannotIssueInForeignCurrency = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & {
+  __typename: 'CannotIssueInForeignCurrency';
+  description: Scalars['String']['output'];
+};
+
 export type CannotReverseInvoiceStatus = UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdatePrescriptionErrorInterface & {
   __typename: 'CannotReverseInvoiceStatus';
   description: Scalars['String']['output'];
@@ -625,6 +630,44 @@ export type CreateRequisitionShipmentInput = {
 
 export type CreateRequisitionShipmentResponse = CreateRequisitionShipmentError | InvoiceNode;
 
+export type CurrenciesResponse = CurrencyConnector;
+
+export type CurrencyConnector = {
+  __typename: 'CurrencyConnector';
+  nodes: Array<CurrencyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type CurrencyFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  isHomeCurrency?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type CurrencyNode = {
+  __typename: 'CurrencyNode';
+  code: Scalars['String']['output'];
+  dateUpdated?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  isHomeCurrency: Scalars['Boolean']['output'];
+  rate: Scalars['Float']['output'];
+};
+
+export enum CurrencySortFieldInput {
+  CurrencyCode = 'currencyCode',
+  Id = 'id',
+  IsHomeCurrency = 'isHomeCurrency'
+}
+
+export type CurrencySortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: CurrencySortFieldInput;
+};
+
 export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
@@ -633,7 +676,6 @@ export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorIn
 
 export type DatabaseSettingsNode = {
   __typename: 'DatabaseSettingsNode';
-  /** Central server url */
   databaseType: DatabaseType;
 };
 
@@ -1143,6 +1185,8 @@ export type EncounterNode = {
   programId: Scalars['String']['output'];
   startDatetime: Scalars['DateTime']['output'];
   status?: Maybe<EncounterNodeStatus>;
+  /** Tries to suggest a date for the next encounter */
+  suggestedNextEncounter?: Maybe<SuggestedNextEncounterNode>;
   type: Scalars['String']['output'];
 };
 
@@ -2063,6 +2107,7 @@ export type InvoiceLineNode = {
   batch?: Maybe<Scalars['String']['output']>;
   costPricePerPack: Scalars['Float']['output'];
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  foreignCurrencyPriceBeforeTax?: Maybe<Scalars['Float']['output']>;
   id: Scalars['String']['output'];
   invoiceId: Scalars['String']['output'];
   item: ItemNode;
@@ -2120,6 +2165,8 @@ export type InvoiceNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
+  currency?: Maybe<CurrencyNode>;
+  currencyRate?: Maybe<Scalars['Float']['output']>;
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
@@ -3506,6 +3553,7 @@ export type PluginNode = {
 
 export type PricingNode = {
   __typename: 'PricingNode';
+  foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
   serviceTotalAfterTax: Scalars['Float']['output'];
   serviceTotalBeforeTax: Scalars['Float']['output'];
   stockTotalAfterTax: Scalars['Float']['output'];
@@ -3718,6 +3766,7 @@ export type Queries = {
   centralPatientSearch: CentralPatientSearchResponse;
   clinicians: CliniciansResponse;
   contactTraces: ContactTraceResponse;
+  currencies: CurrenciesResponse;
   databaseSettings: DatabaseSettingsNode;
   displaySettings: DisplaySettingsNode;
   document?: Maybe<DocumentNode>;
@@ -3855,6 +3904,12 @@ export type QueriesContactTracesArgs = {
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<ContactTraceSortInput>;
   storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesCurrenciesArgs = {
+  filter?: InputMaybe<CurrencyFilterInput>;
+  sort?: InputMaybe<Array<CurrencySortInput>>;
 };
 
 
@@ -4950,6 +5005,7 @@ export type StoreNodeNameArgs = {
 export type StorePreferenceNode = {
   __typename: 'StorePreferenceNode';
   id: Scalars['String']['output'];
+  issueInForeignCurrency: Scalars['Boolean']['output'];
   omProgramModule: Scalars['Boolean']['output'];
   packToOne: Scalars['Boolean']['output'];
   requestRequisitionRequiresAuthorisation: Scalars['Boolean']['output'];
@@ -4982,6 +5038,12 @@ export type StringFilterInput = {
   equalTo?: InputMaybe<Scalars['String']['input']>;
   /** Search term must be included in search candidate (case insensitive) */
   like?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type SuggestedNextEncounterNode = {
+  __typename: 'SuggestedNextEncounterNode';
+  label?: Maybe<Scalars['String']['output']>;
+  startDatetime: Scalars['DateTime']['output'];
 };
 
 export type SuggestedQuantityCalculationNode = {
@@ -5300,6 +5362,8 @@ export type UpdateInboundShipmentErrorInterface = {
 export type UpdateInboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  currencyId?: InputMaybe<Scalars['String']['input']>;
+  currencyRate?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
@@ -5408,6 +5472,8 @@ export type UpdateOutboundShipmentError = {
 export type UpdateOutboundShipmentInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  currencyId?: InputMaybe<Scalars['String']['input']>;
+  currencyRate?: InputMaybe<Scalars['Float']['input']>;
   /** The new invoice id provided by the client */
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
@@ -5943,6 +6009,7 @@ export type UserStoreConnector = {
 export type UserStoreNode = {
   __typename: 'UserStoreNode';
   code: Scalars['String']['output'];
+  homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   preferences: StorePreferenceNode;
