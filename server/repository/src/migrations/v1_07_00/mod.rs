@@ -3,7 +3,6 @@ use super::{helpers::run_without_change_log_updates, version::Version, Migration
 use crate::StorageConnection;
 
 mod barcode_add_manufacturer_link_id;
-mod central_omsupply;
 mod changelog_add_name_link_id;
 mod clinician_link;
 mod clinician_store_join_add_clinician_link_id;
@@ -23,7 +22,6 @@ mod master_list_name_join_add_name_link_id;
 mod name_link;
 mod name_store_join_add_name_link_id;
 mod name_tag_join_add_name_link_id;
-mod pack_variant;
 mod program_enrolment_add_patient_link_id;
 mod program_event_patient_link_id;
 mod requisition_add_name_link_id;
@@ -84,8 +82,6 @@ impl Migration for V1_07_00 {
         currency::migrate(connection)?;
         store_preference_add_issue_in_foreign_currency::migrate(connection)?;
         invoice_add_currency_fields::migrate(connection)?;
-        pack_variant::migrate(connection)?;
-        central_omsupply::migrate(connection)?;
         sync_log::migrate(connection)?;
         Ok(())
     }
