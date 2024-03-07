@@ -2,9 +2,7 @@ use repository::{ItemLinkRow, ItemLinkRowRepository, StorageConnection, SyncBuff
 
 use serde::Deserialize;
 
-use crate::sync::translations::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use crate::sync::translations::{item::ItemTranslation, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize)]
 pub struct ItemMergeMessage {
@@ -14,31 +12,34 @@ pub struct ItemMergeMessage {
     pub merge_id_to_delete: String,
 }
 
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ItemMergeTranslation)
+}
 // Conceptually this isn't a translation, so the abstraction should probably be changed or this doesn't belong here
-pub(crate) struct ItemMergeTranslation {}
+pub(crate) struct ItemMergeTranslation;
 impl SyncTranslation for ItemMergeTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::ITEM,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &'static str {
+        ItemTranslation.table_name()
     }
 
-    fn try_translate_pull_merge(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+
+    fn try_translate_from_merge_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if sync_record.table_name != LegacyTableName::ITEM {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<ItemMergeMessage>(&sync_record.data)?;
 
         let item_link_repo = ItemLinkRowRepository::new(connection);
         let item_links = item_link_repo.find_many_by_item_id(&data.merge_id_to_delete)?;
         if item_links.len() == 0 {
-            return Ok(None);
+            return Ok(PullTranslateResult::Ignored(
+                "No mergeable item links found".to_string(),
+            ));
         }
         let indirect_link = item_link_repo
             .find_one_by_id(&data.merge_id_to_keep)?
@@ -47,17 +48,15 @@ impl SyncTranslation for ItemMergeTranslation {
                 data.merge_id_to_keep
             ))?;
 
-        let upsert_records: Vec<PullUpsertRecord> = item_links
+        let upsert_records: Vec<ItemLinkRow> = item_links
             .into_iter()
-            .map(|ItemLinkRow { id, .. }| {
-                PullUpsertRecord::ItemLink(ItemLinkRow {
-                    id,
-                    item_id: indirect_link.item_id.clone(),
-                })
+            .map(|ItemLinkRow { id, .. }| ItemLinkRow {
+                id,
+                item_id: indirect_link.item_id.clone(),
             })
             .collect();
 
-        Ok(Some(IntegrationRecords::from_upserts(upsert_records)))
+        Ok(PullTranslateResult::upserts(upsert_records))
     }
 }
 
@@ -69,8 +68,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, ItemLinkRowRepository, SyncBufferAction,
-        SyncBufferRow, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncBufferAction, SyncBufferRowRepository,
     };
 
     #[actix_rt::test]
@@ -79,7 +77,7 @@ mod tests {
         let mut sync_records = vec![
             SyncBufferRow {
                 record_id: "item_b_merge".to_string(),
-                table_name: LegacyTableName::ITEM.to_string(),
+                table_name: "item".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "item_b",
@@ -90,7 +88,7 @@ mod tests {
             },
             SyncBufferRow {
                 record_id: "item_c_merge".to_string(),
-                table_name: LegacyTableName::ITEM.to_string(),
+                table_name: "item".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "item_c",

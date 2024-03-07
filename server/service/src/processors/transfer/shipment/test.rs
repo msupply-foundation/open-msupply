@@ -69,7 +69,12 @@ async fn invoice_transfers() {
         ..
     } = setup_all_with_data_and_service_provider(
         "invoice_transfers",
-        MockDataInserts::none().stores().names().items().units(),
+        MockDataInserts::none()
+            .stores()
+            .names()
+            .items()
+            .units()
+            .currencies(),
         inline_init(|r: &mut MockData| {
             r.names = vec![inbound_store_name.clone(), outbound_store_name.clone()];
             r.stores = vec![inbound_store.clone(), outbound_store.clone()];
@@ -219,7 +224,12 @@ async fn invoice_transfers_with_merged_name() {
         ..
     } = setup_all_with_data_and_service_provider(
         "invoice_transfers_with_merged_name",
-        MockDataInserts::none().stores().names().items().units(),
+        MockDataInserts::none()
+            .stores()
+            .names()
+            .items()
+            .units()
+            .currencies(),
         inline_init(|r: &mut MockData| {
             r.names = vec![
                 inbound_store_name.clone(),

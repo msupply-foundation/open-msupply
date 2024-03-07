@@ -8,12 +8,13 @@ use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
@@ -23,6 +24,7 @@ use graphql_general::{
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
@@ -43,6 +45,7 @@ use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use tokio::sync::RwLock;
+use util::is_central_server;
 
 pub type OperationalSchema =
     async_graphql::Schema<Queries, Mutations, async_graphql::EmptySubscription>;
@@ -51,6 +54,27 @@ pub type InitialisationSchema = async_graphql::Schema<
     InitialisationMutations,
     async_graphql::EmptySubscription,
 >;
+#[derive(Default, Clone)]
+pub struct CentralServerMutationNode;
+#[Object]
+impl CentralServerMutationNode {
+    async fn pack_variant(&self) -> PackVariantMutations {
+        PackVariantMutations
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralServerMutations;
+#[Object]
+impl CentralServerMutations {
+    async fn central_server(&self) -> async_graphql::Result<CentralServerMutationNode> {
+        if !is_central_server() {
+            return Err(StandardGraphqlError::from_str("Not a central server"));
+        };
+
+        Ok(CentralServerMutationNode)
+    }
+}
 
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
@@ -71,6 +95,7 @@ pub struct Queries(
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
+    pub PackVariantQueries,
     pub PluginQueries,
 );
 
@@ -94,6 +119,7 @@ impl Queries {
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
+            PackVariantQueries,
             PluginQueries,
         )
     }
@@ -117,6 +143,7 @@ pub struct Mutations(
     pub FormSchemaMutations,
     pub PluginMutations,
     pub TemperatureBreachMutations,
+    pub CentralServerMutations,
 );
 
 impl Mutations {
@@ -138,6 +165,7 @@ impl Mutations {
             FormSchemaMutations,
             PluginMutations,
             TemperatureBreachMutations,
+            CentralServerMutations,
         )
     }
 }

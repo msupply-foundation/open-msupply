@@ -14,18 +14,22 @@ export interface NumericInputProps {
   step?: number;
   multiplier?: number;
   value?: number | undefined;
+  focusOnRender?: boolean;
 }
+
 export type NumericTextInputProps = NumericInputProps &
   Omit<StandardTextFieldProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
   };
+
+export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
 
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
   (
     {
       sx,
       InputProps,
-      width = 75,
+      width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
       onChange = () => {},
       defaultValue,
       allowNegative,

@@ -2,10 +2,10 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 
-use repository::{ContextRow, Permission, UserPermissionRow};
+use repository::{ContextRow, Permission, UserPermissionRow, UserPermissionRowDelete};
 use serde_json::json;
 use util::uuid::uuid;
 
@@ -64,23 +64,22 @@ impl SyncRecordTester for UserPermissionTester {
                 "list_master": [context_json],
                 "om_user_permission": [user_permission_row_1_json, user_permission_row_2_json],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::UserPermission(user_permission_row_1.clone()),
-                PullUpsertRecord::UserPermission(user_permission_row_2),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(user_permission_row_1.clone()),
+                IntegrationOperation::upsert(user_permission_row_2),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - deletes
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({
                 "om_user_permission": [user_permission_row_1.id],
             }),
-            integration_records: IntegrationRecords::from_deletes(vec![PullDeleteRecord {
-                id: user_permission_row_1.id,
-                table: PullDeleteRecordTable::UserPermission,
-            }]),
+            integration_records: vec![IntegrationOperation::delete(UserPermissionRowDelete(
+                user_permission_row_1.id,
+            ))],
+            ..Default::default()
         });
         result
     }

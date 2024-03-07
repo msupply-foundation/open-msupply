@@ -171,14 +171,13 @@ mod test {
     use super::*;
     use crate::service_provider::ServiceProvider;
     use repository::{
-        db_diesel::requisition_row::RequisitionRowType,
         mock::{
             mock_item_a, mock_name_a, mock_new_response_requisition_for_update_test_line,
             mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow,
-        RequisitionLineRow, RequisitionRow, StockLineRow, StoreRow,
+        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow, RequisitionRow,
+        StockLineRow, StoreRow,
     };
     use util::{
         constants::NUMBER_OF_DAYS_IN_A_MONTH, date_now, inline_edit, inline_init, uuid::uuid,

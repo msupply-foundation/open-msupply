@@ -5,9 +5,9 @@ import { getSdk, StocktakeRowFragment } from '../../operations.generated';
 export const useStocktakeApi = () => {
   const keys = {
     base: () => ['stocktake'] as const,
-    detail: (id: string) => [...keys.base(), storeId, id] as const,
-    lines: (id: string, params: LinesParams) =>
-      [...keys.detail(id), 'lines', params] as const,
+    detail: (number: string) => [...keys.base(), storeId, number] as const,
+    lines: (number: string, params: LinesParams) =>
+      [...keys.detail(number), 'lines', params] as const,
     list: () => [...keys.base(), storeId, 'list'] as const,
     paramList: (params: ListParams) => [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<StocktakeRowFragment>) =>

@@ -31,6 +31,8 @@ pub struct UpdateOutboundShipment {
     pub colour: Option<String>,
     pub transport_reference: Option<String>,
     pub tax: Option<ShipmentTaxUpdate>,
+    pub currency_id: Option<String>,
+    pub currency_rate: Option<f64>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -41,6 +43,8 @@ pub enum UpdateOutboundShipmentError {
     InvoiceIsNotEditable,
     NotAnOutboundShipment,
     NotThisStoreInvoice,
+    CannotIssueInForeignCurrency,
+    OtherPartyDoesNotExist,
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     // Internal
@@ -65,7 +69,7 @@ pub fn update_outbound_shipment(
                 update_invoice,
                 lines_to_trim,
                 location_movements,
-                update_tax_for_lines,
+                update_lines,
             } = generate(&ctx.store_id, invoice, patch.clone(), connection)?;
 
             InvoiceRowRepository::new(connection).upsert_one(&update_invoice)?;
@@ -90,8 +94,8 @@ pub fn update_outbound_shipment(
                 }
             }
 
-            if let Some(update_tax) = update_tax_for_lines {
-                for line in update_tax {
+            if let Some(update_lines) = update_lines {
+                for line in update_lines {
                     invoice_line_repo.upsert_one(&line)?;
                 }
             }
@@ -438,6 +442,8 @@ mod test {
                 tax: Some(ShipmentTaxUpdate {
                     percentage: Some(15.0),
                 }),
+                currency_id: None,
+                currency_rate: None,
             }
         }
 
@@ -461,6 +467,8 @@ mod test {
                     colour,
                     transport_reference,
                     tax,
+                    currency_id: _,
+                    currency_rate: _,
                 } = get_update();
                 u.on_hold = on_hold.unwrap();
                 u.comment = comment;
