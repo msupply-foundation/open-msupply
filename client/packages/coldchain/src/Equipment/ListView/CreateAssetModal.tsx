@@ -110,7 +110,7 @@ export const CreateAssetModal = ({
           onClick={async () => {
             try {
               await save(draft);
-              success(t('message.cce-created'))();
+              success(t('messages.cce-created'))();
               handleClose();
             } catch (e) {
               error(t(parseInsertError(e)))();

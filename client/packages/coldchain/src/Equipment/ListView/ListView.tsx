@@ -69,6 +69,7 @@ const AssetListComponent: FC = () => {
         label: 'label.notes',
         sortable: false,
       },
+      'selection',
     ],
     {
       sortBy,
