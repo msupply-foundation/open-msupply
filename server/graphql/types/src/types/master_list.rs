@@ -1,5 +1,7 @@
-use async_graphql::Object;
-use repository::MasterList;
+use async_graphql::{Context, Error, Object};
+use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
+use repository::{MasterList, RepositoryError};
+use service::master_list::query_lines::get_master_list_lines_count;
 
 #[derive(PartialEq, Debug)]
 pub struct MasterListNode {
@@ -22,6 +24,16 @@ impl MasterListNode {
 
     pub async fn description(&self) -> &str {
         &self.master_list.description
+    }
+
+    pub async fn lines_count(&self, ctx: &Context<'_>) -> Result<Option<i64>, Error> {
+        let count = get_master_list_lines_count(
+            &ctx.get_connection_manager().connection()?,
+            &self.master_list.id,
+        )
+        .map_err(StandardGraphqlError::from_repository_error)?;
+
+        Ok(Some(count as i64))
     }
 }
 
