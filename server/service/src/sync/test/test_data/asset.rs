@@ -42,7 +42,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     )]
 }
 
-pub(crate) fn test_omsupply_central_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_v6_records() -> Vec<TestSyncPushRecord> {
     // New type for TestSyncToSyncRecord
     vec![TestSyncPushRecord {
         table_name: TABLE_NAME.to_string(),
