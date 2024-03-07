@@ -2,7 +2,9 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists, check_user_is_user},
+    validate::{
+        check_asset_exists, check_asset_log_exists, check_reason_matches_status, check_user_is_user,
+    },
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
@@ -19,6 +21,7 @@ pub enum InsertAssetLogError {
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
     InsufficientPermission,
+    ReasonInvalidForStatus,
 }
 
 pub struct InsertAssetLog {
@@ -59,6 +62,9 @@ pub fn validate(
 
     if check_asset_log_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
+    }
+    if !check_reason_matches_status(&input.status, &input.reason) {
+        return Err(InsertAssetLogError::ReasonInvalidForStatus);
     }
     if check_asset_exists(&input.asset_id, connection)?
         .is_some()
