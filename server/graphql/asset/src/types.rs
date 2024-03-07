@@ -271,8 +271,24 @@ impl AssetLogNode {
         &self.row().asset_id
     }
 
+    pub async fn user_id(&self) -> &str {
+        &self.row().user_id
+    }
+
     pub async fn status(&self) -> &Option<String> {
         &self.row().status
+    }
+
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
+    }
+
+    pub async fn r#type(&self) -> &Option<String> {
+        &self.row().r#type
+    }
+
+    pub async fn reason(&self) -> &Option<String> {
+        &self.row().reason
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {

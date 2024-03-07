@@ -174,6 +174,7 @@ mod test {
                     id
                     assetId
                     status
+                    userId
                 }
             }
         }
@@ -184,6 +185,7 @@ mod test {
                 "id": "n/a",
                 "assetId": "asset_a",
                 "status": "status",
+                "userId": "user_account_a"
             }
         }));
 
@@ -192,6 +194,7 @@ mod test {
             Ok(AssetLog {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
+                user_id: "user_account_a".to_owned(),
                 status: Some("status".to_owned()),
                 ..Default::default()
             })
@@ -202,6 +205,7 @@ mod test {
                 "id": "id",
                 "assetId": "asset_a",
                 "status": "status",
+                "userId": "user_account_a",
             }
         });
         assert_graphql_query!(
