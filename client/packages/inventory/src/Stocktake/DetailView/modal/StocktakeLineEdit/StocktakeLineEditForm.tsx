@@ -51,7 +51,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
       </ModalRow>
       {item && (
         <ModalRow margin={3}>
-          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+          <ModalLabel label={t('label.unit')} />
           <BasicTextInput
             disabled
             sx={{ width: 150 }}

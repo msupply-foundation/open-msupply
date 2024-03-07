@@ -34,7 +34,7 @@ interface FooterProps {
 const EncounterStatusCrumbs: FC<{ encounter: EncounterFragment }> = ({
   encounter,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   // TODO StatusCrumbs shows "Order History" in the logs pop up -> make this configurable
   return (
     <StatusCrumbs
@@ -69,7 +69,7 @@ export const Footer: FC<FooterProps> = ({
   onSave,
   encounter,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog();
   return (

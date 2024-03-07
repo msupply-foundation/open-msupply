@@ -1,9 +1,8 @@
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
-};
+use crate::sync::test::TestSyncPullRecord;
 
 use repository::NameTagRow;
+
+const TABLE_NAME: &'static str = "name_tag";
 
 const NAME_TAG_1: (&'static str, &'static str) = (
     "59F2635D22B346ADA0088D6261926465",
@@ -15,12 +14,12 @@ const NAME_TAG_1: (&'static str, &'static str) = (
 
 fn name_tag_1() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME_TAG,
+        TABLE_NAME,
         NAME_TAG_1,
-        PullUpsertRecord::NameTag(NameTagRow {
+        NameTagRow {
             id: NAME_TAG_1.0.to_owned(),
             name: "a1".to_owned(),
-        }),
+        },
     )
 }
 
@@ -34,12 +33,12 @@ const NAME_TAG_2: (&'static str, &'static str) = (
 
 fn name_tag_2() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME_TAG,
+        TABLE_NAME,
         NAME_TAG_2,
-        PullUpsertRecord::NameTag(NameTagRow {
+        NameTagRow {
             id: NAME_TAG_2.0.to_owned(),
             name: "b2".to_owned(),
-        }),
+        },
     )
 }
 

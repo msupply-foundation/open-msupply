@@ -10,7 +10,6 @@ import {
   Legend,
   Line,
   NothingHere,
-  NumUtils,
   ResponsiveContainer,
   TooltipProps,
   Typography,
@@ -25,6 +24,7 @@ import { BreachPopover } from './BreachPopover';
 import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
+import { useFormatTemperature } from '../../../common';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
 const LOWER_THRESHOLD = 2;
@@ -51,11 +51,10 @@ const Chart = ({
     null
   );
   const { urlQuery, updateQuery } = useUrlQuery();
+  const formatTemp = useFormatTemperature;
 
   const formatTemperature = (value: number | null) =>
-    value === null
-      ? '-'
-      : `${NumUtils.round(value, 2)} ${t('label.temperature-unit')}`;
+    !!value ? `${formatTemp(value)}` : '-';
 
   const TemperatureTooltip = ({
     active,
