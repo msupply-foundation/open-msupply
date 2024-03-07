@@ -1,6 +1,7 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
+        currency::CurrencyTranslation,
         inventory_adjustment_reason::InventoryAdjustmentReasonTranslation,
         invoice::InvoiceTranslation, item::ItemTranslation, location::LocationTranslation,
         stock_line::StockLineTranslation,
@@ -79,6 +80,8 @@ pub struct LegacyTransLineRow {
     #[serde(rename = "optionID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_adjustment_reason_id: Option<String>,
+    #[serde(rename = "foreign_currency_price")]
+    pub foreign_currency_price_before_tax: Option<f64>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -99,6 +102,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             StockLineTranslation.table_name(),
             LocationTranslation.table_name(),
             InventoryAdjustmentReasonTranslation.table_name(),
+            CurrencyTranslation.table_name(),
         ]
     }
 
@@ -131,6 +135,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_before_tax,
             total_after_tax,
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
 
         let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
@@ -223,6 +228,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -272,6 +278,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     note,
                     inventory_adjustment_reason_id,
+                    foreign_currency_price_before_tax,
                 },
             item_row,
             ..
@@ -297,6 +304,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             total_before_tax: Some(total_before_tax),
             total_after_tax: Some(total_after_tax),
             inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax,
         };
         Ok(PushTranslateResult::upsert(
             changelog,

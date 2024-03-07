@@ -5,6 +5,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
+    currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -126,6 +127,8 @@ pub struct ServiceProvider {
     pub pack_variant_service: Box<dyn PackVariantServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
+    // Currency
+    pub currency_service: Box<dyn CurrencyServiceTrait>,
     // Asset catalogue
     pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
     // Assets
@@ -206,6 +209,7 @@ impl ServiceProvider {
             pack_variant_service: Box::new(crate::pack_variant::PackVariantService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
+            currency_service: Box::new(CurrencyService {}),
             catalogue_service: Box::new(CatalogueService {}),
             asset_service: Box::new(crate::asset::AssetService {}),
         }

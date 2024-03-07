@@ -13,7 +13,8 @@ import {
 import { usePackVariant } from '../../context';
 
 const ENTER_PACK_SIZE = -1;
-
+export const PACK_VARIANT_ENTRY_CELL_MIN_WIDTH =
+  150 + DEFAULT_NUMERIC_TEXT_INPUT_WIDTH;
 // This cell displays a packSize number input and unit pack drop down if unit pack variants exist
 export const PackVariantEntryCell =
   <T extends RecordWithId>({
@@ -36,6 +37,14 @@ export const PackVariantEntryCell =
     const [packSize, setPackSize] = useState(
       Number(column.accessor({ rowData }))
     );
+
+    // If pack size is 0 on load set it to most used varaint or 1 (ideally should be default item pack)
+    // for stocklines this is possible since server would set packSize to None when created from master list
+    useEffect(() => {
+      if (Number(column.accessor({ rowData })) == 0) {
+        setPackSize(variantsControl?.activeVariant?.packSize || 1);
+      }
+    }, []);
 
     const updater = useDebounceCallback(column.setter, [column.setter], 250);
     const disabled = getIsDisabled?.(rowData) || false;
@@ -84,7 +93,7 @@ export const PackVariantEntryCell =
         display="flex"
         flexDirection="row"
         alignItems="center"
-        minWidth={180 + DEFAULT_NUMERIC_TEXT_INPUT_WIDTH}
+        minWidth={PACK_VARIANT_ENTRY_CELL_MIN_WIDTH}
       >
         {/* reduce the chance that column changes size with minWidth */}
         <Select
@@ -110,13 +119,13 @@ export const PackVariantEntryCell =
         <BasicCellLayout>{'/'}</BasicCellLayout>
 
         {
-          /* Allo input only when manually entering pack size */
+          /* Allow input only when manually entering pack size */
           isEnterPackSize ? (
             numberInput()
           ) : (
             /* reduce the chance that column changes size by matching width of input*/
             <BasicCellLayout width={DEFAULT_NUMERIC_TEXT_INPUT_WIDTH}>
-              {String(packSize)}
+              <div style={{ textAlign: 'start' }}>{String(packSize)}</div>
             </BasicCellLayout>
           )
         }

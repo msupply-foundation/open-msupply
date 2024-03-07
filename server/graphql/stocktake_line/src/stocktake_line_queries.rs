@@ -143,7 +143,6 @@ pub fn stocktake_lines(
 
 #[cfg(test)]
 mod test {
-    use async_graphql::EmptyMutation;
     use async_graphql::*;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;

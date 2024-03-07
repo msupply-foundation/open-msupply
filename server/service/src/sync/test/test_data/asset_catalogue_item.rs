@@ -15,7 +15,7 @@ const ASSET_CATALOGUE_ITEM1: (&'static str, &'static str) = (
         "code": "A1",
         "manufacturer": "Manufacturer 1",
         "model": "Model 1",
-        "type_id": "a6625bba-052b-4cf8-9e0f-b96ebba0a31f"        
+        "type_id": "a6625bba-052b-4cf8-9e0f-b96ebba0a31f"       
     }"#,
 );
 

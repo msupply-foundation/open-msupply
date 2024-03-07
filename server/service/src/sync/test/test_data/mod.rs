@@ -9,6 +9,7 @@ pub(crate) mod asset_category;
 pub(crate) mod asset_class;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
+pub(crate) mod currency;
 pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
@@ -66,6 +67,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     test_records.append(&mut asset_class::test_pull_upsert_records());
     test_records.append(&mut asset_category::test_pull_upsert_records());
     test_records.append(&mut asset_type::test_pull_upsert_records());
+    test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
     test_records
 }
 
@@ -88,6 +90,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecor
     test_records.append(&mut program_requisition_settings::test_pull_upsert_records());
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
+    test_records.append(&mut currency::test_pull_upsert_records());
     test_records
 }
 
