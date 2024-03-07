@@ -75,3 +75,12 @@ impl LineDoesNotReferenceStockLine {
         "Line does not reference any stock line"
     }
 }
+
+pub struct CannotIssueInForeignCurrency;
+
+#[Object]
+impl CannotIssueInForeignCurrency {
+    pub async fn description(&self) -> &'static str {
+        "Cannot issue invoice in foreign currency"
+    }
+}

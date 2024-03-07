@@ -33,7 +33,7 @@ export const Footer: FC<FooterProps> = ({
   inputData,
   showSaveConfirmation,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { Modal, showDialog, hideDialog } = useDialog();
   const navigate = useNavigate();
   const { userHasPermission } = useAuthContext();
