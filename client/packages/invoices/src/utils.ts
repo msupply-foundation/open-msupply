@@ -156,6 +156,18 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
         inbound.status === InvoiceNodeStatus.Verified;
 };
 
+export const isInboundReturnDisabled = (
+  inboundReturn: InboundReturnRowFragment
+): boolean => {
+  // const isManuallyCreated = !inbound.linkedShipment?.id;
+  // return isManuallyCreated
+  //   ? inbound.status === InvoiceNodeStatus.Verified
+  //   : inbound.status === InvoiceNodeStatus.Picked ||
+  //       inbound.status === InvoiceNodeStatus.Shipped ||
+  //       inbound.status === InvoiceNodeStatus.Verified;
+  return inboundReturn.status === InvoiceNodeStatus.Verified;
+};
+
 export const isPrescriptionDisabled = (
   prescription: PrescriptionRowFragment
 ): boolean => {
