@@ -22,7 +22,7 @@ export const AppBarButtonsComponent = () => {
   const { OpenButton } = useDetailPanel();
   const { data } = useResponse.document.get();
   const { print, isPrinting } = useReport.utils.print();
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   const printReport = (
     report: ReportRowFragment,

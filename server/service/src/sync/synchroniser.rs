@@ -4,13 +4,17 @@ use crate::{
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::{ops::Not, sync::Arc};
+
+use std::ops::Not;
+use std::sync::Arc;
 use thiserror::Error;
-use util::format_error;
+use util::{format_error, is_central_server};
 
 use super::{
     api::SyncApiV5,
+    api_v6::SyncApiV6,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
+    central_data_synchroniser_v6::{CentralDataSynchroniserV6, CentralPullErrorV6},
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -29,6 +33,7 @@ pub struct Synchroniser {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
+    central_v6: CentralDataSynchroniserV6,
     remote: RemoteDataSynchroniser,
 }
 
@@ -46,6 +51,8 @@ pub(crate) enum SyncError {
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
+    #[error("Error while pulling central v6 records")]
+    CentralPullErrorV6(#[from] CentralPullErrorV6),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
@@ -98,7 +105,9 @@ impl Synchroniser {
         service_provider: Arc<ServiceProvider>,
         sync_version: u32,
     ) -> anyhow::Result<Self> {
-        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider, sync_version)?;
+        let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
+        let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
+        let sync_api_v6 = SyncApiV6::new(sync_v5_settings)?;
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -106,6 +115,7 @@ impl Synchroniser {
             settings,
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
+            central_v6: CentralDataSynchroniserV6 { sync_api_v6 },
         })
     }
 
@@ -185,6 +195,17 @@ impl Synchroniser {
             .await?;
 
         logger.done_step(SyncStep::PullRemote)?;
+
+        // PULL V6
+        if !is_central_server() {
+            logger.start_step(SyncStep::PullCentralV6)?;
+            if let Err(error) = self.central_v6.pull(&ctx.connection, 20, logger).await {
+                // Log but ignore error for now, to allow omSupply to run without omSupply server
+                // let _ = logger.error(&error.into());
+                log::info!("{}", format_error(&error));
+            }
+            logger.done_step(SyncStep::PullCentralV6)?;
+        }
 
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;

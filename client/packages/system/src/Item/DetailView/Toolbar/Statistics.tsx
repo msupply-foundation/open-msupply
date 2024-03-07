@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { FC } from 'react';
 import { useTranslation } from '@common/intl';
 import { Grid, StatsPanel } from '@openmsupply-client/common';
 import { useFormatNumber } from '@common/intl';
 import { useItemFields } from '../../api';
 
-export const Statistics = () => {
+interface Statistics {
+  numberOfPacksFromQuantity: (totalQuantity: number) => number;
+}
+
+export const Statistics: FC<Statistics> = ({ numberOfPacksFromQuantity }) => {
   const t = useTranslation('catalogue');
   const formatNumber = useFormatNumber();
   const { stats } = useItemFields();
 
   if (!stats) return null;
-
-  const monthsOfStockOnHand = !stats?.availableMonthsOfStockOnHand
-    ? undefined
-    : formatNumber.round(stats?.availableMonthsOfStockOnHand, 1);
 
   return (
     <Grid
@@ -28,7 +28,9 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.units'),
-            value: formatNumber.round(stats?.availableStockOnHand),
+            value: formatNumber.round(
+              numberOfPacksFromQuantity(stats.availableStockOnHand)
+            ),
           },
         ]}
         title={t('title.stock-on-hand')}
@@ -39,7 +41,10 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.units'),
-            value: formatNumber.round(stats?.averageMonthlyConsumption, 1),
+            value: formatNumber.round(
+              numberOfPacksFromQuantity(stats.averageMonthlyConsumption),
+              2
+            ),
           },
         ]}
         title={t('title.amc')}
@@ -50,7 +55,12 @@ export const Statistics = () => {
         stats={[
           {
             label: t('label.months'),
-            value: monthsOfStockOnHand,
+            value: formatNumber.round(
+              numberOfPacksFromQuantity(
+                stats?.availableMonthsOfStockOnHand ?? 0
+              ),
+              2
+            ),
           },
         ]}
         title={t('title.months-of-stock')}

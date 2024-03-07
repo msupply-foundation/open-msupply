@@ -202,8 +202,7 @@ mod user_account_test {
     use repository::{
         mock::{mock_user_account_a, mock_user_account_b, MockDataInserts},
         test_db::{self, setup_all},
-        EqualFilter, Permission, UserFilter, UserPermissionFilter, UserPermissionRepository,
-        UserRepository,
+        Permission,
     };
     use util::{assert_matches, inline_edit};
 

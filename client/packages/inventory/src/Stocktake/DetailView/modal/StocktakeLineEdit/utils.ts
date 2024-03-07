@@ -11,10 +11,7 @@ import { StocktakeLineFragment } from './../../../api';
 //             what mutation the line is sent with when saved.
 // isUpdated - The same as isCreated but is sent with the update mutation.
 //
-export type DraftStocktakeLine = Omit<
-  StocktakeLineFragment,
-  '__typename' | 'item'
-> & {
+export type DraftStocktakeLine = Omit<StocktakeLineFragment, '__typename'> & {
   countThisLine: boolean;
   isCreated?: boolean;
   isUpdated?: boolean;
@@ -23,7 +20,8 @@ export type DraftStocktakeLine = Omit<
 export const DraftLine = {
   fromItem: (
     stocktakeId: string,
-    item: ItemRowFragment
+    item: ItemRowFragment,
+    defaultPackSize: number
   ): DraftStocktakeLine => {
     return {
       stocktakeId,
@@ -36,8 +34,15 @@ export const DraftLine = {
       itemId: item.id,
       sellPricePerPack: 0,
       costPricePerPack: 0,
-      packSize: 1,
+      packSize: defaultPackSize,
       location: null,
+      item: {
+        __typename: 'ItemNode',
+        id: item.id,
+        code: item.code,
+        unitName: item.unitName,
+        name: item.name,
+      },
     };
   },
   fromStockLine: (
@@ -55,6 +60,13 @@ export const DraftLine = {
       snapshotNumberOfPacks: stockLine.totalNumberOfPacks,
       expiryDate: stockLine.expiryDate ? stockLine.expiryDate : null,
       id: FnUtils.generateUUID(),
+      item: {
+        __typename: 'ItemNode',
+        id: stockLine.itemId,
+        code: stockLine.item.code,
+        unitName: stockLine.item.unitName,
+        name: stockLine.item.name,
+      },
     };
   },
   fromStocktakeLine: (

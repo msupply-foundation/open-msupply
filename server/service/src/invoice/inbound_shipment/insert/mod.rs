@@ -86,7 +86,7 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_shipment_c, mock_name_a, mock_name_linked_to_store_join,
+            currency_a, mock_inbound_shipment_c, mock_name_a, mock_name_linked_to_store_join,
             mock_name_not_linked_to_store, mock_store_a, mock_store_linked_to_name,
             mock_user_account_a, MockData, MockDataInserts,
         },
@@ -243,6 +243,7 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
+                u.currency_id = Some(currency_a().id);
                 u
             })
         );

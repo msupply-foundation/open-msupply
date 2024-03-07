@@ -52,6 +52,14 @@ export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export const outboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -72,6 +80,16 @@ export const getNextOutboundStatus = (
     status => currentStatus === status
   );
   const nextStatus = outboundStatuses[currentStatusIdx + 1];
+  return nextStatus ?? null;
+};
+
+export const getNextOutboundReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = outboundReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = outboundReturnStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
