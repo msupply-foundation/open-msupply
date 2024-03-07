@@ -28,7 +28,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { print, isPrinting } = useReport.utils.print();
   const { data } = useStocktake.document.get();
   const isDisabled = !data || isStocktakeDisabled(data);

@@ -2,9 +2,7 @@ use repository::{NameLinkRow, NameLinkRowRepository, StorageConnection, SyncBuff
 
 use serde::Deserialize;
 
-use crate::sync::translations::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use crate::sync::translations::{name::NameTranslation, PullTranslateResult, SyncTranslation};
 
 #[derive(Deserialize)]
 pub struct NameMergeMessage {
@@ -14,30 +12,32 @@ pub struct NameMergeMessage {
     pub merge_id_to_delete: String,
 }
 
-pub(crate) struct NameMergeTranslation {}
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(NameMergeTranslation)
+}
+pub(crate) struct NameMergeTranslation;
 impl SyncTranslation for NameMergeTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::NAME,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &'static str {
+        NameTranslation.table_name()
     }
 
-    fn try_translate_pull_merge(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![]
+    }
+    fn try_translate_from_merge_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if sync_record.table_name != LegacyTableName::NAME {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<NameMergeMessage>(&sync_record.data)?;
 
         let name_link_repo = NameLinkRowRepository::new(connection);
         let name_links = name_link_repo.find_many_by_name_id(&data.merge_id_to_delete)?;
         if name_links.len() == 0 {
-            return Ok(None);
+            return Ok(PullTranslateResult::Ignored(
+                "No mergeable name links found".to_string(),
+            ));
         }
         let indirect_link = name_link_repo
             .find_one_by_id(&data.merge_id_to_keep)?
@@ -46,17 +46,15 @@ impl SyncTranslation for NameMergeTranslation {
                 data.merge_id_to_keep
             ))?;
 
-        let upsert_records: Vec<PullUpsertRecord> = name_links
+        let upsert_records: Vec<NameLinkRow> = name_links
             .into_iter()
-            .map(|NameLinkRow { id, .. }| {
-                PullUpsertRecord::NameLink(NameLinkRow {
-                    id,
-                    name_id: indirect_link.name_id.clone(),
-                })
+            .map(|NameLinkRow { id, .. }| NameLinkRow {
+                id,
+                name_id: indirect_link.name_id.clone(),
             })
             .collect();
 
-        Ok(Some(IntegrationRecords::from_upserts(upsert_records)))
+        Ok(PullTranslateResult::upserts(upsert_records))
     }
 }
 
@@ -68,8 +66,7 @@ mod tests {
 
     use super::*;
     use repository::{
-        mock::MockDataInserts, test_db::setup_all, NameLinkRowRepository, SyncBufferAction,
-        SyncBufferRow, SyncBufferRowRepository,
+        mock::MockDataInserts, test_db::setup_all, SyncBufferAction, SyncBufferRowRepository,
     };
 
     #[actix_rt::test]
@@ -77,7 +74,7 @@ mod tests {
         let mut sync_records = vec![
             SyncBufferRow {
                 record_id: "name_b_merge".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "name_b",
@@ -88,7 +85,7 @@ mod tests {
             },
             SyncBufferRow {
                 record_id: "name_c_merge".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_c",

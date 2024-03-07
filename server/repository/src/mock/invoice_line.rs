@@ -30,6 +30,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_outbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -53,6 +54,7 @@ pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
@@ -83,6 +85,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_outbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -106,6 +109,7 @@ pub fn mock_outbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
@@ -136,6 +140,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_outbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -159,6 +164,7 @@ pub fn mock_outbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
@@ -189,6 +195,7 @@ pub fn mock_outbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![mock_outbound_shipment_d_invoice_line_a]
@@ -216,6 +223,7 @@ pub fn mock_outbound_shipment_no_stock_line() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![mock_outbound_shipment_no_stock_line]
@@ -243,6 +251,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_inbound_shipment_a_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -266,6 +275,7 @@ pub fn mock_inbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
@@ -296,6 +306,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_inbound_shipment_b_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -319,6 +330,7 @@ pub fn mock_inbound_shipment_b_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
@@ -349,6 +361,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_inbound_shipment_c_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -372,6 +385,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_inbound_shipment_c_invoice_line_c: InvoiceLineRow = InvoiceLineRow {
@@ -395,6 +409,7 @@ pub fn mock_inbound_shipment_c_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![
@@ -426,6 +441,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     let mock_inbound_shipment_d_invoice_line_b: InvoiceLineRow = InvoiceLineRow {
@@ -449,6 +465,7 @@ pub fn mock_inbound_shipment_d_invoice_lines() -> Vec<InvoiceLineRow> {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     vec![

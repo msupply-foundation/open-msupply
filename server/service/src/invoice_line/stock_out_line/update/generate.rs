@@ -81,6 +81,7 @@ fn generate_line(
         total_after_tax,
         tax,
         r#type,
+        foreign_currency_price_before_tax,
         ..
     }: InvoiceLineRow,
     ItemRow {
@@ -121,6 +122,7 @@ fn generate_line(
         note: input.note,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax,
     };
 
     if let Some(number_of_packs) = input.number_of_packs {

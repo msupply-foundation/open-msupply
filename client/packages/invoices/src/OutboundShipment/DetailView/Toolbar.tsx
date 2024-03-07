@@ -14,6 +14,7 @@ import {
   Switch,
   useIsGrouped,
   ArrowLeftIcon,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -68,16 +69,18 @@ export const Toolbar: FC<{
             <InputWithLabelRow
               label={t('label.customer-ref')}
               Input={
-                <BasicTextInput
-                  disabled={isDisabled}
-                  size="small"
-                  sx={{ width: 250 }}
-                  value={theirReferenceBuffer ?? ''}
-                  onChange={event => {
-                    setTheirReferenceBuffer(event.target.value);
-                    update({ theirReference: event.target.value });
-                  }}
-                />
+                <Tooltip title={theirReferenceBuffer} placement="bottom-start">
+                  <BasicTextInput
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReferenceBuffer ?? ''}
+                    onChange={event => {
+                      setTheirReferenceBuffer(event.target.value);
+                      update({ theirReference: event.target.value });
+                    }}
+                  />
+                </Tooltip>
               }
             />
           </Box>

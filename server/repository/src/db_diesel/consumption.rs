@@ -5,7 +5,6 @@ use crate::{
     DateFilter, EqualFilter, RepositoryError,
 };
 use diesel::prelude::*;
-use diesel::{QueryDsl, RunQueryDsl};
 
 table! {
     consumption (id) {

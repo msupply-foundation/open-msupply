@@ -85,6 +85,10 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
       const result = await sdk.refreshToken();
       return refreshTokenGuard(result);
     },
+    isCentralServer: async () => {
+      const result = await sdk.isCentralServer();
+      return result.isCentralServer;
+    },
     me: async (token?: string) => {
       try {
         const result = await sdk.me(

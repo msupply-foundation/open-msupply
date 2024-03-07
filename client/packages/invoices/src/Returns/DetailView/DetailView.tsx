@@ -14,9 +14,9 @@ import {
 } from '@openmsupply-client/common';
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
-// import { Toolbar } from './Toolbar';
-// import { Footer } from './Footer';
-// import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
+import { Footer } from './Footer';
+import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -73,7 +73,7 @@ export const DetailView: FC = () => {
             }
           )}
         >
-          {/* <AppBarButtons onAddItem={onAddItem} /> */}
+          <AppBarButtons onAddItem={onAddItem} />
           {/* {isOpen && (
             <OutboundLineEdit
               draft={entity}
@@ -83,9 +83,9 @@ export const DetailView: FC = () => {
             />
           )} */}
 
-          {/* <Toolbar /> */}
+          <Toolbar />
           <DetailTabs tabs={tabs} />
-          {/* <Footer /> */}
+          <Footer />
           {/* <SidePanel /> */}
         </TableProvider>
       ) : (
