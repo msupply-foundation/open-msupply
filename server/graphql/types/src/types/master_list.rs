@@ -1,6 +1,6 @@
 use async_graphql::{Context, Error, Object};
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use repository::{MasterList, RepositoryError};
+use repository::MasterList;
 use service::master_list::query_lines::get_master_list_lines_count;
 
 #[derive(PartialEq, Debug)]
