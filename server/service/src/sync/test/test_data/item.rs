@@ -1,4 +1,4 @@
-use crate::sync::{test::TestFromSyncRecord, translations::item::ordered_simple_json};
+use crate::sync::{test::TestSyncIncomingRecord, translations::item::ordered_simple_json};
 use repository::{ItemRow, ItemRowDelete, ItemRowType};
 
 const TABLE_NAME: &'static str = "item";
@@ -163,9 +163,9 @@ const ITEM_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (ITEM_1.0, &ordered_simple_json(ITEM_1.1).unwrap()),
             ItemRow {
@@ -179,7 +179,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 is_active: true,
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             (ITEM_2.0, &ordered_simple_json(ITEM_2.1).unwrap()),
             ItemRow {
@@ -196,8 +196,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         ITEM_1.0,
         ItemRowDelete(ITEM_1.0.to_string()),

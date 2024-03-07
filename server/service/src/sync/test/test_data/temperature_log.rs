@@ -4,7 +4,7 @@ use chrono::{Duration, NaiveDate, NaiveTime};
 use repository::TemperatureLogRow;
 use serde_json::json;
 
-use super::{TestFromSyncRecord, TestToSyncRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &'static str = "temperature_log";
 
@@ -23,8 +23,8 @@ const TEMPERATURE_LOG_1: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TEMPERATURE_LOG_1,
         TemperatureLogRow {
@@ -43,8 +43,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestToSyncRecord> {
-    vec![TestToSyncRecord {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TEMPERATURE_LOG_1.0.to_string(),
         push_data: json!(LegacyTemperatureLogRow {

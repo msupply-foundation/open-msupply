@@ -1,4 +1,4 @@
-use crate::sync::test::TestFromSyncRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 use repository::{ReportContext, ReportRow, ReportRowDelete, ReportType};
 
 const TABLE_NAME: &'static str = "report";
@@ -26,8 +26,8 @@ const REPORT_1: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REPORT_1,
         ReportRow {
@@ -43,8 +43,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     )]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         REPORT_1.0,
         ReportRowDelete(REPORT_1.0.to_string()),

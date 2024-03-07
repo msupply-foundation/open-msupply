@@ -1,5 +1,5 @@
 use crate::sync::{
-    test::TestFromSyncRecord,
+    test::TestSyncIncomingRecord,
     translations::invoice::{
         LegacyTransactRow, LegacyTransactStatus, LegacyTransactType, TransactMode,
     },
@@ -9,7 +9,7 @@ use repository::{InvoiceRow, InvoiceRowDelete, InvoiceRowStatus, InvoiceRowType}
 use serde_json::json;
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
-use super::TestToSyncRecord;
+use super::TestSyncOutgoingRecord;
 
 const TABLE_NAME: &'static str = "transact";
 
@@ -96,8 +96,8 @@ const TRANSACT_1: (&'static str, &'static str) = (
       "om_transport_reference": ""
   }"#,
 );
-fn transact_1_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn transact_1_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANSACT_1,
         InvoiceRow {
@@ -139,8 +139,8 @@ fn transact_1_pull_record() -> TestFromSyncRecord {
         },
     )
 }
-fn transact_1_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn transact_1_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
@@ -269,8 +269,8 @@ const TRANSACT_2: (&str, &str) = (
         "om_transport_reference": "transport reference"
     }"#,
 );
-fn transact_2_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn transact_2_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANSACT_2,
         InvoiceRow {
@@ -306,8 +306,8 @@ fn transact_2_pull_record() -> TestFromSyncRecord {
         },
     )
 }
-fn transact_2_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn transact_2_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_2.0.to_string(),
         push_data: json!(LegacyTransactRow {
@@ -441,8 +441,8 @@ const TRANSACT_OM_FIELDS: (&str, &str) = (
     }"#,
 );
 
-fn transact_om_fields_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         TRANSACT_OM_FIELDS,
         InvoiceRow {
@@ -502,8 +502,8 @@ fn transact_om_fields_pull_record() -> TestFromSyncRecord {
         },
     )
 }
-fn transact_om_fields_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: TRANSACT_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyTransactRow {
@@ -663,8 +663,8 @@ const INVENTORY_ADDITION: (&str, &str) = (
     }"#,
 );
 
-fn inventory_addition_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INVENTORY_ADDITION,
         InvoiceRow {
@@ -706,8 +706,8 @@ fn inventory_addition_pull_record() -> TestFromSyncRecord {
     )
 }
 
-fn inventory_addition_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: INVENTORY_ADDITION.0.to_string(),
         push_data: json!(LegacyTransactRow {
@@ -847,8 +847,8 @@ const INVENTORY_REDUCTION: (&str, &str) = (
     }"#,
 );
 
-fn inventory_reduction_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         INVENTORY_REDUCTION,
         InvoiceRow {
@@ -890,8 +890,8 @@ fn inventory_reduction_pull_record() -> TestFromSyncRecord {
     )
 }
 
-fn inventory_reduction_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: INVENTORY_REDUCTION.0.to_string(),
         push_data: json!(LegacyTransactRow {
@@ -1026,8 +1026,8 @@ const PRESCRIPTION_1: (&str, &str) = (
       "om_transport_reference": ""
   }"#,
 );
-fn prescription_1_pull_record() -> TestFromSyncRecord {
-    TestFromSyncRecord::new_pull_upsert(
+fn prescription_1_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PRESCRIPTION_1,
         InvoiceRow {
@@ -1069,8 +1069,8 @@ fn prescription_1_pull_record() -> TestFromSyncRecord {
         },
     )
 }
-fn prescription_1_push_record() -> TestToSyncRecord {
-    TestToSyncRecord {
+fn prescription_1_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PRESCRIPTION_1.0.to_string(),
         push_data: json!(LegacyTransactRow {
@@ -1122,7 +1122,7 @@ fn prescription_1_push_record() -> TestToSyncRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         transact_1_pull_record(),
         transact_2_pull_record(),
@@ -1133,15 +1133,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         TRANSACT_OM_FIELDS.0,
         InvoiceRowDelete(TRANSACT_OM_FIELDS.0.to_string()),
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestToSyncRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         transact_1_push_record(),
         transact_2_push_record(),

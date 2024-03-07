@@ -8,7 +8,7 @@ use repository::{
 };
 
 use crate::sync::{
-    test::TestFromSyncRecord,
+    test::TestSyncIncomingRecord,
     translations::{IntegrationOperation, PullTranslateResult},
 };
 
@@ -117,9 +117,9 @@ const MASTER_LIST_WITH_PROGRAM_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestFromSyncRecord {
+        TestSyncIncomingRecord {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
                 IntegrationOperation::upsert(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
@@ -203,7 +203,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
             },
             extra_data: None,
         },
-        TestFromSyncRecord {
+        TestSyncIncomingRecord {
             translated_record: PullTranslateResult::IntegrationOperations(vec![
                 IntegrationOperation::upsert(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),

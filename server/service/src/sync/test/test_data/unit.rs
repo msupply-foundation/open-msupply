@@ -1,6 +1,6 @@
 use repository::{UnitRow, UnitRowDelete};
 
-use crate::sync::test::TestFromSyncRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &'static str = "unit";
 
@@ -34,9 +34,9 @@ const UNIT_3: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_1,
             UnitRow {
@@ -47,7 +47,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 is_active: true,
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_2,
             UnitRow {
@@ -58,7 +58,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
                 is_active: true,
             },
         ),
-        TestFromSyncRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             UNIT_3,
             UnitRow {
@@ -72,8 +72,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
-    vec![TestFromSyncRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         UNIT_1.0,
         UnitRowDelete(UNIT_1.0.to_string()),

@@ -8,7 +8,7 @@ use super::translations::{IntegrationOperation, PullTranslateResult};
 use repository::{mock::MockData, *};
 use util::inline_init;
 
-pub(crate) struct TestFromSyncRecord {
+pub(crate) struct TestSyncIncomingRecord {
     /// Expected result for the imported data
     pub(crate) translated_record: PullTranslateResult,
     /// Row as stored in the remote sync buffer
@@ -17,17 +17,17 @@ pub(crate) struct TestFromSyncRecord {
     pub(crate) extra_data: Option<MockData>,
 }
 
-impl TestFromSyncRecord {
+impl TestSyncIncomingRecord {
     fn new_pull_upsert<U>(
         table_name: &str,
         // .0 = id .1 = data
         id_and_data: (&str, &str),
         upsert: U,
-    ) -> TestFromSyncRecord
+    ) -> TestSyncIncomingRecord
     where
         U: Upsert + 'static,
     {
-        TestFromSyncRecord {
+        TestSyncIncomingRecord {
             translated_record: PullTranslateResult::upsert(upsert),
             sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
                 r.table_name = table_name.to_owned();
@@ -39,17 +39,17 @@ impl TestFromSyncRecord {
         }
     }
 
-    fn new_pull_delete<U>(table_name: &str, id: &str, result: U) -> TestFromSyncRecord
+    fn new_pull_delete<U>(table_name: &str, id: &str, result: U) -> TestSyncIncomingRecord
     where
         U: Delete + 'static,
     {
         Self::new_pull_deletes(table_name, id, vec![result])
     }
-    fn new_pull_deletes<U>(table_name: &str, id: &str, deletes: Vec<U>) -> TestFromSyncRecord
+    fn new_pull_deletes<U>(table_name: &str, id: &str, deletes: Vec<U>) -> TestSyncIncomingRecord
     where
         U: Delete + 'static,
     {
-        TestFromSyncRecord {
+        TestSyncIncomingRecord {
             translated_record: PullTranslateResult::deletes(deletes),
             sync_buffer_row: inline_init(|r: &mut SyncBufferRow| {
                 r.table_name = table_name.to_owned();
@@ -68,20 +68,22 @@ impl TestFromSyncRecord {
     }
 }
 
-/// To be used in combination with TestFromSyncRecord.
-/// I.e. first run and integrate a row from TestFromSyncRecord and then try to push this record out
+/// To be used in combination with TestSyncIncomingRecord.
+/// I.e. first run and integrate a row from TestSyncIncomingRecord and then try to push this record out
 #[derive(Debug)]
-pub struct TestToSyncRecord {
+pub struct TestSyncOutgoingRecord {
     /// Record id for the row to be pushed.
     /// Its assumed the row exists, e.g. because it has been integrated before through a
-    /// TestFromSyncRecord
+    /// TestSyncIncomingRecord
     pub record_id: String,
     pub table_name: String,
     /// Expected record as pushed out to the server
     pub push_data: serde_json::Value,
 }
 
-pub(crate) fn extract_sync_buffer_rows(records: &Vec<TestFromSyncRecord>) -> Vec<SyncBufferRow> {
+pub(crate) fn extract_sync_buffer_rows(
+    records: &Vec<TestSyncIncomingRecord>,
+) -> Vec<SyncBufferRow> {
     records
         .into_iter()
         .map(|test_record| test_record.sync_buffer_row.clone())
@@ -89,7 +91,7 @@ pub(crate) fn extract_sync_buffer_rows(records: &Vec<TestFromSyncRecord>) -> Vec
 }
 
 pub(crate) async fn insert_all_extra_data(
-    records: &Vec<TestFromSyncRecord>,
+    records: &Vec<TestSyncIncomingRecord>,
     connection: &StorageConnection,
 ) {
     for record in records {
@@ -99,7 +101,7 @@ pub(crate) async fn insert_all_extra_data(
 
 pub(crate) async fn check_test_records_against_database(
     con: &StorageConnection,
-    test_records: Vec<TestFromSyncRecord>,
+    test_records: Vec<TestSyncIncomingRecord>,
 ) {
     for test_record in test_records {
         let translated_records = match test_record.translated_record {
