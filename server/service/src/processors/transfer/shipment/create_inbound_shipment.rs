@@ -72,13 +72,12 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             .find_one_by_id(&record_for_processing.other_party_store_id)?
             .ok_or(RepositoryError::NotFound)?;
 
-        let store_created_datetime = store
-            .created_date
-            .map(|d| NaiveDateTime::new(d, NaiveTime::from_hms_opt(0, 0, 0).unwrap_or_default()));
-        let invoice_created_datetime =
-            outbound_shipment.invoice_row.created_datetime - Duration::days(30);
-        if Some(invoice_created_datetime) < store_created_datetime {
-            return Ok(None);
+        if let Some(created_date) = store.created_date {
+            let store_created_datetime = NaiveDateTime::new(created_date, NaiveTime::from_hms_opt(0, 0, 0).unwrap_or_default());
+            let invoice_created_datetime = outbound_shipment.invoice_row.created_datetime - Duration::days(30);
+            if invoice_created_datetime < store_created_datetime {
+                return Ok(None);
+            }
         }
 
         // Execute
