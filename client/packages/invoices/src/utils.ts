@@ -226,6 +226,7 @@ export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Verified;
 
 export const canReturnOutboundLines = (outbound: OutboundFragment): boolean =>
+  outbound.status === InvoiceNodeStatus.Shipped ||
   outbound.status === InvoiceNodeStatus.Delivered ||
   outbound.status === InvoiceNodeStatus.Verified;
 
