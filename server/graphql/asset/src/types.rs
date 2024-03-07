@@ -5,7 +5,7 @@ use graphql_core::generic_filters::{
 };
 use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader};
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::ContextExt;
+use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{AssetCatalogueItemNode, StoreNode};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
@@ -216,6 +216,29 @@ impl AssetSortInput {
 
 // Asset log types
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum StatusInput {
+    NotInUse,
+    Functioning,
+    FunctioningButNeedsAttention,
+    NotFunctioning,
+    Decomissioned,
+}
+
+impl StatusInput {
+    pub fn to_domain(self) -> Status {
+        match self {
+            StatusInput::NotInUse => Status::NotInUse,
+            StatusInput::Functioning => Status::Functioning,
+            StatusInput::FunctioningButNeedsAttention => Status::FunctioningButNeedsAttention,
+            StatusInput::NotFunctioning => Status::NotFunctioning,
+            StatusInput::Decomissioned => Status::Decomissioned,
+        }
+    }
+}
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum AssetLogSortFieldInput {
@@ -236,7 +259,7 @@ pub struct AssetLogSortInput {
 pub struct AssetLogFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub asset_id: Option<EqualFilterStringInput>,
-    pub status: Option<StringFilterInput>,
+    pub status: Option<EqualFilterStatusInput>,
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
 }
@@ -246,7 +269,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
         AssetLogFilter {
             id: f.id.map(EqualFilter::from),
             asset_id: f.asset_id.map(EqualFilter::from),
-            status: f.status.map(StringFilter::from),
+            status: f.status.map(|s| map_filter!(s, StatusInput::to_domain)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
         }
@@ -288,27 +311,11 @@ impl ReasonInput {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum StatusInput {
-    NotInUse,
-    Functioning,
-    FunctioningButNeedsAttention,
-    NotFunctioning,
-    Decomissioned,
-}
-
-impl StatusInput {
-    pub fn to_domain(self) -> Status {
-        match self {
-            StatusInput::NotInUse => Status::NotInUse,
-            StatusInput::Functioning => Status::Functioning,
-            StatusInput::FunctioningButNeedsAttention => Status::FunctioningButNeedsAttention,
-            StatusInput::NotFunctioning => Status::NotFunctioning,
-            StatusInput::Decomissioned => Status::Decomissioned,
-        }
-    }
+#[derive(InputObject, Clone)]
+pub struct EqualFilterStatusInput {
+    pub equal_to: Option<StatusInput>,
+    pub equal_any: Option<Vec<StatusInput>>,
+    pub not_equal_to: Option<StatusInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]

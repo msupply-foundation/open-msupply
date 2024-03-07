@@ -6,6 +6,7 @@ mod query {
         service_provider::ServiceProvider,
     };
     use repository::{
+        asset_log_row::Status,
         mock::{mock_asset_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -34,7 +35,7 @@ mod query {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
                     user_id: mock_user_account_a().id,
-                    status: Some("test_status".to_string()),
+                    status: Some(Status::Functioning),
                     comment: None,
                     r#type: None,
                     reason: None,
@@ -52,7 +53,7 @@ mod query {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
                     user_id: mock_user_account_a().id,
-                    status: Some("test_status".to_string()),
+                    status: Some(Status::Functioning),
                     comment: None,
                     r#type: None,
                     reason: None,
@@ -69,7 +70,7 @@ mod query {
                     id: "test_id_2".to_string(),
                     asset_id: "incorrect_asset_id".to_string(),
                     user_id: mock_user_account_a().id,
-                    status: Some("test_status".to_string()),
+                    status: Some(Status::Functioning),
                     comment: None,
                     r#type: None,
                     reason: None,
