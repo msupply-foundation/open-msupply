@@ -1,4 +1,4 @@
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use crate::sync::translations::requisition::{
     LegacyAuthorisationStatus, LegacyRequisitionRow, LegacyRequisitionStatus, LegacyRequisitionType,
 };
@@ -50,8 +50,8 @@ const REQUISITION_REQUEST: (&'static str, &'static str) = (
       "om_colour": "" 
     }"#,
 );
-fn requisition_request_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn requisition_request_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_REQUEST,
         RequisitionRow {
@@ -87,8 +87,8 @@ fn requisition_request_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn requisition_request_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn requisition_request_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_REQUEST.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
@@ -163,8 +163,8 @@ const REQUISITION_RESPONSE: (&'static str, &'static str) = (
       "isRemoteOrder": false
     }"#,
 );
-fn requisition_response_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn requisition_response_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_RESPONSE,
         RequisitionRow {
@@ -200,8 +200,8 @@ fn requisition_response_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn requisition_response_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn requisition_response_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_RESPONSE.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
@@ -283,8 +283,8 @@ const REQUISITION_OM_FIELDS: (&'static str, &'static str) = (
       "om_colour": "Colour" 
     }"#,
 );
-fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         REQUISITION_OM_FIELDS,
         RequisitionRow {
@@ -325,8 +325,8 @@ fn requisition_om_fields_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn requisition_om_fields_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_OM_FIELDS.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
@@ -413,8 +413,8 @@ const PROGRAM_REQUISITION_REQUEST: (&'static str, &'static str) = (
       "om_colour": "" 
     }"#,
 );
-fn program_requisition_request_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         PROGRAM_REQUISITION_REQUEST,
         RequisitionRow {
@@ -450,8 +450,8 @@ fn program_requisition_request_pull_record() -> TestSyncPullRecord {
         },
     )
 }
-fn program_requisition_request_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PROGRAM_REQUISITION_REQUEST.0.to_string(),
         push_data: json!(LegacyRequisitionRow {
@@ -494,7 +494,7 @@ fn program_requisition_request_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         requisition_request_pull_record(),
         program_requisition_request_pull_record(),
@@ -503,15 +503,15 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         REQUISITION_OM_FIELDS.0,
         RequisitionRowDelete(REQUISITION_OM_FIELDS.0.to_string()),
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         requisition_request_push_record(),
         program_requisition_request_push_record(),
