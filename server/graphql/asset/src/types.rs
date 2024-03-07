@@ -16,7 +16,7 @@ use repository::{
 use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use repository::asset_log_row::Reason;
+use repository::asset_log_row::{Reason, Status};
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -291,6 +291,29 @@ impl ReasonInput {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 
+pub enum StatusInput {
+    NotInUse,
+    Functioning,
+    FunctioningButNeedsAttention,
+    NotFunctioning,
+    Decomissioned,
+}
+
+impl StatusInput {
+    pub fn to_domain(self) -> Status {
+        match self {
+            StatusInput::NotInUse => Status::NotInUse,
+            StatusInput::Functioning => Status::Functioning,
+            StatusInput::FunctioningButNeedsAttention => Status::FunctioningButNeedsAttention,
+            StatusInput::NotFunctioning => Status::NotFunctioning,
+            StatusInput::Decomissioned => Status::Decomissioned,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
 pub enum ReasonType {
     AwaitingInstallation,
     Stored,
@@ -322,6 +345,28 @@ impl ReasonType {
     }
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum StatusType {
+    NotInUse,
+    Functioning,
+    FunctioningButNeedsAttention,
+    NotFunctioning,
+    Decomissioned,
+}
+impl StatusType {
+    pub fn from_domain(status: &Status) -> Self {
+        match status {
+            Status::NotInUse => StatusType::NotInUse,
+            Status::Functioning => StatusType::Functioning,
+            Status::FunctioningButNeedsAttention => StatusType::FunctioningButNeedsAttention,
+            Status::NotFunctioning => StatusType::NotFunctioning,
+            Status::Decomissioned => StatusType::Decomissioned,
+        }
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct AssetLogNode {
     pub asset_log: AssetLog,
@@ -347,8 +392,8 @@ impl AssetLogNode {
         &self.row().user_id
     }
 
-    pub async fn status(&self) -> &Option<String> {
-        &self.row().status
+    pub async fn status(&self) -> Option<StatusType> {
+        self.row().status.as_ref().map(StatusType::from_domain)
     }
 
     pub async fn comment(&self) -> &Option<String> {
