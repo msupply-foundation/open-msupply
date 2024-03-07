@@ -4,20 +4,9 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::api::RemoteSyncRecordV5;
+use crate::sync::translations::store::StoreTranslation;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::LOCATION;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Location
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationRow {
@@ -32,24 +21,31 @@ pub struct LegacyLocationRow {
     pub store_id: String,
 }
 
-pub(crate) struct LocationTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(LocationTranslation)
+}
+
+pub(super) struct LocationTranslation;
 impl SyncTranslation for LocationTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::LOCATION,
-            dependencies: vec![LegacyTableName::STORE],
-        }
+    fn table_name(&self) -> &'static str {
+        "Location"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![StoreTranslation.table_name()]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Location)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationRow {
             id,
             name,
@@ -66,20 +62,14 @@ impl SyncTranslation for LocationTranslation {
             store_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Location(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let LocationRow {
             id,
             name,
@@ -101,22 +91,19 @@ impl SyncTranslation for LocationTranslation {
             store_id: store_id,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -134,8 +121,9 @@ mod tests {
             setup_all("test_location_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

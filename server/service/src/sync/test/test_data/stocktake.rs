@@ -1,15 +1,14 @@
 use crate::sync::{
     test::TestSyncPullRecord,
-    translations::{
-        stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
-        LegacyTableName, PullUpsertRecord,
-    },
+    translations::stocktake::{LegacyStocktakeRow, LegacyStocktakeStatus},
 };
 use chrono::{NaiveDate, NaiveTime};
 use repository::{StocktakeRow, StocktakeStatus};
 use serde_json::json;
 
 use super::TestSyncPushRecord;
+
+const TABLE_NAME: &'static str = "Stock_take";
 
 const STOCKTAKE_1: (&'static str, &'static str) = (
     "0a375950f0d211eb8dddb54df6d741bc",
@@ -35,9 +34,9 @@ const STOCKTAKE_1: (&'static str, &'static str) = (
 );
 fn stocktake_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::STOCKTAKE,
+        TABLE_NAME,
         STOCKTAKE_1,
-        PullUpsertRecord::Stocktake(StocktakeRow {
+        StocktakeRow {
             id: STOCKTAKE_1.0.to_string(),
             user_id: "".to_string(),
             store_id: "store_a".to_string(),
@@ -53,12 +52,12 @@ fn stocktake_pull_record() -> TestSyncPullRecord {
             inventory_reduction_id: Some("inbound_shipment_b".to_string()),
             is_locked: false,
             stocktake_date: Some(NaiveDate::from_ymd_opt(2021, 07, 30).unwrap()),
-        }),
+        },
     )
 }
 fn stocktake_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::STOCKTAKE.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_1.0.to_string(),
         push_data: json!(LegacyStocktakeRow {
             ID: STOCKTAKE_1.0.to_string(),
@@ -109,9 +108,9 @@ const STOCKTAKE_OM_FIELD: (&'static str, &'static str) = (
 );
 fn stocktake_om_field_pull_record() -> TestSyncPullRecord {
     TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::STOCKTAKE,
+        TABLE_NAME,
         STOCKTAKE_OM_FIELD,
-        PullUpsertRecord::Stocktake(StocktakeRow {
+        StocktakeRow {
             id: STOCKTAKE_OM_FIELD.0.to_string(),
             user_id: "".to_string(),
             store_id: "store_a".to_string(),
@@ -133,12 +132,12 @@ fn stocktake_om_field_pull_record() -> TestSyncPullRecord {
             inventory_reduction_id: None,
             is_locked: false,
             stocktake_date: Some(NaiveDate::from_ymd_opt(2021, 07, 30).unwrap()),
-        }),
+        },
     )
 }
 fn stocktake_om_field_push_record() -> TestSyncPushRecord {
     TestSyncPushRecord {
-        table_name: LegacyTableName::STOCKTAKE.to_string(),
+        table_name: TABLE_NAME.to_string(),
         record_id: STOCKTAKE_OM_FIELD.0.to_string(),
         push_data: json!(LegacyStocktakeRow {
             ID: STOCKTAKE_OM_FIELD.0.to_string(),

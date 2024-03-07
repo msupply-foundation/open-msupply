@@ -8,10 +8,15 @@ use repository::{
 use serde_json::Value;
 
 use crate::sync::{
-    api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string, translations::LegacyTableName,
+    integrate_document::DocumentUpsert,
+    sync_serde::empty_str_as_option_string,
+    translations::{
+        document_registry::DocumentRegistryTranslation, form_schema::FormSchemaTranslation,
+        name::NameTranslation,
+    },
 };
 
-use super::{IntegrationRecords, PullDependency, PullUpsertRecord, SyncTranslation};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -44,35 +49,35 @@ struct LegacyDocumentRow {
     pub context_id: String,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::DOCUMENT
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Document
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(DocumentTranslation)
 }
 
-pub(crate) struct DocumentTranslation {}
+pub(super) struct DocumentTranslation;
 impl SyncTranslation for DocumentTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::DOCUMENT,
-            dependencies: vec![
-                LegacyTableName::NAME,
-                LegacyTableName::FORM_SCHEMA,
-                // DocumentRegistry is needed in `upsert_document()`
-                LegacyTableName::DOCUMENT_REGISTRY,
-            ],
-        }
+    fn table_name(&self) -> &'static str {
+        "om_document"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![
+            NameTranslation.table_name(),
+            FormSchemaTranslation.table_name(),
+            DocumentRegistryTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Document)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyDocumentRow {
             id,
             name,
@@ -102,20 +107,14 @@ impl SyncTranslation for DocumentTranslation {
             owner_name_id,
             context_id,
         };
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Document(result),
-        )))
+        Ok(PullTranslateResult::upsert(DocumentUpsert(result)))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let document = DocumentRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -153,10 +152,10 @@ impl SyncTranslation for DocumentTranslation {
             context_id,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LegacyTableName::DOCUMENT,
-            serde_json::to_value(legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(&legacy_row)?,
+        ))
     }
 }

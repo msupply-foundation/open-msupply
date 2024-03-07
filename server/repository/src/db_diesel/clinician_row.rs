@@ -1,7 +1,7 @@
 use super::{name_link_row::name_link, StorageConnection};
 
 use crate::{
-    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError,
+    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError, Upsert,
 };
 
 use diesel::prelude::*;
@@ -142,6 +142,22 @@ impl<'a> ClinicianRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+pub struct ClinicianRowDelete(pub String);
+
+impl Upsert for ClinicianRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ClinicianRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

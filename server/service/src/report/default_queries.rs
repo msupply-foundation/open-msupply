@@ -45,6 +45,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
         taxPercentage
         totalAfterTax
         totalBeforeTax
+        foreignCurrencyTotalAfterTax
       }
       otherParty(storeId: $storeId) {
         name
@@ -89,6 +90,7 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
           taxPercentage
           totalAfterTax
           totalBeforeTax
+          foreignCurrencyTotalAfterTax
         }
         stockLine {
           availableNumberOfPacks

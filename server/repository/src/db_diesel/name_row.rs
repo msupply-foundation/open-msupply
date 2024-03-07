@@ -1,9 +1,9 @@
 use super::{name_row::name::dsl::*, StorageConnection};
-
 use crate::{
     item_link, name_link, repository_error::RepositoryError, EqualFilter, NameLinkRow,
     NameLinkRowRepository,
 };
+use crate::{Delete, Upsert};
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -269,6 +269,36 @@ impl<'a> NameRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NameRowDelete(pub String);
+// TODO soft delete
+impl Delete for NameRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for NameRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

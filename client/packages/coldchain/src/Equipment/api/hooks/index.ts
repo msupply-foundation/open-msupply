@@ -11,6 +11,7 @@ export const useAssets = {
     fields: Document.useAssetFields,
 
     insert: Document.useAssetInsert,
+    update: Document.useAssetUpdate,
   },
 
   line: {},

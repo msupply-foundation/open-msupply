@@ -2,6 +2,7 @@ use super::period_schedule_row::period_schedule::dsl as period_schedule_dsl;
 
 use crate::{repository_error::RepositoryError, StorageConnection};
 
+use crate::Upsert;
 use diesel::prelude::*;
 
 table! {
@@ -63,5 +64,19 @@ impl<'a> PeriodScheduleRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+impl Upsert for PeriodScheduleRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        PeriodScheduleRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PeriodScheduleRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

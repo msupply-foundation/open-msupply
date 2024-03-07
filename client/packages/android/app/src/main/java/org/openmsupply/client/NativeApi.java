@@ -42,7 +42,11 @@ import javax.net.ssl.SSLHandshakeException;
 @CapacitorPlugin(name = "NativeApi")
 public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String LOG_FILE_NAME = "remote_server.log";
-    private static final String DB_FILE_NAME = "omsupply-database.sqlite";
+
+    // This comes from Java_org_openmsupply_client_RemoteServer_startServer - if
+    // it's changed there, it will need to be changed here too...
+    private static final String DB_FILE_NAME = "omsupply-database";
+
     public static final String OM_SUPPLY = "omSupply";
     private static final Integer DEFAULT_PORT = DiscoveryConstants.PORT;
     private static final String DEFAULT_URL = "https://localhost:" + DEFAULT_PORT + "/";
