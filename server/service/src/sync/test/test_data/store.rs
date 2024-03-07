@@ -1,4 +1,4 @@
-use crate::sync::{test::TestSyncPullRecord, translations::PullTranslateResult};
+use crate::sync::{test::TestFromSyncRecord, translations::PullTranslateResult};
 use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
 use util::inline_init;
 
@@ -49,8 +49,8 @@ const STORE_1: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn store_1() -> TestFromSyncRecord {
+    TestFromSyncRecord::new_pull_upsert(
         TABLE_NAME,
         STORE_1,
         inline_init(|s: &mut StoreRow| {
@@ -109,8 +109,8 @@ const STORE_2: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_2() -> TestSyncPullRecord {
-    TestSyncPullRecord {
+fn store_2() -> TestFromSyncRecord {
+    TestFromSyncRecord {
         translated_record: PullTranslateResult::Ignored(
             "Ignoring not implemented system names".to_string(),
         ),
@@ -169,8 +169,8 @@ const STORE_3: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_3() -> TestSyncPullRecord {
-    TestSyncPullRecord {
+fn store_3() -> TestFromSyncRecord {
+    TestFromSyncRecord {
         translated_record: PullTranslateResult::Ignored(
             "Ignoring not implemented system names".to_string(),
         ),
@@ -229,8 +229,8 @@ const STORE_4: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_4() -> TestSyncPullRecord {
-    TestSyncPullRecord {
+fn store_4() -> TestFromSyncRecord {
+    TestFromSyncRecord {
         translated_record: PullTranslateResult::Ignored(
             "Ignoring not implemented system names".to_string(),
         ),
@@ -243,12 +243,12 @@ fn store_4() -> TestSyncPullRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
     vec![store_1(), store_2(), store_3(), store_4()]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestFromSyncRecord> {
+    vec![TestFromSyncRecord::new_pull_delete(
         TABLE_NAME,
         STORE_4.0,
         StoreRowDelete(STORE_4.0.to_string()),

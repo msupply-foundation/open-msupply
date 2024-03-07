@@ -1,4 +1,4 @@
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestFromSyncRecord;
 use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType};
 
 const INVENTORY_ADJUSTMENT_REASON_1: (&'static str, &'static str) = (
@@ -11,8 +11,8 @@ const INVENTORY_ADJUSTMENT_REASON_1: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestFromSyncRecord> {
+    vec![TestFromSyncRecord::new_pull_upsert(
         "options",
         INVENTORY_ADJUSTMENT_REASON_1,
         InventoryAdjustmentReasonRow {
