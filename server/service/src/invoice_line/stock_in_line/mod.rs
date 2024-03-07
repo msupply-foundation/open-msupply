@@ -1,6 +1,7 @@
 use repository::InvoiceRowType;
 
 pub mod insert;
+pub use self::insert::*;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub enum StockInType {

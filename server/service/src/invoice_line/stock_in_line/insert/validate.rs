@@ -40,13 +40,12 @@ pub fn validate(
         return Err(NotThisStoreInvoice);
     };
     if !check_invoice_type(&invoice, input.r#type.to_domain()) {
-        return Err(NotAnStockIn);
+        return Err(NotAStockIn);
     }
     if !check_invoice_is_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
 
-    // TODO: StockLineDoesNotBelongToCurrentStore
     // TODO: LocationDoesNotBelongToCurrentStore
 
     Ok((item, invoice))
