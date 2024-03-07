@@ -21,28 +21,28 @@ export const useInboundReturnRows = () => {
     sortBy,
   });
 
-  // OK SO WHEN WE TOGGLE THIS ON THINGS BE CRASHING RIP
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
 
   const { data } = useInboundReturn();
-
   const lines = data?.lines.nodes;
 
-  const items = inboundReturnLinesToSummaryItems(lines ?? []).map(item => ({
-    ...item,
-    [String(sortBy.key)]:
-      item.lines[0]?.[sortBy.key as keyof InboundReturnLineFragment],
-  }));
-
   const sortedItems = useMemo(() => {
+    const items = inboundReturnLinesToSummaryItems(lines ?? []).map(item => ({
+      ...item,
+      [String(sortBy.key)]:
+        item.lines[0]?.[sortBy.key as keyof InboundReturnLineFragment],
+    }));
+
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
+
     if (!currentColumn?.getSortValue) return items;
     const sorter = SortUtils.getColumnSorter(
       currentColumn?.getSortValue,
       !!sortBy.isDesc
     );
+
     return [...(items ?? [])].sort(sorter);
-  }, [items, sortBy.key, sortBy.isDesc]);
+  }, [lines, sortBy.key, sortBy.isDesc]);
 
   const sortedLines = useMemo(() => {
     const currentColumn = columns.find(({ key }) => key === sortBy.key);
