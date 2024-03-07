@@ -52,7 +52,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     <Box flexDirection="column" style={{ width: '100%' }} display="flex">
       <Box flex={1} style={{ overflowY: 'auto' }}>
         <DataTable
-          id="outbound-detail"
+          id="inbound-detail"
           onRowClick={onRowClick}
           ExpandContent={Expand}
           columns={columns}
@@ -60,7 +60,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
           enableColumnSelection
           noDataElement={
             <NothingHere
-              body={t('error.no-outbound-items')}
+              body={t('error.no-inbound-return-items')}
               onCreate={isDisabled ? undefined : () => onAddItem()}
               buttonText={t('button.add-item')}
             />
