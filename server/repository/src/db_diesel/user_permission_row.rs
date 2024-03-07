@@ -4,7 +4,7 @@ use crate::{
     db_diesel::user_permission_row::user_permission::dsl as user_permission_dsl,
     repository_error::RepositoryError,
 };
-
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
@@ -60,6 +60,7 @@ pub enum Permission {
     LogQuery,
     // items
     ItemMutate,
+    ItemNamesCodesAndUnitsMutate,
     PatientQuery,
     PatientMutate,
     // Document
@@ -131,5 +132,34 @@ impl<'a> UserPermissionRowRepository<'a> {
         diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct UserPermissionRowDelete(pub String);
+impl Delete for UserPermissionRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UserPermissionRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserPermissionRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for UserPermissionRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UserPermissionRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserPermissionRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

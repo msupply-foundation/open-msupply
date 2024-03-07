@@ -31,7 +31,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.document.get();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { print, isPrinting } = useReport.utils.print();
   const {
     queryParams: { sortBy },

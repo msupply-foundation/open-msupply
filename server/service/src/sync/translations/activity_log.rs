@@ -5,20 +5,9 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::sync::{api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string};
+use crate::sync::{sync_serde::empty_str_as_option_string, translations::store::StoreTranslation};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::OM_ACTIVITY_LOG;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::ActivityLog
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -40,24 +29,27 @@ pub struct LegacyActivityLogRow {
     pub changed_from: Option<String>,
 }
 
-pub(crate) struct ActivityLogTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ActivityLogTranslation)
+}
+
+pub(super) struct ActivityLogTranslation;
 impl SyncTranslation for ActivityLogTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::OM_ACTIVITY_LOG,
-            dependencies: vec![LegacyTableName::STORE],
-        }
+    fn table_name(&self) -> &'static str {
+        "om_activity_log"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&'static str> {
+        vec![StoreTranslation.table_name()]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyActivityLogRow>(&sync_record.data)?;
 
         let result = ActivityLogRow {
@@ -71,20 +63,18 @@ impl SyncTranslation for ActivityLogTranslation {
             changed_from: data.changed_from,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::ActivityLog(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::ActivityLog)
+    }
+
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let ActivityLogRow {
             id,
             r#type,
@@ -101,9 +91,11 @@ impl SyncTranslation for ActivityLogTranslation {
                 changelog.record_id
             )))?;
 
-        let (store_id, record_id, user_id) = match (store_id, record_id, user_id) {
-            (Some(store_id), Some(record_id), Some(user_id)) => (store_id, record_id, user_id),
-            _ => return Ok(Some(Vec::new())),
+        let (Some(store_id), Some(record_id), Some(user_id)) = (store_id, record_id, user_id)
+        else {
+            return Ok(PushTranslateResult::Ignored(
+                "Ignoring activity logs without store, user or record id".to_string(),
+            ));
         };
 
         let legacy_row = LegacyActivityLogRow {
@@ -116,11 +108,12 @@ impl SyncTranslation for ActivityLogTranslation {
             changed_to,
             changed_from,
         };
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             serde_json::to_value(&legacy_row)?,
-        )]))
+        ))
     }
 }
 
@@ -138,8 +131,9 @@ mod tests {
             setup_all("test_activity_log_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 use anyhow::Context;
 use diesel::prelude::*;

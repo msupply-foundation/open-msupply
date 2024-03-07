@@ -29,8 +29,15 @@ pub fn update_outbound_shipment_service_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_line, _, item) = validate(&input, &ctx.store_id, &connection)?;
-            let updated_line = generate(input, existing_line, item)?;
+            let (existing_line, invoice_row, item) = validate(&input, &ctx.store_id, &connection)?;
+            let updated_line = generate(
+                &connection,
+                input,
+                existing_line,
+                item,
+                invoice_row.currency_id,
+                &invoice_row.currency_rate,
+            )?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
             get_invoice_line(ctx, &updated_line.id)

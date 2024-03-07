@@ -1,4 +1,5 @@
 import currency from 'currency.js';
+import { useAuthContext } from '../../authentication';
 import { useIntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
@@ -79,84 +80,138 @@ const getSeparatorAndDecimal = (locale: string) => {
   return { separator, decimal };
 };
 
-const currencyOptions = {
-  en: {
-    symbol: '$',
-    // separator: "," decimal = "."
-    ...getSeparatorAndDecimal('en'),
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  fr: {
-    symbol: '€',
-    // separator: " " decimal = ","
-    ...getSeparatorAndDecimal('fr'),
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
-  'fr-DJ': {
-    symbol: 'DJF',
-    // separator: " " decimal = ","
-    ...getSeparatorAndDecimal('fr-DJ'),
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
-  ar: {
-    symbol: 'ر.ق.',
-    // separator: "," decimal = "."
-    ...getSeparatorAndDecimal('ar'),
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  es: {
-    symbol: '$',
-    // separator: "," decimal = "."
-    ...getSeparatorAndDecimal('es'),
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  tet: {
-    symbol: '$',
-    // separator: "," decimal = "."
-    ...getSeparatorAndDecimal('tet'),
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  ru: {
-    symbol: '₽',
-    // separator: "." decimal = ","
-    ...getSeparatorAndDecimal('ru'),
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
+const getPatterns = (locale: string) => {
+  switch (locale) {
+    case 'fr-DJ':
+    case 'fr':
+    case 'ru':
+      return { pattern: '# !', negativePattern: '-# !' };
+    default:
+      return { pattern: '!#', negativePattern: '-!#' };
+  }
 };
 
-export const useCurrency = (dp?: number) => {
+export type Currencies =
+  | 'USD'
+  | 'EUR'
+  | 'NZD'
+  | 'DJF'
+  | 'QAR'
+  | 'RUB'
+  | 'SSP'
+  | 'PGK'
+  | 'COP'
+  | 'SBD';
+
+export const currencyOptions = (locale: string, code?: Currencies) => {
+  switch (code) {
+    case 'EUR':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '€',
+        precision: 2,
+        format,
+      };
+    case 'DJF':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'DJF',
+        precision: 0,
+        format,
+      };
+    case 'QAR':
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'ر.ق.',
+        precision: 2,
+        format,
+      };
+    case 'RUB':
+      return {
+        // separator: "." decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '₽',
+        precision: 2,
+        format,
+      };
+    case 'SSP': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'SSP',
+        precision: 2,
+        format,
+      };
+    }
+    case 'PGK': {
+      return {
+        // separator: "." decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'K',
+        precision: 2,
+        format,
+      };
+    }
+    case 'COP': {
+      return {
+        // separator: "." decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '$',
+        precision: 2,
+        format,
+      };
+    }
+    case 'SBD': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'SI$',
+        precision: 2,
+        format,
+      };
+    }
+    case 'USD':
+    case 'NZD':
+    default:
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '$',
+        precision: 2,
+        format,
+      };
+  }
+};
+
+export const useCurrency = (code?: Currencies) => {
+  const { store } = useAuthContext();
   const { currentLanguage: language } = useIntlUtils();
-  const options = currencyOptions[language];
-  const precision = dp ?? options.precision;
+  const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
+
+  const options = currencyOptions(language, currencyCode);
+  const precision = options.precision;
   return {
     c: (value: currency.Any) => currency(value, { ...options, precision }),
     options,
-    language,
+    currencyCode,
   };
 };
 
-export const useFormatCurrency = (dp?: number) => {
-  const { c } = useCurrency(dp);
+export const useFormatCurrency = (code?: Currencies) => {
+  const { c } = useCurrency(code);
   return (value: currency.Any) => c(value).format();
 };

@@ -25,7 +25,7 @@ import { ServerSettings } from './ServerSettings';
 import { ElectronSettings } from './ElectronSettings';
 
 export const Settings: React.FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { error } = useNotification();
   const navigate = useNavigate();
   const [customTheme, setCustomTheme] = useLocalStorage('/theme/custom');

@@ -26,6 +26,7 @@ use self::v1_01_01::V1_01_01;
 use self::v1_01_02::V1_01_02;
 use self::v1_01_03::V1_01_03;
 
+pub(crate) mod helpers;
 mod templates;
 
 pub use self::version::*;

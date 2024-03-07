@@ -44,7 +44,6 @@
   "label.last-updated": "Last updated",
   "label.reason": "Reason",
   "label.rtmd": "mSupply RTMD",
-  "label.temperature-unit": "°C",
   "label.unacknowledged": "Unacknowledged",
   "message.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.asset-saved": "Asset saved 🥳",

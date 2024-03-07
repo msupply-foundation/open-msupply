@@ -7,10 +7,10 @@ use crate::db_diesel::{
 use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 
+use crate::{Delete, Upsert};
+use chrono::{NaiveDate, NaiveDateTime};
 use diesel::dsl::max;
 use diesel::prelude::*;
-
-use chrono::{NaiveDate, NaiveDateTime};
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 use util::Defaults;
@@ -229,6 +229,35 @@ impl<'a> RequisitionRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RequisitionRowDelete(pub String);
+impl Delete for RequisitionRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        RequisitionRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RequisitionRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for RequisitionRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        RequisitionRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RequisitionRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 
