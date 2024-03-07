@@ -1,10 +1,14 @@
 use super::asset_log_row::asset_log::dsl::*;
 
+use crate::EqualFilter;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
 
 table! {
     asset_log (id) {
@@ -14,12 +18,44 @@ table! {
         status -> Nullable<Text>,
         comment -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Nullable<Text>,
-        reason -> Nullable<Text>,
+        reason -> Nullable<crate::db_diesel::assets::asset_log_row::ReasonMapping>,
         log_datetime -> Timestamp,
     }
 }
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+
+pub enum Reason {
+    AwaitingInstallation,
+    Stored,
+    OffsiteForRepairs,
+    AwaitingDecomissioning,
+    NeedsServicing,
+    MultipleTemperatureBreaches,
+    Unknown,
+    NeedsSpareParts,
+    LackOfPower,
+    Functioning,
+    Decomissioned,
+}
+
+impl Reason {
+    pub fn equal_to(&self) -> EqualFilter<Reason> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
+        }
+    }
+}
+
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset_log"]
 
 pub struct AssetLogRow {
@@ -30,7 +66,7 @@ pub struct AssetLogRow {
     pub comment: Option<String>,
     #[column_name = "type_"]
     pub r#type: Option<String>,
-    pub reason: Option<String>,
+    pub reason: Option<Reason>,
     pub log_datetime: NaiveDateTime,
 }
 
