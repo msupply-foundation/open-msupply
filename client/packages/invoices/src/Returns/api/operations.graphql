@@ -113,6 +113,7 @@ query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
     batch
     expiryDate
     id
+    itemId
     itemCode
     itemName
     packSize

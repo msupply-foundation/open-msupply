@@ -37,8 +37,26 @@ export const useDraftInboundReturnLines = (
 
   const saveInboundReturn = async () => {
     const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
-      ({ id, reasonId, numberOfPacksReturned, stockLineId, note }) => {
-        return { id, stockLineId, reasonId, note, numberOfPacksReturned };
+      ({
+        id,
+        reasonId,
+        itemId,
+        numberOfPacksReturned,
+        note,
+        packSize,
+        batch,
+        expiryDate,
+      }) => {
+        return {
+          id,
+          packSize,
+          batch,
+          expiryDate,
+          itemId,
+          reasonId,
+          note,
+          numberOfPacksReturned,
+        };
       }
     );
 
