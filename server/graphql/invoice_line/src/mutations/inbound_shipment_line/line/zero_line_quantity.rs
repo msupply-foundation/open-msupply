@@ -1,4 +1,4 @@
-use super::{BatchIsReserved, InvoiceWasCreatedAfterStore};
+use super::{BatchIsReserved};
 use async_graphql::*;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{
@@ -64,7 +64,6 @@ pub enum ZeroInboundShipmentLineQuantityErrorInterface {
     ForeignKeyError(ForeignKeyError),
     CannotEditInvoice(CannotEditInvoice),
     BatchIsReserved(BatchIsReserved),
-    InvoiceWasCreatedAfterStore(InvoiceWasCreatedAfterStore),
 }
 
 impl ZeroInboundShipmentLineQuantityInput {
@@ -119,13 +118,6 @@ fn map_error(error: ServiceError) -> Result<ZeroInboundShipmentLineQuantityError
         ServiceError::BatchIsReserved => {
             return Ok(
                 ZeroInboundShipmentLineQuantityErrorInterface::BatchIsReserved(BatchIsReserved {}),
-            )
-        }
-        ServiceError::InvoiceWasCreatedAfterStore => {
-            return Ok(
-                ZeroInboundShipmentLineQuantityErrorInterface::InvoiceWasCreatedAfterStore(
-                    InvoiceWasCreatedAfterStore {},
-                ),
             )
         }
         // Standard Graphql Errors

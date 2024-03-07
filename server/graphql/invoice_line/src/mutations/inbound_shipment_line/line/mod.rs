@@ -12,11 +12,3 @@ impl BatchIsReserved {
         "Batch is already reserved/issued"
     }
 }
-
-pub struct InvoiceWasCreatedAfterStore;
-#[Object]
-impl InvoiceWasCreatedAfterStore {
-    pub async fn description(&self) -> &'static str {
-        "Invoice was created after store"
-    }
-}

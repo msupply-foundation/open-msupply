@@ -5,10 +5,8 @@ use crate::{
         validate::{check_line_belongs_to_invoice, check_line_exists_option},
     },
 };
-use chrono::{NaiveDateTime, NaiveTime};
 use repository::{
-    InvoiceLineRow, InvoiceRow, InvoiceRowType, RepositoryError, StorageConnection,
-    StoreRowRepository,
+    InvoiceLineRow, InvoiceRow, InvoiceRowType, StorageConnection,
 };
 
 use super::{ZeroInboundShipmentLineQuantity, ZeroInboundShipmentLineQuantityError};
@@ -40,29 +38,6 @@ pub fn validate(
     if !check_line_belongs_to_invoice(&line, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_id));
     }
-    if !check_invoice_was_before_store(connection, store_id, &invoice)? {
-        return Err(InvoiceWasCreatedAfterStore);
-    }
 
     Ok((invoice, line))
-}
-
-fn check_invoice_was_before_store(
-    connection: &StorageConnection,
-    store_id: &str,
-    invoice: &InvoiceRow,
-) -> Result<bool, RepositoryError> {
-    let store = StoreRowRepository::new(connection)
-        .find_one_by_id(store_id)?
-        .ok_or(RepositoryError::NotFound)?;
-
-    let store_created_datetime = store
-        .created_date
-        .map(|date| NaiveDateTime::new(date, NaiveTime::from_hms_opt(0, 0, 0).unwrap_or_default()))
-        .unwrap_or_default();
-
-    if invoice.created_datetime < store_created_datetime {
-        return Ok(true);
-    }
-    Ok(false)
 }
