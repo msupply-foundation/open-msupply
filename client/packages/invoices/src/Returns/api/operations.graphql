@@ -105,23 +105,27 @@ query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   }
 }
 
-query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
-  generateInboundReturnLines(
-    input: { stockLineIds: $stockLineIds }
-    storeId: $storeId
-  ) {
-    batch
-    expiryDate
-    id
-    itemId
-    itemCode
-    itemName
-    packSize
-    stockLineId
-    numberOfPacksReturned
-    numberOfPacksIssued
-    note
-    reasonId
+query generateInboundReturnLines(
+  $input: GenerateInboundReturnLinesInput!
+  $storeId: String!
+) {
+  generateInboundReturnLines(input: $input, storeId: $storeId) {
+    ... on GeneratedInboundReturnLineConnector {
+      nodes {
+        batch
+        expiryDate
+        id
+        itemId
+        itemCode
+        itemName
+        packSize
+        stockLineId
+        numberOfPacksReturned
+        numberOfPacksIssued
+        note
+        reasonId
+      }
+    }
   }
 }
 
