@@ -10,7 +10,9 @@ fragment UserStoreNode on UserStoreNode {
     packToOne
     omProgramModule
     vaccineModule
+    issueInForeignCurrency
   }
+  homeCurrencyCode
 }
 
 query authToken($username: String!, $password: String!) {
@@ -61,6 +63,10 @@ query me {
       jobTitle
     }
   }
+}
+
+query isCentralServer {
+  isCentralServer
 }
 
 query refreshToken {

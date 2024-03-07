@@ -241,7 +241,7 @@ mod document_service_test {
     };
     use serde_json::json;
 
-    use crate::{document::raw_document::RawDocument, service_provider::ServiceProvider};
+    use crate::service_provider::ServiceProvider;
 
     use super::*;
 
