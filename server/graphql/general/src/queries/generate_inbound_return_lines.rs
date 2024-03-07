@@ -9,6 +9,7 @@ pub struct GenerateInboundReturnInput {
 #[derive(SimpleObject, Clone)]
 pub struct InboundReturnLine {
     pub id: String,
+    pub item_id: String,
     pub item_code: String,
     pub item_name: String,
     pub stock_line_id: String,
@@ -28,6 +29,7 @@ pub fn generate_inbound_return_lines(
     Ok(vec![InboundReturnLine {
         id: "new_inbound_return_line1".to_string(),
         // Below, don't have to match atm
+        item_id: "abc".to_string(),
         item_code: "abc".to_string(),
         item_name: "Item name 1".to_string(),
         stock_line_id: "stock_line_id".to_string(),
