@@ -97,238 +97,239 @@ where
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use repository::{
-//         mock::{
-//             mock_item_a, mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
-//             MockDataInserts,
-//         },
-//         test_db::setup_all,
-//         InvoiceLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
-//     };
-//     use util::{inline_edit, inline_init};
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{
+            mock_item_a, mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
+            MockDataInserts,
+        },
+        test_db::setup_all,
+        InvoiceLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+    };
+    use util::{inline_edit, inline_init};
 
-//     use crate::{
-//         invoice_line::stock_in_line::{
-//             insert::InsertStockInLine, InsertStockInLineError as ServiceError,
-//         },
-//         service_provider::ServiceProvider,
-//         NullableUpdate,
-//     };
+    use crate::{
+        invoice_line::stock_in_line::{
+            insert::InsertStockInLine, InsertStockInLineError as ServiceError,
+        },
+        service_provider::ServiceProvider,
+        NullableUpdate,
+    };
 
-//     #[actix_rt::test]
-//     async fn insert_stock_in_line_errors() {
-//         let (_, _, connection_manager, _) =
-//             setup_all("insert_stock_in_line_errors", MockDataInserts::all()).await;
+    use super::insert_stock_in_line;
 
-//         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-//         let mut context = service_provider
-//             .context(mock_store_a().id, mock_user_account_a().id)
-//             .unwrap();
-//         let service = service_provider.invoice_line_service;
+    #[actix_rt::test]
+    async fn insert_stock_in_line_errors() {
+        let (_, _, connection_manager, _) =
+            setup_all("insert_stock_in_line_errors", MockDataInserts::all()).await;
 
-//         // LineAlreadyExists
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = mock_stock_in_a_invoice_lines()[0].id.clone();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                 }),
-//             ),
-//             Err(ServiceError::LineAlreadyExists)
-//         );
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let mut context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
 
-//         // InvoiceDoesNotExist
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = "new invoice id".to_string();
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             ),
-//             Err(ServiceError::InvoiceDoesNotExist)
-//         );
+        // LineAlreadyExists
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = mock_stock_in_a_invoice_lines()[0].id.clone();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                }),
+            ),
+            Err(ServiceError::LineAlreadyExists)
+        );
 
-//         // NotAnStockIn
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_outbound_shipment_e().id;
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             ),
-//             Err(ServiceError::NotAnStockIn)
-//         );
+        // InvoiceDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = "new invoice id".to_string();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                }),
+            ),
+            Err(ServiceError::InvoiceDoesNotExist)
+        );
 
-//         // LocationDoesNotExist
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                     r.location = Some(NullableUpdate {
-//                         value: Some("invalid".to_string()),
-//                     });
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             ),
-//             Err(ServiceError::LocationDoesNotExist)
-//         );
+        // NotAnStockIn
+        assert_eq!(
+            service.insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_outbound_shipment_e().id;
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                }),
+            ),
+            Err(ServiceError::NotAnStockIn)
+        );
 
-//         // ItemNotFound
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                     r.item_id = "invalid".to_string();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             ),
-//             Err(ServiceError::ItemNotFound)
-//         );
+        // LocationDoesNotExist
+        assert_eq!(
+            service.insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.location = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    });
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                }),
+            ),
+            Err(ServiceError::LocationDoesNotExist)
+        );
 
-//         // PackSizeBelowOne
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 0;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             ),
-//             Err(ServiceError::PackSizeBelowOne)
-//         );
+        // ItemNotFound
+        assert_eq!(
+            service.insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.item_id = "invalid".to_string();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                }),
+            ),
+            Err(ServiceError::ItemNotFound)
+        );
 
-//         // NumberOfPacksBelowOne
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 0.0;
-//                 }),
-//             ),
-//             Err(ServiceError::NumberOfPacksBelowOne)
-//         );
+        // PackSizeBelowOne
+        assert_eq!(
+            service.insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 0;
+                    r.number_of_packs = 1.0;
+                }),
+            ),
+            Err(ServiceError::PackSizeBelowOne)
+        );
 
-//         // NotThisStoreInvoice
-//         context.store_id = mock_store_b().id;
-//         assert_eq!(
-//             service.insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_stock_in_c().id.clone();
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             ),
-//             Err(ServiceError::NotThisStoreInvoice)
-//         );
+        // NumberOfPacksBelowOne
+        assert_eq!(
+            service.insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 0.0;
+                }),
+            ),
+            Err(ServiceError::NumberOfPacksBelowOne)
+        );
 
-//         //TODO NewlyCreatedLineDoesNotExist
-//     }
+        // NotThisStoreInvoice
+        context.store_id = mock_store_b().id;
+        assert_eq!(
+            service.insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_stock_in_c().id.clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                }),
+            ),
+            Err(ServiceError::NotThisStoreInvoice)
+        );
 
-//     #[actix_rt::test]
-//     async fn insert_stock_in_line_success() {
-//         let (_, connection, connection_manager, _) =
-//             setup_all("insert_stock_in_line_success", MockDataInserts::all()).await;
+        //TODO NewlyCreatedLineDoesNotExist
+    }
 
-//         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-//         let context = service_provider
-//             .context(mock_store_a().id, mock_user_account_a().id)
-//             .unwrap();
-//         let service = service_provider.invoice_line_service;
+    #[actix_rt::test]
+    async fn insert_stock_in_line_success() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stock_in_line_success", MockDataInserts::all()).await;
 
-//         service
-//             .insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line id".to_string();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 1;
-//                     r.number_of_packs = 1.0;
-//                 }),
-//             )
-//             .unwrap();
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.invoice_line_service;
 
-//         let inbound_line = InvoiceLineRowRepository::new(&connection)
-//             .find_one_by_id("new invoice line id")
-//             .unwrap();
+        service
+            .insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                }),
+            )
+            .unwrap();
 
-//         assert_eq!(
-//             inbound_line,
-//             inline_edit(&inbound_line, |mut u| {
-//                 u.id = "new invoice line id".to_string();
-//                 u.item_link_id = mock_item_a().id.clone();
-//                 u.pack_size = 1;
-//                 u.number_of_packs = 1.0;
-//                 u
-//             })
-//         );
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new invoice line id")
+            .unwrap();
 
-//         // pack to one preference is set
-//         let pack_to_one = StorePreferenceRow {
-//             id: mock_store_a().id.clone(),
-//             pack_to_one: true,
-//             ..StorePreferenceRow::default()
-//         };
-//         StorePreferenceRowRepository::new(&connection)
-//             .upsert_one(&pack_to_one)
-//             .unwrap();
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = "new invoice line id".to_string();
+                u.item_link_id = mock_item_a().id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 1.0;
+                u
+            })
+        );
 
-//         service
-//             .insert_stock_in_line(
-//                 &context,
-//                 inline_init(|r: &mut InsertStockInLine| {
-//                     r.id = "new invoice line pack to one".to_string();
-//                     r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-//                     r.item_id = mock_item_a().id.clone();
-//                     r.pack_size = 10;
-//                     r.number_of_packs = 20.0;
-//                     r.sell_price_per_pack = 100.0;
-//                 }),
-//             )
-//             .unwrap();
+        // pack to one preference is set
+        let pack_to_one = StorePreferenceRow {
+            id: mock_store_a().id.clone(),
+            pack_to_one: true,
+            ..StorePreferenceRow::default()
+        };
+        StorePreferenceRowRepository::new(&connection)
+            .upsert_one(&pack_to_one)
+            .unwrap();
 
-//         let inbound_line = InvoiceLineRowRepository::new(&connection)
-//             .find_one_by_id("new invoice line pack to one")
-//             .unwrap();
+        service
+            .insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line pack to one".to_string();
+                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 10;
+                    r.number_of_packs = 20.0;
+                    r.sell_price_per_pack = 100.0;
+                }),
+            )
+            .unwrap();
 
-//         assert_eq!(
-//             inbound_line,
-//             inline_edit(&inbound_line, |mut u| {
-//                 u.id = "new invoice line pack to one".to_string();
-//                 u.item_link_id = mock_item_a().id.clone();
-//                 u.pack_size = 1;
-//                 u.number_of_packs = 200.0;
-//                 u.sell_price_per_pack = 10.0;
-//                 u
-//             })
-//         );
-//     }
-// }
+        let inbound_line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("new invoice line pack to one")
+            .unwrap();
+
+        assert_eq!(
+            inbound_line,
+            inline_edit(&inbound_line, |mut u| {
+                u.id = "new invoice line pack to one".to_string();
+                u.item_link_id = mock_item_a().id.clone();
+                u.pack_size = 1;
+                u.number_of_packs = 200.0;
+                u.sell_price_per_pack = 10.0;
+                u
+            })
+        );
+    }
+}
