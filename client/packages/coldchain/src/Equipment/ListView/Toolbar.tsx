@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
   FilterMenu,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
+import { useAssets } from '../api';
 
 type ReferenceData = {
   id: string;
@@ -26,6 +30,7 @@ export const Toolbar = () => {
   });
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
+  const onDelete = useAssets.document.deleteAssets();
 
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
@@ -54,6 +59,7 @@ export const Toolbar = () => {
         flex: 1,
         justifyContent: 'space-between',
         display: 'flex',
+        alignItems: 'flex-end',
       }}
     >
       <Box display="flex" gap={1}>
@@ -101,6 +107,11 @@ export const Toolbar = () => {
           ]}
         />
       </Box>
+      <DropdownMenu label={t('label.actions')}>
+        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+          {t('button.delete-lines')}
+        </DropdownMenuItem>
+      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

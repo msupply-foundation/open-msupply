@@ -68,6 +68,7 @@ const AssetListComponent: FC = () => {
         label: 'label.installation-date',
         formatter: dateString => localisedDate(String(dateString)),
       },
+      'selection',
     ],
     {
       sortBy,

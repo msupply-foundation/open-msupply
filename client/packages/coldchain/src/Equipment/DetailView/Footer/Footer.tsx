@@ -6,6 +6,7 @@ import {
   AppFooterPortal,
   XCircleIcon,
   useBreadcrumbs,
+  DeleteIcon,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../../api';
@@ -14,6 +15,7 @@ export const FooterComponent: FC = () => {
   const t = useTranslation('coldchain');
   const { navigateUpOne } = useBreadcrumbs();
   const { data } = useAssets.document.get();
+  const onDelete = useAssets.document.delete(data?.id || '');
 
   return (
     <AppFooterPortal
@@ -34,6 +36,14 @@ export const FooterComponent: FC = () => {
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigateUpOne()}
+              />
+              <ButtonWithIcon
+                shrinkThreshold="lg"
+                Icon={<DeleteIcon />}
+                label={t('button.delete')}
+                color="error"
+                sx={{ fontSize: '12px' }}
+                onClick={onDelete}
               />
             </Box>
           </Box>
