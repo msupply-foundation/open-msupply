@@ -1,7 +1,6 @@
 use crate::{service_provider::ServiceContext, ListError, ListResult};
-use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError, StockLineRow,
-};
+use chrono::NaiveDate;
+use repository::{EqualFilter, InvoiceLineFilter, InvoiceLineRepository, ItemRow, RepositoryError};
 use util::uuid::uuid;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -10,9 +9,12 @@ pub struct InboundReturnLine {
     pub reason_id: Option<String>,
     pub note: Option<String>,
     pub number_of_packs: f64,
-    pub stock_line_row: StockLineRow,
     pub item_row: ItemRow,
     pub packs_issued: Option<f64>,
+    pub batch: Option<String>,
+    pub pack_size: i32,
+    pub stock_line_id: Option<String>,
+    pub expiry_date: Option<NaiveDate>,
 }
 
 pub struct ExistingLinesInput {
@@ -67,20 +69,20 @@ fn generate_new_return_lines(
     )?;
 
     let new_return_lines: Vec<InboundReturnLine> = outbound_shipment_lines
-        .iter()
-        .map(|invoice_line| match &invoice_line.stock_line_option {
-            Some(stock_line_row) => Ok(InboundReturnLine {
-                id: uuid(),
-                stock_line_row: stock_line_row.clone(),
-                item_row: invoice_line.item_row.clone(),
-                packs_issued: Some(invoice_line.invoice_line_row.number_of_packs),
-                reason_id: None,
-                note: None,
-                number_of_packs: 0.0,
-            }),
-            None => Err(RepositoryError::NotFound),
+        .into_iter()
+        .map(|invoice_line| InboundReturnLine {
+            id: uuid(),
+            item_row: invoice_line.item_row,
+            packs_issued: Some(invoice_line.invoice_line_row.number_of_packs),
+            reason_id: None,
+            note: None,
+            number_of_packs: 0.0,
+            batch: None,
+            pack_size: 1,
+            stock_line_id: None,
+            expiry_date: None,
         })
-        .collect::<Result<Vec<InboundReturnLine>, RepositoryError>>()?;
+        .collect();
 
     Ok(new_return_lines)
 }
@@ -98,18 +100,23 @@ fn get_existing_return_lines(
     )?;
 
     let existing_return_lines: Vec<InboundReturnLine> = existing_invoice_lines
-        .iter()
-        .map(|invoice_line| match &invoice_line.stock_line_option {
+        .into_iter()
+        .map(|invoice_line| match invoice_line.stock_line_option {
             Some(stock_line_row) => Ok(InboundReturnLine {
-                id: invoice_line.invoice_line_row.id.clone(),
-                stock_line_row: stock_line_row.clone(),
-                item_row: invoice_line.item_row.clone(),
-                reason_id: invoice_line.invoice_line_row.return_reason_id.clone(),
-                note: invoice_line.invoice_line_row.note.clone(),
+                id: invoice_line.invoice_line_row.id,
+                reason_id: invoice_line.invoice_line_row.return_reason_id,
+                note: invoice_line.invoice_line_row.note,
                 number_of_packs: invoice_line.invoice_line_row.number_of_packs,
                 // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
                 // to store a linked invoice line of the outbound shipment against the inbound return line
                 packs_issued: None,
+
+                item_row: invoice_line.item_row,
+
+                stock_line_id: Some(stock_line_row.id),
+                batch: stock_line_row.batch,
+                pack_size: stock_line_row.pack_size,
+                expiry_date: stock_line_row.expiry_date,
             }),
             None => Err(RepositoryError::NotFound),
         })
@@ -124,20 +131,32 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
-            mock_outbound_shipment_a_invoice_lines, mock_outbound_shipment_no_stock_line,
-            MockDataInserts,
+            mock_outbound_shipment_a_invoice_lines, MockData, MockDataInserts,
         },
-        test_db::setup_all,
-        RepositoryError,
+        test_db::{setup_all, setup_all_with_data},
+        InvoiceLineRow, RepositoryError,
     };
 
     type ServiceInput = super::GenerateInboundReturnLinesInput;
 
     #[actix_rt::test]
     async fn generate_inbound_return_lines_errors() {
-        let (_, _, connection_manager, _) = setup_all(
+        fn inbound_return_line_no_stock_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "inbound_return_line_no_stock_line".to_string(),
+                item_link_id: mock_item_a().id,
+                invoice_id: mock_inbound_return_a().id,
+                stock_line_id: None,
+                ..Default::default()
+            }
+        }
+        let (_, _, connection_manager, _) = setup_all_with_data(
             "generate_inbound_return_lines_errors",
             MockDataInserts::all(),
+            MockData {
+                invoice_lines: vec![inbound_return_line_no_stock_line()],
+                ..Default::default()
+            },
         )
         .await;
 
@@ -146,7 +165,11 @@ mod test {
         let service = service_provider.invoice_service;
 
         let store_id = "store_a";
-        let outbound_shipment_line_ids = vec![mock_outbound_shipment_no_stock_line()[0].id.clone()];
+        let outbound_shipment_line_ids = vec![];
+        let existing_lines_input = ExistingLinesInput {
+            item_id: mock_item_a().id,
+            return_id: mock_inbound_return_a().id, // added return line with no stock line above
+        };
 
         assert_eq!(
             service.generate_inbound_return_lines(
@@ -154,7 +177,7 @@ mod test {
                 store_id,
                 ServiceInput {
                     outbound_shipment_line_ids,
-                    existing_lines_input: None
+                    existing_lines_input: Some(existing_lines_input)
                 },
             ),
             Err(ListError::DatabaseError(RepositoryError::NotFound))
