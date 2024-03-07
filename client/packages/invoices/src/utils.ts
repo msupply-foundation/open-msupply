@@ -211,7 +211,9 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
+export const canDeleteInvoice = (
+  invoice: OutboundRowFragment | OutboundReturnRowFragment
+): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
 
