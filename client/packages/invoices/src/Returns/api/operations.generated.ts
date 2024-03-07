@@ -48,7 +48,7 @@ export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: { __typename: 'InboundReturnLineConnector', nodes: Array<{ __typename: 'InboundReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, itemCode: string, itemName: string, packSize: number, stockLineId: string, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null }> } };
+export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: { __typename: 'GeneratedInboundReturnLineConnector', nodes: Array<{ __typename: 'GeneratedInboundReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, itemId: string, itemCode: string, itemName: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null }> } };
 
 export type OutboundReturnByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -193,11 +193,12 @@ export const GenerateOutboundReturnLinesDocument = gql`
 export const GenerateInboundReturnLinesDocument = gql`
     query generateInboundReturnLines($input: GenerateInboundReturnLinesInput!, $storeId: String!) {
   generateInboundReturnLines(input: $input, storeId: $storeId) {
-    ... on InboundReturnLineConnector {
+    ... on GeneratedInboundReturnLineConnector {
       nodes {
         batch
         expiryDate
         id
+        itemId
         itemCode
         itemName
         packSize

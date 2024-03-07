@@ -110,11 +110,12 @@ query generateInboundReturnLines(
   $storeId: String!
 ) {
   generateInboundReturnLines(input: $input, storeId: $storeId) {
-    ... on InboundReturnLineConnector {
+    ... on GeneratedInboundReturnLineConnector {
       nodes {
         batch
         expiryDate
         id
+        itemId
         itemCode
         itemName
         packSize

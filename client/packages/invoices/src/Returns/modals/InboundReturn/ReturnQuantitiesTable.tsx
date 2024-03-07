@@ -1,6 +1,6 @@
 import {
   DataTable,
-  InboundReturnLineNode,
+  GeneratedInboundReturnLineNode,
   NumberInputCell,
   useColumns,
 } from 'packages/common/src';
@@ -10,10 +10,12 @@ export const QuantityReturnedTableComponent = ({
   lines,
   updateLine,
 }: {
-  lines: InboundReturnLineNode[];
-  updateLine: (line: Partial<InboundReturnLineNode> & { id: string }) => void;
+  lines: GeneratedInboundReturnLineNode[];
+  updateLine: (
+    line: Partial<GeneratedInboundReturnLineNode> & { id: string }
+  ) => void;
 }) => {
-  const columns = useColumns<InboundReturnLineNode>(
+  const columns = useColumns<GeneratedInboundReturnLineNode>(
     [
       'itemCode',
       'itemName',
