@@ -24,8 +24,10 @@ use self::outbound_shipment::UpdateOutboundShipmentName;
 use self::outbound_shipment::UpdateOutboundShipmentNameError;
 use self::query::*;
 
-pub mod inbound_return;
 pub mod outbound_return;
+
+pub mod inbound_return;
+use self::inbound_return::*;
 
 pub mod outbound_shipment;
 use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
@@ -208,6 +210,15 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: InsertOutboundReturn,
     ) -> Result<Invoice, InsertOutboundReturnError> {
         insert_outbound_return(ctx, input)
+    }
+
+    fn generate_inbound_return_lines(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: GenerateInboundReturnLinesInput,
+    ) -> Result<ListResult<InboundReturnLine>, ListError> {
+        generate_inbound_return_lines(ctx, store_id, input)
     }
 
     fn insert_inbound_return(
