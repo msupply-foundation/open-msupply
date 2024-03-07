@@ -68,6 +68,7 @@ fn generate_line(
         number_of_packs,
         location,
         total_before_tax,
+        note,
         tax: _,
         r#type: _,
     }: InsertStockInLine,
@@ -98,8 +99,9 @@ fn generate_line(
         total_before_tax,
         total_after_tax,
         tax,
-        note: None,
+        note,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     }
 }

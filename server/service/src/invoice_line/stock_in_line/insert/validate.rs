@@ -5,7 +5,7 @@ use crate::{
         validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
     },
 };
-use repository::{InvoiceRow, InvoiceRowType, ItemRow, StorageConnection};
+use repository::{InvoiceRow, ItemRow, StorageConnection};
 
 use super::{InsertStockInLine, InsertStockInLineError};
 

@@ -24,6 +24,7 @@ pub struct InsertStockInLine {
     pub location: Option<NullableUpdate<String>>,
     pub pack_size: u32,
     pub batch: Option<String>,
+    pub note: Option<String>,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub expiry_date: Option<NaiveDate>,
