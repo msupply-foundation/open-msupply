@@ -4,7 +4,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::InboundReturnLineConnector;
+use graphql_types::types::GeneratedInboundReturnLineConnector;
 use service::auth::{Resource, ResourceAccessRequest};
 
 use service::invoice::inbound_return::{
@@ -27,7 +27,7 @@ pub struct GenerateInboundReturnLinesInput {
 
 #[derive(Union)]
 pub enum GenerateInboundReturnLinesResponse {
-    Response(InboundReturnLineConnector),
+    Response(GeneratedInboundReturnLineConnector),
 }
 
 pub fn generate_inbound_return_lines(
@@ -53,7 +53,7 @@ pub fn generate_inbound_return_lines(
         .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(GenerateInboundReturnLinesResponse::Response(
-        InboundReturnLineConnector::from_domain(return_lines),
+        GeneratedInboundReturnLineConnector::from_domain(return_lines),
     ))
 }
 
