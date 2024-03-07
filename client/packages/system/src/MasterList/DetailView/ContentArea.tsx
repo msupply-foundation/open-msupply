@@ -1,5 +1,4 @@
 import React from 'react';
-// import React from 'react';
 import { DataTable, useColumns, useTranslation, useUrlQueryParams } from '@openmsupply-client/common';
 import { useMasterList } from '../api';
 import { MasterListLineFragment } from '../api/operations.generated';
