@@ -6,7 +6,7 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::{auth::validate_auth, service_provider::ServiceContext};
+use crate::service_provider::ServiceContext;
 
 use super::insert_log::InsertAssetLog;
 
@@ -27,3 +27,10 @@ pub fn check_asset_log_exists(
 pub fn check_user_is_user(ctx: &ServiceContext, input: &InsertAssetLog) -> bool {
     return ctx.user_id == input.user_id;
 }
+
+// pub fn check_reason_matches_status(input: &InsertAssetLog) -> bool {
+//     return match input.status {
+//         None => true
+//         Some()
+//     }
+// }
