@@ -6,7 +6,7 @@ mod query {
         service_provider::ServiceProvider,
     };
     use repository::{
-        asset_log_row::Status,
+        asset_log_row::{Reason, Status},
         mock::{mock_asset_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -77,6 +77,42 @@ mod query {
                 },
             ),
             Err(InsertAssetLogError::AssetDoesNotExist)
-        )
+        );
+
+        // Insert log where status matches reason
+        let id = "test_id_3".to_string();
+        let asset_log = service
+            .insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: id.clone(),
+                    asset_id: mock_asset_a().id,
+                    user_id: mock_user_account_a().id,
+                    status: Some(Status::FunctioningButNeedsAttention),
+                    comment: None,
+                    r#type: None,
+                    reason: Some(Reason::NeedsServicing),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(asset_log.id, id);
+
+        // Insert log where status does not match reason
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: "test_id_4".to_string(),
+                    asset_id: "incorrect_asset_id".to_string(),
+                    user_id: mock_user_account_a().id,
+                    status: Some(Status::FunctioningButNeedsAttention),
+                    comment: None,
+                    r#type: None,
+                    reason: Some(Reason::Stored),
+                },
+            ),
+            Err(InsertAssetLogError::ReasonInvalidForStatus)
+        );
     }
 }
