@@ -164,15 +164,12 @@ query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   ) {
     ... on InvoiceNode {
       __typename
-      id
-      invoiceNumber
+      ...InboundReturnRow
       lines {
         nodes {
           ...InboundReturnLine
         }
       }
-      status
-      otherPartyName
       otherPartyStore {
         code
       }

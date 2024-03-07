@@ -44,7 +44,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.inboundIsDisabled();
 
   if (!rows) return null;
 
@@ -61,8 +61,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
           noDataElement={
             <NothingHere
               body={t('error.no-outbound-items')}
-              //   onCreate={isDisabled ? undefined : () => onAddItem()}
-              onCreate={() => onAddItem()}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
               buttonText={t('button.add-item')}
             />
           }

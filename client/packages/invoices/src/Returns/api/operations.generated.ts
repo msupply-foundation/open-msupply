@@ -66,7 +66,7 @@ export type InboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, invoiceNumber: number, status: Types.InvoiceNodeStatus, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
+export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -265,22 +265,20 @@ export const InboundReturnByNumberDocument = gql`
   ) {
     ... on InvoiceNode {
       __typename
-      id
-      invoiceNumber
+      ...InboundReturnRow
       lines {
         nodes {
           ...InboundReturnLine
         }
       }
-      status
-      otherPartyName
       otherPartyStore {
         code
       }
     }
   }
 }
-    ${InboundReturnLineFragmentDoc}`;
+    ${InboundReturnRowFragmentDoc}
+${InboundReturnLineFragmentDoc}`;
 export const InsertOutboundReturnDocument = gql`
     mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
   insertOutboundReturn(storeId: $storeId, input: $input) {
