@@ -36,7 +36,6 @@ const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
 
 const getEmptyAsset = () => ({
   id: FnUtils.generateUUID(),
-  name: '',
   code: '',
   catalogueItemId: '',
 });
@@ -107,7 +106,7 @@ export const CreateAssetModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!draft.catalogueItemId || !draft.name || !draft.code}
+          disabled={!draft.catalogueItemId || !draft.code}
           onClick={async () => {
             try {
               await save(draft);
@@ -170,12 +169,14 @@ export const CreateAssetModal = ({
             }
           />
           <InputRow
-            label={t('label.name')}
+            label={t('label.notes')}
             Input={
               <BasicTextInput
                 fullWidth
-                value={draft.name}
-                onChange={e => updateDraft({ name: e.target.value })}
+                value={draft.notes}
+                onChange={e => updateDraft({ notes: e.target.value })}
+                multiline
+                rows={2}
               />
             }
           />

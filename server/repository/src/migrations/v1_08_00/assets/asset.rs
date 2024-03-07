@@ -9,7 +9,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         CREATE TABLE asset (
             id TEXT NOT NULL PRIMARY KEY,
             store_id TEXT REFERENCES store (id), -- This serves as the location of the asset at least for now can be null for un-assigned assets
-            name TEXT NOT NULL,
+            notes TEXT,
             code TEXT NOT NULL,
             serial_number TEXT, 
             asset_catalogue_item_id TEXT REFERENCES asset_catalogue_item (id),

@@ -346,7 +346,7 @@ export type AssetFilterInput = {
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   installationDate?: InputMaybe<DateFilterInput>;
-  name?: InputMaybe<StringFilterInput>;
+  notes?: InputMaybe<StringFilterInput>;
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
@@ -361,7 +361,7 @@ export type AssetNode = {
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
-  name: Scalars['String']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
   store?: Maybe<StoreNode>;
@@ -371,7 +371,6 @@ export type AssetNode = {
 export enum AssetSortFieldInput {
   InstallationDate = 'installationDate',
   ModifiedDatetime = 'modifiedDatetime',
-  Name = 'name',
   ReplacementDate = 'replacementDate',
   SerialNumber = 'serialNumber'
 }
@@ -1723,7 +1722,7 @@ export type InsertAssetInput = {
   code: Scalars['String']['input'];
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
-  name: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
@@ -5732,7 +5731,7 @@ export type UpdateAssetInput = {
   code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
-  name?: InputMaybe<Scalars['String']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
   storeId?: InputMaybe<Scalars['String']['input']>;
@@ -6435,6 +6434,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetMutate = 'ASSET_MUTATE',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
