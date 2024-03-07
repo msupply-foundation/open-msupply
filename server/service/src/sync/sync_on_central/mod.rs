@@ -1,3 +1,4 @@
+use log::debug;
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter, SyncBufferRowRepository,
 };
@@ -123,7 +124,7 @@ pub async fn pull(
     .map(SyncRecordV6::from)
     .collect();
 
-    println!("Sending records as central server: {:#?}", records);
+    debug!("Sending records as central server: {:#?}", records);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -151,7 +152,7 @@ pub async fn push(
         .await
         .map_err(Error::from)?;
 
-    println!("Receiving records as central server: {:#?}", batch);
+    debug!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
         records,
@@ -164,8 +165,7 @@ pub async fn push(
 
     let records_in_this_batch = records.len() as u64;
     for SyncRecordV6 { record, .. } in records {
-        // TODO NO unwrap
-        let buffer_row = record.to_buffer_row().unwrap();
+        let buffer_row = record.to_buffer_row()?;
 
         repo.upsert_one(&buffer_row)?;
     }

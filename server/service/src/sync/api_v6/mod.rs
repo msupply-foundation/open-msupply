@@ -17,6 +17,7 @@ use super::{
     },
     translations::PushSyncRecord,
 };
+use crate::sync::api::ParsingSyncRecordError;
 
 #[derive(Deserialize, Debug, Error, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,6 +32,8 @@ pub enum SyncParsedErrorV6 {
     OtherServerError(String),
     #[error("Not a central server")]
     NotACentralServer,
+    #[error("Could not parse record to sync buffer row: {0}")]
+    ParsingSyncRecordError(String),
 }
 
 impl From<SyncApiError> for SyncParsedErrorV6 {
@@ -50,6 +53,12 @@ impl From<SyncApiError> for SyncParsedErrorV6 {
 impl From<RepositoryError> for SyncParsedErrorV6 {
     fn from(from: RepositoryError) -> Self {
         SyncParsedErrorV6::OtherServerError(format_error(&from))
+    }
+}
+
+impl From<ParsingSyncRecordError> for SyncParsedErrorV6 {
+    fn from(from: ParsingSyncRecordError) -> Self {
+        SyncParsedErrorV6::ParsingSyncRecordError(format_error(&from))
     }
 }
 
