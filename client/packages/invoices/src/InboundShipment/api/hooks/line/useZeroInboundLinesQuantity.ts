@@ -25,8 +25,6 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     }) || [];
 
-  const notAllLinesSelected = selectedRows.length !== lines?.length;
-
   const onZeroQuantities = async () => {
     await mutateAsync(selectedRows).catch(err => {
       throw err;
@@ -36,7 +34,7 @@ export const useZeroInboundLinesQuantity = (): (() => void) => {
   const confirmAndZeroLines = useDeleteConfirmation({
     selectedRows,
     deleteAction: onZeroQuantities,
-    canDelete: !isDisabled && !notAllLinesSelected,
+    canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-zero-shipment-lines', {
         count: selectedRows.length,
