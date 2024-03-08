@@ -101,11 +101,13 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_item_a, mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a,
-            MockDataInserts,
+            mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
+            mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
+            mock_user_account_a, MockData, MockDataInserts,
         },
-        test_db::setup_all,
-        InvoiceLineRowRepository, StorePreferenceRow, StorePreferenceRowRepository,
+        test_db::{setup_all, setup_all_with_data},
+        InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StorePreferenceRow,
+        StorePreferenceRowRepository,
     };
     use util::{inline_edit, inline_init};
 
@@ -121,11 +123,28 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_stock_in_line_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_stock_in_line_errors", MockDataInserts::all()).await;
+        fn verified_inbound_return() -> InvoiceRow {
+            InvoiceRow {
+                id: "verified_inbound_return".to_string(),
+                status: InvoiceRowStatus::Verified,
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_store_b().id,
+                r#type: InvoiceRowType::InboundReturn,
+                ..Default::default()
+            }
+        }
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_errors",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![verified_inbound_return()],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let mut context = service_provider
+        let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
@@ -134,11 +153,66 @@ mod test {
             insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
-                    r.id = mock_stock_in_a_invoice_lines()[0].id.clone();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
+                    r.id = mock_inbound_return_a_invoice_line_a().id;
                 }),
             ),
             Err(ServiceError::LineAlreadyExists)
+        );
+
+        // PackSizeBelowOne
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.pack_size = 0;
+                }),
+            ),
+            Err(ServiceError::PackSizeBelowOne)
+        );
+
+        // NumberOfPacksBelowOne
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.pack_size = 1;
+                    r.number_of_packs = 0.0;
+                }),
+            ),
+            Err(ServiceError::NumberOfPacksBelowOne)
+        );
+
+        // ItemNotFound
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                    r.item_id = "invalid".to_string();
+                }),
+            ),
+            Err(ServiceError::ItemNotFound)
+        );
+
+        // LocationDoesNotExist
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                inline_init(|r: &mut InsertStockInLine| {
+                    r.id = "new invoice line id".to_string();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
+                    r.item_id = mock_item_a().id;
+                    r.location = Some(NullableUpdate {
+                        value: Some("invalid".to_string()),
+                    });
+                }),
+            ),
+            Err(ServiceError::LocationDoesNotExist)
         );
 
         // InvoiceDoesNotExist
@@ -147,110 +221,59 @@ mod test {
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.invoice_id = "new invoice id".to_string();
-                    r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
                     r.number_of_packs = 1.0;
+                    r.item_id = mock_item_a().id;
+                    r.invoice_id = "new invoice id".to_string();
                 }),
             ),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
-        // NotAnStockIn
+        // NotAStockIn
         assert_eq!(
-            service.insert_stock_in_line(
+            insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
+                    r.item_id = mock_item_a().id.clone();
+                    r.pack_size = 1;
+                    r.number_of_packs = 1.0;
                     r.invoice_id = mock_outbound_shipment_e().id;
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
-                    r.number_of_packs = 1.0;
                 }),
             ),
-            Err(ServiceError::NotAnStockIn)
+            Err(ServiceError::NotAStockIn)
         );
 
-        // LocationDoesNotExist
+        // CannotEditFinalised
         assert_eq!(
-            service.insert_stock_in_line(
+            insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-                    r.location = Some(NullableUpdate {
-                        value: Some("invalid".to_string()),
-                    });
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
                     r.number_of_packs = 1.0;
+                    r.invoice_id = verified_inbound_return().id; // VERIFIED
                 }),
             ),
-            Err(ServiceError::LocationDoesNotExist)
-        );
-
-        // ItemNotFound
-        assert_eq!(
-            service.insert_stock_in_line(
-                &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-                    r.item_id = "invalid".to_string();
-                    r.pack_size = 1;
-                    r.number_of_packs = 1.0;
-                }),
-            ),
-            Err(ServiceError::ItemNotFound)
-        );
-
-        // PackSizeBelowOne
-        assert_eq!(
-            service.insert_stock_in_line(
-                &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 0;
-                    r.number_of_packs = 1.0;
-                }),
-            ),
-            Err(ServiceError::PackSizeBelowOne)
-        );
-
-        // NumberOfPacksBelowOne
-        assert_eq!(
-            service.insert_stock_in_line(
-                &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
-                    r.number_of_packs = 0.0;
-                }),
-            ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::CannotEditFinalised)
         );
 
         // NotThisStoreInvoice
-        context.store_id = mock_store_b().id;
         assert_eq!(
-            service.insert_stock_in_line(
+            insert_stock_in_line(
                 &context,
                 inline_init(|r: &mut InsertStockInLine| {
                     r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_stock_in_c().id.clone();
-                    r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
                     r.number_of_packs = 1.0;
+                    r.item_id = mock_item_a().id;
+                    r.invoice_id = mock_inbound_return_a().id; // Store B
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
-
-        //TODO NewlyCreatedLineDoesNotExist
     }
 
     #[actix_rt::test]
@@ -260,32 +283,30 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_a().id, mock_user_account_a().id)
+            .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
-        let service = service_provider.invoice_line_service;
 
-        service
-            .insert_stock_in_line(
-                &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new invoice line id".to_string();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 1;
-                    r.number_of_packs = 1.0;
-                }),
-            )
-            .unwrap();
+        insert_stock_in_line(
+            &context,
+            inline_init(|r: &mut InsertStockInLine| {
+                r.id = "new_invoice_line_id".to_string();
+                r.invoice_id = mock_inbound_return_a().id;
+                r.item_id = mock_item_a().id;
+                r.pack_size = 1;
+                r.number_of_packs = 1.0;
+            }),
+        )
+        .unwrap();
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id("new invoice line id")
+            .find_one_by_id("new_invoice_line_id")
             .unwrap();
 
         assert_eq!(
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
-                u.id = "new invoice line id".to_string();
-                u.item_link_id = mock_item_a().id.clone();
+                u.id = "new_invoice_line_id".to_string();
+                u.item_link_id = mock_item_a().id;
                 u.pack_size = 1;
                 u.number_of_packs = 1.0;
                 u
@@ -294,7 +315,7 @@ mod test {
 
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {
-            id: mock_store_a().id.clone(),
+            id: mock_store_b().id,
             pack_to_one: true,
             ..StorePreferenceRow::default()
         };
@@ -302,29 +323,28 @@ mod test {
             .upsert_one(&pack_to_one)
             .unwrap();
 
-        service
-            .insert_stock_in_line(
-                &context,
-                inline_init(|r: &mut InsertStockInLine| {
-                    r.id = "new invoice line pack to one".to_string();
-                    r.invoice_id = mock_stock_in_c_invoice_lines()[0].invoice_id.clone();
-                    r.item_id = mock_item_a().id.clone();
-                    r.pack_size = 10;
-                    r.number_of_packs = 20.0;
-                    r.sell_price_per_pack = 100.0;
-                }),
-            )
-            .unwrap();
+        insert_stock_in_line(
+            &context,
+            inline_init(|r: &mut InsertStockInLine| {
+                r.id = "new_invoice_line_pack_to_one".to_string();
+                r.invoice_id = mock_inbound_return_a().id;
+                r.item_id = mock_item_a().id;
+                r.pack_size = 10;
+                r.number_of_packs = 20.0;
+                r.sell_price_per_pack = 100.0;
+            }),
+        )
+        .unwrap();
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id("new invoice line pack to one")
+            .find_one_by_id("new_invoice_line_pack_to_one")
             .unwrap();
 
         assert_eq!(
             inbound_line,
             inline_edit(&inbound_line, |mut u| {
-                u.id = "new invoice line pack to one".to_string();
-                u.item_link_id = mock_item_a().id.clone();
+                u.id = "new_invoice_line_pack_to_one".to_string();
+                u.item_link_id = mock_item_a().id;
                 u.pack_size = 1;
                 u.number_of_packs = 200.0;
                 u.sell_price_per_pack = 10.0;
