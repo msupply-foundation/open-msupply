@@ -27,7 +27,6 @@ export const useInbound = {
     deleteSelected: Lines.useDeleteSelectedLines,
     save: Lines.useSaveInboundLines,
 
-    zeroQuantity: Lines.useZeroInboundLineQuantity,
     zeroQuantities: Lines.useZeroInboundLinesQuantity,
   },
   utils: {
