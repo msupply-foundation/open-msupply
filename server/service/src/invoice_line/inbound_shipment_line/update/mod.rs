@@ -1,12 +1,9 @@
 use crate::{
-    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
-    service_provider::ServiceContext,
-    NullableUpdate, WithDBError,
+    activity_log::activity_log_entry, invoice_line::{query::get_invoice_line, ShipmentTaxUpdate}, service_provider::ServiceContext, NullableUpdate, WithDBError
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    ActivityLogRowRepository, ActivityLogType, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository
 };
 
 mod generate;
@@ -42,7 +39,7 @@ pub fn update_inbound_shipment_line(
             let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(connection, &ctx.user_id, input, line, item, invoice)?;
+                generate(connection, &ctx.user_id, input.clone(), line.clone(), item, invoice)?;
 
             let stock_line_repository = StockLineRowRepository::new(&connection);
 
@@ -58,6 +55,19 @@ pub fn update_inbound_shipment_line(
 
             if let Some(invoice_row) = invoice_row_option {
                 InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+            }
+
+            if let Some(number_of_packs) = input.number_of_packs {
+                if number_of_packs == 0.0 {
+                    activity_log_entry(
+                        ctx,
+                        ActivityLogType::QuantityForLineHasBeenSetTo0,
+                        Some(updated_line.id.clone()),
+                        Some(line.invoice_line_row.number_of_packs.to_string()),
+                        Some(number_of_packs.to_string()),
+                    )?;
+                }
+
             }
 
             get_invoice_line(ctx, &updated_line.id)
