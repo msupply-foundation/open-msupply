@@ -44,16 +44,16 @@ pub fn update_inbound_shipment_line(
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
                 generate(connection, &ctx.user_id, input, line, item, invoice)?;
 
-            let stock_line_respository = StockLineRowRepository::new(&connection);
+            let stock_line_repository = StockLineRowRepository::new(&connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
-                stock_line_respository.upsert_one(&upsert_batch)?;
+                stock_line_repository.upsert_one(&upsert_batch)?;
             }
 
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
 
             if let Some(id) = delete_batch_id_option {
-                stock_line_respository.delete(&id)?;
+                stock_line_repository.delete(&id)?;
             }
 
             if let Some(invoice_row) = invoice_row_option {

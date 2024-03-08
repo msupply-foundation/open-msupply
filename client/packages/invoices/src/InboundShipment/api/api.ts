@@ -13,7 +13,6 @@ import {
   Formatter,
   UpdateInboundShipmentStatusInput,
   setNullableInput,
-  ZeroInboundShipmentLineQuantityInput,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from './../../types';
 import { isA } from '../../utils';
@@ -118,11 +117,6 @@ const inboundParsers = {
     location: setNullableInput('id', line.location),
   }),
   toDeleteLine: (line: { id: string }): DeleteInboundShipmentLineInput => {
-    return { id: line.id };
-  },
-  toZeroLineQuantity: (line: {
-    id: string;
-  }): ZeroInboundShipmentLineQuantityInput => {
     return { id: line.id };
   },
   toInsertServiceCharge: (line: DraftInboundLine) => ({
@@ -250,14 +244,6 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
       },
     });
   },
-  zeroLinesQuantity: async (lines: { id: string }[]) => {
-    return sdk.zeroLinesQuantity({
-      storeId,
-      input: {
-        zeroLinesQuantity: lines.map(inboundParsers.toZeroLineQuantity),
-      },
-    });
-  },
   updateServiceTax: async ({
     lines,
     taxPercentage,
@@ -317,15 +303,6 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
             numberOfPacks === 0
         )
         .map(inboundParsers.toDeleteLine),
-      zeroLinesQuantity: draftInboundLine
-        .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks }) =>
-            !isCreated &&
-            isUpdated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
-        )
-        .map(inboundParsers.toZeroLineQuantity),
       insertInboundShipmentServiceLines: draftInboundLine
         .filter(
           ({ type, isCreated, isDeleted }) =>

@@ -376,45 +376,6 @@ mutation deleteInboundShipmentLines(
   }
 }
 
-mutation zeroLinesQuantity(
-  $storeId: String!
-  $input: BatchInboundShipmentInput!
-) {
-  batchInboundShipment(storeId: $storeId, input: $input) {
-    zeroLinesQuantity {
-        id
-      response {
-        ... on ZeroInboundShipmentLineQuantityError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-          }
-        }
-        ... on InvoiceLineNode {
-          id
-        }
-      }
-    }
-  }
-}
-
 mutation upsertInboundShipment(
   $storeId: String!
   $input: BatchInboundShipmentInput!
@@ -555,37 +516,6 @@ mutation upsertInboundShipment(
             ... on NotAnInboundShipment {
               __typename
               description
-            }
-          }
-        }
-        ... on InvoiceLineNode {
-          id
-        }
-      }
-    }
-    zeroLinesQuantity {
-      id
-      response {
-        ... on ZeroInboundShipmentLineQuantityError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
             }
           }
         }

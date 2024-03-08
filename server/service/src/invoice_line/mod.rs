@@ -122,14 +122,6 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         delete_inbound_shipment_service_line(ctx, input)
     }
 
-    fn zero_inbound_shipment_line_quantity(
-        &self,
-        ctx: &ServiceContext,
-        input: ZeroInboundShipmentLineQuantity,
-    ) -> Result<InvoiceLine, ZeroInboundShipmentLineQuantityError> {
-        zero_inbound_shipment_line_quantity(ctx, input)
-    }
-
     // Outbound
     fn insert_outbound_shipment_service_line(
         &self,

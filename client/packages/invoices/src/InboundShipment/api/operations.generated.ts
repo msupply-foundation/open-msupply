@@ -71,21 +71,13 @@ export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
 
 export type DeleteInboundShipmentLinesMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
-export type ZeroLinesQuantityMutationVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  input: Types.BatchInboundShipmentInput;
-}>;
-
-
-export type ZeroLinesQuantityMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', zeroLinesQuantity?: Array<{ __typename: 'ZeroInboundShipmentLineQuantityResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'ZeroInboundShipmentLineQuantityError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null } };
-
 export type UpsertInboundShipmentMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.BatchInboundShipmentInput;
 }>;
 
 
-export type UpsertInboundShipmentMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotIssueInForeignCurrency', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipments?: Array<{ __typename: 'InsertInboundShipmentResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } }> | null, deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, updateInboundShipmentServiceLines?: Array<{ __typename: 'UpdateInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, zeroLinesQuantity?: Array<{ __typename: 'ZeroInboundShipmentLineQuantityResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'ZeroInboundShipmentLineQuantityError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipmentServiceLines?: Array<{ __typename: 'InsertInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteInboundShipmentServiceLines?: Array<{ __typename: 'DeleteInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
+export type UpsertInboundShipmentMutation = { __typename: 'Mutations', batchInboundShipment: { __typename: 'BatchInboundShipmentResponse', updateInboundShipments?: Array<{ __typename: 'UpdateInboundShipmentResponseWithId', id: string, response: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } | { __typename: 'UpdateInboundShipmentError', error: { __typename: 'CannotChangeStatusOfInvoiceOnHold', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'CannotIssueInForeignCurrency', description: string } | { __typename: 'CannotReverseInvoiceStatus', description: string } | { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipments?: Array<{ __typename: 'InsertInboundShipmentResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } }> | null, deleteInboundShipments?: Array<{ __typename: 'DeleteInboundShipmentResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentError', error: { __typename: 'CannotDeleteInvoiceWithLines', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, updateInboundShipmentServiceLines?: Array<{ __typename: 'UpdateInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } }> | null, updateInboundShipmentLines?: Array<{ __typename: 'UpdateInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InvoiceLineNode', id: string } | { __typename: 'UpdateInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'NotAnInboundShipment', description: string } | { __typename: 'RecordNotFound', description: string } } }> | null, insertInboundShipmentServiceLines?: Array<{ __typename: 'InsertInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, insertInboundShipmentLines?: Array<{ __typename: 'InsertInboundShipmentLineResponseWithId', id: string, response: { __typename: 'InsertInboundShipmentLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } } | { __typename: 'InvoiceLineNode', id: string } }> | null, deleteInboundShipmentServiceLines?: Array<{ __typename: 'DeleteInboundShipmentServiceLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentServiceLineError', error: { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null, deleteInboundShipmentLines?: Array<{ __typename: 'DeleteInboundShipmentLineResponseWithId', id: string, response: { __typename: 'DeleteInboundShipmentLineError', error: { __typename: 'BatchIsReserved', description: string } | { __typename: 'CannotEditInvoice', description: string } | { __typename: 'ForeignKeyError', description: string, key: Types.ForeignKey } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } }> | null } };
 
 export type AddToInboundShipmentFromMasterListMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -449,43 +441,6 @@ export const DeleteInboundShipmentLinesDocument = gql`
   }
 }
     `;
-export const ZeroLinesQuantityDocument = gql`
-    mutation zeroLinesQuantity($storeId: String!, $input: BatchInboundShipmentInput!) {
-  batchInboundShipment(storeId: $storeId, input: $input) {
-    zeroLinesQuantity {
-      id
-      response {
-        ... on ZeroInboundShipmentLineQuantityError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
-            }
-          }
-        }
-        ... on InvoiceLineNode {
-          id
-        }
-      }
-    }
-  }
-}
-    `;
 export const UpsertInboundShipmentDocument = gql`
     mutation upsertInboundShipment($storeId: String!, $input: BatchInboundShipmentInput!) {
   batchInboundShipment(storeId: $storeId, input: $input) {
@@ -624,37 +579,6 @@ export const UpsertInboundShipmentDocument = gql`
             ... on NotAnInboundShipment {
               __typename
               description
-            }
-          }
-        }
-        ... on InvoiceLineNode {
-          id
-        }
-      }
-    }
-    zeroLinesQuantity {
-      id
-      response {
-        ... on ZeroInboundShipmentLineQuantityError {
-          __typename
-          error {
-            description
-            ... on RecordNotFound {
-              __typename
-              description
-            }
-            ... on BatchIsReserved {
-              __typename
-              description
-            }
-            ... on CannotEditInvoice {
-              __typename
-              description
-            }
-            ... on ForeignKeyError {
-              __typename
-              description
-              key
             }
           }
         }
@@ -830,9 +754,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteInboundShipmentLines(variables: DeleteInboundShipmentLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundShipmentLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundShipmentLinesMutation>(DeleteInboundShipmentLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundShipmentLines', 'mutation');
     },
-    zeroLinesQuantity(variables: ZeroLinesQuantityMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ZeroLinesQuantityMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ZeroLinesQuantityMutation>(ZeroLinesQuantityDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'zeroLinesQuantity', 'mutation');
-    },
     upsertInboundShipment(variables: UpsertInboundShipmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpsertInboundShipmentMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpsertInboundShipmentMutation>(UpsertInboundShipmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'upsertInboundShipment', 'mutation');
     },
@@ -959,23 +880,6 @@ export const mockInsertInboundShipmentMutation = (resolver: ResponseResolver<Gra
 export const mockDeleteInboundShipmentLinesMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundShipmentLinesMutationVariables>, GraphQLContext<DeleteInboundShipmentLinesMutation>, any>) =>
   graphql.mutation<DeleteInboundShipmentLinesMutation, DeleteInboundShipmentLinesMutationVariables>(
     'deleteInboundShipmentLines',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockZeroLinesQuantityMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
- *   return res(
- *     ctx.data({ batchInboundShipment })
- *   )
- * })
- */
-export const mockZeroLinesQuantityMutation = (resolver: ResponseResolver<GraphQLRequest<ZeroLinesQuantityMutationVariables>, GraphQLContext<ZeroLinesQuantityMutation>, any>) =>
-  graphql.mutation<ZeroLinesQuantityMutation, ZeroLinesQuantityMutationVariables>(
-    'zeroLinesQuantity',
     resolver
   )
 

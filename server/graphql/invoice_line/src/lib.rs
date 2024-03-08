@@ -151,18 +151,6 @@ impl InvoiceLineMutations {
         inbound_shipment_line::line::delete::delete(ctx, &store_id, input)
     }
 
-    async fn zero_line_quantity(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: inbound_shipment_line::line::zero_line_quantity::ZeroInboundShipmentLineQuantityInput,
-    ) -> Result<
-        inbound_shipment_line::line::zero_line_quantity::ZeroInboundShipmentLineQuantityResponse,
-    > {
-        inbound_shipment_line::line::zero_line_quantity::zero_inbound_shipment_line_quantity(
-            ctx, &store_id, input,
-        )
-    }
 
     async fn insert_inbound_shipment_service_line(
         &self,
