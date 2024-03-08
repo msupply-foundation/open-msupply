@@ -17,7 +17,7 @@ export const AppBarButtons: FC<{
   disabled: boolean;
   store?: UserStoreNodeFragment;
 }> = ({ disabled, store }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { print, isPrinting } = useReport.utils.print();
   const patientId = usePatient.utils.id();
   const printReport = (

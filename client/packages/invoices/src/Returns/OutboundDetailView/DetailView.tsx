@@ -14,8 +14,7 @@ import {
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
-// import { Toolbar } from './Toolbar';
-// import { Footer } from './Footer';
+import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 // import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
@@ -23,7 +22,7 @@ import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
 import { OutboundReturnEditModal } from '../modals';
 
-export const DetailView: FC = () => {
+export const OutboundReturnsDetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
   const { onOpen, onClose, isOpen, entity: itemId } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.outboundReturn();
@@ -87,7 +86,7 @@ export const DetailView: FC = () => {
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
-          {/* <Footer /> */}
+          <Footer />
           {/* <SidePanel /> */}
         </TableProvider>
       ) : (
