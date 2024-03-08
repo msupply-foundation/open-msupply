@@ -1,4 +1,4 @@
-import { useTableStore } from 'packages/common/src';
+import { useTableStore } from '@openmsupply-client/common';
 import { useInboundRows } from '../line/useInboundRows';
 import { isString } from 'lodash';
 

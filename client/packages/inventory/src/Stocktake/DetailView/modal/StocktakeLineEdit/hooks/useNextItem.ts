@@ -1,5 +1,5 @@
 import { ItemRowFragment } from '@openmsupply-client/system';
-import { StocktakeSummaryItem } from 'packages/inventory/src/types';
+import { StocktakeSummaryItem } from '../../../../../types';
 
 export const useNextItem = (
   items: StocktakeSummaryItem[],

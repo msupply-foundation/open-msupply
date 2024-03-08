@@ -5,7 +5,7 @@ import {
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { useReturnsApi } from '../utils/useReturnsApi';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const useInsertOutboundReturn = () => {
   const queryClient = useQueryClient();

@@ -22,7 +22,7 @@ pub fn delete_outbound_returns(
     ids: Vec<String>,
 ) -> Result<Vec<String>, OutError> {
     ctx.connection
-        .transaction_sync(|connection| -> Result<(), OutError> {
+        .transaction_sync(|connection| {
             for id in &ids {
                 validate(&id, &ctx.store_id, &connection)?;
 

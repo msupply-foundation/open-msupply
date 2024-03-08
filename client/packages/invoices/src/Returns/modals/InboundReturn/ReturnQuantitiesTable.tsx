@@ -3,7 +3,7 @@ import {
   InboundReturnLine,
   NumberInputCell,
   useColumns,
-} from 'packages/common/src';
+} from '@openmsupply-client/common';
 import React from 'react';
 
 export const QuantityReturnedTableComponent = ({

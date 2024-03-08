@@ -3,8 +3,8 @@ import {
   DataTable,
   TextInputCell,
   useColumns,
-} from 'packages/common/src';
-import { ReturnReasonSearchInput } from 'packages/system/src';
+} from '@openmsupply-client/common';
+import { ReturnReasonSearchInput } from '@openmsupply-client/system';
 import React from 'react';
 
 interface ReturnWithReason {
