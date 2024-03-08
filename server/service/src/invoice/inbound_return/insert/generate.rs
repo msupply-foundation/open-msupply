@@ -64,8 +64,15 @@ pub fn generate(
         .filter(|line| line.number_of_packs > 0.0)
         .collect();
 
+    let update_line_return_reasons = lines_with_packs
+        .iter()
+        .map(|line| UpdateLineReturnReason {
+            line_id: line.id.clone(),
+            reason_id: line.reason_id.clone(),
+        })
+        .collect();
+
     let stock_in_lines = lines_with_packs
-        .clone()
         .into_iter()
         .map(
             |InsertInboundReturnLine {
@@ -95,14 +102,6 @@ pub fn generate(
                 r#type: StockInType::InboundReturn,
             },
         )
-        .collect();
-
-    let update_line_return_reasons = lines_with_packs
-        .into_iter()
-        .map(|line| UpdateLineReturnReason {
-            line_id: line.id,
-            reason_id: line.reason_id,
-        })
         .collect();
 
     Ok((inbound_return, stock_in_lines, update_line_return_reasons))
