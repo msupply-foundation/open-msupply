@@ -19,7 +19,7 @@ pub fn check_line_does_not_exist(
 
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1.0 {
+        if number_of_packs < 0.0 {
             return false;
         }
     }

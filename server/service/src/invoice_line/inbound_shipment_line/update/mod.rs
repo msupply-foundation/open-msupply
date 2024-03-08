@@ -1,9 +1,13 @@
 use crate::{
-    activity_log::activity_log_entry, invoice_line::{query::get_invoice_line, ShipmentTaxUpdate}, service_provider::ServiceContext, NullableUpdate, WithDBError
+    activity_log::activity_log_entry,
+    invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
+    service_provider::ServiceContext,
+    NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
-    ActivityLogRowRepository, ActivityLogType, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError, StockLineRowRepository
+    ActivityLogType, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    StockLineRowRepository,
 };
 
 mod generate;
@@ -39,7 +43,14 @@ pub fn update_inbound_shipment_line(
             let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(connection, &ctx.user_id, input.clone(), line.clone(), item, invoice)?;
+                generate(
+                    connection,
+                    &ctx.user_id,
+                    input.clone(),
+                    line.clone(),
+                    item,
+                    invoice,
+                )?;
 
             let stock_line_repository = StockLineRowRepository::new(&connection);
 
@@ -67,7 +78,6 @@ pub fn update_inbound_shipment_line(
                         Some(number_of_packs.to_string()),
                     )?;
                 }
-
             }
 
             get_invoice_line(ctx, &updated_line.id)
@@ -90,7 +100,7 @@ pub enum UpdateInboundShipmentLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
@@ -210,10 +220,10 @@ mod test {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(0.0);
+                    r.number_of_packs = Some(-1.0);
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // CannotEditFinalised
