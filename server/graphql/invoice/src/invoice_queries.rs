@@ -208,6 +208,19 @@ fn inbound_return(ctx: &Context<'_>, r#type: &InvoiceNodeType) -> Option<Invoice
             ..Default::default()
         })
         .unwrap();
+    InvoiceLineRowRepository::new(&context.connection)
+        .upsert_one(&InvoiceLineRow {
+            id: "inbound_return_line2".to_string(),
+            invoice_id: "inbound_return_1".to_string(),
+            item_link_id: "E43D125F51DE4355AE1233DA449ED08A".to_string(),
+            item_name: "Amoxicillin 250mg tabs".to_string(),
+            item_code: "030453".to_string(),
+            stock_line_id: Some("050e7e63-d63d-4e9e-b4b1-dff288e6bd40".to_string()),
+            pack_size: 20,
+            number_of_packs: 1000.0,
+            ..Default::default()
+        })
+        .unwrap();
 
     Some(
         InvoiceRepository::new(&context.connection)
@@ -223,6 +236,11 @@ pub fn get_invoice_by_number(
     invoice_number: u32,
     r#type: InvoiceNodeType,
 ) -> Result<InvoiceResponse> {
+    if r#type == InvoiceNodeType::InboundReturn {
+        if let Some(invoice) = inbound_return(ctx, &r#type) {
+            return Ok(InvoiceResponse::Response(InvoiceNode::from_domain(invoice)));
+        }
+    }
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {

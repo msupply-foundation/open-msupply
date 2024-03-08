@@ -6,7 +6,6 @@ fragment OutboundReturnRow on InvoiceNode {
   invoiceNumber
   colour
   createdDatetime
-  createdDatetime
   pickedDatetime
   shippedDatetime
   deliveredDatetime
@@ -24,6 +23,31 @@ fragment InboundReturnRow on InvoiceNode {
   deliveredDatetime
 }
 
+fragment InboundReturn on InvoiceNode {
+  __typename
+  id
+  status
+  invoiceNumber
+  colour
+
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
+
+  otherPartyName
+  otherPartyStore {
+    code
+  }
+
+  user {
+    __typename
+    username
+    email
+  }
+}
+
 fragment OutboundReturnDetailRow on InvoiceLineNode {
   id
   itemCode
@@ -33,6 +57,17 @@ fragment OutboundReturnDetailRow on InvoiceLineNode {
   numberOfPacks
   packSize
   sellPricePerPack
+}
+
+fragment InboundReturnLine on InvoiceLineNode {
+  id
+  itemId
+  itemCode
+  itemName
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
 }
 
 query outboundReturns(
@@ -142,6 +177,23 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
         code
       }
       ...OutboundReturnRow
+    }
+  }
+}
+query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: INBOUND_RETURN
+  ) {
+    ... on InvoiceNode {
+      __typename
+      ...InboundReturn
+      lines {
+        nodes {
+          ...InboundReturnLine
+        }
+      }
     }
   }
 }
