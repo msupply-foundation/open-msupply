@@ -287,11 +287,8 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks }) =>
-            !isCreated &&
-            isUpdated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
+          ({ type, isCreated, isUpdated }) =>
+            !isCreated && isUpdated && type === InvoiceLineNodeType.StockIn
         )
         .map(inboundParsers.toUpdateLine),
       deleteInboundShipmentLines: draftInboundLine
