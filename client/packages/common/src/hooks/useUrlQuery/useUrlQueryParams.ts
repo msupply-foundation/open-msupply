@@ -150,8 +150,8 @@ export const useUrlQueryParams = ({
     first: rowsPerPage,
     sortBy: {
       key: urlQuery['sort'] ?? initialSort?.key ?? '',
-      direction: urlQuery['dir'] ?? initialSort?.dir ?? 'asc',
-      isDesc: (urlQuery['dir'] ?? initialSort?.dir) === 'desc',
+      direction: urlQuery['dir'] ?? 'asc',
+      isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
   };
