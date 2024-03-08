@@ -4,6 +4,7 @@ use actix_web::{
     Responder,
 };
 
+use crate::central_server_only;
 use service::{
     service_provider::ServiceProvider,
     sync::{
@@ -13,10 +14,14 @@ use service::{
 };
 
 pub fn config_sync_on_central(cfg: &mut web::ServiceConfig) {
-    cfg.service(pull);
+    cfg.service(
+        web::scope("central")
+            .wrap(central_server_only())
+            .service(pull),
+    );
 }
 
-#[post("central/sync/pull")]
+#[post("/sync/pull")]
 async fn pull(
     request: Json<SyncRequestV6>,
     service_provider: Data<ServiceProvider>,
