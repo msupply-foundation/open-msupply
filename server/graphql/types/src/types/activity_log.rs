@@ -53,7 +53,7 @@ pub enum ActivityLogNodeType {
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
     SensorLocationChanged,
-    ZeroQuantitiesForInvoiceCreatedBeforeStore,
+    QuantityForLineHasBeenSetTo0,
 }
 
 #[Object]
@@ -162,8 +162,8 @@ impl ActivityLogNodeType {
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
             from::SensorLocationChanged => to::SensorLocationChanged,
-            from::ZeroQuantitiesForInvoiceCreatedBeforeStore => {
-                to::ZeroQuantitiesForInvoiceCreatedBeforeStore
+            from::QuantityForLineHasBeenSetTo0 => {
+                to::QuantityForLineHasBeenSetTo0
             }
         }
     }
@@ -203,8 +203,8 @@ impl ActivityLogNodeType {
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
             from::SensorLocationChanged => to::SensorLocationChanged,
-            from::ZeroQuantitiesForInvoiceCreatedBeforeStore => {
-                to::ZeroQuantitiesForInvoiceCreatedBeforeStore
+            from::QuantityForLineHasBeenSetTo0 => {
+                to::QuantityForLineHasBeenSetTo0
             }
         }
     }

@@ -58,7 +58,7 @@ pub enum ActivityLogType {
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
     SensorLocationChanged,
-    ZeroQuantitiesForInvoiceCreatedBeforeStore,
+    QuantityForLineHasBeenSetTo0,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
