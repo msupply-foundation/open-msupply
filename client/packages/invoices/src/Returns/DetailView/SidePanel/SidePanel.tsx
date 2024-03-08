@@ -9,7 +9,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
-// import { AdditionalInfoSection } from './AdditionalInfoSection';
+import { AdditionalInfoSection } from './AdditionalInfoSection';
 // import { PricingSection } from './PricingSection';
 // import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 // import { TransportSection } from './TransportSection';
@@ -63,7 +63,7 @@ export const SidePanelComponent = () => {
         </>
       }
     >
-      {/* <AdditionalInfoSection /> */}
+      <AdditionalInfoSection />
       {/* <RelatedDocumentsSection /> */}
       {/* <PricingSection /> */}
       {/* <TransportSection /> */}
