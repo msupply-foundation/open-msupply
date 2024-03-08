@@ -2,7 +2,6 @@ use super::{helpers::run_without_change_log_updates, version::Version, Migration
 
 use crate::StorageConnection;
 
-mod activity_log_add_clear_invoice_created_before_store;
 mod barcode_add_manufacturer_link_id;
 mod changelog_add_name_link_id;
 mod clinician_link;
@@ -30,7 +29,6 @@ mod requisition_line_add_item_link_id;
 mod stock_line_add_item_link_id;
 mod stock_line_add_supplier_link_id;
 mod stocktake_line_add_item_link_id;
-mod store_add_created_date;
 mod store_preference_add_issue_in_foreign_currency;
 mod sync_log;
 mod unit_add_is_active;
@@ -44,8 +42,6 @@ impl Migration for V1_07_00 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         sync_log::migrate(connection)?;
-        store_add_created_date::migrate(connection)?;
-        activity_log_add_clear_invoice_created_before_store::migrate(connection)?;
         currency::migrate(connection)?;
         store_preference_add_issue_in_foreign_currency::migrate(connection)?;
         invoice_add_currency_fields::migrate(connection)?;
