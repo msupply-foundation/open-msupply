@@ -72,7 +72,7 @@ pub fn update_inbound_shipment_line(
                 if number_of_packs == 0.0 {
                     activity_log_entry(
                         ctx,
-                        ActivityLogType::QuantityForLineHasBeenSetTo0,
+                        ActivityLogType::QuantityForLineHasBeenSetToZero,
                         Some(updated_line.id.clone()),
                         Some(line.invoice_line_row.number_of_packs.to_string()),
                         Some(number_of_packs.to_string()),
