@@ -17,7 +17,7 @@ import { canDeleteInvoice } from '../../../utils';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation('replenishment');
   const { data } = useReturns.document.outboundReturn();
   //   const { mutateAsync } = useOutbound.document.delete();
   const canDelete = data ? canDeleteInvoice(data) : false;
@@ -30,10 +30,10 @@ export const SidePanelComponent = () => {
     selectedRows: [data],
     deleteAction: async () => {},
     messages: {
-      confirmMessage: t('messages.confirm-delete-shipment', {
+      confirmMessage: t('messages.confirm-delete-return', {
         number: data?.invoiceNumber,
       }),
-      deleteSuccess: t('messages.deleted-shipments', {
+      deleteSuccess: t('messages.deleted-returns', {
         count: 1,
       }),
     },
