@@ -476,10 +476,6 @@ export const ZeroLinesQuantityDocument = gql`
               description
               key
             }
-            ... on InvoiceWasCreatedAfterStore {
-              __typename
-              description
-            }
           }
         }
         ... on InvoiceLineNode {
@@ -659,10 +655,6 @@ export const UpsertInboundShipmentDocument = gql`
               __typename
               description
               key
-            }
-            ... on InvoiceWasCreatedAfterStore {
-              __typename
-              description
             }
           }
         }

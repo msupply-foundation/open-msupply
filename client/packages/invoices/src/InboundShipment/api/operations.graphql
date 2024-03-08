@@ -405,10 +405,6 @@ mutation zeroLinesQuantity(
               description
               key
             }
-            ... on InvoiceWasCreatedAfterStore {
-              __typename
-              description
-            }
           }
         }
         ... on InvoiceLineNode {
@@ -590,10 +586,6 @@ mutation upsertInboundShipment(
               __typename
               description
               key
-            }
-            ... on InvoiceWasCreatedAfterStore {
-              __typename
-              description
             }
           }
         }

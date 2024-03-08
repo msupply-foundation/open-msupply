@@ -12,8 +12,6 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
-  useAuthContext,
-  DateUtils,
   RewindIcon,
   Tooltip,
 } from '@openmsupply-client/common';
@@ -55,16 +53,6 @@ export const Toolbar: FC = () => {
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
   const isTransfer = !!shipment?.linkedShipment?.id;
-  const { store } = useAuthContext();
-  const storeCreatedDate = DateUtils.getDateOrNull(store?.createdDate ?? null);
-  const invoiceCreatedDate = DateUtils.getDateOrNull(
-    shipment?.createdDatetime ?? null
-  );
-  const isInvoiceCreatedBeforeStore =
-    storeCreatedDate && invoiceCreatedDate
-      ? DateUtils.isBefore(invoiceCreatedDate, storeCreatedDate)
-      : false;
-
   if (!data) return null;
 
   return (
@@ -131,14 +119,12 @@ export const Toolbar: FC = () => {
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
-            {isInvoiceCreatedBeforeStore && (
               <DropdownMenuItem
                 IconComponent={RewindIcon}
                 onClick={onZeroQuantities}
               >
                 {t('button.zero-line-quantity')}
               </DropdownMenuItem>
-            )}
           </DropdownMenu>
         </Grid>
       </Grid>
