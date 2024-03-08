@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   NESTED_SPLIT_CHAR,
   RANGE_SPLIT_CHAR,
@@ -70,18 +70,24 @@ export const useUrlQueryParams = ({
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort]);
+  }, [initialSort, updateQuery, urlQuery]);
 
-  const updateSortQuery = <T extends RecordWithId>(column: Column<T>) => {
-    const currentSort = urlQuery['sort'];
-    const sort = column.key as string;
-    if (sort !== currentSort) {
-      updateQuery({ sort, dir: '', page: '' });
-    } else {
-      const dir = column.sortBy?.direction === 'desc' ? '' : 'desc';
-      updateQuery({ dir });
-    }
-  };
+  // Changes sort key or, if the sort key is already selected, toggles the sort direction.
+  const updateSortQuery = useCallback(
+    <T extends RecordWithId>(column: Column<T>) => {
+      const currentSort = urlQuery['sort'];
+      const sort = column.key as string;
+      if (sort !== currentSort) {
+        // change sort key
+        updateQuery({ sort, dir: '', page: '' });
+      } else {
+        // toggle sort direction
+        const dir = column.sortBy?.direction === 'desc' ? '' : 'desc';
+        updateQuery({ dir });
+      }
+    },
+    [updateQuery, urlQuery]
+  );
 
   const updatePaginationQuery = (page: number) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
