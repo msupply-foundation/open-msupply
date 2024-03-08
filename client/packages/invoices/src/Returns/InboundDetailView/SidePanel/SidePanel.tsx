@@ -16,11 +16,12 @@ export const SidePanelComponent = () => {
   const { success } = useNotification();
   const t = useTranslation('distribution');
   const { data } = useReturns.document.inboundReturn();
-  // const { mutateAsync } = useOutbound.document.delete();
+  const { mutateAsync } = useReturns.document.deleteInbound();
+
   const canDelete = data?.status === InvoiceNodeStatus.New;
   const deleteAction = async () => {
     if (!data) return;
-    // await mutateAsync([data]);
+    await mutateAsync([data]);
   };
 
   const onDelete = useDeleteConfirmation({
