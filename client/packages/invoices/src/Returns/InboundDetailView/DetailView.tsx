@@ -24,6 +24,7 @@ export const InboundReturnDetailView: FC = () => {
   const t = useTranslation('distribution');
   const navigate = useNavigate();
 
+  // TODO: hook these up to modal
   const onRowClick = () => {};
 
   const onAddItem = () => {};
