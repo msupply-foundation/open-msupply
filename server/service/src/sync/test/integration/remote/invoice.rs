@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use repository::mock::mock_request_draft_requisition;
@@ -161,21 +161,21 @@ impl SyncRecordTester for InvoiceRecordTester {
                     "type": "positiveInventoryAdjustment"
                 }]
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(location_row),
-                PullUpsertRecord::Invoice(invoice_row_1.clone()),
-                PullUpsertRecord::Invoice(invoice_row_2.clone()),
-                PullUpsertRecord::Invoice(invoice_row_3),
-                PullUpsertRecord::Invoice(invoice_row_4),
-                PullUpsertRecord::Invoice(invoice_row_5),
-                PullUpsertRecord::Invoice(invoice_row_6),
-                PullUpsertRecord::InvoiceLine(invoice_line_row_1.clone()),
-                PullUpsertRecord::InvoiceLine(invoice_line_row_2),
-                PullUpsertRecord::InvoiceLine(invoice_line_row_3),
-                PullUpsertRecord::InvoiceLine(invoice_line_row_4),
-                PullUpsertRecord::InvoiceLine(invoice_line_row_5),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(location_row),
+                IntegrationOperation::upsert(invoice_row_1.clone()),
+                IntegrationOperation::upsert(invoice_row_2.clone()),
+                IntegrationOperation::upsert(invoice_row_3),
+                IntegrationOperation::upsert(invoice_row_4),
+                IntegrationOperation::upsert(invoice_row_5),
+                IntegrationOperation::upsert(invoice_row_6),
+                IntegrationOperation::upsert(invoice_line_row_1.clone()),
+                IntegrationOperation::upsert(invoice_line_row_2),
+                IntegrationOperation::upsert(invoice_line_row_3),
+                IntegrationOperation::upsert(invoice_line_row_4),
+                IntegrationOperation::upsert(invoice_line_row_5),
+            ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
@@ -247,15 +247,14 @@ impl SyncRecordTester for InvoiceRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::StockLine(stock_line_row),
-                PullUpsertRecord::Requisition(requisition_row),
-                PullUpsertRecord::Invoice(invoice_row_1.clone()),
-                PullUpsertRecord::Invoice(invoice_row_2.clone()),
-                PullUpsertRecord::InvoiceLine(invoice_line_row_1.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(stock_line_row),
+                IntegrationOperation::upsert(requisition_row),
+                IntegrationOperation::upsert(invoice_row_1.clone()),
+                IntegrationOperation::upsert(invoice_row_2.clone()),
+                IntegrationOperation::upsert(invoice_line_row_1.clone()),
+            ],
+            ..Default::default()
         });
         // STEP 3 - delete
         let invoice_row_2 = inline_edit(&invoice_row_2, |mut d| {
@@ -263,21 +262,12 @@ impl SyncRecordTester for InvoiceRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upsert(PullUpsertRecord::Invoice(
-                invoice_row_2,
-            ))
-            .join(IntegrationRecords::from_deletes(vec![
-                PullDeleteRecord {
-                    id: invoice_line_row_1.id.clone(),
-                    table: PullDeleteRecordTable::InvoiceLine,
-                },
-                PullDeleteRecord {
-                    id: invoice_row_1.id.clone(),
-                    table: PullDeleteRecordTable::Invoice,
-                },
-            ])),
+            integration_records: vec![
+                IntegrationOperation::upsert(invoice_row_2),
+                IntegrationOperation::delete(InvoiceLineRowDelete(invoice_line_row_1.id.clone())),
+                IntegrationOperation::delete(InvoiceRowDelete(invoice_row_1.id.clone())),
+            ],
+            ..Default::default()
         });
         result
     }

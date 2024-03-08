@@ -323,8 +323,6 @@ fn create_jwt_pair(
 mod user_account_test {
     use util::assert_matches;
 
-    use crate::token_bucket::TokenBucket;
-
     use super::*;
 
     #[actix_rt::test]

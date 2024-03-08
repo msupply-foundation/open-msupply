@@ -20,7 +20,7 @@ interface ReportSelectorProps {
 }
 
 const NoReports = ({ hasPermission }: { hasPermission: boolean }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   return (
     <Box display="flex" alignItems="center" gap={1} padding={2}>
       <Box flex={0}>

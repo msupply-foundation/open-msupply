@@ -26,7 +26,7 @@ export const AppBarButtons: FC<{
   const { mutate: onCreate } = useRequest.document.insert();
   const { mutate: onProgramCreate } = useRequest.document.insertProgram();
   const { success, error } = useNotification();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',

@@ -17,6 +17,7 @@ export const PaperPopoverSection: FC<
     flexDirection="column"
     display="flex"
     alignItems={alignItems}
+    sx={{ wordBreak: 'break-word' }}
   >
     <Typography fontWeight="700" style={labelStyle}>
       {label}
