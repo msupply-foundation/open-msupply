@@ -64,26 +64,37 @@ const useOptions = (
   return { errors: zErrors ?? regexError, options: schemaOptions, pattern };
 };
 
-// Returns error if value doesn't match the pattern
-const usePatternValidation = (
+// Special error const for missing required value.
+// We need a non-empty error message to mark the form as dirty but we don't want to display a
+// "Required" helper text in the Text component.
+const REQUIRED_ERROR = 'REQUIRED';
+
+/** Validates the custom text options */
+const useOptionsValidation = (
   path: string,
+  isRequired: boolean,
   pattern?: RegExp,
   value?: string
 ): string | undefined => {
   const { customError, setCustomError } = useJSONFormsCustomError(path, 'Text');
 
   useEffect(() => {
-    if (!pattern || value === undefined) {
-      setCustomError(undefined);
+    // required validation
+    if (isRequired && !value) {
+      setCustomError(REQUIRED_ERROR);
       return;
     }
-    const result = pattern.exec(value);
-    if (result == null) {
-      setCustomError('Invalid format');
-    } else {
-      setCustomError(undefined);
+
+    // pattern validation
+    if (pattern && value !== undefined) {
+      const result = pattern.exec(value);
+      if (result == null) {
+        setCustomError('Invalid format');
+        return;
+      }
     }
-  }, [pattern, setCustomError, value]);
+    setCustomError(undefined);
+  }, [pattern, setCustomError, isRequired, value]);
   return customError;
 };
 
@@ -96,15 +107,19 @@ const UIComponent = (props: ControlProps) => {
     options: schemaOptions,
     pattern,
   } = useOptions(props.uischema.options);
-  const customErrors = usePatternValidation(path, pattern, data);
+  const customErrors = useOptionsValidation(
+    path,
+    !!schemaOptions?.required,
+    pattern,
+    data
+  );
   const { text, onChange } = useDebouncedTextInput(
     data,
     (value: string | undefined) => handleChange(path, value)
   );
   const t = useTranslation();
 
-  const missingRequired = !!schemaOptions?.required && !text;
-  const error = !!errors || !!zErrors || !!customErrors || missingRequired;
+  const error = !!errors || !!zErrors || !!customErrors;
 
   const examples =
     schemaOptions?.examples ??
@@ -120,7 +135,8 @@ const UIComponent = (props: ControlProps) => {
       });
     }
 
-    return zErrors ?? errors ?? customErrors;
+    const text = zErrors ?? errors ?? customErrors;
+    return text !== REQUIRED_ERROR ? text : undefined;
   })();
 
   if (!props.visible) {
