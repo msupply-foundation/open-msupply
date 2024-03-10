@@ -30,6 +30,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     }
 }
 

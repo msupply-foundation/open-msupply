@@ -1,5 +1,8 @@
 use super::patient::PatientNode;
-use super::{ClinicianNode, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode, UserNode};
+use super::{
+    ClinicianNode, CurrencyNode, InvoiceLineConnector, NameNode, RequisitionNode, StoreNode,
+    UserNode,
+};
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use dataloader::DataLoader;
@@ -242,6 +245,7 @@ impl InvoiceNode {
             service_total_before_tax: 0.0,
             service_total_after_tax: 0.0,
             tax_percentage: self.row().tax,
+            foreign_currency_total_after_tax: None,
         };
 
         let result_option = loader.load_one(self.row().id.to_string()).await?;
@@ -313,6 +317,33 @@ impl InvoiceNode {
 
         Ok(Some(result))
     }
+
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+        let service_provider = ctx.service_provider();
+        let currency_provider = &service_provider.currency_service;
+        let service_context = &service_provider.basic_context()?;
+
+        let currency_id = if let Some(currency_id) = &self.row().currency_id {
+            currency_id
+        } else {
+            return Ok(None);
+        };
+
+        let currency = currency_provider
+            .get_currency(service_context, &currency_id)
+            .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
+            .ok_or(StandardGraphqlError::InternalError(format!(
+                "Cannot find currency ({}) linked to invoice ({})",
+                &currency_id,
+                &self.row().id
+            )))?;
+
+        Ok(Some(CurrencyNode::from_domain(currency)))
+    }
+
+    pub async fn currency_rate(&self) -> &f64 {
+        &self.row().currency_rate
+    }
 }
 
 impl InvoiceNode {
@@ -345,6 +376,10 @@ impl PricingNode {
 
     pub async fn total_after_tax(&self) -> f64 {
         self.invoice_pricing.total_after_tax
+    }
+
+    pub async fn foreign_currency_total_after_tax(&self) -> &Option<f64> {
+        &self.invoice_pricing.foreign_currency_total_after_tax
     }
 
     // stock

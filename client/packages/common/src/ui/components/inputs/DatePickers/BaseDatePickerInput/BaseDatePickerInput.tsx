@@ -55,7 +55,7 @@ export const BaseDatePickerInput: FC<
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   return (
     <DatePicker

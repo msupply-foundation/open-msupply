@@ -139,7 +139,7 @@ export const useLogin = (
       store,
       token,
       user: {
-        id: '',
+        id: userDetails?.userId ?? '',
         name: username,
         permissions,
         firstName: userDetails?.firstName,

@@ -1,5 +1,5 @@
 use super::{item_row::item, StorageConnection};
-use crate::{name_link, repository_error::RepositoryError};
+use crate::{name_link, repository_error::RepositoryError, Upsert};
 
 use self::item_link::dsl as item_link_dsl;
 use diesel::prelude::*;
@@ -111,5 +111,19 @@ impl<'a> ItemLinkRowRepository<'a> {
         diesel::delete(item_link_dsl::item_link.filter(item_link::id.eq(item_link_id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for ItemLinkRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ItemLinkRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ItemLinkRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

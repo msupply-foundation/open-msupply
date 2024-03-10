@@ -18,7 +18,7 @@ interface DetailTabsProps {
  **/
 export const ModalTabs: FC<DetailTabsProps> = ({ sx, tabs }) => {
   const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   return (
     <TabContext value={currentTab}>
