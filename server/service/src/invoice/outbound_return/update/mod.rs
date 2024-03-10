@@ -90,7 +90,7 @@ impl From<RepositoryError> for UpdateOutboundReturnError {
 }
 
 impl UpdateOutboundReturnStatus {
-    pub fn full_status(&self) -> InvoiceRowStatus {
+    pub fn as_invoice_row_status(&self) -> InvoiceRowStatus {
         match self {
             UpdateOutboundReturnStatus::Picked => InvoiceRowStatus::Picked,
             UpdateOutboundReturnStatus::Shipped => InvoiceRowStatus::Shipped,
@@ -101,7 +101,7 @@ impl UpdateOutboundReturnStatus {
         status: &Option<UpdateOutboundReturnStatus>,
     ) -> Option<InvoiceRowStatus> {
         match status {
-            Some(status) => Some(status.full_status()),
+            Some(status) => Some(status.as_invoice_row_status()),
             None => None,
         }
     }
@@ -110,7 +110,7 @@ impl UpdateOutboundReturnStatus {
 impl UpdateOutboundReturn {
     pub fn full_status(&self) -> Option<InvoiceRowStatus> {
         match &self.status {
-            Some(status) => Some(status.full_status()),
+            Some(status) => Some(status.as_invoice_row_status()),
             None => None,
         }
     }
