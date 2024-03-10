@@ -174,9 +174,6 @@ module.exports = env => {
         name: 'host',
         shared: [
           {
-            '@openmsupply-client/common': {
-              eager: true,
-            },
             react: {
               singleton: true,
               eager: true,
@@ -192,8 +189,8 @@ module.exports = env => {
         ],
       }),
       new EncodingPlugin({
-        encoding: 'UTF-16'
-    })
+        encoding: 'UTF-16',
+      }),
     ],
   };
 };
