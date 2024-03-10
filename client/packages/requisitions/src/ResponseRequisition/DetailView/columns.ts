@@ -1,3 +1,4 @@
+/* eslint-disable new-cap */
 import {
   useColumns,
   GenericColumnKey,
@@ -43,6 +44,7 @@ export const useResponseColumns = () => {
       label: 'label.pack',
       sortable: false,
       accessor: ({ rowData }) => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
         const { variantsControl } = usePackVariant(
           rowData.item.id,
           rowData.item.unitName ?? null
@@ -90,6 +92,7 @@ export const useResponseColumns = () => {
           getItemId: row => row.itemId,
           getQuantity: row => NumUtils.round(row.requestedQuantity ?? 0),
         }),
+        width: 150,
       },
     ],
   ];
@@ -121,6 +124,20 @@ export const useResponseColumns = () => {
       }),
     },
   ]);
+
+  columnDefinitions.push({
+    label: 'label.already-issued',
+    description: 'description.remaining-to-supply',
+    key: 'alreadyIssued',
+    align: ColumnAlign.Right,
+    getSortValue: rowData => rowData.remainingQuantityToSupply,
+    Cell: PackVariantQuantityCell({
+      getItemId: row => row.itemId,
+      getQuantity: row => NumUtils.round(row.alreadyIssued),
+    }),
+    width: 100,
+  });
+
   columnDefinitions.push({
     label: 'label.remaining-to-supply',
     description: 'description.remaining-to-supply',
@@ -131,7 +148,6 @@ export const useResponseColumns = () => {
       getItemId: row => row.itemId,
       getQuantity: row => NumUtils.round(row.remainingQuantityToSupply),
     }),
-    width: 100,
   });
   columnDefinitions.push(GenericColumnKey.Selection);
 
