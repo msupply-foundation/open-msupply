@@ -20,7 +20,7 @@ pub enum InsertAssetError {
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
-    pub name: String,
+    pub notes: Option<String>,
     pub code: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
@@ -70,7 +70,7 @@ pub fn generate(
     InsertAsset {
         id,
         store_id,
-        name,
+        notes,
         code,
         serial_number,
         catalogue_item_id,
@@ -81,7 +81,7 @@ pub fn generate(
     AssetRow {
         id,
         store_id,
-        name,
+        notes,
         code,
         serial_number,
         catalogue_item_id,

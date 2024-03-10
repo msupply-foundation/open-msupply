@@ -19,7 +19,6 @@ use service::{usize_to_u32, ListResult};
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum AssetSortFieldInput {
-    Name,
     SerialNumber,
     InstallationDate,
     ReplacementDate,
@@ -37,7 +36,7 @@ pub struct AssetSortInput {
 
 #[derive(InputObject, Clone)]
 pub struct AssetFilterInput {
-    pub name: Option<StringFilterInput>,
+    pub notes: Option<StringFilterInput>,
     pub code: Option<StringFilterInput>,
     pub id: Option<EqualFilterStringInput>,
     pub serial_number: Option<StringFilterInput>,
@@ -52,7 +51,7 @@ pub struct AssetFilterInput {
 impl From<AssetFilterInput> for AssetFilter {
     fn from(f: AssetFilterInput) -> Self {
         AssetFilter {
-            name: f.name.map(StringFilter::from),
+            notes: f.notes.map(StringFilter::from),
             code: f.code.map(StringFilter::from),
             id: f.id.map(EqualFilter::from),
             serial_number: f.serial_number.map(StringFilter::from),
@@ -87,8 +86,8 @@ impl AssetNode {
         &self.row().store_id
     }
 
-    pub async fn name(&self) -> &str {
-        &self.row().name
+    pub async fn notes(&self) -> &Option<String> {
+        &self.row().notes
     }
 
     pub async fn code(&self) -> &str {
@@ -197,7 +196,6 @@ impl AssetSortInput {
         use AssetSortField as to;
         use AssetSortFieldInput as from;
         let key = match self.key {
-            from::Name => to::Name,
             from::SerialNumber => to::SerialNumber,
             from::InstallationDate => to::InstallationDate,
             from::ReplacementDate => to::ReplacementDate,
