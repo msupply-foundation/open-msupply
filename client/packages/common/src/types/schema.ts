@@ -2799,6 +2799,7 @@ export type Mutations = {
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
+  updateOutboundReturnLines: UpdateOutboundReturnLinesResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
   updateOutboundShipmentLine: UpdateOutboundShipmentLineResponse;
   updateOutboundShipmentName: UpdateOutboundShipmentNameResponse;
@@ -3220,6 +3221,12 @@ export type MutationsUpdateLocationArgs = {
 
 export type MutationsUpdateLogLevelArgs = {
   input: UpsertLogLevelInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateOutboundReturnLinesArgs = {
+  input: UpdateOutboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5773,6 +5780,13 @@ export type UpdateLocationResponse = LocationNode | UpdateLocationError;
 export type UpdateNameErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type UpdateOutboundReturnLinesInput = {
+  outboundReturnId: Scalars['String']['input'];
+  outboundReturnLines: Array<OutboundReturnLineInput>;
+};
+
+export type UpdateOutboundReturnLinesResponse = InvoiceNode;
 
 export type UpdateOutboundShipmentError = {
   __typename: 'UpdateOutboundShipmentError';
