@@ -194,8 +194,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
 
-      // TODO: needed?
-      // throw new Error('Could not get inbound return');
+      throw new Error('Could not get inbound return');
     },
   },
   insertOutboundReturn: async (input: OutboundReturnInput) => {
