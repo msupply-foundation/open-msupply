@@ -168,14 +168,11 @@ mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
   }
 }
 
-mutation deleteOutboundReturns(
-  $storeId: String!
-  $input: [DeleteOutboundReturnInput!]!
-) {
-  deleteOutboundReturns(storeId: $storeId, input: $input) {
+mutation deleteOutboundReturn($storeId: String!, $id: String!) {
+  deleteOutboundReturn(storeId: $storeId, id: $id) {
     __typename
-    ... on DeletedIdsResponse {
-      deletedIds
+    ... on DeleteResponse {
+      id
     }
   }
 }
@@ -186,8 +183,8 @@ mutation deleteInboundReturns(
 ) {
   deleteInboundReturns(storeId: $storeId, input: $input) {
     __typename
-    ... on DeletedIdsResponse {
-      deletedIds
+    ... on DeleteResponse {
+      id
     }
   }
 }

@@ -8,7 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { useOutbounds } from './useOutbounds';
 import { useReturnsApi } from '../utils/useReturnsApi';
-import { canDeleteOutboundReturn } from 'packages/invoices/src/utils';
+import { canDeleteOutboundReturn } from '../../../../utils';
 
 export const useOutboundDeleteRows = () => {
   const queryClient = useQueryClient();
@@ -26,7 +26,7 @@ export const useOutboundDeleteRows = () => {
   );
 
   const deleteAction = async () => {
-    await mutateAsync(selectedRows)
+    await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
       .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
         throw err;

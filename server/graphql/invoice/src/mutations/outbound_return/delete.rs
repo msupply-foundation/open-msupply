@@ -5,15 +5,10 @@ use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::outbound_return::delete::DeleteOutboundReturnError as ServiceError;
-
-#[derive(InputObject)]
-#[graphql(name = "DeleteOutboundReturnInput")]
-pub struct DeleteInput {
-    pub ids: Vec<String>,
-}
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteOutboundReturnError")]
@@ -21,22 +16,14 @@ pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
-pub struct DeletedIdsResponse(pub Vec<String>);
-#[Object]
-impl DeletedIdsResponse {
-    pub async fn deleted_ids(&self) -> &Vec<String> {
-        &self.0
-    }
-}
-
 #[derive(Union)]
 #[graphql(name = "DeleteOutboundReturnResponse")]
 pub enum DeleteResponse {
     Error(DeleteError),
-    Response(DeletedIdsResponse),
+    Response(GenericDeleteResponse),
 }
 
-pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<DeleteResponse> {
+pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -52,13 +39,13 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, input: DeleteInput) -> Result<D
     map_response(
         service_provider
             .invoice_service
-            .delete_outbound_returns(&service_context, input.ids),
+            .delete_outbound_return(&service_context, id),
     )
 }
 
-pub fn map_response(from: Result<Vec<String>, ServiceError>) -> Result<DeleteResponse> {
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
     let result = match from {
-        Ok(ids) => DeleteResponse::Response(DeletedIdsResponse(ids)),
+        Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
         Err(error) => DeleteResponse::Error(DeleteError {
             error: map_error(error)?,
         }),
@@ -81,20 +68,15 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
-        // Structured Errors
-        ServiceError::InvoiceDoesNotExist => {
-            return Ok(DeleteErrorInterface::RecordNotFound(RecordNotFound {}))
-        }
-        ServiceError::CannotEditFinalised => {
-            return Ok(DeleteErrorInterface::CannotEditInvoice(
-                CannotEditInvoice {},
-            ))
-        }
         // Standard Graphql Errors
-        ServiceError::NotAnOutboundReturn => BadUserInput(formatted_error),
-        ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
-        ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
+        ServiceError::InvoiceDoesNotExist
+        | ServiceError::CannotEditFinalised
+        | ServiceError::NotAnOutboundReturn
+        | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+
+        ServiceError::DatabaseError(_) | ServiceError::LineDeleteError { .. } => {
+            InternalError(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())
