@@ -187,6 +187,7 @@ impl RequisitionLineNode {
             .unwrap_or(0.0))
     }
 
+    /// Quantity already issued in outbound shipments
     pub async fn already_issued(&self, ctx: &Context<'_>) -> Result<f64> {
         let loader = ctx.get_loader::<DataLoader<RequisitionLineSupplyStatusLoader>>();
 
