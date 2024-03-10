@@ -19,7 +19,7 @@ pub fn generate(
 ) -> Result<GenerateResult, UpdateOutboundReturnError> {
     let mut updated_return = existing_return.clone();
 
-    updated_return.comment = input.comment.or(existing_return.comment.clone());
+    updated_return.comment = input.comment.or(existing_return.comment);
 
     set_new_status_datetime(&mut updated_return, &input.status);
     if let Some(status) = input.status.clone() {
@@ -27,7 +27,7 @@ pub fn generate(
     }
 
     let should_update_total_number_of_packs =
-        should_update_stock_lines_total_number_of_packs(&existing_return, &input.status);
+        should_update_stock_lines_total_number_of_packs(&existing_return.status, &input.status);
 
     let stock_lines_to_update = if should_update_total_number_of_packs {
         Some(
@@ -51,19 +51,31 @@ pub fn generate(
     })
 }
 
+fn changed_status(
+    status: &Option<UpdateOutboundReturnStatus>,
+    existing_status: &InvoiceRowStatus,
+) -> Option<UpdateOutboundReturnStatus> {
+    let new_status = match status {
+        Some(status) => status,
+        None => return None, // Status is not changing
+    };
+
+    if &new_status.as_invoice_row_status() == existing_status {
+        // The invoice already has this status, there's nothing to do.
+        return None;
+    }
+
+    Some(new_status.clone())
+}
+
 fn set_new_status_datetime(
     outbound_return: &mut InvoiceRow,
     status: &Option<UpdateOutboundReturnStatus>,
 ) {
-    let new_status = match status {
+    let new_status = match changed_status(status, &outbound_return.status) {
         Some(status) => status,
         None => return, // There's no status to update
     };
-
-    if new_status.as_invoice_row_status() == outbound_return.status {
-        // The invoice already has this status, there's nothing to do.
-        return;
-    }
 
     let current_datetime = Utc::now().naive_utc();
 
@@ -92,20 +104,20 @@ fn set_new_status_datetime(
 }
 
 fn should_update_stock_lines_total_number_of_packs(
-    existing_return: &InvoiceRow,
+    existing_status: &InvoiceRowStatus,
     status: &Option<UpdateOutboundReturnStatus>,
 ) -> bool {
-    if let Some(new_status) = status {
-        let existing_status = &existing_return.status;
-        match (existing_status, new_status) {
-            (
-                // From New to Picked, or New to Shipped
-                InvoiceRowStatus::New,
-                UpdateOutboundReturnStatus::Picked | UpdateOutboundReturnStatus::Shipped,
-            ) => true,
-            _ => false,
-        }
-    } else {
-        false
+    let new_status = match changed_status(status, existing_status) {
+        Some(status) => status,
+        None => return false, // Status is not changing
+    };
+
+    match (existing_status, new_status) {
+        (
+            // From New to Picked, or New to Shipped
+            InvoiceRowStatus::New,
+            UpdateOutboundReturnStatus::Picked | UpdateOutboundReturnStatus::Shipped,
+        ) => true,
+        _ => false,
     }
 }
