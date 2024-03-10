@@ -3,6 +3,7 @@ import {
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
+  UpdateOutboundReturnInput,
   UpdateOutboundReturnLinesInput,
 } from '@common/types';
 import {
@@ -210,6 +211,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert outbound return');
+  },
+  updateOutboundReturn: async (input: UpdateOutboundReturnInput) => {
+    const result = await sdk.updateOutboundReturn({
+      input,
+      storeId,
+    });
+
+    const { updateOutboundReturn } = result;
+
+    if (updateOutboundReturn.__typename === 'InvoiceNode') {
+      return updateOutboundReturn;
+    }
+
+    throw new Error('Could not update outbound return');
   },
   updateOutboundReturnLines: async (input: UpdateOutboundReturnLinesInput) => {
     const result = await sdk.updateOutboundReturnLines({

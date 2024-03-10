@@ -12,8 +12,10 @@ export const useReturns = {
     inboundReturn: Document.useInboundReturn,
 
     insertOutboundReturn: Document.useInsertOutboundReturn,
-    insertInboundReturn: Document.useInsertInboundReturn,
+    updateOutboundReturn: Document.useUpdateOutboundReturn,
     deleteOutboundRows: Document.useOutboundDeleteRows,
+
+    insertInboundReturn: Document.useInsertInboundReturn,
     deleteInbound: Document.useInboundReturnDelete,
     deleteInboundRows: Document.useInboundDeleteRows,
   },
