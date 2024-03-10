@@ -77,11 +77,12 @@ impl From<RepositoryError> for DeleteOutboundReturnError {
 mod test {
     use repository::{
         mock::{
-            mock_name_store_a, mock_name_store_b, mock_outbound_return_a, mock_outbound_shipment_a,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
+            mock_name_store_a, mock_name_store_b, mock_outbound_return_a,
+            mock_outbound_return_a_invoice_line_a, mock_outbound_shipment_a, mock_store_a,
+            mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
+        InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, StockLineRowRepository,
     };
 
     use crate::{
@@ -163,16 +164,31 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
+        let stock_line_row_repo = StockLineRowRepository::new(&connection);
+        let stock_line_id = mock_outbound_return_a_invoice_line_a()
+            .stock_line_id
+            .unwrap();
+        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+
         service
             .delete_outbound_return(&context, mock_outbound_return_a().id)
             .unwrap();
 
-        //test entry has been deleted
+        // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
                 .find_one_by_id_option(&mock_outbound_return_a().id)
                 .unwrap(),
             None
+        );
+
+        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+
+        // test stock has been increased by the num of packs in the outbound return line
+        assert_eq!(
+            updated_stock_line.total_number_of_packs,
+            original_stock_line.total_number_of_packs
+                + mock_outbound_return_a_invoice_line_a().number_of_packs
         );
     }
 }
