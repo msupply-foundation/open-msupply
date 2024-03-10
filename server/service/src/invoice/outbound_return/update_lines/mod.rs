@@ -148,7 +148,7 @@ mod test {
     };
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_errors() {
+    async fn test_update_outbound_return_lines_errors() {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
                 store_id: mock_store_b().id,
@@ -183,7 +183,7 @@ mod test {
         }
 
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "test_update_outbound_return_errors",
+            "test_update_outbound_return_lines_errors",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![wrong_store(), shipped_return()],
@@ -326,7 +326,7 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_update_outbound_return_success() {
+    async fn test_update_outbound_return_lines_success() {
         fn return_reason() -> ReturnReasonRow {
             ReturnReasonRow {
                 id: "return_reason".to_string(),
@@ -336,7 +336,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "test_update_outbound_return_success",
+            "test_update_outbound_return_lines_success",
             MockDataInserts::all(),
             MockData {
                 return_reasons: vec![return_reason()],

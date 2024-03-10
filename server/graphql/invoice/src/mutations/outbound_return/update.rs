@@ -5,31 +5,36 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::InvoiceNode;
-use service::auth::{Resource, ResourceAccessRequest};
-use service::invoice::outbound_return::update_lines::{
-    UpdateOutboundReturnLines as ServiceInput, UpdateOutboundReturnLinesError as ServiceError,
+use service::invoice::outbound_return::update::{
+    UpdateOutboundReturn as ServiceInput, UpdateOutboundReturnError as ServiceError,
+};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    invoice::outbound_return::update::UpdateOutboundReturnStatus,
 };
 
-use super::insert::OutboundReturnLineInput;
-
 #[derive(InputObject)]
-#[graphql(name = "UpdateOutboundReturnLinesInput")]
+#[graphql(name = "UpdateOutboundReturnInput")]
 pub struct UpdateInput {
     pub outbound_return_id: String,
-    outbound_return_lines: Vec<OutboundReturnLineInput>,
+    // supplier_id: String,
+    status: Option<UpdateOutboundReturnStatusInput>,
+    comment: Option<String>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum UpdateOutboundReturnStatusInput {
+    Picked,
+    Shipped,
 }
 
 #[derive(Union)]
-#[graphql(name = "UpdateOutboundReturnLinesResponse")]
+#[graphql(name = "UpdateOutboundReturnResponse")]
 pub enum UpdateResponse {
     Response(InvoiceNode),
 }
 
-pub fn update_lines(
-    ctx: &Context<'_>,
-    store_id: &str,
-    input: UpdateInput,
-) -> Result<UpdateResponse> {
+pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<UpdateResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -44,7 +49,7 @@ pub fn update_lines(
 
     let result = service_provider
         .invoice_service
-        .update_outbound_return_lines(&service_context, input.to_domain());
+        .update_outbound_return(&service_context, input.to_domain());
 
     match result {
         Ok(outbound_return) => Ok(UpdateResponse::Response(InvoiceNode::from_domain(
@@ -63,11 +68,11 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         ServiceError::NotAnOutboundReturn
         | ServiceError::ReturnDoesNotBelongToCurrentStore
         | ServiceError::ReturnIsNotEditable
+        | ServiceError::CannotReverseInvoiceStatus
+        | ServiceError::CannotChangeStatusOfInvoiceOnHold
         | ServiceError::ReturnDoesNotExist => BadUserInput(formatted_error),
-        ServiceError::LineInsertError { .. }
-        | ServiceError::LineUpdateError { .. }
-        | ServiceError::LineDeleteError { .. }
-        | ServiceError::LineReturnReasonUpdateError { .. }
+
+        ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedReturnDoesNotExist
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };
@@ -79,15 +84,24 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             outbound_return_id,
-            outbound_return_lines,
+            comment,
+            status,
         }: UpdateInput = self;
 
         ServiceInput {
             outbound_return_id,
-            outbound_return_lines: outbound_return_lines
-                .into_iter()
-                .map(|line| line.to_domain())
-                .collect(),
+            comment,
+            status: status.map(|status| status.to_domain()),
+        }
+    }
+}
+
+impl UpdateOutboundReturnStatusInput {
+    pub fn to_domain(&self) -> UpdateOutboundReturnStatus {
+        use UpdateOutboundReturnStatus::*;
+        match self {
+            UpdateOutboundReturnStatusInput::Picked => Picked,
+            UpdateOutboundReturnStatusInput::Shipped => Shipped,
         }
     }
 }

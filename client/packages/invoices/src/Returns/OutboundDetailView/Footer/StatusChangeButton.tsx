@@ -7,6 +7,7 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
+  UpdateOutboundReturnStatusInput,
 } from '@openmsupply-client/common';
 import {
   getNextOutboundReturnStatus,
@@ -55,16 +56,10 @@ const getStatusOptions = (
   if (currentStatus === InvoiceNodeStatus.New) {
     options[1].isDisabled = false;
     options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Allocated) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
   }
 
   if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[3].isDisabled = false;
+    options[2].isDisabled = false;
   }
 
   return options;
@@ -81,6 +76,19 @@ const getNextStatusOption = (
   return nextStatusOption || null;
 };
 
+const getStatusUpdateInput = (
+  status: InvoiceNodeStatus | undefined
+): UpdateOutboundReturnStatusInput | undefined => {
+  switch (status) {
+    case InvoiceNodeStatus.Picked:
+      return UpdateOutboundReturnStatusInput.Picked;
+    case InvoiceNodeStatus.Shipped:
+      return UpdateOutboundReturnStatusInput.Shipped;
+    default:
+      throw new Error('Invalid status');
+  }
+};
+
 const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
   (invoiceStatus: InvoiceNodeStatus): string => {
@@ -90,22 +98,16 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  // const { lines, status, onHold, update } = useOutbound.document.fields([
-  //   'status',
-  //   'onHold',
-  //   'lines',
-  // ]);
-
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
   const { data } = useReturns.document.outboundReturn();
+  const { mutateAsync } = useReturns.document.updateOutboundReturn();
 
-  // TEMP until "fields" hook available:
   const status = data?.status ?? InvoiceNodeStatus.New;
-  const update = async (_: unknown) => true;
-  const onHold = false;
+
+  // TODO: lines
   const lines: { totalCount: number; nodes: unknown[] } = {
-    totalCount: 0,
+    totalCount: 1,
     nodes: [],
   };
 
@@ -120,11 +122,19 @@ const useStatusChangeButton = () => {
     );
 
   const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
+    if (!selectedOption || !data) return null;
     try {
-      await update({ status: selectedOption.value });
-      success(t('messages.return-saved'))();
+      const status = getStatusUpdateInput(selectedOption.value);
+
+      if (status) {
+        await mutateAsync({
+          outboundReturnId: data?.id,
+          status,
+        });
+        success(t('messages.return-saved'))();
+      }
     } catch (e) {
+      console.error(e);
       error(t('messages.error-saving-return'))();
     }
   };
@@ -151,7 +161,7 @@ const useStatusChangeButton = () => {
     selectedOption,
     setSelectedOption,
     getConfirmation,
-    onHold,
+    onHold: data?.onHold ?? false,
     lines,
   };
 };
