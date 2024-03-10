@@ -16,6 +16,7 @@ import {
   CurrencyCell,
   ColumnAlign,
   NumberInputCell,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -140,7 +141,9 @@ export const QuantityTableComponent: FC<
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<TableProps& { item: InboundLineFragment['item'] | null }>= ({
+export const PricingTableComponent: FC<
+  TableProps & { item: InboundLineFragment['item'] | null }
+> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
@@ -149,6 +152,7 @@ export const PricingTableComponent: FC<TableProps& { item: InboundLineFragment['
   item,
 }) => {
   const { packVariantExists } = usePackVariant(item?.id || '', null);
+  const { store } = useAuthContext();
 
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
@@ -178,15 +182,16 @@ export const PricingTableComponent: FC<TableProps& { item: InboundLineFragment['
       },
     ],
     [
-    'costPricePerPack',
-    {
-      Cell: CurrencyInputCell,
-      width: 100,
-      setter: updateDraftLine,
-    },
-  ]);
+      'costPricePerPack',
+      {
+        Cell: CurrencyInputCell,
+        width: 100,
+        setter: updateDraftLine,
+      },
+    ]
+  );
 
-  if (isExternalSupplier) {
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencyCostPricePerPack',
       label: 'label.fc-cost-price',
@@ -204,15 +209,13 @@ export const PricingTableComponent: FC<TableProps& { item: InboundLineFragment['
     });
   }
 
-  columnDefinitions.push(
-    [
-      'lineTotal',
-      {
-        accessor: ({ rowData }) =>
-          rowData.numberOfPacks * rowData.costPricePerPack,
-      },
-    ]
-  );
+  columnDefinitions.push([
+    'lineTotal',
+    {
+      accessor: ({ rowData }) =>
+        rowData.numberOfPacks * rowData.costPricePerPack,
+    },
+  ]);
 
   if (isExternalSupplier) {
     columnDefinitions.push({
