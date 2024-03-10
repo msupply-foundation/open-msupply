@@ -346,7 +346,7 @@ mod test {
 
         assert_eq!(
             updated_stock_line.total_number_of_packs,
-            original_stock_line.total_number_of_packs // total has not changed (stock would have already been reduced New -> Picked)
+            original_stock_line.total_number_of_packs // total has not changed (no stock movements after PICKED status)
         );
     }
 }
