@@ -3,7 +3,7 @@ use crate::{mock::mock_prescription_a, InvoiceLineRow, InvoiceLineRowType};
 use chrono::NaiveDate;
 use util::inline_init;
 
-use super::{mock_outbound_return_a, mock_stock_line_si_d};
+use super::{mock_outbound_return_a, mock_stock_line_a, mock_stock_line_b, mock_stock_line_si_d};
 
 pub fn mock_outbound_shipment_a_invoice_lines() -> Vec<InvoiceLineRow> {
     let mock_outbound_shipment_a_invoice_line_a: InvoiceLineRow = InvoiceLineRow {
@@ -512,6 +512,18 @@ pub fn mock_outbound_return_a_invoice_line_a() -> InvoiceLineRow {
         l.id = "outbound_return_a_invoice_line_a".to_string();
         l.invoice_id = mock_outbound_return_a().id;
         l.item_link_id = "item_b".to_string();
+        l.stock_line_id = Some(mock_stock_line_a().id);
+        l.item_code = "item_b_code".to_string();
+        l.note = Some("return_comment".to_string());
+        l.r#type = InvoiceLineRowType::StockOut
+    })
+}
+pub fn mock_outbound_return_a_invoice_line_b() -> InvoiceLineRow {
+    inline_init(|l: &mut InvoiceLineRow| {
+        l.id = "outbound_return_a_invoice_line_b".to_string();
+        l.invoice_id = mock_outbound_return_a().id;
+        l.item_link_id = "item_b".to_string();
+        l.stock_line_id = Some(mock_stock_line_b().id);
         l.item_code = "item_b_code".to_string();
         l.note = Some("return_comment".to_string());
         l.r#type = InvoiceLineRowType::StockOut
@@ -520,8 +532,12 @@ pub fn mock_outbound_return_a_invoice_line_a() -> InvoiceLineRow {
 
 pub fn mock_outbound_return_a_invoice_lines() -> Vec<InvoiceLineRow> {
     let mock_outbound_return_a_invoice_line_a = mock_outbound_return_a_invoice_line_a();
+    let mock_outbound_return_a_invoice_line_b = mock_outbound_return_a_invoice_line_b();
 
-    vec![mock_outbound_return_a_invoice_line_a]
+    vec![
+        mock_outbound_return_a_invoice_line_a,
+        mock_outbound_return_a_invoice_line_b,
+    ]
 }
 
 pub fn mock_prescription_a_invoice_lines() -> Vec<InvoiceLineRow> {
