@@ -67,15 +67,6 @@ mod graphql {
                   name
                   code
                   description
-                  lines {
-                      nodes {
-                          id
-                          item {
-                              id
-                          }
-                      }
-                      totalCount
-                  }
                 }
                 totalCount
               }
@@ -100,20 +91,6 @@ mod graphql {
         // TODO would prefer for loaders to be using service provider
         // in which case we would override both item and master list line service
         // and test it's mapping here, rather then from mock data
-        let mock_data_lines = &mock_master_list_master_list_line_filter_test().lines;
-
-        let lines: Vec<Value> = mock_data_lines
-            .iter()
-            .map(|line| {
-                json!({
-                    "id": line.id,
-                    "item": {
-                        "id": line.item_link_id
-                    }
-                })
-            })
-            .collect();
-
         let expected = json!({
               "masterLists": {
                   "nodes": [
@@ -122,11 +99,6 @@ mod graphql {
                           "name": "test_name",
                           "code": "test_code",
                           "description": "test_description",
-                          "lines": {
-                              "nodes": lines,
-                              "totalCount": lines.len()
-                          }
-
                       },
                   ],
                   "totalCount": 1
