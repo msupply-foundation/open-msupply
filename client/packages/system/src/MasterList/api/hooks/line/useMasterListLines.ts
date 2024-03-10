@@ -4,7 +4,7 @@ import { useMasterListId } from '../document/useMasterList';
 
 export const useMasterListLines = () => {
   const { queryParams } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
+    initialSort: { key: 'itemName', dir: 'asc' },
   });
 
   const api = useMasterListApi();

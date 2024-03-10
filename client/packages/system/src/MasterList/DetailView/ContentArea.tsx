@@ -1,5 +1,10 @@
 import React from 'react';
-import { DataTable, useColumns, useTranslation, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  DataTable,
+  useColumns,
+  useTranslation,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useMasterList } from '../api';
 import { MasterListLineFragment } from '../api/operations.generated';
 
@@ -11,7 +16,7 @@ export const ContentArea = () => {
     updatePaginationQuery,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'name', dir: 'asc' },
+    initialSort: { key: 'itemName', dir: 'asc' },
   });
   const pagination = { page, first, offset };
 
@@ -50,15 +55,14 @@ export const ContentArea = () => {
 
   return (
     <DataTable
-    id="master-list-detail"
-    pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
-    onChangePage={updatePaginationQuery}
-    columns={columns}
-    data={data?.nodes}
-    isError={isError}
-    isLoading={isLoading}
-    noDataMessage={t('error.no-items')}
+      id="master-list-detail"
+      pagination={{ ...pagination, total: data?.totalCount ?? 0 }}
+      onChangePage={updatePaginationQuery}
+      columns={columns}
+      data={data?.nodes}
+      isError={isError}
+      isLoading={isLoading}
+      noDataMessage={t('error.no-items')}
     />
-   
   );
 };
