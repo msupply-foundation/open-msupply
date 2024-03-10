@@ -37,13 +37,13 @@ export const useInboundDeleteRows = () => {
     selectedRows,
     deleteAction,
     canDelete: selectedRows.every(
-      ({ status }) => status === InvoiceNodeStatus.New // is this accurate?
+      ({ status }) => status === InvoiceNodeStatus.New
     ),
     messages: {
       confirmMessage: t('messages.confirm-delete-returns', {
         count: selectedRows.length,
       }),
-      deleteSuccess: t('messages.deleted-shipments', {
+      deleteSuccess: t('messages.deleted-returns', {
         count: selectedRows.length,
       }),
     },
