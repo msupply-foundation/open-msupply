@@ -180,6 +180,11 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
       otherPartyStore {
         code
       }
+      user {
+        __typename
+        username
+        email
+      }
       ...OutboundReturnRow
     }
   }
