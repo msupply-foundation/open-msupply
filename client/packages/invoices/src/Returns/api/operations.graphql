@@ -5,6 +5,7 @@ fragment OutboundReturnRow on InvoiceNode {
   status
   invoiceNumber
   colour
+  onHold
   createdDatetime
   pickedDatetime
   shippedDatetime
@@ -215,6 +216,18 @@ mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
         __typename
         description
       }
+    }
+  }
+}
+mutation updateOutboundReturn(
+  $storeId: String!
+  $input: UpdateOutboundReturnInput!
+) {
+  updateOutboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
     }
   }
 }
