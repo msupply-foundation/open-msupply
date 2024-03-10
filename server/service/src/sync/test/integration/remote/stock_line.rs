@@ -2,10 +2,10 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{LocationRow, StockLineRow};
+use repository::{LocationRow, StockLineRow, StockLineRowDelete};
 use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 pub struct StockLineRecordTester;
@@ -46,11 +46,11 @@ impl SyncRecordTester for StockLineRecordTester {
                 "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(location_row),
-                PullUpsertRecord::StockLine(stock_line_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(location_row),
+                IntegrationOperation::upsert(stock_line_row.clone()),
+            ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let stock_line_row = inline_edit(&stock_line_row, |mut d| {
@@ -73,19 +73,15 @@ impl SyncRecordTester for StockLineRecordTester {
                 "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::StockLine(stock_line_row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(stock_line_row.clone())],
+            ..Default::default()
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_delete(
-                &stock_line_row.id,
-                crate::sync::translations::PullDeleteRecordTable::StockLine,
-            ),
+            integration_records: vec![IntegrationOperation::delete(StockLineRowDelete(
+                stock_line_row.id,
+            ))],
+            ..Default::default()
         });
         result
     }

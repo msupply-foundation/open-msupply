@@ -9,17 +9,28 @@ export const useReturns = {
     listOutbound: Document.useOutbounds,
     listAllOutbound: Document.useOutboundsAll,
     outboundReturn: Document.useOutboundReturn,
+    inboundReturn: Document.useInboundReturn,
 
     insertOutboundReturn: Document.useInsertOutboundReturn,
-    insertInboundReturn: Document.useInsertInboundReturn,
+    updateOutboundReturn: Document.useUpdateOutboundReturn,
     deleteOutboundRows: Document.useOutboundDeleteRows,
+
+    insertInboundReturn: Document.useInsertInboundReturn,
+    deleteInbound: Document.useInboundReturnDelete,
     deleteInboundRows: Document.useInboundDeleteRows,
   },
   lines: {
     outboundReturnLines: Lines.useOutboundReturnLines,
+    updateOutboundLines: Lines.useUpdateOutboundReturnLines,
+
     inboundReturnLines: Lines.useInboundReturnLines,
+
+    inboundReturnRows: Lines.useInboundReturnRows,
+
+    deleteSelectedInboundLines: Lines.useDeleteSelectedInboundReturnLines,
   },
   utils: {
     api: Utils.useReturnsApi,
+    inboundIsDisabled: Utils.useInboundReturnIsDisabled,
   },
 };

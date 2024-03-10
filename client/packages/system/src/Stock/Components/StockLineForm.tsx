@@ -22,6 +22,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
+import { usePackVariant } from '../..';
 
 const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
@@ -55,6 +56,11 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     ? draft.supplierName
     : t('message.no-supplier');
   const location = draft?.location ?? null;
+  const { asPackVariant } = usePackVariant(
+    draft.itemId,
+    draft.item.unitName ?? null
+  );
+  const packUnit = asPackVariant(draft.packSize);
 
   const scanBarcode = async () => {
     try {
@@ -109,7 +115,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         gap={1}
       >
         <TextWithLabelRow
-          label={t('label.pack-quantity')}
+          label={t('label.num-packs')}
           text={String(draft.totalNumberOfPacks)}
           textProps={{ textAlign: 'end' }}
         />
@@ -167,8 +173,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         gap={1}
       >
         <TextWithLabelRow
-          label={t('label.pack-size')}
-          text={String(draft.packSize)}
+          label={t('label.pack')}
+          text={String(packUnit)}
           textProps={{ textAlign: 'end' }}
         />
         <StyledInputRow

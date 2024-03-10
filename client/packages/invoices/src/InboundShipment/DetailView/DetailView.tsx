@@ -111,6 +111,8 @@ export const DetailView: FC = () => {
               onClose={onClose}
               mode={mode}
               item={entity}
+              currency={data.currency}
+              isExternalSupplier={!data.otherParty.store}
             />
           )}
           {returnsIsOpen && (
