@@ -35,7 +35,7 @@ export const AppBarButtons = () => {
   const chartApi = useTemperatureChart.utils.api();
   const navigate = useNavigate();
   const getConfirmation = useConfirmationModal({
-    message: t('message.new-sensor'),
+    message: t('messages.new-sensor'),
     title: t('title.new-sensor'),
   });
   // prevent a user reloading the page while uploading
@@ -67,7 +67,7 @@ export const AppBarButtons = () => {
       if (resultJson.numberOfLogs === 0 && resultJson.numberOfBreaches === 0)
         throw new Error(t('error.fridge-tag-import-empty'));
 
-      success(t('message.fridge-tag-import-successful', resultJson))();
+      success(t('messages.fridge-tag-import-successful', resultJson))();
 
       // forces a refetch of logs, breach, chart data and sensors
       queryClient.invalidateQueries(breachApi.keys.base());

@@ -193,7 +193,7 @@ mod test {
               ... on AssetConnector {
                 nodes {
                   id
-                  name
+                  notes
                   code
                 }
                 totalCount
@@ -207,7 +207,7 @@ mod test {
             Ok(ListResult {
                 rows: vec![Asset {
                     id: "test_id".to_owned(),
-                    name: "test_name".to_owned(),
+                    notes: Some("test_note".to_owned()),
                     code: "test_code".to_owned(),
                     ..Default::default()
                 }],
@@ -220,7 +220,7 @@ mod test {
                   "nodes": [
                       {
                           "id": "test_id",
-                          "name": "test_name",
+                          "notes": "test_note",
                           "code": "test_code",
                       },
                   ],

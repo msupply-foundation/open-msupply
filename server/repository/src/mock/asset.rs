@@ -11,7 +11,7 @@ E003/002	Cold Chain Equipment	Refrigerators and freezers	Vaccine/Waterpacks free
 pub fn mock_asset_a() -> AssetRow {
     AssetRow {
         id: String::from("asset_a"),
-        name: String::from("Freezer A - HBD 116"),
+        notes: Some(String::from("Freezer A - HBD 116")),
         code: String::from("asset_a"),
         store_id: None,
         serial_number: Some(String::from("serial_number_a")),
@@ -36,7 +36,7 @@ E004/002	Cold Chain Equipment	Insulated Containers	Vaccine Carrier LR 3L	B Medic
 pub fn mock_asset_b() -> AssetRow {
     AssetRow {
         id: String::from("asset_b"),
-        name: String::from("Vaccine Carrier LR 3L - RCW4"),
+        notes: Some(String::from("Vaccine Carrier LR 3L - RCW4")),
         code: String::from("asset_b"),
         store_id: Some(mock_store_a().id),
         serial_number: Some(String::from("serial_number")),
@@ -52,7 +52,7 @@ pub fn mock_asset_b() -> AssetRow {
 pub fn mock_deleted_asset() -> AssetRow {
     AssetRow {
         id: String::from("deleted_asset"),
-        name: String::new(),
+        notes: None,
         code: String::new(),
         store_id: None,
         serial_number: None,

@@ -1,5 +1,5 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
     translations::name::{LegacyNameRow, LegacyNameType},
 };
 use chrono::NaiveDate;
@@ -106,8 +106,8 @@ const NAME_1: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_1() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_1,
         NameRow {
@@ -246,8 +246,8 @@ const NAME_2: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_2() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_2() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_2,
         NameRow {
@@ -380,8 +380,8 @@ const NAME_3: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_3() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_3() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_3,
         NameRow {
@@ -515,8 +515,8 @@ const NAME_4: (&'static str, &'static str) = (
   }"#,
 );
 
-fn name_4() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_4() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_4,
         NameRow {
@@ -556,8 +556,8 @@ fn name_4() -> TestSyncPullRecord {
     )
 }
 
-fn name_push_record_1() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn name_push_record_1() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: NAME_1.0.to_string(),
         push_data: json!(LegacyNameRow {
@@ -599,8 +599,8 @@ fn name_push_record_1() -> TestSyncPushRecord {
     }
 }
 
-fn name_push_record_2() -> TestSyncPushRecord {
-    TestSyncPushRecord {
+fn name_push_record_2() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: NAME_4.0.to_string(),
         push_data: json!(LegacyNameRow {
@@ -642,18 +642,18 @@ fn name_push_record_2() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![name_1(), name_2(), name_3(), name_4()]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         NAME_4.0,
         NameRowDelete(NAME_4.0.to_string()),
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![name_push_record_1(), name_push_record_2()]
 }
