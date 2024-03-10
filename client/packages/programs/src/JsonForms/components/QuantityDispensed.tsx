@@ -153,7 +153,7 @@ const UIComponent = (props: ControlProps) => {
             options
           ).getTime() / 1000
         )
-      : '';
+      : 'N/A';
 
   if (!props.visible) {
     return null;
