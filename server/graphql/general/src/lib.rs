@@ -114,6 +114,19 @@ impl GeneralQueries {
         master_lists(ctx, store_id, page, filter, sort)
     }
 
+    pub async fn master_list_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        master_list_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<MasterListLineFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<MasterListLineSortInput>>,
+    ) -> Result<MasterListLinesResponse> {
+        master_list_lines(ctx, store_id, master_list_id, page, filter, sort)
+    }
+
     /// Query omSupply "item" entries
     pub async fn items(
         &self,
