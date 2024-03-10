@@ -17,7 +17,10 @@ const Options = z
      * Additional pattern to be matched that can be defined in ui schema
      */
     pattern: z.string().optional(),
-    /** Overwrite the schema definition, e.g. to make a non-required field required in the UI. */
+    /**
+     * Make the text value mandatory in the UI.
+     * For example, a field might be optional in the data schema but should be required in the UI.
+     */
     required: z.boolean().optional(),
     /**
      * Examples for the correct pattern
