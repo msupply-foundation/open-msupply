@@ -49,7 +49,7 @@ pub fn update_inbound_shipment_line(
                     input.clone(),
                     line.clone(),
                     item,
-                    invoice,
+                    invoice.clone(),
                 )?;
 
             let stock_line_repository = StockLineRowRepository::new(&connection);
@@ -73,9 +73,9 @@ pub fn update_inbound_shipment_line(
                     activity_log_entry(
                         ctx,
                         ActivityLogType::QuantityForLineHasBeenSetToZero,
-                        Some(updated_line.id.clone()),
-                        Some(line.invoice_line_row.number_of_packs.to_string()),
-                        Some(number_of_packs.to_string()),
+                        Some(invoice.id),
+                        Some(updated_line.batch.unwrap_or_default() + " " + &updated_line.id),
+                        None,
                     )?;
                 }
             }
