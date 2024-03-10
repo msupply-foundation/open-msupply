@@ -4,7 +4,7 @@ use crate::{
 };
 use diesel::prelude::*;
 
-use super::temperature_chart_row::{Interval, *};
+use super::temperature_chart_row::*;
 
 pub struct TemperatureChartRepository<'a> {
     connection: &'a StorageConnection,
@@ -87,7 +87,7 @@ mod test {
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         EqualFilter, LocationRow, NameRow, SensorFilter, SensorRow, StoreRow, TemperatureBreachRow,
-        TemperatureChartRepository, TemperatureChartRow, TemperatureLogRow,
+        TemperatureLogRow,
     };
 
     use rand::{seq::SliceRandom, thread_rng};

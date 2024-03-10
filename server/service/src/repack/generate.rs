@@ -92,7 +92,7 @@ fn generate_invoice_and_lines(
     let mut invoice_lines = Vec::new();
 
     let item = ItemRowRepository::new(connection)
-        .find_one_by_id(&stock_line_to_update.item_row.id)?
+        .find_active_by_id(&stock_line_to_update.item_row.id)?
         .ok_or(RepositoryError::NotFound)?;
 
     let stock_line_to_update_row = &stock_line_to_update.stock_line_row;

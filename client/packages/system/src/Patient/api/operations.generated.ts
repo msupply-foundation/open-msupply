@@ -82,6 +82,15 @@ export type UpdatePatientMutationVariables = Types.Exact<{
 
 export type UpdatePatientMutation = { __typename: 'Mutations', updatePatient: { __typename: 'PatientNode', id: string, code: string, code2?: string | null, firstName?: string | null, lastName?: string | null, name: string, dateOfBirth?: string | null, address1?: string | null, phone?: string | null, gender?: Types.GenderType | null, email?: string | null, documentDraft?: any | null, isDeceased: boolean, dateOfDeath?: string | null, document?: { __typename: 'DocumentNode', id: string, name: string, type: string } | null, programEnrolments: { __typename: 'ProgramEnrolmentConnector', totalCount: number, nodes: Array<{ __typename: 'ProgramEnrolmentNode', programEnrolmentId?: string | null, document: { __typename: 'DocumentNode', documentRegistry?: { __typename: 'DocumentRegistryNode', name?: string | null } | null } }> } } };
 
+export type LatestPatientEncounterQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  patientId: Types.Scalars['String']['input'];
+  encounterType?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
+
+
+export type LatestPatientEncounterQuery = { __typename: 'Queries', encounters: { __typename: 'EncounterConnector', totalCount: number, nodes: Array<{ __typename: 'EncounterNode', id: string, type: string, startDatetime: string, suggestedNextEncounter?: { __typename: 'SuggestedNextEncounterNode', startDatetime: string, label?: string | null } | null }> } };
+
 export const PatientRowFragmentDoc = gql`
     fragment PatientRow on PatientNode {
   id
@@ -280,6 +289,30 @@ export const UpdatePatientDocument = gql`
   }
 }
     ${ProgramPatientRowFragmentDoc}`;
+export const LatestPatientEncounterDocument = gql`
+    query latestPatientEncounter($storeId: String!, $patientId: String!, $encounterType: String) {
+  encounters(
+    storeId: $storeId
+    filter: {patientId: {equalTo: $patientId}, type: {equalTo: $encounterType}}
+    sort: {key: startDatetime, desc: true}
+    page: {first: 1}
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        id
+        type
+        startDatetime
+        suggestedNextEncounter {
+          startDatetime
+          label
+        }
+      }
+      totalCount
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -314,6 +347,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     updatePatient(variables: UpdatePatientMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdatePatientMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdatePatientMutation>(UpdatePatientDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updatePatient', 'mutation');
+    },
+    latestPatientEncounter(variables: LatestPatientEncounterQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LatestPatientEncounterQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LatestPatientEncounterQuery>(LatestPatientEncounterDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'latestPatientEncounter', 'query');
     }
   };
 }
@@ -469,5 +505,22 @@ export const mockInsertPatientMutation = (resolver: ResponseResolver<GraphQLRequ
 export const mockUpdatePatientMutation = (resolver: ResponseResolver<GraphQLRequest<UpdatePatientMutationVariables>, GraphQLContext<UpdatePatientMutation>, any>) =>
   graphql.mutation<UpdatePatientMutation, UpdatePatientMutationVariables>(
     'updatePatient',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLatestPatientEncounterQuery((req, res, ctx) => {
+ *   const { storeId, patientId, encounterType } = req.variables;
+ *   return res(
+ *     ctx.data({ encounters })
+ *   )
+ * })
+ */
+export const mockLatestPatientEncounterQuery = (resolver: ResponseResolver<GraphQLRequest<LatestPatientEncounterQueryVariables>, GraphQLContext<LatestPatientEncounterQuery>, any>) =>
+  graphql.query<LatestPatientEncounterQuery, LatestPatientEncounterQueryVariables>(
+    'latestPatientEncounter',
     resolver
   )

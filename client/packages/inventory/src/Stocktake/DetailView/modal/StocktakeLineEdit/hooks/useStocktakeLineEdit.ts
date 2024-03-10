@@ -5,7 +5,7 @@ import {
   noOtherVariants,
   getErrorMessage,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { ItemRowFragment, usePackVariant } from '@openmsupply-client/system';
 import { StocktakeLineFragment, useStocktake } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
@@ -29,9 +29,12 @@ export const useStocktakeLineEdit = (
   const filteredItems = items.filter(item => item.item?.id === item?.id);
   const nextItem = useNextItem(filteredItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
+  const { variantsControl } = usePackVariant(String(item?.id), null);
   const { mutateAsync: upsertLines, isLoading: isSaving } =
     useStocktake.line.save();
   const errorsContext = useStocktakeLineErrorContext();
+
+  const defaultPackSize = variantsControl?.activeVariant?.packSize || 1;
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
@@ -101,7 +104,10 @@ export const useStocktakeLineEdit = (
 
   const addLine = () => {
     if (item) {
-      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
+      setDraftLines(lines => [
+        DraftLine.fromItem(id, item, defaultPackSize),
+        ...lines,
+      ]);
     }
   };
 

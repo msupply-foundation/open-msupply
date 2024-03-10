@@ -1,8 +1,7 @@
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
-};
-use repository::{ReportContext, ReportRow, ReportType};
+use crate::sync::test::TestSyncPullRecord;
+use repository::{ReportContext, ReportRow, ReportRowDelete, ReportType};
+
+const TABLE_NAME: &'static str = "report";
 
 const REPORT_1: (&'static str, &'static str) = (
     "76B6C424E1935C4DAF36A7A8F451FE72",
@@ -29,9 +28,9 @@ const REPORT_1: (&'static str, &'static str) = (
 
 pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REPORT,
+        TABLE_NAME,
         REPORT_1,
-        PullUpsertRecord::Report(ReportRow {
+        ReportRow {
             id: REPORT_1.0.to_string(),
             name: "Test".to_string(),
             r#type: ReportType::OmSupply,
@@ -40,14 +39,14 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
             comment: Some("Test comment".to_string()),
             sub_context: None,
             argument_schema_id: None,
-        }),
+        },
     )]
 }
 
 pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
     vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::REPORT,
+        TABLE_NAME,
         REPORT_1.0,
-        PullDeleteRecordTable::Report,
+        ReportRowDelete(REPORT_1.0.to_string()),
     )]
 }

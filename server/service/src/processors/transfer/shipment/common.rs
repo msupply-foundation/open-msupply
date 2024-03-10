@@ -42,6 +42,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                  tax,
                  inventory_adjustment_reason_id: _,
                  return_reason_id: _,
+                 foreign_currency_price_before_tax,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
@@ -66,6 +67,7 @@ pub(crate) fn generate_inbound_shipment_lines(
                     number_of_packs,
                     note,
                     tax,
+                    foreign_currency_price_before_tax,
                     // Default
                     stock_line_id: None,
                     location_id: None,

@@ -40,6 +40,10 @@ table! {
         pull_remote_finished_datetime -> Nullable<Timestamp>,
         pull_remote_progress_total -> Nullable<Integer>,
         pull_remote_progress_done -> Nullable<Integer>,
+        pull_v6_started_datetime -> Nullable<Timestamp>,
+        pull_v6_finished_datetime -> Nullable<Timestamp>,
+        pull_v6_progress_total -> Nullable<Integer>,
+        pull_v6_progress_done -> Nullable<Integer>,
         integration_started_datetime -> Nullable<Timestamp>,
         integration_finished_datetime -> Nullable<Timestamp>,
         integration_progress_total -> Nullable<Integer>,
@@ -70,6 +74,10 @@ pub struct SyncLogRow {
     pub pull_remote_finished_datetime: Option<NaiveDateTime>,
     pub pull_remote_progress_total: Option<i32>,
     pub pull_remote_progress_done: Option<i32>,
+    pub pull_v6_started_datetime: Option<NaiveDateTime>,
+    pub pull_v6_finished_datetime: Option<NaiveDateTime>,
+    pub pull_v6_progress_total: Option<i32>,
+    pub pull_v6_progress_done: Option<i32>,
     pub integration_started_datetime: Option<NaiveDateTime>,
     pub integration_finished_datetime: Option<NaiveDateTime>,
     pub integration_progress_total: Option<i32>,
@@ -104,6 +112,10 @@ impl Default for SyncLogRow {
             integration_progress_total: Default::default(),
             error_message: Default::default(),
             error_code: Default::default(),
+            pull_v6_started_datetime: Default::default(),
+            pull_v6_finished_datetime: Default::default(),
+            pull_v6_progress_total: Default::default(),
+            pull_v6_progress_done: Default::default(),
         }
     }
 }
