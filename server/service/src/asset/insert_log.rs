@@ -64,8 +64,6 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
-    // TODO - want to pass to this function either the input OR existing value if input is null (is optional).
-    // Also want to maybe make this a dynamic matching rather than hard coded? Not sure if this is possible easily.Maybe these values are pretty fixed?
     if !check_reason_matches_status(&input.status, &input.reason) {
         return Err(InsertAssetLogError::ReasonInvalidForStatus);
     }
