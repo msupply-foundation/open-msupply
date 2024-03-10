@@ -187,6 +187,21 @@ impl RequisitionLineNode {
             .unwrap_or(0.0))
     }
 
+    pub async fn already_issued(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionLineSupplyStatusLoader>>();
+
+        let response_option = loader
+            .load_one(RequisitionAndItemId::new(
+                &self.row().requisition_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(response_option
+            .map(|requisition_line_status| requisition_line_status.quantity_in_invoices())
+            .unwrap_or(0.0))
+    }
+
     pub async fn linked_requisition_line(
         &self,
         ctx: &Context<'_>,
