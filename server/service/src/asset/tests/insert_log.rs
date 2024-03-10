@@ -33,7 +33,6 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
-                    user_id: mock_user_account_a().id,
                     status: Some("test_status".to_string()),
                     comment: None,
                     r#type: None,
@@ -51,7 +50,6 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
-                    user_id: mock_user_account_a().id,
                     status: Some("test_status".to_string()),
                     comment: None,
                     r#type: None,
@@ -68,7 +66,6 @@ mod query {
                 InsertAssetLog {
                     id: "test_id_2".to_string(),
                     asset_id: "incorrect_asset_id".to_string(),
-                    user_id: mock_user_account_a().id,
                     status: Some("test_status".to_string()),
                     comment: None,
                     r#type: None,

@@ -23,7 +23,3 @@ pub fn check_asset_log_exists(
 ) -> Result<Option<AssetLogRow>, RepositoryError> {
     Ok(AssetLogRowRepository::new(connection).find_one_by_id(id)?)
 }
-
-pub fn check_user_is_user(ctx: &ServiceContext, input: &InsertAssetLog) -> bool {
-    return ctx.user_id == input.user_id;
-}

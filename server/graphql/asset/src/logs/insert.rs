@@ -47,7 +47,6 @@ pub fn insert_asset_log(
 pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
-    pub user_id: String,
     pub status: Option<String>,
     pub reason: Option<String>,
     pub comment: Option<String>,
@@ -59,7 +58,6 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
         InsertAssetLogInput {
             id,
             asset_id,
-            user_id,
             status,
             reason,
             comment,
@@ -69,7 +67,6 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
         InsertAssetLog {
             id,
             asset_id,
-            user_id,
             status,
             reason,
             comment,

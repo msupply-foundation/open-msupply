@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists, check_user_is_user},
+    validate::{check_asset_exists, check_asset_log_exists},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
@@ -23,7 +23,6 @@ pub enum InsertAssetLogError {
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
-    pub user_id: String,
     pub status: Option<String>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
@@ -37,8 +36,8 @@ pub fn insert_asset_log(
     let asset_log = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(ctx, &input, connection)?;
-            let new_asset_log = generate(input);
+            validate(&input, connection)?;
+            let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
 
             get_asset_log(ctx, new_asset_log.id).map_err(InsertAssetLogError::from)
@@ -48,14 +47,9 @@ pub fn insert_asset_log(
 }
 
 pub fn validate(
-    ctx: &ServiceContext,
     input: &InsertAssetLog,
     connection: &StorageConnection,
 ) -> Result<(), InsertAssetLogError> {
-    if !check_user_is_user(ctx, &input) {
-        return Err(InsertAssetLogError::InsufficientPermission);
-    }
-
     if check_asset_log_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
@@ -69,10 +63,10 @@ pub fn validate(
 }
 
 pub fn generate(
+    ctx: &ServiceContext,
     InsertAssetLog {
         id,
         asset_id,
-        user_id,
         status,
         comment,
         r#type,
@@ -82,7 +76,7 @@ pub fn generate(
     AssetLogRow {
         id,
         asset_id,
-        user_id,
+        user_id: ctx.user_id.clone(),
         status,
         comment,
         r#type,
