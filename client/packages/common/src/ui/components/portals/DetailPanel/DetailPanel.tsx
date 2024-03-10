@@ -65,7 +65,7 @@ export const DetailPanel: FC = () => {
 export const DetailPanelPortal: FC<
   PropsWithChildren<DetailPanelPortalProps>
 > = ({ Actions, children }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { detailPanelRef } = useHostContext();
   const { hasUserSet, isOpen, close } = useDetailPanelStore();
   const isLargeScreen = useIsLargeScreen();

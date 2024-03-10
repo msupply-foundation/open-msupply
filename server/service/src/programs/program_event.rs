@@ -123,9 +123,24 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<ProgramEvent>, ListError> {
         let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
         let repository = ProgramEventRepository::new(&ctx.connection);
+
+        let filter = if let Some(allowed_ctx) = allowed_ctx {
+            let mut filter = filter.unwrap_or(ProgramEventFilter::new());
+            // restrict query results to allowed entries
+            filter.context_id = Some(
+                filter
+                    .context_id
+                    .unwrap_or_default()
+                    .restrict_results(&allowed_ctx),
+            );
+            Some(filter)
+        } else {
+            filter
+        };
         Ok(ListResult {
             rows: repository.query(pagination, filter.clone(), sort)?,
             count: i64_to_u32(repository.count(filter)?),
@@ -139,6 +154,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
+        allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<ProgramEvent>, ListError> {
         let filter = filter
             .unwrap_or(ProgramEventFilter::new())
@@ -148,7 +164,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                 at.checked_add_signed(Duration::nanoseconds(1))
                     .unwrap_or(at),
             ));
-        self.events(ctx, pagination, Some(filter), sort)
+        self.events(ctx, pagination, Some(filter), sort, allowed_ctx)
     }
 
     /// Upserts all events of a patient with a given datetime, i.e. it removes exiting events and
@@ -333,6 +349,7 @@ mod test {
                     NaiveDateTime::from_timestamp_opt($at, 0).unwrap(),
                     None,
                     Some(ProgramEventFilter::new()),
+                    None,
                     None,
                 )
                 .unwrap();
@@ -762,6 +779,7 @@ mod test {
                 None,
                 Some(ProgramEventFilter::new()),
                 None,
+                None,
             )
             .unwrap();
         assert_eq!(events.count, 0);
@@ -779,6 +797,7 @@ mod test {
                     key: ProgramEventSortField::ActiveStartDatetime,
                     desc: Some(false),
                 }),
+                None,
             )
             .unwrap()
             .rows
@@ -906,7 +925,7 @@ mod test {
         // G1_2: datetime: 2011-11-29T00:00:00, start: 2012-01-28T00:00:00, end: 2012-04-03T00:00:00
         // G1_1: datetime: 2011-11-29T00:00:00, start: 2011-12-31T00:00:00, end: 2012-01-28T00:00:00
         let result = service
-            .events(&ctx, None, None, None)
+            .events(&ctx, None, None, None, None)
             .unwrap()
             .rows
             .into_iter()
@@ -988,7 +1007,7 @@ mod test {
             )
             .unwrap();
         let result = service
-            .events(&ctx, None, None, None)
+            .events(&ctx, None, None, None, None)
             .unwrap()
             .rows
             .into_iter()

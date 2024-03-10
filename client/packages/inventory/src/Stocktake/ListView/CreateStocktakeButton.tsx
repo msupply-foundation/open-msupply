@@ -131,7 +131,7 @@ export const CreateStocktakeButton: React.FC<{
 
   const locations =
     locationData?.nodes.map(location => ({
-      label: location.name,
+      label: location.code,
       value: location.id,
     })) || [];
 

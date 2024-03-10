@@ -2,7 +2,7 @@ use super::{
     document_registry_row::document_registry::dsl as document_registry_dsl, StorageConnection,
 };
 
-use crate::{db_diesel::form_schema_row::form_schema, RepositoryError};
+use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, Upsert};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -97,5 +97,19 @@ impl<'a> DocumentRegistryRowRepository<'a> {
         )
         .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for DocumentRegistryRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        DocumentRegistryRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            DocumentRegistryRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

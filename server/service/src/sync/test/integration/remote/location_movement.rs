@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use repository::{LocationMovementRow, LocationRow, StockLineRow};
@@ -54,12 +54,12 @@ impl SyncRecordTester for LocationMovementRecordTester {
                 "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(location_row.clone()),
-                PullUpsertRecord::StockLine(stock_line_row.clone()),
-                PullUpsertRecord::LocationMovement(location_movement_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(location_row.clone()),
+                IntegrationOperation::upsert(stock_line_row.clone()),
+                IntegrationOperation::upsert(location_movement_row.clone()),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -80,11 +80,8 @@ impl SyncRecordTester for LocationMovementRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::LocationMovement(location_movement.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(location_movement.clone())],
+            ..Default::default()
         });
 
         result

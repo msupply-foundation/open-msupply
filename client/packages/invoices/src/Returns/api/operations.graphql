@@ -5,7 +5,12 @@ fragment OutboundReturnRow on InvoiceNode {
   status
   invoiceNumber
   colour
+  onHold
   createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
 }
 
 fragment InboundReturnRow on InvoiceNode {
@@ -17,6 +22,54 @@ fragment InboundReturnRow on InvoiceNode {
   colour
   createdDatetime
   deliveredDatetime
+}
+
+fragment InboundReturn on InvoiceNode {
+  __typename
+  id
+  status
+  invoiceNumber
+  colour
+
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
+
+  otherPartyName
+  otherPartyStore {
+    code
+  }
+
+  user {
+    __typename
+    username
+    email
+  }
+}
+
+fragment OutboundReturnDetailRow on InvoiceLineNode {
+  id
+  itemCode
+  itemName
+  itemId
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  sellPricePerPack
+}
+
+fragment InboundReturnLine on InvoiceLineNode {
+  id
+  itemId
+  itemCode
+  itemName
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
 }
 
 query outboundReturns(
@@ -66,11 +119,11 @@ query inboundReturns(
   }
 }
 
-query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
-  generateOutboundReturnLines(
-    input: { stockLineIds: $stockLineIds }
-    storeId: $storeId
-  ) {
+query generateOutboundReturnLines(
+  $input: GenerateOutboundReturnLinesInput!
+  $storeId: String!
+) {
+  generateOutboundReturnLines(input: $input, storeId: $storeId) {
     ... on OutboundReturnLineConnector {
       nodes {
         availableNumberOfPacks
@@ -108,33 +161,42 @@ query generateInboundReturnLines($stockLineIds: [String!], $storeId: String!) {
   }
 }
 
-query invoiceByNumber($invoiceNumber: Int!, $storeId: String!) {
+query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(
     invoiceNumber: $invoiceNumber
     storeId: $storeId
     type: OUTBOUND_RETURN
   ) {
     ... on InvoiceNode {
+      __typename
       id
-      invoiceNumber
       lines {
         nodes {
-          id
-          returnReasonId
-          stockLine {
-            id
-            packSize
-            item {
-              id
-              code
-              name
-            }
-          }
+          ...OutboundReturnDetailRow
         }
       }
       otherPartyName
+      otherPartyId
       otherPartyStore {
         code
+      }
+      ...OutboundReturnRow
+    }
+  }
+}
+query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: INBOUND_RETURN
+  ) {
+    ... on InvoiceNode {
+      __typename
+      ...InboundReturn
+      lines {
+        nodes {
+          ...InboundReturnLine
+        }
       }
     }
   }
@@ -154,6 +216,30 @@ mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
         __typename
         description
       }
+    }
+  }
+}
+mutation updateOutboundReturn(
+  $storeId: String!
+  $input: UpdateOutboundReturnInput!
+) {
+  updateOutboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation updateOutboundReturnLines(
+  $storeId: String!
+  $input: UpdateOutboundReturnLinesInput!
+) {
+  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
     }
   }
 }
