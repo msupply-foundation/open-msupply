@@ -16,6 +16,7 @@ import {
   CurrencyCell,
   ColumnAlign,
   NumberInputCell,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -147,6 +148,8 @@ export const PricingTableComponent: FC<TableProps> = ({
   currency,
   isExternalSupplier,
 }) => {
+  const { store } = useAuthContext();
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -166,7 +169,7 @@ export const PricingTableComponent: FC<TableProps> = ({
     ],
   ];
 
-  if (isExternalSupplier) {
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencySellPricePerPack',
       label: 'label.fc-sell-price',
@@ -193,7 +196,7 @@ export const PricingTableComponent: FC<TableProps> = ({
     },
   ]);
 
-  if (isExternalSupplier) {
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencyCostPricePerPack',
       label: 'label.fc-cost-price',
