@@ -1,5 +1,6 @@
 pub mod generate_outbound_return_lines;
 pub mod insert;
+pub mod update;
 pub mod update_lines;
 
 #[derive(Clone, Debug, Default, PartialEq)]

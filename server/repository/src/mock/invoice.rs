@@ -445,6 +445,22 @@ pub fn mock_outbound_return_a() -> InvoiceRow {
     })
 }
 
+pub fn mock_outbound_return_b() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("outbound_return_b");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 1;
+        r.r#type = InvoiceRowType::OutboundReturn;
+        r.status = InvoiceRowStatus::New;
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+    })
+}
+
 pub fn mock_outbound_shipments() -> Vec<InvoiceRow> {
     vec![
         mock_outbound_shipment_a(),
@@ -481,7 +497,7 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
 }
 
 pub fn mock_outbound_returns() -> Vec<InvoiceRow> {
-    vec![mock_outbound_return_a()]
+    vec![mock_outbound_return_a(), mock_outbound_return_b()]
 }
 
 pub fn mock_invoices() -> Vec<InvoiceRow> {
