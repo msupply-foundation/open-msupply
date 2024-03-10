@@ -4,13 +4,13 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null };
+export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null };
 
 export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null };
 
 export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyName: string, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null };
 
-export type OutboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
+export type OutboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
 
 export type InboundReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number };
 
@@ -24,7 +24,7 @@ export type OutboundReturnsQueryVariables = Types.Exact<{
 }>;
 
 
-export type OutboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null }> } };
+export type OutboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null }> } };
 
 export type InboundReturnsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -39,7 +39,7 @@ export type InboundReturnsQueryVariables = Types.Exact<{
 export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null }> } };
 
 export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
-  stockLineIds?: Types.InputMaybe<Array<Types.Scalars['String']['input']> | Types.Scalars['String']['input']>;
+  input: Types.GenerateOutboundReturnLinesInput;
   storeId: Types.Scalars['String']['input'];
 }>;
 
@@ -60,7 +60,7 @@ export type OutboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type OutboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null } | { __typename: 'NodeError' } };
+export type OutboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, otherPartyName: string, otherPartyId: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null } | { __typename: 'NodeError' } };
 
 export type InboundReturnByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -77,6 +77,22 @@ export type InsertOutboundReturnMutationVariables = Types.Exact<{
 
 
 export type InsertOutboundReturnMutation = { __typename: 'Mutations', insertOutboundReturn: { __typename: 'InsertOutboundReturnError', error: { __typename: 'OtherPartyNotASupplier', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+
+export type UpdateOutboundReturnMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateOutboundReturnInput;
+}>;
+
+
+export type UpdateOutboundReturnMutation = { __typename: 'Mutations', updateOutboundReturn: { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+
+export type UpdateOutboundReturnLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateOutboundReturnLinesInput;
+}>;
+
+
+export type UpdateOutboundReturnLinesMutation = { __typename: 'Mutations', updateOutboundReturnLines: { __typename: 'InvoiceNode', id: string } };
 
 export type InsertInboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -110,6 +126,7 @@ export const OutboundReturnRowFragmentDoc = gql`
   status
   invoiceNumber
   colour
+  onHold
   createdDatetime
   pickedDatetime
   shippedDatetime
@@ -157,6 +174,7 @@ export const OutboundReturnDetailRowFragmentDoc = gql`
   id
   itemCode
   itemName
+  itemId
   batch
   expiryDate
   numberOfPacks
@@ -213,11 +231,8 @@ export const InboundReturnsDocument = gql`
 }
     ${InboundReturnRowFragmentDoc}`;
 export const GenerateOutboundReturnLinesDocument = gql`
-    query generateOutboundReturnLines($stockLineIds: [String!], $storeId: String!) {
-  generateOutboundReturnLines(
-    input: {stockLineIds: $stockLineIds}
-    storeId: $storeId
-  ) {
+    query generateOutboundReturnLines($input: GenerateOutboundReturnLinesInput!, $storeId: String!) {
+  generateOutboundReturnLines(input: $input, storeId: $storeId) {
     ... on OutboundReturnLineConnector {
       nodes {
         availableNumberOfPacks
@@ -271,13 +286,10 @@ export const OutboundReturnByNumberDocument = gql`
           ...OutboundReturnDetailRow
         }
       }
+      otherPartyName
+      otherPartyId
       otherPartyStore {
         code
-      }
-      user {
-        __typename
-        username
-        email
       }
       ...OutboundReturnRow
     }
@@ -319,6 +331,27 @@ export const InsertOutboundReturnDocument = gql`
         __typename
         description
       }
+    }
+  }
+}
+    `;
+export const UpdateOutboundReturnDocument = gql`
+    mutation updateOutboundReturn($storeId: String!, $input: UpdateOutboundReturnInput!) {
+  updateOutboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+    `;
+export const UpdateOutboundReturnLinesDocument = gql`
+    mutation updateOutboundReturnLines($storeId: String!, $input: UpdateOutboundReturnLinesInput!) {
+  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
     }
   }
 }
@@ -383,6 +416,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     insertOutboundReturn(variables: InsertOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertOutboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertOutboundReturnMutation>(InsertOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertOutboundReturn', 'mutation');
     },
+    updateOutboundReturn(variables: UpdateOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnMutation>(UpdateOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturn', 'mutation');
+    },
+    updateOutboundReturnLines(variables: UpdateOutboundReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateOutboundReturnLinesMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateOutboundReturnLinesMutation>(UpdateOutboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateOutboundReturnLines', 'mutation');
+    },
     insertInboundReturn(variables: InsertInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertInboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundReturnMutation>(InsertInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundReturn', 'mutation');
     },
@@ -435,7 +474,7 @@ export const mockInboundReturnsQuery = (resolver: ResponseResolver<GraphQLReques
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockGenerateOutboundReturnLinesQuery((req, res, ctx) => {
- *   const { stockLineIds, storeId } = req.variables;
+ *   const { input, storeId } = req.variables;
  *   return res(
  *     ctx.data({ generateOutboundReturnLines })
  *   )
@@ -512,6 +551,40 @@ export const mockInboundReturnByNumberQuery = (resolver: ResponseResolver<GraphQ
 export const mockInsertOutboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<InsertOutboundReturnMutationVariables>, GraphQLContext<InsertOutboundReturnMutation>, any>) =>
   graphql.mutation<InsertOutboundReturnMutation, InsertOutboundReturnMutationVariables>(
     'insertOutboundReturn',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateOutboundReturnMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateOutboundReturn })
+ *   )
+ * })
+ */
+export const mockUpdateOutboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundReturnMutationVariables>, GraphQLContext<UpdateOutboundReturnMutation>, any>) =>
+  graphql.mutation<UpdateOutboundReturnMutation, UpdateOutboundReturnMutationVariables>(
+    'updateOutboundReturn',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateOutboundReturnLinesMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateOutboundReturnLines })
+ *   )
+ * })
+ */
+export const mockUpdateOutboundReturnLinesMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateOutboundReturnLinesMutationVariables>, GraphQLContext<UpdateOutboundReturnLinesMutation>, any>) =>
+  graphql.mutation<UpdateOutboundReturnLinesMutation, UpdateOutboundReturnLinesMutationVariables>(
+    'updateOutboundReturnLines',
     resolver
   )
 
