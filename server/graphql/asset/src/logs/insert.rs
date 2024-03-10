@@ -60,7 +60,6 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
         InsertAssetLogInput {
             id,
             asset_id,
-            user_id,
             status,
             reason,
             comment,

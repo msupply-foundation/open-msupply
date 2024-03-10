@@ -3,10 +3,12 @@ use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
-use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader};
+use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader, UserLoader};
 use graphql_core::simple_generic_errors::NodeError;
+use graphql_core::ContextExt;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{AssetCatalogueItemNode, StoreNode};
+use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 use repository::{
@@ -395,8 +397,13 @@ impl AssetLogNode {
         &self.row().asset_id
     }
 
-    pub async fn user_id(&self) -> &str {
-        &self.row().user_id
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let user_id = &self.row().user_id;
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        Ok(loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain))
     }
 
     pub async fn status(&self) -> Option<StatusType> {
