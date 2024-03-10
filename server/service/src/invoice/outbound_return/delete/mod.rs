@@ -1,4 +1,4 @@
-use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError, TransactionError};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError};
 
 pub mod validate;
 
@@ -12,52 +12,45 @@ use crate::{
         StockOutType,
     },
     service_provider::ServiceContext,
-    WithDBError,
 };
 
-type OutError = DeleteOutboundReturnError;
-
-pub fn delete_outbound_returns(
+pub fn delete_outbound_return(
     ctx: &ServiceContext,
-    ids: Vec<String>,
-) -> Result<Vec<String>, OutError> {
+    id: String,
+) -> Result<String, DeleteOutboundReturnError> {
     ctx.connection
-        .transaction_sync(|connection| -> Result<(), OutError> {
-            for id in &ids {
-                validate(&id, &ctx.store_id, &connection)?;
+        .transaction_sync(|connection| {
+            validate(&id, &ctx.store_id, &connection)?;
 
-                let lines = get_lines_for_invoice(connection, &id)?;
-                for line in lines {
-                    delete_stock_out_line(
-                        ctx,
-                        DeleteStockOutLine {
-                            id: line.invoice_line_row.id.clone(),
-                            r#type: Some(StockOutType::OutboundReturn),
-                        },
-                    )
-                    .map_err(|error| OutError::LineDeleteError {
-                        line_id: line.invoice_line_row.id,
-                        error,
-                    })?;
-                }
-
-                activity_log_entry(
-                    &ctx,
-                    ActivityLogType::InvoiceDeleted,
-                    Some(id.to_owned()),
-                    None,
-                    None,
-                )?;
-
-                InvoiceRowRepository::new(&connection)
-                    .delete(&id)
-                    .map_err(|error| OutError::DatabaseError(error))?;
+            let lines = get_lines_for_invoice(connection, &id)?;
+            for line in lines {
+                delete_stock_out_line(
+                    ctx,
+                    DeleteStockOutLine {
+                        id: line.invoice_line_row.id.clone(),
+                        r#type: Some(StockOutType::OutboundReturn),
+                    },
+                )
+                .map_err(|error| DeleteOutboundReturnError::LineDeleteError {
+                    line_id: line.invoice_line_row.id,
+                    error,
+                })?;
             }
-            Ok(())
-        })
-        .map_err(|error| error.to_inner_error())?;
 
-    Ok(ids)
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::InvoiceDeleted,
+                Some(id.to_owned()),
+                None,
+                None,
+            )?;
+
+            InvoiceRowRepository::new(&connection)
+                .delete(&id)
+                .map_err(|error| DeleteOutboundReturnError::DatabaseError(error))?;
+            Ok(id)
+        })
+        .map_err(|error| error.to_inner_error())
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -77,32 +70,6 @@ pub enum DeleteOutboundReturnError {
 impl From<RepositoryError> for DeleteOutboundReturnError {
     fn from(error: RepositoryError) -> Self {
         DeleteOutboundReturnError::DatabaseError(error)
-    }
-}
-
-impl From<TransactionError<DeleteOutboundReturnError>> for DeleteOutboundReturnError {
-    fn from(error: TransactionError<DeleteOutboundReturnError>) -> Self {
-        match error {
-            TransactionError::Transaction { msg, level } => {
-                DeleteOutboundReturnError::DatabaseError(RepositoryError::TransactionError {
-                    msg,
-                    level,
-                })
-            }
-            TransactionError::Inner(e) => e,
-        }
-    }
-}
-
-impl<ERR> From<WithDBError<ERR>> for DeleteOutboundReturnError
-where
-    ERR: Into<DeleteOutboundReturnError>,
-{
-    fn from(result: WithDBError<ERR>) -> Self {
-        match result {
-            WithDBError::DatabaseError(error) => error.into(),
-            WithDBError::Error(error) => error.into(),
-        }
     }
 }
 
@@ -162,25 +129,25 @@ mod test {
 
         // InvoiceDoesNotExist
         assert_eq!(
-            service.delete_outbound_returns(&context, vec!["invalid".to_string()]),
+            service.delete_outbound_return(&context, "invalid".to_string()),
             Err(ServiceError::InvoiceDoesNotExist)
         );
 
         //NotAnOutboundReturn
         assert_eq!(
-            service.delete_outbound_returns(&context, vec![mock_outbound_shipment_a().id]),
+            service.delete_outbound_return(&context, mock_outbound_shipment_a().id),
             Err(ServiceError::NotAnOutboundReturn)
         );
 
         //NotThisStoreInvoice
         assert_eq!(
-            service.delete_outbound_returns(&context, vec![wrong_store().id]),
+            service.delete_outbound_return(&context, wrong_store().id),
             Err(ServiceError::NotThisStoreInvoice)
         );
 
         //CannotEditFinalised
         assert_eq!(
-            service.delete_outbound_returns(&context, vec![verified().id]),
+            service.delete_outbound_return(&context, verified().id),
             Err(ServiceError::CannotEditFinalised)
         );
     }
@@ -197,7 +164,7 @@ mod test {
         let service = service_provider.invoice_service;
 
         service
-            .delete_outbound_returns(&context, vec![mock_outbound_return_a().id])
+            .delete_outbound_return(&context, mock_outbound_return_a().id)
             .unwrap();
 
         //test entry has been deleted
