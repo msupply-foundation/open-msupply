@@ -23,7 +23,7 @@ pub fn generate(
 
     set_new_status_datetime(&mut updated_return, &input.status);
     if let Some(status) = input.status.clone() {
-        updated_return.status = status.full_status().into()
+        updated_return.status = status.as_invoice_row_status()
     }
 
     let should_update_total_number_of_packs =
@@ -60,7 +60,7 @@ fn set_new_status_datetime(
         None => return, // There's no status to update
     };
 
-    if new_status.full_status() == outbound_return.status {
+    if new_status.as_invoice_row_status() == outbound_return.status {
         // The invoice already has this status, there's nothing to do.
         return;
     }
