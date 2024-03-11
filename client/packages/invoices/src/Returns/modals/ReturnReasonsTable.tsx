@@ -11,6 +11,8 @@ interface ReturnWithReason {
   id: string;
   itemCode: string;
   itemName: string;
+  expiryDate?: string | null;
+  batch?: string | null;
   note?: string | null;
   reasonId?: string | null;
 }
@@ -38,6 +40,8 @@ export const ReturnReasonsComponent = ({
     [
       'itemCode',
       'itemName',
+      'batch',
+      'expiryDate',
       // 'itemUnit', // not implemented for now
       ['returnReason', { Cell: ReturnReasonCell, setter: updateLine }],
       {

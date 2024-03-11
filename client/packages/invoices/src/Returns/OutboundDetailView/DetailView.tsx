@@ -2,38 +2,37 @@ import React, { FC } from 'react';
 import {
   TableProvider,
   createTableStore,
-  // useEditModal,
   DetailViewSkeleton,
   AlertModal,
   useNavigate,
   RouteBuilder,
   useTranslation,
   createQueryParamsStore,
+  useEditModal,
   DetailTabs,
-  // ModalMode,
 } from '@openmsupply-client/common';
 // import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
-// import { SidePanel } from './SidePanel';
+import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
-// import { OutboundLineEdit } from './OutboundLineEdit';
+import { OutboundReturnEditModal } from '../modals';
 
-export const DetailView: FC = () => {
+export const OutboundReturnsDetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
-  // const { entity, mode, onOpen, onClose, isOpen, setMode } =
-  //   useEditModal<Draft>();
+  const { onOpen, onClose, isOpen, entity: itemId } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
-  const onRowClick = () => {};
+  const onRowClick = (row: OutboundReturnDetailRowFragment) =>
+    onOpen(row.itemId);
 
-  const onAddItem = () => {};
+  const onAddItem = () => onOpen();
   //  (draft?: Draft) => {
   //   onOpen(draft);
   //   setMode(ModalMode.Create);
@@ -74,19 +73,21 @@ export const DetailView: FC = () => {
           )}
         >
           <AppBarButtons onAddItem={onAddItem} />
-          {/* {isOpen && (
-            <OutboundLineEdit
-              draft={entity}
-              mode={mode}
+          {isOpen && (
+            <OutboundReturnEditModal
               isOpen={isOpen}
               onClose={onClose}
+              stockLineIds={[]}
+              supplierId={data.otherPartyId}
+              returnId={data.id}
+              initialItemId={itemId}
             />
-          )} */}
+          )}
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />
-          {/* <SidePanel /> */}
+          <SidePanel />
         </TableProvider>
       ) : (
         <AlertModal

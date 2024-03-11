@@ -9,7 +9,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 import {
-  getNextOutboundReturnStatus,
+  getNextInboundReturnStatus,
   getStatusTranslation,
 } from '../../../utils';
 import { useReturns } from '../../api';
@@ -53,18 +53,14 @@ const getStatusOptions = (
   ];
 
   if (currentStatus === InvoiceNodeStatus.New) {
-    options[1].isDisabled = false;
-    options[2].isDisabled = false;
+    // When new, can change to delivered or verified
     options[3].isDisabled = false;
+    options[4].isDisabled = false;
   }
 
-  if (currentStatus === InvoiceNodeStatus.Allocated) {
-    options[2].isDisabled = false;
-    options[3].isDisabled = false;
-  }
-
-  if (currentStatus === InvoiceNodeStatus.Picked) {
-    options[3].isDisabled = false;
+  if (currentStatus === InvoiceNodeStatus.Delivered) {
+    // When delivered, can change to verified
+    options[4].isDisabled = false;
   }
 
   return options;
@@ -76,7 +72,7 @@ const getNextStatusOption = (
 ): SplitButtonOption<InvoiceNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextOutboundReturnStatus(status);
+  const nextStatus = getNextInboundReturnStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
@@ -97,8 +93,8 @@ const useStatusChangeButton = () => {
   // ]);
 
   const { success, error } = useNotification();
-  const t = useTranslation('replenishment');
-  const { data } = useReturns.document.outboundReturn();
+  const t = useTranslation('distribution');
+  const { data } = useReturns.document.inboundReturn();
 
   // TEMP until "fields" hook available:
   const status = data?.status ?? InvoiceNodeStatus.New;
@@ -165,12 +161,12 @@ export const StatusChangeButton = () => {
     onHold,
     lines,
   } = useStatusChangeButton();
-  // const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.inboundIsDisabled();
   const t = useTranslation();
   const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
-  // if (isDisabled) return null;
+  if (isDisabled) return null;
 
   const onStatusClick = () => {
     return getConfirmation();

@@ -16,20 +16,13 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use super::OutboundReturnLineInput;
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertOutboundReturn {
     pub id: String,
     pub other_party_id: String,
-    pub outbound_return_lines: Vec<InsertOutboundReturnLine>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct InsertOutboundReturnLine {
-    pub id: String,
-    pub stock_line_id: String,
-    pub number_of_packs: f64,
-    pub reason_id: Option<String>,
-    pub note: Option<String>,
+    pub outbound_return_lines: Vec<OutboundReturnLineInput>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -148,7 +141,7 @@ mod test {
         service_provider::ServiceProvider,
     };
 
-    use super::InsertOutboundReturnLine;
+    use super::OutboundReturnLineInput;
 
     #[actix_rt::test]
     async fn test_insert_outbound_return_errors() {
@@ -242,7 +235,7 @@ mod test {
                 InsertOutboundReturn {
                     id: "new_id".to_string(),
                     other_party_id: mock_name_a().id, // Supplier
-                    outbound_return_lines: vec![InsertOutboundReturnLine {
+                    outbound_return_lines: vec![OutboundReturnLineInput {
                         id: "new_line_id".to_string(),
                         stock_line_id: "does_not_exist".to_string(),
                         number_of_packs: 1.0,
@@ -263,7 +256,7 @@ mod test {
                 InsertOutboundReturn {
                     id: "some_new_id".to_string(),
                     other_party_id: mock_name_a().id, // Supplier
-                    outbound_return_lines: vec![InsertOutboundReturnLine {
+                    outbound_return_lines: vec![OutboundReturnLineInput {
                         id: "new_line_id".to_string(),
                         stock_line_id: mock_stock_line_b().id,
                         number_of_packs: 1.0,
@@ -327,14 +320,14 @@ mod test {
                     r.id = "new_outbound_return_id".to_string();
                     r.other_party_id = supplier().id;
                     r.outbound_return_lines = vec![
-                        InsertOutboundReturnLine {
+                        OutboundReturnLineInput {
                             id: "new_outbound_return_line_id".to_string(),
                             stock_line_id: mock_stock_line_b().id,
                             reason_id: Some(return_reason().id),
                             number_of_packs: 1.0,
                             ..Default::default()
                         },
-                        InsertOutboundReturnLine {
+                        OutboundReturnLineInput {
                             id: "new_outbound_return_line_id_2".to_string(),
                             stock_line_id: mock_stock_line_b().id,
                             reason_id: Some(return_reason().id),
