@@ -2,6 +2,10 @@ use super::asset_row::asset::dsl::*;
 
 use serde::{Deserialize, Serialize};
 
+use crate::ChangeLogInsertRow;
+use crate::ChangelogAction;
+use crate::ChangelogRepository;
+use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
@@ -55,29 +59,37 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
         diesel::insert_into(asset)
             .values(asset_row)
             .on_conflict(id)
             .do_update()
             .set(asset_row)
             .execute(&self.connection.connection)?;
-        Ok(())
+        self.insert_changelog(asset_row.id.to_owned(), ChangelogAction::Upsert)
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
         diesel::replace_into(asset)
             .values(asset_row)
             .execute(&self.connection.connection)?;
-        Ok(())
+        self.insert_changelog(asset_row.id.to_owned(), ChangelogAction::Upsert)
     }
 
-    pub fn insert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(asset)
-            .values(asset_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
+    fn insert_changelog(
+        &self,
+        asset_id: String,
+        action: ChangelogAction,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Asset,
+            record_id: asset_id,
+            row_action: action,
+            store_id: None,     // TODO?
+            name_link_id: None, // TODO?
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -99,13 +111,20 @@ impl<'a> AssetRowRepository<'a> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
+        _ = self.insert_changelog(asset_id.to_owned(), ChangelogAction::Delete); // TODO: return this and enable delete sync...
         Ok(())
     }
 }
 
 impl Upsert for AssetRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        AssetRowRepository::new(con).upsert_one(self)
+        let _change_log_id = AssetRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(cursor_id))
     }
 
     // Test only

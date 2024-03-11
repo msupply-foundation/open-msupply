@@ -283,7 +283,7 @@ mod tests {
             ..Default::default()
         };
 
-        let _result = asset_row_repository.insert_one(&asset).unwrap();
+        let _result = asset_row_repository.upsert_one(&asset).unwrap();
 
         // Query by id
         let result = asset_repository

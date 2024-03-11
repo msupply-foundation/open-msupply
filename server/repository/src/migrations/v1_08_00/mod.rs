@@ -2,6 +2,7 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod add_source_site_id;
 mod assets;
 mod central_omsupply;
 
@@ -13,6 +14,7 @@ impl Migration for V1_08_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        add_source_site_id::migrate(connection)?;
         central_omsupply::migrate(connection)?;
         assets::migrate_assets(connection)?;
         Ok(())
