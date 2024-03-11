@@ -3,6 +3,8 @@ import {
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
+  UpdateOutboundReturnInput,
+  UpdateOutboundReturnLinesInput,
 } from '@common/types';
 import {
   InboundReturnRowFragment,
@@ -149,10 +151,13 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    outboundReturnLines: async (stockLineIds: string[]) => {
+    outboundReturnLines: async (stockLineIds: string[], itemId?: string) => {
       const result = await sdk.generateOutboundReturnLines({
-        stockLineIds,
         storeId,
+        input: {
+          stockLineIds,
+          itemId,
+        },
       });
 
       return result?.generateOutboundReturnLines;
@@ -179,6 +184,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
         return invoice;
       }
     },
+    inboundReturnByNumber: async (invoiceNumber: number) => {
+      const result = await sdk.inboundReturnByNumber({
+        invoiceNumber,
+        storeId,
+      });
+
+      const invoice = result?.invoiceByNumber;
+
+      if (invoice.__typename === 'InvoiceNode') {
+        return invoice;
+      }
+
+      throw new Error('Could not get inbound return');
+    },
   },
   insertOutboundReturn: async (input: OutboundReturnInput) => {
     const result = await sdk.insertOutboundReturn({
@@ -193,6 +212,34 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert outbound return');
+  },
+  updateOutboundReturn: async (input: UpdateOutboundReturnInput) => {
+    const result = await sdk.updateOutboundReturn({
+      input,
+      storeId,
+    });
+
+    const { updateOutboundReturn } = result;
+
+    if (updateOutboundReturn.__typename === 'InvoiceNode') {
+      return updateOutboundReturn;
+    }
+
+    throw new Error('Could not update outbound return');
+  },
+  updateOutboundReturnLines: async (input: UpdateOutboundReturnLinesInput) => {
+    const result = await sdk.updateOutboundReturnLines({
+      input,
+      storeId,
+    });
+
+    const { updateOutboundReturnLines } = result;
+
+    if (updateOutboundReturnLines.__typename === 'InvoiceNode') {
+      return updateOutboundReturnLines;
+    }
+
+    throw new Error('Could not update outbound return');
   },
   insertInboundReturn: async (input: InboundReturnInput) => {
     const result = await sdk.insertInboundReturn({

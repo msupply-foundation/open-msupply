@@ -60,6 +60,14 @@ export const outboundReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export const inboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -97,6 +105,16 @@ export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMap[currentStatus];
+  return nextStatus ?? null;
+};
+
+export const getNextInboundReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = inboundReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = inboundReturnStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
@@ -156,6 +174,18 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
         inbound.status === InvoiceNodeStatus.Verified;
 };
 
+export const isInboundReturnDisabled = (
+  inboundReturn: InboundReturnRowFragment
+): boolean => {
+  // const isManuallyCreated = !inbound.linkedShipment?.id;
+  // return isManuallyCreated
+  //   ? inbound.status === InvoiceNodeStatus.Verified
+  //   : inbound.status === InvoiceNodeStatus.Picked ||
+  //       inbound.status === InvoiceNodeStatus.Shipped ||
+  //       inbound.status === InvoiceNodeStatus.Verified;
+  return inboundReturn.status === InvoiceNodeStatus.Verified;
+};
+
 export const isPrescriptionDisabled = (
   prescription: PrescriptionRowFragment
 ): boolean => {
@@ -211,7 +241,9 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
+export const canDeleteInvoice = (
+  invoice: OutboundRowFragment | OutboundReturnRowFragment
+): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
 

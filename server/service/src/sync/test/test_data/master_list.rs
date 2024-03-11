@@ -1,6 +1,6 @@
 use repository::MasterListRow;
 
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &'static str = "list_master";
 
@@ -44,9 +44,9 @@ const MASTER_LIST_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             MASTER_LIST_1,
             MasterListRow {
@@ -57,7 +57,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 is_active: false,
             },
         ),
-        TestSyncPullRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             MASTER_LIST_2,
             MasterListRow {

@@ -46,7 +46,8 @@ export const useDraftInboundReturnLines = (
       ({ id, reasonId, numberOfPacksReturned, note }) => {
         return {
           id,
-          stockLineId: 'will be removed..',
+          stockLineId:
+            'TODO: this field is removed in another PR, lets just keep the compiler happy for now 😅',
           reasonId,
           note,
           numberOfPacksReturned,
