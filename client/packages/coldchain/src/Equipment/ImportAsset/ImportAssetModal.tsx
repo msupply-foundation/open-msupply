@@ -1,21 +1,28 @@
 import React from 'react';
 import {
   useNotification,
-  Box,
   useDialog,
   useTranslation,
   DialogButton,
+  TabContext,
+  useTabs,
 } from '@openmsupply-client/common';
+import { UploadTab } from './UploadTab';
 
 interface ImportAssetModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+enum Tabs {
+  Upload = 'Upload',
+}
+
 export const ImportAssetModal = ({
   isOpen,
   onClose,
 }: ImportAssetModalProps) => {
+  const { currentTab } = useTabs(Tabs.Upload);
   const t = useTranslation('coldchain');
   const { error } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
@@ -43,7 +50,9 @@ export const ImportAssetModal = ({
         />
       }
     >
-      <Box>modal!</Box>
+      <TabContext value={currentTab}>
+        <UploadTab />
+      </TabContext>
     </Modal>
   );
 };
