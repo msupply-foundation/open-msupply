@@ -5,9 +5,7 @@ use graphql_core::generic_filters::{
 };
 use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader, UserLoader};
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::ContextExt;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{AssetCatalogueItemNode, StoreNode};
 use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
