@@ -143,8 +143,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>),
-    Delete(Box<dyn Delete>),
+    Upsert(Box<dyn Upsert>, Option<String>), // Upsert record, and source_site_id
+    Delete(Box<dyn Delete>),                 // Todo: add source site id?
 }
 
 impl IntegrationOperation {
@@ -152,7 +152,7 @@ impl IntegrationOperation {
     where
         U: Upsert + 'static,
     {
-        Self::Upsert(Box::new(upsert))
+        Self::Upsert(Box::new(upsert), None) // TODO?
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
@@ -194,9 +194,22 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert)))
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None)) // Source site is added later using add_source_site_id
                 .collect(),
         )
+    }
+
+    pub(crate) fn add_source_site_id(&mut self, source_site_id: String) {
+        match self {
+            Self::IntegrationOperations(operations) => {
+                for operation in operations {
+                    if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
+                        *site_id = Some(source_site_id.clone());
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 
     pub(crate) fn delete<U>(upsert: U) -> Self

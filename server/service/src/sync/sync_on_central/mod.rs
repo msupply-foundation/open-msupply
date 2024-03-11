@@ -1,8 +1,8 @@
-use log::debug;
 use repository::{
     ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter, SyncBufferRowRepository,
 };
 
+use simple_log::warn;
 use util::{format_error, is_central_server};
 
 use crate::{
@@ -18,22 +18,23 @@ use super::{
     translations::translate_changelogs_to_sync_records,
 };
 
-// Asset should sync from central om to remote on when
-// It is in change log
-// In change log last_source_site_id is not the remote site id (on the record) & we're not initalising a site, where it does want to receive it's own records again...
-
-fn create_filter() -> ChangelogFilter {
-    ChangelogFilter::new().table_name(EqualFilter {
-        equal_any: Some(vec![
-            ChangelogTableName::PackVariant,
-            ChangelogTableName::AssetClass,
-            ChangelogTableName::AssetCategory,
-            ChangelogTableName::AssetType,
-            ChangelogTableName::AssetCatalogueItem,
-            ChangelogTableName::Asset,
-        ]),
-        ..Default::default()
-    })
+fn create_filter(sync_site_id: Option<String>) -> ChangelogFilter {
+    ChangelogFilter::new()
+        .table_name(EqualFilter {
+            equal_any: Some(vec![
+                ChangelogTableName::PackVariant,
+                ChangelogTableName::AssetClass,
+                ChangelogTableName::AssetCategory,
+                ChangelogTableName::AssetType,
+                ChangelogTableName::AssetCatalogueItem,
+                ChangelogTableName::Asset,
+            ]),
+            ..Default::default()
+        })
+        .source_site_id(EqualFilter {
+            not_equal_to: sync_site_id, // Don't include any records that were created by this site
+            ..Default::default()
+        })
 
     // TODO, the idea for this method is to build a query in such a way as to allow
     // extracting all relevant records for a site from change_log, where resulting SQL would be
@@ -48,7 +49,7 @@ fn create_filter() -> ChangelogFilter {
     // 	// Special cases
     // 	(table_name in {patient record name} AND patient_id IN {select name_id from name_store_join where store_id in {active stores on remote site})
     // )
-    // When we upgrade to diesel 2 we can do dynaimc filter: https://github.com/andreievg/diesel-rs-dynamic-filters
+    // When we upgrade to diesel 2 we can do dynamic filter: https://github.com/andreievg/diesel-rs-dynamic-filters
     // And the above would become something like:
     // use ChangeLog::Filter as f;
     // let filter = create_and_filter(vec![
@@ -78,6 +79,7 @@ fn create_filter() -> ChangelogFilter {
     // ]);
 }
 
+/// Send Records to a remote open-mSupply Server
 pub async fn pull(
     service_provider: &ServiceProvider,
     SyncPullRequestV6 {
@@ -92,18 +94,21 @@ pub async fn pull(
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
-    SyncApiV5::new(sync_v5_settings)
+    let response = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_status()
+        .get_site_info()
         .await
         .map_err(Error::from)?;
+    // Could use ID directly here, but by using string, if site_id becomes a UUID, we'll be ok for future
+    let sync_site_id = response.site_id.to_string();
 
     // TODO Versioning ?
 
     let ctx = service_provider.basic_context()?;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let filter = Some(create_filter());
+    // TODO: if not initialising, remove the site_id from this filter...
+    let filter = Some(create_filter(Some(sync_site_id)));
 
     let changelogs = changelog_repo.changelogs(cursor, batch_size, filter.clone())?;
     let total_records = changelog_repo.count(cursor, filter)?;
@@ -124,7 +129,7 @@ pub async fn pull(
     .map(SyncRecordV6::from)
     .collect();
 
-    debug!("Sending records as central server: {:#?}", records);
+    warn!("Sending records as central server: {:#?}", records);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -133,6 +138,7 @@ pub async fn pull(
     })
 }
 
+/// Receive Records from a remote open-mSupply Server
 pub async fn push(
     service_provider: &ServiceProvider,
     SyncPushRequestV6 {
@@ -146,13 +152,16 @@ pub async fn push(
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
-    SyncApiV5::new(sync_v5_settings)
+    let response = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .get_site_status()
+        .get_site_info()
         .await
         .map_err(Error::from)?;
 
-    debug!("Receiving records as central server: {:#?}", batch);
+    // Could use ID directly here, but by using string, if site_id becomes a UUID, we'll be ok for future
+    let sync_site_id = response.site_id.to_string();
+
+    warn!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
         records,
@@ -165,13 +174,12 @@ pub async fn push(
 
     let records_in_this_batch = records.len() as u64;
     for SyncRecordV6 { record, .. } in records {
-        let buffer_row = record.to_buffer_row()?;
+        let buffer_row = record.to_buffer_row(Some(sync_site_id.clone()))?;
 
         repo.upsert_one(&buffer_row)?;
     }
 
-    // TODO seperate process ?
-    // TODO we need to integrate records for just 1 site?
+    // TODO we need to trigger integrate records for just 1 site?
     if total_records <= records_in_this_batch {
         service_provider.sync_trigger.trigger();
     }

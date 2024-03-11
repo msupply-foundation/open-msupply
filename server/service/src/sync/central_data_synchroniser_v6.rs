@@ -84,7 +84,7 @@ impl CentralDataSynchroniserV6 {
             let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
-                let buffer_row = record.to_buffer_row()?;
+                let buffer_row = record.to_buffer_row(None)?;
 
                 insert_one_and_update_cursor(
                     connection,

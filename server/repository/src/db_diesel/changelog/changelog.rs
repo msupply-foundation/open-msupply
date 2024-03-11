@@ -1,4 +1,3 @@
-// use super::super::;
 use crate::{
     diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter, NameLinkRow,
     RepositoryError, StorageConnection,
@@ -21,6 +20,7 @@ table! {
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
+        source_site_id -> Nullable<Text>,
     }
 }
 
@@ -33,11 +33,30 @@ table! {
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
+        source_site_id -> Nullable<Text>,
     }
 }
 
 joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
+
+table! {
+    #[sql_name = "changelog"]
+    changelog_insert (cursor) {
+        cursor -> BigInt,
+        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        record_id -> Text,
+        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
+        name_link_id -> Nullable<Text>,
+        store_id -> Nullable<Text>,
+    }
+}
+
+no_arg_sql_function!(
+    last_insert_rowid,
+    diesel::sql_types::BigInt,
+    "Represents the SQL last_insert_row() function"
+);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -80,6 +99,16 @@ pub enum ChangelogTableName {
     Asset,
 }
 
+#[derive(Debug, PartialEq, Insertable)]
+#[table_name = "changelog_insert"]
+pub struct ChangeLogInsertRow {
+    pub table_name: ChangelogTableName,
+    pub record_id: String,
+    pub row_action: ChangelogAction,
+    pub name_link_id: Option<String>,
+    pub store_id: Option<String>,
+}
+
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
 #[table_name = "changelog"]
 pub struct ChangelogRow {
@@ -91,6 +120,7 @@ pub struct ChangelogRow {
     pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
+    pub source_site_id: Option<String>,
 }
 
 #[derive(Default, Clone)]
@@ -101,6 +131,7 @@ pub struct ChangelogFilter {
     pub record_id: Option<EqualFilter<String>>,
     pub action: Option<EqualFilter<ChangelogAction>>,
     pub is_sync_update: Option<EqualFilter<bool>>,
+    pub source_site_id: Option<EqualFilter<String>>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -146,6 +177,7 @@ impl<'a> ChangelogRepository<'a> {
                 name_id: name_link_row.map(|r| r.name_id),
                 store_id: change_log_row.store_id,
                 is_sync_update: change_log_row.is_sync_update,
+                source_site_id: change_log_row.source_site_id,
             })
             .collect())
     }
@@ -187,6 +219,48 @@ impl<'a> ChangelogRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
+
+    pub fn set_source_site_id_and_is_sync_update(
+        &self,
+        cursor_id: i64,
+        source_site_id: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(changelog::table)
+            .set((
+                changelog::source_site_id.eq(source_site_id),
+                changelog::is_sync_update.eq(true),
+            ))
+            .filter(changelog::cursor.eq(cursor_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    /// Inserts a changelog record, and returns the cursor of the inserted record
+    #[cfg(feature = "postgres")]
+    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
+        // Insert the record, and then return the cursor of the inserted record
+        // Using a returning clause makes this thread safe
+        let cursor_id = diesel::insert_into(changelog_insert::table)
+            .values(row)
+            .returning(changelog_insert::cursor)
+            .get_results(&self.connection.connection)?
+            .pop()
+            .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
+
+        Ok(cursor_id)
+    }
+
+    #[cfg(not(feature = "postgres"))]
+    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
+        // Insert the record, and then return the cursor of the inserted record
+        // SQLite docs say this is safe if you don't have different threads sharing a single connection
+        diesel::insert_into(changelog_insert::table)
+            .values(row)
+            .execute(&self.connection.connection)?;
+        let cursor_id =
+            diesel::select(last_insert_rowid).get_result::<i64>(&self.connection.connection)?;
+        Ok(cursor_id)
+    }
 }
 
 type BoxedChangelogQuery =
@@ -206,14 +280,16 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
             record_id,
             is_sync_update,
             action,
+            source_site_id,
         } = f;
 
         apply_equal_filter!(query, table_name, changelog_deduped::table_name);
         apply_equal_filter!(query, name_id, name_link::name_id);
         apply_equal_filter!(query, store_id, changelog_deduped::store_id);
         apply_equal_filter!(query, record_id, changelog_deduped::record_id);
-        apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
         apply_equal_filter!(query, action, changelog_deduped::row_action);
+        apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
+        apply_equal_filter!(query, source_site_id, changelog_deduped::source_site_id);
     }
 
     query
@@ -231,6 +307,7 @@ impl Default for ChangelogRow {
             name_id: Default::default(),
             store_id: Default::default(),
             is_sync_update: Default::default(),
+            source_site_id: Default::default(),
         }
     }
 }
@@ -267,6 +344,11 @@ impl ChangelogFilter {
 
     pub fn is_sync_update(mut self, filter: EqualFilter<bool>) -> Self {
         self.is_sync_update = Some(filter);
+        self
+    }
+
+    pub fn source_site_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.source_site_id = Some(filter);
         self
     }
 }

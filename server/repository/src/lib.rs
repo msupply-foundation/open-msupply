@@ -47,7 +47,15 @@ pub trait Delete: DebugTrait {
 }
 
 pub trait Upsert: DebugTrait {
+    // Long term DELETE THIS TRAIT METHOD AND REMOVE TRIGGERS?
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        self.upsert_sync(con)?;
+        // When not using triggers to create changelog records, this is where you may want to implement changelog logic
+        Ok(None)
+    }
+
     // Test only
     fn assert_upserted(&self, con: &StorageConnection);
     // Test only, can be used to drill down to concrete type (see test below)
@@ -69,7 +77,8 @@ fn downcast_example() {
         let Some(mut_invoice) = record
             .as_mut_any()
             .map(|any| any.downcast_mut::<InvoiceRow>())
-            .flatten() else  {
+            .flatten()
+        else {
             continue;
         };
 
