@@ -1,6 +1,7 @@
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemLinkRow,
-    ItemRow, Pagination,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    repository_error::RepositoryError,
+    EqualFilter, ItemLinkRow, ItemRow, Pagination, Sort,
 };
 
 use super::{
@@ -30,6 +31,13 @@ pub struct MasterListLineFilter {
     pub item_id: Option<EqualFilter<String>>,
     pub master_list_id: Option<EqualFilter<String>>,
 }
+
+pub enum MasterListLineSortField {
+    Name,
+    Code,
+}
+
+pub type MasterListLineSort = Sort<MasterListLineSortField>;
 
 pub struct MasterListLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -65,11 +73,23 @@ impl<'a> MasterListLineRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
+        sort: Option<MasterListLineSort>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let mut query = create_filtered_query(filter)?;
 
-        query = query.order(master_list_line_dsl::id.asc());
+        if let Some(sort) = sort {
+            match sort.key {
+                MasterListLineSortField::Name => {
+                    apply_sort_no_case!(query, sort, item_dsl::name);
+                }
+                MasterListLineSortField::Code => {
+                    apply_sort_no_case!(query, sort, item_dsl::code);
+                }
+            }
+        } else {
+            query = query.order(master_list_line_dsl::id.asc())
+        }
 
         let result = query
             .offset(pagination.offset as i64)
