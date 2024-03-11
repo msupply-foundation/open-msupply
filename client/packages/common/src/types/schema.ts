@@ -2790,6 +2790,12 @@ export type MasterListLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type MasterListLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type MasterListLineNode = {
   __typename: 'MasterListLineNode';
   id: Scalars['String']['output'];
@@ -2797,12 +2803,29 @@ export type MasterListLineNode = {
   itemId: Scalars['String']['output'];
 };
 
+export enum MasterListLineSortFieldInput {
+  Code = 'code',
+  Name = 'name'
+}
+
+export type MasterListLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: MasterListLineSortFieldInput;
+};
+
+export type MasterListLinesResponse = MasterListLineConnector;
+
 export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  lines: MasterListLineConnector;
+  linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
 };
 
@@ -4161,6 +4184,7 @@ export type Queries = {
   logFileNames: LogNode;
   logLevel: LogLevelNode;
   logout: LogoutResponse;
+  masterListLines: MasterListLinesResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
@@ -4465,6 +4489,15 @@ export type QueriesLocationsArgs = {
 
 export type QueriesLogContentsArgs = {
   fileName?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueriesMasterListLinesArgs = {
+  filter?: InputMaybe<MasterListLineFilterInput>;
+  masterListId: Scalars['String']['input'];
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<MasterListLineSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
