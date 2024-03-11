@@ -3,6 +3,7 @@ use super::asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogR
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
+use crate::asset_log_row::AssetLogStatus;
 use crate::{
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
@@ -24,7 +25,7 @@ pub type AssetLogSort = Sort<AssetLogSortField>;
 pub struct AssetLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub asset_id: Option<EqualFilter<String>>,
-    pub status: Option<StringFilter>,
+    pub status: Option<EqualFilter<AssetLogStatus>>,
     pub log_datetime: Option<DatetimeFilter>,
     pub user: Option<StringFilter>,
 }
@@ -48,7 +49,7 @@ impl AssetLogFilter {
         self.asset_id = Some(filter);
         self
     }
-    pub fn status(mut self, filter: StringFilter) -> Self {
+    pub fn status(mut self, filter: EqualFilter<AssetLogStatus>) -> Self {
         self.status = Some(filter);
         self
     }
@@ -143,7 +144,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
         } = f;
 
         apply_equal_filter!(query, id, asset_log_dsl::id);
-        apply_string_filter!(query, status, asset_log_dsl::status);
+        apply_equal_filter!(query, status, asset_log_dsl::status);
         apply_date_filter!(query, log_datetime, asset_log_dsl::log_datetime);
 
         apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
