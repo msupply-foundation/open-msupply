@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -7,6 +7,7 @@ import {
   createTableStore,
   useKeyboardHeightAdjustment,
   useTabs,
+  Box,
 } from '@openmsupply-client/common';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ItemSelector } from './ItemSelector';
@@ -34,6 +35,9 @@ export const OutboundReturnEditModal = ({
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
   );
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  const [showZeroQuantityAlert, setShowZeroQuantityAlert] = useState(false);
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -54,6 +58,13 @@ export const OutboundReturnEditModal = ({
     }
   };
 
+  const handleNext = () => {
+    if (lines.every(line => line.numberOfPacksToReturn === 0)) {
+      setShowZeroQuantityAlert(true);
+      alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    } else onChangeTab(Tabs.Reason);
+  };
+
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
@@ -62,7 +73,7 @@ export const OutboundReturnEditModal = ({
         nextButton={
           currentTab === Tabs.Quantity ? (
             <DialogButton
-              onClick={() => onChangeTab(Tabs.Reason)}
+              onClick={handleNext}
               variant="next"
               disabled={!lines.length}
             />
@@ -76,7 +87,7 @@ export const OutboundReturnEditModal = ({
         height={height}
         width={1024}
       >
-        <>
+        <Box ref={alertRef}>
           {returnId && (
             <ItemSelector
               disabled={!!itemId}
@@ -89,9 +100,11 @@ export const OutboundReturnEditModal = ({
               currentTab={currentTab}
               lines={lines}
               update={update}
+              showZeroQuantityAlert={showZeroQuantityAlert}
+              setShowZeroQuantityAlert={setShowZeroQuantityAlert}
             />
           )}
-        </>
+        </Box>
       </Modal>
     </TableProvider>
   );
