@@ -1,6 +1,6 @@
 use repository::MasterListLineRow;
 
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 const MASTER_LIST_LINE_1: (&'static str, &'static str) = (
     "9B02D0770B544BD1AC7DB99BB85FCDD5",
@@ -14,8 +14,8 @@ const MASTER_LIST_LINE_1: (&'static str, &'static str) = (
   }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         "list_master_line",
         MASTER_LIST_LINE_1,
         MasterListLineRow {
