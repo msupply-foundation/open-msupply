@@ -6,6 +6,10 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
+use crate::{auth::validate_auth, service_provider::ServiceContext};
+
+use super::insert_log::InsertAssetLog;
+
 pub fn check_asset_exists(
     id: &str,
     connection: &StorageConnection,

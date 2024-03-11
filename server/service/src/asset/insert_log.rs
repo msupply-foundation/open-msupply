@@ -17,12 +17,16 @@ pub enum InsertAssetLogError {
     AssetDoesNotExist,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
+    InsufficientPermission,
 }
 
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
     pub status: Option<String>,
+    pub comment: Option<String>,
+    pub r#type: Option<String>,
+    pub reason: Option<String>,
 }
 
 pub fn insert_asset_log(
@@ -33,7 +37,7 @@ pub fn insert_asset_log(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_asset_log = generate(input);
+            let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
 
             get_asset_log(ctx, new_asset_log.id).map_err(InsertAssetLogError::from)
@@ -59,16 +63,24 @@ pub fn validate(
 }
 
 pub fn generate(
+    ctx: &ServiceContext,
     InsertAssetLog {
         id,
         asset_id,
         status,
+        comment,
+        r#type,
+        reason,
     }: InsertAssetLog,
 ) -> AssetLogRow {
     AssetLogRow {
         id,
         asset_id,
+        user_id: ctx.user_id.clone(),
         status,
+        comment,
+        r#type,
+        reason,
         log_datetime: Utc::now().naive_utc(),
     }
 }

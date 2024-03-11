@@ -3,10 +3,10 @@ use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
-use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader};
+use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader, UserLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::ContextExt;
-use graphql_types::types::{AssetCatalogueItemNode, StoreNode};
+use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 use repository::{
@@ -233,6 +233,7 @@ pub struct AssetLogFilterInput {
     pub asset_id: Option<EqualFilterStringInput>,
     pub status: Option<StringFilterInput>,
     pub log_datetime: Option<DatetimeFilterInput>,
+    pub user: Option<StringFilterInput>,
 }
 
 impl From<AssetLogFilterInput> for AssetLogFilter {
@@ -242,6 +243,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
             asset_id: f.asset_id.map(EqualFilter::from),
             status: f.status.map(StringFilter::from),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
+            user: f.user.map(StringFilter::from),
         }
     }
 }
@@ -267,8 +269,29 @@ impl AssetLogNode {
         &self.row().asset_id
     }
 
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
+        let user_id = &self.row().user_id;
+        let loader = ctx.get_loader::<DataLoader<UserLoader>>();
+        Ok(loader
+            .load_one(user_id.clone())
+            .await?
+            .map(UserNode::from_domain))
+    }
+
     pub async fn status(&self) -> &Option<String> {
         &self.row().status
+    }
+
+    pub async fn comment(&self) -> &Option<String> {
+        &self.row().comment
+    }
+
+    pub async fn r#type(&self) -> &Option<String> {
+        &self.row().r#type
+    }
+
+    pub async fn reason(&self) -> &Option<String> {
+        &self.row().reason
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {

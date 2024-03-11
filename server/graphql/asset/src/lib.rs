@@ -95,19 +95,10 @@ impl AssetMutations {
 }
 
 #[derive(Default, Clone)]
-pub struct AssetLogs;
+pub struct AssetLogQueries;
 
 #[Object]
-impl AssetLogs {
-    async fn insert_asset_log(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertAssetLogInput,
-    ) -> Result<InsertAssetLogResponse> {
-        insert_asset_log(ctx, &store_id, input)
-    }
-
+impl AssetLogQueries {
     async fn asset_logs(
         &self,
         ctx: &Context<'_>,
@@ -117,6 +108,21 @@ impl AssetLogs {
         sort: Option<Vec<AssetLogSortInput>>,
     ) -> Result<AssetLogsResponse> {
         asset_logs(ctx, store_id, page, filter, sort)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct AssetLogMutations;
+
+#[Object]
+impl AssetLogMutations {
+    async fn insert_asset_log(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertAssetLogInput,
+    ) -> Result<InsertAssetLogResponse> {
+        insert_asset_log(ctx, &store_id, input)
     }
 }
 

@@ -10,7 +10,11 @@ table! {
     asset_log (id) {
         id -> Text,
         asset_id -> Text,
+        user_id -> Text,
         status -> Nullable<Text>,
+        comment -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<Text>,
+        reason -> Nullable<Text>,
         log_datetime -> Timestamp,
     }
 }
@@ -21,7 +25,12 @@ table! {
 pub struct AssetLogRow {
     pub id: String,
     pub asset_id: String,
+    pub user_id: String,
     pub status: Option<String>,
+    pub comment: Option<String>,
+    #[column_name = "type_"]
+    pub r#type: Option<String>,
+    pub reason: Option<String>,
     pub log_datetime: NaiveDateTime,
 }
 

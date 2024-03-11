@@ -48,6 +48,9 @@ pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
     pub status: Option<String>,
+    pub reason: Option<String>,
+    pub comment: Option<String>,
+    pub r#type: Option<String>,
 }
 
 impl From<InsertAssetLogInput> for InsertAssetLog {
@@ -56,12 +59,18 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             id,
             asset_id,
             status,
+            reason,
+            comment,
+            r#type,
         }: InsertAssetLogInput,
     ) -> Self {
         InsertAssetLog {
             id,
             asset_id,
             status,
+            reason,
+            comment,
+            r#type,
         }
     }
 }
@@ -96,6 +105,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::InsufficientPermission => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -119,7 +129,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::AssetLogs;
+    use crate::AssetLogMutations;
 
     type InsertAssetLogMethod =
         dyn Fn(InsertAssetLog) -> Result<AssetLog, InsertAssetLogError> + Sync + Send;
@@ -148,7 +158,7 @@ mod test {
     async fn test_graphql_insert_asset_log_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
-            AssetLogs,
+            AssetLogMutations,
             "test_graphql_insert_asset_log_success",
             MockDataInserts::all(),
         )
@@ -161,6 +171,7 @@ mod test {
                     id
                     assetId
                     status
+                    userId
                 }
             }
         }
@@ -171,6 +182,7 @@ mod test {
                 "id": "n/a",
                 "assetId": "asset_a",
                 "status": "status",
+                "userId": "user_account_a"
             }
         }));
 
@@ -179,6 +191,7 @@ mod test {
             Ok(AssetLog {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
+                user_id: "user_account_a".to_owned(),
                 status: Some("status".to_owned()),
                 ..Default::default()
             })
@@ -189,6 +202,7 @@ mod test {
                 "id": "id",
                 "assetId": "asset_a",
                 "status": "status",
+                "userId": "user_account_a",
             }
         });
         assert_graphql_query!(

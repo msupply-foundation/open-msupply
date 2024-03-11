@@ -546,6 +546,7 @@ impl MockDataInserts {
         self.names = true;
         self.stores = true;
         self.assets = true;
+        self.user_accounts = true;
         self.asset_logs = true;
         self
     }
