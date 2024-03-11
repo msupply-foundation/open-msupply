@@ -188,7 +188,7 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(Asset {
                 id: "id".to_owned(),
-                notes: "notes".to_owned(),
+                notes: Some("notes".to_owned()),
                 code: "code".to_owned(),
                 ..Default::default()
             })
