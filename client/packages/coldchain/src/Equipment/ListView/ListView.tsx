@@ -16,6 +16,7 @@ import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
+import { ImportAssetModal } from '../ImportAsset';
 
 const AssetListComponent: FC = () => {
   const {
@@ -32,6 +33,7 @@ const AssetListComponent: FC = () => {
   const t = useTranslation('catalogue');
   const { localisedDate } = useFormatDateTime();
   const modalController = useToggle();
+  const importModalController = useToggle();
 
   const columns = useColumns<AssetFragment>(
     [
@@ -84,7 +86,14 @@ const AssetListComponent: FC = () => {
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
       />
-      <AppBarButtons modalController={modalController} />
+      <ImportAssetModal
+        isOpen={importModalController.isOn}
+        onClose={importModalController.toggleOff}
+      />
+      <AppBarButtons
+        importModalController={importModalController}
+        modalController={modalController}
+      />
       <Toolbar />
       <DataTable
         id="item-list"
