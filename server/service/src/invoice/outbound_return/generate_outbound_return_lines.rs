@@ -156,7 +156,7 @@ fn invoice_line_to_return_line(
             .stock_line_id
             .as_ref()
             .ok_or(RepositoryError::as_db_error(
-                "Invoice line has not stock line ID",
+                "Invoice line has no stock line ID",
                 "",
             ))?;
 
@@ -234,7 +234,7 @@ mod test {
                 },
             ),
             Err(ListError::DatabaseError(RepositoryError::as_db_error(
-                "Invoice line has not stock line ID",
+                "Invoice line has no stock line ID",
                 ""
             )))
         );
