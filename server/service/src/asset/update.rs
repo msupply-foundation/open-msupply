@@ -1,12 +1,15 @@
 use super::{query::get_asset, validate::check_asset_exists};
-use crate::{service_provider::ServiceContext, NullableUpdate, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
+    SingleRecordError,
+};
 use chrono::{NaiveDate, Utc};
 use repository::{
     assets::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 #[derive(PartialEq, Debug)]
@@ -40,6 +43,14 @@ pub fn update_asset(
             let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input, asset_row);
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetUpdated,
+                Some(updated_asset_row.id.clone()),
+                None,
+                None,
+            )?;
 
             get_asset(ctx, updated_asset_row.id).map_err(UpdateAssetError::from)
         })

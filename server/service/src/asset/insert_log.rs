@@ -4,11 +4,13 @@ use super::{
     query_log::get_asset_log,
     validate::{check_asset_exists, check_asset_log_exists},
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use chrono::Utc;
 use repository::{
     assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
-    RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -39,6 +41,14 @@ pub fn insert_asset_log(
             validate(&input, connection)?;
             let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetLogCreated,
+                Some(new_asset_log.id.clone()),
+                None,
+                None,
+            )?;
 
             get_asset_log(ctx, new_asset_log.id).map_err(InsertAssetLogError::from)
         })
