@@ -118,13 +118,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let master_list_line_by_master_list_id = DataLoader::new(
-        MasterListLineByMasterListId {
-            connection_manager: connection_manager.clone(),
-        },
-        async_std::task::spawn,
-    );
-
     let stocktake_line_loader = DataLoader::new(
         StocktakeLineByStocktakeIdLoader {
             connection_manager: connection_manager.clone(),
@@ -229,7 +222,6 @@ pub async fn get_loaders(
     loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);
     loaders.insert(location_by_id_loader);
-    loaders.insert(master_list_line_by_master_list_id);
     loaders.insert(requisitions_by_id_loader);
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
