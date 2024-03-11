@@ -3,9 +3,9 @@ extern crate machine_uid;
 
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, serve_frontend::config_serve_frontend, static_files::config_static_files,
-    support::config_support, sync_on_central::config_sync_on_central,
-    upload_fridge_tag::config_upload_fridge_tag,
+    cors::cors_policy, middleware::central_server_only, serve_frontend::config_serve_frontend,
+    static_files::config_static_files, support::config_support,
+    sync_on_central::config_sync_on_central, upload_fridge_tag::config_upload_fridge_tag,
 };
 
 use self::middleware::{compress as compress_middleware, logger as logger_middleware};
@@ -305,7 +305,7 @@ pub async fn start_server(
             .configure(config_upload_fridge_tag)
             .configure(config_sync_on_central)
             .configure(config_support)
-            // Needs to be last to capture all unmatches routes
+            // Needs to be last to capture all unmatched routes
             .configure(config_serve_frontend)
     })
     .disable_signals();
