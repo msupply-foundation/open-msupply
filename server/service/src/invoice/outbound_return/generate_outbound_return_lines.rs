@@ -1,7 +1,7 @@
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, RepositoryError, StockLine,
-    StockLineFilter, StockLineRepository,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowType,
+    RepositoryError, StockLine, StockLineFilter, StockLineRepository,
 };
 use util::uuid::uuid;
 
@@ -29,60 +29,35 @@ pub fn generate_outbound_return_lines(
         return_id,
     }: GenerateOutboundReturnLinesInput,
 ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-    let stock_line_repo = StockLineRepository::new(&ctx.connection);
+    // TWO OPTIONS:
+    // Currently have a mix of the two, which isn't ideal.
+
+    // 1: FOR THE FRONTEND USE CASES
+    // - Stock line IDs are passed in, and we generate new return lines for those
+    // OR
+    // - Item ID and return ID are passed in, so we generate blank lines for each available stock line of that item
+    // and populate any existing lines
+
+    // 2: FLEXIBLE
+    // - Stock line IDs are passed in, and we generate new return lines for those
+    //   - If return ID included, we populate any existing lines
+    // - Item ID is passed in, so we generate blank lines for each available stock line of that item
+    //   - If return ID included, we populate any existing lines
+    // If only return ID is passed in, we return all lines currently in the return
+
+    // -------
 
     // If any stock_line_ids are passed in, we should return a new OutboundReturnLine for each
     // regardless of whether that stock line is currently available
-    let from_stock_line_ids = if !stock_line_ids.is_empty() {
-        let filter = StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids));
-
-        let return_lines = stock_line_repo
-            .query_by_filter(filter, Some(store_id.to_string()))?
-            .iter()
-            .map(stock_line_to_new_return_line)
-            .collect();
-
-        return_lines
-    } else {
-        vec![]
-    };
+    let from_stock_line_ids = generate_lines_from_stock_line_ids(ctx, store_id, stock_line_ids)?;
 
     // If an item id is provided, we should return a new OutboundReturnLine for each stock line
     // of that item that is currently available
-    let from_item_id = match &item_id {
-        Some(item_id) => {
-            let filter = StockLineFilter::new()
-                .item_id(EqualFilter::equal_to(item_id))
-                .is_available(true);
-
-            let return_lines = stock_line_repo
-                .query_by_filter(filter, Some(store_id.to_string()))?
-                .iter()
-                .map(stock_line_to_new_return_line)
-                .collect();
-
-            return_lines
-        }
-        None => vec![],
-    };
+    let from_item_id = generate_lines_from_item_id(ctx, store_id, &item_id)?;
 
     // If a return id is included alongside the item, we should include those existing return lines
     // for that item
-    let existing_return_lines = match (item_id, return_id) {
-        (Some(item_id), Some(return_id)) => {
-            let lines = InvoiceLineRepository::new(&ctx.connection).query_by_filter(
-                InvoiceLineFilter::new()
-                    .invoice_id(EqualFilter::equal_to(&return_id))
-                    .item_id(EqualFilter::equal_to(&item_id)),
-            )?;
-
-            lines
-                .iter()
-                .map(|line| invoice_line_to_new_return_line(ctx, store_id, line))
-                .collect::<Result<Vec<OutboundReturnLine>, RepositoryError>>()?
-        }
-        _ => vec![],
-    };
+    let existing_return_lines = get_existing_return_lines(ctx, store_id, &item_id, &return_id)?;
 
     // Filter out any stock lines that are already included in the existing return lines
     let new_item_lines = from_item_id
@@ -104,6 +79,99 @@ pub fn generate_outbound_return_lines(
     })
 }
 
+fn generate_lines_from_stock_line_ids(
+    ctx: &ServiceContext,
+    store_id: &str,
+    stock_line_ids: Vec<String>,
+) -> Result<Vec<OutboundReturnLine>, RepositoryError> {
+    let stock_line_repo = StockLineRepository::new(&ctx.connection);
+
+    // TODO: MAYBE
+    // let existing_return_lines_ids_by_stock_line = match &return_id {
+    //     Some(return_id) => {
+    //         let lines = InvoiceLineRepository::new(&ctx.connection).query_by_filter(
+    //             InvoiceLineFilter::new()
+    //                 .stock_line_id(EqualFilter::equal_any(stock_line_ids.clone()))
+    //                 .invoice_id(EqualFilter::equal_to(&return_id))
+    //                 .invoice_type(InvoiceRowType::OutboundReturn.equal_to()),
+    //         )?;
+
+    //         lines
+    //             .iter()
+    //             // TODO
+    //             // .map(|line| line.stock_line_option.unwrap_or_else(|| return).id)
+    //             .map(|line| line.stock_line_option.clone().unwrap().id)
+    //             .collect()
+    //     }
+    //     None => vec![],
+    // };
+    // let mut id_filter = EqualFilter::equal_any(stock_line_ids);
+    // id_filter.not_equal_all = Some(existing_return_lines_ids_by_stock_line);
+
+    // let filter = StockLineFilter::new().id(id_filter);
+
+    let filter = StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids));
+
+    let return_lines = stock_line_repo
+        .query_by_filter(filter, Some(store_id.to_string()))?
+        .iter()
+        .map(stock_line_to_new_return_line)
+        .collect();
+
+    Ok(return_lines)
+}
+
+fn generate_lines_from_item_id(
+    ctx: &ServiceContext,
+    store_id: &str,
+    item_id: &Option<String>,
+) -> Result<Vec<OutboundReturnLine>, RepositoryError> {
+    let stock_line_repo = StockLineRepository::new(&ctx.connection);
+
+    match item_id {
+        Some(item_id) => {
+            let filter = StockLineFilter::new()
+                .item_id(EqualFilter::equal_to(item_id))
+                .is_available(true);
+
+            let return_lines = stock_line_repo
+                .query_by_filter(filter, Some(store_id.to_string()))?
+                .iter()
+                .map(stock_line_to_new_return_line)
+                .collect();
+
+            Ok(return_lines)
+        }
+        None => Ok(vec![]),
+    }
+}
+
+fn get_existing_return_lines(
+    ctx: &ServiceContext,
+    store_id: &str,
+    item_id: &Option<String>,
+    return_id: &Option<String>,
+) -> Result<Vec<OutboundReturnLine>, RepositoryError> {
+    match (item_id, return_id) {
+        (Some(item_id), Some(return_id)) => {
+            let lines = InvoiceLineRepository::new(&ctx.connection).query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(return_id))
+                    .invoice_type(InvoiceRowType::OutboundReturn.equal_to())
+                    .item_id(EqualFilter::equal_to(item_id)),
+            )?;
+
+            let existing_return_lines = lines
+                .iter()
+                .map(|line| invoice_line_to_return_line(ctx, store_id, line))
+                .collect::<Result<Vec<OutboundReturnLine>, RepositoryError>>();
+
+            existing_return_lines
+        }
+        _ => Ok(vec![]),
+    }
+}
+
 fn stock_line_to_new_return_line(stock_line: &StockLine) -> OutboundReturnLine {
     OutboundReturnLine {
         id: uuid(),
@@ -114,11 +182,12 @@ fn stock_line_to_new_return_line(stock_line: &StockLine) -> OutboundReturnLine {
     }
 }
 
-fn invoice_line_to_new_return_line(
+fn invoice_line_to_return_line(
     ctx: &ServiceContext,
     store_id: &str,
     line: &InvoiceLine,
 ) -> Result<OutboundReturnLine, RepositoryError> {
+    // TODO: NotFound - could make more specific error? This should fully fail?
     let stock_line_id = line
         .invoice_line_row
         .stock_line_id
@@ -186,7 +255,7 @@ mod test {
         let item_id = Some(mock_item_a().id);
         let return_id = Some(mock_outbound_return_a().id);
 
-        // NotFound
+        // Return invoice doesn't have an associated stock_line
         assert_eq!(
             service.generate_outbound_return_lines(
                 &context,
@@ -272,7 +341,7 @@ mod test {
     #[actix_rt::test]
     async fn generate_outbound_return_lines_item_id() {
         let (_, _, connection_manager, _) = setup_all(
-            "generate_inbound_return_lines_item_id",
+            "generate_outbound_return_lines_item_id",
             MockDataInserts::all(),
         )
         .await;
