@@ -32,7 +32,7 @@ const parseStatus = (
         colour: 'cceStatus.notInUse',
       };
     default:
-      return undefined;
+      console.warn(`Unknown equipment status: ${status}`);
   }
 };
 
@@ -42,15 +42,17 @@ export const Status = ({
   status: StatusType | null | undefined;
 }) => {
   const t = useTranslation('coldchain');
+
   if (!status) return null;
 
-  const props = parseStatus(status);
-  if (!props) return null;
+  const parsed = parseStatus(status);
+
+  if (!parsed) return null;
 
   return (
     <Box
       sx={{
-        backgroundColor: props.colour,
+        backgroundColor: parsed.colour,
         borderRadius: 4,
         color: 'cceStatus.text',
         fontWeight: 'bold',
@@ -59,7 +61,7 @@ export const Status = ({
       paddingY={0.25}
       paddingX={1}
     >
-      {t(props.key)}
+      {t(parsed.key)}
     </Box>
   );
 };
