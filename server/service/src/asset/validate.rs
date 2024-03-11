@@ -1,5 +1,5 @@
 use repository::{
-    asset_log_row::{Reason, Status},
+    asset_log_row::{AssetLogReason, AssetLogStatus},
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
@@ -21,7 +21,10 @@ pub fn check_asset_log_exists(
     Ok(AssetLogRowRepository::new(connection).find_one_by_id(id)?)
 }
 
-pub fn check_reason_matches_status(status: &Option<Status>, reason: &Option<Reason>) -> bool {
+pub fn check_reason_matches_status(
+    status: &Option<AssetLogStatus>,
+    reason: &Option<AssetLogReason>,
+) -> bool {
     let status = match status {
         Some(status) => status,
         None => return true,
@@ -33,19 +36,20 @@ pub fn check_reason_matches_status(status: &Option<Status>, reason: &Option<Reas
     };
 
     match status {
-        Status::NotInUse => {
-            reason == Reason::AwaitingDecomissioning
-                || reason == Reason::Stored
-                || reason == Reason::OffsiteForRepairs
-                || reason == Reason::AwaitingDecomissioning
+        AssetLogStatus::NotInUse => {
+            reason == AssetLogReason::AwaitingDecomissioning
+                || reason == AssetLogReason::Stored
+                || reason == AssetLogReason::OffsiteForRepairs
+                || reason == AssetLogReason::AwaitingDecomissioning
         }
-        Status::FunctioningButNeedsAttention => {
-            reason == Reason::NeedsServicing || reason == Reason::MultipleTemperatureBreaches
+        AssetLogStatus::FunctioningButNeedsAttention => {
+            reason == AssetLogReason::NeedsServicing
+                || reason == AssetLogReason::MultipleTemperatureBreaches
         }
-        Status::NotFunctioning => {
-            reason == Reason::Unknown
-                || reason == Reason::NeedsSpareParts
-                || reason == Reason::LackOfPower
+        AssetLogStatus::NotFunctioning => {
+            reason == AssetLogReason::Unknown
+                || reason == AssetLogReason::NeedsSpareParts
+                || reason == AssetLogReason::LackOfPower
         }
         // If a reason exists, it won't match the reamining statuses which require a None reason.
         _ => false,
