@@ -91,6 +91,9 @@ export const BaseDatePickerInput: FC<
             '& .MuiPickersDay-root.Mui-selected': {
               backgroundColor: `${theme.palette.secondary.main}`,
             },
+            '& .MuiPickersPopper-paper': {
+              position: 'fixed',
+            },
           },
         },
         desktopPaper: {
