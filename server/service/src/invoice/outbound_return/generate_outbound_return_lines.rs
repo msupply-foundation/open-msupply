@@ -187,12 +187,14 @@ fn invoice_line_to_return_line(
     store_id: &str,
     line: &InvoiceLine,
 ) -> Result<OutboundReturnLine, RepositoryError> {
-    // TODO: NotFound - could make more specific error? This should fully fail?
-    let stock_line_id = line
-        .invoice_line_row
-        .stock_line_id
-        .as_ref()
-        .ok_or(RepositoryError::NotFound)?;
+    let stock_line_id =
+        line.invoice_line_row
+            .stock_line_id
+            .as_ref()
+            .ok_or(RepositoryError::as_db_error(
+                "Invoice line has not stock line ID",
+                "",
+            ))?;
 
     let stock_line = StockLineRepository::new(&ctx.connection)
         .query_by_filter(
@@ -200,7 +202,7 @@ fn invoice_line_to_return_line(
             Some(store_id.to_string()),
         )?
         .pop()
-        .ok_or(RepositoryError::NotFound)?;
+        .ok_or(RepositoryError::as_db_error("Stock line not found", ""))?;
 
     Ok(OutboundReturnLine {
         id: line.invoice_line_row.id.clone(),
@@ -266,7 +268,10 @@ mod test {
                     return_id,
                 },
             ),
-            Err(ListError::DatabaseError(RepositoryError::NotFound))
+            Err(ListError::DatabaseError(RepositoryError::as_db_error(
+                "Invoice line has not stock line ID",
+                ""
+            )))
         );
     }
 
