@@ -26,7 +26,6 @@ table! {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-
 pub enum Reason {
     AwaitingInstallation,
     Stored,
@@ -57,7 +56,6 @@ impl Reason {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-
 pub enum Status {
     NotInUse,
     Functioning,
@@ -82,7 +80,6 @@ impl Status {
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset_log"]
-
 pub struct AssetLogRow {
     pub id: String,
     pub asset_id: String,

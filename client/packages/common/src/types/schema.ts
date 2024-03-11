@@ -352,6 +352,49 @@ export type AssetFilterInput = {
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type AssetLogConnector = {
+  __typename: 'AssetLogConnector';
+  nodes: Array<AssetLogNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetLogFilterInput = {
+  assetId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  logDatetime?: InputMaybe<DatetimeFilterInput>;
+  status?: InputMaybe<EqualFilterStatusInput>;
+  user?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetLogNode = {
+  __typename: 'AssetLogNode';
+  assetId: Scalars['String']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  logDatetime: Scalars['NaiveDateTime']['output'];
+  reason?: Maybe<ReasonType>;
+  status?: Maybe<StatusType>;
+  type?: Maybe<Scalars['String']['output']>;
+  user?: Maybe<UserNode>;
+};
+
+export enum AssetLogSortFieldInput {
+  LogDatetime = 'logDatetime',
+  Status = 'status'
+}
+
+export type AssetLogSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: AssetLogSortFieldInput;
+};
+
+export type AssetLogsResponse = AssetLogConnector;
+
 export type AssetNode = {
   __typename: 'AssetNode';
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
@@ -364,6 +407,7 @@ export type AssetNode = {
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<StatusType>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
@@ -888,7 +932,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1567,6 +1611,12 @@ export type EqualFilterRequisitionTypeInput = {
   notEqualTo?: InputMaybe<RequisitionNodeType>;
 };
 
+export type EqualFilterStatusInput = {
+  equalAny?: InputMaybe<Array<StatusInput>>;
+  equalTo?: InputMaybe<StatusInput>;
+  notEqualTo?: InputMaybe<StatusInput>;
+};
+
 export type EqualFilterStocktakeStatusInput = {
   equalAny?: InputMaybe<Array<StocktakeNodeStatus>>;
   equalTo?: InputMaybe<StocktakeNodeStatus>;
@@ -1727,6 +1777,26 @@ export type InsertAssetInput = {
   serialNumber?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type InsertAssetLogError = {
+  __typename: 'InsertAssetLogError';
+  error: InsertAssetLogErrorInterface;
+};
+
+export type InsertAssetLogErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertAssetLogInput = {
+  assetId: Scalars['String']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  reason?: InputMaybe<ReasonInput>;
+  status?: InputMaybe<StatusInput>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertAssetLogResponse = AssetLogNode | InsertAssetLogError;
 
 export type InsertAssetResponse = AssetNode | InsertAssetError;
 
@@ -2254,7 +2324,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertAssetErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2907,6 +2977,7 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
+  insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertDocumentRegistry: InsertDocumentResponse;
@@ -3152,6 +3223,12 @@ export type MutationsInitialiseSiteArgs = {
 
 export type MutationsInsertAssetArgs = {
   input: InsertAssetInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertAssetLogArgs = {
+  input: InsertAssetLogInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4140,6 +4217,7 @@ export type Queries = {
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
   assetClasses: AssetClassesResponse;
+  assetLogs: AssetLogsResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
   /** Query omSupply "assets" entries */
@@ -4296,6 +4374,14 @@ export type QueriesAssetClassesArgs = {
   filter?: InputMaybe<AssetClassFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetLogsArgs = {
+  filter?: InputMaybe<AssetLogFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetLogSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -4760,7 +4846,35 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export type RecordAlreadyExist = InsertAssetErrorInterface & InsertLocationErrorInterface & {
+export enum ReasonInput {
+  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingInstallation = 'AWAITING_INSTALLATION',
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  LackOfPower = 'LACK_OF_POWER',
+  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
+  NeedsServicing = 'NEEDS_SERVICING',
+  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
+  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
+  Stored = 'STORED',
+  Unknown = 'UNKNOWN'
+}
+
+export enum ReasonType {
+  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingInstallation = 'AWAITING_INSTALLATION',
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  LackOfPower = 'LACK_OF_POWER',
+  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
+  NeedsServicing = 'NEEDS_SERVICING',
+  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
+  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
+  Stored = 'STORED',
+  Unknown = 'UNKNOWN'
+}
+
+export type RecordAlreadyExist = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -5178,6 +5292,22 @@ export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & 
   description: Scalars['String']['output'];
   lines: StocktakeLineConnector;
 };
+
+export enum StatusInput {
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
+  NotFunctioning = 'NOT_FUNCTIONING',
+  NotInUse = 'NOT_IN_USE'
+}
+
+export enum StatusType {
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
+  NotFunctioning = 'NOT_FUNCTIONING',
+  NotInUse = 'NOT_IN_USE'
+}
 
 export type StockCounts = {
   __typename: 'StockCounts';
@@ -5744,7 +5874,7 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertAssetErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
