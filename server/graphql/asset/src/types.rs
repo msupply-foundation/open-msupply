@@ -217,7 +217,7 @@ impl AssetSortInput {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 
-pub enum StatusInput {
+pub enum AssetLogStatusInput {
     NotInUse,
     Functioning,
     FunctioningButNeedsAttention,
@@ -225,14 +225,16 @@ pub enum StatusInput {
     Decomissioned,
 }
 
-impl StatusInput {
+impl AssetLogStatusInput {
     pub fn to_domain(self) -> Status {
         match self {
-            StatusInput::NotInUse => Status::NotInUse,
-            StatusInput::Functioning => Status::Functioning,
-            StatusInput::FunctioningButNeedsAttention => Status::FunctioningButNeedsAttention,
-            StatusInput::NotFunctioning => Status::NotFunctioning,
-            StatusInput::Decomissioned => Status::Decomissioned,
+            AssetLogStatusInput::NotInUse => Status::NotInUse,
+            AssetLogStatusInput::Functioning => Status::Functioning,
+            AssetLogStatusInput::FunctioningButNeedsAttention => {
+                Status::FunctioningButNeedsAttention
+            }
+            AssetLogStatusInput::NotFunctioning => Status::NotFunctioning,
+            AssetLogStatusInput::Decomissioned => Status::Decomissioned,
         }
     }
 }
@@ -267,7 +269,9 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
         AssetLogFilter {
             id: f.id.map(EqualFilter::from),
             asset_id: f.asset_id.map(EqualFilter::from),
-            status: f.status.map(|s| map_filter!(s, StatusInput::to_domain)),
+            status: f
+                .status
+                .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
         }
@@ -277,7 +281,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
 
-pub enum ReasonInput {
+pub enum AssetLogReasonInput {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
@@ -291,29 +295,29 @@ pub enum ReasonInput {
     Decomissioned,
 }
 
-impl ReasonInput {
+impl AssetLogReasonInput {
     pub fn to_domain(self) -> Reason {
         match self {
-            ReasonInput::AwaitingInstallation => Reason::AwaitingInstallation,
-            ReasonInput::Stored => Reason::Stored,
-            ReasonInput::OffsiteForRepairs => Reason::OffsiteForRepairs,
-            ReasonInput::AwaitingDecomissioning => Reason::AwaitingDecomissioning,
-            ReasonInput::NeedsServicing => Reason::NeedsServicing,
-            ReasonInput::MultipleTemperatureBreaches => Reason::MultipleTemperatureBreaches,
-            ReasonInput::Unknown => Reason::Unknown,
-            ReasonInput::NeedsSpareParts => Reason::NeedsSpareParts,
-            ReasonInput::LackOfPower => Reason::LackOfPower,
-            ReasonInput::Functioning => Reason::Functioning,
-            ReasonInput::Decomissioned => Reason::Decomissioned,
+            AssetLogReasonInput::AwaitingInstallation => Reason::AwaitingInstallation,
+            AssetLogReasonInput::Stored => Reason::Stored,
+            AssetLogReasonInput::OffsiteForRepairs => Reason::OffsiteForRepairs,
+            AssetLogReasonInput::AwaitingDecomissioning => Reason::AwaitingDecomissioning,
+            AssetLogReasonInput::NeedsServicing => Reason::NeedsServicing,
+            AssetLogReasonInput::MultipleTemperatureBreaches => Reason::MultipleTemperatureBreaches,
+            AssetLogReasonInput::Unknown => Reason::Unknown,
+            AssetLogReasonInput::NeedsSpareParts => Reason::NeedsSpareParts,
+            AssetLogReasonInput::LackOfPower => Reason::LackOfPower,
+            AssetLogReasonInput::Functioning => Reason::Functioning,
+            AssetLogReasonInput::Decomissioned => Reason::Decomissioned,
         }
     }
 }
 
 #[derive(InputObject, Clone)]
 pub struct EqualFilterStatusInput {
-    pub equal_to: Option<StatusInput>,
-    pub equal_any: Option<Vec<StatusInput>>,
-    pub not_equal_to: Option<StatusInput>,
+    pub equal_to: Option<AssetLogStatusInput>,
+    pub equal_any: Option<Vec<AssetLogStatusInput>>,
+    pub not_equal_to: Option<AssetLogStatusInput>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
