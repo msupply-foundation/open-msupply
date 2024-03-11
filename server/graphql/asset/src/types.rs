@@ -3,10 +3,13 @@ use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
-use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader, UserLoader};
+use graphql_core::loader::{
+    AssetCatalogueItemLoader, AssetStatusLoader, StoreByIdLoader, UserLoader,
+};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
+
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 use repository::{
@@ -101,8 +104,6 @@ impl AssetNode {
         &self.row().serial_number
     }
 
-    // TODO: Loaders for store, class, category, type, catalogue_item
-
     pub async fn catalogue_item_id(&self) -> &Option<String> {
         &self.row().catalogue_item_id
     }
@@ -150,6 +151,16 @@ impl AssetNode {
             .load_one(catalogue_item_id.clone())
             .await?
             .map(AssetCatalogueItemNode::from_domain))
+    }
+
+    pub async fn status(&self, ctx: &Context<'_>) -> Result<Option<StatusType>> {
+        let asset_id = self.row().id.clone();
+        let loader = ctx.get_loader::<DataLoader<AssetStatusLoader>>();
+        let status = match loader.load_one(asset_id.clone()).await? {
+            Some(s) => Some(StatusType::from_domain(&s)),
+            None => None,
+        };
+        Ok(status)
     }
 }
 

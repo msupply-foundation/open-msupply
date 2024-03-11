@@ -52,7 +52,7 @@ const AssetListComponent: FC = () => {
       },
       {
         key: 'status',
-        label: 'label.status',
+        label: 'label.functional-status',
         sortable: false,
       },
       {
