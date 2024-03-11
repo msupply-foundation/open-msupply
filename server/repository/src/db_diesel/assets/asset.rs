@@ -21,6 +21,7 @@ pub enum AssetSortField {
     InstallationDate,
     ReplacementDate,
     ModifiedDatetime,
+    Notes,
 }
 
 pub type AssetSort = Sort<AssetSortField>;
@@ -150,6 +151,9 @@ impl<'a> AssetRepository<'a> {
                 }
                 AssetSortField::ModifiedDatetime => {
                     apply_sort!(query, sort, asset_dsl::modified_datetime)
+                }
+                AssetSortField::Notes => {
+                    apply_sort!(query, sort, asset_dsl::notes)
                 }
             }
         } else {

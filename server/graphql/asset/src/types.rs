@@ -5,7 +5,7 @@ use graphql_core::generic_filters::{
 };
 use graphql_core::loader::{AssetCatalogueItemLoader, StoreByIdLoader, UserLoader};
 use graphql_core::simple_generic_errors::NodeError;
-use graphql_core::ContextExt;
+use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
@@ -15,6 +15,9 @@ use repository::{
 };
 use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
+
+use repository::asset_log_row::{AssetLogReason, AssetLogStatus};
+use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
@@ -211,6 +214,31 @@ impl AssetSortInput {
 
 // Asset log types
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum AssetLogStatusInput {
+    NotInUse,
+    Functioning,
+    FunctioningButNeedsAttention,
+    NotFunctioning,
+    Decomissioned,
+}
+
+impl AssetLogStatusInput {
+    pub fn to_domain(self) -> AssetLogStatus {
+        match self {
+            AssetLogStatusInput::NotInUse => AssetLogStatus::NotInUse,
+            AssetLogStatusInput::Functioning => AssetLogStatus::Functioning,
+            AssetLogStatusInput::FunctioningButNeedsAttention => {
+                AssetLogStatus::FunctioningButNeedsAttention
+            }
+            AssetLogStatusInput::NotFunctioning => AssetLogStatus::NotFunctioning,
+            AssetLogStatusInput::Decomissioned => AssetLogStatus::Decomissioned,
+        }
+    }
+}
+
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum AssetLogSortFieldInput {
@@ -231,7 +259,7 @@ pub struct AssetLogSortInput {
 pub struct AssetLogFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub asset_id: Option<EqualFilterStringInput>,
-    pub status: Option<StringFilterInput>,
+    pub status: Option<EqualFilterStatusInput>,
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
 }
@@ -241,9 +269,113 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
         AssetLogFilter {
             id: f.id.map(EqualFilter::from),
             asset_id: f.asset_id.map(EqualFilter::from),
-            status: f.status.map(StringFilter::from),
+            status: f
+                .status
+                .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum AssetLogReasonInput {
+    AwaitingInstallation,
+    Stored,
+    OffsiteForRepairs,
+    AwaitingDecomissioning,
+    NeedsServicing,
+    MultipleTemperatureBreaches,
+    Unknown,
+    NeedsSpareParts,
+    LackOfPower,
+    Functioning,
+    Decomissioned,
+}
+
+impl AssetLogReasonInput {
+    pub fn to_domain(self) -> AssetLogReason {
+        match self {
+            AssetLogReasonInput::AwaitingInstallation => AssetLogReason::AwaitingInstallation,
+            AssetLogReasonInput::Stored => AssetLogReason::Stored,
+            AssetLogReasonInput::OffsiteForRepairs => AssetLogReason::OffsiteForRepairs,
+            AssetLogReasonInput::AwaitingDecomissioning => AssetLogReason::AwaitingDecomissioning,
+            AssetLogReasonInput::NeedsServicing => AssetLogReason::NeedsServicing,
+            AssetLogReasonInput::MultipleTemperatureBreaches => {
+                AssetLogReason::MultipleTemperatureBreaches
+            }
+            AssetLogReasonInput::Unknown => AssetLogReason::Unknown,
+            AssetLogReasonInput::NeedsSpareParts => AssetLogReason::NeedsSpareParts,
+            AssetLogReasonInput::LackOfPower => AssetLogReason::LackOfPower,
+            AssetLogReasonInput::Functioning => AssetLogReason::Functioning,
+            AssetLogReasonInput::Decomissioned => AssetLogReason::Decomissioned,
+        }
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct EqualFilterStatusInput {
+    pub equal_to: Option<AssetLogStatusInput>,
+    pub equal_any: Option<Vec<AssetLogStatusInput>>,
+    pub not_equal_to: Option<AssetLogStatusInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum ReasonType {
+    AwaitingInstallation,
+    Stored,
+    OffsiteForRepairs,
+    AwaitingDecomissioning,
+    NeedsServicing,
+    MultipleTemperatureBreaches,
+    Unknown,
+    NeedsSpareParts,
+    LackOfPower,
+    Functioning,
+    Decomissioned,
+}
+impl ReasonType {
+    pub fn from_domain(reason: &AssetLogReason) -> Self {
+        match reason {
+            AssetLogReason::AwaitingInstallation => ReasonType::AwaitingInstallation,
+            AssetLogReason::Stored => ReasonType::Stored,
+            AssetLogReason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
+            AssetLogReason::AwaitingDecomissioning => ReasonType::AwaitingDecomissioning,
+            AssetLogReason::NeedsServicing => ReasonType::NeedsServicing,
+            AssetLogReason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
+            AssetLogReason::Unknown => ReasonType::Unknown,
+            AssetLogReason::NeedsSpareParts => ReasonType::NeedsSpareParts,
+            AssetLogReason::LackOfPower => ReasonType::LackOfPower,
+            AssetLogReason::Functioning => ReasonType::Functioning,
+            AssetLogReason::Decomissioned => ReasonType::Decomissioned,
+        }
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+
+pub enum StatusType {
+    NotInUse,
+    Functioning,
+    FunctioningButNeedsAttention,
+    NotFunctioning,
+    Decomissioned,
+}
+impl StatusType {
+    pub fn from_domain(status: &AssetLogStatus) -> Self {
+        match status {
+            AssetLogStatus::NotInUse => StatusType::NotInUse,
+            AssetLogStatus::Functioning => StatusType::Functioning,
+            AssetLogStatus::FunctioningButNeedsAttention => {
+                StatusType::FunctioningButNeedsAttention
+            }
+            AssetLogStatus::NotFunctioning => StatusType::NotFunctioning,
+            AssetLogStatus::Decomissioned => StatusType::Decomissioned,
         }
     }
 }
@@ -278,8 +410,8 @@ impl AssetLogNode {
             .map(UserNode::from_domain))
     }
 
-    pub async fn status(&self) -> &Option<String> {
-        &self.row().status
+    pub async fn status(&self) -> Option<StatusType> {
+        self.row().status.as_ref().map(StatusType::from_domain)
     }
 
     pub async fn comment(&self) -> &Option<String> {
@@ -290,8 +422,8 @@ impl AssetLogNode {
         &self.row().r#type
     }
 
-    pub async fn reason(&self) -> &Option<String> {
-        &self.row().reason
+    pub async fn reason(&self) -> Option<ReasonType> {
+        self.row().reason.as_ref().map(ReasonType::from_domain)
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
