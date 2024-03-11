@@ -24,18 +24,11 @@ impl Loader<String> for AssetStatusLoader {
 
         let sort = AssetLogSort {
             key: AssetLogSortField::LogDatetime,
-            desc: Some(true),
+            desc: Some(false),
         };
 
         let result = repo
-            .query(
-                Pagination {
-                    offset: 0,
-                    limit: 1,
-                },
-                Some(filter),
-                Some(sort),
-            )?
+            .query(Pagination::all(), Some(filter), Some(sort))?
             .into_iter()
             .filter(|asset_log| asset_log.status.is_some())
             .map(|asset_log| (asset_log.asset_id.clone(), asset_log.status.unwrap()))

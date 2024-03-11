@@ -67,6 +67,11 @@
   "messages.fridge-tag-import-successful": "Success! {{numberOfLogs}} logs and {{numberOfBreaches}} breaches imported.",
   "messages.total-breaches": "Total unacknowledged: {{count}}",
   "messages.total-excursions": "Total excursions: {{count}}",
+  "status.decomissioned": "Decomissioned",
+  "status.functioning": "Functioning",
+  "status.functioning-but-needs-attention": "Functioning but needs attention",
+  "status.not-functioning": "Not Functioning",
+  "status.not-in-use": "Not in use",
   "title.new-sensor": "New sensor added",
   "title.sensor-details": "Sensor Details",
   "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported."

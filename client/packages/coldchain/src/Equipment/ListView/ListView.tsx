@@ -16,6 +16,11 @@ import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
+import { Status } from '../Components';
+
+const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
+  return <Status status={rowData.status} />;
+};
 
 const AssetListComponent: FC = () => {
   const {
@@ -53,6 +58,7 @@ const AssetListComponent: FC = () => {
       {
         key: 'status',
         label: 'label.functional-status',
+        Cell: StatusCell,
         sortable: false,
       },
       {
