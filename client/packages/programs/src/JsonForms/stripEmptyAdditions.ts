@@ -58,7 +58,8 @@ export const stripEmptyAdditions = (
       const o = oldObj[key];
       let n = newData[key];
       if (n === undefined) {
-        if (o !== undefined) {
+        if (o !== undefined && objectOrArrayIsEmpty(o)) {
+          // keep existing empty object
           object[key] = o;
         }
         continue;
