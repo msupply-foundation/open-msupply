@@ -6,6 +6,7 @@ import {
   AppFooterPortal,
   XCircleIcon,
   useBreadcrumbs,
+  DeleteIcon,
   LoadingButton,
   // useAuthContext,
   // UserPermission,
@@ -27,6 +28,7 @@ export const FooterComponent = ({
   const t = useTranslation('coldchain');
   const { navigateUpOne } = useBreadcrumbs();
   const { data } = useAssets.document.get();
+  const onDelete = useAssets.document.delete(data?.id || '');
   // const { userHasPermission } = useAuthContext();
 
   return (
@@ -48,6 +50,14 @@ export const FooterComponent = ({
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigateUpOne()}
+              />
+              <ButtonWithIcon
+                shrinkThreshold="lg"
+                Icon={<DeleteIcon />}
+                label={t('button.delete')}
+                color="error"
+                sx={{ fontSize: '12px' }}
+                onClick={onDelete}
               />
               <LoadingButton
                 color="secondary"

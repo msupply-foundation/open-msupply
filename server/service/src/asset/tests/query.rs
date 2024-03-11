@@ -137,7 +137,7 @@ mod query {
                     "fad280b6-8384-41af-84cf-c7b6b4526ef0",
                 ))),
                 Some(AssetSort {
-                    key: AssetSortField::Name,
+                    key: AssetSortField::Notes,
                     desc: Some(false),
                 }),
             )

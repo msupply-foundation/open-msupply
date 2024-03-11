@@ -10,7 +10,7 @@ use diesel::prelude::*;
 table! {
     asset (id) {
         id -> Text,
-        name -> Text,
+        notes -> Nullable<Text>,
         code -> Text,
         store_id -> Nullable<Text>,
         serial_number -> Nullable<Text>,
@@ -27,7 +27,7 @@ table! {
 #[table_name = "asset"]
 pub struct AssetRow {
     pub id: String,
-    pub name: String,
+    pub notes: Option<String>,
     pub code: String,
     pub store_id: Option<String>,
     pub serial_number: Option<String>,

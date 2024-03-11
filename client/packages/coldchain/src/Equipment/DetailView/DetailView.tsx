@@ -17,7 +17,6 @@ import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { Summary } from './Tabs';
 import { AssetFragment, useAssets } from '../api';
-import { Details } from './Tabs/Details';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 
@@ -71,10 +70,6 @@ export const EquipmentDetailView = () => {
     {
       Component: <Summary onChange={onChange} draft={draft} />,
       value: 'Summary',
-    },
-    {
-      Component: <Details />,
-      value: 'Details',
     },
     {
       Component: <StatusLogs />,

@@ -1,4 +1,4 @@
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 use repository::NameTagRow;
 
@@ -12,8 +12,8 @@ const NAME_TAG_1: (&'static str, &'static str) = (
     }"#,
 );
 
-fn name_tag_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_tag_1() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_TAG_1,
         NameTagRow {
@@ -31,8 +31,8 @@ const NAME_TAG_2: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_tag_2() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn name_tag_2() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         NAME_TAG_2,
         NameTagRow {
@@ -42,6 +42,6 @@ fn name_tag_2() -> TestSyncPullRecord {
     )
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![name_tag_1(), name_tag_2()]
 }
