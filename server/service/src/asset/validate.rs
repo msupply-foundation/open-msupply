@@ -7,10 +7,6 @@ use repository::{
     RepositoryError, StorageConnection,
 };
 
-use crate::service_provider::ServiceContext;
-
-use super::insert_log::InsertAssetLog;
-
 pub fn check_asset_exists(
     id: &str,
     connection: &StorageConnection,
@@ -23,10 +19,6 @@ pub fn check_asset_log_exists(
     connection: &StorageConnection,
 ) -> Result<Option<AssetLogRow>, RepositoryError> {
     Ok(AssetLogRowRepository::new(connection).find_one_by_id(id)?)
-}
-
-pub fn check_user_is_user(ctx: &ServiceContext, input: &InsertAssetLog) -> bool {
-    return ctx.user_id == input.user_id;
 }
 
 pub fn check_reason_matches_status(status: &Option<Status>, reason: &Option<Reason>) -> bool {

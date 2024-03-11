@@ -2,9 +2,7 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{
-        check_asset_exists, check_asset_log_exists, check_reason_matches_status, check_user_is_user,
-    },
+    validate::{check_asset_exists, check_asset_log_exists, check_reason_matches_status},
 };
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
@@ -27,7 +25,6 @@ pub enum InsertAssetLogError {
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
-    pub user_id: String,
     pub status: Option<Status>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
