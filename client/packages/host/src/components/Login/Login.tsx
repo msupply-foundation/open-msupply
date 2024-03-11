@@ -66,6 +66,10 @@ export const Login = () => {
       );
       return `${t('error.account-blocked')} ${formattedTime}`;
     }
+    if (error.detail?.includes('TransactionError')) {
+      return t('error.database-busy');
+    }
+
     return t('error.login');
   }, [error, timeoutRemaining, customDate, t]);
 
