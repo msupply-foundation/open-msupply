@@ -13,9 +13,9 @@ use service::invoice::outbound_return::generate_outbound_return_lines::GenerateO
 pub struct GenerateOutboundReturnLinesInput {
     /// The stock line ids to generate new return lines for
     pub stock_line_ids: Vec<String>,
-    /// Generate return lines for all the available stock lines of a specific item
+    /// Generate new return lines for all the available stock lines of a specific item
     pub item_id: Option<String>,
-    /// Include existing return lines in the response. Only has an effect when `item_id` is set.
+    /// Include existing return lines in the response. Only has an effect when either `stock_line_ids` or `item_id` is set.
     pub return_id: Option<String>,
 }
 
