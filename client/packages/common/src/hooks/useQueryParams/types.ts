@@ -54,5 +54,6 @@ export interface SortBy<T> extends SortRule<T> {
 }
 export interface SortController<T extends RecordWithId> {
   sortBy: SortBy<T>;
+  /** Changes the sort options as specified */
   onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
