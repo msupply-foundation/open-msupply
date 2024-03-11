@@ -191,7 +191,7 @@ describe('sort', () => {
       wrapper: getWrapper(),
     });
     act(() => {
-      result.current.sort.onChangeSortBy(quantityColumn);
+      result.current.sort.onChangeSortBy(quantityColumn.key, 'asc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'quantity',
@@ -206,7 +206,7 @@ describe('sort', () => {
       wrapper: getWrapper(),
     });
     act(() => {
-      result.current.sort.onChangeSortBy(idColumn);
+      result.current.sort.onChangeSortBy(idColumn.key, 'desc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'id',
@@ -215,7 +215,7 @@ describe('sort', () => {
     });
   });
 
-  it('has the correct values after triggering a few sort bys in sequence', () => {
+  it('has the correct values after sorts', () => {
     const idColumn = createColumnWithDefaults<TestSortBy>({ key: 'id' });
     const quantityColumn = createColumnWithDefaults<TestSortBy>({
       key: 'quantity',
@@ -225,17 +225,27 @@ describe('sort', () => {
     });
     act(() => {
       // initially: id/asc
-      result.current.sort.onChangeSortBy(idColumn);
+      result.current.sort.onChangeSortBy(idColumn.key, 'asc');
+    });
+    expect(result.current.sort.sortBy).toEqual({
+      key: 'id',
+      isDesc: false,
+      direction: 'asc',
+    });
+
+    act(() => {
       // should be: id/desc
-      result.current.sort.onChangeSortBy(idColumn);
-      // should be: quantity/asc
-      result.current.sort.onChangeSortBy(quantityColumn);
-      // should be: id/asc
-      result.current.sort.onChangeSortBy(idColumn);
-      // should be: quantity/asc
-      result.current.sort.onChangeSortBy(quantityColumn);
+      result.current.sort.onChangeSortBy(idColumn.key, 'desc');
+    });
+    expect(result.current.sort.sortBy).toEqual({
+      key: 'id',
+      isDesc: true,
+      direction: 'desc',
+    });
+
+    act(() => {
       // should be: quantity/desc
-      result.current.sort.onChangeSortBy(quantityColumn);
+      result.current.sort.onChangeSortBy(quantityColumn.key, 'desc');
     });
     expect(result.current.sort.sortBy).toEqual({
       key: 'quantity',

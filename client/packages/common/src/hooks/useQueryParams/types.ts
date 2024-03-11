@@ -1,5 +1,4 @@
 import { RecordWithId } from '@common/types';
-import { Column } from '../../ui/layout/tables';
 
 export interface FilterByConditionByType {
   string: 'equalTo' | 'like' | 'notEqualTo';
@@ -55,5 +54,5 @@ export interface SortBy<T> extends SortRule<T> {
 }
 export interface SortController<T extends RecordWithId> {
   sortBy: SortBy<T>;
-  onChangeSortBy: (newSortRule: Column<T>) => SortBy<T>;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }

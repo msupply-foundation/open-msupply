@@ -110,7 +110,7 @@ const getDefaultColumnAlign = <T extends RecordWithId>(
 };
 
 interface ColumnOptions<T extends RecordWithId> {
-  onChangeSortBy?: (column: Column<T>) => void;
+  onChangeSortBy?: (sort: string, dir: 'desc' | 'asc') => void;
   sortBy?: SortBy<T>;
 }
 

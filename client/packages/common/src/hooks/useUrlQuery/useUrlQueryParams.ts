@@ -5,12 +5,7 @@ import {
   UrlQueryValue,
   useUrlQuery,
 } from './useUrlQuery';
-import {
-  Column,
-  Formatter,
-  RecordWithId,
-  useLocalStorage,
-} from '@openmsupply-client/common';
+import { Formatter, useLocalStorage } from '@openmsupply-client/common';
 import {
   FilterBy,
   FilterByWithBoolean,
@@ -72,21 +67,11 @@ export const useUrlQueryParams = ({
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
   }, [initialSort, updateQuery, urlQuery]);
 
-  // Changes sort key or, if the sort key is already selected, toggles the sort direction.
   const updateSortQuery = useCallback(
-    <T extends RecordWithId>(column: Column<T>) => {
-      const currentSort = urlQuery['sort'];
-      const sort = column.key as string;
-      if (sort !== currentSort) {
-        // change sort key
-        updateQuery({ sort, dir: '', page: '' });
-      } else {
-        // toggle sort direction
-        const dir = column.sortBy?.direction === 'desc' ? '' : 'desc';
-        updateQuery({ dir });
-      }
+    (sort: string, dir: 'desc' | 'asc') => {
+      updateQuery({ sort, dir: dir === 'asc' ? '' : 'desc' });
     },
-    [updateQuery, urlQuery]
+    [updateQuery]
   );
 
   const updatePaginationQuery = (page: number) => {
