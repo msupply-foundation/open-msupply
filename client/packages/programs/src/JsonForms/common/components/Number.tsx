@@ -47,6 +47,7 @@ const UIComponent = (props: ControlProps) => {
       Input={
         <NumericTextInput
           {...inputProps}
+          decimalLimit={10}
           min={schema.minimum}
           max={schema.maximum}
         />
