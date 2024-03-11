@@ -48,7 +48,6 @@ pub fn insert_asset_log(
 pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
-    pub user_id: String,
     pub status: Option<StatusInput>,
     pub reason: Option<ReasonInput>,
     pub comment: Option<String>,
@@ -69,7 +68,6 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
         InsertAssetLog {
             id,
             asset_id,
-            user_id,
             status: status.map(|s| s.to_domain()),
             reason: reason.map(|r| r.to_domain()),
             comment,
@@ -176,7 +174,6 @@ mod test {
                     id
                     assetId
                     status
-                    userId
                 }
             }
         }
@@ -187,7 +184,6 @@ mod test {
                 "id": "n/a",
                 "assetId": "asset_a",
                 "status": Status::Functioning,
-                "userId": "user_account_a"
             }
         }));
 
@@ -196,7 +192,6 @@ mod test {
             Ok(AssetLog {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
-                user_id: "user_account_a".to_owned(),
                 status: Some(Status::Functioning),
                 ..Default::default()
             })
@@ -207,7 +202,6 @@ mod test {
                 "id": "id",
                 "assetId": "asset_a",
                 "status": Status::Functioning,
-                "userId": "user_account_a",
             }
         });
         assert_graphql_query!(
