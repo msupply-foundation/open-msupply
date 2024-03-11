@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import {
   isEqualIgnoreUndefinedAndEmpty,
   stripEmptyAdditions,
@@ -86,5 +87,19 @@ describe('stripEmptyAdditions', () => {
     };
 
     expect(isEqualIgnoreUndefinedAndEmpty(old, add1)).toBeTruthy();
+  });
+
+  it('should allow removing item with simple types', () => {
+    const old = {
+      some: 2,
+      someMore: 'string',
+      array: [{ value: false }],
+    };
+    const add1 = {
+      array: [{ value: false, add1: undefined }],
+    };
+
+    const stripped = stripEmptyAdditions(old, add1);
+    expect(isEqual(add1, stripped)).toBeTruthy();
   });
 });
