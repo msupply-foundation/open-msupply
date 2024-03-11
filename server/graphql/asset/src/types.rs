@@ -16,7 +16,7 @@ use repository::{
 use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use repository::asset_log_row::{Reason, Status};
+use repository::asset_log_row::{AssetLogReason, AssetLogStatus};
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -226,15 +226,15 @@ pub enum AssetLogStatusInput {
 }
 
 impl AssetLogStatusInput {
-    pub fn to_domain(self) -> Status {
+    pub fn to_domain(self) -> AssetLogStatus {
         match self {
-            AssetLogStatusInput::NotInUse => Status::NotInUse,
-            AssetLogStatusInput::Functioning => Status::Functioning,
+            AssetLogStatusInput::NotInUse => AssetLogStatus::NotInUse,
+            AssetLogStatusInput::Functioning => AssetLogStatus::Functioning,
             AssetLogStatusInput::FunctioningButNeedsAttention => {
-                Status::FunctioningButNeedsAttention
+                AssetLogStatus::FunctioningButNeedsAttention
             }
-            AssetLogStatusInput::NotFunctioning => Status::NotFunctioning,
-            AssetLogStatusInput::Decomissioned => Status::Decomissioned,
+            AssetLogStatusInput::NotFunctioning => AssetLogStatus::NotFunctioning,
+            AssetLogStatusInput::Decomissioned => AssetLogStatus::Decomissioned,
         }
     }
 }
@@ -296,19 +296,21 @@ pub enum AssetLogReasonInput {
 }
 
 impl AssetLogReasonInput {
-    pub fn to_domain(self) -> Reason {
+    pub fn to_domain(self) -> AssetLogReason {
         match self {
-            AssetLogReasonInput::AwaitingInstallation => Reason::AwaitingInstallation,
-            AssetLogReasonInput::Stored => Reason::Stored,
-            AssetLogReasonInput::OffsiteForRepairs => Reason::OffsiteForRepairs,
-            AssetLogReasonInput::AwaitingDecomissioning => Reason::AwaitingDecomissioning,
-            AssetLogReasonInput::NeedsServicing => Reason::NeedsServicing,
-            AssetLogReasonInput::MultipleTemperatureBreaches => Reason::MultipleTemperatureBreaches,
-            AssetLogReasonInput::Unknown => Reason::Unknown,
-            AssetLogReasonInput::NeedsSpareParts => Reason::NeedsSpareParts,
-            AssetLogReasonInput::LackOfPower => Reason::LackOfPower,
-            AssetLogReasonInput::Functioning => Reason::Functioning,
-            AssetLogReasonInput::Decomissioned => Reason::Decomissioned,
+            AssetLogReasonInput::AwaitingInstallation => AssetLogReason::AwaitingInstallation,
+            AssetLogReasonInput::Stored => AssetLogReason::Stored,
+            AssetLogReasonInput::OffsiteForRepairs => AssetLogReason::OffsiteForRepairs,
+            AssetLogReasonInput::AwaitingDecomissioning => AssetLogReason::AwaitingDecomissioning,
+            AssetLogReasonInput::NeedsServicing => AssetLogReason::NeedsServicing,
+            AssetLogReasonInput::MultipleTemperatureBreaches => {
+                AssetLogReason::MultipleTemperatureBreaches
+            }
+            AssetLogReasonInput::Unknown => AssetLogReason::Unknown,
+            AssetLogReasonInput::NeedsSpareParts => AssetLogReason::NeedsSpareParts,
+            AssetLogReasonInput::LackOfPower => AssetLogReason::LackOfPower,
+            AssetLogReasonInput::Functioning => AssetLogReason::Functioning,
+            AssetLogReasonInput::Decomissioned => AssetLogReason::Decomissioned,
         }
     }
 }
@@ -337,19 +339,19 @@ pub enum ReasonType {
     Decomissioned,
 }
 impl ReasonType {
-    pub fn from_domain(reason: &Reason) -> Self {
+    pub fn from_domain(reason: &AssetLogReason) -> Self {
         match reason {
-            Reason::AwaitingInstallation => ReasonType::AwaitingInstallation,
-            Reason::Stored => ReasonType::Stored,
-            Reason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
-            Reason::AwaitingDecomissioning => ReasonType::AwaitingDecomissioning,
-            Reason::NeedsServicing => ReasonType::NeedsServicing,
-            Reason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
-            Reason::Unknown => ReasonType::Unknown,
-            Reason::NeedsSpareParts => ReasonType::NeedsSpareParts,
-            Reason::LackOfPower => ReasonType::LackOfPower,
-            Reason::Functioning => ReasonType::Functioning,
-            Reason::Decomissioned => ReasonType::Decomissioned,
+            AssetLogReason::AwaitingInstallation => ReasonType::AwaitingInstallation,
+            AssetLogReason::Stored => ReasonType::Stored,
+            AssetLogReason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
+            AssetLogReason::AwaitingDecomissioning => ReasonType::AwaitingDecomissioning,
+            AssetLogReason::NeedsServicing => ReasonType::NeedsServicing,
+            AssetLogReason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
+            AssetLogReason::Unknown => ReasonType::Unknown,
+            AssetLogReason::NeedsSpareParts => ReasonType::NeedsSpareParts,
+            AssetLogReason::LackOfPower => ReasonType::LackOfPower,
+            AssetLogReason::Functioning => ReasonType::Functioning,
+            AssetLogReason::Decomissioned => ReasonType::Decomissioned,
         }
     }
 }
@@ -365,13 +367,15 @@ pub enum StatusType {
     Decomissioned,
 }
 impl StatusType {
-    pub fn from_domain(status: &Status) -> Self {
+    pub fn from_domain(status: &AssetLogStatus) -> Self {
         match status {
-            Status::NotInUse => StatusType::NotInUse,
-            Status::Functioning => StatusType::Functioning,
-            Status::FunctioningButNeedsAttention => StatusType::FunctioningButNeedsAttention,
-            Status::NotFunctioning => StatusType::NotFunctioning,
-            Status::Decomissioned => StatusType::Decomissioned,
+            AssetLogStatus::NotInUse => StatusType::NotInUse,
+            AssetLogStatus::Functioning => StatusType::Functioning,
+            AssetLogStatus::FunctioningButNeedsAttention => {
+                StatusType::FunctioningButNeedsAttention
+            }
+            AssetLogStatus::NotFunctioning => StatusType::NotFunctioning,
+            AssetLogStatus::Decomissioned => StatusType::Decomissioned,
         }
     }
 }

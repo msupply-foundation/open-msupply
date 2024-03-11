@@ -6,7 +6,7 @@ mod query {
         service_provider::ServiceProvider,
     };
     use repository::{
-        asset_log_row::{Reason, Status},
+        asset_log_row::{AssetLogReason, AssetLogStatus},
         mock::{mock_asset_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
     };
@@ -34,7 +34,7 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
-                    status: Some(Status::Functioning),
+                    status: Some(AssetLogStatus::Functioning),
                     comment: None,
                     r#type: None,
                     reason: None,
@@ -51,7 +51,7 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
-                    status: Some(Status::Functioning),
+                    status: Some(AssetLogStatus::Functioning),
                     comment: None,
                     r#type: None,
                     reason: None,
@@ -67,7 +67,7 @@ mod query {
                 InsertAssetLog {
                     id: "test_id_2".to_string(),
                     asset_id: "incorrect_asset_id".to_string(),
-                    status: Some(Status::Functioning),
+                    status: Some(AssetLogStatus::Functioning),
                     comment: None,
                     r#type: None,
                     reason: None,
@@ -84,10 +84,10 @@ mod query {
                 InsertAssetLog {
                     id: id.clone(),
                     asset_id: mock_asset_a().id,
-                    status: Some(Status::FunctioningButNeedsAttention),
+                    status: Some(AssetLogStatus::FunctioningButNeedsAttention),
                     comment: None,
                     r#type: None,
-                    reason: Some(Reason::NeedsServicing),
+                    reason: Some(AssetLogReason::NeedsServicing),
                 },
             )
             .unwrap();
@@ -101,10 +101,10 @@ mod query {
                 InsertAssetLog {
                     id: "test_id_4".to_string(),
                     asset_id: "incorrect_asset_id".to_string(),
-                    status: Some(Status::FunctioningButNeedsAttention),
+                    status: Some(AssetLogStatus::FunctioningButNeedsAttention),
                     comment: None,
                     r#type: None,
-                    reason: Some(Reason::Stored),
+                    reason: Some(AssetLogReason::Stored),
                 },
             ),
             Err(InsertAssetLogError::ReasonInvalidForStatus)
