@@ -54,10 +54,10 @@ export const useColumnUtils = () => {
           return !!obj ? [obj] : [];
         });
         const isValid =
-          arr.length === 0 ||
-          arr[0] === undefined ||
-          typeof arr[0] !== 'object' ||
-          !(key in arr[0]);
+          arr.length > 0 &&
+          (arr[0] === undefined ||
+            typeof arr[0] !== 'object' ||
+            !(key in arr[0]));
 
         return isValid
           ? ArrayUtils.ifTheSameElseDefault(
