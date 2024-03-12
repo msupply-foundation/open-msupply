@@ -1,7 +1,7 @@
 use repository::asset_type_row::AssetTypeRow;
 use serde_json::json;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &'static str = "asset_type";
 
@@ -22,16 +22,16 @@ fn asset_type1() -> AssetTypeRow {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_TYPE1,
         asset_type1(),
     )]
 }
 
-pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncPushRecord> {
-    vec![TestSyncPushRecord {
+pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: ASSET_TYPE1.0.to_string(),
         push_data: json!(asset_type1()),
