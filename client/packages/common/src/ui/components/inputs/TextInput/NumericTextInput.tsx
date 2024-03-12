@@ -48,26 +48,31 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     const [textValue, setTextValue] = useState(
       format(value ?? defaultValue, { minimumFractionDigits: decimalMin })
     );
-    const firstRender = useRef(true);
+    const isFirstRender = useRef(true);
 
-    const isIncomplete = useCallback(
-      (value: string) => value.endsWith(decimal) || value.endsWith('0'),
+    const isInputIncomplete = useCallback(
+      (value: string) =>
+        new RegExp(
+          // Checks for a trailing `.` or a `0` (not necessarily immediately)
+          // after a `.`
+          `^\\d*\\.$|\\d*${RegexUtils.escapeChars(decimal)}\\d*0$`
+        ).test(value),
       [decimal]
     );
 
     useEffect(() => {
-      if (firstRender.current) {
+      if (isFirstRender.current) {
         // On first render, ensure number value is set from defaultValue prop
         if (textValue && value === undefined) onChange(parse(textValue));
-        firstRender.current = false;
+        isFirstRender.current = false;
         return;
       }
 
       // On subsequent renders, keep textValue up to date with value if value
       // has changed externally
-      if (parse(textValue) !== value && !isIncomplete(textValue))
+      if (parse(textValue) !== value && !isInputIncomplete(textValue))
         setTextValue(format(value));
-    }, [value, textValue, format, parse, onChange, isIncomplete]);
+    }, [value, textValue, format, parse, onChange, isInputIncomplete]);
 
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
@@ -99,7 +104,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           if (inputRegex.test(input)) setTextValue(input);
           else return;
 
-          if (isIncomplete(input)) return;
+          if (isInputIncomplete(input)) return;
 
           const parsed = parse(input);
 
