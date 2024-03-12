@@ -16,7 +16,7 @@ import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
-import { SidePanel } from './SidePanel';
+// import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
@@ -24,7 +24,13 @@ import { OutboundReturnEditModal } from '../modals';
 
 export const OutboundReturnsDetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
-  const { onOpen, onClose, isOpen, entity: itemId } = useEditModal<string>();
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: itemId,
+    mode,
+  } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
@@ -81,13 +87,14 @@ export const OutboundReturnsDetailView: FC = () => {
               supplierId={data.otherPartyId}
               returnId={data.id}
               initialItemId={itemId}
+              modalMode={mode}
             />
           )}
 
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />
-          <SidePanel />
+          {/* <SidePanel /> */}
         </TableProvider>
       ) : (
         <AlertModal

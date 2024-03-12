@@ -8,6 +8,8 @@ import {
   useKeyboardHeightAdjustment,
   useTabs,
   Box,
+  ModalMode,
+  AlertColor,
 } from '@openmsupply-client/common';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ItemSelector } from './ItemSelector';
@@ -20,6 +22,7 @@ interface OutboundReturnEditModalProps {
   supplierId: string;
   returnId?: string;
   initialItemId?: string | null;
+  modalMode: ModalMode | null;
 }
 
 export const OutboundReturnEditModal = ({
@@ -29,6 +32,7 @@ export const OutboundReturnEditModal = ({
   supplierId,
   returnId,
   initialItemId,
+  modalMode,
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -37,7 +41,9 @@ export const OutboundReturnEditModal = ({
   );
   const alertRef = useRef<HTMLDivElement>(null);
 
-  const [showZeroQuantityAlert, setShowZeroQuantityAlert] = useState(false);
+  const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
+    AlertColor | undefined
+  >();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -59,10 +65,24 @@ export const OutboundReturnEditModal = ({
   };
 
   const handleNext = () => {
-    if (lines.every(line => line.numberOfPacksToReturn === 0)) {
-      setShowZeroQuantityAlert(true);
-      alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
-    } else onChangeTab(Tabs.Reason);
+    if (
+      lines.some(line => line.numberOfPacksToReturn !== 0) ||
+      zeroQuantityAlert === 'warning'
+    ) {
+      onChangeTab(Tabs.Reason);
+      return;
+    }
+    switch (modalMode) {
+      case ModalMode.Create: {
+        setZeroQuantityAlert('error');
+        break;
+      }
+      case ModalMode.Update: {
+        setZeroQuantityAlert('warning');
+        break;
+      }
+    }
+    alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -100,8 +120,8 @@ export const OutboundReturnEditModal = ({
               currentTab={currentTab}
               lines={lines}
               update={update}
-              showZeroQuantityAlert={showZeroQuantityAlert}
-              setShowZeroQuantityAlert={setShowZeroQuantityAlert}
+              zeroQuantityAlert={zeroQuantityAlert}
+              setZeroQuantityAlert={setZeroQuantityAlert}
             />
           )}
         </Box>
