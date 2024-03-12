@@ -97,6 +97,7 @@ export enum ActivityLogNodeType {
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
+  QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
@@ -5051,6 +5052,7 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Int']['output'];
   comment?: Maybe<Scalars['String']['output']>;
@@ -5577,6 +5579,7 @@ export enum StoreModeNodeType {
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String']['output'];
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   /**
    * Returns the associated store logo.
@@ -6641,6 +6644,7 @@ export type UserStoreConnector = {
 export type UserStoreNode = {
   __typename: 'UserStoreNode';
   code: Scalars['String']['output'];
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];

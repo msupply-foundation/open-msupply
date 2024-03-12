@@ -12,6 +12,7 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  RewindIcon,
   Tooltip,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
@@ -44,6 +45,7 @@ export const Toolbar: FC = () => {
   const { data: shipment } = useInbound.document.get();
 
   const onDelete = useInbound.lines.deleteSelected();
+  const onZeroQuantities = useInbound.lines.zeroQuantities();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
     'theirReference',
@@ -51,7 +53,6 @@ export const Toolbar: FC = () => {
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
   const isTransfer = !!shipment?.linkedShipment?.id;
-
   if (!data) return null;
 
   return (
@@ -118,6 +119,12 @@ export const Toolbar: FC = () => {
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
+              <DropdownMenuItem
+                IconComponent={RewindIcon}
+                onClick={onZeroQuantities}
+              >
+                {t('button.zero-line-quantity')}
+              </DropdownMenuItem>
           </DropdownMenu>
         </Grid>
       </Grid>
