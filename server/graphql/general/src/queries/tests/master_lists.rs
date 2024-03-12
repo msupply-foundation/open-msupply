@@ -3,11 +3,11 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        mock::{mock_master_list_master_list_line_filter_test, MockDataInserts},
-        MasterList, MasterListFilter, MasterListSort, StorageConnectionManager,
+        mock::MockDataInserts, MasterList, MasterListFilter, MasterListSort,
+        StorageConnectionManager,
     };
     use repository::{EqualFilter, PaginationOption, StringFilter};
-    use serde_json::{json, Value};
+    use serde_json::json;
 
     use service::{
         master_list::MasterListServiceTrait,
