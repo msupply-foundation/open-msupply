@@ -1567,11 +1567,14 @@ export type InboundReturnInput = {
 };
 
 export type InboundReturnLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
+  packSize: Scalars['Int']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
-  stockLineId: Scalars['String']['input'];
 };
 
 export type InitialisationStatusNode = {

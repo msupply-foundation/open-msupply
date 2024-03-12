@@ -43,11 +43,22 @@ export const useDraftInboundReturnLines = (
 
   const saveInboundReturn = async () => {
     const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
-      ({ id, reasonId, numberOfPacksReturned, note }) => {
+      ({
+        id,
+        reasonId,
+        itemId,
+        numberOfPacksReturned,
+        note,
+        packSize,
+        batch,
+        expiryDate,
+      }) => {
         return {
           id,
-          stockLineId:
-            'TODO: this field is removed in another PR, lets just keep the compiler happy for now 😅',
+          packSize,
+          batch,
+          expiryDate,
+          itemId,
           reasonId,
           note,
           numberOfPacksReturned,
