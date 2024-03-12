@@ -233,6 +233,7 @@
   "label.from-created-datetime": "From created date / time",
   "label.from-datetime": "From date / time",
   "label.from-start-datetime": "From start date / time",
+  "label.functional-status": "Functional status",
   "label.gender": "Gender",
   "label.generate": "Generate",
   "label.group-by-item": "Group by Item",

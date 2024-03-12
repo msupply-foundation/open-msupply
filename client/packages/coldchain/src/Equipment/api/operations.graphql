@@ -9,6 +9,7 @@ fragment Asset on AssetNode {
   notes
   replacementDate
   serialNumber
+  status
   storeId
   catalogueItem {
     manufacturer
