@@ -1,6 +1,6 @@
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowType,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     RepositoryError, StockLine, StockLineFilter, StockLineRepository,
 };
 use util::uuid::uuid;
@@ -24,32 +24,52 @@ pub struct GenerateOutboundReturnLinesInput {
 pub fn generate_outbound_return_lines(
     ctx: &ServiceContext,
     store_id: &str,
-    input: GenerateOutboundReturnLinesInput,
+    GenerateOutboundReturnLinesInput {
+        stock_line_ids,
+        item_id,
+        return_id,
+    }: GenerateOutboundReturnLinesInput,
 ) -> Result<ListResult<OutboundReturnLine>, ListError> {
-    // If a return_id is provided, get all existing lines for the provided stock_line_ids/item_id
-    let existing_return_lines = get_existing_return_lines(ctx, store_id, input.clone())?;
+    // If a return_id is provided, get all existing lines for the provided stock_line_ids and item_id
+    let existing_return_lines =
+        get_existing_return_lines(ctx, return_id, &stock_line_ids, &item_id)?;
+
+    // Add stock line ids from existing_return_lines
+    let stock_line_ids = stock_line_ids
+        .into_iter()
+        .chain(
+            existing_return_lines
+                .iter()
+                // get_existing_return_lines will throw an erro if stock_line_id does not exist on invoice_line
+                .filter_map(|l| l.invoice_line_row.stock_line_id.clone()),
+        )
+        .collect();
 
     // Get stock lines for any stock_line_ids passed in, regardless of whether that stock line is currently available
-    let from_stock_line_ids = stock_lines_from_stock_line_ids(ctx, store_id, input.stock_line_ids)?;
+    let from_stock_line_ids = stock_lines_from_stock_line_ids(ctx, store_id, &stock_line_ids)?;
 
-    // If an item id is provided, get each stock line where stock is available
-    let from_item_id = stock_lines_for_item_id(ctx, store_id, &input.item_id)?;
+    // If an item id is provided, get each stock line where stock is available (will also exclude stock_line_ids)
+    let from_item_id = stock_lines_for_item_id(ctx, store_id, &item_id, stock_line_ids)?;
 
-    let new_return_lines = vec![from_stock_line_ids, from_item_id]
+    // At this point should have all stock lines, from input and from existing return_lines, iterate over them create
+    // iterator with this shape (Option<OutboundInvoiceLine>, StockLine), so they can be mapped with outbound_line_from_stock_line_and_invoice_line
+    let all_stock_lines = from_stock_line_ids
         .into_iter()
-        .flatten()
-        // filter out any stock lines for which we already have a return line (existing are joined below)
-        .filter(|new_line| {
-            !existing_return_lines.iter().any(|existing_line| {
-                new_line.stock_line_row.id == existing_line.stock_line.stock_line_row.id
-            })
-        })
-        .map(stock_line_to_new_return_line)
-        .collect::<Vec<OutboundReturnLine>>();
+        .chain(from_item_id.into_iter());
+    let match_stock_line_to_invoice_line = |sl: &StockLine, il: &InvoiceLine| -> bool {
+        il.invoice_line_row.stock_line_id.as_ref() == Some(&sl.stock_line_row.id)
+    };
+    let stock_line_and_outbound_line = all_stock_lines.map(|stock_line| {
+        let invoice_line = existing_return_lines
+            .iter()
+            .find(|invoice_line| match_stock_line_to_invoice_line(&stock_line, invoice_line));
+        (invoice_line.map(Clone::clone), stock_line)
+    });
 
-    // return existing lines first, then new lines
-    let mut return_lines = existing_return_lines;
-    return_lines.extend(new_return_lines);
+    // Map iterator over (Option<OutboundInvoiceLine>, StockLine) to Vec<OutboundReturnLine>
+    let return_lines: Vec<OutboundReturnLine> = stock_line_and_outbound_line
+        .map(outbound_line_from_stock_line_and_invoice_line)
+        .collect();
 
     Ok(ListResult {
         count: return_lines.len() as u32,
@@ -60,11 +80,11 @@ pub fn generate_outbound_return_lines(
 fn stock_lines_from_stock_line_ids(
     ctx: &ServiceContext,
     store_id: &str,
-    stock_line_ids: Vec<String>,
+    stock_line_ids: &Vec<String>,
 ) -> Result<Vec<StockLine>, RepositoryError> {
     let stock_line_repo = StockLineRepository::new(&ctx.connection);
 
-    let filter = StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids));
+    let filter = StockLineFilter::new().id(EqualFilter::equal_any(stock_line_ids.clone()));
 
     let stock_lines = stock_line_repo.query_by_filter(filter, Some(store_id.to_string()));
 
@@ -75,6 +95,7 @@ fn stock_lines_for_item_id(
     ctx: &ServiceContext,
     store_id: &str,
     item_id: &Option<String>,
+    stock_line_ids_to_exclude: Vec<String>,
 ) -> Result<Vec<StockLine>, RepositoryError> {
     let stock_line_repo = StockLineRepository::new(&ctx.connection);
 
@@ -82,9 +103,11 @@ fn stock_lines_for_item_id(
         Some(item_id) => {
             let filter = StockLineFilter::new()
                 .item_id(EqualFilter::equal_to(item_id))
+                .id(EqualFilter::not_equal_all(stock_line_ids_to_exclude))
+                .store_id(EqualFilter::equal_to(store_id))
                 .is_available(true);
 
-            let stock_lines = stock_line_repo.query_by_filter(filter, Some(store_id.to_string()));
+            let stock_lines = stock_line_repo.query_by_filter(filter, None);
 
             stock_lines
         }
@@ -94,89 +117,77 @@ fn stock_lines_for_item_id(
 
 fn get_existing_return_lines(
     ctx: &ServiceContext,
-    store_id: &str,
-    GenerateOutboundReturnLinesInput {
-        return_id,
-        stock_line_ids,
-        item_id,
-    }: GenerateOutboundReturnLinesInput,
-) -> Result<Vec<OutboundReturnLine>, RepositoryError> {
-    match return_id {
-        Some(return_id) => {
-            let base_filter = InvoiceLineFilter::new()
-                .invoice_id(EqualFilter::equal_to(&return_id))
-                .invoice_type(InvoiceRowType::OutboundReturn.equal_to());
+    return_id: Option<String>,
+    stock_line_ids: &Vec<String>,
+    item_id: &Option<String>,
+) -> Result<Vec<InvoiceLine>, RepositoryError> {
+    let Some(return_id) = return_id else {
+        return Ok(vec![]);
+    };
+    let base_filter = InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(&return_id));
+    let repo = InvoiceLineRepository::new(&ctx.connection);
 
-            let existing_lines_from_stock_line_ids = InvoiceLineRepository::new(&ctx.connection)
-                .query_by_filter(
-                    base_filter
-                        .clone()
-                        .stock_line_id(EqualFilter::equal_any(stock_line_ids)),
-                )?;
+    let lines_by_stock_line = repo.query_by_filter(
+        base_filter
+            .clone()
+            .stock_line_id(EqualFilter::equal_any(stock_line_ids.clone())),
+    )?;
 
-            let existing_lines_for_item_id = if let Some(item_id) = item_id {
-                InvoiceLineRepository::new(&ctx.connection)
-                    .query_by_filter(base_filter.item_id(EqualFilter::equal_to(&item_id)))?
-            } else {
-                vec![]
-            };
+    // We can't just filter by stock lines alone, since not available stock lines for item will not be included
+    // but they could already exist in current invoice
+    let Some(item_id) = item_id else {
+        return Ok(lines_by_stock_line);
+    };
 
-            let existing_return_lines = vec![
-                existing_lines_from_stock_line_ids,
-                existing_lines_for_item_id,
-            ]
-            .into_iter()
-            .flatten()
-            .map(|line| invoice_line_to_return_line(ctx, store_id, &line))
-            .collect::<Result<Vec<OutboundReturnLine>, RepositoryError>>();
+    let lines_by_item_id =
+        repo.query_by_filter(base_filter.clone().item_id(EqualFilter::equal_to(item_id)))?;
 
-            existing_return_lines
-        }
-        None => Ok(vec![]),
-    }
-}
+    let all_lines = lines_by_stock_line
+        .into_iter()
+        .chain(lines_by_item_id.into_iter());
 
-fn stock_line_to_new_return_line(stock_line: StockLine) -> OutboundReturnLine {
-    OutboundReturnLine {
-        id: uuid(),
-        stock_line,
-        reason_id: None,
-        note: None,
-        number_of_packs: 0.0,
-    }
-}
-
-fn invoice_line_to_return_line(
-    ctx: &ServiceContext,
-    store_id: &str,
-    line: &InvoiceLine,
-) -> Result<OutboundReturnLine, RepositoryError> {
-    let stock_line_id =
-        line.invoice_line_row
-            .stock_line_id
-            .as_ref()
-            .ok_or(RepositoryError::as_db_error(
+    // Do sanity check to ensure all invoice lines have stock_line_id
+    let result = all_lines
+        .map(|l| match &l.invoice_line_row.stock_line_id {
+            Some(_) => Ok(l),
+            None => Err(RepositoryError::as_db_error(
                 "Invoice line has no stock line ID",
                 "",
-            ))?;
+            )),
+        })
+        .collect::<Result<_, _>>()?;
 
-    let stock_line = StockLineRepository::new(&ctx.connection)
-        .query_by_filter(
-            StockLineFilter::new().id(EqualFilter::equal_to(stock_line_id)),
-            Some(store_id.to_string()),
-        )?
-        .pop()
-        .ok_or(RepositoryError::as_db_error("Stock line not found", ""))?;
-
-    Ok(OutboundReturnLine {
-        id: line.invoice_line_row.id.clone(),
-        reason_id: line.invoice_line_row.return_reason_id.clone(),
-        note: line.invoice_line_row.note.clone(),
-        number_of_packs: line.invoice_line_row.number_of_packs,
-        stock_line,
-    })
+    Ok(result)
 }
 
+fn outbound_line_from_stock_line_and_invoice_line(
+    (invoice_line, stock_line): (Option<InvoiceLine>, StockLine),
+) -> OutboundReturnLine {
+    let Some(invoice_line) = invoice_line else {
+        return OutboundReturnLine {
+            id: uuid(),
+            reason_id: None,
+            note: None,
+            number_of_packs: 0.0,
+            stock_line,
+        };
+    };
+
+    let InvoiceLineRow {
+        return_reason_id,
+        note,
+        number_of_packs,
+        ..
+    } = invoice_line.invoice_line_row;
+
+    return OutboundReturnLine {
+        id: uuid(),
+        note,
+        number_of_packs,
+        reason_id: return_reason_id,
+        stock_line,
+    };
+}
 #[cfg(test)]
 mod test {
     use crate::{service_provider::ServiceProvider, ListError};
@@ -437,13 +448,19 @@ mod test {
         // the stock line that is already in the return should be included, even though it
         // has no available packs
         // it should also have the correct number of packs/note/return_reason_id mapped
-        // it should be the first line in the result
-        let existing_line = &result.rows[0];
-        assert!(
-            existing_line.stock_line.stock_line_row.id == unavailable_stock_line().id
-                && existing_line.number_of_packs == 1.0
-                && existing_line.note == item_a_return_line().note
+        // println!("{:#?}", result);
+        let existing_line = result
+            .rows
+            .iter()
+            .find(|l| l.stock_line.stock_line_row.id == unavailable_stock_line().id);
+        assert!(matches!(existing_line, Some(_)));
+        let existing_line = existing_line.unwrap();
+        assert_eq!(
+            existing_line.stock_line.stock_line_row.id,
+            unavailable_stock_line().id
         );
+        assert_eq!(existing_line.number_of_packs, 1.0);
+        assert_eq!(existing_line.note, item_a_return_line().note);
 
         assert!(result.rows.iter().all(|line| {
             // except for the line that is already in the return
