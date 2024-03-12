@@ -27,9 +27,11 @@ export const useRequestLines = () => {
     if (on) {
       return sorted.filter(
         item =>
-          item.itemStats.availableStockOnHand <
+          (item.itemStats.availableStockOnHand === 0 &&
+            item.itemStats.averageMonthlyConsumption === 0) ||
+          (item.itemStats.availableStockOnHand <
             item.itemStats.averageMonthlyConsumption * threshold &&
-          matchItem(itemFilter, item.item)
+            matchItem(itemFilter, item.item))
       );
     } else {
       return sorted.filter(item => matchItem(itemFilter, item.item));
