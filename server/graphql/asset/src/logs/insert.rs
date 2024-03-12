@@ -1,4 +1,4 @@
-use crate::types::{ReasonInput, StatusInput};
+use crate::types::{AssetLogReasonInput, AssetLogStatusInput};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -48,8 +48,8 @@ pub fn insert_asset_log(
 pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<StatusInput>,
-    pub reason: Option<ReasonInput>,
+    pub status: Option<AssetLogStatusInput>,
+    pub reason: Option<AssetLogReasonInput>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
 }
@@ -119,7 +119,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        asset_log_row::Status, assets::asset_log::AssetLog, mock::MockDataInserts,
+        asset_log_row::AssetLogStatus, assets::asset_log::AssetLog, mock::MockDataInserts,
         StorageConnectionManager,
     };
     use serde_json::json;
@@ -183,7 +183,7 @@ mod test {
             "input": {
                 "id": "n/a",
                 "assetId": "asset_a",
-                "status": Status::Functioning,
+                "status": AssetLogStatus::Functioning,
             }
         }));
 
@@ -192,7 +192,7 @@ mod test {
             Ok(AssetLog {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
-                status: Some(Status::Functioning),
+                status: Some(AssetLogStatus::Functioning),
                 ..Default::default()
             })
         }));
@@ -201,7 +201,7 @@ mod test {
             "insertAssetLog": {
                 "id": "id",
                 "assetId": "asset_a",
-                "status": Status::Functioning,
+                "status": AssetLogStatus::Functioning,
             }
         });
         assert_graphql_query!(
