@@ -1,6 +1,5 @@
 use chrono::Utc;
 
-use repository::LocationMovementRow;
 use repository::{
     InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
     StorageConnection,
@@ -17,12 +16,10 @@ pub struct LineAndStockLine {
 pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<LineAndStockLine>>,
     pub(crate) updated_return: InvoiceRow,
-    pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
 }
 
 pub(crate) fn generate(
     connection: &StorageConnection,
-    store_id: &str,
     user_id: &str,
     existing_return: InvoiceRow,
     patch: UpdateInboundReturn,
@@ -30,9 +27,9 @@ pub(crate) fn generate(
     let mut updated_return = existing_return.clone();
 
     updated_return.user_id = Some(user_id.to_string());
-    // update_invoice.comment = patch.comment.or(update_invoice.comment);
-    // update_invoice.on_hold = patch.on_hold.unwrap_or(update_invoice.on_hold);
-    // update_invoice.colour = patch.colour.or(update_invoice.colour);
+    updated_return.comment = patch.comment.clone().or(updated_return.comment);
+    updated_return.on_hold = patch.on_hold.unwrap_or(updated_return.on_hold);
+    updated_return.colour = patch.colour.clone().or(updated_return.colour);
 
     set_new_status_datetime(&mut updated_return, &patch);
 
@@ -53,24 +50,9 @@ pub(crate) fn generate(
         None
     };
 
-    let location_movements = if let Some(batches) = &batches_to_update {
-        let generate_movement = batches
-            .iter()
-            .filter_map(|batch| match batch.line.location_id {
-                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
-                None => None,
-            })
-            .collect();
-
-        Some(generate_movement)
-    } else {
-        None
-    };
-
     Ok(GenerateResult {
         batches_to_update,
         updated_return,
-        location_movements,
     })
 }
 
@@ -209,18 +191,4 @@ pub fn generate_lines_and_stock_lines(
         }
     }
     Ok(result)
-}
-
-pub fn generate_location_movements(
-    store_id: String,
-    batch: &LineAndStockLine,
-) -> LocationMovementRow {
-    LocationMovementRow {
-        id: uuid(),
-        store_id,
-        stock_line_id: batch.stock_line.id.clone(),
-        location_id: batch.line.location_id.clone(),
-        enter_datetime: Some(Utc::now().naive_utc()),
-        exit_datetime: None,
-    }
 }
