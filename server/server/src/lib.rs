@@ -304,9 +304,8 @@ pub async fn start_server(
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
             .configure(config_sync_on_central)
-            .wrap(central_server_only())
             .configure(config_support)
-            // Needs to be last to capture all unmatches routes
+            // Needs to be last to capture all unmatched routes
             .configure(config_serve_frontend)
     })
     .disable_signals();

@@ -96,6 +96,7 @@ fn get_date_fields() -> Vec<TableAndFieldName> {
         ("stocktake_line", "expiry_date"),
         ("period", "start_date"),
         ("period", "end_date"),
+        ("store", "created_date"),
         ("currency", "date_updated"),
     ]
     .iter()
@@ -527,16 +528,58 @@ mod tests {
                         }
                     )
                 ],
-                dates: vec![(
-                    IdAndDate {
-                        id: "stock_line1".to_string(),
-                        d: NaiveDate::from_ymd_opt(2023, 02, 11).unwrap()
-                    },
-                    TableAndFieldName {
-                        table_name: "stock_line",
-                        field_name: "expiry_date"
-                    }
-                )]
+                dates: vec![
+                    (
+                        IdAndDate {
+                            id: "program_master_list_store".to_string(),
+                            d: NaiveDate::from_ymd_opt(2020, 01, 11).unwrap()
+                        },
+                        TableAndFieldName {
+                            table_name: "store",
+                            field_name: "created_date"
+                        },
+                    ),
+                    (
+                        IdAndDate {
+                            id: "store_a".to_string(),
+                            d: NaiveDate::from_ymd_opt(2020, 01, 11).unwrap()
+                        },
+                        TableAndFieldName {
+                            table_name: "store",
+                            field_name: "created_date"
+                        },
+                    ),
+                    (
+                        IdAndDate {
+                            id: "store_b".to_string(),
+                            d: NaiveDate::from_ymd_opt(2020, 01, 11).unwrap()
+                        },
+                        TableAndFieldName {
+                            table_name: "store",
+                            field_name: "created_date"
+                        },
+                    ),
+                    (
+                        IdAndDate {
+                            id: "store_c".to_string(),
+                            d: NaiveDate::from_ymd_opt(2020, 01, 11).unwrap()
+                        },
+                        TableAndFieldName {
+                            table_name: "store",
+                            field_name: "created_date"
+                        },
+                    ),
+                    (
+                        IdAndDate {
+                            id: "stock_line1".to_string(),
+                            d: NaiveDate::from_ymd_opt(2023, 02, 11).unwrap()
+                        },
+                        TableAndFieldName {
+                            table_name: "stock_line",
+                            field_name: "expiry_date"
+                        }
+                    )
+                ]
             }
         );
 

@@ -89,6 +89,7 @@ export enum ActivityLogNodeType {
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
+  QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
@@ -2207,7 +2208,7 @@ export type InvoiceNode = {
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
-  currencyRate?: Maybe<Scalars['Float']['output']>;
+  currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];
@@ -2552,6 +2553,12 @@ export type MasterListLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type MasterListLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type MasterListLineNode = {
   __typename: 'MasterListLineNode';
   id: Scalars['String']['output'];
@@ -2559,12 +2566,29 @@ export type MasterListLineNode = {
   itemId: Scalars['String']['output'];
 };
 
+export enum MasterListLineSortFieldInput {
+  Code = 'code',
+  Name = 'name'
+}
+
+export type MasterListLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: MasterListLineSortFieldInput;
+};
+
+export type MasterListLinesResponse = MasterListLineConnector;
+
 export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  lines: MasterListLineConnector;
+  linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
 };
 
@@ -3877,6 +3901,7 @@ export type Queries = {
   logFileNames: LogNode;
   logLevel: LogLevelNode;
   logout: LogoutResponse;
+  masterListLines: MasterListLinesResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
@@ -4125,6 +4150,15 @@ export type QueriesLocationsArgs = {
 
 export type QueriesLogContentsArgs = {
   fileName?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueriesMasterListLinesArgs = {
+  filter?: InputMaybe<MasterListLineFilterInput>;
+  masterListId: Scalars['String']['input'];
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<MasterListLineSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -4563,6 +4597,7 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Int']['output'];
   comment?: Maybe<Scalars['String']['output']>;
@@ -5073,6 +5108,7 @@ export enum StoreModeNodeType {
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String']['output'];
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   /**
    * Returns the associated store logo.
@@ -6114,6 +6150,7 @@ export type UserStoreConnector = {
 export type UserStoreNode = {
   __typename: 'UserStoreNode';
   code: Scalars['String']['output'];
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];

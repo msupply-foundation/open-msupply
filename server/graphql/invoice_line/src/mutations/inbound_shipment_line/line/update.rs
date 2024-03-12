@@ -157,7 +157,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
+        ServiceError::NumberOfPacksBelowZero => BadUserInput(formatted_error),
         ServiceError::NotThisInvoiceLine(_) => BadUserInput(formatted_error),
         ServiceError::PackSizeBelowOne => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
@@ -360,7 +360,7 @@ mod test {
         );
 
         //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
