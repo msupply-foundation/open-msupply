@@ -105,7 +105,12 @@ impl SyncApiV6 {
         })
     }
 
-    pub async fn pull(&self, cursor: u64, batch_size: u32) -> Result<SyncBatchV6, SyncApiErrorV6> {
+    pub async fn pull(
+        &self,
+        cursor: u64,
+        batch_size: u32,
+        is_initialised: bool,
+    ) -> Result<SyncBatchV6, SyncApiErrorV6> {
         let Self {
             sync_v5_settings,
             url,
@@ -118,6 +123,7 @@ impl SyncApiV6 {
             cursor,
             batch_size,
             sync_v5_settings: sync_v5_settings.clone(),
+            is_initialised,
         };
 
         let result = Client::new().post(url.clone()).json(&request).send().await;

@@ -131,6 +131,7 @@ pub struct SyncPullRequestV6 {
     pub(crate) cursor: u64,
     pub(crate) batch_size: u32,
     pub(crate) sync_v5_settings: SyncApiSettings,
+    pub(crate) is_initialised: bool,
 }
 
 #[derive(Serialize, Deserialize)]
