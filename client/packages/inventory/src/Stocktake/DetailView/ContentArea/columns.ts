@@ -21,9 +21,7 @@ import { useStocktakeLineErrorContext } from '../../context';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
-  onChangeSortBy: (
-    column: Column<StocktakeLineFragment | StocktakeSummaryItem>
-  ) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
 const expandColumn = getRowExpandColumn<
