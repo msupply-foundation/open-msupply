@@ -728,7 +728,7 @@ export type DeleteInboundReturnInput = {
   ids: Array<Scalars['String']['input']>;
 };
 
-export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeletedIdsResponse;
+export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -817,11 +817,7 @@ export type DeleteOutboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteOutboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeletedIdsResponse;
+export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeleteResponse;
 
 export type DeleteOutboundShipmentError = {
   __typename: 'DeleteOutboundShipmentError';
@@ -1030,11 +1026,6 @@ export type DeleteStocktakeResponseWithId = {
   __typename: 'DeleteStocktakeResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteStocktakeResponse;
-};
-
-export type DeletedIdsResponse = {
-  __typename: 'DeletedIdsResponse';
-  deletedIds: Array<Scalars['String']['output']>;
 };
 
 export type DisplaySettingNode = {
@@ -2779,7 +2770,7 @@ export type Mutations = {
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteLocation: DeleteLocationResponse;
-  deleteOutboundReturns: DeleteOutboundReturnResponse;
+  deleteOutboundReturn: DeleteOutboundReturnResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
@@ -2972,8 +2963,8 @@ export type MutationsDeleteLocationArgs = {
 };
 
 
-export type MutationsDeleteOutboundReturnsArgs = {
-  input: DeleteOutboundReturnInput;
+export type MutationsDeleteOutboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
