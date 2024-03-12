@@ -1,9 +1,12 @@
 use super::super::user_row::user_account::dsl as user_account_dsl;
-use super::asset_log_row::{asset_log, asset_log::dsl as asset_log_dsl, AssetLogRow};
+use super::asset_log_row::{
+    asset_log, asset_log::dsl as asset_log_dsl, latest_asset_log::dsl as latest_asset_log_dsl,
+    AssetLogRow,
+};
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-use crate::asset_log_row::Status;
+use crate::asset_log_row::{latest_asset_log, Status};
 use crate::{
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
@@ -123,6 +126,24 @@ impl<'a> AssetLogRepository<'a> {
 
         Ok(result.into_iter().map(to_domain).collect())
     }
+
+    pub fn query_latest(
+        &self,
+        filter: Option<AssetLogFilter>,
+    ) -> Result<Vec<AssetLog>, RepositoryError> {
+        let mut query = create_latest_filtered_query(filter);
+        query = query.order(latest_asset_log_dsl::log_datetime.desc());
+
+        // Debug diesel query
+        // println!(
+        //    "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
+
+        let result = query.load::<AssetLog>(&self.connection.connection)?;
+
+        Ok(result.into_iter().map(to_domain).collect())
+    }
 }
 
 fn to_domain(asset_log_row: AssetLogRow) -> AssetLog {
@@ -156,6 +177,18 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             apply_string_filter!(sub_query, Some(user), user_account_dsl::username);
             query = query.filter(asset_log_dsl::user_id.eq_any(sub_query));
         }
+    }
+    query
+}
+
+type BoxedLatestAssetLogQuery = IntoBoxed<'static, latest_asset_log::table, DBType>;
+
+fn create_latest_filtered_query<'a>(filter: Option<AssetLogFilter>) -> BoxedLatestAssetLogQuery {
+    let mut query = latest_asset_log_dsl::latest_asset_log.into_boxed();
+
+    if let Some(f) = filter {
+        let AssetLogFilter { id, .. } = f;
+        apply_equal_filter!(query, id, latest_asset_log_dsl::id);
     }
     query
 }
