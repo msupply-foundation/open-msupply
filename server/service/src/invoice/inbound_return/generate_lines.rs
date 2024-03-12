@@ -1,11 +1,12 @@
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use chrono::NaiveDate;
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceRowType, ItemRow,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
+    InvoiceRowType, ItemRow,
 };
 use util::uuid::uuid;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct InboundReturnLine {
     pub id: String,
     pub reason_id: Option<String>,
@@ -73,28 +74,42 @@ fn get_existing_return_lines(
 
     let existing_return_lines = existing_invoice_lines
         .into_iter()
-        .map(invoice_line_to_return_line)
+        .map(InboundReturnLine::from_return_invoice_line)
         .collect::<Vec<InboundReturnLine>>();
 
     Ok(existing_return_lines)
 }
 
-fn invoice_line_to_return_line(line: InvoiceLine) -> InboundReturnLine {
-    InboundReturnLine {
-        id: line.invoice_line_row.id,
-        reason_id: line.invoice_line_row.return_reason_id,
-        note: line.invoice_line_row.note,
-        number_of_packs: line.invoice_line_row.number_of_packs,
-        // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
-        // to store a linked invoice line of the outbound shipment against the inbound return line
-        packs_issued: None,
+impl InboundReturnLine {
+    fn extend_from_invoice_line(self, line: InvoiceLine) -> Self {
+        let InvoiceLineRow {
+            pack_size,
+            expiry_date,
+            batch,
+            ..
+        } = line.invoice_line_row;
+        Self {
+            item_row: line.item_row,
+            batch,
+            pack_size,
+            expiry_date,
+            ..self
+        }
+    }
 
-        item_row: line.item_row,
-
-        stock_line_id: line.invoice_line_row.stock_line_id,
-        batch: line.invoice_line_row.batch,
-        pack_size: line.invoice_line_row.pack_size,
-        expiry_date: line.invoice_line_row.expiry_date,
+    fn from_return_invoice_line(line: InvoiceLine) -> Self {
+        Self {
+            id: line.invoice_line_row.id.clone(),
+            reason_id: line.invoice_line_row.return_reason_id.clone(),
+            note: line.invoice_line_row.note.clone(),
+            number_of_packs: line.invoice_line_row.number_of_packs.clone(),
+            stock_line_id: line.invoice_line_row.stock_line_id.clone(),
+            // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
+            // to store a linked invoice line of the outbound shipment against the inbound return line
+            packs_issued: None,
+            ..Default::default()
+        }
+        .extend_from_invoice_line(line)
     }
 }
 
@@ -109,17 +124,13 @@ fn generate_new_return_lines(
 
     let new_return_lines: Vec<InboundReturnLine> = outbound_shipment_lines
         .into_iter()
-        .map(|invoice_line| InboundReturnLine {
-            id: uuid(),
-            item_row: invoice_line.item_row,
-            packs_issued: Some(invoice_line.invoice_line_row.number_of_packs),
-            reason_id: None,
-            note: None,
-            number_of_packs: 0.0,
-            batch: None,
-            pack_size: 1,
-            stock_line_id: None,
-            expiry_date: None,
+        .map(|invoice_line| {
+            InboundReturnLine {
+                id: uuid(),
+                packs_issued: Some(invoice_line.invoice_line_row.number_of_packs),
+                ..Default::default()
+            }
+            .extend_from_invoice_line(invoice_line)
         })
         .collect();
 
