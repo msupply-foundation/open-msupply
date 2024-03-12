@@ -28,7 +28,7 @@ export const PackVariantCell =
     const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
 
     const displayValue =
-      packSizes.length > 1 ? '[muiltiple]' : asPackVariant(packSizes[0] ?? 1);
+      packSizes.length > 1 ? '[multiple]' : asPackVariant(packSizes[0] ?? 1);
 
     // Must have only one packSize
     return <BasicCellLayout isError={isError}>{displayValue}</BasicCellLayout>;

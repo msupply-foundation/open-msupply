@@ -1,6 +1,6 @@
 use self::special::name_to_name_store_join;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 pub(crate) mod activity_log;
 pub(crate) mod asset;
@@ -42,7 +42,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user_permission;
 
-pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
@@ -72,7 +72,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncPullReco
     test_records
 }
 
-pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut location::test_pull_upsert_records());
     test_records.append(&mut sensor::test_pull_upsert_records());
@@ -95,7 +95,7 @@ pub(crate) fn get_all_pull_upsert_remote_test_records() -> Vec<TestSyncPullRecor
     test_records
 }
 
-pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut user_permission::test_pull_delete_records());
     test_records.append(&mut unit::test_pull_delete_records());
@@ -109,7 +109,7 @@ pub(crate) fn get_all_pull_delete_central_test_records() -> Vec<TestSyncPullReco
     test_records
 }
 
-pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut requisition::test_pull_delete_records());
     test_records.append(&mut requisition_line::test_pull_delete_records());
@@ -120,7 +120,7 @@ pub(crate) fn get_all_pull_delete_remote_test_records() -> Vec<TestSyncPullRecor
     test_records
 }
 
-pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut name::test_push_records());
     test_records.append(&mut location::test_push_records());
@@ -143,7 +143,7 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncPushRecord> {
     test_records
 }
 
-pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
     test_records.append(&mut pack_variant::test_v6_central_push_records());
     test_records.append(&mut asset_class::test_v6_central_push_records());

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
@@ -30,7 +30,7 @@ export const getLocale = (language: SupportedLocales) => {
   }
 };
 
-export const useIntl = () => React.useContext(IntlContext);
+export const useIntl = () => useContext(IntlContext);
 
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
@@ -61,7 +61,7 @@ type StringOrEmpty = string | null | undefined;
 export const useIntlUtils = () => {
   const { i18n } = useIntl();
   const { language: i18nLanguage } = i18n;
-  const [language, setLanguage] = React.useState<string>(i18nLanguage);
+  const [language, setLanguage] = useState<string>(i18nLanguage);
 
   const changeLanguage = useCallback(
     (languageCode?: string) => {

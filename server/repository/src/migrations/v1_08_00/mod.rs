@@ -5,6 +5,7 @@ use crate::StorageConnection;
 mod add_source_site_id;
 mod assets;
 mod central_omsupply;
+mod pack_variant;
 
 pub(crate) struct V1_08_00;
 
@@ -17,6 +18,8 @@ impl Migration for V1_08_00 {
         add_source_site_id::migrate(connection)?;
         central_omsupply::migrate(connection)?;
         assets::migrate_assets(connection)?;
+        pack_variant::migrate(connection)?;
+        central_omsupply::migrate(connection)?;
         Ok(())
     }
 }
