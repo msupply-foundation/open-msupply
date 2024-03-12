@@ -6,9 +6,7 @@ export const useGenerateInboundReturnLines = (
 ) => {
   const api = useReturnsApi();
 
-  const { data } = useQuery(api.keys.generatedInboundLines(), () =>
+  return useQuery(api.keys.generatedInboundLines(), () =>
     api.get.inboundReturnLines(outboundShipmentLineIds)
   );
-
-  return data;
 };
