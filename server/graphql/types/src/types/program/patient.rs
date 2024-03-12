@@ -44,7 +44,6 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
-    pub name_or_code: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
     pub program_enrolment_name: Option<StringFilterInput>,
 }
@@ -66,7 +65,6 @@ impl From<PatientFilterInput> for PatientFilter {
             country: f.country.map(StringFilter::from),
             email: f.email.map(StringFilter::from),
             identifier: f.identifier.map(StringFilter::from),
-            name_or_code: f.name_or_code.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
             program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
         }

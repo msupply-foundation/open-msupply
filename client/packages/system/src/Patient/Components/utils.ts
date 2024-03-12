@@ -14,7 +14,7 @@ export const useSearchPatient = () => {
   };
   useEffect(() => {
     if (shouldSearch(debouncedSearchText))
-      mutate({ nameOrCode: debouncedSearchText });
+      mutate({ identifier: debouncedSearchText });
   }, [debouncedSearchText, mutate]);
 
   let patients: ProgramPatientRowFragment[] = [];
