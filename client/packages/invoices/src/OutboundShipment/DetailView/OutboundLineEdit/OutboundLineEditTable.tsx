@@ -22,6 +22,7 @@ export interface OutboundLineEditTableProps {
   allocatedQuantity: number;
   batch?: string;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
 }
 
 const PlaceholderCell = styled(TableCell)(({ theme }) => ({
@@ -87,6 +88,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   allocatedQuantity,
   batch,
   currency,
+  isExternalSupplier
 }) => {
   const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
@@ -111,6 +113,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     onChange: onEditStockLine,
     unit,
     currency,
+    isExternalSupplier
   });
 
   const additionalRows = [

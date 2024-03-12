@@ -3,6 +3,8 @@ import {
   FilterByWithBoolean,
   AssetSortFieldInput,
   InsertAssetInput,
+  UpdateAssetInput,
+  setNullableInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
@@ -14,17 +16,26 @@ export type ListParams<T> = {
   filterBy?: FilterByWithBoolean | null;
 };
 
-const itemParsers = {
+const assetParsers = {
   toSortField: (sortBy: SortBy<AssetFragment>) => {
     const fields: Record<string, AssetSortFieldInput> = {
-      name: AssetSortFieldInput.Name,
       installationDate: AssetSortFieldInput.InstallationDate,
       replacementData: AssetSortFieldInput.ReplacementDate,
       serialNumber: AssetSortFieldInput.SerialNumber,
     };
 
-    return fields[sortBy.key] ?? AssetSortFieldInput.Name;
+    return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
+  toUpdate: (input: AssetFragment): UpdateAssetInput => ({
+    id: input.id,
+    catalogueItemId: setNullableInput('catalogueItemId', input),
+    code: input.code,
+    installationDate: setNullableInput('installationDate', input),
+    notes: input.notes,
+    replacementDate: setNullableInput('replacementDate', input),
+    serialNumber: setNullableInput('serialNumber', input),
+    storeId: input.storeId,
+  }),
 };
 
 export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
@@ -52,7 +63,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       const result = await sdk.assets({
         first,
         offset,
-        key: itemParsers.toSortField(sortBy),
+        key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
         filter: { ...filterBy, classId: { equalTo: CCE_CLASS_ID } },
@@ -64,7 +75,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     },
     listAll: async ({ sortBy }: ListParams<AssetFragment>) => {
       const result = await sdk.assets({
-        key: itemParsers.toSortField(sortBy),
+        key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
         filter: { classId: { equalTo: CCE_CLASS_ID } },
@@ -87,6 +98,19 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not insert asset');
+  },
+  update: async (input: AssetFragment): Promise<string> => {
+    const result = await sdk.updateAsset({
+      input: assetParsers.toUpdate(input),
+      storeId,
+    });
+    const { updateAsset } = result;
+
+    if (updateAsset?.__typename === 'AssetNode') {
+      return updateAsset.id;
+    }
+
+    throw new Error('Could not update asset');
   },
   delete: async (assetId: string, storeId: string): Promise<string> => {
     const result = await sdk.deleteAsset({ assetId, storeId });

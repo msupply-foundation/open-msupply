@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
   FilterMenu,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
 import { mapIdNameToOptions, useAssetData } from '@openmsupply-client/system';
 import { CCE_CLASS_ID } from '../utils';
+import { useAssets } from '../api';
 
 type ReferenceData = {
   id: string;
@@ -26,6 +30,7 @@ export const Toolbar = () => {
   });
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
+  const onDelete = useAssets.document.deleteAssets();
 
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
@@ -54,6 +59,7 @@ export const Toolbar = () => {
         flex: 1,
         justifyContent: 'space-between',
         display: 'flex',
+        alignItems: 'flex-end',
       }}
     >
       <Box display="flex" gap={1}>
@@ -64,11 +70,20 @@ export const Toolbar = () => {
               name: t('label.category'),
               urlParameter: 'categoryId',
               options: mapIdNameToOptions(categories),
+              isDefault: true,
+            },
+            {
+              type: 'enum',
+              name: t('label.type'),
+              urlParameter: 'typeId',
+              options: mapIdNameToOptions(types),
+              isDefault: true,
             },
             {
               type: 'text',
               name: t('label.code'),
               urlParameter: 'code',
+              isDefault: true,
             },
             {
               name: t('label.installation-date'),
@@ -77,10 +92,9 @@ export const Toolbar = () => {
             },
             {
               type: 'text',
-              name: t('label.name'),
-              urlParameter: 'name',
-              placeholder: t('placeholder.search-by-name'),
-              isDefault: true,
+              name: t('label.notes'),
+              urlParameter: 'notes',
+              placeholder: t('placeholder.search-by-notes'),
             },
             {
               name: t('label.replacement-date'),
@@ -92,15 +106,14 @@ export const Toolbar = () => {
               name: t('label.serial'),
               urlParameter: 'serialNumber',
             },
-            {
-              type: 'enum',
-              name: t('label.type'),
-              urlParameter: 'typeId',
-              options: mapIdNameToOptions(types),
-            },
           ]}
         />
       </Box>
+      <DropdownMenu label={t('label.actions')}>
+        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+          {t('button.delete-lines')}
+        </DropdownMenuItem>
+      </DropdownMenu>
     </AppBarContentPortal>
   );
 };
