@@ -36,9 +36,6 @@ pub use self::temperature_notification::*;
 pub mod master_list;
 pub use self::master_list::*;
 
-pub mod master_list_line;
-pub use self::master_list_line::*;
-
 pub mod invoice_query;
 pub use self::invoice_query::*;
 
@@ -103,6 +100,9 @@ pub use self::program_node::*;
 
 pub mod outbound_return_line;
 pub use self::outbound_return_line::*;
+
+pub mod inbound_return_line;
+pub use self::inbound_return_line::*;
 
 pub mod return_reason;
 pub use self::return_reason::*;

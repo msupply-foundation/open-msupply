@@ -1,11 +1,13 @@
 import { useQuery } from '@openmsupply-client/common';
 import { useReturnsApi } from '../utils/useReturnsApi';
 
-export const useInboundReturnLines = (stockLineIds: string[]) => {
+export const useGenerateInboundReturnLines = (
+  outboundShipmentLineIds: string[]
+) => {
   const api = useReturnsApi();
 
   const { data } = useQuery(api.keys.generatedInboundLines(), () =>
-    api.get.inboundReturnLines(stockLineIds)
+    api.get.inboundReturnLines(outboundShipmentLineIds)
   );
 
   return data;

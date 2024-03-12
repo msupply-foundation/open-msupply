@@ -1410,6 +1410,11 @@ export type EqualFilterTypeInput = {
   notEqualTo?: InputMaybe<NameNodeType>;
 };
 
+export type ExistingLinesInput = {
+  itemId: Scalars['String']['input'];
+  returnId: Scalars['String']['input'];
+};
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
@@ -1507,9 +1512,13 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
-export type GenerateInboundReturnInput = {
-  stockLineIds: Array<Scalars['String']['input']>;
+export type GenerateInboundReturnLinesInput = {
+  existingLinesInput?: InputMaybe<ExistingLinesInput>;
+  /** The ids of the outbound shipment lines to generate new return lines for */
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
+
+export type GenerateInboundReturnLinesResponse = GeneratedInboundReturnLineConnector;
 
 /**
  * At least one input is required.
@@ -1523,6 +1532,28 @@ export type GenerateOutboundReturnLinesInput = {
 
 export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
 
+export type GeneratedInboundReturnLineConnector = {
+  __typename: 'GeneratedInboundReturnLineConnector';
+  nodes: Array<GeneratedInboundReturnLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type GeneratedInboundReturnLineNode = {
+  __typename: 'GeneratedInboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
+};
+
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
   created: InvoiceCountsSummary;
@@ -1533,21 +1564,6 @@ export type InboundReturnInput = {
   customerId: Scalars['String']['input'];
   id: Scalars['String']['input'];
   inboundReturnLines: Array<InboundReturnLineInput>;
-};
-
-export type InboundReturnLine = {
-  __typename: 'InboundReturnLine';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued: Scalars['Float']['output'];
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId: Scalars['String']['output'];
 };
 
 export type InboundReturnLineInput = {
@@ -2655,6 +2671,12 @@ export type MasterListLineConnector = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type MasterListLineFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  itemId?: InputMaybe<EqualFilterStringInput>;
+  masterListId?: InputMaybe<EqualFilterStringInput>;
+};
+
 export type MasterListLineNode = {
   __typename: 'MasterListLineNode';
   id: Scalars['String']['output'];
@@ -2662,12 +2684,29 @@ export type MasterListLineNode = {
   itemId: Scalars['String']['output'];
 };
 
+export enum MasterListLineSortFieldInput {
+  Code = 'code',
+  Name = 'name'
+}
+
+export type MasterListLineSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: MasterListLineSortFieldInput;
+};
+
+export type MasterListLinesResponse = MasterListLineConnector;
+
 export type MasterListNode = {
   __typename: 'MasterListNode';
   code: Scalars['String']['output'];
   description: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  lines: MasterListLineConnector;
+  linesCount?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
 };
 
@@ -4036,7 +4075,17 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
-  generateInboundReturnLines: Array<InboundReturnLine>;
+  /**
+   * Generates new inbound return lines in memory, based on outbound return line ids.
+   * Optionally includes existing inbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
+  generateInboundReturnLines: GenerateInboundReturnLinesResponse;
+  /**
+   * Generates new outbound return lines in memory, based on either stock line ids, or an item id.
+   * Optionally includes existing outbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -4059,6 +4108,7 @@ export type Queries = {
   logFileNames: LogNode;
   logLevel: LogLevelNode;
   logout: LogoutResponse;
+  masterListLines: MasterListLinesResponse;
   /** Query omSupply "master_lists" entries */
   masterLists: MasterListsResponse;
   me: UserResponse;
@@ -4235,7 +4285,7 @@ export type QueriesFormSchemasArgs = {
 
 
 export type QueriesGenerateInboundReturnLinesArgs = {
-  input: GenerateInboundReturnInput;
+  input: GenerateInboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4320,6 +4370,15 @@ export type QueriesLocationsArgs = {
 
 export type QueriesLogContentsArgs = {
   fileName?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type QueriesMasterListLinesArgs = {
+  filter?: InputMaybe<MasterListLineFilterInput>;
+  masterListId: Scalars['String']['input'];
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<MasterListLineSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
