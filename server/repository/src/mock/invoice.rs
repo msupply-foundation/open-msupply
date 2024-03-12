@@ -432,7 +432,7 @@ pub fn mock_outbound_return_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_return_a");
         r.name_link_id = String::from("name_store_a");
-        r.store_id = String::from("store_b");
+        r.store_id = String::from("store_a");
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundReturn;
         r.status = InvoiceRowStatus::Picked;
