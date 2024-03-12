@@ -26,6 +26,20 @@ fragment Asset on AssetNode {
   }
 }
 
+fragment AssetLog on AssetLogNode {
+  comment
+  id
+  logDatetime
+  reason
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+  }
+}
+
 query assets(
   $desc: Boolean
   $filter: AssetFilterInput!
@@ -58,6 +72,18 @@ query assetById($storeId: String!, $assetId: String!) {
         ...Asset
       }
       totalCount
+    }
+  }
+}
+
+query assetLogs($filter: AssetLogFilterInput!, $storeId: String!) {
+  assetLogs(filter: $filter, storeId: $storeId) {
+    ... on AssetLogConnector {
+      __typename
+      nodes {
+        __typename
+        ...AssetLog
+      }
     }
   }
 }
@@ -103,6 +129,21 @@ mutation updateAsset($input: UpdateAssetInput!, $storeId: String!) {
     ... on AssetNode {
       __typename
       id
+    }
+  }
+}
+
+mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
+  insertAssetLog(input: $input, storeId: $storeId) {
+    ... on AssetLogNode {
+      __typename
+      id
+    }
+    ... on InsertAssetLogError {
+      __typename
+      error {
+        description
+      }
     }
   }
 }
