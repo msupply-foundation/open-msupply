@@ -33,7 +33,7 @@ mod query {
                 InsertAsset {
                     id: id.clone(),
                     store_id: Some(mock_store_a().id),
-                    name: "test_name".to_string(),
+                    notes: Some("test_note".to_string()),
                     code: "test_code".to_string(),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
@@ -76,18 +76,18 @@ mod query {
             Some("new_serial_number".to_string())
         );
 
-        // 4. Check if we update the name, it doesn't remove the serial number
+        // 4. Check if we update the notes, it doesn't remove the serial number
         let updated_asset = service
             .update_asset(
                 &ctx,
                 UpdateAsset {
                     id,
-                    name: Some("new_name".to_string()),
+                    notes: Some("new_note".to_string()),
                     ..Default::default()
                 },
             )
             .unwrap();
-        assert_eq!(updated_asset.name, "new_name".to_string());
+        assert_eq!(updated_asset.notes, Some("new_note".to_string()));
         assert_eq!(
             updated_asset.serial_number,
             Some("new_serial_number".to_string())

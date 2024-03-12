@@ -5,7 +5,7 @@ use crate::sync::{
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
         test_data::{get_all_push_test_records, get_all_sync_v6_records},
-        TestSyncPushRecord,
+        TestSyncOutgoingRecord,
     },
     translations::{
         translate_changelogs_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
