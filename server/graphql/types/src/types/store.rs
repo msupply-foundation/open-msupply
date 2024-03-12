@@ -1,4 +1,5 @@
 use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
+use chrono::NaiveDate;
 use graphql_core::{
     loader::{NameByIdLoader, NameByIdLoaderInput},
     standard_graphql_error::StandardGraphqlError,
@@ -51,6 +52,10 @@ impl StoreNode {
     /// The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
     pub async fn logo(&self) -> &Option<String> {
         &self.row().logo
+    }
+
+    pub async fn created_date(&self) -> Option<NaiveDate> {
+        self.row().created_date
     }
 }
 
