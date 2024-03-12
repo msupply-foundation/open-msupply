@@ -15,10 +15,10 @@ table! {
         id -> Text,
         asset_id -> Text,
         user_id -> Text,
-        status -> Nullable<crate::db_diesel::assets::asset_log_row::StatusMapping>,
+        status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Nullable<Text>,
-        reason -> Nullable<crate::db_diesel::assets::asset_log_row::ReasonMapping>,
+        reason -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogReasonMapping>,
         log_datetime -> Timestamp,
     }
 }
@@ -28,10 +28,10 @@ table! {
         id -> Text,
         asset_id -> Text,
         user_id -> Text,
-        status -> Nullable<crate::db_diesel::assets::asset_log_row::StatusMapping>,
+        status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Nullable<Text>,
-        reason -> Nullable<crate::db_diesel::assets::asset_log_row::ReasonMapping>,
+        reason -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogReasonMapping>,
         log_datetime -> Timestamp,
     }
 }
@@ -39,7 +39,8 @@ table! {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Reason {
+
+pub enum AssetLogReason {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
@@ -53,8 +54,8 @@ pub enum Reason {
     Decomissioned,
 }
 
-impl Reason {
-    pub fn equal_to(&self) -> EqualFilter<Reason> {
+impl AssetLogReason {
+    pub fn equal_to(&self) -> EqualFilter<AssetLogReason> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
@@ -69,7 +70,8 @@ impl Reason {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Status {
+
+pub enum AssetLogStatus {
     NotInUse,
     Functioning,
     FunctioningButNeedsAttention,
@@ -77,8 +79,8 @@ pub enum Status {
     Decomissioned,
 }
 
-impl Status {
-    pub fn equal_to(&self) -> EqualFilter<Status> {
+impl AssetLogStatus {
+    pub fn equal_to(&self) -> EqualFilter<AssetLogStatus> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
@@ -97,11 +99,11 @@ pub struct AssetLogRow {
     pub id: String,
     pub asset_id: String,
     pub user_id: String,
-    pub status: Option<Status>,
+    pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
     #[column_name = "type_"]
     pub r#type: Option<String>,
-    pub reason: Option<Reason>,
+    pub reason: Option<AssetLogReason>,
     pub log_datetime: NaiveDateTime,
 }
 

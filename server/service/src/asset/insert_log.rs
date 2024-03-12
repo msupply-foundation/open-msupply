@@ -7,7 +7,7 @@ use super::{
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::Utc;
 use repository::{
-    asset_log_row::{Reason, Status},
+    asset_log_row::{AssetLogReason, AssetLogStatus},
     assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
     RepositoryError, StorageConnection,
 };
@@ -25,10 +25,10 @@ pub enum InsertAssetLogError {
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<Status>,
+    pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
-    pub reason: Option<Reason>,
+    pub reason: Option<AssetLogReason>,
 }
 
 pub fn insert_asset_log(
