@@ -78,7 +78,7 @@ async fn test_sync_pull_and_push() {
     let mut test_records = vec![get_all_push_test_records(), get_all_sync_v6_records()]
         .into_iter()
         .flatten()
-        .collect::<Vec<TestSyncPushRecord>>();
+        .collect::<Vec<TestSyncOutgoingRecord>>();
 
     // Not using get_sync_push_changelogs_filter, since this test uses record integrated via sync as push records
     // which are usually filtered out via is_sync_updated flag

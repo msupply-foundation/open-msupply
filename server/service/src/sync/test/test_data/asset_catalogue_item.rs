@@ -1,7 +1,7 @@
 use repository::asset_catalogue_item_row::AssetCatalogueItemRow;
 use serde_json::json;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &'static str = "asset_catalogue_item";
 
@@ -31,16 +31,16 @@ fn asset_catalogue_item1() -> AssetCatalogueItemRow {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET_CATALOGUE_ITEM1,
         asset_catalogue_item1(),
     )]
 }
 
-pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncPushRecord> {
-    vec![TestSyncPushRecord {
+pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: ASSET_CATALOGUE_ITEM1.0.to_string(),
         push_data: json!(asset_catalogue_item1()),

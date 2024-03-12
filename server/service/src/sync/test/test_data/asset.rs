@@ -2,7 +2,7 @@ use repository::asset_row::AssetRow;
 use serde_json::json;
 use util::Defaults;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &'static str = "asset";
 
@@ -21,9 +21,9 @@ const ASSET1: (&'static str, &'static str) = (
 fn asset1() -> AssetRow {
     AssetRow {
         id: ASSET1.0.to_string(),
-        name: "Asset 1".to_string(),
         code: "AT1".to_string(),
         store_id: Some("store_a".to_string()), // We need a store to sync some where?
+        notes: Some("Asset 1".to_string()),
         serial_number: None,
         catalogue_item_id: None,
         installation_date: None,
@@ -34,17 +34,17 @@ fn asset1() -> AssetRow {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         ASSET1,
         asset1(),
     )]
 }
 
-pub(crate) fn test_v6_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_v6_records() -> Vec<TestSyncOutgoingRecord> {
     // New type for TestSyncToSyncRecord
-    vec![TestSyncPushRecord {
+    vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: ASSET1.0.to_string(),
         push_data: json!(asset1()),

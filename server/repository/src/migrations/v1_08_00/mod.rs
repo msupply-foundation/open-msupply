@@ -19,7 +19,6 @@ impl Migration for V1_08_00 {
         central_omsupply::migrate(connection)?;
         assets::migrate_assets(connection)?;
         pack_variant::migrate(connection)?;
-        central_omsupply::migrate(connection)?;
         Ok(())
     }
 }
