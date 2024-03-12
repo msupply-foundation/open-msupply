@@ -6,6 +6,7 @@ use crate::StorageConnection;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use serde::Serialize;
 
 table! {
     asset (id) {
@@ -23,7 +24,7 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize)]
 #[table_name = "asset"]
 pub struct AssetRow {
     pub id: String,
