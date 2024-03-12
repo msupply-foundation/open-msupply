@@ -83,18 +83,13 @@ fn get_existing_return_lines(
 impl InboundReturnLine {
     fn extend_from_invoice_line(self, line: InvoiceLine) -> Self {
         let InvoiceLineRow {
-            number_of_packs,
             pack_size,
             expiry_date,
             batch,
-            stock_line_id,
             ..
         } = line.invoice_line_row;
         Self {
-            number_of_packs,
-            packs_issued: None,
             item_row: line.item_row,
-            stock_line_id,
             batch,
             pack_size,
             expiry_date,
@@ -107,6 +102,8 @@ impl InboundReturnLine {
             id: line.invoice_line_row.id.clone(),
             reason_id: line.invoice_line_row.return_reason_id.clone(),
             note: line.invoice_line_row.note.clone(),
+            number_of_packs: line.invoice_line_row.number_of_packs.clone(),
+            stock_line_id: line.invoice_line_row.stock_line_id.clone(),
             // We only include packs_issued on new lines. In order to get it for existing lines, we'd need
             // to store a linked invoice line of the outbound shipment against the inbound return line
             packs_issued: None,
