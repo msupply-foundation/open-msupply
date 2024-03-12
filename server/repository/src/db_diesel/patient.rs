@@ -39,12 +39,11 @@ pub struct PatientFilter {
     /// Filter for any identifier associated with a name entry.
     /// Currently:
     /// - name::code
+    /// - name::name
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
     pub program_enrolment_name: Option<StringFilter>,
-    // Filter for name and code
-    pub name_or_code: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -183,7 +182,6 @@ impl<'a> PatientRepository<'a> {
                 country,
                 email,
                 identifier,
-                name_or_code,
                 program_enrolment_name,
             } = f;
 
@@ -195,6 +193,7 @@ impl<'a> PatientRepository<'a> {
                     identifier.clone(),
                     name_dsl::national_health_number
                 );
+                apply_string_or_filter!(query, identifier.clone(), name_dsl::name_);
 
                 let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
                     ProgramEnrolmentFilter {
@@ -207,11 +206,6 @@ impl<'a> PatientRepository<'a> {
                 .select(name_dsl::id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
-            }
-
-            if name_or_code.is_some() {
-                apply_string_filter!(query, name_or_code.clone(), name_dsl::name_);
-                apply_string_or_filter!(query, name_or_code.clone(), name_dsl::code);
             }
 
             if program_enrolment_name.is_some() {
@@ -345,11 +339,6 @@ impl PatientFilter {
         self
     }
 
-    pub fn name_or_code(mut self, filter: StringFilter) -> Self {
-        self.name_or_code = Some(filter);
-        self
-    }
-
     pub fn program_enrolment_name(mut self, filter: StringFilter) -> Self {
         self.program_enrolment_name = Some(filter);
         self
@@ -423,6 +412,7 @@ mod tests {
         let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
+            row.name = "test_name".to_string();
             row.r#type = NameType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
@@ -490,12 +480,9 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 0);
-        // test filter for name_or_code and identifier
         let result = repo
             .query_by_filter(
-                PatientFilter::new()
-                    .name_or_code(StringFilter::equal_to("codePatient"))
-                    .identifier(StringFilter::like("nhn")),
+                PatientFilter::new().identifier(StringFilter::like("test_name")),
                 None,
             )
             .unwrap();
