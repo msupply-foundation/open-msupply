@@ -127,10 +127,10 @@ export const useResponseColumns = () => {
 
   columnDefinitions.push({
     label: 'label.already-issued',
-    description: 'description.remaining-to-supply',
+    description: 'description.already-issued',
     key: 'alreadyIssued',
     align: ColumnAlign.Right,
-    getSortValue: rowData => rowData.remainingQuantityToSupply,
+    getSortValue: rowData => rowData.alreadyIssued,
     Cell: PackVariantQuantityCell({
       getItemId: row => row.itemId,
       getQuantity: row => NumUtils.round(row.alreadyIssued),
