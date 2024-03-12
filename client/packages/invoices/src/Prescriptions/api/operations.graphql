@@ -51,6 +51,14 @@ fragment PrescriptionRow on InvoiceNode {
     firstName
     lastName
   }
+
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+  currencyRate
 }
 
 query prescriptions(

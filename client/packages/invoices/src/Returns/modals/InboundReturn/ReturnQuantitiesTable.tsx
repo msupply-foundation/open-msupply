@@ -1,6 +1,6 @@
 import {
   DataTable,
-  InboundReturnLine,
+  GeneratedInboundReturnLineNode,
   NumberInputCell,
   useColumns,
 } from 'packages/common/src';
@@ -10,10 +10,12 @@ export const QuantityReturnedTableComponent = ({
   lines,
   updateLine,
 }: {
-  lines: InboundReturnLine[];
-  updateLine: (line: Partial<InboundReturnLine> & { id: string }) => void;
+  lines: GeneratedInboundReturnLineNode[];
+  updateLine: (
+    line: Partial<GeneratedInboundReturnLineNode> & { id: string }
+  ) => void;
 }) => {
-  const columns = useColumns<InboundReturnLine>(
+  const columns = useColumns<GeneratedInboundReturnLineNode>(
     [
       'itemCode',
       'itemName',
@@ -38,7 +40,7 @@ export const QuantityReturnedTableComponent = ({
             <NumberInputCell
               {...props}
               isRequired
-              max={props.rowData.numberOfPacksIssued}
+              max={props.rowData.numberOfPacksIssued ?? undefined}
               min={0}
             />
           ),

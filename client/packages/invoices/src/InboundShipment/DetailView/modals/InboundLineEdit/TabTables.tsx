@@ -16,6 +16,7 @@ import {
   CurrencyCell,
   ColumnAlign,
   NumberInputCell,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -140,13 +141,19 @@ export const QuantityTableComponent: FC<
 
 export const QuantityTable = React.memo(QuantityTableComponent);
 
-export const PricingTableComponent: FC<TableProps> = ({
+export const PricingTableComponent: FC<
+  TableProps & { item: InboundLineFragment['item'] | null }
+> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
   currency,
   isExternalSupplier,
+  item,
 }) => {
+  const { packVariantExists } = usePackVariant(item?.id || '', null);
+  const { store } = useAuthContext();
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -156,44 +163,35 @@ export const PricingTableComponent: FC<TableProps> = ({
         },
       },
     ],
+  ];
+
+  columnDefinitions.push(
+    getColumnLookupWithOverrides('packSize', {
+      ...(packVariantExists
+        ? {
+            label: 'label.unit-variant-and-pack-size',
+            minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+          }
+        : { label: 'label.pack-size' }),
+    }),
     [
-      'sellPricePerPack',
+      'numberOfPacks',
+      {
+        width: 100,
+        label: 'label.num-packs',
+      },
+    ],
+    [
+      'costPricePerPack',
       {
         Cell: CurrencyInputCell,
         width: 100,
         setter: updateDraftLine,
       },
-    ],
-  ];
+    ]
+  );
 
-  if (isExternalSupplier) {
-    columnDefinitions.push({
-      key: 'foreignCurrencySellPricePerPack',
-      label: 'label.fc-sell-price',
-      description: 'description.fc-sell-price',
-      width: 100,
-      align: ColumnAlign.Right,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
-      accessor: ({ rowData }) => {
-        if (currency) {
-          return rowData.sellPricePerPack / currency.rate;
-        }
-        return null;
-      },
-    });
-  }
-
-  columnDefinitions.push([
-    'costPricePerPack',
-    {
-      Cell: CurrencyInputCell,
-      width: 100,
-      setter: updateDraftLine,
-    },
-  ]);
-
-  if (isExternalSupplier) {
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencyCostPricePerPack',
       label: 'label.fc-cost-price',
@@ -211,21 +209,13 @@ export const PricingTableComponent: FC<TableProps> = ({
     });
   }
 
-  columnDefinitions.push(
-    [
-      'unitQuantity',
-      {
-        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-      },
-    ],
-    [
-      'lineTotal',
-      {
-        accessor: ({ rowData }) =>
-          rowData.numberOfPacks * rowData.costPricePerPack,
-      },
-    ]
-  );
+  columnDefinitions.push([
+    'lineTotal',
+    {
+      accessor: ({ rowData }) =>
+        rowData.numberOfPacks * rowData.costPricePerPack,
+    },
+  ]);
 
   if (isExternalSupplier) {
     columnDefinitions.push({
