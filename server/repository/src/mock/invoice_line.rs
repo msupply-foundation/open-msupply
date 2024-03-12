@@ -537,9 +537,9 @@ pub fn mock_outbound_return_b_invoice_line_a() -> InvoiceLineRow {
     inline_init(|l: &mut InvoiceLineRow| {
         l.id = "outbound_return_b_invoice_line_a".to_string();
         l.invoice_id = mock_outbound_return_b().id;
-        l.item_link_id = "item_b".to_string();
+        l.item_link_id = "item_a".to_string();
         l.stock_line_id = Some(mock_stock_line_a().id);
-        l.item_code = "item_b_code".to_string();
+        l.item_code = "item_a_code".to_string();
         l.note = Some("return_comment".to_string());
         l.number_of_packs = 5.0;
         l.r#type = InvoiceLineRowType::StockOut

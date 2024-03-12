@@ -194,11 +194,11 @@ mod test {
     use repository::{
         mock::{
             mock_item_a, mock_outbound_return_a, mock_outbound_return_a_invoice_line_a,
-            mock_stock_line_a, mock_stock_line_b, mock_stock_line_ci_c, mock_store_a, MockData,
-            MockDataInserts,
+            mock_outbound_return_b, mock_stock_line_a, mock_stock_line_b, mock_stock_line_ci_c,
+            mock_store_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, RepositoryError, StockLineRow,
+        InvoiceLineRow, ItemRow, ItemRowType, RepositoryError, StockLineRow,
     };
 
     type ServiceInput = super::GenerateOutboundReturnLinesInput;
@@ -384,6 +384,76 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn generate_outbound_return_lines_item_id_stock_belongs_to_multiple_stores() {
+        fn test_item() -> ItemRow {
+            ItemRow {
+                id: "test_item".to_string(),
+                r#type: ItemRowType::Stock,
+                default_pack_size: 1,
+                ..Default::default()
+            }
+        }
+
+        fn stock_line_store_a() -> StockLineRow {
+            StockLineRow {
+                id: "stock_line_store_a".to_string(),
+                item_link_id: "test_item".to_string(),
+                store_id: "store_a".to_string(),
+                available_number_of_packs: 5.0,
+                ..Default::default()
+            }
+        }
+        fn stock_line_store_b() -> StockLineRow {
+            StockLineRow {
+                id: "stock_line_store_b".to_string(),
+                item_link_id: "test_item".to_string(),
+                store_id: "store_b".to_string(),
+                available_number_of_packs: 5.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "generate_inbound_return_lines_item_id_and_return_id",
+            MockDataInserts::all(),
+            MockData {
+                items: vec![test_item()],
+                stock_lines: vec![stock_line_store_a(), stock_line_store_b()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let store_id = mock_store_a().id;
+        let stock_line_ids = vec![];
+        let item_id = Some(test_item().id);
+        let return_id = None;
+
+        let result = service
+            .generate_outbound_return_lines(
+                &context,
+                &store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            )
+            .unwrap();
+
+        // the stock test_item stock line for store B should not be included!
+        assert_eq!(result.rows.len(), 1);
+        assert_eq!(
+            result.rows[0].stock_line.stock_line_row.id,
+            stock_line_store_a().id
+        );
+    }
+
+    #[actix_rt::test]
     async fn generate_outbound_return_lines_item_id_and_return_id() {
         fn unavailable_stock_line() -> StockLineRow {
             StockLineRow {
@@ -519,5 +589,45 @@ mod test {
             mock_stock_line_ci_c()[0].id
         );
         assert_eq!(new_line.number_of_packs, 0.0);
+    }
+
+    #[actix_rt::test]
+    async fn generate_outbound_return_lines_dedupes_existing_lines() {
+        let (_, _, connection_manager, _) = setup_all(
+            "generate_outbound_return_lines_dedupes_existing_lines",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.invoice_service;
+
+        let store_id = mock_store_a().id;
+
+        let stock_line_ids = vec![mock_stock_line_a().id]; // has item_id of item_a
+        let item_id = Some(mock_item_a().id);
+        let return_id = Some(mock_outbound_return_b().id); // has stock_line_a
+
+        let result = service
+            .generate_outbound_return_lines(
+                &context,
+                &store_id,
+                ServiceInput {
+                    stock_line_ids,
+                    item_id,
+                    return_id,
+                },
+            )
+            .unwrap();
+
+        // ensure we get the 1 existing line back, not 2 (via both stock_line_id and item_id)
+        let existing_lines = result
+            .rows
+            .iter()
+            .filter(|l| l.number_of_packs > 0.0)
+            .collect::<Vec<_>>();
+
+        assert_eq!(existing_lines.len(), 1);
     }
 }
