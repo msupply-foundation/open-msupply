@@ -174,6 +174,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
     };
 
     let InvoiceLineRow {
+        id,
         return_reason_id,
         note,
         number_of_packs,
@@ -181,7 +182,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
     } = invoice_line.invoice_line_row;
 
     return OutboundReturnLine {
-        id: uuid(),
+        id,
         note,
         number_of_packs,
         reason_id: return_reason_id,
@@ -523,8 +524,11 @@ mod test {
             .rows
             .iter()
             .find(|l| l.stock_line.stock_line_row.id == unavailable_stock_line().id);
+
         assert!(matches!(existing_line, Some(_)));
         let existing_line = existing_line.unwrap();
+
+        assert_eq!(existing_line.id, item_a_return_line().id);
         assert_eq!(
             existing_line.stock_line.stock_line_row.id,
             unavailable_stock_line().id
