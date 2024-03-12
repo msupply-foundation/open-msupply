@@ -23,6 +23,19 @@ table! {
     }
 }
 
+table! {
+    latest_asset_log (id) {
+        id -> Text,
+        asset_id -> Text,
+        user_id -> Text,
+        status -> Nullable<crate::db_diesel::assets::asset_log_row::StatusMapping>,
+        comment -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<Text>,
+        reason -> Nullable<crate::db_diesel::assets::asset_log_row::ReasonMapping>,
+        log_datetime -> Timestamp,
+    }
+}
+
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
