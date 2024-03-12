@@ -1,3 +1,4 @@
+use crate::types::{AssetLogReasonInput, AssetLogStatusInput};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -47,7 +48,10 @@ pub fn insert_asset_log(
 pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<String>,
+    pub status: Option<AssetLogStatusInput>,
+    pub reason: Option<AssetLogReasonInput>,
+    pub comment: Option<String>,
+    pub r#type: Option<String>,
 }
 
 impl From<InsertAssetLogInput> for InsertAssetLog {
@@ -56,12 +60,18 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             id,
             asset_id,
             status,
+            reason,
+            comment,
+            r#type,
         }: InsertAssetLogInput,
     ) -> Self {
         InsertAssetLog {
             id,
             asset_id,
-            status,
+            status: status.map(|s| s.to_domain()),
+            reason: reason.map(|r| r.to_domain()),
+            comment,
+            r#type,
         }
     }
 }
@@ -96,6 +106,8 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::InsufficientPermission => BadUserInput(formatted_error),
+        ServiceError::ReasonInvalidForStatus => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -107,7 +119,8 @@ mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
     use repository::{
-        assets::asset_log::AssetLog, mock::MockDataInserts, StorageConnectionManager,
+        asset_log_row::AssetLogStatus, assets::asset_log::AssetLog, mock::MockDataInserts,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -119,7 +132,7 @@ mod test {
         service_provider::{ServiceContext, ServiceProvider},
     };
 
-    use crate::AssetLogs;
+    use crate::AssetLogMutations;
 
     type InsertAssetLogMethod =
         dyn Fn(InsertAssetLog) -> Result<AssetLog, InsertAssetLogError> + Sync + Send;
@@ -148,7 +161,7 @@ mod test {
     async fn test_graphql_insert_asset_log_success() {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             EmptyMutation,
-            AssetLogs,
+            AssetLogMutations,
             "test_graphql_insert_asset_log_success",
             MockDataInserts::all(),
         )
@@ -170,7 +183,7 @@ mod test {
             "input": {
                 "id": "n/a",
                 "assetId": "asset_a",
-                "status": "status",
+                "status": AssetLogStatus::Functioning,
             }
         }));
 
@@ -179,7 +192,7 @@ mod test {
             Ok(AssetLog {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
-                status: Some("status".to_owned()),
+                status: Some(AssetLogStatus::Functioning),
                 ..Default::default()
             })
         }));
@@ -188,7 +201,7 @@ mod test {
             "insertAssetLog": {
                 "id": "id",
                 "assetId": "asset_a",
-                "status": "status",
+                "status": AssetLogStatus::Functioning,
             }
         });
         assert_graphql_query!(

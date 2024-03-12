@@ -4,7 +4,7 @@ import { useAssetApi } from '../utils/useAssetApi';
 export const useAssets = () => {
   const { queryParams } = useUrlQueryParams({
     filters: [
-      { key: 'name' },
+      { key: 'notes' },
       { key: 'model' },
       { key: 'code' },
       { key: 'installationDate', condition: 'equalTo' },
