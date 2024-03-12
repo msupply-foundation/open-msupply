@@ -86,6 +86,7 @@ pub async fn pull(
         cursor,
         batch_size,
         sync_v5_settings,
+        is_initialised,
     }: SyncPullRequestV6,
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
@@ -107,11 +108,15 @@ pub async fn pull(
     let ctx = service_provider.basic_context()?;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    // TODO: if not initialising, remove the site_id from this filter...
-    let filter = Some(create_filter(Some(sync_site_id)));
+    // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
+    // The rest of the time we want to exclude any records that were created by the site
+    let filter = match is_initialised {
+        true => create_filter(Some(sync_site_id.clone())),
+        false => create_filter(None),
+    };
 
-    let changelogs = changelog_repo.changelogs(cursor, batch_size, filter.clone())?;
-    let total_records = changelog_repo.count(cursor, filter)?;
+    let changelogs = changelog_repo.changelogs(cursor, batch_size, Some(filter.clone()))?;
+    let total_records = changelog_repo.count(cursor, Some(filter))?;
     let max_cursor = changelog_repo.latest_cursor()?;
 
     let end_cursor = changelogs
