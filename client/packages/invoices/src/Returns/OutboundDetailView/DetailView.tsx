@@ -16,7 +16,7 @@ import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
-// import { SidePanel } from './SidePanel';
+import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
@@ -87,7 +87,7 @@ export const OutboundReturnsDetailView: FC = () => {
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <Footer />
-          {/* <SidePanel /> */}
+          <SidePanel />
         </TableProvider>
       ) : (
         <AlertModal

@@ -241,7 +241,9 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
+export const canDeleteInvoice = (
+  invoice: OutboundRowFragment | OutboundReturnRowFragment
+): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
 
@@ -262,6 +264,7 @@ export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
   inbound.status === InvoiceNodeStatus.Verified;
 
 export const canReturnOutboundLines = (outbound: OutboundFragment): boolean =>
+  outbound.status === InvoiceNodeStatus.Shipped ||
   outbound.status === InvoiceNodeStatus.Delivered ||
   outbound.status === InvoiceNodeStatus.Verified;
 
