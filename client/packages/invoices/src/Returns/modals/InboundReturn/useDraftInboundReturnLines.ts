@@ -2,19 +2,25 @@ import React, { useEffect } from 'react';
 import {
   FnUtils,
   InboundReturnInput,
-  InboundReturnLine,
+  GeneratedInboundReturnLineNode,
   InboundReturnLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
 export const useDraftInboundReturnLines = (
-  stockLineIds: string[],
+  outboundReturnLineIds: string[],
   customerId: string
 ) => {
-  const [draftLines, setDraftLines] = React.useState<InboundReturnLine[]>([]);
+  const [draftLines, setDraftLines] = React.useState<
+    GeneratedInboundReturnLineNode[]
+  >([]);
 
-  const lines = useReturns.lines.inboundReturnLines(stockLineIds);
+  const data = useReturns.lines.generateInboundReturnLines(
+    outboundReturnLineIds
+  );
+  const lines = data?.nodes;
+
   const { mutateAsync } = useReturns.document.insertInboundReturn();
 
   useEffect(() => {
@@ -23,7 +29,7 @@ export const useDraftInboundReturnLines = (
     setDraftLines(newDraftLines);
   }, [lines]);
 
-  const update = (patch: RecordPatch<InboundReturnLine>) => {
+  const update = (patch: RecordPatch<GeneratedInboundReturnLineNode>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {
@@ -37,8 +43,26 @@ export const useDraftInboundReturnLines = (
 
   const saveInboundReturn = async () => {
     const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
-      ({ id, reasonId, numberOfPacksReturned, stockLineId, note }) => {
-        return { id, stockLineId, reasonId, note, numberOfPacksReturned };
+      ({
+        id,
+        reasonId,
+        itemId,
+        numberOfPacksReturned,
+        note,
+        packSize,
+        batch,
+        expiryDate,
+      }) => {
+        return {
+          id,
+          packSize,
+          batch,
+          expiryDate,
+          itemId,
+          reasonId,
+          note,
+          numberOfPacksReturned,
+        };
       }
     );
 

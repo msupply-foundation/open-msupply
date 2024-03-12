@@ -2,7 +2,7 @@ import { useTableStore } from '@openmsupply-client/common';
 import { useOutboundRows } from '../line/useOutboundRows';
 import { isString } from 'lodash';
 
-export const useSelectedStockLineIds = () => {
+export const useSelectedIds = () => {
   const { items, lines } = useOutboundRows();
 
   const selectedIds =
@@ -15,7 +15,7 @@ export const useSelectedStockLineIds = () => {
             .flatMap(({ lines }) => lines.flat())
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
     })
-      ?.map(({ stockLine }) => stockLine?.id)
+      ?.map(({ id }) => id)
       .filter(isString) || [];
 
   return selectedIds;

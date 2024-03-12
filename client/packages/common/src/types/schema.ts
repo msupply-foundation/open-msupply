@@ -728,7 +728,7 @@ export type DeleteInboundReturnInput = {
   ids: Array<Scalars['String']['input']>;
 };
 
-export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeletedIdsResponse;
+export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -817,11 +817,7 @@ export type DeleteOutboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteOutboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeletedIdsResponse;
+export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeleteResponse;
 
 export type DeleteOutboundShipmentError = {
   __typename: 'DeleteOutboundShipmentError';
@@ -1030,11 +1026,6 @@ export type DeleteStocktakeResponseWithId = {
   __typename: 'DeleteStocktakeResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteStocktakeResponse;
-};
-
-export type DeletedIdsResponse = {
-  __typename: 'DeletedIdsResponse';
-  deletedIds: Array<Scalars['String']['output']>;
 };
 
 export type DisplaySettingNode = {
@@ -1410,6 +1401,11 @@ export type EqualFilterTypeInput = {
   notEqualTo?: InputMaybe<NameNodeType>;
 };
 
+export type ExistingLinesInput = {
+  itemId: Scalars['String']['input'];
+  returnId: Scalars['String']['input'];
+};
+
 export type FailedToFetchReportData = PrintReportErrorInterface & {
   __typename: 'FailedToFetchReportData';
   description: Scalars['String']['output'];
@@ -1507,21 +1503,47 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
-export type GenerateInboundReturnInput = {
-  stockLineIds: Array<Scalars['String']['input']>;
+export type GenerateInboundReturnLinesInput = {
+  existingLinesInput?: InputMaybe<ExistingLinesInput>;
+  /** The ids of the outbound shipment lines to generate new return lines for */
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
+
+export type GenerateInboundReturnLinesResponse = GeneratedInboundReturnLineConnector;
 
 /** At least one input is required. */
 export type GenerateOutboundReturnLinesInput = {
-  /** Generate return lines for all the available stock lines of a specific item */
+  /** Generate new return lines for all the available stock lines of a specific item */
   itemId?: InputMaybe<Scalars['String']['input']>;
-  /** Include existing return lines in the response. Only has an effect when `item_id` is set. */
+  /** Include existing return lines in the response. Only has an effect when either `stock_line_ids` or `item_id` is set. */
   returnId?: InputMaybe<Scalars['String']['input']>;
   /** The stock line ids to generate new return lines for */
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
 export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
+
+export type GeneratedInboundReturnLineConnector = {
+  __typename: 'GeneratedInboundReturnLineConnector';
+  nodes: Array<GeneratedInboundReturnLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type GeneratedInboundReturnLineNode = {
+  __typename: 'GeneratedInboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
+};
 
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
@@ -1535,27 +1557,15 @@ export type InboundReturnInput = {
   inboundReturnLines: Array<InboundReturnLineInput>;
 };
 
-export type InboundReturnLine = {
-  __typename: 'InboundReturnLine';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued: Scalars['Float']['output'];
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId: Scalars['String']['output'];
-};
-
 export type InboundReturnLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
+  packSize: Scalars['Int']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
-  stockLineId: Scalars['String']['input'];
 };
 
 export type InitialisationStatusNode = {
@@ -2760,7 +2770,7 @@ export type Mutations = {
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteLocation: DeleteLocationResponse;
-  deleteOutboundReturns: DeleteOutboundReturnResponse;
+  deleteOutboundReturn: DeleteOutboundReturnResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
@@ -2953,8 +2963,8 @@ export type MutationsDeleteLocationArgs = {
 };
 
 
-export type MutationsDeleteOutboundReturnsArgs = {
-  input: DeleteOutboundReturnInput;
+export type MutationsDeleteOutboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -4059,7 +4069,17 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
-  generateInboundReturnLines: Array<InboundReturnLine>;
+  /**
+   * Generates new inbound return lines in memory, based on outbound return line ids.
+   * Optionally includes existing inbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
+  generateInboundReturnLines: GenerateInboundReturnLinesResponse;
+  /**
+   * Generates new outbound return lines in memory, based on either stock line ids, or an item id.
+   * Optionally includes existing outbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -4259,7 +4279,7 @@ export type QueriesFormSchemasArgs = {
 
 
 export type QueriesGenerateInboundReturnLinesArgs = {
-  input: GenerateInboundReturnInput;
+  input: GenerateInboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 

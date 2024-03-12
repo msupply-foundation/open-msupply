@@ -23,10 +23,8 @@ export const useReturns = {
     outboundReturnLines: Lines.useOutboundReturnLines,
     updateOutboundLines: Lines.useUpdateOutboundReturnLines,
 
-    inboundReturnLines: Lines.useInboundReturnLines,
-
+    generateInboundReturnLines: Lines.useGenerateInboundReturnLines,
     inboundReturnRows: Lines.useInboundReturnRows,
-
     deleteSelectedInboundLines: Lines.useDeleteSelectedInboundReturnLines,
   },
   utils: {
