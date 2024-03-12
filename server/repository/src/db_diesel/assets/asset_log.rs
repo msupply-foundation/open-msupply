@@ -6,7 +6,7 @@ use super::asset_log_row::{
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-use crate::asset_log_row::{latest_asset_log, Status};
+use crate::asset_log_row::{latest_asset_log, AssetLogStatus};
 use crate::{
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
@@ -28,7 +28,7 @@ pub type AssetLogSort = Sort<AssetLogSortField>;
 pub struct AssetLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub asset_id: Option<EqualFilter<String>>,
-    pub status: Option<EqualFilter<Status>>,
+    pub status: Option<EqualFilter<AssetLogStatus>>,
     pub log_datetime: Option<DatetimeFilter>,
     pub user: Option<StringFilter>,
 }
@@ -52,7 +52,7 @@ impl AssetLogFilter {
         self.asset_id = Some(filter);
         self
     }
-    pub fn status(mut self, filter: EqualFilter<Status>) -> Self {
+    pub fn status(mut self, filter: EqualFilter<AssetLogStatus>) -> Self {
         self.status = Some(filter);
         self
     }
