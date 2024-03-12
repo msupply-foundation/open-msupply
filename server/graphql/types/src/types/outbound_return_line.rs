@@ -58,7 +58,7 @@ impl OutboundReturnLineNode {
         &self.return_line.reason_id
     }
 
-    pub async fn number_of_packs_to_return(&self) -> &u32 {
+    pub async fn number_of_packs_to_return(&self) -> &f64 {
         &self.return_line.number_of_packs
     }
 
