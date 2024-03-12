@@ -120,6 +120,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
             updateDraftLine={updateDraftLine}
             currency={currency}
             isExternalSupplier={isExternalSupplier}
+            item={item}
           />
         </InboundLineEditPanel>
 

@@ -1,8 +1,8 @@
-use chrono::Utc;
+use chrono::{Duration, NaiveDateTime, NaiveTime, Utc};
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
     InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, Requisition,
-    StorageConnection,
+    StorageConnection, StoreRowRepository,
 };
 use util::uuid::uuid;
 
@@ -33,6 +33,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
     /// 4. Linked shipment does not exist (the inbound shipment)
+    /// 5. Source shipment was not created a month before receiving store was created.
     ///
     /// Only runs once:
     /// 5. Because created inbound shipment will be linked to source outbound shipment `4.` will never be true again
@@ -65,6 +66,21 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         // 4.
         if linked_shipment.is_some() {
             return Ok(None);
+        }
+        // 5.
+        let store = StoreRowRepository::new(connection)
+            .find_one_by_id(&record_for_processing.other_party_store_id)?
+            .ok_or(RepositoryError::NotFound)?;
+
+        if let Some(created_date) = store.created_date {
+            let store_created_datetime = NaiveDateTime::new(
+                created_date - Duration::days(30),
+                NaiveTime::from_hms_opt(0, 0, 0).unwrap_or_default(),
+            );
+            let invoice_created_datetime = outbound_shipment.invoice_row.created_datetime;
+            if invoice_created_datetime < store_created_datetime {
+                return Ok(None);
+            }
         }
 
         // Execute

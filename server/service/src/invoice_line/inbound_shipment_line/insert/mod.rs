@@ -71,7 +71,7 @@ pub enum InsertInboundShipmentLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
 }
 
@@ -226,7 +226,7 @@ mod test {
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
@@ -237,10 +237,10 @@ mod test {
                         .clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 0.0;
+                    r.number_of_packs = -1.0;
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // NotThisStoreInvoice
