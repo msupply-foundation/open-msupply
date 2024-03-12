@@ -56,7 +56,7 @@
   "description.our-soh": "Our Stock on Hand",
   "description.pack-quantity": "Total quantity in number of packs",
   "description.program": "Programs are used to manage groups of items, and replenishment schedules.",
-  "description.remaining-to-supply": "The remaining quantity to supply to the customer which will be re-calculated after a shipment has been created",
+  "description.remaining-to-supply": "The quantity remaining to be supplied to the customer which will be re-calculated after a shipment has been created. The calculation is 'Supply - Issued'.",
   "description.requested-quantity": "Quantity requested by customer",
   "description.snapshot-num-of-packs": "Snapshot # of Packs",
   "description.soh": "Stock on Hand",
