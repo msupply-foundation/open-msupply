@@ -100,7 +100,6 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
 
     let current_datetime = Utc::now().naive_utc();
 
-    // TODO: is this right??
     match (&inbound_return.status, new_status) {
         // From New/Picked/Shipped to Delivered
         (
@@ -111,9 +110,10 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
         }
 
         // From New to Verified
-        (InvoiceRowStatus::New, UpdateInboundReturnStatus::Verified)
-        | (InvoiceRowStatus::Picked, UpdateInboundReturnStatus::Verified)
-        | (InvoiceRowStatus::Shipped, UpdateInboundReturnStatus::Verified) => {
+        (
+            InvoiceRowStatus::New | InvoiceRowStatus::Picked | InvoiceRowStatus::Shipped,
+            UpdateInboundReturnStatus::Verified,
+        ) => {
             inbound_return.delivered_datetime = Some(current_datetime);
             inbound_return.verified_datetime = Some(current_datetime);
         }

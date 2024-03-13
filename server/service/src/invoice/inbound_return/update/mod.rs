@@ -269,8 +269,6 @@ mod test {
             ),
             Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
         );
-
-        // TODO CannotReverseInvoiceStatus,UpdateInvoiceDoesNotExist
     }
 
     #[actix_rt::test]
