@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use repository::{
     ActivityLogType, Invoice, InvoiceRowRepository, RepositoryError, TransactionError,
 };
@@ -17,23 +16,13 @@ pub mod validate;
 use generate::generate;
 use validate::validate;
 
+use super::InboundReturnLineInput;
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct InsertInboundReturn {
     pub id: String,
     pub other_party_id: String,
-    pub inbound_return_lines: Vec<InsertInboundReturnLine>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct InsertInboundReturnLine {
-    pub id: String,
-    pub item_id: String,
-    pub expiry_date: Option<NaiveDate>,
-    pub batch: Option<String>,
-    pub pack_size: u32,
-    pub number_of_packs: f64,
-    pub reason_id: Option<String>,
-    pub note: Option<String>,
+    pub inbound_return_lines: Vec<InboundReturnLineInput>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -152,7 +141,7 @@ mod test {
         service_provider::ServiceProvider,
     };
 
-    use super::InsertInboundReturnLine;
+    use super::InboundReturnLineInput;
 
     #[actix_rt::test]
     async fn test_insert_inbound_return_errors() {
@@ -250,7 +239,7 @@ mod test {
                 InsertInboundReturn {
                     id: "new_id".to_string(),
                     other_party_id: mock_name_customer_a().id,
-                    inbound_return_lines: vec![InsertInboundReturnLine {
+                    inbound_return_lines: vec![InboundReturnLineInput {
                         id: mock_inbound_return_a_invoice_line_a().id,
                         number_of_packs: 1.0,
                         ..Default::default()
@@ -270,7 +259,7 @@ mod test {
                 InsertInboundReturn {
                     id: "some_new_id".to_string(),
                     other_party_id: mock_name_customer_a().id,
-                    inbound_return_lines: vec![InsertInboundReturnLine {
+                    inbound_return_lines: vec![InboundReturnLineInput {
                         id: "new_line_id".to_string(),
                         item_id: mock_item_a().id,
                         number_of_packs: 1.0,
@@ -318,7 +307,7 @@ mod test {
                     r.id = "new_inbound_return_id".to_string();
                     r.other_party_id = mock_name_customer_a().id;
                     r.inbound_return_lines = vec![
-                        InsertInboundReturnLine {
+                        InboundReturnLineInput {
                             id: "new_inbound_return_line_id".to_string(),
                             reason_id: Some(return_reason().id),
                             number_of_packs: 1.0,
@@ -326,7 +315,7 @@ mod test {
                             pack_size: 1,
                             ..Default::default()
                         },
-                        InsertInboundReturnLine {
+                        InboundReturnLineInput {
                             id: "new_inbound_return_line_id_2".to_string(),
                             reason_id: Some(return_reason().id),
                             number_of_packs: 0.0,

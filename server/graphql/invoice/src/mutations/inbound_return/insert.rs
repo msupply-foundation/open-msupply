@@ -10,8 +10,8 @@ use graphql_types::types::InvoiceNode;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::invoice::inbound_return::insert::{
     InsertInboundReturn as ServiceInput, InsertInboundReturnError as ServiceError,
-    InsertInboundReturnLine,
 };
+use service::invoice::inbound_return::InboundReturnLineInput as ServiceLineInput;
 
 #[derive(InputObject)]
 #[graphql(name = "InboundReturnInput")]
@@ -130,7 +130,7 @@ impl InsertInput {
 }
 
 impl InboundReturnLineInput {
-    pub fn to_domain(self) -> InsertInboundReturnLine {
+    pub fn to_domain(self) -> ServiceLineInput {
         let InboundReturnLineInput {
             id,
             number_of_packs_returned,
@@ -142,7 +142,7 @@ impl InboundReturnLineInput {
             pack_size,
         }: InboundReturnLineInput = self;
 
-        InsertInboundReturnLine {
+        ServiceLineInput {
             id,
             number_of_packs: number_of_packs_returned,
             reason_id,
