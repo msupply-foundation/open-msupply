@@ -9,8 +9,8 @@ import {
   CurrencyInputCell,
   ColumnAlign,
   NumberInputCell,
-  useFormatCurrency,
   CellProps,
+  CurrencyCell,
 } from '@openmsupply-client/common';
 import {
   ServiceItemSearchInput,
@@ -26,7 +26,6 @@ export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftInboundLine>) => void
 ) => {
   const t = useTranslation('replenishment');
-  const c = useFormatCurrency();
   return useColumns<DraftInboundLine>([
     {
       key: 'serviceItemName',
@@ -74,7 +73,8 @@ export const useServiceLineColumns = (
       label: 'label.total',
       align: ColumnAlign.Right,
       width: 75,
-      accessor: ({ rowData }) => c(rowData?.totalAfterTax),
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => rowData?.totalAfterTax,
     },
     {
       key: 'isDeleted',
