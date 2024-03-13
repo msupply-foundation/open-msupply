@@ -54,8 +54,6 @@ export const InboundReturnEditModal = ({
     customerId
   );
 
-  const okEnabled =
-    currentTab === Tabs.Reason && lines.every(line => line.reasonId);
   const onOk = async () => {
     try {
       await saveInboundReturn();
@@ -80,7 +78,7 @@ export const InboundReturnEditModal = ({
         }
         okButton={
           currentTab === Tabs.Reason ? (
-            <DialogButton onClick={onOk} variant="ok" disabled={!okEnabled} />
+            <DialogButton onClick={onOk} variant="ok" />
           ) : undefined
         }
         height={height}
@@ -99,7 +97,7 @@ export const InboundReturnEditModal = ({
             </TabPanel>
             <TabPanel value={Tabs.Reason}>
               <ReturnReasonsTable
-                lines={lines}
+                lines={lines.filter(line => line.numberOfPacksReturned > 0)}
                 updateLine={line => update(line)}
               />
             </TabPanel>
