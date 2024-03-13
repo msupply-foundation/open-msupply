@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -7,6 +7,9 @@ import {
   createTableStore,
   useKeyboardHeightAdjustment,
   useTabs,
+  Box,
+  ModalMode,
+  AlertColor,
 } from '@openmsupply-client/common';
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ItemSelector } from './ItemSelector';
@@ -19,6 +22,7 @@ interface OutboundReturnEditModalProps {
   supplierId: string;
   returnId?: string;
   initialItemId?: string | null;
+  modalMode: ModalMode | null;
 }
 
 export const OutboundReturnEditModal = ({
@@ -28,12 +32,18 @@ export const OutboundReturnEditModal = ({
   supplierId,
   returnId,
   initialItemId,
+  modalMode,
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
   const [itemId, setItemId] = useState<string | undefined>(
     initialItemId ?? undefined
   );
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
+    AlertColor | undefined
+  >();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -54,29 +64,50 @@ export const OutboundReturnEditModal = ({
     }
   };
 
+  const handleNext = () => {
+    if (lines.some(line => line.numberOfPacksToReturn !== 0)) {
+      onChangeTab(Tabs.Reason);
+      return;
+    }
+
+    switch (modalMode) {
+      case ModalMode.Create: {
+        setZeroQuantityAlert('error');
+        break;
+      }
+      case ModalMode.Update: {
+        setZeroQuantityAlert('warning');
+        break;
+      }
+    }
+    alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
         title={t('heading.return-items')}
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
+        // zeroQuantityAlert === warning implies all lines are 0 and user has
+        // been already warned, so we act immediately to update them
         nextButton={
-          currentTab === Tabs.Quantity ? (
+          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning' ? (
             <DialogButton
-              onClick={() => onChangeTab(Tabs.Reason)}
+              onClick={handleNext}
               variant="next"
               disabled={!lines.length}
             />
           ) : undefined
         }
         okButton={
-          currentTab === Tabs.Reason ? (
+          currentTab === Tabs.Reason || zeroQuantityAlert === 'warning' ? (
             <DialogButton onClick={onOk} variant="ok" />
           ) : undefined
         }
         height={height}
         width={1024}
       >
-        <>
+        <Box ref={alertRef}>
           {returnId && (
             <ItemSelector
               disabled={!!itemId}
@@ -89,9 +120,11 @@ export const OutboundReturnEditModal = ({
               currentTab={currentTab}
               lines={lines}
               update={update}
+              zeroQuantityAlert={zeroQuantityAlert}
+              setZeroQuantityAlert={setZeroQuantityAlert}
             />
           )}
-        </>
+        </Box>
       </Modal>
     </TableProvider>
   );

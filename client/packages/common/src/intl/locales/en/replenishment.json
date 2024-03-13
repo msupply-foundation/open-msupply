@@ -124,6 +124,8 @@
   "messages.confirm-delete-shipment-lines_many": "This will permanently remove {{count}} shipment lines",
   "messages.confirm-delete-shipment-lines_other": "This will permanently remove {{count}} shipment lines",
   "messages.confirm-delete-return": "This will permanently remove Return #{{number}}",
+  "messages.alert-zero-return-quantity": "Please add some quantities to return before proceeding to the next step",
+  "messages.zero-return-quantity-will-delete-lines": "There are no return quantities specified. Click OK again to confirm and remove these lines from the return.",
   "messages.deleted-requisitions_one": "Deleted {{count}} order",
   "messages.deleted-requisitions_few": "Deleted {{count}} orders",
   "messages.deleted-requisitions_many": "Deleted {{count}} orders",
