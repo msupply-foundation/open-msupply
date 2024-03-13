@@ -3,7 +3,7 @@ mod test {
     use async_graphql::EmptyMutation;
 
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::MockDataInserts;
     use repository::mock::{mock_name_store_a, mock_outbound_shipment_a, mock_store_a};
     use repository::InvoiceRowType;
@@ -41,7 +41,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_get_invoice_by_number() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             InvoiceQueries,
             EmptyMutation,
             "test_graphql_get_invoice_by_number",

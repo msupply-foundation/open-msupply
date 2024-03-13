@@ -124,7 +124,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 
 #[cfg(test)]
 mod graphql {
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{
         mock_name_linked_to_store, mock_name_not_linked_to_store, mock_name_store_b,
@@ -139,7 +139,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_insert() {
-        let (_, connection, _, settings) = setup_graphl_test(
+        let (_, connection, _, settings) = setup_graphql_test(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_insert",
