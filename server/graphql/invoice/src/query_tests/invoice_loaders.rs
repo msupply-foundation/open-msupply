@@ -3,7 +3,7 @@ mod test {
     use async_graphql::EmptyMutation;
 
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::{
         mock_invoice_loader_invoice1, mock_invoice_loader_invoice2,
         mock_invoice_loader_requisition1,
@@ -16,7 +16,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_invoice_loaders() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             InvoiceQueries,
             EmptyMutation,
             "test_graphql_invoice_loaders",

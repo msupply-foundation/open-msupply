@@ -2,7 +2,7 @@
 mod tests {
 
     use async_graphql::{EmptyMutation, MergedObject};
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use graphql_general::GeneralQueries;
     use graphql_invoice::InvoiceQueries;
     use graphql_invoice_line::InvoiceLineQueries;
@@ -43,7 +43,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_default_queries() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             full_query(),
             EmptyMutation,
             "test_default_report_queries",

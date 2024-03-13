@@ -99,7 +99,7 @@ mod test {
     use crate::InvoiceMutations;
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_empty_draft_inbound_shipment, mock_item_a, MockDataInserts},
@@ -152,7 +152,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_add_from_master_list_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_structured_errors",
@@ -261,7 +261,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_add_from_master_list_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceMutations,
             "test_graphql_add_is_from_master_list_success",

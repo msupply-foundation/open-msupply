@@ -80,7 +80,7 @@ impl SensorMutations {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     //use repository::mock::mock_sensors;
     use repository::{
         mock::MockDataInserts, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField,
@@ -131,7 +131,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_sensors_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             SensorQueries,
             EmptyMutation,
             "test_graphql_sensors_success",
@@ -235,7 +235,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_sensors_inputs() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             SensorQueries,
             EmptyMutation,
             "test_graphql_sensor_inputs",

@@ -130,7 +130,7 @@ impl AssetLogMutations {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
 
     use repository::{
         assets::asset::{Asset, AssetFilter, AssetSort},
@@ -179,7 +179,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_assets_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             AssetQueries,
             EmptyMutation,
             "test_graphql_assets_success",

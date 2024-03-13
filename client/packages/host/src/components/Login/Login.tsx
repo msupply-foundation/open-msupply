@@ -66,6 +66,10 @@ export const Login = () => {
       );
       return `${t('error.account-blocked')} ${formattedTime}`;
     }
+    if (error?.stdError === 'Internal error') {
+      return t('error.internal-error');
+    }
+
     return t('error.login');
   }, [error, timeoutRemaining, customDate, t]);
 

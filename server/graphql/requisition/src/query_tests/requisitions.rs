@@ -2,7 +2,7 @@ mod graphql {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition_all_fields, MockDataInserts},
@@ -55,7 +55,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_requisitions() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             RequisitionQueries,
             EmptyMutation,
             "test_graphql_get_requisitions",
