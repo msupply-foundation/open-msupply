@@ -164,7 +164,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | NoInvoiceType
-        | NumberOfPacksBelowOne
+        | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
@@ -455,7 +455,7 @@ mod test {
         );
 
         //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
