@@ -163,7 +163,7 @@ impl StoreSortInput {
 #[cfg(test)]
 mod graphql {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::{mock_name_a, mock_store_a};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{EqualFilter, RepositoryError, Store, StoreFilter};
@@ -198,7 +198,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn graphql_store_mapping() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "graphql_store_mapping",

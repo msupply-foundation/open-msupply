@@ -2,7 +2,7 @@
 mod test {
     use async_graphql::EmptyMutation;
     use chrono::{DateTime, Utc};
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, get_invoice_lines_inline};
     use repository::EqualFilter;
     use repository::{mock::MockDataInserts, InvoiceFilter, InvoiceRepository};
@@ -12,7 +12,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_pricing() {
-        let (_, connection, _, settings) = setup_graphl_test(
+        let (_, connection, _, settings) = setup_graphql_test(
             InvoiceQueries,
             EmptyMutation,
             "test_graphql_invoices_query_pricing",
@@ -65,7 +65,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_filters() {
-        let (_, connection, _, settings) = setup_graphl_test(
+        let (_, connection, _, settings) = setup_graphql_test(
             InvoiceQueries,
             EmptyMutation,
             "test_graphql_invoices_query_filters",
@@ -184,7 +184,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_invoices_query_sort() {
-        let (_, connection, _, settings) = setup_graphl_test(
+        let (_, connection, _, settings) = setup_graphql_test(
             InvoiceQueries,
             EmptyMutation,
             "test_graphql_invoices_query_sort",
