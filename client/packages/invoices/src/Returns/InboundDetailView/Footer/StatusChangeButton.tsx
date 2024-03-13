@@ -86,24 +86,19 @@ const getButtonLabel =
   };
 
 const useStatusChangeButton = () => {
-  // const { lines, status, onHold, update } = useOutbound.document.fields([
-  //   'status',
-  //   'onHold',
-  //   'lines',
-  // ]);
-
   const { success, error } = useNotification();
   const t = useTranslation('distribution');
-  const { data } = useReturns.document.inboundReturn();
+  const { mutateAsync } = useReturns.document.updateInboundReturn();
 
-  // TEMP until "fields" hook available:
-  const status = data?.status ?? InvoiceNodeStatus.New;
-  const update = async (_: unknown) => true;
-  const onHold = false;
-  const lines: { totalCount: number; nodes: unknown[] } = {
-    totalCount: 0,
-    nodes: [],
-  };
+  const {
+    data: { status, lines, onHold, id } = {
+      status: InvoiceNodeStatus.New,
+      lines: { totalCount: 0 },
+      onHold: false,
+    },
+  } = useReturns.document.inboundReturn();
+
+  const lineCount = lines.totalCount;
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -116,9 +111,12 @@ const useStatusChangeButton = () => {
     );
 
   const onConfirmStatusChange = async () => {
-    if (!selectedOption) return null;
+    if (!selectedOption || !id) return null;
     try {
-      await update({ status: selectedOption.value });
+      await mutateAsync({
+        inboundReturnId: id,
+        status: selectedOption.value,
+      });
       success(t('messages.return-saved'))();
     } catch (e) {
       error(t('messages.error-saving-return'))();
@@ -148,7 +146,7 @@ const useStatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
-    lines,
+    lineCount,
   };
 };
 
@@ -159,11 +157,11 @@ export const StatusChangeButton = () => {
     setSelectedOption,
     getConfirmation,
     onHold,
-    lines,
+    lineCount,
   } = useStatusChangeButton();
   const isDisabled = useReturns.utils.inboundIsDisabled();
   const t = useTranslation();
-  const noLines = lines?.totalCount === 0;
+  const noLines = lineCount === 0;
 
   if (!selectedOption) return null;
   if (isDisabled) return null;
