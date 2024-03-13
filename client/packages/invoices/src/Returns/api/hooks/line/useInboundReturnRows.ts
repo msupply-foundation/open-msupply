@@ -8,7 +8,7 @@ import {
 import { useInboundReturnColumns } from '../../../InboundDetailView/columns';
 import { useInboundReturn } from '../document/useInboundReturn';
 import { InboundReturnLineFragment } from '../../operations.generated';
-import { InboundReturnItem } from 'packages/invoices/src/types';
+import { InboundReturnItem } from '../../../../types';
 
 export const useInboundReturnRows = () => {
   const {

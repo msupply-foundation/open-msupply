@@ -1,4 +1,4 @@
-import { useQuery } from 'packages/common/src';
+import { useQuery } from '@openmsupply-client/common';
 import { OutboundListParams } from '../../api';
 import { useReturnsApi } from '../utils/useReturnsApi';
 
