@@ -2,16 +2,27 @@ import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
 import { useIntlUtils } from '../utils';
 
+// See: https://stackoverflow.com/questions/50673859/how-to-prevent-very-small-numbers-from-being-converted-to-scientific-notation
+// For example 4e-7 becomes "0.0000004" instead of "4e-7"
+const toNonScientificString = (value: number): string => {
+  const valueString = value.toString();
+  const decimalsPart = valueString.split('.')?.[1] ?? '';
+  const eDecimals = Number(valueString?.split('e-')?.[1]) || 0;
+  const countOfDecimals = decimalsPart.length + eDecimals;
+  return value.toFixed(countOfDecimals);
+};
+
 const trimCents = (centsString: string) => {
-  const trimmed = Number(`.${centsString}`);
+  const number = Number(`.${centsString}`);
 
   // If the result is an empty string, return .00
-  if (!trimmed) {
+  if (!number) {
     return '00';
   }
 
+  const trimmed = toNonScientificString(number);
   // Trimmed is some number with just one decimal place.
-  if (String(trimmed).length < 4) {
+  if (trimmed.length < 4) {
     return `${String(trimmed)[2]}0`;
   }
 
@@ -203,9 +214,12 @@ export const useCurrency = (code?: Currencies) => {
   const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
 
   const options = currencyOptions(language, currencyCode);
-  const precision = options.precision;
   return {
-    c: (value: currency.Any) => currency(value, { ...options, precision }),
+    c: (value: currency.Any, precision?: number) =>
+      currency(value, {
+        ...options,
+        precision: precision ?? options.precision,
+      }),
     options,
     currencyCode,
   };
