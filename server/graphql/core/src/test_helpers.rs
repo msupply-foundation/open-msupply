@@ -210,7 +210,7 @@ macro_rules! assert_standard_graphql_error {
     }};
 }
 
-pub async fn setup_graphl_test_with_data<
+pub async fn setup_graphql_test_with_data<
     Q: 'static + ObjectType + Clone,
     M: 'static + ObjectType + Clone,
 >(
@@ -251,5 +251,5 @@ pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + Obj
     StorageConnectionManager,
     TestGraphlSettings<Q, M>,
 ) {
-    setup_graphl_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
+    setup_graphql_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
 }
