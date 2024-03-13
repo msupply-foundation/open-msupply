@@ -1,6 +1,9 @@
 use super::validate::check_asset_exists;
 use crate::service_provider::ServiceContext;
-use repository::{assets::asset_row::AssetRowRepository, RepositoryError, StorageConnection};
+use repository::{
+    asset_internal_location_row::AssetInternalLocationRowRepository,
+    assets::asset_row::AssetRowRepository, RepositoryError, StorageConnection,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteAssetError {
@@ -20,11 +23,16 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &asset_id)?;
 
+            let _deleted_location = AssetInternalLocationRowRepository::new(&connection)
+                .delete_all_for_asset_id(&asset_id)
+                .map_err(DeleteAssetError::from);
+
             AssetRowRepository::new(&connection)
                 .delete(&asset_id)
                 .map_err(DeleteAssetError::from)
         })
         .map_err(|error| error.to_inner_error())?;
+
     Ok(asset_id)
 }
 

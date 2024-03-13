@@ -22,13 +22,13 @@ pub struct AssetInternalLocationRow {
     pub location_id: String,
 }
 
-pub struct AssetLocationRowRepository<'a> {
+pub struct AssetInternalLocationRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> AssetLocationRowRepository<'a> {
+impl<'a> AssetInternalLocationRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        AssetLocationRowRepository { connection }
+        AssetInternalLocationRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]

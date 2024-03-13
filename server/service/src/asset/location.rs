@@ -1,5 +1,5 @@
 use repository::{
-    asset_internal_location_row::{AssetInternalLocationRow, AssetLocationRowRepository},
+    asset_internal_location_row::{AssetInternalLocationRow, AssetInternalLocationRowRepository},
     RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
@@ -11,7 +11,7 @@ pub fn set_asset_location(
 ) -> Result<(), RepositoryError> {
     connection
         .transaction_sync(|connection| {
-            let repo = AssetLocationRowRepository::new(connection);
+            let repo = AssetInternalLocationRowRepository::new(connection);
 
             // delete previous locations
             match repo.delete_all_for_asset_id(asset_id) {
