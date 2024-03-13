@@ -22,6 +22,7 @@ fragment PrescriptionRow on InvoiceNode {
     serviceTotalBeforeTax
     taxPercentage
   }
+  currencyRate
 
   user {
     __typename
