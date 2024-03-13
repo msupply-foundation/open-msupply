@@ -76,7 +76,7 @@ pub enum InvoiceLineSortField {
 
 pub type InvoiceLineSort = Sort<InvoiceLineSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -93,19 +93,7 @@ pub struct InvoiceLineFilter {
 
 impl InvoiceLineFilter {
     pub fn new() -> InvoiceLineFilter {
-        InvoiceLineFilter {
-            id: None,
-            store_id: None,
-            invoice_id: None,
-            r#type: None,
-            item_id: None,
-            location_id: None,
-            requisition_id: None,
-            number_of_packs: None,
-            invoice_type: None,
-            invoice_status: None,
-            stock_line_id: None,
-        }
+        InvoiceLineFilter::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

@@ -1,0 +1,36 @@
+[package]
+name = "asset_catalogue"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+
+repository = { path = "../../repository" }
+service = { path = "../../service" }
+util = { path = "../../util" }
+graphql_core = { path = "../core" }
+graphql_types = { path = "../types" }
+
+actix-web = { workspace = true }
+anymap= { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+actix-rt = { workspace = true }
+assert-json-diff = { workspace = true }
+
+[features]
+default = ["sqlite"]
+sqlite = ["repository/sqlite"]
+postgres = ["repository/postgres"]

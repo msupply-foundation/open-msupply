@@ -1,6 +1,8 @@
 use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
+pub mod asset;
+pub mod asset_log;
 mod barcode;
 mod clinician;
 pub mod common;
@@ -52,6 +54,8 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+pub use asset::*;
+pub use asset_log::*;
 pub use barcode::*;
 pub use clinician::*;
 use common::*;
@@ -101,6 +105,10 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
+    assets::{
+        asset_log_row::{AssetLogRow, AssetLogRowRepository},
+        asset_row::{AssetRow, AssetRowRepository},
+    },
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
     ContextRowRepository, CurrencyRow, Document, DocumentRegistryRow,
@@ -184,6 +192,8 @@ pub struct MockData {
     pub contexts: Vec<ContextRow>,
     pub pack_variants: Vec<PackVariantRow>,
     pub plugin_data: Vec<PluginDataRow>,
+    pub assets: Vec<AssetRow>,
+    pub asset_logs: Vec<AssetLogRow>,
 }
 
 impl MockData {
@@ -248,6 +258,8 @@ pub struct MockDataInserts {
     pub pack_variants: bool,
     pub plugin_data: bool,
     pub currencies: bool,
+    pub assets: bool,
+    pub asset_logs: bool,
 }
 
 impl MockDataInserts {
@@ -301,6 +313,8 @@ impl MockDataInserts {
             pack_variants: true,
             plugin_data: true,
             currencies: true,
+            assets: true,
+            asset_logs: true,
         }
     }
 
@@ -354,6 +368,7 @@ impl MockDataInserts {
     }
 
     pub fn stores(mut self) -> Self {
+        self.names = true;
         self.stores = true;
         self
     }
@@ -526,6 +541,22 @@ impl MockDataInserts {
         self.currencies = true;
         self
     }
+
+    pub fn assets(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
+        self
+    }
+
+    pub fn asset_logs(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
+        self.user_accounts = true;
+        self.asset_logs = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -600,6 +631,8 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             contexts: mock_contexts(),
             pack_variants: mock_pack_variants(),
             clinicians: mock_clinicians(),
+            assets: mock_assets(),
+            asset_logs: mock_asset_logs(),
             ..Default::default()
         },
     );
@@ -607,6 +640,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
         "test_invoice_count_service_data",
         test_invoice_count_service_data(),
     );
+
     data.insert(
         "test_outbound_shipment_update_data",
         test_outbound_shipment_update_data(),
@@ -1008,6 +1042,20 @@ pub fn insert_mock_data(
                 repo.upsert_one(&row).unwrap();
             }
         }
+
+        if inserts.assets {
+            for row in &mock_data.assets {
+                let repo = AssetRowRepository::new(connection);
+                repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.asset_logs {
+            let repo = AssetLogRowRepository::new(connection);
+            for row in &mock_data.asset_logs {
+                repo.upsert_one(&row).unwrap();
+            }
+        }
     }
     mock_data
 }
@@ -1063,6 +1111,8 @@ impl MockData {
             mut clinician_store_joins,
             mut contexts,
             mut pack_variants,
+            mut assets,
+            mut asset_logs,
             plugin_data: _,
             mut currencies,
         } = other;
@@ -1118,6 +1168,8 @@ impl MockData {
         self.contexts.append(&mut contexts);
         self.pack_variants.append(&mut pack_variants);
         self.currencies.append(&mut currencies);
+        self.assets.append(&mut assets);
+        self.asset_logs.append(&mut asset_logs);
 
         self
     }

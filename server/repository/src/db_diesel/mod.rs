@@ -2,6 +2,7 @@ use crate::repository_error::RepositoryError;
 
 pub mod activity_log;
 mod activity_log_row;
+pub mod assets;
 pub mod barcode;
 mod barcode_row;
 pub mod changelog;
@@ -104,6 +105,7 @@ mod user_row;
 mod user_store_join_row;
 
 pub use activity_log_row::*;
+pub use assets::*;
 pub use barcode_row::*;
 pub use changelog::*;
 pub use clinician::*;

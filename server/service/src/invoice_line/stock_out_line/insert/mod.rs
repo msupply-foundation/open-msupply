@@ -170,7 +170,7 @@ mod test {
                     r.invoice_id = mock_outbound_shipment_a_invoice_lines()[0]
                         .invoice_id
                         .clone();
-                    r.number_of_packs = 0.0;
+                    r.number_of_packs = -1.0;
                 }),
             ),
             Err(ServiceError::NumberOfPacksBelowOne)
