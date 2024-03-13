@@ -102,13 +102,13 @@ export type InsertInboundReturnMutationVariables = Types.Exact<{
 
 export type InsertInboundReturnMutation = { __typename: 'Mutations', insertInboundReturn: { __typename: 'InsertInboundReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
-export type DeleteOutboundReturnsMutationVariables = Types.Exact<{
+export type DeleteOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Array<Types.DeleteOutboundReturnInput> | Types.DeleteOutboundReturnInput;
+  id: Types.Scalars['String']['input'];
 }>;
 
 
-export type DeleteOutboundReturnsMutation = { __typename: 'Mutations', deleteOutboundReturns: { __typename: 'DeleteOutboundReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
+export type DeleteOutboundReturnMutation = { __typename: 'Mutations', deleteOutboundReturn: { __typename: 'DeleteOutboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
 
 export type UpdateInboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -124,7 +124,7 @@ export type DeleteInboundReturnsMutationVariables = Types.Exact<{
 }>;
 
 
-export type DeleteInboundReturnsMutation = { __typename: 'Mutations', deleteInboundReturns: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeletedIdsResponse', deletedIds: Array<string> } };
+export type DeleteInboundReturnsMutation = { __typename: 'Mutations', deleteInboundReturns: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
 
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
@@ -384,12 +384,12 @@ export const InsertInboundReturnDocument = gql`
   }
 }
     `;
-export const DeleteOutboundReturnsDocument = gql`
-    mutation deleteOutboundReturns($storeId: String!, $input: [DeleteOutboundReturnInput!]!) {
-  deleteOutboundReturns(storeId: $storeId, input: $input) {
+export const DeleteOutboundReturnDocument = gql`
+    mutation deleteOutboundReturn($storeId: String!, $id: String!) {
+  deleteOutboundReturn(storeId: $storeId, id: $id) {
     __typename
-    ... on DeletedIdsResponse {
-      deletedIds
+    ... on DeleteResponse {
+      id
     }
   }
 }
@@ -408,8 +408,8 @@ export const DeleteInboundReturnsDocument = gql`
     mutation deleteInboundReturns($storeId: String!, $input: [DeleteInboundReturnInput!]!) {
   deleteInboundReturns(storeId: $storeId, input: $input) {
     __typename
-    ... on DeletedIdsResponse {
-      deletedIds
+    ... on DeleteResponse {
+      id
     }
   }
 }
@@ -452,8 +452,8 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     insertInboundReturn(variables: InsertInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertInboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertInboundReturnMutation>(InsertInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertInboundReturn', 'mutation');
     },
-    deleteOutboundReturns(variables: DeleteOutboundReturnsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundReturnsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnsMutation>(DeleteOutboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturns', 'mutation');
+    deleteOutboundReturn(variables: DeleteOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundReturnMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnMutation>(DeleteOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturn', 'mutation');
     },
     updateInboundReturn(variables: UpdateInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateInboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnMutation>(UpdateInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturn', 'mutation');
@@ -639,16 +639,16 @@ export const mockInsertInboundReturnMutation = (resolver: ResponseResolver<Graph
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockDeleteOutboundReturnsMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
+ * mockDeleteOutboundReturnMutation((req, res, ctx) => {
+ *   const { storeId, id } = req.variables;
  *   return res(
- *     ctx.data({ deleteOutboundReturns })
+ *     ctx.data({ deleteOutboundReturn })
  *   )
  * })
  */
-export const mockDeleteOutboundReturnsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundReturnsMutationVariables>, GraphQLContext<DeleteOutboundReturnsMutation>, any>) =>
-  graphql.mutation<DeleteOutboundReturnsMutation, DeleteOutboundReturnsMutationVariables>(
-    'deleteOutboundReturns',
+export const mockDeleteOutboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteOutboundReturnMutationVariables>, GraphQLContext<DeleteOutboundReturnMutation>, any>) =>
+  graphql.mutation<DeleteOutboundReturnMutation, DeleteOutboundReturnMutationVariables>(
+    'deleteOutboundReturn',
     resolver
   )
 

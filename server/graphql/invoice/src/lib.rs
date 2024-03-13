@@ -200,13 +200,13 @@ impl InvoiceMutations {
         outbound_return::update_lines::update_lines(ctx, &store_id, input)
     }
 
-    async fn delete_outbound_returns(
+    async fn delete_outbound_return(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        input: outbound_return::delete::DeleteInput,
+        id: String,
     ) -> Result<outbound_return::delete::DeleteResponse> {
-        outbound_return::delete::delete(ctx, &store_id, input)
+        outbound_return::delete::delete(ctx, &store_id, id)
     }
 
     async fn insert_inbound_return(

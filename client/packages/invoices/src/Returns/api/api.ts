@@ -170,12 +170,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       });
       return result?.invoices;
     },
-    outboundReturnLines: async (stockLineIds: string[], itemId?: string) => {
+    outboundReturnLines: async (
+      stockLineIds: string[],
+      itemId?: string,
+      returnId?: string
+    ) => {
       const result = await sdk.generateOutboundReturnLines({
         storeId,
         input: {
           stockLineIds,
           itemId,
+          returnId,
         },
       });
 
@@ -261,24 +266,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not update outbound return');
   },
 
-  deleteOutbound: async (
-    returns: OutboundReturnRowFragment[]
-  ): Promise<string[]> => {
-    const result = await sdk.deleteOutboundReturns({
+  deleteOutbound: async (id: string): Promise<string> => {
+    const result = await sdk.deleteOutboundReturn({
       storeId,
-      input: {
-        ids: returns.map(({ id }) => id),
-      },
+      id,
     });
 
-    const { deleteOutboundReturns } = result;
+    const { deleteOutboundReturn } = result;
 
-    if (deleteOutboundReturns.__typename === 'DeletedIdsResponse') {
-      return deleteOutboundReturns.deletedIds;
+    if (deleteOutboundReturn.__typename === 'DeleteResponse') {
+      return deleteOutboundReturn.id;
     }
 
-    // TODO: query for and handle error response...
-    throw new Error('Could not delete outbound returns');
+    // TODO: handle error response...
+    throw new Error('Could not delete outbound return');
   },
 
   insertInboundReturn: async (input: InboundReturnInput) => {
@@ -324,7 +325,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
   deleteInbound: async (
     returns: InboundReturnRowFragment[]
-  ): Promise<string[]> => {
+  ): Promise<string> => {
     const result = await sdk.deleteInboundReturns({
       storeId,
       input: {
@@ -334,11 +335,11 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     const { deleteInboundReturns } = result;
 
-    if (deleteInboundReturns.__typename === 'DeletedIdsResponse') {
-      return deleteInboundReturns.deletedIds;
+    if (deleteInboundReturns.__typename === 'DeleteResponse') {
+      return deleteInboundReturns.id;
     }
 
-    // TODO: query for and handle error response...
-    throw new Error('Could not delete inbound returns');
+    // TODO: handle error response...
+    throw new Error('Could not delete inbound return');
   },
 });
