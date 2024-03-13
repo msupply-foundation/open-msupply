@@ -43,7 +43,7 @@ interface ResponseError {
   extensions?: { details?: string };
 }
 
-export class StdError extends Error {
+export class GraphqlStdError extends Error {
   public stdError?: string | undefined;
   constructor(message: string, stdError: string | undefined) {
     super(message);
@@ -76,7 +76,7 @@ const handleResponseError = (errors: ResponseError[]) => {
   const error = errors[0];
   const { extensions } = error || {};
   const { details } = extensions || {};
-  throw new StdError(
+  throw new GraphqlStdError(
     details || error?.message || 'Unknown error',
     error?.message
   );
