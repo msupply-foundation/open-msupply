@@ -10,6 +10,7 @@ import { useInsertOutboundReturn } from './useInsertOutboundReturn';
 import { useInboundReturn } from './useInboundReturn';
 import { useInboundReturnDelete } from './useInboundDelete';
 import { useUpdateOutboundReturn } from './useUpdateOutboundReturn';
+import { useUpdateInboundReturn } from './useUpdateInboundReturn';
 
 export const Document = {
   useOutboundReturn,
@@ -25,5 +26,6 @@ export const Document = {
   useUpdateOutboundReturn,
 
   useInsertInboundReturn,
+  useUpdateInboundReturn,
   useInboundReturnDelete,
 };
