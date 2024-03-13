@@ -138,6 +138,7 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
     ... on AssetLogNode {
       __typename
       id
+      assetId
     }
     ... on InsertAssetLogError {
       __typename

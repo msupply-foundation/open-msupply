@@ -378,6 +378,20 @@ export type AssetLogNode = {
   user?: Maybe<UserNode>;
 };
 
+export enum AssetLogReasonInput {
+  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingInstallation = 'AWAITING_INSTALLATION',
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  LackOfPower = 'LACK_OF_POWER',
+  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
+  NeedsServicing = 'NEEDS_SERVICING',
+  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
+  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
+  Stored = 'STORED',
+  Unknown = 'UNKNOWN'
+}
+
 export enum AssetLogSortFieldInput {
   LogDatetime = 'logDatetime',
   Status = 'status'
@@ -392,6 +406,14 @@ export type AssetLogSortInput = {
   /** Sort query result by `key` */
   key: AssetLogSortFieldInput;
 };
+
+export enum AssetLogStatusInput {
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
+  NotFunctioning = 'NOT_FUNCTIONING',
+  NotInUse = 'NOT_IN_USE'
+}
 
 export type AssetLogsResponse = AssetLogConnector;
 
@@ -1612,9 +1634,9 @@ export type EqualFilterRequisitionTypeInput = {
 };
 
 export type EqualFilterStatusInput = {
-  equalAny?: InputMaybe<Array<StatusInput>>;
-  equalTo?: InputMaybe<StatusInput>;
-  notEqualTo?: InputMaybe<StatusInput>;
+  equalAny?: InputMaybe<Array<AssetLogStatusInput>>;
+  equalTo?: InputMaybe<AssetLogStatusInput>;
+  notEqualTo?: InputMaybe<AssetLogStatusInput>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
@@ -1791,8 +1813,8 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  reason?: InputMaybe<ReasonInput>;
-  status?: InputMaybe<StatusInput>;
+  reason?: InputMaybe<AssetLogReasonInput>;
+  status?: InputMaybe<AssetLogStatusInput>;
   type?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -4846,20 +4868,6 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export enum ReasonInput {
-  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
-  AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decomissioned = 'DECOMISSIONED',
-  Functioning = 'FUNCTIONING',
-  LackOfPower = 'LACK_OF_POWER',
-  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
-  NeedsServicing = 'NEEDS_SERVICING',
-  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
-  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
-  Stored = 'STORED',
-  Unknown = 'UNKNOWN'
-}
-
 export enum ReasonType {
   AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
   AwaitingInstallation = 'AWAITING_INSTALLATION',
@@ -5292,14 +5300,6 @@ export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & 
   description: Scalars['String']['output'];
   lines: StocktakeLineConnector;
 };
-
-export enum StatusInput {
-  Decomissioned = 'DECOMISSIONED',
-  Functioning = 'FUNCTIONING',
-  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
-  NotFunctioning = 'NOT_FUNCTIONING',
-  NotInUse = 'NOT_IN_USE'
-}
 
 export enum StatusType {
   Decomissioned = 'DECOMISSIONED',

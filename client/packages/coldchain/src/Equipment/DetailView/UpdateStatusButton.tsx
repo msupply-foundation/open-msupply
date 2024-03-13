@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ButtonWithIcon,
   useTranslation,
@@ -12,31 +12,53 @@ import {
   WizardStepper,
   useDebounceCallback,
   DetailContainer,
+  InsertAssetLogInput,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { StatusTab } from './StatusTab';
 import { UploadTab } from './UploadTab';
-import { AssetLogFragment } from '../api';
+import { useAssets } from '../api';
 
 enum Tabs {
   Status = 'Status',
   Upload = 'UploadFiles',
 }
-export const UpdateStatusButtonComponent = () => {
+
+const getEmptyAssetLog = (assetId: string) => ({
+  id: FnUtils.generateUUID(),
+  assetId,
+});
+
+export const UpdateStatusButtonComponent = ({
+  assetId,
+}: {
+  assetId: string | undefined;
+}) => {
+  const onClose = () => {
+    setDraft(getEmptyAssetLog(''));
+    onChangeTab(Tabs.Status);
+  };
   const { currentTab, onChangeTab } = useTabs(Tabs.Status);
   const t = useTranslation('coldchain');
-  const { Modal, hideDialog, showDialog } = useDialog();
-  const { success } = useNotification();
-  // TODO create a draft object
-  const [draft, setDraft] = useState<Partial<AssetLogFragment>>({
-    id: '',
-  });
+  const { Modal, hideDialog, showDialog } = useDialog({ onClose });
+  const { error, success } = useNotification();
+  const [draft, setDraft] = useState<Partial<InsertAssetLogInput>>(
+    getEmptyAssetLog('')
+  );
+  const { mutateAsync: insert } = useAssets.log.insert();
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.Upload);
   }, []);
 
-  const onOk = () => {
-    success(t('messages.log-saved-successfully'))();
+  const onOk = async () => {
+    await insert(draft)
+      .then(() => {
+        success(t('messages.log-saved-successfully'))();
+        hideDialog();
+        onClose();
+      })
+      .catch(e => error(`${t('error.unable-to-save-log')}: ${e.message}`)());
   };
 
   const logSteps = [
@@ -57,18 +79,29 @@ export const UpdateStatusButtonComponent = () => {
     return step ? logSteps.indexOf(step) : 0;
   };
 
-  const isValid = () => false;
-
-  const onChange = (patch: Partial<AssetLogFragment>) => {
+  const isValid = () => !!draft?.id && !!draft?.assetId && !!draft?.status;
+  const onChange = (patch: Partial<InsertAssetLogInput>) => {
     if (!draft) return;
     setDraft({ ...draft, ...patch });
   };
 
+  useEffect(() => setDraft(getEmptyAssetLog(assetId ?? '')), [assetId]);
+
   return (
     <>
       <Modal
+        width={785}
+        sx={{ '& .MuiDialogContent-root': { paddingTop: 0 } }}
         title="Add Item"
-        cancelButton={<DialogButton variant="cancel" onClick={hideDialog} />}
+        cancelButton={
+          <DialogButton
+            variant="cancel"
+            onClick={() => {
+              onClose();
+              hideDialog();
+            }}
+          />
+        }
         okButton={
           currentTab === Tabs.Upload ? (
             <DialogButton variant="ok" onClick={onOk} />
@@ -84,11 +117,12 @@ export const UpdateStatusButtonComponent = () => {
           ) : undefined
         }
       >
-        <DetailContainer>
+        <DetailContainer paddingTop={0}>
           <Box
-            display="flex"
-            flexDirection="column"
             alignItems="center"
+            display="flex"
+            flex={1}
+            flexDirection="column"
             gap={2}
             sx={{
               '& .MuiStep-horizontal': {

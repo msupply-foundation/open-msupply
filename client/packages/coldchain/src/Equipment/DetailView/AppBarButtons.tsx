@@ -17,7 +17,7 @@ import {
 import { UpdateStatusButton } from './UpdateStatusButton';
 import { JsonData } from '@openmsupply-client/programs';
 
-export const AppBarButtonsComponent = ({}) => {
+export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
   const t = useTranslation('common');
   const { print, isPrinting } = useReport.utils.print();
@@ -41,7 +41,7 @@ export const AppBarButtonsComponent = ({}) => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <UpdateStatusButton />
+        <UpdateStatusButton assetId={data?.id} />
         <ReportSelector context={ReportContext.Asset} onPrint={printReport}>
           <LoadingButton
             variant="outlined"

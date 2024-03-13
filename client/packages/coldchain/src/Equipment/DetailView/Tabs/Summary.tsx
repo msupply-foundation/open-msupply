@@ -91,21 +91,21 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
         <Section heading={t('heading.asset-identification')}>
           <Row label={t('label.category')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetCategory?.name}
+              value={draft.catalogueItem?.assetCategory?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
           <Row label={t('label.type')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetType?.name}
+              value={draft.catalogueItem?.assetType?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
           <Row label={t('label.serial')}>
             <BasicTextInput
-              value={draft.serialNumber}
+              value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
             />
