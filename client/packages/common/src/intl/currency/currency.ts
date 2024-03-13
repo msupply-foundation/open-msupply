@@ -2,16 +2,6 @@ import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
 import { useIntlUtils } from '../utils';
 
-// See: https://stackoverflow.com/questions/50673859/how-to-prevent-very-small-numbers-from-being-converted-to-scientific-notation
-// For example 4e-7 becomes "0.0000004" instead of "4e-7"
-const toNonScientificString = (value: number): string => {
-  const valueString = value.toString();
-  const decimalsPart = valueString.split('.')?.[1] ?? '';
-  const eDecimals = Number(valueString?.split('e-')?.[1]) || 0;
-  const countOfDecimals = decimalsPart.length + eDecimals;
-  return value.toFixed(countOfDecimals);
-};
-
 const trimCents = (centsString: string) => {
   const number = Number(`.${centsString}`);
 
@@ -20,7 +10,9 @@ const trimCents = (centsString: string) => {
     return '00';
   }
 
-  const trimmed = toNonScientificString(number);
+  const trimmed = new Intl.NumberFormat('en', {
+    maximumFractionDigits: 21,
+  }).format(number);
   // Trimmed is some number with just one decimal place.
   if (trimmed.length < 4) {
     return `${String(trimmed)[2]}0`;
