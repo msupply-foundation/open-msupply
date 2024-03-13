@@ -48,7 +48,7 @@ export const ReturnSteps = ({
 
   const alertMessage =
     zeroQuantityAlert === 'warning'
-      ? t('messages.warn-zero-return-quantity')
+      ? t('messages.zero-return-quantity-will-delete-lines')
       : t('messages.alert-zero-return-quantity');
 
   return (
