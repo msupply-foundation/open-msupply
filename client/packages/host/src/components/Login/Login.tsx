@@ -66,7 +66,7 @@ export const Login = () => {
       );
       return `${t('error.account-blocked')} ${formattedTime}`;
     }
-    if (error?.detail?.includes('UpdateUserError')) {
+    if (error?.stdError?.includes('Internal error')) {
       return t('error.database-busy');
     }
 

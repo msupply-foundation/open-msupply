@@ -43,6 +43,14 @@ interface ResponseError {
   extensions?: { details?: string };
 }
 
+export class StdError extends Error {
+  public stdError?: string | undefined;
+  constructor(message: string, stdError: string | undefined) {
+    super(message);
+    this.stdError = stdError;
+  }
+}
+
 const hasError = (errors: ResponseError[], error: AuthError) =>
   errors.some(({ message }: { message?: string }) => message === error);
 
@@ -68,7 +76,10 @@ const handleResponseError = (errors: ResponseError[]) => {
   const error = errors[0];
   const { extensions } = error || {};
   const { details } = extensions || {};
-  throw new Error(details || error?.message || 'Unknown error');
+  throw new StdError(
+    details || error?.message || 'Unknown error',
+    error?.message
+  );
 };
 
 const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
