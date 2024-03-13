@@ -20,7 +20,7 @@ use crate::{
     loader::{get_loaders, LoaderRegistry},
 };
 
-pub struct TestGraphlSettings<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone> {
+pub struct TestGraphqlSettings<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone> {
     pub queries: Q,
     pub mutations: M,
     pub connection_manager: StorageConnectionManager,
@@ -30,7 +30,7 @@ pub async fn run_test_gql_query<
     Q: 'static + ObjectType + Clone,
     M: 'static + ObjectType + Clone,
 >(
-    settings: &TestGraphlSettings<Q, M>,
+    settings: &TestGraphqlSettings<Q, M>,
     query: &str,
     variables: &Option<serde_json::Value>,
     service_provider_override: Option<ServiceProvider>,
@@ -223,7 +223,7 @@ pub async fn setup_graphql_test_with_data<
     MockDataCollection,
     StorageConnection,
     StorageConnectionManager,
-    TestGraphlSettings<Q, M>,
+    TestGraphqlSettings<Q, M>,
 ) {
     let (mock_data, connection, connection_manager, _) =
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
@@ -232,7 +232,7 @@ pub async fn setup_graphql_test_with_data<
         mock_data,
         connection,
         connection_manager.clone(),
-        TestGraphlSettings {
+        TestGraphqlSettings {
             queries,
             mutations,
             connection_manager,
@@ -252,7 +252,7 @@ pub async fn setup_graphql_test<
     MockDataCollection,
     StorageConnection,
     StorageConnectionManager,
-    TestGraphlSettings<Q, M>,
+    TestGraphqlSettings<Q, M>,
 ) {
     setup_graphql_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
 }
