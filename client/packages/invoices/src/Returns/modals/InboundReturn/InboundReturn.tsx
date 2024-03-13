@@ -107,6 +107,8 @@ export const InboundReturnEditModal = ({
       <Modal
         title={t('heading.return-items')}
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
+        // zeroQuantityAlert === warning implies all lines are 0 and user has
+        // been already warned, so we act immediately to update them
         nextButton={
           currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning' ? (
             <DialogButton onClick={handleNext} variant={'next'} />
