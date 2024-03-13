@@ -257,6 +257,5 @@ mod test {
                 .unwrap(),
             None
         );
-        // tODO: check stock line also delted
     }
 }
