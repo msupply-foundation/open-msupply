@@ -247,6 +247,12 @@ export const canDeleteInvoice = (
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated;
 
+export const canDeleteOutboundReturn = (
+  outboundReturn: OutboundReturnRowFragment
+): boolean =>
+  outboundReturn.status === InvoiceNodeStatus.New ||
+  outboundReturn.status === InvoiceNodeStatus.Picked;
+
 export const canDeletePrescription = (
   invoice: PrescriptionRowFragment
 ): boolean =>

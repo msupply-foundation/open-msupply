@@ -16,18 +16,22 @@ export const useDraftInboundReturnLines = (
     GeneratedInboundReturnLineNode[]
   >([]);
 
-  const data = useReturns.lines.generateInboundReturnLines(
+  const { refetch } = useReturns.lines.generateInboundReturnLines(
     outboundReturnLineIds
   );
-  const lines = data?.nodes;
 
   const { mutateAsync } = useReturns.document.insertInboundReturn();
 
   useEffect(() => {
-    const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
+    const getLines = async () => {
+      const { data } = await refetch();
+      const lines = data?.nodes ?? [];
 
-    setDraftLines(newDraftLines);
-  }, [lines]);
+      setDraftLines(lines);
+    };
+
+    getLines();
+  }, []);
 
   const update = (patch: RecordPatch<GeneratedInboundReturnLineNode>) => {
     setDraftLines(currLines => {

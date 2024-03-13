@@ -728,7 +728,7 @@ export type DeleteInboundReturnInput = {
   ids: Array<Scalars['String']['input']>;
 };
 
-export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeletedIdsResponse;
+export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -817,11 +817,7 @@ export type DeleteOutboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteOutboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeletedIdsResponse;
+export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeleteResponse;
 
 export type DeleteOutboundShipmentError = {
   __typename: 'DeleteOutboundShipmentError';
@@ -1030,11 +1026,6 @@ export type DeleteStocktakeResponseWithId = {
   __typename: 'DeleteStocktakeResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteStocktakeResponse;
-};
-
-export type DeletedIdsResponse = {
-  __typename: 'DeletedIdsResponse';
-  deletedIds: Array<Scalars['String']['output']>;
 };
 
 export type DisplaySettingNode = {
@@ -1520,13 +1511,13 @@ export type GenerateInboundReturnLinesInput = {
 
 export type GenerateInboundReturnLinesResponse = GeneratedInboundReturnLineConnector;
 
-/**
- * At least one input is required.
- * Note that if you provide multiple inputs, they will be applied as an AND filter.
- */
+/** At least one input is required. */
 export type GenerateOutboundReturnLinesInput = {
+  /** Generate new return lines for all the available stock lines of a specific item */
   itemId?: InputMaybe<Scalars['String']['input']>;
+  /** Include existing return lines in the response. Only has an effect when either `stock_line_ids` or `item_id` is set. */
   returnId?: InputMaybe<Scalars['String']['input']>;
+  /** The stock line ids to generate new return lines for */
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
@@ -2779,7 +2770,7 @@ export type Mutations = {
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteLocation: DeleteLocationResponse;
-  deleteOutboundReturns: DeleteOutboundReturnResponse;
+  deleteOutboundReturn: DeleteOutboundReturnResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
@@ -2973,8 +2964,8 @@ export type MutationsDeleteLocationArgs = {
 };
 
 
-export type MutationsDeleteOutboundReturnsArgs = {
-  input: DeleteOutboundReturnInput;
+export type MutationsDeleteOutboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -3637,7 +3628,7 @@ export type OutboundReturnLineNode = {
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksToReturn: Scalars['Int']['output'];
+  numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
