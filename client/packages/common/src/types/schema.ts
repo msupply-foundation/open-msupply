@@ -5737,7 +5737,7 @@ export type UpdateErrorInterface = {
 export type UpdateInboundReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  inboundReturnId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateInboundReturnStatusInput>;
 };

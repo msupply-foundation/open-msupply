@@ -302,10 +302,10 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       status?: InvoiceNodeStatus;
     }
   ) => {
-    const { inboundReturnId, comment, onHold, colour, status } = input;
+    const { id, comment, onHold, colour, status } = input;
     const result = await sdk.updateInboundReturn({
       input: {
-        inboundReturnId,
+        id,
         comment,
         onHold,
         colour,

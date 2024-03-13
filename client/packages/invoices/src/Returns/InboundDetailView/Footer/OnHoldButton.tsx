@@ -17,11 +17,7 @@ export const OnHoldButtonComponent = memo(() => {
 
   const updateOnHold = (onHold: boolean) => {
     if (!id) return;
-
-    mutateAsync({
-      inboundReturnId: id,
-      onHold,
-    });
+    mutateAsync({ id, onHold });
   };
 
   const getConfirmation = useConfirmationModal({
