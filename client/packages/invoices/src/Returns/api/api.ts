@@ -275,20 +275,16 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     // TODO: handle error response...
     throw new Error('Could not delete outbound return');
   },
-  deleteInbound: async (
-    returns: InboundReturnRowFragment[]
-  ): Promise<string> => {
-    const result = await sdk.deleteInboundReturns({
+  deleteInbound: async (id: string): Promise<string> => {
+    const result = await sdk.deleteInboundReturn({
       storeId,
-      input: {
-        ids: returns.map(({ id }) => id),
-      },
+      id,
     });
 
-    const { deleteInboundReturns } = result;
+    const { deleteInboundReturn } = result;
 
-    if (deleteInboundReturns.__typename === 'DeleteResponse') {
-      return deleteInboundReturns.id;
+    if (deleteInboundReturn.__typename === 'DeleteResponse') {
+      return deleteInboundReturn.id;
     }
 
     // TODO: handle error response...

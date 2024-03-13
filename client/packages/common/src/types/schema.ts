@@ -724,10 +724,6 @@ export type DeleteInboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteInboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
 export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
@@ -2765,7 +2761,7 @@ export type Mutations = {
    * lines quantity (placeholder and filled) for requisitionLine.item
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
-  deleteInboundReturns: DeleteInboundReturnResponse;
+  deleteInboundReturn: DeleteInboundReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -2934,8 +2930,8 @@ export type MutationsCreateRequisitionShipmentArgs = {
 };
 
 
-export type MutationsDeleteInboundReturnsArgs = {
-  input: DeleteInboundReturnInput;
+export type MutationsDeleteInboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
