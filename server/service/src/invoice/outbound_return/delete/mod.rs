@@ -37,6 +37,10 @@ pub fn delete_outbound_return(
                 })?;
             }
 
+            InvoiceRowRepository::new(&connection)
+                .delete(&id)
+                .map_err(|error| DeleteOutboundReturnError::DatabaseError(error))?;
+
             activity_log_entry(
                 &ctx,
                 ActivityLogType::InvoiceDeleted,
@@ -45,9 +49,6 @@ pub fn delete_outbound_return(
                 None,
             )?;
 
-            InvoiceRowRepository::new(&connection)
-                .delete(&id)
-                .map_err(|error| DeleteOutboundReturnError::DatabaseError(error))?;
             Ok(id)
         })
         .map_err(|error| error.to_inner_error())
