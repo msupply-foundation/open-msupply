@@ -112,8 +112,8 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_return_a_invoice_line_a, mock_inbound_return_a_invoice_line_b,
-            mock_item_a, mock_item_b, mock_name_store_b, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_item_a, mock_item_b, mock_name_store_b, mock_outbound_return_a_invoice_line_a,
+            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
@@ -229,6 +229,19 @@ mod test {
                 }),
             ),
             Err(ServiceError::ItemNotFound)
+        );
+
+        // NotAStockIn
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                inline_init(|r: &mut UpdateStockInLine| {
+                    r.id = mock_outbound_return_a_invoice_line_a().id;
+                    r.pack_size = Some(1);
+                    r.number_of_packs = Some(1.0);
+                }),
+            ),
+            Err(ServiceError::NotAStockIn)
         );
 
         // CannotEditFinalised
