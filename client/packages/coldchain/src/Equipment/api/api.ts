@@ -37,6 +37,14 @@ const assetParsers = {
     serialNumber: setNullableInput('serialNumber', input),
     storeId: input.storeId,
   }),
+  toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
+    id: input.id ?? '',
+    assetId: input.assetId ?? '',
+    comment: input.comment,
+    reason: input.reason,
+    status: input.status,
+    type: input.type,
+  }),
 };
 
 export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
@@ -130,15 +138,15 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete asset');
   },
-  insertLog: async (input: InsertAssetLogInput): Promise<string> => {
+  insertLog: async (input: Partial<InsertAssetLogInput>): Promise<string> => {
     const result = await sdk.insertAssetLog({
-      input,
+      input: assetParsers.toLogInsert(input),
       storeId,
     });
     const { insertAssetLog } = result;
 
     if (insertAssetLog?.__typename === 'AssetLogNode') {
-      return insertAssetLog.id;
+      return insertAssetLog.assetId;
     }
 
     throw new Error('Could not insert asset log');

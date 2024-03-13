@@ -66,7 +66,7 @@ export type InsertAssetLogMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertAssetLogMutation = { __typename: 'Mutations', insertAssetLog: { __typename: 'AssetLogNode', id: string } | { __typename: 'InsertAssetLogError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
+export type InsertAssetLogMutation = { __typename: 'Mutations', insertAssetLog: { __typename: 'AssetLogNode', id: string, assetId: string } | { __typename: 'InsertAssetLogError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
 
 export const AssetFragmentDoc = gql`
     fragment Asset on AssetNode {
@@ -210,6 +210,7 @@ export const InsertAssetLogDocument = gql`
     ... on AssetLogNode {
       __typename
       id
+      assetId
     }
     ... on InsertAssetLogError {
       __typename

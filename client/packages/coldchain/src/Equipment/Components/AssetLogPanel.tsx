@@ -1,12 +1,16 @@
 import React, { FC, PropsWithChildren } from 'react';
 
-import { styled, TabPanel, Box } from '@openmsupply-client/common';
-import { AssetLogFragment } from '../api';
+import {
+  styled,
+  TabPanel,
+  Box,
+  InsertAssetLogInput,
+} from '@openmsupply-client/common';
 
 const StyledTabPanel = styled(TabPanel)({
   height: '100%',
-  padding: '0px 24px',
-  minWidth: '150px',
+  padding: 0,
+  width: '100%',
 });
 
 const StyledTabContainer = styled(Box)(({ theme }) => ({
@@ -17,7 +21,7 @@ const StyledTabContainer = styled(Box)(({ theme }) => ({
 
 export interface AssetLogPanel {
   value: string;
-  draft: Partial<AssetLogFragment>;
+  draft: Partial<InsertAssetLogInput>;
 }
 
 export const AssetLogPanel: FC<PropsWithChildren<AssetLogPanel>> = ({

@@ -1,7 +1,7 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetFragment } from './api';
 import { Formatter } from '@common/utils';
-import { ReasonType, StatusType } from '@common/types';
+import { AssetLogStatusInput, ReasonType, StatusType } from '@common/types';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
@@ -95,6 +95,29 @@ export const parseLogReason = (
     case ReasonType.Unknown:
       return { key: 'reason.unknown' };
     default:
-      console.warn(`Unknown equipment status: ${status}`);
+      console.warn(`Unknown equipment reason: ${reason}`);
   }
+};
+
+// used to prevent an error from the API when inserting
+// without the restriction here then the user has to guess which combinations are valid
+// If new entries are added to the API, this will need updating
+export const reasonsByStatus = {
+  [AssetLogStatusInput.NotInUse]: [
+    ReasonType.AwaitingInstallation,
+    ReasonType.Stored,
+    ReasonType.OffsiteForRepairs,
+    ReasonType.AwaitingDecomissioning,
+  ],
+  [AssetLogStatusInput.Functioning]: [],
+  [AssetLogStatusInput.FunctioningButNeedsAttention]: [
+    ReasonType.NeedsServicing,
+    ReasonType.MultipleTemperatureBreaches,
+  ],
+  [AssetLogStatusInput.NotFunctioning]: [
+    ReasonType.NeedsSpareParts,
+    ReasonType.LackOfPower,
+    ReasonType.Unknown,
+  ],
+  [AssetLogStatusInput.Decomissioned]: [],
 };
