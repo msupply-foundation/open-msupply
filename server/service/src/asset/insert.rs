@@ -1,4 +1,4 @@
-use super::{query::get_asset, validate::check_asset_exists};
+use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -17,6 +17,8 @@ pub enum InsertAssetError {
     SerialNumberAlreadyExists,
 }
 
+#[derive(PartialEq, Debug, Clone)]
+
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
@@ -26,6 +28,7 @@ pub struct InsertAsset {
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
+    pub location_ids: Option<Vec<String>>,
 }
 
 pub fn insert_asset(
@@ -36,8 +39,13 @@ pub fn insert_asset(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_asset = generate(input);
+            let new_asset = generate(input.clone());
             AssetRowRepository::new(&connection).upsert_one(&new_asset)?;
+
+            if input.location_ids.is_some() {
+                set_asset_location(connection, &new_asset.id, input.location_ids.unwrap())
+                    .map_err(|error| InsertAssetError::DatabaseError(error))?;
+            }
 
             get_asset(ctx, new_asset.id).map_err(InsertAssetError::from)
         })
@@ -76,6 +84,7 @@ pub fn generate(
         catalogue_item_id,
         installation_date,
         replacement_date,
+        location_ids: _,
     }: InsertAsset,
 ) -> AssetRow {
     AssetRow {

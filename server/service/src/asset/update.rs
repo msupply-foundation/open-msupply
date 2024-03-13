@@ -1,4 +1,4 @@
-use super::{query::get_asset, validate::check_asset_exists};
+use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
 use crate::{service_provider::ServiceContext, NullableUpdate, SingleRecordError};
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -18,7 +18,7 @@ pub enum UpdateAssetError {
     DatabaseError(RepositoryError),
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct UpdateAsset {
     pub id: String,
     pub store_id: Option<String>,
@@ -28,6 +28,7 @@ pub struct UpdateAsset {
     pub catalogue_item_id: Option<NullableUpdate<String>>,
     pub installation_date: Option<NullableUpdate<NaiveDate>>,
     pub replacement_date: Option<NullableUpdate<NaiveDate>>,
+    pub location_ids: Option<Vec<String>>,
 }
 
 pub fn update_asset(
@@ -38,8 +39,13 @@ pub fn update_asset(
         .connection
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
-            let updated_asset_row = generate(&ctx.store_id, input, asset_row);
+            let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
+
+            if input.location_ids.clone().is_some() {
+                set_asset_location(connection, &asset_row.id, input.location_ids.unwrap())
+                    .map_err(|error| UpdateAssetError::DatabaseError(error))?;
+            }
 
             get_asset(ctx, updated_asset_row.id).map_err(UpdateAssetError::from)
         })
@@ -86,6 +92,7 @@ pub fn generate(
         catalogue_item_id,
         installation_date,
         replacement_date,
+        location_ids: _,
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
