@@ -85,6 +85,7 @@ export const PrescriptionRowFragmentDoc = gql`
     serviceTotalBeforeTax
     taxPercentage
   }
+  currencyRate
   user {
     __typename
     username
