@@ -72,7 +72,7 @@ export const EquipmentDetailView = () => {
       value: 'Summary',
     },
     {
-      Component: <StatusLogs />,
+      Component: draft === undefined ? null : <StatusLogs assetId={draft.id} />,
       value: 'StatusLogs',
     },
     {

@@ -62,6 +62,7 @@ export { TranslateIcon } from './Translate';
 export { TruckIcon } from './Truck';
 export { UnhappyMan } from './UnhappyMan';
 export { UploadIcon } from './Upload';
+export { UserCircleIcon } from './UserCircle';
 export { UserIcon } from './User';
 export { XCircleIcon } from './XCircle';
 export { ZapIcon } from './Zap';
