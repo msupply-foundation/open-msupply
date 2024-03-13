@@ -80,12 +80,6 @@ export const InboundReturnEditModal = ({
       onChangeTab(Tabs.Reason);
       return;
     }
-    // zeroQuantityAlert === warning implies all lines are 0 and user has been
-    // warned, so we act immediately to update them
-    if (zeroQuantityAlert === 'warning') {
-      onOk();
-      return;
-    }
     switch (modalMode) {
       case ModalMode.Create: {
         setZeroQuantityAlert('error');
@@ -114,15 +108,12 @@ export const InboundReturnEditModal = ({
         title={t('heading.return-items')}
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
         nextButton={
-          currentTab === Tabs.Quantity ? (
-            <DialogButton
-              onClick={handleNext}
-              variant={zeroQuantityAlert === 'warning' ? 'ok' : 'next'}
-            />
+          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning' ? (
+            <DialogButton onClick={handleNext} variant={'next'} />
           ) : undefined
         }
         okButton={
-          currentTab === Tabs.Reason ? (
+          currentTab === Tabs.Reason || zeroQuantityAlert === 'warning' ? (
             <DialogButton onClick={onOk} variant="ok" />
           ) : undefined
         }
