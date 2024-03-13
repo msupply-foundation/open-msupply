@@ -54,7 +54,7 @@
           "type": "string"
         }
       },
-      "required": ["id", "code"],
+      "required": ["id", "code", "firstName", "lastName"],
       "type": "object"
     }
   },
