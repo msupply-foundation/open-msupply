@@ -37,6 +37,7 @@ fragment InboundReturn on InvoiceNode {
   deliveredDatetime
   verifiedDatetime
 
+  otherPartyId
   otherPartyName
   otherPartyStore {
     code
