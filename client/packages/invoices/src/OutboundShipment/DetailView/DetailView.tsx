@@ -38,6 +38,8 @@ export const DetailView: FC = () => {
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
     entity: outboundShipmentLineIds,
+    mode: returnModalMode,
+    setMode: setReturnMode,
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
@@ -61,7 +63,10 @@ export const DetailView: FC = () => {
     } else if (!selectedIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
-    } else onOpenReturns(selectedIds);
+    } else {
+      onOpenReturns(selectedIds);
+      setReturnMode(ModalMode.Create);
+    }
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -113,6 +118,7 @@ export const DetailView: FC = () => {
               onClose={onCloseReturns}
               outboundShipmentLineIds={outboundShipmentLineIds || []}
               customerId={data.otherPartyId}
+              modalMode={returnModalMode}
             />
           )}
 
