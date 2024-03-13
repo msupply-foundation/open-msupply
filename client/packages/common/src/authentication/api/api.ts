@@ -2,7 +2,7 @@ import {
   AuthError,
   LocaleKey,
   LocalStorage,
-  StdError,
+  GraphqlStdError,
   TypedTFunction,
 } from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
@@ -75,7 +75,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         });
         return authTokenGuard(result, t);
       } catch (e) {
-        const error = e as StdError;
+        const error = e as GraphqlStdError;
         if ('message' in error) {
           console.error(error.message);
         }
