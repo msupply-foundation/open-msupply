@@ -8,10 +8,7 @@ import {
   SplitButtonOption,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import {
-  getNextInboundReturnStatus,
-  getStatusTranslation,
-} from '../../../utils';
+import { getNextInboundStatus, getStatusTranslation } from '../../../utils';
 import { useReturns } from '../../api';
 
 const getStatusOptions = (
@@ -66,13 +63,53 @@ const getStatusOptions = (
   return options;
 };
 
+const getManualStatusOptions = (
+  currentStatus: InvoiceNodeStatus,
+  getButtonLabel: (status: InvoiceNodeStatus) => string
+): SplitButtonOption<InvoiceNodeStatus>[] => {
+  const options: [
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+    SplitButtonOption<InvoiceNodeStatus>,
+  ] = [
+    {
+      value: InvoiceNodeStatus.New,
+      label: getButtonLabel(InvoiceNodeStatus.New),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Delivered,
+      label: getButtonLabel(InvoiceNodeStatus.Delivered),
+      isDisabled: true,
+    },
+    {
+      value: InvoiceNodeStatus.Verified,
+      label: getButtonLabel(InvoiceNodeStatus.Verified),
+      isDisabled: true,
+    },
+  ];
+
+  if (currentStatus === InvoiceNodeStatus.New) {
+    // When the status is new, delivered and verified are available to
+    // select.
+    options[1].isDisabled = false;
+  }
+
+  // When the status is delivered, only verified is available to select.
+  if (currentStatus === InvoiceNodeStatus.Delivered) {
+    options[2].isDisabled = false;
+  }
+
+  return options;
+};
+
 const getNextStatusOption = (
   status: InvoiceNodeStatus,
   options: SplitButtonOption<InvoiceNodeStatus>[]
 ): SplitButtonOption<InvoiceNodeStatus> | null => {
   if (!status) return options[0] ?? null;
 
-  const nextStatus = getNextInboundReturnStatus(status);
+  const nextStatus = getNextInboundStatus(status);
   const nextStatusOption = options.find(o => o.value === nextStatus);
   return nextStatusOption || null;
 };
@@ -100,8 +137,15 @@ const useStatusChangeButton = () => {
 
   const lineCount = lines.totalCount;
 
+  // TODO manual vs automatic returns
+  // const isManuallyCreated = !linkedShipment?.id;
+  const isManuallyCreated = true;
+
   const options = useMemo(
-    () => getStatusOptions(status, getButtonLabel(t)),
+    () =>
+      isManuallyCreated
+        ? getManualStatusOptions(status, getButtonLabel(t))
+        : getStatusOptions(status, getButtonLabel(t)),
     [status, getButtonLabel]
   );
 
