@@ -16,18 +16,22 @@ export const useDraftInboundReturnLines = (
     GeneratedInboundReturnLineNode[]
   >([]);
 
-  const data = useReturns.lines.generateInboundReturnLines(
+  const { refetch } = useReturns.lines.generateInboundReturnLines(
     outboundReturnLineIds
   );
-  const lines = data?.nodes;
 
   const { mutateAsync } = useReturns.document.insertInboundReturn();
 
   useEffect(() => {
-    const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
+    const getLines = async () => {
+      const { data } = await refetch();
+      const lines = data?.nodes ?? [];
 
-    setDraftLines(newDraftLines);
-  }, [lines]);
+      setDraftLines(lines);
+    };
+
+    getLines();
+  }, []);
 
   const update = (patch: RecordPatch<GeneratedInboundReturnLineNode>) => {
     setDraftLines(currLines => {
@@ -43,11 +47,22 @@ export const useDraftInboundReturnLines = (
 
   const saveInboundReturn = async () => {
     const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
-      ({ id, reasonId, numberOfPacksReturned, note }) => {
+      ({
+        id,
+        reasonId,
+        itemId,
+        numberOfPacksReturned,
+        note,
+        packSize,
+        batch,
+        expiryDate,
+      }) => {
         return {
           id,
-          stockLineId:
-            'TODO: this field is removed in another PR, lets just keep the compiler happy for now 😅',
+          packSize,
+          batch,
+          expiryDate,
+          itemId,
           reasonId,
           note,
           numberOfPacksReturned,

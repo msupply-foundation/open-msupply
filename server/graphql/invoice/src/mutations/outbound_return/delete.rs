@@ -1,13 +1,14 @@
 use async_graphql::*;
 use graphql_core::simple_generic_errors::CannotEditInvoice;
 use graphql_core::simple_generic_errors::RecordNotFound;
+use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
+use graphql_core::ContextExt;
 use graphql_types::generic_errors::CannotDeleteInvoiceWithLines;
-
-#[derive(InputObject)]
-#[graphql(name = "DeleteOutboundReturnInput")]
-pub struct DeleteInput {
-    pub ids: Vec<String>,
-}
+use graphql_types::types::DeleteResponse as GenericDeleteResponse;
+use service::auth::Resource;
+use service::auth::ResourceAccessRequest;
+use service::invoice::outbound_return::delete::DeleteOutboundReturnError as ServiceError;
 
 #[derive(SimpleObject)]
 #[graphql(name = "DeleteOutboundReturnError")]
@@ -15,41 +16,42 @@ pub struct DeleteError {
     pub error: DeleteErrorInterface,
 }
 
-pub struct DeletedIdsResponse(pub Vec<String>);
-#[Object]
-impl DeletedIdsResponse {
-    pub async fn deleted_ids(&self) -> &Vec<String> {
-        &self.0
-    }
-}
-
 #[derive(Union)]
 #[graphql(name = "DeleteOutboundReturnResponse")]
 pub enum DeleteResponse {
     Error(DeleteError),
-    Response(DeletedIdsResponse),
+    Response(GenericDeleteResponse),
 }
 
-pub fn delete(_ctx: &Context<'_>, _store_id: &str, _input: DeleteInput) -> Result<DeleteResponse> {
-    // let user = validate_auth(
-    //     ctx,
-    //     &ResourceAccessRequest {
-    //         resource: Resource::MutateOutboundShipment,
-    //         store_id: Some(store_id.to_string()),
-    //     },
-    // )?;
+pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            // resource: Resource::MutateOutboundReturn,
+            resource: Resource::MutateOutboundShipment,
+            store_id: Some(store_id.to_string()),
+        },
+    )?;
 
-    // let service_provider = ctx.service_provider();
-    // let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    // map_response(
-    //     service_provider
-    //         .invoice_service
-    //         .delete_inbound_shipment(&service_context, input.to_domain()),
-    // )
-    Ok(DeleteResponse::Response(DeletedIdsResponse(vec![
-        "deleted_id".to_string(),
-    ])))
+    map_response(
+        service_provider
+            .invoice_service
+            .delete_outbound_return(&service_context, id),
+    )
+}
+
+pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    let result = match from {
+        Ok(id) => DeleteResponse::Response(GenericDeleteResponse(id)),
+        Err(error) => DeleteResponse::Error(DeleteError {
+            error: map_error(error)?,
+        }),
+    };
+
+    Ok(result)
 }
 
 #[derive(Interface)]
@@ -59,4 +61,23 @@ pub enum DeleteErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+}
+
+fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
+
+    let graphql_error = match error {
+        // Standard Graphql Errors
+        ServiceError::InvoiceDoesNotExist
+        | ServiceError::CannotEditFinalised
+        | ServiceError::NotAnOutboundReturn
+        | ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
+
+        ServiceError::DatabaseError(_) | ServiceError::LineDeleteError { .. } => {
+            InternalError(formatted_error)
+        }
+    };
+
+    Err(graphql_error.extend())
 }

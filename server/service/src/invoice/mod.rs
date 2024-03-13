@@ -10,6 +10,10 @@ use crate::service_provider::ServiceContext;
 use crate::ListError;
 use crate::ListResult;
 pub mod query;
+use self::inbound_return::insert::insert_inbound_return;
+use self::inbound_return::insert::InsertInboundReturn;
+use self::inbound_return::insert::InsertInboundReturnError;
+use self::outbound_return::delete::*;
 use self::outbound_return::generate_outbound_return_lines::*;
 use self::outbound_return::insert::*;
 use self::outbound_return::update::*;
@@ -225,6 +229,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         update_outbound_return_lines(ctx, input)
     }
 
+    fn delete_outbound_return(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeleteOutboundReturnError> {
+        delete_outbound_return(ctx, id)
+    }
+
     fn generate_inbound_return_lines(
         &self,
         ctx: &ServiceContext,
@@ -232,6 +244,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: GenerateInboundReturnLinesInput,
     ) -> Result<ListResult<InboundReturnLine>, ListError> {
         generate_inbound_return_lines(ctx, store_id, input)
+    }
+
+    fn insert_inbound_return(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertInboundReturn,
+    ) -> Result<Invoice, InsertInboundReturnError> {
+        insert_inbound_return(ctx, input)
     }
 }
 
