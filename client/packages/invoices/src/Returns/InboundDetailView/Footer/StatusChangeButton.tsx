@@ -113,10 +113,8 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption || !id) return null;
     try {
-      await mutateAsync({
-        inboundReturnId: id,
-        status: selectedOption.value,
-      });
+      await mutateAsync({ id, status: selectedOption.value });
+
       success(t('messages.return-saved'))();
     } catch (e) {
       error(t('messages.error-saving-return'))();

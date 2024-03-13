@@ -16,7 +16,7 @@ use service::{
 #[derive(InputObject)]
 #[graphql(name = "UpdateInboundReturnInput")]
 pub struct UpdateInput {
-    pub inbound_return_id: String,
+    pub id: String,
     // supplier_id: String,
     status: Option<UpdateInboundReturnStatusInput>,
     on_hold: Option<bool>,
@@ -85,7 +85,7 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
-            inbound_return_id,
+            id,
             comment,
             status,
             on_hold,
@@ -93,7 +93,7 @@ impl UpdateInput {
         }: UpdateInput = self;
 
         ServiceInput {
-            id: inbound_return_id,
+            id,
             status: status.map(|status| status.to_domain()),
             comment,
             on_hold,
