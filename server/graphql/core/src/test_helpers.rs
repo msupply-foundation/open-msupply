@@ -240,7 +240,10 @@ pub async fn setup_graphql_test_with_data<
     )
 }
 
-pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
+pub async fn setup_graphql_test<
+    Q: 'static + ObjectType + Clone,
+    M: 'static + ObjectType + Clone,
+>(
     queries: Q,
     mutations: M,
     db_name: &str,
