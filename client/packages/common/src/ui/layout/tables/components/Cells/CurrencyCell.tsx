@@ -29,7 +29,7 @@ export const CurrencyCell = <T extends RecordWithId>({
   const { c } = useCurrency(currencyCode);
   const price = Number(column.accessor({ rowData })) ?? 0;
   // format prices > 1 with default precision
-  const precision = price < 0 ? 10 : undefined;
+  const precision = price < 1 ? 10 : undefined;
   const fullText = c(price, precision).format();
   let text = fullText;
   if (price !== 0 && price < 0.001) {
