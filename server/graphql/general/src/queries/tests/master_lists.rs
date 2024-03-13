@@ -1,7 +1,7 @@
 mod graphql {
 
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::MockDataInserts, MasterList, MasterListFilter, MasterListSort,
         StorageConnectionManager,
@@ -50,7 +50,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_masterlists_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_masterlists_success",
@@ -141,7 +141,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_masterlists_filters() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_masterlist_filters",

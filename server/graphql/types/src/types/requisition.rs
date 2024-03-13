@@ -340,7 +340,7 @@ mod test {
 
     use graphql_core::{
         assert_graphql_query,
-        test_helpers::{setup_graphl_test, setup_graphql_test_with_data},
+        test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
@@ -356,7 +356,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_requisition_user_loader",
