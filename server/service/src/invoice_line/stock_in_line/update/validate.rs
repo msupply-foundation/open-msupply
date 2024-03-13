@@ -57,9 +57,6 @@ pub fn validate(
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
 
-    // TODO: StockLineDoesNotBelongToCurrentStore
-    // TODO: LocationDoesNotBelongToCurrentStore
-
     Ok((line, item, invoice))
 }
 
