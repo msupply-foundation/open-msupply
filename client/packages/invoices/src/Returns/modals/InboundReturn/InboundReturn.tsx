@@ -25,6 +25,7 @@ interface InboundReturnEditModalProps {
   customerId: string;
   onClose: () => void;
   modalMode: ModalMode | null;
+  returnId?: string;
 }
 
 enum Tabs {
@@ -38,6 +39,7 @@ export const InboundReturnEditModal = ({
   customerId,
   onClose,
   modalMode,
+  returnId,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation(['distribution', 'replenishment']);
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -61,10 +63,11 @@ export const InboundReturnEditModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
 
-  const { lines, update, saveInboundReturn } = useDraftInboundReturnLines(
+  const { lines, update, saveInboundReturn } = useDraftInboundReturnLines({
     outboundShipmentLineIds,
-    customerId
-  );
+    customerId,
+    returnId,
+  });
 
   const onOk = async () => {
     try {

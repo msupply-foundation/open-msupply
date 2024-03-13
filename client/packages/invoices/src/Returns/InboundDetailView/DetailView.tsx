@@ -9,6 +9,7 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
@@ -18,16 +19,27 @@ import { AppRoute } from '@openmsupply-client/config';
 import { SidePanel } from './SidePanel/SidePanel';
 import { ActivityLogList } from 'packages/system/src';
 import { Footer } from './Footer';
+import { InboundReturnItem } from '../../types';
+import { InboundReturnEditModal } from '../modals';
 
 export const InboundReturnDetailView: FC = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
 
-  // TODO: hook these up to modal
-  const onRowClick = () => {};
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: itemId,
+    mode,
+  } = useEditModal<string>();
 
-  const onAddItem = () => {};
+  // TODO: hook these up to modal
+  const onRowClick = (row: InboundReturnLineFragment | InboundReturnItem) =>
+    onOpen(row.itemId);
+
+  const onAddItem = () => onOpen();
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -56,6 +68,17 @@ export const InboundReturnDetailView: FC = () => {
           })}
         >
           <AppBarButtons onAddItem={onAddItem} />
+          {isOpen && (
+            <InboundReturnEditModal
+              isOpen={isOpen}
+              onClose={onClose}
+              outboundShipmentLineIds={[]}
+              customerId={data.otherPartyId}
+              returnId={data.id}
+              // initialItemId={itemId}
+              modalMode={mode}
+            />
+          )}
 
           <Toolbar />
           <DetailTabs tabs={tabs} />

@@ -8,16 +8,25 @@ import {
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
-export const useDraftInboundReturnLines = (
-  outboundReturnLineIds: string[],
-  customerId: string
-) => {
+export const useDraftInboundReturnLines = ({
+  customerId,
+  outboundShipmentLineIds,
+  itemId,
+  returnId,
+}: {
+  outboundShipmentLineIds: string[];
+  customerId: string;
+  itemId?: string;
+  returnId?: string;
+}) => {
   const [draftLines, setDraftLines] = React.useState<
     GeneratedInboundReturnLineNode[]
   >([]);
 
   const { refetch } = useReturns.lines.generateInboundReturnLines(
-    outboundReturnLineIds
+    outboundShipmentLineIds,
+    returnId,
+    itemId
   );
 
   const { mutateAsync } = useReturns.document.insertInboundReturn();

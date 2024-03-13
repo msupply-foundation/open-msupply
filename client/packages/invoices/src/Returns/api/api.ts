@@ -1,4 +1,5 @@
 import {
+  GenerateInboundReturnLinesInput,
   InboundReturnInput,
   InvoiceNodeType,
   InvoiceSortFieldInput,
@@ -167,11 +168,11 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.generateOutboundReturnLines;
     },
-    inboundReturnLines: async (outboundShipmentLineIds: string[]) => {
+    generateInboundReturnLines: async (
+      input: GenerateInboundReturnLinesInput
+    ) => {
       const result = await sdk.generateInboundReturnLines({
-        input: {
-          outboundShipmentLineIds,
-        },
+        input,
         storeId,
       });
 
