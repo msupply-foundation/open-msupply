@@ -65,11 +65,14 @@ export const OutboundReturnEditModal = ({
   };
 
   const handleNext = () => {
-    if (
-      lines.some(line => line.numberOfPacksToReturn !== 0) ||
-      zeroQuantityAlert === 'warning'
-    ) {
+    if (lines.some(line => line.numberOfPacksToReturn !== 0)) {
       onChangeTab(Tabs.Reason);
+      return;
+    }
+    // zeroQuantityAlert === warning implies all lines are 0 and user has been
+    // warned, so we act immediately to update them
+    if (zeroQuantityAlert === 'warning') {
+      onOk();
       return;
     }
     switch (modalMode) {
@@ -94,7 +97,7 @@ export const OutboundReturnEditModal = ({
           currentTab === Tabs.Quantity ? (
             <DialogButton
               onClick={handleNext}
-              variant="next"
+              variant={zeroQuantityAlert === 'warning' ? 'ok' : 'next'}
               disabled={!lines.length}
             />
           ) : undefined
