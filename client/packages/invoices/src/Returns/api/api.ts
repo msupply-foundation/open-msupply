@@ -76,6 +76,8 @@ const inboundParsers = {
     status: InvoiceNodeStatus | undefined
   ): UpdateInboundReturnStatusInput | undefined => {
     switch (status) {
+      case undefined:
+        return;
       case InvoiceNodeStatus.Delivered:
         return UpdateInboundReturnStatusInput.Delivered;
       case InvoiceNodeStatus.Verified:

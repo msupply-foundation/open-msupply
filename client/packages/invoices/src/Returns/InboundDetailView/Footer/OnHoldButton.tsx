@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { memo } from 'react';
 import {
   ToggleButton,
   useTranslation,
@@ -8,12 +8,21 @@ import { useReturns } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation('distribution');
-  //   const { onHold, update } = useOutbound.document.fields('onHold');
+  const { mutateAsync } = useReturns.document.updateInboundReturn();
+
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  // TEMP until 'onHold' update query is available:
-  const [onHold, setOnHold] = useState(false);
-  const update = ({ onHold }: { onHold: boolean }) => setOnHold(onHold);
+  const { data: { id, onHold } = { onHold: false } } =
+    useReturns.document.inboundReturn();
+
+  const updateOnHold = (onHold: boolean) => {
+    if (!id) return;
+
+    mutateAsync({
+      inboundReturnId: id,
+      onHold,
+    });
+  };
 
   const getConfirmation = useConfirmationModal({
     message: t(
@@ -22,7 +31,7 @@ export const OnHoldButtonComponent = memo(() => {
         : 'messages.on-hold-confirmation'
     ),
     title: t('heading.are-you-sure'),
-    onConfirm: () => update({ onHold: !onHold }),
+    onConfirm: () => updateOnHold(!onHold),
   });
 
   return (
