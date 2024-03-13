@@ -340,7 +340,7 @@ mod test {
 
     use graphql_core::{
         assert_graphql_query,
-        test_helpers::{setup_graphl_test, setup_graphl_test_with_data},
+        test_helpers::{setup_graphl_test, setup_graphql_test_with_data},
     };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
@@ -437,7 +437,7 @@ mod test {
         use repository::mock::test_remaining_to_supply as TestData;
         #[derive(Clone)]
         struct TestQuery;
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphql_requisition_lines_remaining_to_supply_loader",
