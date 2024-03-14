@@ -100,7 +100,7 @@ export type InsertInboundReturnMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertInboundReturnMutation = { __typename: 'Mutations', insertInboundReturn: { __typename: 'InsertInboundReturnError' } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
+export type InsertInboundReturnMutation = { __typename: 'Mutations', insertInboundReturn: { __typename: 'InsertInboundReturnError', error: { __typename: 'OtherPartyNotACustomer', description: string } | { __typename: 'OtherPartyNotVisible', description: string } } | { __typename: 'InvoiceNode', id: string, invoiceNumber: number } };
 
 export type DeleteOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -371,6 +371,13 @@ export const InsertInboundReturnDocument = gql`
       __typename
       id
       invoiceNumber
+    }
+    ... on InsertInboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
     }
   }
 }

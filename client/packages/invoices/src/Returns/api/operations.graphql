@@ -262,6 +262,14 @@ mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
       id
       invoiceNumber
     }
+
+    ... on InsertInboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
   }
 }
 
