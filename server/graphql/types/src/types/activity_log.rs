@@ -53,6 +53,10 @@ pub enum ActivityLogNodeType {
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
     SensorLocationChanged,
+    AssetCreated,
+    AssetUpdated,
+    AssetDeleted,
+    AssetLogCreated,
     QuantityForLineHasBeenSetToZero,
 }
 
@@ -162,6 +166,10 @@ impl ActivityLogNodeType {
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
             from::SensorLocationChanged => to::SensorLocationChanged,
+            from::AssetCreated => to::AssetCreated,
+            from::AssetUpdated => to::AssetUpdated,
+            from::AssetDeleted => to::AssetDeleted,
+            from::AssetLogCreated => to::AssetLogCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
         }
     }
@@ -201,6 +209,10 @@ impl ActivityLogNodeType {
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
             from::SensorLocationChanged => to::SensorLocationChanged,
+            from::AssetCreated => to::AssetCreated,
+            from::AssetUpdated => to::AssetUpdated,
+            from::AssetDeleted => to::AssetDeleted,
+            from::AssetLogCreated => to::AssetLogCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
         }
     }
