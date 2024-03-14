@@ -85,6 +85,10 @@ export type ActivityLogNode = {
 };
 
 export enum ActivityLogNodeType {
+  AssetCreated = 'ASSET_CREATED',
+  AssetDeleted = 'ASSET_DELETED',
+  AssetLogCreated = 'ASSET_LOG_CREATED',
+  AssetUpdated = 'ASSET_UPDATED',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
@@ -426,6 +430,7 @@ export type AssetNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  locations: Array<LocationNode>;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1795,6 +1800,7 @@ export type InsertAssetInput = {
   code: Scalars['String']['input'];
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
@@ -5898,6 +5904,7 @@ export type UpdateAssetInput = {
   code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
+  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
