@@ -282,6 +282,18 @@ mutation deleteOutboundReturn($storeId: String!, $id: String!) {
   }
 }
 
+mutation updateInboundReturnLines(
+  $storeId: String!
+  $input: UpdateInboundReturnLinesInput!
+) {
+  updateInboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
 mutation deleteInboundReturns(
   $storeId: String!
   $input: [DeleteInboundReturnInput!]!

@@ -32,7 +32,8 @@ export const useDraftInboundReturnLines = ({
     itemId
   );
 
-  const { mutateAsync } = useReturns.document.insertInboundReturn();
+  const { mutateAsync: insert } = useReturns.document.insertInboundReturn();
+  // const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   useEffect(() => {
     if (!draftLines.length) getLines();
@@ -84,7 +85,7 @@ export const useDraftInboundReturnLines = ({
     });
   };
 
-  const saveInboundReturn = async () => {
+  const save = async () => {
     const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
       ({
         id,
@@ -117,8 +118,8 @@ export const useDraftInboundReturnLines = ({
 
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
-    await mutateAsync(input);
+    await insert(input);
   };
 
-  return { lines: draftLines, update, saveInboundReturn, addDraftLine };
+  return { lines: draftLines, update, saveInboundReturn: save, addDraftLine };
 };
