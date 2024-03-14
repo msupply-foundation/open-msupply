@@ -3,7 +3,11 @@ use actix_web::{
     web::{self, Data},
     HttpRequest, HttpResponse,
 };
-use service::{auth_data::AuthData, service_provider::ServiceProvider};
+use service::{
+    auth_data::AuthData,
+    print::{label::print_qr_code, Printer},
+    service_provider::ServiceProvider,
+};
 
 #[derive(serde::Deserialize)]
 pub struct LabelData {
@@ -31,13 +35,14 @@ pub async fn print_label_qr(
     };
 
     // get printer settings
+    let printer = Printer {
+        ip: "192.168.178.69".to_string(),
+        port: 9100,
+    };
 
     // print label
-    let message = data.message.clone().unwrap_or_default();
-    println!(
-        "Printing QR label with code: {} message: {}",
-        data.code, message
-    );
-
+    if print_qr_code(printer, data.code.clone(), data.message.clone()).is_err() {
+        return HttpResponse::InternalServerError().body("Error printing QR label");
+    }
     HttpResponse::Ok().body("QR label printed")
 }

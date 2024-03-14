@@ -5084,6 +5084,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "simple-log",
+ "telnet",
  "temperature-sensor",
  "tera",
  "thiserror",
@@ -5404,6 +5405,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "telnet"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99f2cc260bea5219955ab4832c9600a41b87101d280939edae6dd10b3c68a4f3"
 
 [[package]]
 name = "temperature-sensor"
