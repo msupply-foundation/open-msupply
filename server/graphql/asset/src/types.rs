@@ -3,26 +3,22 @@ use async_graphql::*;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
+use graphql_core::loader::AssetStatusLogLoader;
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetLocationLoader, LocationByIdLoader, StoreByIdLoader, UserLoader,
-};
-use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetStatusLogLoader, StoreByIdLoader, UserLoader,
+    AssetCatalogueItemLoader, AssetLocationLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{AssetCatalogueItemNode, LocationNode, StoreNode, UserNode};
-use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
-use repository::asset_internal_location_row::AssetInternalLocationRowRepository;
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
-use repository::location::Location;
+
 use repository::{
     assets::asset::{Asset, AssetFilter, AssetSort},
     EqualFilter,
 };
-use repository::{DateFilter, DatetimeFilter, RepositoryError, StringFilter};
+use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
 use repository::asset_log_row::{AssetLogReason, AssetLogStatus};
