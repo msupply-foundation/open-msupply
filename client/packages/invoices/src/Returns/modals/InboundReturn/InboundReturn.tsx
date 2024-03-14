@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -57,19 +57,6 @@ export const InboundReturnEditModal = ({
       returnId,
       itemId,
     });
-
-  // TODO: own hook
-  useEffect(() => {
-    const keyBinding = (e: KeyboardEvent) => {
-      if (returnId && e.key === '+') {
-        e.preventDefault();
-        addDraftLine();
-      }
-    };
-
-    window.addEventListener('keydown', keyBinding);
-    return () => window.removeEventListener('keydown', keyBinding);
-  }, []);
 
   const onOk = async () => {
     try {
@@ -134,7 +121,7 @@ export const InboundReturnEditModal = ({
               update={update}
               zeroQuantityAlert={zeroQuantityAlert}
               setZeroQuantityAlert={setZeroQuantityAlert}
-              // We only want to allow adding draft lines when we are adding by item
+              // We only allow adding draft lines when we are adding by item
               addDraftLine={itemId ? addDraftLine : undefined}
             />
           )}
