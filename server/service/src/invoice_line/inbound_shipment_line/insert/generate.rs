@@ -94,7 +94,7 @@ fn generate_line(
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         total_before_tax,
-        currency_id,
+        &currency_id,
         &currency_rate,
     )?;
 

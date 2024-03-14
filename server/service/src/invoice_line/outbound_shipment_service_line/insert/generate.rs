@@ -16,7 +16,7 @@ pub fn generate(
         note,
     }: InsertOutboundShipmentServiceLine,
     item: ItemRow,
-    currency_id: Option<String>,
+    currency_id: &str,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, InsertOutboundShipmentServiceLineError> {
     Ok(InvoiceLineRow {
@@ -33,7 +33,7 @@ pub fn generate(
         foreign_currency_price_before_tax: calculate_foreign_currency_total(
             connection,
             total_before_tax,
-            currency_id,
+            &currency_id,
             currency_rate,
         )?,
         // Default
