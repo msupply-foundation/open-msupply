@@ -11,12 +11,12 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
-pub struct AssetLocationByAssetId {
+pub struct AssetLocationLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for AssetLocationByAssetId {
+impl Loader<String> for AssetLocationLoader {
     type Value = Location;
     type Error = RepositoryError;
 

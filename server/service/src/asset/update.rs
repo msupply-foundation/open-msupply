@@ -1,10 +1,8 @@
 use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
-use super::{query::get_asset, validate::check_asset_exists};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
 };
-use crate::{service_provider::ServiceContext, NullableUpdate, SingleRecordError};
 use chrono::{NaiveDate, Utc};
 use repository::{
     assets::{
@@ -45,7 +43,6 @@ pub fn update_asset(
         .connection
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
-            let updated_asset_row = generate(&ctx.store_id, input, asset_row.clone());
             let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
 

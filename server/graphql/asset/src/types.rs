@@ -4,8 +4,7 @@ use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetLocationByAssetId, LocationByIdLoader, StoreByIdLoader,
-    UserLoader,
+    AssetCatalogueItemLoader, AssetLocationLoader, LocationByIdLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetStatusLogLoader, StoreByIdLoader, UserLoader,
@@ -166,7 +165,7 @@ impl AssetNode {
     ) -> Result<Vec<LocationNode>, async_graphql::Error> {
         let asset_id = &self.row().id;
 
-        let loader = ctx.get_loader::<DataLoader<AssetLocationByAssetId>>();
+        let loader = ctx.get_loader::<DataLoader<AssetLocationLoader>>();
         let locations = loader
             .load_many([asset_id.to_string()])
             .await?

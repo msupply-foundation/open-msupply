@@ -209,6 +209,13 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let asset_location_loader = DataLoader::new(
+        AssetLocationLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -235,6 +242,7 @@ pub async fn get_loaders(
     loaders.insert(document_loader);
     loaders.insert(schema_loader);
     loaders.insert(doc_registry_loader);
+    loaders.insert(asset_location_loader);
     loaders.insert(DataLoader::new(
         PatientLoader {
             service_provider: service_provider.clone(),

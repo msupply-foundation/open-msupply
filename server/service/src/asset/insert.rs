@@ -1,9 +1,7 @@
 use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
-use super::{query::get_asset, validate::check_asset_exists};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::{NaiveDate, Utc};
 use repository::{
     assets::{
