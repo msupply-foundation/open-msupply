@@ -35,7 +35,7 @@ async fn pull(
     Ok(web::Json(response))
 }
 
-#[post("central/sync/push")]
+#[post("/sync/push")]
 async fn push(
     request: Json<SyncPushRequestV6>,
     service_provider: Data<ServiceProvider>,
