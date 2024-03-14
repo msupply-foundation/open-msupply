@@ -35,11 +35,12 @@ async fn pull(
     Ok(web::Json(response))
 }
 
-#[post("central/sync/push")]
+#[post("/sync/push")]
 async fn push(
     request: Json<SyncPushRequestV6>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
+    println!("push");
     let response = match sync_on_central::push(&service_provider, request.into_inner()).await {
         Ok(result) => SyncPushResponseV6::Data(result),
         Err(error) => SyncPushResponseV6::Error(error),
