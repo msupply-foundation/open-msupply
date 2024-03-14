@@ -94,8 +94,7 @@ pub struct LegacyTransactRow {
     #[serde(rename = "prescriber_ID")]
     pub clinician_id: Option<String>,
     #[serde(rename = "currency_ID")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub currency_id: Option<String>,
+    pub currency_id: String,
     pub currency_rate: f64,
 
     #[serde(default)]
