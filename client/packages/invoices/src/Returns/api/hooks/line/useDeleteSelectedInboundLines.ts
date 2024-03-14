@@ -58,7 +58,7 @@ const useDeleteInboundLines = () => {
   const { invoiceNumber = '' } = useParams();
   const queryClient = useQueryClient();
   const api = useReturnsApi();
-  const queryKey = api.keys.detail(invoiceNumber);
+  const queryKey = api.keys.inboundDetail(invoiceNumber);
 
   // TODO: Replace with actual mutation
   // return useMutation(api.updateInboundReturnLines, {

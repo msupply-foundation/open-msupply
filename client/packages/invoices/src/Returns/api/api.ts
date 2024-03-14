@@ -4,6 +4,7 @@ import {
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
+  UpdateInboundReturnLinesInput,
   UpdateOutboundReturnInput,
   UpdateOutboundReturnLinesInput,
 } from '@common/types';
@@ -275,6 +276,20 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     // TODO: handle error response...
     throw new Error('Could not delete outbound return');
+  },
+  updateInboundReturnLines: async (input: UpdateInboundReturnLinesInput) => {
+    const result = await sdk.updateInboundReturnLines({
+      input,
+      storeId,
+    });
+
+    const { updateInboundReturnLines } = result;
+
+    if (updateInboundReturnLines.__typename === 'InvoiceNode') {
+      return updateInboundReturnLines;
+    }
+
+    throw new Error('Could not update inbound return');
   },
   deleteInbound: async (
     returns: InboundReturnRowFragment[]
