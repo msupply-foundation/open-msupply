@@ -20,10 +20,12 @@ export const useOutboundLineEditColumns = ({
   onChange,
   unit,
   currency,
+  isExternalSupplier
 }: {
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
 }) => {
   const { c } = useCurrency();
   const { store } = useAuthContext();
@@ -58,6 +60,27 @@ export const useOutboundLineEditColumns = ({
         width: 120,
       },
     ],
+  ]
+  
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
+    columnDefinitions.push({
+      key: 'foreignCurrencySellPricePerPack',
+      label: 'label.fc-sell-price',
+      description: 'description.fc-sell-price',
+      width: 100,
+      align: ColumnAlign.Right,
+      // eslint-disable-next-line new-cap
+      Cell: CurrencyCell({ currency: currency?.code }),
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return rowData.sellPricePerPack / currency.rate;
+        }
+        return null;
+      },
+    });
+  }
+
+  columnDefinitions.push(
     {
       key: 'packUnit',
       label: 'label.pack',
@@ -103,27 +126,6 @@ export const useOutboundLineEditColumns = ({
         width: 120,
       },
     ],
-  ];
-
-  if (!!store?.preferences.issueInForeignCurrency) {
-    columnDefinitions.push({
-      key: 'foreignCurrencySellPricePerPack',
-      label: 'label.fc-sell-price',
-      description: 'description.fc-sell-price',
-      width: 100,
-      align: ColumnAlign.Right,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
-      accessor: ({ rowData }) => {
-        if (currency) {
-          return rowData.sellPricePerPack / currency.rate;
-        }
-        return null;
-      },
-    });
-  }
-
-  columnDefinitions.push(
     {
       label: 'label.on-hold',
       key: 'onHold',

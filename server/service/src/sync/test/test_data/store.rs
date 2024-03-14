@@ -1,4 +1,5 @@
-use crate::sync::{test::TestSyncPullRecord, translations::PullTranslateResult};
+use crate::sync::{test::TestSyncIncomingRecord, translations::PullTranslateResult};
+use chrono::NaiveDate;
 use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
 use util::inline_init;
 
@@ -49,8 +50,8 @@ const STORE_1: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
+fn store_1() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         STORE_1,
         inline_init(|s: &mut StoreRow| {
@@ -59,12 +60,13 @@ fn store_1() -> TestSyncPullRecord {
             s.code = "GEN".to_string();
             s.site_id = 1;
             s.logo = Some("No logo".to_string());
+            s.created_date = NaiveDate::from_ymd_opt(2021, 9, 3);
         }),
     )
 }
 
 // Note, has wrong mode: should be "drug_registry" (to fix tests)
-const STORE_2: (&'static str, &'static str) = (
+const STORE_2: (&str, &str) = (
     "9EDD3F83C3D64C22A3CC9C98CF4967C5",
     r#"{
     "ID": "9EDD3F83C3D64C22A3CC9C98CF4967C5",
@@ -109,8 +111,8 @@ const STORE_2: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_2() -> TestSyncPullRecord {
-    TestSyncPullRecord {
+fn store_2() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored(
             "Ignoring not implemented system names".to_string(),
         ),
@@ -124,7 +126,7 @@ fn store_2() -> TestSyncPullRecord {
 }
 
 // Note, has wrong mode: should be "supervisor" (to fix tests)
-const STORE_3: (&'static str, &'static str) = (
+const STORE_3: (&str, &str) = (
     "9A3F71AA4C6D48649ADBC4B2966C5B9D",
     r#"{
     "ID": "9A3F71AA4C6D48649ADBC4B2966C5B9D",
@@ -169,8 +171,8 @@ const STORE_3: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_3() -> TestSyncPullRecord {
-    TestSyncPullRecord {
+fn store_3() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored(
             "Ignoring not implemented system names".to_string(),
         ),
@@ -184,7 +186,7 @@ fn store_3() -> TestSyncPullRecord {
 }
 
 // Note, has wrong mode: should be "his" (to fix tests)
-const STORE_4: (&'static str, &'static str) = (
+const STORE_4: (&str, &str) = (
     "2CD38EF518764ED79258961101100C3D",
     r#"{
     "ID": "2CD38EF518764ED79258961101100C3D",
@@ -229,8 +231,8 @@ const STORE_4: (&'static str, &'static str) = (
 }"#,
 );
 
-fn store_4() -> TestSyncPullRecord {
-    TestSyncPullRecord {
+fn store_4() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord {
         translated_record: PullTranslateResult::Ignored(
             "Ignoring not implemented system names".to_string(),
         ),
@@ -243,12 +245,12 @@ fn store_4() -> TestSyncPullRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![store_1(), store_2(), store_3(), store_4()]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
         TABLE_NAME,
         STORE_4.0,
         StoreRowDelete(STORE_4.0.to_string()),

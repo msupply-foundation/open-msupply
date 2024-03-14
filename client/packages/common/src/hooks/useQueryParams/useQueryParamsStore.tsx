@@ -10,7 +10,6 @@ import {
   SortController,
   SortBy,
 } from './types';
-import { Column } from '../../ui';
 
 export interface QueryParamsState<T extends RecordWithId> {
   pagination: PaginationController;
@@ -84,19 +83,14 @@ export const createQueryParamsStore = <T extends RecordWithId>({
         isDesc: initialSortBy.isDesc ?? false,
         direction: getDirection(initialSortBy.isDesc ?? false),
       },
-      onChangeSortBy: (column: Column<T>) => {
+      onChangeSortBy: (sortKey: string, sortDir: 'desc' | 'asc') => {
         let sortBy = { key: '', direction: 'asc' } as SortBy<T>;
         set(state => {
-          const { key, sortBy: { isDesc: maybeNewIsDesc } = {} } = column;
           const { sort } = state;
-          const isDesc =
-            sort.sortBy.key === key
-              ? !sort.sortBy.isDesc
-              : !!maybeNewIsDesc ?? false;
-
+          const isDesc = sortDir === 'desc';
           sortBy = {
             ...sort.sortBy,
-            key,
+            key: sortKey,
             isDesc,
             direction: getDirection(isDesc),
           };

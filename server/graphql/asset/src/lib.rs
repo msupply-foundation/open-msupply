@@ -95,19 +95,10 @@ impl AssetMutations {
 }
 
 #[derive(Default, Clone)]
-pub struct AssetLogs;
+pub struct AssetLogQueries;
 
 #[Object]
-impl AssetLogs {
-    async fn insert_asset_log(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        input: InsertAssetLogInput,
-    ) -> Result<InsertAssetLogResponse> {
-        insert_asset_log(ctx, &store_id, input)
-    }
-
+impl AssetLogQueries {
     async fn asset_logs(
         &self,
         ctx: &Context<'_>,
@@ -120,11 +111,26 @@ impl AssetLogs {
     }
 }
 
+#[derive(Default, Clone)]
+pub struct AssetLogMutations;
+
+#[Object]
+impl AssetLogMutations {
+    async fn insert_asset_log(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertAssetLogInput,
+    ) -> Result<InsertAssetLogResponse> {
+        insert_asset_log(ctx, &store_id, input)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
 
     use repository::{
         assets::asset::{Asset, AssetFilter, AssetSort},
@@ -173,7 +179,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_assets_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             AssetQueries,
             EmptyMutation,
             "test_graphql_assets_success",

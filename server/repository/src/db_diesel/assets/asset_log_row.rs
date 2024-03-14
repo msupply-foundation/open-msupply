@@ -1,27 +1,109 @@
 use super::asset_log_row::asset_log::dsl::*;
 
+use crate::EqualFilter;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+
 table! {
     asset_log (id) {
         id -> Text,
         asset_id -> Text,
-        status -> Nullable<Text>,
+        user_id -> Text,
+        status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
+        comment -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<Text>,
+        reason -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogReasonMapping>,
         log_datetime -> Timestamp,
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[table_name = "asset_log"]
+table! {
+    latest_asset_log (id) {
+        id -> Text,
+        asset_id -> Text,
+        user_id -> Text,
+        status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
+        comment -> Nullable<Text>,
+        #[sql_name = "type"] type_ -> Nullable<Text>,
+        reason -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogReasonMapping>,
+        log_datetime -> Timestamp,
+    }
+}
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+
+pub enum AssetLogReason {
+    AwaitingInstallation,
+    Stored,
+    OffsiteForRepairs,
+    AwaitingDecomissioning,
+    NeedsServicing,
+    MultipleTemperatureBreaches,
+    Unknown,
+    NeedsSpareParts,
+    LackOfPower,
+    Functioning,
+    Decomissioned,
+}
+
+impl AssetLogReason {
+    pub fn equal_to(&self) -> EqualFilter<AssetLogReason> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
+        }
+    }
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+
+pub enum AssetLogStatus {
+    NotInUse,
+    Functioning,
+    FunctioningButNeedsAttention,
+    NotFunctioning,
+    Decomissioned,
+}
+
+impl AssetLogStatus {
+    pub fn equal_to(&self) -> EqualFilter<AssetLogStatus> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            not_equal_to: None,
+            equal_any: None,
+            not_equal_all: None,
+            equal_any_or_null: None,
+            is_null: None,
+        }
+    }
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
+#[changeset_options(treat_none_as_null = "true")]
+#[table_name = "asset_log"]
 pub struct AssetLogRow {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<String>,
+    pub user_id: String,
+    pub status: Option<AssetLogStatus>,
+    pub comment: Option<String>,
+    #[column_name = "type_"]
+    pub r#type: Option<String>,
+    pub reason: Option<AssetLogReason>,
     pub log_datetime: NaiveDateTime,
 }
 

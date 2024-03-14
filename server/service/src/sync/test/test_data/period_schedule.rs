@@ -1,6 +1,6 @@
 use repository::PeriodScheduleRow;
 
-use crate::sync::test::TestSyncPullRecord;
+use crate::sync::test::TestSyncIncomingRecord;
 
 const TABLE_NAME: &'static str = "periodSchedule";
 
@@ -28,9 +28,9 @@ const PERIOD_SCHEDULE_3: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_SCHEDULE_1,
             PeriodScheduleRow {
@@ -38,7 +38,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "Weekly1".to_string(),
             },
         ),
-        TestSyncPullRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_SCHEDULE_2,
             PeriodScheduleRow {
@@ -46,7 +46,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 name: "Yearly2".to_string(),
             },
         ),
-        TestSyncPullRecord::new_pull_upsert(
+        TestSyncIncomingRecord::new_pull_upsert(
             TABLE_NAME,
             PERIOD_SCHEDULE_3,
             PeriodScheduleRow {

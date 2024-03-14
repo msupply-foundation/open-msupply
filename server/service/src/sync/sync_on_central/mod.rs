@@ -14,7 +14,13 @@ use super::{
 
 fn create_filter() -> ChangelogFilter {
     ChangelogFilter::new().table_name(EqualFilter {
-        equal_any: Some(vec![ChangelogTableName::PackVariant]),
+        equal_any: Some(vec![
+            ChangelogTableName::PackVariant,
+            ChangelogTableName::AssetClass,
+            ChangelogTableName::AssetCategory,
+            ChangelogTableName::AssetType,
+            ChangelogTableName::AssetCatalogueItem,
+        ]),
         ..Default::default()
     })
 

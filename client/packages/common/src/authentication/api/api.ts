@@ -1,9 +1,16 @@
-import { AuthError, LocaleKey, LocalStorage, TypedTFunction } from '../..';
+import {
+  AuthError,
+  LocaleKey,
+  LocalStorage,
+  GraphqlStdError,
+  TypedTFunction,
+} from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
   detail?: string;
+  stdError?: string | undefined;
   timeoutRemaining?: number;
 };
 
@@ -68,7 +75,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         });
         return authTokenGuard(result, t);
       } catch (e) {
-        const error = e as Error;
+        const error = e as GraphqlStdError;
         if ('message' in error) {
           console.error(error.message);
         }
@@ -77,6 +84,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
           error: {
             message: t('error.authentication-error'),
             detail: error.message,
+            stdError: error.stdError,
           },
         };
       }

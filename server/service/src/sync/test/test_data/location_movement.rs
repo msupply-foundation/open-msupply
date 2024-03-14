@@ -4,7 +4,7 @@ use chrono::{NaiveDate, NaiveTime};
 use repository::LocationMovementRow;
 use serde_json::json;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 const TABLE_NAME: &'static str = "location_movement";
 
@@ -22,8 +22,8 @@ const LOCATION_MOVEMENT_1: (&'static str, &'static str) = (
   }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
         TABLE_NAME,
         LOCATION_MOVEMENT_1,
         LocationMovementRow {
@@ -41,8 +41,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
-    vec![TestSyncPushRecord {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: LOCATION_MOVEMENT_1.0.to_string(),
         push_data: json!(LegacyLocationMovementRow {

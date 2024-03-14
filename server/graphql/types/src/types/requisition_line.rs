@@ -187,6 +187,22 @@ impl RequisitionLineNode {
             .unwrap_or(0.0))
     }
 
+    /// Quantity already issued in outbound shipments
+    pub async fn already_issued(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionLineSupplyStatusLoader>>();
+
+        let response_option = loader
+            .load_one(RequisitionAndItemId::new(
+                &self.row().requisition_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(response_option
+            .map(|requisition_line_status| requisition_line_status.quantity_in_invoices())
+            .unwrap_or(0.0))
+    }
+
     pub async fn linked_requisition_line(
         &self,
         ctx: &Context<'_>,
@@ -255,7 +271,7 @@ impl RequisitionLineNode {
 mod test {
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{mock_item_a, mock_item_b, mock_item_c, mock_item_d, MockDataInserts},
         RequisitionLine,
@@ -270,7 +286,7 @@ mod test {
         use repository::mock::test_remaining_to_supply as TestData;
         #[derive(Clone)]
         struct TestQuery;
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphql_requisition_line_quantity_remaining_to_supply",
