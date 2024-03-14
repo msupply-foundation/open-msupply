@@ -16,7 +16,7 @@ pub fn generate(
     store_id: &str,
     user_id: &str,
     requisition: Requisition,
-    fullfilments: Vec<RequisitionLineSupplyStatus>,
+    fulfillments: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
     let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
@@ -58,7 +58,7 @@ pub fn generate(
         clinician_link_id: None,
     };
 
-    let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fullfilments)?;
+    let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
     Ok((new_invoice, invoice_line_rows))
 }
 

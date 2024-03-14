@@ -127,8 +127,8 @@ const BreachModal = ({
               />
               {!!breach.maxOrMinTemperature && (
                 <TextRow
-                  label={t('message.max-or-min-temperature')}
-                  text={t('message.temperature', {
+                  label={t('messages.max-or-min-temperature')}
+                  text={t('messages.temperature', {
                     temperature: breach.maxOrMinTemperature,
                   })}
                 />
@@ -143,7 +143,7 @@ const BreachModal = ({
         {!breach?.endDatetime ? (
           <Box paddingTop={3}>
             <ErrorWithDetails
-              error={t('message.breach-ongoing')}
+              error={t('messages.breach-ongoing')}
               details={''}
             />
           </Box>
@@ -158,7 +158,7 @@ const BreachModal = ({
               rows={3}
               onChange={event => setComment(event.target.value)}
               value={comment}
-              helperText={t('message.acknowledge-breach-helptext')}
+              helperText={t('messages.acknowledge-breach-helptext')}
             />
           </Box>
         )}

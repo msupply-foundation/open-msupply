@@ -125,7 +125,7 @@ const Location = ({
       <Separator />
       {!!notification?.location?.name && (
         <Text>
-          {t('message.location')}
+          {t('messages.location')}
           <b style={{ paddingLeft: 4 }}>{notification.location.name}</b>
         </Text>
       )}
@@ -197,7 +197,7 @@ const Notification = ({
       {!!notification.maxOrMinTemperature && (
         <>
           <Text>
-            {t('message.last-temperature', {
+            {t('messages.last-temperature', {
               temperature: notification.maxOrMinTemperature,
             })}
           </Text>
@@ -205,7 +205,7 @@ const Notification = ({
         </>
       )}
       <Text>
-        {t('message.device')}
+        {t('messages.device')}
         <b style={{ paddingLeft: 4 }}>{notification.sensor?.name}</b>
       </Text>
       <Location notification={notification} />
@@ -271,15 +271,15 @@ export const ColdchainNotification = () => {
       }}
     >
       <Notification
-        message="message.notification-breach-detected"
-        totalCountMessage="message.total-breaches"
+        message="messages.notification-breach-detected"
+        totalCountMessage="messages.total-breaches"
         notification={notifications?.breaches?.nodes?.[0]}
         totalCount={notifications?.breaches?.totalCount ?? 0}
         detailButton={breachButton}
       />
       <Notification
-        message="message.notification-excursion-detected"
-        totalCountMessage="message.total-excursions"
+        message="messages.notification-excursion-detected"
+        totalCountMessage="messages.total-excursions"
         notification={notifications?.excursions?.nodes?.[0]}
         totalCount={notifications?.excursions?.totalCount ?? 0}
         detailButton={excursionButton}

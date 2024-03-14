@@ -137,9 +137,9 @@ mod test {
     };
     use repository::{
         mock::{
-            mock_item_a, mock_name_store_b, mock_outbound_return_a,
+            mock_item_a, mock_name_store_a, mock_outbound_return_a,
             mock_outbound_return_a_invoice_line_a, mock_outbound_return_a_invoice_line_b,
-            mock_outbound_shipment_a, mock_stock_line_a, mock_store_a, mock_store_b,
+            mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -151,8 +151,8 @@ mod test {
     async fn test_update_outbound_return_lines_errors() {
         fn base_test_return() -> InvoiceRow {
             InvoiceRow {
-                store_id: mock_store_b().id,
-                name_link_id: mock_name_store_b().id,
+                store_id: mock_store_a().id,
+                name_link_id: mock_name_store_a().id,
                 r#type: InvoiceRowType::OutboundReturn,
                 status: InvoiceRowStatus::New,
                 ..Default::default()
@@ -161,7 +161,7 @@ mod test {
         fn wrong_store() -> InvoiceRow {
             InvoiceRow {
                 id: "wrong_store".to_string(),
-                store_id: mock_store_a().id,
+                store_id: mock_store_b().id,
                 ..base_test_return()
             }
         }
@@ -195,7 +195,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_b().id, mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
         // ReturnDoesNotExist
@@ -219,7 +219,7 @@ mod test {
                 .update_outbound_return_lines(
                     &context,
                     UpdateOutboundReturnLines {
-                        outbound_return_id: mock_outbound_shipment_a().id,
+                        outbound_return_id: mock_outbound_shipment_e().id,
                         ..Default::default()
                     }
                 ),
@@ -347,7 +347,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_b().id, mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
 
         service_provider

@@ -54,7 +54,7 @@ pub fn validate(
     if invoice.status != InvoiceRowStatus::New
         && !check_number_of_packs(input.number_of_packs.clone())
     {
-        return Err(NumberOfPacksBelowOne);
+        return Err(NumberOfPacksBelowZero);
     }
 
     let batch_pair = check_batch_exists_option(store_id, &input, line_row, connection)?;

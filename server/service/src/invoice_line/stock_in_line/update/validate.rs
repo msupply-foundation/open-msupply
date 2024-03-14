@@ -2,10 +2,7 @@ use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
         check_batch, check_location_exists, check_pack_size,
-        validate::{
-            check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
-            check_number_of_packs,
-        },
+        validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists_option},
     },
 };
 use repository::{InvoiceLine, InvoiceRow, ItemRow, StorageConnection};
@@ -71,4 +68,13 @@ fn check_item_option(
     } else {
         Ok(None)
     }
+}
+
+fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
+    if let Some(number_of_packs) = number_of_packs_option {
+        if number_of_packs < 1.0 {
+            return false;
+        }
+    }
+    true
 }
