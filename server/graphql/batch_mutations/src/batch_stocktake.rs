@@ -254,7 +254,7 @@ fn map_delete_lines(responses: DeleteStocktakeLinesResult) -> Result<DeleteStock
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::MockDataInserts, RepositoryError, StocktakeLine, StorageConnectionManager,
@@ -304,7 +304,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_batch_stocktake() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             BatchMutations,
             "test_graphql_batch_stocktake",

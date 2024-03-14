@@ -160,7 +160,7 @@ mod test {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
-            .context(mock_store_b().id, "".to_string())
+            .context(mock_store_a().id, "".to_string())
             .unwrap();
         let service = service_provider.invoice_service;
 
