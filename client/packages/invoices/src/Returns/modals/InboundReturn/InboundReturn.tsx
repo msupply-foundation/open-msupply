@@ -18,6 +18,7 @@ import {
 import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { useDraftInboundReturnLines } from './useDraftInboundReturnLines';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
+import { ItemSelector } from './ItemSelector';
 
 interface InboundReturnEditModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ interface InboundReturnEditModalProps {
   onClose: () => void;
   modalMode: ModalMode | null;
   returnId?: string;
+  initialItemId?: string | null;
 }
 
 enum Tabs {
@@ -40,9 +42,14 @@ export const InboundReturnEditModal = ({
   onClose,
   modalMode,
   returnId,
+  initialItemId,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation(['distribution', 'replenishment']);
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+
+  const [itemId, setItemId] = useState<string | undefined>(
+    initialItemId ?? undefined
+  );
 
   const alertRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +74,7 @@ export const InboundReturnEditModal = ({
     outboundShipmentLineIds,
     customerId,
     returnId,
+    itemId,
   });
 
   const onOk = async () => {
@@ -126,27 +134,42 @@ export const InboundReturnEditModal = ({
         width={1024}
       >
         <Box ref={alertRef}>
-          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-          <TabContext value={currentTab}>
-            <TabPanel value={Tabs.Quantity}>
-              {zeroQuantityAlert && (
-                <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
-              )}
-              <QuantityReturnedTable
-                lines={lines}
-                updateLine={line => {
-                  if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
-                  update(line);
-                }}
+          {returnId && (
+            <ItemSelector
+              disabled={!!itemId}
+              itemId={itemId}
+              onChangeItemId={setItemId}
+            />
+          )}
+
+          {lines.length > 0 && (
+            <>
+              <WizardStepper
+                activeStep={getActiveStep()}
+                steps={returnsSteps}
               />
-            </TabPanel>
-            <TabPanel value={Tabs.Reason}>
-              <ReturnReasonsTable
-                lines={lines.filter(line => line.numberOfPacksReturned > 0)}
-                updateLine={line => update(line)}
-              />
-            </TabPanel>
-          </TabContext>
+              <TabContext value={currentTab}>
+                <TabPanel value={Tabs.Quantity}>
+                  {zeroQuantityAlert && (
+                    <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+                  )}
+                  <QuantityReturnedTable
+                    lines={lines}
+                    updateLine={line => {
+                      if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
+                      update(line);
+                    }}
+                  />
+                </TabPanel>
+                <TabPanel value={Tabs.Reason}>
+                  <ReturnReasonsTable
+                    lines={lines.filter(line => line.numberOfPacksReturned > 0)}
+                    updateLine={line => update(line)}
+                  />
+                </TabPanel>
+              </TabContext>
+            </>
+          )}
         </Box>
       </Modal>
     </TableProvider>
