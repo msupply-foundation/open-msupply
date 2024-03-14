@@ -12,6 +12,7 @@ fragment UserStoreNode on UserStoreNode {
     vaccineModule
     issueInForeignCurrency
   }
+  createdDate
   homeCurrencyCode
 }
 
