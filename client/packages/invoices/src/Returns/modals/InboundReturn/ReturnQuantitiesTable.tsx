@@ -67,6 +67,7 @@ export const QuantityReturnedTableComponent = ({
       [
         'numberOfPacksReturned',
         {
+          description: 'description.pack-quantity',
           width: 100,
           setter: updateLine,
           Cell: props => (
