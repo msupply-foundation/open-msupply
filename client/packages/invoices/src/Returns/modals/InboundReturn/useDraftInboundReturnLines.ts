@@ -44,13 +44,12 @@ export const useDraftInboundReturnLines = ({
       if (lines.length) {
         setDraftLines(lines);
       } else {
-        addPlaceholderLine();
+        addDraftLine();
       }
     }
   }, [item]);
 
-  // TODO: ew?
-  const addPlaceholderLine = () => {
+  const addDraftLine = () => {
     if (!item) return;
 
     setDraftLines(currLines => {
@@ -121,5 +120,5 @@ export const useDraftInboundReturnLines = ({
     await mutateAsync(input);
   };
 
-  return { lines: draftLines, update, saveInboundReturn };
+  return { lines: draftLines, update, saveInboundReturn, addDraftLine };
 };

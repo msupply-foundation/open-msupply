@@ -8,9 +8,13 @@ import {
   Alert,
   RecordPatch,
   GeneratedInboundReturnLineNode,
+  ButtonWithIcon,
+  PlusCircleIcon,
+  Box,
 } from '@openmsupply-client/common';
 import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
+import { useReturns } from '../..';
 
 export enum Tabs {
   Quantity = 'Quantity',
@@ -21,6 +25,7 @@ interface ReturnStepsProps {
   currentTab: string;
   lines: GeneratedInboundReturnLineNode[];
   update: (patch: RecordPatch<GeneratedInboundReturnLineNode>) => void;
+  addDraftLine?: () => void;
   zeroQuantityAlert: AlertColor | undefined;
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
@@ -31,10 +36,12 @@ export const ReturnSteps = ({
   currentTab,
   lines,
   update,
+  addDraftLine,
   zeroQuantityAlert,
   setZeroQuantityAlert,
 }: ReturnStepsProps) => {
   const t = useTranslation(['distribution', 'replenishment']);
+  const isDisabled = useReturns.utils.inboundIsDisabled();
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
@@ -58,6 +65,18 @@ export const ReturnSteps = ({
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+      {addDraftLine && (
+        <Box flex={1} justifyContent="flex-end" display="flex">
+          <ButtonWithIcon
+            disabled={isDisabled}
+            color="primary"
+            variant="outlined"
+            onClick={addDraftLine}
+            label={`${t('label.add-batch')} (+)`}
+            Icon={<PlusCircleIcon />}
+          />
+        </Box>
+      )}
       <TabPanel value={Tabs.Quantity}>
         {zeroQuantityAlert && (
           <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>

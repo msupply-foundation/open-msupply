@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -34,7 +34,7 @@ export const InboundReturnEditModal = ({
   returnId,
   initialItemId,
 }: InboundReturnEditModalProps) => {
-  const t = useTranslation(['distribution', 'replenishment']);
+  const t = useTranslation('distribution');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
 
   const [itemId, setItemId] = useState<string | undefined>(
@@ -48,14 +48,28 @@ export const InboundReturnEditModal = ({
   >();
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
+  const height = useKeyboardHeightAdjustment(700);
 
-  const { lines, update, saveInboundReturn } = useDraftInboundReturnLines({
-    outboundShipmentLineIds,
-    customerId,
-    returnId,
-    itemId,
-  });
+  const { lines, update, saveInboundReturn, addDraftLine } =
+    useDraftInboundReturnLines({
+      outboundShipmentLineIds,
+      customerId,
+      returnId,
+      itemId,
+    });
+
+  // TODO: own hook
+  useEffect(() => {
+    const keyBinding = (e: KeyboardEvent) => {
+      if (returnId && e.key === '+') {
+        e.preventDefault();
+        addDraftLine();
+      }
+    };
+
+    window.addEventListener('keydown', keyBinding);
+    return () => window.removeEventListener('keydown', keyBinding);
+  }, []);
 
   const onOk = async () => {
     try {
@@ -120,6 +134,8 @@ export const InboundReturnEditModal = ({
               update={update}
               zeroQuantityAlert={zeroQuantityAlert}
               setZeroQuantityAlert={setZeroQuantityAlert}
+              // We only want to allow adding draft lines when we are adding by item
+              addDraftLine={itemId ? addDraftLine : undefined}
             />
           )}
         </Box>
