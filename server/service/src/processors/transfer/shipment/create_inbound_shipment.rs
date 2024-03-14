@@ -52,7 +52,9 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
                 _ => return Ok(None),
             };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment
+            && outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundReturn
+        {
             return Ok(None);
         }
         // 3.
@@ -73,6 +75,11 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &outbound_shipment,
             record_for_processing,
             request_requisition,
+            match outbound_shipment.invoice_row.r#type {
+                InvoiceRowType::OutboundShipment => InvoiceRowType::InboundShipment,
+                InvoiceRowType::OutboundReturn => InvoiceRowType::InboundReturn,
+                _ => unimplemented!(),
+            },
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
@@ -120,6 +127,7 @@ fn generate_inbound_shipment(
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
     request_requisition: &Option<Requisition>,
+    r#type: InvoiceRowType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_link_id = outbound_shipment.store_row.name_id.clone();
@@ -154,8 +162,16 @@ fn generate_inbound_shipment(
 
     let result = InvoiceRow {
         id: uuid(),
-        invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
-        r#type: InvoiceRowType::InboundShipment,
+        invoice_number: next_number(
+            connection,
+            &match r#type {
+                InvoiceRowType::InboundShipment => NumberRowType::InboundShipment,
+                InvoiceRowType::InboundReturn => NumberRowType::InboundReturn,
+                _ => unimplemented!(),
+            },
+            &store_id,
+        )?,
+        r#type,
         name_link_id,
         store_id,
         status,
