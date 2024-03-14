@@ -4,53 +4,47 @@ import {
   Grid,
   useTranslation,
   PrinterIcon,
-  ReportContext,
-  LoadingButton,
-  useUrlQueryParams,
+  ButtonWithIcon,
+  useNotification,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
-import {
-  ReportRowFragment,
-  ReportSelector,
-  useReport,
-} from '@openmsupply-client/system';
 import { UpdateStatusButton } from './UpdateStatusButton';
-import { JsonData } from '@openmsupply-client/programs';
 
 export const AppBarButtonsComponent = ({}) => {
   const { data } = useAssets.document.get();
-  const t = useTranslation('common');
-  const { print, isPrinting } = useReport.utils.print();
-  const {
-    queryParams: { sortBy },
-  } = useUrlQueryParams();
+  const t = useTranslation('coldchain');
+  const { error, success } = useNotification();
 
-  const printReport = (
-    report: ReportRowFragment,
-    args: JsonData | undefined
-  ) => {
-    if (!data) return;
-    print({
-      reportId: report.id,
-      dataId: data?.id,
-      args,
-      sort: { key: sortBy.key, desc: sortBy.isDesc },
-    });
+  // TODO check for no code? raise error?
+  const printQR = () => {
+    fetch('http://localhost:8000/print/label-qr', {
+      method: 'POST',
+      body: JSON.stringify({
+        code: data?.code,
+        message: `${t('label.serial')}: ${data?.serialNumber ?? ''}\n${t(
+          'label.code'
+        )}: ${data?.code ?? ''}`,
+      }),
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(() => {
+        success(t('messages.success-printing-qr'))();
+      })
+      .catch(() => {
+        error(t('error.printing-qr'))();
+      });
   };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <UpdateStatusButton />
-        <ReportSelector context={ReportContext.Asset} onPrint={printReport}>
-          <LoadingButton
-            variant="outlined"
-            startIcon={<PrinterIcon />}
-            isLoading={isPrinting}
-          >
-            {t('button.print')}
-          </LoadingButton>
-        </ReportSelector>
+        <ButtonWithIcon
+          Icon={<PrinterIcon />}
+          label={t('button.print')}
+          onClick={printQR}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );

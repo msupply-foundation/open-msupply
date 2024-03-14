@@ -19,6 +19,11 @@ pub fn config_print(cfg: &mut web::ServiceConfig) {
     );
 }
 
+#[derive(serde::Deserialize)]
+struct AuthCookie {
+    token: String,
+}
+
 fn validate_request(
     request: HttpRequest,
     service_provider: &ServiceProvider,
@@ -28,7 +33,17 @@ fn validate_request(
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
     let token = match request.cookie(COOKIE_NAME) {
-        Some(cookie) => Some(cookie.value().to_string()),
+        Some(cookie) => {
+            let auth_cookie: AuthCookie = match serde_json::from_str(&cookie.value().to_string()) {
+                Ok(auth_cookie) => auth_cookie,
+                Err(err) => {
+                    return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+                        err.to_string(),
+                    )))
+                }
+            };
+            Some(auth_cookie.token)
+        }
         None => None,
     };
 
