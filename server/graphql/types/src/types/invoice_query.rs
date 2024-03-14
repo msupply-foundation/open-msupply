@@ -321,18 +321,12 @@ impl InvoiceNode {
         let currency_provider = &service_provider.currency_service;
         let service_context = &service_provider.basic_context()?;
 
-        let currency_id = if let Some(currency_id) = &self.row().currency_id {
-            currency_id
-        } else {
-            return Ok(None);
-        };
-
         let currency = currency_provider
-            .get_currency(service_context, &currency_id)
+            .get_currency(service_context, &self.row().currency_id)
             .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
             .ok_or(StandardGraphqlError::InternalError(format!(
                 "Cannot find currency ({}) linked to invoice ({})",
-                &currency_id,
+                &&self.row().currency_id,
                 &self.row().id
             )))?;
 
@@ -487,7 +481,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
         Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
@@ -507,6 +501,7 @@ mod test {
                 r.id = "test_invoice_pricing".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
+                r.currency_id = currency_a().id;
             })
         }
         fn line1() -> InvoiceLineRow {
