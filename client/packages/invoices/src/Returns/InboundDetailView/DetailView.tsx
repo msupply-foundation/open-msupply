@@ -35,7 +35,6 @@ export const InboundReturnDetailView: FC = () => {
     mode,
   } = useEditModal<string>();
 
-  // TODO: hook these up to modal
   const onRowClick = (row: InboundReturnLineFragment | InboundReturnItem) =>
     onOpen(row.itemId);
 
@@ -75,7 +74,7 @@ export const InboundReturnDetailView: FC = () => {
               outboundShipmentLineIds={[]}
               customerId={data.otherPartyId}
               returnId={data.id}
-              // initialItemId={itemId}
+              initialItemId={itemId}
               modalMode={mode}
             />
           )}
