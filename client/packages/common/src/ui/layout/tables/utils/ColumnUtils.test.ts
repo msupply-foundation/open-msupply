@@ -105,6 +105,24 @@ describe('getColumnProperty', () => {
 
     expect(value).toBe('[multiple]');
   });
+
+  it('returns "" when when there are no matching lines and no default', () => {
+    const result = renderHookWithProvider(useColumnUtils);
+    const { getColumnProperty } = result.result.current;
+    const row = {
+      id: '1',
+      itemId: '1',
+      lines: [],
+    } as StockOutItem | StockOutLineFragment;
+
+    const value = getColumnProperty(row, [
+      { path: ['lines', 'item', 'code'] },
+      { path: ['item', 'code'] },
+    ]);
+
+    expect(value).toBe('');
+  });
+
   it('uses supplied default for lines', () => {
     const result = renderHookWithProvider(useColumnUtils);
     const { getColumnProperty } = result.result.current;

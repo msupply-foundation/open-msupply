@@ -2,13 +2,16 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists},
+    validate::{check_asset_exists, check_asset_log_exists, check_reason_matches_status},
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use chrono::Utc;
 use repository::{
+    asset_log_row::{AssetLogReason, AssetLogStatus},
     assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
-    RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -17,12 +20,17 @@ pub enum InsertAssetLogError {
     AssetDoesNotExist,
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
+    InsufficientPermission,
+    ReasonInvalidForStatus,
 }
 
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<String>,
+    pub status: Option<AssetLogStatus>,
+    pub comment: Option<String>,
+    pub r#type: Option<String>,
+    pub reason: Option<AssetLogReason>,
 }
 
 pub fn insert_asset_log(
@@ -33,8 +41,16 @@ pub fn insert_asset_log(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_asset_log = generate(input);
+            let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetLogCreated,
+                Some(new_asset_log.id.clone()),
+                None,
+                None,
+            )?;
 
             get_asset_log(ctx, new_asset_log.id).map_err(InsertAssetLogError::from)
         })
@@ -49,6 +65,10 @@ pub fn validate(
     if check_asset_log_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
+
+    if !check_reason_matches_status(&input.status, &input.reason) {
+        return Err(InsertAssetLogError::ReasonInvalidForStatus);
+    }
     if check_asset_exists(&input.asset_id, connection)?
         .is_some()
         .not()
@@ -59,16 +79,24 @@ pub fn validate(
 }
 
 pub fn generate(
+    ctx: &ServiceContext,
     InsertAssetLog {
         id,
         asset_id,
         status,
+        comment,
+        r#type,
+        reason,
     }: InsertAssetLog,
 ) -> AssetLogRow {
     AssetLogRow {
         id,
         asset_id,
+        user_id: ctx.user_id.clone(),
         status,
+        comment,
+        r#type,
+        reason,
         log_datetime: Utc::now().naive_utc(),
     }
 }

@@ -210,7 +210,7 @@ impl UpdateOutboundShipmentStatusInput {
 
 #[cfg(test)]
 mod graphql {
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use repository::mock::{mock_new_invoice_with_unallocated_line, MockDataInserts};
     use serde_json::json;
@@ -219,7 +219,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_update() {
-        let (mock_data, _, _, settings) = setup_graphl_test(
+        let (mock_data, _, _, settings) = setup_graphql_test(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_update",
