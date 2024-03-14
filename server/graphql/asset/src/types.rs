@@ -7,10 +7,15 @@ use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetLocationByAssetId, LocationByIdLoader, StoreByIdLoader,
     UserLoader,
 };
+use graphql_core::loader::{
+    AssetCatalogueItemLoader, AssetStatusLogLoader, StoreByIdLoader, UserLoader,
+};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{AssetCatalogueItemNode, LocationNode, StoreNode, UserNode};
+use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
 use repository::asset_internal_location_row::AssetInternalLocationRowRepository;
+
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 use repository::location::Location;
@@ -106,8 +111,6 @@ impl AssetNode {
         &self.row().serial_number
     }
 
-    // TODO: Loaders for store, class, category, type, catalogue_item
-
     pub async fn catalogue_item_id(&self) -> &Option<String> {
         &self.row().catalogue_item_id
     }
@@ -172,6 +175,16 @@ impl AssetNode {
             .map(LocationNode::from_domain)
             .collect();
         Ok(locations)
+    }
+
+    pub async fn status_log(&self, ctx: &Context<'_>) -> Result<Option<AssetLogNode>> {
+        let asset_id = self.row().id.clone();
+        let loader = ctx.get_loader::<DataLoader<AssetStatusLogLoader>>();
+
+        Ok(loader
+            .load_one(asset_id.clone())
+            .await?
+            .map(AssetLogNode::from_domain))
     }
 }
 

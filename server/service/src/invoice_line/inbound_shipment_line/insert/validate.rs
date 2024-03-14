@@ -24,7 +24,7 @@ pub fn validate(
         return Err(PackSizeBelowOne);
     }
     if !check_number_of_packs(Some(input.number_of_packs)) {
-        return Err(NumberOfPacksBelowOne);
+        return Err(NumberOfPacksBelowZero);
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;

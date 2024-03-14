@@ -1,4 +1,8 @@
 use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
+use super::{query::get_asset, validate::check_asset_exists};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -6,7 +10,7 @@ use repository::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    RepositoryError, StorageConnection, StringFilter,
+    ActivityLogType, RepositoryError, StorageConnection, StringFilter,
 };
 
 #[derive(PartialEq, Debug)]
@@ -41,6 +45,14 @@ pub fn insert_asset(
             validate(&input, connection)?;
             let new_asset = generate(input.clone());
             AssetRowRepository::new(&connection).upsert_one(&new_asset)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetCreated,
+                Some(new_asset.id.clone()),
+                None,
+                None,
+            )?;
 
             if input.location_ids.is_some() {
                 set_asset_location(connection, &new_asset.id, input.location_ids.unwrap())

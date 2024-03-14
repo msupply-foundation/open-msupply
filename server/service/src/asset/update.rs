@@ -1,4 +1,9 @@
 use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
+use super::{query::get_asset, validate::check_asset_exists};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
+    SingleRecordError,
+};
 use crate::{service_provider::ServiceContext, NullableUpdate, SingleRecordError};
 use chrono::{NaiveDate, Utc};
 use repository::{
@@ -6,8 +11,9 @@ use repository::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    EqualFilter, RepositoryError, StorageConnection, StringFilter,
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
+use serde_json;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
@@ -39,8 +45,17 @@ pub fn update_asset(
         .connection
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
+            let updated_asset_row = generate(&ctx.store_id, input, asset_row.clone());
             let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetUpdated,
+                Some(updated_asset_row.id.clone()),
+                Some(serde_json::to_string(&asset_row).unwrap_or_default()),
+                Some(serde_json::to_string(&updated_asset_row).unwrap_or_default()),
+            )?;
 
             if input.location_ids.clone().is_some() {
                 set_asset_location(connection, &asset_row.id, input.location_ids.unwrap())

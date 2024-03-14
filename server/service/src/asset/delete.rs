@@ -1,8 +1,12 @@
 use super::validate::check_asset_exists;
 use crate::service_provider::ServiceContext;
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::{
     asset_internal_location_row::AssetInternalLocationRowRepository,
     assets::asset_row::AssetRowRepository, RepositoryError, StorageConnection,
+};
+use repository::{
+    assets::asset_row::AssetRowRepository, ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -22,6 +26,14 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &asset_id)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetDeleted,
+                Some(asset_id.clone()),
+                None,
+                None,
+            )?;
 
             let _deleted_location = AssetInternalLocationRowRepository::new(&connection)
                 .delete_all_for_asset_id(&asset_id)
