@@ -7,6 +7,7 @@ import {
   RecordPatch,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
+import { useItemById } from '@openmsupply-client/system';
 
 export const useDraftInboundReturnLines = ({
   customerId,
@@ -23,6 +24,8 @@ export const useDraftInboundReturnLines = ({
     GeneratedInboundReturnLineNode[]
   >([]);
 
+  const { data: item } = useItemById(itemId);
+
   const { refetch } = useReturns.lines.generateInboundReturnLines(
     outboundShipmentLineIds,
     returnId,
@@ -32,15 +35,43 @@ export const useDraftInboundReturnLines = ({
   const { mutateAsync } = useReturns.document.insertInboundReturn();
 
   useEffect(() => {
-    const getLines = async () => {
+    if (!draftLines.length) getLines();
+
+    async function getLines() {
       const { data } = await refetch();
       const lines = data?.nodes ?? [];
 
-      setDraftLines(lines);
-    };
+      if (lines.length) {
+        setDraftLines(lines);
+      } else {
+        addPlaceholderLine();
+      }
+    }
+  }, [item]);
 
-    getLines();
-  }, []);
+  // TODO: ew?
+  const addPlaceholderLine = () => {
+    if (!item) return;
+
+    setDraftLines(currLines => {
+      return [
+        ...currLines,
+        {
+          __typename: 'GeneratedInboundReturnLineNode' as const,
+          id: FnUtils.generateUUID(),
+          itemId: item.id,
+          itemCode: item.code,
+          itemName: item.name,
+          packSize: item.defaultPackSize,
+          numberOfPacksReturned: 0,
+          reasonId: null,
+          batch: null,
+          expiryDate: null,
+          note: null,
+        },
+      ];
+    });
+  };
 
   const update = (patch: RecordPatch<GeneratedInboundReturnLineNode>) => {
     setDraftLines(currLines => {
