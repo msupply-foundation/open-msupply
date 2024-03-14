@@ -7,7 +7,7 @@ mod query {
     };
     use repository::{
         asset_log_row::{AssetLogReason, AssetLogStatus},
-        mock::{mock_asset_a, mock_user_account_a, MockDataInserts},
+        mock::{mock_asset_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
     };
 
@@ -22,7 +22,7 @@ mod query {
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let ctx = service_provider
-            .context(mock_asset_a().id, mock_user_account_a().id)
+            .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.asset_service;
 
