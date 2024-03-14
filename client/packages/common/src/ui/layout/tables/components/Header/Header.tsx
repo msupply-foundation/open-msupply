@@ -44,9 +44,21 @@ export const HeaderCell = <T extends RecordWithId>({
   const t = useTranslation();
   const isSorted = key === currentSortKey;
 
+  // Changes sort key or, if the sort key is already selected, toggles the sort direction.
   const onSort = useDebounceCallback(
-    () => onChangeSortBy && sortable && onChangeSortBy(column),
-    [column],
+    () => {
+      if (!onChangeSortBy || !sortable) return;
+
+      if (key !== currentSortKey) {
+        // change sort key
+        onChangeSortBy(key as string, 'asc');
+      } else {
+        // toggle sort direction
+        const dir = direction === 'desc' ? 'asc' : 'desc';
+        onChangeSortBy(key as string, dir);
+      }
+    },
+    [sortable, key, currentSortKey, direction, onChangeSortBy],
     150
   );
 

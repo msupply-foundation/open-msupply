@@ -1,3 +1,4 @@
+// used when performing an exhaustive check of enum values
 export const noOtherVariants = (variant: never): never => {
   throw new Error(`Should never match this variant: ${variant}`);
 };

@@ -164,7 +164,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | NoInvoiceType
-        | NumberOfPacksBelowOne
+        | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
@@ -181,7 +181,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -241,7 +241,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_prescription_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_update_prescription_errors",
@@ -455,7 +455,7 @@ mod test {
         );
 
         //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -539,7 +539,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_prescription_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_update_prescription_success",

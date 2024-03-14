@@ -1,6 +1,8 @@
 use super::validate::check_asset_exists;
-use crate::service_provider::ServiceContext;
-use repository::{assets::asset_row::AssetRowRepository, RepositoryError, StorageConnection};
+use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
+use repository::{
+    assets::asset_row::AssetRowRepository, ActivityLogType, RepositoryError, StorageConnection,
+};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteAssetError {
@@ -19,6 +21,14 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &asset_id)?;
+
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetDeleted,
+                Some(asset_id.clone()),
+                None,
+                None,
+            )?;
 
             AssetRowRepository::new(&connection)
                 .delete(&asset_id)

@@ -80,7 +80,7 @@ export interface Column<T extends RecordWithId> {
   getIsError?: (row: T) => boolean;
   getIsDisabled?: (row: T) => boolean;
 
-  onChangeSortBy?: (column: Column<T>) => void;
+  onChangeSortBy?: (sort: string, dir: 'desc' | 'asc') => void;
   sortBy?: SortBy<T>;
 
   width?: number | string;

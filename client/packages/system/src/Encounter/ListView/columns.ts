@@ -1,7 +1,6 @@
 import {
   useColumns,
   ColumnAlign,
-  Column,
   ColumnDescription,
   SortBy,
   ColumnDataAccessor,
@@ -18,7 +17,7 @@ import { getLogicalStatus } from '../utils';
 import { ChipTableCell } from '../../Patient';
 
 interface useEncounterListColumnsProps {
-  onChangeSortBy: (column: Column<EncounterRowFragment>) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
   sortBy: SortBy<EncounterRowFragment>;
   includePatient?: boolean;
 }

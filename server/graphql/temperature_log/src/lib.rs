@@ -65,7 +65,7 @@ impl TemperatureLogQueries {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::{
         mock::MockDataInserts,
         temperature_log::{
@@ -117,7 +117,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_temperature_logs_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             TemperatureLogQueries,
             EmptyMutation,
             "test_graphql_temperature_logs_success",
@@ -212,7 +212,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_temperature_logs_inputs() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             TemperatureLogQueries,
             EmptyMutation,
             "test_graphql_temperature_log_inputs",

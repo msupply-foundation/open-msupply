@@ -23,7 +23,7 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const { success, error } = useNotification();
   const { mutate: onCreate } = useOutbound.document.insert();
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
   const { fetchAsync, isLoading } = useOutbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',

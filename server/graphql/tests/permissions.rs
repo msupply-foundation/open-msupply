@@ -3,7 +3,7 @@ mod permission_tests {
     use std::sync::{Arc, Mutex};
 
     use async_graphql::MergedObject;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
         auth::{AuthError, AuthServiceTrait, Resource, ResourceAccessRequest, ValidatedUser},
@@ -1196,7 +1196,7 @@ mod permission_tests {
     /// Test that all endpoints use the correct resource validation
     #[actix_rt::test]
     async fn test_graphql_permissions_resource_mapping() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             full_query(),
             full_mutation(),
             "test_graphql_permissions_resource_mapping",

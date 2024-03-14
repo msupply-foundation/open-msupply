@@ -253,7 +253,7 @@ impl SensorAxisNode {
 #[cfg(test)]
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query_with_config, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query_with_config, test_helpers::setup_graphql_test};
     use repository::{
         mock::{mock_sensor_1, mock_sensor_2, MockDataInserts},
         temperature_chart_row::Interval,
@@ -299,7 +299,7 @@ mod test {
     // Testing mid_point calculation and grouping by sensor + loader
     #[actix_rt::test]
     async fn test_graphql_temperature_chart_mapping() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_temperature_chart_mapping",

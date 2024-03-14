@@ -40,7 +40,7 @@ impl SyncTranslation for AssetTypeTranslation {
         Some(ChangelogTableName::AssetType)
     }
 
-    // Only translating and pushing on central server
+    // Only translating and pulling from central server
     fn should_translate_to_sync_record(
         &self,
         row: &ChangelogRow,
