@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   useTranslation,
   WizardStepper,
@@ -42,6 +42,8 @@ export const ReturnSteps = ({
 }: ReturnStepsProps) => {
   const t = useTranslation(['distribution', 'replenishment']);
   const isDisabled = useReturns.utils.inboundIsDisabled();
+
+  useAddDraftLineKeyBinding(addDraftLine);
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
@@ -97,4 +99,18 @@ export const ReturnSteps = ({
       </TabPanel>
     </TabContext>
   );
+};
+
+const useAddDraftLineKeyBinding = (addDraftLine: (() => void) | undefined) => {
+  useEffect(() => {
+    const keyBinding = (e: KeyboardEvent) => {
+      if (addDraftLine && e.key === '+') {
+        e.preventDefault();
+        addDraftLine();
+      }
+    };
+
+    window.addEventListener('keydown', keyBinding);
+    return () => window.removeEventListener('keydown', keyBinding);
+  }, [addDraftLine]);
 };
