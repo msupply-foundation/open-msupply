@@ -35,7 +35,7 @@ export const UpdateStatusButtonComponent = ({
   assetId: string | undefined;
 }) => {
   const onClose = () => {
-    setDraft(getEmptyAssetLog(''));
+    setDraft(getEmptyAssetLog(assetId ?? 'closed'));
     onChangeTab(Tabs.Status);
   };
   const { currentTab, onChangeTab } = useTabs(Tabs.Status);
@@ -79,13 +79,16 @@ export const UpdateStatusButtonComponent = ({
     return step ? logSteps.indexOf(step) : 0;
   };
 
-  const isValid = () => !!draft?.id && !!draft?.assetId && !!draft?.status;
+  const isInvalid = () => !draft?.id || !draft?.assetId || !draft?.status;
+
   const onChange = (patch: Partial<InsertAssetLogInput>) => {
     if (!draft) return;
     setDraft({ ...draft, ...patch });
   };
 
-  useEffect(() => setDraft(getEmptyAssetLog(assetId ?? '')), [assetId]);
+  useEffect(() => {
+    if (!!assetId) setDraft(getEmptyAssetLog(assetId));
+  }, [assetId]);
 
   return (
     <>
@@ -112,7 +115,7 @@ export const UpdateStatusButtonComponent = ({
             <DialogButton
               variant="next"
               onClick={onNext}
-              disabled={!isValid()}
+              disabled={isInvalid()}
             />
           ) : undefined
         }
