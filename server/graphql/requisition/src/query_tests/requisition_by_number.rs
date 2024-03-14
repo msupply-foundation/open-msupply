@@ -1,6 +1,6 @@
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
         requisition_row::RequisitionRowType,
@@ -45,7 +45,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_get_requisition_by_number() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             RequisitionQueries,
             EmptyMutation,
             "test_graphql_get_requisition_by_number",

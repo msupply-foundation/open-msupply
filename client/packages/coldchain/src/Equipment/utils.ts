@@ -121,3 +121,15 @@ export const reasonsByStatus = {
   ],
   [AssetLogStatusInput.Decomissioned]: [],
 };
+
+export const getReasonString = (
+  reason: ReasonType | null | undefined,
+  t: TypedTFunction<LocaleKey>
+) => {
+  const defaultValue = '-';
+  if (!reason) return defaultValue;
+
+  const parsed = parseLogReason(reason);
+
+  return parsed === undefined ? defaultValue : t(parsed.key);
+};

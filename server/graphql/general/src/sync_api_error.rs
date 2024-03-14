@@ -130,7 +130,7 @@ impl SyncErrorNode {
 mod test {
     use super::*;
     use actix_web::http::StatusCode;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use reqwest::{Client, Url};
     use serde_json::json;
@@ -141,7 +141,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_api_error",
