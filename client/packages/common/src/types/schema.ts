@@ -430,7 +430,7 @@ export type AssetNode = {
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<StatusType>;
+  statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
@@ -5060,6 +5060,7 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Int']['output'];

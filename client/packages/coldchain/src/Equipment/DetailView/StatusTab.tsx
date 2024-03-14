@@ -112,6 +112,7 @@ export const StatusTab = ({
         </Row>
         <Row label={t('label.reason')}>
           <Autocomplete
+            disabled={filteredReasons.length === 0}
             options={filteredReasons}
             width="100%"
             isOptionEqualToValue={option => option?.value === draft.reason}
