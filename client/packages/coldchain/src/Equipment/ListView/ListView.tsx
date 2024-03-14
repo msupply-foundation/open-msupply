@@ -19,7 +19,7 @@ import { CreateAssetModal } from './CreateAssetModal';
 import { Status } from '../Components';
 
 const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
-  return <Status status={rowData.status} />;
+  return <Status status={rowData.statusLog?.status} />;
 };
 
 const AssetListComponent: FC = () => {
