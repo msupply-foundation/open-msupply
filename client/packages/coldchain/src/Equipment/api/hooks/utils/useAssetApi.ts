@@ -13,7 +13,7 @@ export const useAssetApi = () => {
       [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<AssetFragment>) =>
       [...keys.list(), sortBy] as const,
-    logs: (assetId: string) => [assetId, 'logs'] as const,
+    logs: (assetId: string) => [...keys.base(), assetId, 'logs'] as const,
   };
 
   const queries = getAssetQueries(getSdk(client), storeId);
