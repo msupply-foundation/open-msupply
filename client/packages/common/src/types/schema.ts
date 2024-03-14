@@ -430,7 +430,7 @@ export type AssetNode = {
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<StatusType>;
+  statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
 };

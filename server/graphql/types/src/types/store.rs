@@ -72,7 +72,7 @@ impl StoreNode {
 #[cfg(test)]
 mod test {
     use async_graphql::{EmptyMutation, Object};
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{MockData, MockDataInserts},
         NameRow, Store, StoreRow,
@@ -101,7 +101,7 @@ mod test {
             })
         }
 
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphql_test_store_loader",

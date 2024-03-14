@@ -104,7 +104,10 @@ export const StatusTab = ({
           <Autocomplete
             isOptionEqualToValue={option => option?.value === draft.status}
             onChange={(_e, selected) =>
-              onChange({ status: selected?.value as AssetLogStatusInput })
+              onChange({
+                status: selected?.value as AssetLogStatusInput,
+                reason: undefined,
+              })
             }
             options={statuses}
             width="100%"
@@ -112,12 +115,14 @@ export const StatusTab = ({
         </Row>
         <Row label={t('label.reason')}>
           <Autocomplete
+            disabled={filteredReasons.length === 0}
             options={filteredReasons}
             width="100%"
             isOptionEqualToValue={option => option?.value === draft.reason}
             onChange={(_, selected) =>
               onChange({ reason: selected?.value as AssetLogReasonInput })
             }
+            value={filteredReasons.find(r => r?.value === draft.reason) ?? null}
           />
         </Row>
         <Row label={t('label.observations')}>

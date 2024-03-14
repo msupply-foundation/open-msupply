@@ -1,5 +1,5 @@
 use repository::asset_log::{AssetLogFilter, AssetLogRepository};
-use repository::asset_log_row::AssetLogStatus;
+use repository::asset_log_row::AssetLogRow;
 use repository::EqualFilter;
 use repository::{RepositoryError, StorageConnectionManager};
 
@@ -7,13 +7,13 @@ use async_graphql::dataloader::*;
 use async_graphql::*;
 use std::collections::HashMap;
 
-pub struct AssetStatusLoader {
+pub struct AssetStatusLogLoader {
     pub connection_manager: StorageConnectionManager,
 }
 
 #[async_trait::async_trait]
-impl Loader<String> for AssetStatusLoader {
-    type Value = AssetLogStatus;
+impl Loader<String> for AssetStatusLogLoader {
+    type Value = AssetLogRow;
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
@@ -24,8 +24,7 @@ impl Loader<String> for AssetStatusLoader {
         let result = repo
             .query_latest(Some(filter))?
             .into_iter()
-            .filter(|asset_log| asset_log.status.is_some())
-            .map(|asset_log| (asset_log.asset_id.clone(), asset_log.status.unwrap()))
+            .map(|asset_log| (asset_log.asset_id.clone(), asset_log))
             .collect();
 
         Ok(result)
