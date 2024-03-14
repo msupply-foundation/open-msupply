@@ -32,7 +32,7 @@ pub fn insert_inbound_shipment_service_line(
                 connection,
                 input,
                 item_row,
-                invoice_row.currency_id,
+                &invoice_row.currency_id,
                 &invoice_row.currency_rate,
             )?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
