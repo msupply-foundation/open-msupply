@@ -1,5 +1,6 @@
 import {
   BasicCell,
+  CellProps,
   DataTable,
   Formatter,
   GeneratedInboundReturnLineNode,
@@ -32,12 +33,13 @@ export const QuantityReturnedTableComponent = ({
         'batch',
         {
           width: 125,
+          accessor: ({ rowData }) => rowData.batch ?? '',
           setter: updateLine,
           Cell: TextInputCell,
         },
       ],
       [
-        getExpiryDateInputColumn<GeneratedInboundReturnLineNode>(),
+        expiryInputColumn,
         {
           width: 150,
           setter: l =>
@@ -54,7 +56,7 @@ export const QuantityReturnedTableComponent = ({
         {
           width: 100,
           setter: updateLine,
-          Cell: props => <NumberInputCell {...props} isRequired min={1} />,
+          Cell: PackSizeInputCell,
         },
       ],
       // TODO: implement pack variant
@@ -83,14 +85,7 @@ export const QuantityReturnedTableComponent = ({
           description: 'description.pack-quantity',
           width: 100,
           setter: updateLine,
-          Cell: props => (
-            <NumberInputCell
-              {...props}
-              isRequired
-              max={props.rowData.numberOfPacksIssued ?? undefined}
-              min={0}
-            />
-          ),
+          Cell: NumberOfPacksReturnedInputCell,
         },
       ],
     ],
@@ -109,3 +104,21 @@ export const QuantityReturnedTableComponent = ({
 };
 
 export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render?
+const PackSizeInputCell: React.FC<
+  CellProps<GeneratedInboundReturnLineNode>
+> = props => <NumberInputCell {...props} isRequired min={1} />;
+
+const NumberOfPacksReturnedInputCell: React.FC<
+  CellProps<GeneratedInboundReturnLineNode>
+> = props => (
+  <NumberInputCell
+    {...props}
+    isRequired
+    max={props.rowData.numberOfPacksIssued ?? undefined}
+    min={0}
+  />
+);
+const expiryInputColumn =
+  getExpiryDateInputColumn<GeneratedInboundReturnLineNode>();

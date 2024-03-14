@@ -63,10 +63,10 @@ export const useDraftInboundReturnLines = ({
           itemName: item.name,
           packSize: item.defaultPackSize,
           numberOfPacksReturned: 0,
-          reasonId: null,
           batch: null,
           expiryDate: null,
           note: null,
+          reasonId: null,
         },
       ];
     });
