@@ -10,7 +10,7 @@ use crate::invoice_line::stock_in_line::StockInType;
 use crate::invoice_line::update_return_reason_id::UpdateLineReturnReason;
 use crate::number::next_number;
 
-use super::{InsertInboundReturn, InsertInboundReturnLine};
+use super::{InboundReturnLineInput, InsertInboundReturn};
 
 pub fn generate(
     connection: &StorageConnection,
@@ -58,7 +58,7 @@ pub fn generate(
         currency_rate: 0.0,
     };
 
-    let lines_with_packs: Vec<InsertInboundReturnLine> = input
+    let lines_with_packs: Vec<InboundReturnLineInput> = input
         .inbound_return_lines
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0)
@@ -75,7 +75,7 @@ pub fn generate(
     let stock_in_lines = lines_with_packs
         .into_iter()
         .map(
-            |InsertInboundReturnLine {
+            |InboundReturnLineInput {
                  id,
                  item_id,
                  expiry_date,
