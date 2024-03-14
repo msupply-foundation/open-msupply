@@ -68,6 +68,7 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
 }) => (
   <NumberInputCell
     {...props}
+    min={0}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}
   />
