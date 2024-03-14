@@ -10,7 +10,7 @@ const ASSET1: (&'static str, &'static str) = (
     "3de161ed-93ef-4210-aa31-3ae9e53748e8",
     r#"{
         "id":  "3de161ed-93ef-4210-aa31-3ae9e53748e8",
-        "name": "Asset 1",
+        "notes": "Asset 1",
         "code": "AT1",
         "store_id": "store_a",
         "created_datetime": "2020-01-22T15:16:00",

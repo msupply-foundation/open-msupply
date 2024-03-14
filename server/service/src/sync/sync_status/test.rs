@@ -20,7 +20,7 @@ use crate::{
             CentralSyncBatchV5, CentralSyncRecordV5, CommonSyncRecord, RemotePushResponseV5,
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteStatusCodeV5, SiteStatusV5,
         },
-        api_v6::{SyncBatchV6, SyncPullResponseV6},
+        api_v6::{SyncBatchV6, SyncPullResponseV6, SyncPushResponseV6, SyncPushSuccessV6},
         settings::{BatchSize, SyncSettings},
         sync_status::{status::InitialisationStatus, SyncLogError},
         synchroniser::{SyncError, Synchroniser},
@@ -189,6 +189,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     }
                     // Even though push is not done start and end is logged
                     r.push = current_status.push.clone();
+                    r.push_v6 = current_status.push_v6.clone();
                     r.pull_central = current_status.pull_central.clone();
                     r
                 });
@@ -394,6 +395,7 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                     // Even though prepare_initial is not run, it is logged
                     r.prepare_initial = current_status.prepare_initial.clone();
                     r.push = current_status.push.clone();
+                    r.push_v6 = current_status.push_v6.clone();
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -463,7 +465,9 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     r.push = current_status.push.clone();
+                    r.push_v6 = current_status.push_v6.clone();
                     r.pull_central = current_status.pull_central.clone();
+                    r.pull_v6 = current_status.pull_v6.clone();
                     r
                 });
                 assert_eq!(current_status, new_status);
@@ -553,17 +557,26 @@ async fn run_server_and_sync(
 
 async fn empty_v6_server(port: u16) -> Server {
     // Empty v6 request (not tests for progress yet), TODO
-    async fn entry() -> impl Responder {
+    async fn empty_pull_response() -> impl Responder {
         web::Json(SyncPullResponseV6::Data(SyncBatchV6 {
             end_cursor: 0,
             total_records: 0,
             records: Vec::new(),
         }))
     }
-    HttpServer::new(move || App::new().route("/central/sync/pull", web::to(entry)))
-        .bind(("127.0.0.1", port + crate::sync::api_v6::PORT_OFFSET))
-        .unwrap()
-        .run()
+    async fn empty_push_response() -> impl Responder {
+        web::Json(SyncPushResponseV6::Data(SyncPushSuccessV6 {
+            records_pushed: 0,
+        }))
+    }
+    HttpServer::new(move || {
+        App::new()
+            .route("/central/sync/pull", web::to(empty_pull_response))
+            .route("/central/sync/push", web::to(empty_push_response))
+    })
+    .bind(("127.0.0.1", port + crate::sync::api_v6::PORT_OFFSET))
+    .unwrap()
+    .run()
 }
 
 #[derive(Debug)]
@@ -587,7 +600,7 @@ struct TestOutput {
 
 type TesterData = Data<Mutex<Tester>>;
 
-/// Helper struct for defining mock server routes and tests withing routes
+/// Helper struct for defining mock server routes and tests within routes
 struct Tester {
     service_provider: Arc<ServiceProvider>,
     previous_status: FullSyncStatus,
