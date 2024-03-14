@@ -107,7 +107,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
   },
   insert: async (input: InsertAssetInput): Promise<string> => {
     const result = await sdk.insertAsset({
-      input,
+      input: { ...input, storeId },
       storeId,
     });
     const { insertAsset } = result;
