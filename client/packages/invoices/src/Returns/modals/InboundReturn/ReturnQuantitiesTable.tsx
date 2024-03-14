@@ -1,7 +1,11 @@
 import {
+  BasicCell,
   DataTable,
+  Formatter,
   GeneratedInboundReturnLineNode,
   NumberInputCell,
+  TextInputCell,
+  getExpiryDateInputColumn,
   useColumns,
 } from '@openmsupply-client/common';
 import React from 'react';
@@ -21,14 +25,43 @@ export const QuantityReturnedTableComponent = ({
       'itemName',
       // 'itemUnit', // not implemented for now
       // 'location',
-      'batch',
-      'expiryDate',
+      [
+        'batch',
+        {
+          width: 125,
+          setter: updateLine,
+          Cell: TextInputCell,
+        },
+      ],
+      [
+        getExpiryDateInputColumn<GeneratedInboundReturnLineNode>(),
+        {
+          width: 150,
+          setter: l =>
+            updateLine({
+              ...l,
+              expiryDate: l.expiryDate
+                ? Formatter.naiveDate(new Date(l.expiryDate))
+                : null,
+            }),
+        },
+      ],
+      [
+        // TODO: PACK VARIANTS HERE
+        'packSize',
+        {
+          width: 100,
+          setter: updateLine,
+          Cell: props => <NumberInputCell {...props} isRequired min={1} />,
+        },
+      ],
       [
         'numberOfPacks',
         {
           label: 'label.pack-quantity-issued',
-          width: 125,
-          accessor: ({ rowData }) => rowData.numberOfPacksIssued,
+          width: 110,
+          accessor: ({ rowData }) => rowData.numberOfPacksIssued ?? '--',
+          Cell: BasicCell,
         },
       ],
       [
