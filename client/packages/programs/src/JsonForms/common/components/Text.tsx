@@ -81,7 +81,7 @@ const usePatternValidation = (
     } else {
       setCustomError(undefined);
     }
-  }, [pattern, value]);
+  }, [pattern, setCustomError, value]);
   return customError;
 };
 
@@ -98,7 +98,8 @@ const UIComponent = (props: ControlProps) => {
   const error = !!errors || !!zErrors || !!customErrors;
   const { text, onChange } = useDebouncedTextInput(
     data,
-    (value: string | undefined) => handleChange(path, value)
+    (value: string | undefined) =>
+      handleChange(path, !!value ? value : undefined)
   );
   const t = useTranslation();
 
@@ -129,7 +130,7 @@ const UIComponent = (props: ControlProps) => {
         value: text ?? '',
         sx: { width },
         style: { flexBasis: '100%' },
-        onChange: e => onChange(e.target.value || ''),
+        onChange: e => onChange(e.target.value ?? ''),
         disabled: !props.enabled,
         error,
         helperText,

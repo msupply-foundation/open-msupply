@@ -1,4 +1,5 @@
 use async_graphql::{dataloader::DataLoader, Context, ErrorExtensions, Object, Result};
+use chrono::NaiveDate;
 use graphql_core::{
     loader::{NameByIdLoader, NameByIdLoaderInput},
     standard_graphql_error::StandardGraphqlError,
@@ -52,6 +53,10 @@ impl StoreNode {
     pub async fn logo(&self) -> &Option<String> {
         &self.row().logo
     }
+
+    pub async fn created_date(&self) -> Option<NaiveDate> {
+        self.row().created_date
+    }
 }
 
 impl StoreNode {
@@ -67,7 +72,7 @@ impl StoreNode {
 #[cfg(test)]
 mod test {
     use async_graphql::{EmptyMutation, Object};
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{MockData, MockDataInserts},
         NameRow, Store, StoreRow,
@@ -96,7 +101,7 @@ mod test {
             })
         }
 
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphql_test_store_loader",

@@ -5,6 +5,7 @@ use super::{
 
 use crate::{repository_error::RepositoryError, Delete, Upsert};
 
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
@@ -16,6 +17,7 @@ table! {
         site_id -> Integer,
         logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
+        created_date -> Nullable<Date>,
     }
 }
 
@@ -42,6 +44,7 @@ pub struct StoreRow {
     pub site_id: i32,
     pub logo: Option<String>,
     pub store_mode: StoreMode,
+    pub created_date: Option<NaiveDate>,
 }
 
 impl Default for StoreMode {
