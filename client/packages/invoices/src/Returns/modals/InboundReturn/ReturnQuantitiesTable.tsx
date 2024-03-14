@@ -19,6 +19,9 @@ export const QuantityReturnedTableComponent = ({
     line: Partial<GeneratedInboundReturnLineNode> & { id: string }
   ) => void;
 }) => {
+  // what to do here if there are multiple items? Some might have PV and others not...
+  // const { packVariantExists } = usePackVariant(item?.id || '', null);
+
   const columns = useColumns<GeneratedInboundReturnLineNode>(
     [
       'itemCode',
@@ -47,7 +50,6 @@ export const QuantityReturnedTableComponent = ({
         },
       ],
       [
-        // TODO: PACK VARIANTS HERE
         'packSize',
         {
           width: 100,
@@ -55,6 +57,17 @@ export const QuantityReturnedTableComponent = ({
           Cell: props => <NumberInputCell {...props} isRequired min={1} />,
         },
       ],
+      // TODO: implement pack variant
+      // getColumnLookupWithOverrides('packSize', {
+      //   Cell: PackUnitEntryCell,
+      //   setter: updateLine,
+      //   ...(packVariantExists
+      //     ? {
+      //         label: 'label.unit-variant-and-pack-size',
+      //         minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+      //       }
+      //     : { label: 'label.pack-size' }),
+      // }),
       [
         'numberOfPacks',
         {
