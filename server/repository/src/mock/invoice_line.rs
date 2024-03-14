@@ -554,6 +554,7 @@ pub fn mock_inbound_return_a_invoice_line_a() -> InvoiceLineRow {
         l.item_code = mock_item_a().code;
         l.stock_line_id = Some(mock_stock_line_a().id);
         l.note = Some("return_comment_line_a".to_string());
+        l.number_of_packs = 30.0;
         l.r#type = InvoiceLineRowType::StockOut
     })
 }
@@ -566,6 +567,7 @@ pub fn mock_inbound_return_a_invoice_line_b() -> InvoiceLineRow {
         l.item_code = mock_item_b().code;
         l.stock_line_id = Some(mock_item_b_lines()[0].id.clone());
         l.note = Some("return_comment_line_b".to_string());
+        l.number_of_packs = 1.0;
         l.r#type = InvoiceLineRowType::StockOut
     })
 }

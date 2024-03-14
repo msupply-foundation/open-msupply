@@ -253,6 +253,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
     ) -> Result<Invoice, InsertInboundReturnError> {
         insert_inbound_return(ctx, input)
     }
+
+    fn update_inbound_return_lines(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateInboundReturnLines,
+    ) -> Result<Invoice, UpdateInboundReturnLinesError> {
+        update_inbound_return_lines(ctx, input)
+    }
 }
 
 pub struct InvoiceService;

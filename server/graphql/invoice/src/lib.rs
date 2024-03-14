@@ -218,6 +218,15 @@ impl InvoiceMutations {
         inbound_return::insert::insert(ctx, &store_id, input)
     }
 
+    async fn update_inbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_return::update_lines::UpdateInput,
+    ) -> Result<inbound_return::update_lines::UpdateResponse> {
+        inbound_return::update_lines::update_lines(ctx, &store_id, input)
+    }
+
     async fn delete_inbound_returns(
         &self,
         ctx: &Context<'_>,
