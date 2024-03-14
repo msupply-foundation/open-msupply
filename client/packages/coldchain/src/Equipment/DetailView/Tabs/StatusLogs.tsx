@@ -1,15 +1,10 @@
 import React from 'react';
 import { BasicSpinner, NothingHere, Typography } from '@common/components';
-import {
-  Box,
-  Paper,
-  ReasonType,
-  UserCircleIcon,
-} from '@openmsupply-client/common';
+import { Box, Paper, UserCircleIcon } from '@openmsupply-client/common';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import { AssetLogFragment, useAssets } from '../../api';
 import { Status } from '../../Components';
-import { parseLogReason } from '../../utils';
+import { translateReason } from '../../utils';
 
 const Divider = () => (
   <Box
@@ -68,12 +63,6 @@ const StatusLog = ({
   };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('coldchain');
-  const translateReason = (reason: ReasonType | null | undefined) => {
-    if (reason === null || reason === undefined) return '-';
-
-    const parsed = parseLogReason(reason);
-    return parsed === undefined ? '-' : t(parsed.key);
-  };
 
   return (
     <Box sx={sx} flex={1} display="flex">
@@ -103,7 +92,7 @@ const StatusLog = ({
         <User user={log.user} />
         <Box display="flex" alignItems="flex-start">
           <Typography sx={{ fontSize: '12px' }}>
-            <b>{t('label.reason')}:</b> {translateReason(log.reason)}
+            <b>{t('label.reason')}:</b> {translateReason(log.reason, t)}
           </Typography>
         </Box>
         <Typography sx={{ fontSize: '12px' }}>
