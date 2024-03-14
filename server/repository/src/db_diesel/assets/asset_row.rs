@@ -13,7 +13,6 @@ use crate::Upsert;
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Serialize;
 
 table! {
     asset (id) {
