@@ -33,11 +33,12 @@ pub fn validate(
     let supply_statuses =
         get_requisitions_supply_statuses(connection, vec![requisition_row.id.clone()])?;
 
-    let remaing_to_supply = RequisitionLineSupplyStatus::lines_remaining_to_supply(supply_statuses);
+    let remaining_to_supply =
+        RequisitionLineSupplyStatus::lines_remaining_to_supply(supply_statuses);
 
-    if remaing_to_supply.len() == 0 {
+    if remaining_to_supply.len() == 0 {
         return Err(OutError::NothingRemainingToSupply);
     }
 
-    Ok((requisition, remaing_to_supply))
+    Ok((requisition, remaining_to_supply))
 }

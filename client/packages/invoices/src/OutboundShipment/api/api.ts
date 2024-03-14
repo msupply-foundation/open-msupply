@@ -48,6 +48,9 @@ const outboundParsers = {
       case 'invoiceNumber': {
         return InvoiceSortFieldInput.InvoiceNumber;
       }
+      case 'theirReference': {
+        return InvoiceSortFieldInput.TheirReference;
+      }
       case 'status':
       default: {
         return InvoiceSortFieldInput.Status;
