@@ -66,7 +66,11 @@ impl<'a> AssetRowRepository<'a> {
             .do_update()
             .set(asset_row)
             .execute(&self.connection.connection)?;
-        self.insert_changelog(asset_row.id.to_owned(), ChangelogAction::Upsert)
+        self.insert_changelog(
+            asset_row.id.to_owned(),
+            ChangelogAction::Upsert,
+            Some(asset_row.clone()),
+        )
     }
 
     #[cfg(not(feature = "postgres"))]
