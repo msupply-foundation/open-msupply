@@ -48,8 +48,12 @@ pub async fn pull(
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs =
-        changelog_repo.outgoing_sync_records(cursor, batch_size, sync_site_id, is_initialised)?;
+    let changelogs = changelog_repo.outgoing_sync_records(
+        cursor,
+        batch_size,
+        sync_site_id.clone(),
+        is_initialised,
+    )?;
     let total_records =
         changelog_repo.count_outgoing_sync_records(cursor, sync_site_id, is_initialised)?;
     let max_cursor = changelog_repo.latest_cursor()?;

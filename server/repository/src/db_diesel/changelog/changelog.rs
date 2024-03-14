@@ -103,11 +103,10 @@ pub enum ChangelogTableName {
 
 pub(crate) enum ChangeLogSyncStyle {
     Legacy,
-    Central(ChangelogTableName),
-    Remote(ChangelogTableName),
-    // Transfer(ChangelogTableName),
+    Central,
+    Remote,
+    // Transfer ?? Patient??  etc
 }
-
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
 impl ChangelogTableName {
@@ -136,22 +135,12 @@ impl ChangelogTableName {
             ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
-            ChangelogTableName::PackVariant => {
-                ChangeLogSyncStyle::Central(ChangelogTableName::PackVariant)
-            }
-            ChangelogTableName::AssetClass => {
-                ChangeLogSyncStyle::Central(ChangelogTableName::AssetClass)
-            }
-            ChangelogTableName::AssetCategory => {
-                ChangeLogSyncStyle::Central(ChangelogTableName::AssetCategory)
-            }
-            ChangelogTableName::AssetType => {
-                ChangeLogSyncStyle::Central(ChangelogTableName::AssetType)
-            }
-            ChangelogTableName::AssetCatalogueItem => {
-                ChangeLogSyncStyle::Central(ChangelogTableName::AssetCatalogueItem)
-            }
-            ChangelogTableName::Asset => ChangeLogSyncStyle::Remote(ChangelogTableName::Asset),
+            ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetCategory => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetType => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
         }
     }
 }
@@ -433,7 +422,7 @@ fn create_filtered_outgoing_sync_query(
 
     let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| match table.sync_style() {
-            ChangeLogSyncStyle::Central(_) => true,
+            ChangeLogSyncStyle::Central => true,
             _ => false,
         })
         .collect();
@@ -441,7 +430,7 @@ fn create_filtered_outgoing_sync_query(
     // Remote Records
     let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
         .filter(|table| match table.sync_style() {
-            ChangeLogSyncStyle::Remote(_) => true,
+            ChangeLogSyncStyle::Remote => true,
             _ => false,
         })
         .collect();
