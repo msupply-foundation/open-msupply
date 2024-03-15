@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import {
   FnUtils,
-  InboundReturnInput,
   GeneratedInboundReturnLineNode,
   InboundReturnLineInput,
   RecordPatch,
@@ -33,7 +32,7 @@ export const useDraftInboundReturnLines = ({
   );
 
   const { mutateAsync: insert } = useReturns.document.insertInboundReturn();
-  // const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
+  const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   useEffect(() => {
     if (!draftLines.length) getLines();
@@ -110,15 +109,20 @@ export const useDraftInboundReturnLines = ({
       }
     );
 
-    const input: InboundReturnInput = {
-      id: FnUtils.generateUUID(),
-      customerId,
-      inboundReturnLines,
-    };
-
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
-    await insert(input);
+    if (!returnId) {
+      await insert({
+        id: FnUtils.generateUUID(),
+        customerId,
+        inboundReturnLines,
+      });
+    } else {
+      await updateLines({
+        inboundReturnId: returnId,
+        inboundReturnLines,
+      });
+    }
   };
 
   return { lines: draftLines, update, saveInboundReturn: save, addDraftLine };
