@@ -1,6 +1,7 @@
 import {
   BasicCell,
   CellProps,
+  ColumnDescription,
   DataTable,
   Formatter,
   GeneratedInboundReturnLineNode,
@@ -70,15 +71,19 @@ export const QuantityReturnedTableComponent = ({
       //       }
       //     : { label: 'label.pack-size' }),
       // }),
-      [
-        'numberOfPacks',
-        {
-          label: 'label.pack-quantity-issued',
-          width: 110,
-          accessor: ({ rowData }) => rowData.numberOfPacksIssued ?? '--',
-          Cell: BasicCell,
-        },
-      ],
+      ...(lines.some(l => l.numberOfPacksIssued !== null) // if any line has a value, show the column
+        ? ([
+            [
+              'numberOfPacks',
+              {
+                label: 'label.pack-quantity-issued',
+                width: 110,
+                accessor: ({ rowData }) => rowData.numberOfPacksIssued ?? '--',
+                Cell: BasicCell,
+              },
+            ],
+          ] as ColumnDescription<GeneratedInboundReturnLineNode>[])
+        : []),
       [
         'numberOfPacksReturned',
         {
