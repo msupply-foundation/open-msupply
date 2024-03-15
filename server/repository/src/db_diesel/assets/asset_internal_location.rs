@@ -135,3 +135,61 @@ fn create_filtered_query(
     }
     query
 }
+
+#[cfg(test)]
+
+mod tests {
+    use crate::{
+        assets::{
+            asset_internal_location::AssetInternalLocationRepository,
+            asset_internal_location_row::{
+                AssetInternalLocationRow, AssetInternalLocationRowRepository,
+            },
+        },
+        mock::{mock_asset_a, mock_location_1, MockDataInserts},
+        test_db, EqualFilter,
+    };
+
+    use super::AssetInternalLocationFilter;
+
+    #[actix_rt::test]
+    async fn test_asset_location_repository() {
+        // Prepare
+        let (_, storage_connection, _, _) = test_db::setup_all(
+            "test_asset_location_query_repository",
+            MockDataInserts::none().assets().locations(),
+        )
+        .await;
+
+        // Create a asset location join
+        let asset_internal_location_repository =
+            AssetInternalLocationRepository::new(&storage_connection);
+        let asset_internal_location_row_repository =
+            AssetInternalLocationRowRepository::new(&storage_connection);
+
+        let asset_location_id = "test_id".to_string();
+        let asset_location = AssetInternalLocationRow {
+            id: asset_location_id.clone(),
+            asset_id: mock_asset_a().id,
+            location_id: mock_location_1().id,
+        };
+
+        let result = asset_internal_location_row_repository
+            .insert_one(&asset_location)
+            .unwrap();
+
+        println!("result: {:?}", result);
+
+        // Query by id
+        let result = asset_internal_location_repository
+            .query_one(
+                AssetInternalLocationFilter::new().id(EqualFilter::equal_to(&asset_location_id)),
+            )
+            .unwrap()
+            .unwrap();
+
+        println!("result: {:?}", result);
+
+        assert_eq!(result.id, asset_location_id);
+    }
+}

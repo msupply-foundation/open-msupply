@@ -3,7 +3,6 @@ use super::asset_internal_location_row::asset_internal_location::dsl::*;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 table! {
