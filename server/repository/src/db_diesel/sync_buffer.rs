@@ -25,7 +25,7 @@ table! {
         table_name -> Text,
         action -> crate::SyncBufferActionMapping,
         data -> Text,
-        source_site_id -> Nullable<Text>,
+        source_site_id -> Nullable<Integer>,
     }
 }
 
@@ -42,7 +42,7 @@ pub struct SyncBufferRow {
     pub table_name: String,
     pub action: SyncBufferAction,
     pub data: String,
-    pub source_site_id: Option<String>,
+    pub source_site_id: Option<i32>,
 }
 
 impl Default for SyncBufferRow {

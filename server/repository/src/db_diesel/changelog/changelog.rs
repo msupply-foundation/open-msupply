@@ -1,6 +1,6 @@
 use crate::{
-    diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter, NameLinkRow,
-    RepositoryError, StorageConnection,
+    db_diesel::store_row::store, diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter,
+    NameLinkRow, RepositoryError, StorageConnection,
 };
 use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
@@ -22,7 +22,7 @@ table! {
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
-        source_site_id -> Nullable<Text>,
+        source_site_id -> Nullable<Integer>,
     }
 }
 
@@ -35,7 +35,7 @@ table! {
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
-        source_site_id -> Nullable<Text>,
+        source_site_id -> Nullable<Integer>,
     }
 }
 
@@ -106,7 +106,8 @@ pub(crate) enum ChangeLogSyncStyle {
     Legacy,
     Central,
     Remote,
-    // Transfer ?? Patient??  etc
+    // Transfer,
+    // Files?? Patient??  etc
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
@@ -167,7 +168,7 @@ pub struct ChangelogRow {
     pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
-    pub source_site_id: Option<String>,
+    pub source_site_id: Option<i32>,
 }
 
 #[derive(Default, Clone)]
@@ -178,7 +179,7 @@ pub struct ChangelogFilter {
     pub record_id: Option<EqualFilter<String>>,
     pub action: Option<EqualFilter<ChangelogAction>>,
     pub is_sync_update: Option<EqualFilter<bool>>,
-    pub source_site_id: Option<EqualFilter<String>>,
+    pub source_site_id: Option<EqualFilter<i32>>,
 }
 
 pub struct ChangelogRepository<'a> {
@@ -246,7 +247,7 @@ impl<'a> ChangelogRepository<'a> {
         &self,
         earliest: u64,
         batch_size: u32,
-        sync_site_id: String,
+        sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
         let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
@@ -281,7 +282,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn count_outgoing_sync_records(
         &self,
         earliest: u64,
-        sync_site_id: String,
+        sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
@@ -320,7 +321,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn set_source_site_id_and_is_sync_update(
         &self,
         cursor_id: i64,
-        source_site_id: Option<String>,
+        source_site_id: Option<i32>,
     ) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set((
@@ -396,7 +397,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
 /// Update this method when adding new sync styles to the system
 fn create_filtered_outgoing_sync_query(
     earliest: u64,
-    sync_site_id: String,
+    sync_site_id: i32,
     is_initialized: bool,
 ) -> BoxedChangelogQuery {
     let mut query = changelog_deduped::table
@@ -436,14 +437,19 @@ fn create_filtered_outgoing_sync_query(
         })
         .collect();
 
+    let active_stores_for_site = store::table
+        .filter(store::site_id.eq(sync_site_id))
+        .select(store::id.nullable())
+        .into_boxed();
+
     // Filter the query for the matching records for each type
     query = query.filter(
         changelog_deduped::table_name
             .eq_any(central_sync_table_names)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::source_site_id.eq(Some(sync_site_id.clone())))), // TODO sub query for name_link, store_id based on the sync_site
-                                                                                         // Any other special cases could be handled here...
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site))), // TODO Should this use name_link?
+                                                                                   // Any other special cases could be handled here...
     );
 
     query
@@ -501,7 +507,7 @@ impl ChangelogFilter {
         self
     }
 
-    pub fn source_site_id(mut self, filter: EqualFilter<String>) -> Self {
+    pub fn source_site_id(mut self, filter: EqualFilter<i32>) -> Self {
         self.source_site_id = Some(filter);
         self
     }
