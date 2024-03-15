@@ -10,7 +10,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             id TEXT NOT NULL PRIMARY KEY,
             store_id TEXT REFERENCES store (id), -- This serves as the location of the asset at least for now can be null for un-assigned assets
             notes TEXT,
-            code TEXT NOT NULL,
+            asset_number TEXT NOT NULL,
             serial_number TEXT, 
             asset_catalogue_item_id TEXT REFERENCES asset_catalogue_item (id),
             installation_date {DATE},
@@ -18,7 +18,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             deleted_datetime {DATETIME},
             created_datetime {DATETIME} NOT NULL,
             modified_datetime {DATETIME} NOT NULL,
-            UNIQUE (code) -- Asset codes must be unique, they'll be used in the barcode
+            UNIQUE (asset_number) -- Asset numbers must be unique within a site
         );
         CREATE INDEX asset_catalogue_item_id ON asset (asset_catalogue_item_id);
         CREATE INDEX asset_serial_number ON asset (serial_number);

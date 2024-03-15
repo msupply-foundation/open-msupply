@@ -12,7 +12,7 @@ pub fn mock_asset_a() -> AssetRow {
     AssetRow {
         id: String::from("asset_a"),
         notes: Some(String::from("Freezer A - HBD 116")),
-        code: String::from("asset_a"),
+        asset_number: String::from("asset_a"),
         store_id: None,
         serial_number: Some(String::from("serial_number_a")),
         catalogue_item_id: Some("c7d48b5c-74b2-4077-94f5-2b25d67a447b".to_string()),
@@ -37,7 +37,7 @@ pub fn mock_asset_b() -> AssetRow {
     AssetRow {
         id: String::from("asset_b"),
         notes: Some(String::from("Vaccine Carrier LR 3L - RCW4")),
-        code: String::from("asset_b"),
+        asset_number: String::from("asset_b"),
         store_id: Some(mock_store_a().id),
         serial_number: Some(String::from("serial_number")),
         catalogue_item_id: Some("c74a3f72-fda6-4bb8-a08f-5f79a20a8716".to_string()),
@@ -53,7 +53,7 @@ pub fn mock_deleted_asset() -> AssetRow {
     AssetRow {
         id: String::from("deleted_asset"),
         notes: None,
-        code: String::new(),
+        asset_number: String::new(),
         store_id: None,
         serial_number: None,
         catalogue_item_id: None,
