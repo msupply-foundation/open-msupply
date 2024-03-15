@@ -357,6 +357,12 @@ export type AssetFilterInput = {
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
 
+export type AssetLocationConnector = {
+  __typename: 'AssetLocationConnector';
+  nodes: Array<LocationNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type AssetLogConnector = {
   __typename: 'AssetLogConnector';
   nodes: Array<AssetLogNode>;
@@ -430,7 +436,7 @@ export type AssetNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
-  locations: Array<LocationNode>;
+  locations: AssetLocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;

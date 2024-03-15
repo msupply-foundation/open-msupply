@@ -17,7 +17,7 @@ pub struct AssetLocationLoader {
 
 #[async_trait::async_trait]
 impl Loader<String> for AssetLocationLoader {
-    type Value = Location;
+    type Value = Vec<Location>;
     type Error = RepositoryError;
 
     async fn load(&self, ids: &[String]) -> Result<HashMap<String, Self::Value>, Self::Error> {
@@ -25,9 +25,10 @@ impl Loader<String> for AssetLocationLoader {
         let asset_location_repo = AssetInternalLocationRepository::new(&connection);
         let location_repo = LocationRepository::new(&connection);
 
-        let locations = asset_location_repo.query_by_filter(
-            AssetInternalLocationFilter::new().asset_id(EqualFilter::equal_any(ids.to_owned())),
-        )?;
+        let locations =
+            asset_location_repo.query_by_filter(AssetInternalLocationFilter::new().asset_id(
+                EqualFilter::equal_any(ids.iter().map(String::clone).collect()),
+            ))?;
 
         let location_ids = locations
             .into_iter()
@@ -37,9 +38,14 @@ impl Loader<String> for AssetLocationLoader {
         let locations = location_repo
             .query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(location_ids)))?;
 
-        Ok(locations
-            .into_iter()
-            .map(|location| (location.location_row.id.clone(), location))
-            .collect())
+        let mut map: HashMap<String, Vec<Location>> = HashMap::new();
+        for line in locations {
+            let list = map
+                .entry(ids[0].clone())
+                .or_insert_with(|| Vec::<Location>::new());
+            list.push(line);
+        }
+
+        Ok(map)
     }
 }
