@@ -7,6 +7,8 @@ use diesel::{
     prelude::*,
 };
 use std::convert::TryInto;
+use strum::EnumIter;
+use strum::IntoEnumIterator;
 use util::inline_init;
 
 use diesel_derive_enum::DbEnum;
@@ -66,7 +68,7 @@ pub enum ChangelogAction {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,
@@ -98,6 +100,50 @@ pub enum ChangelogTableName {
     AssetType,
     AssetCatalogueItem,
     Asset,
+}
+
+pub(crate) enum ChangeLogSyncStyle {
+    Legacy,
+    Central,
+    Remote,
+    // Transfer ?? Patient??  etc
+}
+// When adding a new change log record type, specify how it should be synced
+// If new requirements are needed a different ChangeLogSyncStyle can be added
+impl ChangelogTableName {
+    pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
+        match self {
+            ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::LocationMovement => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::StockLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Invoice => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::InvoiceLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Stocktake => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::StocktakeLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Requisition => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::RequisitionLine => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::ActivityLog => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::InventoryAdjustmentReason => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Barcode => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Clinician => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::ClinicianStoreJoin => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Name => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::NameStoreJoin => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Document => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Sensor => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::TemperatureBreach => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::TemperatureBreachConfig => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::TemperatureLog => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::Currency => ChangeLogSyncStyle::Legacy,
+            ChangelogTableName::PackVariant => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetClass => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetCategory => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetType => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Insertable)]
@@ -159,7 +205,9 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter).limit(limit.into());
+        let query = create_filtered_query(earliest, filter)
+            .order(changelog_deduped::cursor.asc())
+            .limit(limit.into());
 
         // // Debug diesel query
         // println!(
@@ -189,6 +237,54 @@ impl<'a> ChangelogRepository<'a> {
         filter: Option<ChangelogFilter>,
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_query(earliest, filter)
+            .count()
+            .get_result::<i64>(&self.connection.connection)?;
+        Ok(result as u64)
+    }
+
+    pub fn outgoing_sync_records(
+        &self,
+        earliest: u64,
+        batch_size: u32,
+        sync_site_id: String,
+        is_initialized: bool,
+    ) -> Result<Vec<ChangelogRow>, RepositoryError> {
+        let query = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
+            .order(changelog_deduped::cursor.asc())
+            .limit(batch_size.into());
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
+        // );
+
+        let result: Vec<ChangelogJoin> = query.load(&self.connection.connection)?;
+        Ok(result
+            .into_iter()
+            .map(|(change_log_row, name_link_row)| ChangelogRow {
+                cursor: change_log_row.cursor,
+                table_name: change_log_row.table_name,
+                record_id: change_log_row.record_id,
+                row_action: change_log_row.row_action,
+                name_id: name_link_row.map(|r| r.name_id),
+                store_id: change_log_row.store_id,
+                is_sync_update: change_log_row.is_sync_update,
+                source_site_id: change_log_row.source_site_id,
+            })
+            .collect())
+    }
+
+    /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
+    /// This looks up associated records to decide if change log should be sent to the site or not
+    /// Update this method when adding new record types to the system
+    pub fn count_outgoing_sync_records(
+        &self,
+        earliest: u64,
+        sync_site_id: String,
+        is_initialized: bool,
+    ) -> Result<u64, RepositoryError> {
+        let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
             .count()
             .get_result::<i64>(&self.connection.connection)?;
         Ok(result as u64)
@@ -292,6 +388,63 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
         apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
         apply_equal_filter!(query, source_site_id, changelog_deduped::source_site_id);
     }
+
+    query
+}
+
+/// This looks up associated records to decide if change log should be sent to the site or not
+/// Update this method when adding new sync styles to the system
+fn create_filtered_outgoing_sync_query(
+    earliest: u64,
+    sync_site_id: String,
+    is_initialized: bool,
+) -> BoxedChangelogQuery {
+    let mut query = changelog_deduped::table
+        .left_join(name_link::table)
+        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
+        .into_boxed();
+
+    // If we are initialising, we want to send all the records for the site, even ones that originally came from the site
+    // The rest of the time we want to exclude any records that were created by the site
+
+    if is_initialized {
+        query = query
+            .filter(
+                changelog_deduped::source_site_id
+                    .ne(Some(sync_site_id.clone()))
+                    .or(changelog_deduped::source_site_id.is_null()),
+            )
+            .filter(changelog_deduped::is_sync_update.eq(false))
+    }
+
+    // Loop through all the Sync tables and add them to the query if they have the right sync style
+
+    // Central Records
+
+    let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| match table.sync_style() {
+            ChangeLogSyncStyle::Central => true,
+            _ => false,
+        })
+        .collect();
+
+    // Remote Records
+    let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
+        .filter(|table| match table.sync_style() {
+            ChangeLogSyncStyle::Remote => true,
+            _ => false,
+        })
+        .collect();
+
+    // Filter the query for the matching records for each type
+    query = query.filter(
+        changelog_deduped::table_name
+            .eq_any(central_sync_table_names)
+            .or(changelog_deduped::table_name
+                .eq_any(remote_sync_table_names)
+                .and(changelog_deduped::source_site_id.eq(Some(sync_site_id.clone())))), // TODO sub query for name_link, store_id based on the sync_site
+                                                                                         // Any other special cases could be handled here...
+    );
 
     query
 }
