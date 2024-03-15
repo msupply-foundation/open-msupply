@@ -117,6 +117,7 @@ pub async fn push(
     }
 
     // TODO we need to trigger integrate records for just 1 site?
+    // See issue: https://github.com/msupply-foundation/open-msupply/issues/3294
     if total_records <= records_in_this_batch {
         service_provider.sync_trigger.trigger();
     }
