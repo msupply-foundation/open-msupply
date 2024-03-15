@@ -1,4 +1,5 @@
 import { Document } from './document';
+import { Log } from './log';
 
 export const useAssets = {
   utils: {},
@@ -16,5 +17,5 @@ export const useAssets = {
     update: Document.useAssetUpdate,
   },
 
-  line: {},
+  log: { insert: Log.useAssetLogInsert },
 };
