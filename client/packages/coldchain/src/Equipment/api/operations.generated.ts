@@ -30,11 +30,12 @@ export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'Ass
 
 export type AssetLogsQueryVariables = Types.Exact<{
   filter: Types.AssetLogFilterInput;
+  sort?: Types.InputMaybe<Types.AssetLogSortInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string } | null }> } };
+export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string } | null }> } };
 
 export type DeleteAssetMutationVariables = Types.Exact<{
   assetId: Types.Scalars['String']['input'];
@@ -148,10 +149,11 @@ export const AssetByIdDocument = gql`
 }
     ${AssetFragmentDoc}`;
 export const AssetLogsDocument = gql`
-    query assetLogs($filter: AssetLogFilterInput!, $storeId: String!) {
-  assetLogs(filter: $filter, storeId: $storeId) {
+    query assetLogs($filter: AssetLogFilterInput!, $sort: AssetLogSortInput, $storeId: String!) {
+  assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on AssetLogConnector {
       __typename
+      totalCount
       nodes {
         __typename
         ...AssetLog
@@ -297,7 +299,7 @@ export const mockAssetByIdQuery = (resolver: ResponseResolver<GraphQLRequest<Ass
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockAssetLogsQuery((req, res, ctx) => {
- *   const { filter, storeId } = req.variables;
+ *   const { filter, sort, storeId } = req.variables;
  *   return res(
  *     ctx.data({ assetLogs })
  *   )
