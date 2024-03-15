@@ -48,12 +48,14 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   // expanded. See issue #777 for more detail.
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
-  const handleResize = useCallback(() => {
-    window.dispatchEvent(new Event('resize'));
-  }, []);
+  // const handleResize = useCallback(() => {
+  //   window.dispatchEvent(new Event('resize'));
+  // }, []);
   useEffect(() => {
-    handleResize();
-  }, [detailPanelOpen, drawerOpen, handleResize]);
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  }, [detailPanelOpen, drawerOpen]);
 
   const [tabQueryParams, setTabQueryParams] = useState<
     Record<string, UrlQueryObject>
