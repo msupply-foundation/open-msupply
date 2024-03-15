@@ -419,6 +419,34 @@ mod tests {
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
 
+        // test identifier OR
+        let patient_row_a = inline_init(|row: &mut NameRow| {
+            row.id = "patient_a".to_string();
+            row.name = "patient_a_name".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "example111".to_string();
+            row.national_health_number = Some("patient_a_nhn".to_string());
+        });
+
+        let patient_row_b = inline_init(|row: &mut NameRow| {
+            row.id = "patient_b".to_string();
+            row.name = "patient_b_name".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "patient_b_code".to_string();
+            row.national_health_number = Some("example222".to_string());
+        });
+
+        let patient_row_c = inline_init(|row: &mut NameRow| {
+            row.id = "patient_c".to_string();
+            row.name = "example_name".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "code333".to_string();
+            row.national_health_number = Some("patient_c_nhn".to_string());
+        });
+        name_row_repo.upsert_one(&patient_row_a).unwrap();
+        name_row_repo.upsert_one(&patient_row_b).unwrap();
+        name_row_repo.upsert_one(&patient_row_c).unwrap();
+
         // Test identifier search
         ProgramEnrolmentRowRepository::new(&connection)
             .upsert_one(&ProgramEnrolmentRow {
@@ -487,6 +515,15 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.get(0).unwrap().id, patient_row.id);
+
+        // Test identifier OR
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::like("example")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 3);
     }
 
     #[actix_rt::test]
