@@ -316,7 +316,7 @@ impl InvoiceNode {
         Ok(Some(result))
     }
 
-    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<CurrencyNode> {
         let service_provider = ctx.service_provider();
         let currency_provider = &service_provider.currency_service;
         let service_context = &service_provider.basic_context()?;
@@ -330,7 +330,7 @@ impl InvoiceNode {
                 &self.row().id
             )))?;
 
-        Ok(Some(CurrencyNode::from_domain(currency)))
+        Ok(CurrencyNode::from_domain(currency))
     }
 
     pub async fn currency_rate(&self) -> &f64 {
