@@ -5,9 +5,11 @@ import {
   InputWithLabelRow,
   Typography,
 } from '@common/components';
-import { DateUtils, useTranslation } from '@common/intl';
+import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
+import { Status } from '../../Components';
+import { getReasonString } from '../../utils';
 
 interface SummaryProps {
   draft?: AssetFragment;
@@ -82,6 +84,7 @@ const Row = ({
 
 export const Summary = ({ draft, onChange }: SummaryProps) => {
   const t = useTranslation('coldchain');
+  const { localisedDate } = useFormatDateTime();
 
   if (!draft) return null;
 
@@ -91,21 +94,21 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
         <Section heading={t('heading.asset-identification')}>
           <Row label={t('label.category')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetCategory?.name}
+              value={draft.catalogueItem?.assetCategory?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
           <Row label={t('label.type')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetType?.name}
+              value={draft.catalogueItem?.assetType?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
           <Row label={t('label.serial')}>
             <BasicTextInput
-              value={draft.serialNumber}
+              value={draft.serialNumber ?? ''}
               fullWidth
               onChange={e => onChange({ serialNumber: e.target.value })}
             />
@@ -150,13 +153,23 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
       <Container>
         <Section heading={t('heading.functional-status')}>
           <Row label={t('label.current-status')}>
-            <BasicTextInput value={''} disabled fullWidth />
+            <Box display="flex">
+              <Status status={draft.statusLog?.status} />
+            </Box>
           </Row>
           <Row label={t('label.last-updated')}>
-            <BasicTextInput value={''} disabled fullWidth />
+            <BasicTextInput
+              value={localisedDate(draft.statusLog?.logDatetime)}
+              disabled
+              fullWidth
+            />
           </Row>
           <Row label={t('label.reason')}>
-            <BasicTextInput value={''} disabled fullWidth />
+            <BasicTextInput
+              value={getReasonString(draft.statusLog?.reason, t)}
+              disabled
+              fullWidth
+            />
           </Row>
         </Section>
         <Section heading={t('label.additional-info')}>

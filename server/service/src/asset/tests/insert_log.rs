@@ -1,5 +1,4 @@
 #[cfg(test)]
-
 mod query {
     use crate::{
         asset::insert_log::{InsertAssetLog, InsertAssetLogError},

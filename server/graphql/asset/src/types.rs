@@ -4,7 +4,7 @@ use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetStatusLoader, StoreByIdLoader, UserLoader,
+    AssetCatalogueItemLoader, AssetStatusLogLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
@@ -153,14 +153,14 @@ impl AssetNode {
             .map(AssetCatalogueItemNode::from_domain))
     }
 
-    pub async fn status(&self, ctx: &Context<'_>) -> Result<Option<StatusType>> {
+    pub async fn status_log(&self, ctx: &Context<'_>) -> Result<Option<AssetLogNode>> {
         let asset_id = self.row().id.clone();
-        let loader = ctx.get_loader::<DataLoader<AssetStatusLoader>>();
-        let status = match loader.load_one(asset_id.clone()).await? {
-            Some(s) => Some(StatusType::from_domain(&s)),
-            None => None,
-        };
-        Ok(status)
+        let loader = ctx.get_loader::<DataLoader<AssetStatusLogLoader>>();
+
+        Ok(loader
+            .load_one(asset_id.clone())
+            .await?
+            .map(AssetLogNode::from_domain))
     }
 }
 
