@@ -361,7 +361,7 @@ impl ShipmentTransferTester {
             r.status = InvoiceRowStatus::Allocated;
             r.their_reference = Some("some reference".to_string());
             r.comment = Some("some comment".to_string());
-            r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            r.created_datetime = NaiveDate::from_ymd_opt(2024, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();

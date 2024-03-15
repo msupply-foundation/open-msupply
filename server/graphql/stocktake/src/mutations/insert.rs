@@ -119,7 +119,7 @@ impl InsertInput {
 mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{mock::MockDataInserts, Stocktake, StocktakeRow, StorageConnectionManager};
     use serde_json::json;
     use service::{
@@ -159,7 +159,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_insert() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             StocktakeMutations,
             "omsupply-database-gql-stocktake_insert",

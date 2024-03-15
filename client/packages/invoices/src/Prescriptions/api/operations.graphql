@@ -58,6 +58,7 @@ fragment PrescriptionRow on InvoiceNode {
     rate
     isHomeCurrency
   }
+
   currencyRate
 }
 

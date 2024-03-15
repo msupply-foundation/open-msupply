@@ -41,6 +41,11 @@ impl Migration for V1_07_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sync_log::migrate(connection)?;
+        currency::migrate(connection)?;
+        store_preference_add_issue_in_foreign_currency::migrate(connection)?;
+        invoice_add_currency_fields::migrate(connection)?;
+
         // We don't want merge-migration updates to sync back.
         run_without_change_log_updates(connection, || {
             item_add_is_active::migrate(connection)?;
@@ -78,11 +83,6 @@ impl Migration for V1_07_00 {
 
             Ok(())
         })?;
-
-        currency::migrate(connection)?;
-        store_preference_add_issue_in_foreign_currency::migrate(connection)?;
-        invoice_add_currency_fields::migrate(connection)?;
-        sync_log::migrate(connection)?;
         Ok(())
     }
 }
@@ -341,7 +341,7 @@ async fn migration_1_07_00_merge() {
     insert_merge_test_data(&connection);
 
     let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
-        .order(stock_on_hand_dsl::id.asc())
+        .order(stock_on_hand_dsl::item_id.asc())
         .load(&connection.connection)
         .unwrap();
 
@@ -379,7 +379,7 @@ async fn migration_1_07_00_merge() {
 
     // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
     let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
-        .order(stock_on_hand_dsl::id.asc())
+        .order(stock_on_hand_dsl::item_id.asc())
         .load(&connection.connection)
         .unwrap();
     assert_eq!(old_soh, new_soh);

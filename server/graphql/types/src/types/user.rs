@@ -2,6 +2,7 @@ use super::{StorePreferenceNode, UserStorePermissionConnector};
 use async_graphql::{
     dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
 };
+use chrono::NaiveDate;
 use graphql_core::{
     loader::NameRowLoader, standard_graphql_error::StandardGraphqlError, ContextExt,
 };
@@ -53,6 +54,9 @@ impl UserStoreNode {
         StoreModeNodeType::from_domain(&self.user_store.store_row.store_mode)
     }
 
+    pub async fn created_date(&self) -> &Option<NaiveDate> {
+        &self.user_store.store_row.created_date
+    }
     pub async fn home_currency_code(&self, ctx: &Context<'_>) -> Result<Option<String>> {
         let service_provider = ctx.service_provider();
         let currency_provider = &service_provider.currency_service;

@@ -79,7 +79,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::{Duration, NaiveDate};
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts,
@@ -129,7 +129,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_temperature_breaches_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             TemperatureBreachQueries,
             EmptyMutation,
             "test_graphql_temperature_breaches_success",

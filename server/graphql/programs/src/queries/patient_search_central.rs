@@ -120,7 +120,7 @@ impl CentralPatientSearchInput {
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,
             gender: None,
-            name_or_code: None,
+            identifier: None,
         }
     }
 }
