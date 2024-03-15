@@ -1,6 +1,4 @@
-use repository::{
-    ChangelogFilter, ChangelogRepository, ChangelogTableName, EqualFilter, SyncBufferRowRepository,
-};
+use repository::{ChangelogRepository, SyncBufferRowRepository};
 
 use simple_log::warn;
 use util::{format_error, is_central_server};
@@ -39,10 +37,6 @@ pub async fn pull(
         .get_site_info()
         .await
         .map_err(Error::from)?;
-    // Could use ID directly here, but by using string, if site_id becomes a UUID, we'll be ok for future
-    let sync_site_id = response.site_id.to_string();
-
-    // TODO Versioning ?
 
     let ctx = service_provider.basic_context()?;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
@@ -51,11 +45,11 @@ pub async fn pull(
     let changelogs = changelog_repo.outgoing_sync_records(
         cursor,
         batch_size,
-        sync_site_id.clone(),
+        response.site_id,
         is_initialised,
     )?;
     let total_records =
-        changelog_repo.count_outgoing_sync_records(cursor, sync_site_id, is_initialised)?;
+        changelog_repo.count_outgoing_sync_records(cursor, response.site_id, is_initialised)?;
     let max_cursor = changelog_repo.latest_cursor()?;
 
     let end_cursor = changelogs
@@ -104,9 +98,6 @@ pub async fn push(
         .await
         .map_err(Error::from)?;
 
-    // Could use ID directly here, but by using string, if site_id becomes a UUID, we'll be ok for future
-    let sync_site_id = response.site_id.to_string();
-
     warn!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
@@ -120,7 +111,7 @@ pub async fn push(
 
     let records_in_this_batch = records.len() as u64;
     for SyncRecordV6 { record, .. } in records {
-        let buffer_row = record.to_buffer_row(Some(sync_site_id.clone()))?;
+        let buffer_row = record.to_buffer_row(Some(response.site_id))?;
 
         repo.upsert_one(&buffer_row)?;
     }

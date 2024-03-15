@@ -68,7 +68,7 @@ pub(crate) struct ParsingSyncRecordError {
 impl CommonSyncRecord {
     pub(crate) fn to_buffer_row(
         self,
-        source_site_id: Option<String>,
+        source_site_id: Option<i32>,
     ) -> Result<SyncBufferRow, ParsingSyncRecordError> {
         let CommonSyncRecord {
             table_name,
