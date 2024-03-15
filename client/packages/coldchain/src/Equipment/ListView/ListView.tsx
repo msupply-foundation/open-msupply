@@ -8,7 +8,6 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
-  useFormatDateTime,
   useToggle,
   TooltipTextCell,
 } from '@openmsupply-client/common';
@@ -35,12 +34,24 @@ const AssetListComponent: FC = () => {
   const pagination = { page, first, offset };
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
-  const { localisedDate } = useFormatDateTime();
   const modalController = useToggle();
 
   const columns = useColumns<AssetFragment>(
     [
-      ['code', { width: 150, sortable: false }],
+      {
+        key: 'assetNumber',
+        width: 150,
+        sortable: false,
+        label: 'label.asset-number',
+      },
+      {
+        key: 'type',
+        label: 'label.type',
+        sortable: false,
+        width: 200,
+        accessor: ({ rowData }) => rowData.catalogueItem?.assetType?.name,
+        Cell: TooltipTextCell,
+      },
       {
         key: 'manufacturer',
         Cell: TooltipTextCell,
@@ -64,11 +75,6 @@ const AssetListComponent: FC = () => {
       {
         key: 'serialNumber',
         label: 'label.serial',
-      },
-      {
-        key: 'installationDate',
-        label: 'label.installation-date',
-        formatter: dateString => localisedDate(String(dateString)),
       },
       {
         key: 'notes',
@@ -104,6 +110,7 @@ const AssetListComponent: FC = () => {
           navigate(`/cold-chain/equipment/${row.id}`);
         }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
+        enableColumnSelection
       />
     </>
   );
