@@ -125,5 +125,5 @@ export const useDraftInboundReturnLines = ({
     }
   };
 
-  return { lines: draftLines, update, saveInboundReturn: save, addDraftLine };
+  return { lines: draftLines, update, save, addDraftLine };
 };

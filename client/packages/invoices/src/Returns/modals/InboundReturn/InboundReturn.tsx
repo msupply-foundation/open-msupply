@@ -50,17 +50,16 @@ export const InboundReturnEditModal = ({
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(700);
 
-  const { lines, update, saveInboundReturn, addDraftLine } =
-    useDraftInboundReturnLines({
-      outboundShipmentLineIds,
-      customerId,
-      returnId,
-      itemId,
-    });
+  const { lines, update, save, addDraftLine } = useDraftInboundReturnLines({
+    outboundShipmentLineIds,
+    customerId,
+    returnId,
+    itemId,
+  });
 
   const onOk = async () => {
     try {
-      await saveInboundReturn();
+      await save();
       onClose();
     } catch {
       // TODO: handle error display...
