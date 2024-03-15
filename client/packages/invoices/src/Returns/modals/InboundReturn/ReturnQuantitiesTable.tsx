@@ -105,7 +105,7 @@ export const QuantityReturnedTableComponent = ({
 
 export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
 
-// Input cells can't be defined inline, otherwise they lose focus on re-render?
+// Input cells can't be defined inline, otherwise they lose focus on re-render
 const PackSizeInputCell: React.FC<
   CellProps<GeneratedInboundReturnLineNode>
 > = props => <NumberInputCell {...props} isRequired min={1} />;
