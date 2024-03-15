@@ -37,7 +37,6 @@ pub use asset_catalogue_item::*;
 pub use asset_category::*;
 pub use asset_class::*;
 pub use asset_location::*;
-pub use asset_location::*;
 pub use asset_status_log::*;
 pub use asset_type::*;
 pub use clinician::*;
