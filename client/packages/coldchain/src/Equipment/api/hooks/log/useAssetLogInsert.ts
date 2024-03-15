@@ -12,8 +12,7 @@ export const useAssetLogInsert = () => {
   return useMutation(
     async (log: Partial<InsertAssetLogInput>) => api.insertLog(log),
     {
-      onSettled: assetId =>
-        queryClient.invalidateQueries(api.keys.logs(assetId ?? '')),
+      onSettled: () => queryClient.invalidateQueries(api.keys.base()),
       onError: e => {
         console.error(e);
       },
