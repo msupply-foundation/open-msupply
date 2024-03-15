@@ -122,12 +122,12 @@ export const reasonsByStatus = {
   [AssetLogStatusInput.Decomissioned]: [],
 };
 
-export const getReasonString = (
+export const translateReason = (
   reason: ReasonType | null | undefined,
   t: TypedTFunction<LocaleKey>
 ) => {
   const defaultValue = '-';
-  if (!reason) return defaultValue;
+  if (reason === null || reason === undefined) return defaultValue;
 
   const parsed = parseLogReason(reason);
 
