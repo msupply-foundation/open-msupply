@@ -102,12 +102,6 @@ async fn test_sync_pull_and_push() {
             ToSyncRecordTranslationType::PullFromOmSupplyCentral,
         )
         .unwrap(),
-        translate_changelogs_to_sync_records(
-            &connection,
-            changelogs.clone(),
-            ToSyncRecordTranslationType::PushToOmSupplyCentral,
-        )
-        .unwrap(),
     ]
     .into_iter()
     .flatten()

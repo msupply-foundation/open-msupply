@@ -5,6 +5,7 @@ import {
   InsertAssetInput,
   UpdateAssetInput,
   setNullableInput,
+  InsertAssetLogInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
@@ -35,6 +36,14 @@ const assetParsers = {
     replacementDate: setNullableInput('replacementDate', input),
     serialNumber: setNullableInput('serialNumber', input),
     storeId: input.storeId,
+  }),
+  toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
+    id: input.id ?? '',
+    assetId: input.assetId ?? '',
+    comment: input.comment,
+    reason: input.reason,
+    status: input.status,
+    type: input.type,
   }),
 };
 
@@ -85,6 +94,14 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
+    logs: async (assetId: string) => {
+      const filter = { assetId: { equalTo: assetId } };
+      const result = await sdk.assetLogs({ filter, storeId });
+
+      const items = result?.assetLogs;
+
+      return items;
+    },
   },
   insert: async (input: InsertAssetInput): Promise<string> => {
     const result = await sdk.insertAsset({
@@ -120,5 +137,18 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     }
 
     throw new Error('Could not delete asset');
+  },
+  insertLog: async (input: Partial<InsertAssetLogInput>): Promise<string> => {
+    const result = await sdk.insertAssetLog({
+      input: assetParsers.toLogInsert(input),
+      storeId,
+    });
+    const { insertAssetLog } = result;
+
+    if (insertAssetLog?.__typename === 'AssetLogNode') {
+      return insertAssetLog.assetId;
+    }
+
+    throw new Error('Could not insert asset log');
   },
 });

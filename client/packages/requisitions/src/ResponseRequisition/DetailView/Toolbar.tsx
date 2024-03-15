@@ -20,7 +20,7 @@ import { useResponse } from '../api';
 import { getApprovalStatusKey } from '../../utils';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 

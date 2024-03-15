@@ -1,6 +1,6 @@
 mod tests {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::mock::{test_item_stats, MockDataInserts};
     use serde_json::json;
 
@@ -8,7 +8,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_graphql_item_stats_loader() {
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_item_stats_loader",
