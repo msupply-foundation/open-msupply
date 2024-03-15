@@ -78,7 +78,7 @@ pub fn asset_catalogue_items(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAssetCatalogueItem,
+            resource: Resource::QueryAsset,
             store_id: None,
         },
     )?;
@@ -101,7 +101,7 @@ pub fn asset_catalogue_item(ctx: &Context<'_>, id: String) -> Result<AssetCatalo
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAssetCatalogueItem,
+            resource: Resource::QueryAsset,
             store_id: None,
         },
     )?;
