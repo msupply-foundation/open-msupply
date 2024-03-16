@@ -46,6 +46,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             connection,
             r#"
             ALTER TYPE context_type ADD VALUE 'ASSET' BEFORE 'INBOUND_SHIPMENT';
+            ALTER TYPE permission_type ADD VALUE 'ASSET_MUTATE';
+            ALTER TYPE permission_type ADD VALUE 'ASSET_CATALOGUE_ITEM_MUTATE';
+            ALTER TYPE permission_type ADD VALUE 'ASSET_QUERY';
             "#,
         )?;
     }
