@@ -88,7 +88,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
   allocatedQuantity,
   batch,
   currency,
-  isExternalSupplier
+  isExternalSupplier,
 }) => {
   const t = useTranslation('distribution');
   const { orderedRows, placeholderRow } = useOutboundLineEditRows(
@@ -113,7 +113,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     onChange: onEditStockLine,
     unit,
     currency,
-    isExternalSupplier
+    isExternalSupplier,
   });
 
   const additionalRows = [
@@ -131,6 +131,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       <Divider margin={10} />
       <Box
         style={{
+          maxHeight: 400,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
