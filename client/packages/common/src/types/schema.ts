@@ -1007,10 +1007,6 @@ export type DeleteInboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteInboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
 export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
@@ -3097,7 +3093,7 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
-  deleteInboundReturns: DeleteInboundReturnResponse;
+  deleteInboundReturn: DeleteInboundReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
@@ -3163,6 +3159,7 @@ export type Mutations = {
   updateDocument: UpdateDocumentResponse;
   updateEncounter: UpdateEncounterResponse;
   updateInboundReturn: UpdateInboundReturnResponse;
+  updateInboundReturnLines: UpdateInboundReturnLinesResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -3275,8 +3272,8 @@ export type MutationsDeleteAssetArgs = {
 };
 
 
-export type MutationsDeleteInboundReturnsArgs = {
-  input: DeleteInboundReturnInput;
+export type MutationsDeleteInboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -3591,6 +3588,12 @@ export type MutationsUpdateEncounterArgs = {
 
 export type MutationsUpdateInboundReturnArgs = {
   input: UpdateInboundReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateInboundReturnLinesArgs = {
+  input: UpdateInboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6238,6 +6241,13 @@ export type UpdateInboundReturnInput = {
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateInboundReturnStatusInput>;
 };
+
+export type UpdateInboundReturnLinesInput = {
+  inboundReturnId: Scalars['String']['input'];
+  inboundReturnLines: Array<InboundReturnLineInput>;
+};
+
+export type UpdateInboundReturnLinesResponse = InvoiceNode;
 
 export type UpdateInboundReturnResponse = InvoiceNode;
 

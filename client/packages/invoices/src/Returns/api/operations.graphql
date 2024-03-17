@@ -287,11 +287,8 @@ mutation updateInboundReturn(
   }
 }
 
-mutation deleteInboundReturns(
-  $storeId: String!
-  $input: [DeleteInboundReturnInput!]!
-) {
-  deleteInboundReturns(storeId: $storeId, input: $input) {
+mutation deleteInboundReturn($storeId: String!, $id: String!) {
+  deleteInboundReturn(storeId: $storeId, id: $id) {
     __typename
     ... on DeleteResponse {
       id
