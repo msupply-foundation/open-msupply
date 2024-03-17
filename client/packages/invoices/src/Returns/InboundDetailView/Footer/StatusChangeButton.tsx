@@ -93,6 +93,7 @@ const getManualStatusOptions = (
     // When the status is new, delivered and verified are available to
     // select.
     options[1].isDisabled = false;
+    options[2].isDisabled = false;
   }
 
   // When the status is delivered, only verified is available to select.
