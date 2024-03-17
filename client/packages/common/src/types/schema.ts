@@ -3162,6 +3162,7 @@ export type Mutations = {
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateDocument: UpdateDocumentResponse;
   updateEncounter: UpdateEncounterResponse;
+  updateInboundReturn: UpdateInboundReturnResponse;
   updateInboundReturnLines: UpdateInboundReturnLinesResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
@@ -3585,6 +3586,12 @@ export type MutationsUpdateDocumentArgs = {
 
 export type MutationsUpdateEncounterArgs = {
   input: UpdateEncounterInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateInboundReturnArgs = {
+  input: UpdateInboundReturnInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6231,12 +6238,27 @@ export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
 
+export type UpdateInboundReturnInput = {
+  colour?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  status?: InputMaybe<UpdateInboundReturnStatusInput>;
+};
+
 export type UpdateInboundReturnLinesInput = {
   inboundReturnId: Scalars['String']['input'];
   inboundReturnLines: Array<InboundReturnLineInput>;
 };
 
 export type UpdateInboundReturnLinesResponse = InvoiceNode;
+
+export type UpdateInboundReturnResponse = InvoiceNode;
+
+export enum UpdateInboundReturnStatusInput {
+  Delivered = 'DELIVERED',
+  Verified = 'VERIFIED'
+}
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';

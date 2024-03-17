@@ -4,7 +4,9 @@ pub mod generate_lines;
 pub mod insert;
 pub mod update_lines;
 
+pub mod update;
 pub use self::generate_lines::*;
+pub use self::update::*;
 pub use self::update_lines::*;
 
 #[derive(Clone, Debug, Default, PartialEq)]

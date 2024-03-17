@@ -79,7 +79,7 @@ fn set_new_status_datetime(
 
     let current_datetime = Utc::now().naive_utc();
 
-    // Status sequence for outbound shipment: New, Picked, Shipped
+    // Status sequence for outbound return: New, Picked, Shipped
     match (&outbound_return.status, new_status) {
         // From Shipped to Any, ignore
         (InvoiceRowStatus::Shipped, _) => {}
