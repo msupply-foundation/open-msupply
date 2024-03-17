@@ -47,8 +47,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_log", "datetime"),
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
-        ("asset_internal_location", "created_datetime"),
-        ("asset_internal_location", "modified_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {

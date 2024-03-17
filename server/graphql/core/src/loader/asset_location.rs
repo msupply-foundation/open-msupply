@@ -30,22 +30,56 @@ impl Loader<String> for AssetLocationLoader {
                 EqualFilter::equal_any(ids.iter().map(String::clone).collect()),
             ))?;
 
-        let location_ids = locations
-            .into_iter()
-            .map(|location| location.location_id)
-            .collect();
+        let mut asset_ids_by_location: HashMap<String, String> = HashMap::new();
+        for location in locations {
+            asset_ids_by_location.insert(location.location_id, location.asset_id);
+        }
 
-        let locations = location_repo
-            .query_by_filter(LocationFilter::new().id(EqualFilter::equal_any(location_ids)))?;
+        let locations = location_repo.query_by_filter(LocationFilter::new().id(
+            EqualFilter::equal_any(asset_ids_by_location.clone().into_keys().collect()),
+        ))?;
 
         let mut map: HashMap<String, Vec<Location>> = HashMap::new();
-        for line in locations {
+        for location in locations {
+            let asset_id = asset_ids_by_location
+                .get(&location.location_row.id)
+                .unwrap_or(&"".to_string())
+                .to_owned();
+
             let list = map
-                .entry(ids[0].clone())
+                .entry(asset_id)
                 .or_insert_with(|| Vec::<Location>::new());
-            list.push(line);
+            list.push(location);
         }
 
         Ok(map)
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use async_graphql::dataloader::Loader;
+//     use repository::{mock::MockDataInserts, test_db};
+
+//     use crate::loader::AssetLocationLoader;
+
+//     #[tokio::test]
+//     async fn asset_location_loader() {
+//         // Prepare
+//         let (_, _storage_connection, connection_manager, _) = test_db::setup_all(
+//             "asset_location_loader",
+//             MockDataInserts::none().assets().locations(),
+//         )
+//         .await;
+
+//         let loader = AssetLocationLoader { connection_manager };
+
+//         let ids: &[String] = &["abc".to_string(), "cde".to_string()];
+
+//         let result = loader.load(ids).await.unwrap();
+
+//         println!("{:?}", result);
+
+//         assert!(false);
+//     }
+// }
