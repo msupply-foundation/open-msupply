@@ -45,7 +45,7 @@ pub fn delete_stock_in_line(
         .map_err(|error| error.to_inner_error())?;
     Ok(line_id)
 }
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum DeleteStockInLineError {
     LineDoesNotExist,
     DatabaseError(RepositoryError),
