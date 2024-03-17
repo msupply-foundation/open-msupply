@@ -3,13 +3,14 @@ import {
   ColumnAlign,
   ExpiryDateCell,
   CheckCell,
-  CurrencyCell,
   Column,
-  useCurrency,
   LocationCell,
   NumberCell,
   ColumnDescription,
   useAuthContext,
+  useCurrencyCell,
+  Currencies,
+  CurrencyCell,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
@@ -24,9 +25,11 @@ export const useOutboundLineEditColumns = ({
   unit: string;
   currency?: CurrencyRowFragment | null;
 }) => {
-  const { c } = useCurrency();
   const { store } = useAuthContext();
 
+  const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLine>(
+    currency?.code as Currencies
+  );
   const columnDefinitions: ColumnDescription<DraftStockOutLine>[] = [
     [
       'batch',
@@ -53,9 +56,7 @@ export const useOutboundLineEditColumns = ({
     [
       'sellPricePerPack',
       {
-        // eslint-disable-next-line new-cap
-        Cell: CurrencyCell(),
-        formatter: sellPrice => c(Number(sellPrice)).format(),
+        Cell: CurrencyCell,
         width: 120,
       },
     ],
@@ -68,13 +69,11 @@ export const useOutboundLineEditColumns = ({
       description: 'description.fc-sell-price',
       width: 100,
       align: ColumnAlign.Right,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
+      Cell: ForeignCurrencyCell,
       accessor: ({ rowData }) => {
         if (currency) {
           return rowData.sellPricePerPack / currency.rate;
         }
-        return null;
       },
     });
   }
