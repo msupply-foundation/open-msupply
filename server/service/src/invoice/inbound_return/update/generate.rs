@@ -109,17 +109,14 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
             inbound_return.delivered_datetime = Some(current_datetime);
         }
 
-        // From New to Verified
+        // From New/Picked/Shipped/Delivered to Verified
         (
-            InvoiceRowStatus::New | InvoiceRowStatus::Picked | InvoiceRowStatus::Shipped,
+            InvoiceRowStatus::New
+            | InvoiceRowStatus::Picked
+            | InvoiceRowStatus::Shipped
+            | InvoiceRowStatus::Delivered,
             UpdateInboundReturnStatus::Verified,
         ) => {
-            inbound_return.delivered_datetime = Some(current_datetime);
-            inbound_return.verified_datetime = Some(current_datetime);
-        }
-
-        // From Delivered to Verified
-        (InvoiceRowStatus::Delivered, UpdateInboundReturnStatus::Verified) => {
             inbound_return.verified_datetime = Some(current_datetime);
         }
         _ => {}
