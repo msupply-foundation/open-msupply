@@ -98,6 +98,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
             .replace(decimalLimit === 0 ? decimal : '', '');
 
           if (input === '') {
+            setTextValue(''); // For removing single "."
             onChange(undefined);
             return;
           }
@@ -134,9 +135,10 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           setTextValue(format(newNum, { minimumFractionDigits: decimalMin }));
           onChange(newNum);
         }}
-        onBlur={() =>
-          setTextValue(format(value, { minimumFractionDigits: decimalMin }))
-        }
+        onBlur={() => {
+          onChange(Number(parse(textValue)) || undefined);
+          setTextValue(format(value, { minimumFractionDigits: decimalMin }));
+        }}
         onFocus={e => e.target.select()}
         {...props}
         value={textValue}
