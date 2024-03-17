@@ -20,7 +20,7 @@ import { SplitButtonOption } from '@common/components';
 const ops: [
   SplitButtonOption<string>,
   SplitButtonOption<string>,
-  SplitButtonOption<string>
+  SplitButtonOption<string>,
 ] = [
   { label: 'Create a merge commit', value: 'createAndMerge' },
   { label: 'Squash and merge', value: 'squashAndMerge' },
@@ -57,7 +57,7 @@ const Wrapper: FC<PropsWithChildren<{ text: string }>> = ({
 };
 
 const Template: Story<{ color: 'primary' | 'secondary' }> = ({ color }) => {
-  const t = useTranslation(['app', 'common']);
+  const t = useTranslation('app');
   const [selected, setSelected] = useState(false);
   const [selectedColor, setColor] = useState<Color>({
     hex: '#8f90a6',

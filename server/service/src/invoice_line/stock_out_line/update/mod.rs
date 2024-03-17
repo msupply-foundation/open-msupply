@@ -36,8 +36,10 @@ pub enum UpdateStockOutLineError {
     NotThisStoreInvoice,
     NotThisInvoiceLine(String),
     CannotEditFinalised,
+    ItemNotFound,
     StockLineNotFound,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
+    ItemDoesNotMatchStockLine,
     LocationIsOnHold,
     LocationNotFound,
     LineDoesNotReferenceStockLine,
@@ -234,17 +236,17 @@ mod test {
             Err(ServiceError::StockLineNotFound)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             service.update_stock_out_line(
                 &context,
                 inline_init(|r: &mut UpdateStockOutLine| {
                     r.id = mock_outbound_shipment_a_invoice_lines()[0].id.clone();
-                    r.number_of_packs = Some(0.0);
+                    r.number_of_packs = Some(-1.0);
                     r.r#type = Some(StockOutType::OutboundShipment);
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // LocationIsOnHold

@@ -108,7 +108,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -166,7 +166,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_use_suggested_quantity_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_use_suggested_quantity_structured_errors",
@@ -253,7 +253,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_use_suggested_quantity_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_use_suggested_quantity_success",
