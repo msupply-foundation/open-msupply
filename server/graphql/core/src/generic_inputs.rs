@@ -1,4 +1,5 @@
 use async_graphql::*;
+use chrono::{NaiveDate, NaiveDateTime};
 use service::report::definition::PrintReportSort;
 
 #[derive(InputObject)]
@@ -18,6 +19,8 @@ pub struct TaxInput {
 ///   b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
 #[derive(InputObject)]
 #[graphql(concrete(name = "NullableStringUpdate", params(String)))]
+#[graphql(concrete(name = "NullableDateUpdate", params(NaiveDate)))]
+#[graphql(concrete(name = "NullableDatetimeUpdate", params(NaiveDateTime)))]
 pub struct NullableUpdateInput<T: InputType> {
     pub value: Option<T>,
 }

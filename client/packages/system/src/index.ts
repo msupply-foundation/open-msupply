@@ -1,3 +1,4 @@
+export * from './Asset';
 export * from './Item';
 export * from './ActivityLog';
 export * from './Stock';

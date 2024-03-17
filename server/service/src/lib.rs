@@ -10,9 +10,11 @@ pub mod activity_log;
 pub mod apis;
 pub mod app_data;
 
+pub mod asset;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
+pub mod catalogue;
 pub mod clinician;
 mod common_stock;
 pub mod currency;

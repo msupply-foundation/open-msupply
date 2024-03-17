@@ -108,6 +108,13 @@ pub enum Resource {
     QueryInventoryAdjustmentReasons,
     QueryStorePreferences,
     ColdChainApi,
+    // assets
+    MutateAsset,
+    MutateAssetClassCategoryType,
+    MutateAssetCatalogueItem,
+    MutateAssetLog,
+    QueryAsset,
+    QueryAssetCatalogueItem,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -475,6 +482,33 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryStorePreferences,
         PermissionDSL::HasStoreAccess,
     );
+    // the following are placeholders
+    // TODO update with permissions once the central server is in place
+    map.insert(
+        Resource::MutateAsset,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateAssetClassCategoryType,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateAssetCatalogueItem,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateAssetLog,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
+    map.insert(
+        Resource::QueryAsset,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
+    map.insert(
+        Resource::QueryAssetCatalogueItem,
+        PermissionDSL::HasPermission(Permission::ServerAdmin),
+    );
+    // TODO end
 
     map
 }

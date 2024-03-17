@@ -478,7 +478,7 @@ mod test {
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
-            "generate_inbound_return_lines_item_id_and_return_id",
+            "generate_outbound_return_lines_item_id_and_return_id",
             MockDataInserts::all(),
             MockData {
                 stock_lines: vec![unavailable_stock_line()],
