@@ -12,9 +12,10 @@ import {
   QueryParamsProvider,
   createQueryParamsStore,
   CellProps,
-  CurrencyCell,
   ColumnAlign,
   NumberInputCell,
+  Currencies,
+  useCurrencyCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
@@ -131,6 +132,10 @@ export const PricingTableComponent: FC<TableProps> = ({
   currency,
   isExternalSupplier,
 }) => {
+  const CurrencyCell = useCurrencyCell<DraftInboundLine>(
+    currency?.code as Currencies
+  );
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -157,13 +162,11 @@ export const PricingTableComponent: FC<TableProps> = ({
       description: 'description.fc-sell-price',
       width: 100,
       align: ColumnAlign.Right,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
+      Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if (currency) {
           return rowData.sellPricePerPack / currency.rate;
         }
-        return null;
       },
     });
   }
@@ -184,13 +187,11 @@ export const PricingTableComponent: FC<TableProps> = ({
       description: 'description.fc-cost-price',
       width: 100,
       align: ColumnAlign.Right,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
+      Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if (currency) {
           return rowData.costPricePerPack / currency.rate;
         }
-        return null;
       },
     });
   }
@@ -217,8 +218,7 @@ export const PricingTableComponent: FC<TableProps> = ({
       label: 'label.fc-line-total',
       description: 'description.fc-line-total',
       width: 100,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
+      Cell: CurrencyCell,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => {
         if (currency) {
@@ -226,7 +226,6 @@ export const PricingTableComponent: FC<TableProps> = ({
             (rowData.numberOfPacks * rowData.costPricePerPack) / currency.rate
           );
         }
-        return null;
       },
     });
   }
