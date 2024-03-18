@@ -21,7 +21,7 @@ pub fn generate(
         code: item_code,
         ..
     }: ItemRow,
-    currency_id: Option<String>,
+    currency_id: &str,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, UpdateInboundShipmentServiceLineError> {
     // 1) Use name from input (if specified)
@@ -120,7 +120,7 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1.clone(),
-            Some("currency_a".to_string()),
+            "currency_a",
             &1.0,
         )
         .unwrap();
@@ -139,7 +139,7 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1,
-            Some("currency_a".to_string()),
+            "currency_a",
             &1.0,
         )
         .unwrap();
@@ -158,7 +158,7 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
-            Some("currency_a".to_string()),
+            "currency_a",
             &1.0,
         )
         .unwrap();
@@ -177,7 +177,7 @@ mod inbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
-            Some("currency_a".to_string()),
+            "currency_a",
             &1.0,
         )
         .unwrap();

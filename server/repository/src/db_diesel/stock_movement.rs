@@ -119,7 +119,7 @@ mod test {
     use util::{inline_edit, inline_init, uuid::uuid};
 
     use crate::{
-        mock::{mock_item_a, mock_name_a, MockData, MockDataInserts},
+        mock::{currency_a, mock_item_a, mock_name_a, MockData, MockDataInserts},
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow, StoreRow,
     };
@@ -150,6 +150,7 @@ mod test {
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
+                    r.currency_id = currency_a().id;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
