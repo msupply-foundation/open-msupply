@@ -285,7 +285,7 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            currency_id: currency_id,
+            currency_id,
             currency_rate: data.currency_rate.unwrap_or(1.0),
             clinician_link_id: data.clinician_id,
 
