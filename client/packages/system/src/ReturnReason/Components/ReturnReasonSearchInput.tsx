@@ -54,7 +54,6 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
               ...props.InputProps,
             }}
             error={isError}
-            required={true}
           />
         )}
         options={defaultOptionMapper(reasons, 'reason')}

@@ -9,7 +9,7 @@ export interface ButtonWithIconProps extends ButtonProps {
   label: string;
   shouldShrink?: boolean;
   variant?: 'outlined' | 'contained';
-  color?: 'primary' | 'secondary';
+  color?: 'primary' | 'secondary' | 'error';
   disabled?: boolean;
   shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
 }

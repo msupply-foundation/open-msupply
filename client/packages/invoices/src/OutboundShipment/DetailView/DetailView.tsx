@@ -37,7 +37,9 @@ export const DetailView: FC = () => {
     onOpen: onOpenReturns,
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
-    entity: stockLineIds,
+    entity: outboundShipmentLineIds,
+    mode: returnModalMode,
+    setMode: setReturnMode,
   } = useEditModal<string[]>();
 
   const { data, isLoading } = useOutbound.document.get();
@@ -54,14 +56,17 @@ export const DetailView: FC = () => {
     setMode(ModalMode.Create);
   };
 
-  const onReturn = async (selectedStockLineIds: string[]) => {
+  const onReturn = async (selectedIds: string[]) => {
     if (!data || !canReturnOutboundLines(data)) {
       const cantReturnSnack = info(t('messages.cant-return-shipment'));
       cantReturnSnack();
-    } else if (!selectedStockLineIds.length) {
+    } else if (!selectedIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
-    } else onOpenReturns(selectedStockLineIds);
+    } else {
+      onOpenReturns(selectedIds);
+      setReturnMode(ModalMode.Create);
+    }
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -111,8 +116,9 @@ export const DetailView: FC = () => {
             <InboundReturnEditModal
               isOpen={returnsIsOpen}
               onClose={onCloseReturns}
-              stockLineIds={stockLineIds || []}
+              outboundShipmentLineIds={outboundShipmentLineIds || []}
               customerId={data.otherPartyId}
+              modalMode={returnModalMode}
             />
           )}
 

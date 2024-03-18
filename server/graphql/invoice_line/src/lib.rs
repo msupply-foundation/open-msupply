@@ -151,6 +151,7 @@ impl InvoiceLineMutations {
         inbound_shipment_line::line::delete::delete(ctx, &store_id, input)
     }
 
+
     async fn insert_inbound_shipment_service_line(
         &self,
         ctx: &Context<'_>,

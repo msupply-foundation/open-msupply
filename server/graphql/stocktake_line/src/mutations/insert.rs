@@ -181,7 +181,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_item_a, mock_location_1, mock_stock_line_a, MockDataInserts},
@@ -222,7 +222,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_line_insert() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             StocktakeLineMutations,
             "omsupply-database-gql-stocktake_line_insert",

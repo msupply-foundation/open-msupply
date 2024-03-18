@@ -21,7 +21,7 @@ export const SidePanelComponent = () => {
   const canDelete = data?.status === InvoiceNodeStatus.New;
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]);
+    await mutateAsync(data.id);
   };
 
   const onDelete = useDeleteConfirmation({

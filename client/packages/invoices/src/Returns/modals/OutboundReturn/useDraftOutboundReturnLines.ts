@@ -22,7 +22,11 @@ export const useDraftOutboundReturnLines = ({
     []
   );
 
-  const data = useReturns.lines.outboundReturnLines(stockLineIds, itemId);
+  const data = useReturns.lines.outboundReturnLines(
+    stockLineIds,
+    itemId,
+    returnId
+  );
   const lines = data?.nodes;
 
   useEffect(() => {

@@ -432,7 +432,7 @@ pub fn mock_outbound_return_a() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_return_a");
         r.name_link_id = String::from("name_store_a");
-        r.store_id = String::from("store_b");
+        r.store_id = String::from("store_a");
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundReturn;
         r.status = InvoiceRowStatus::Picked;
@@ -457,6 +457,37 @@ pub fn mock_outbound_return_b() -> InvoiceRow {
         r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+    })
+}
+
+pub fn mock_inbound_return_a() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("inbound_return_a");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 1;
+        r.r#type = InvoiceRowType::InboundReturn;
+        r.status = InvoiceRowStatus::Delivered;
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+        r.delivered_datetime = Some(Utc::now().naive_utc());
+    })
+}
+
+pub fn mock_inbound_return_b() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("inbound_return_b");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 2;
+        r.r#type = InvoiceRowType::InboundReturn;
+        r.status = InvoiceRowStatus::New;
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_opt(12, 30, 0)
             .unwrap();
     })
 }
@@ -500,12 +531,17 @@ pub fn mock_outbound_returns() -> Vec<InvoiceRow> {
     vec![mock_outbound_return_a(), mock_outbound_return_b()]
 }
 
+pub fn mock_inbound_returns() -> Vec<InvoiceRow> {
+    vec![mock_inbound_return_a(), mock_inbound_return_b()]
+}
+
 pub fn mock_invoices() -> Vec<InvoiceRow> {
     let mut mock_invoices: Vec<InvoiceRow> = Vec::new();
 
     mock_invoices.extend(mock_outbound_shipments());
     mock_invoices.extend(mock_inbound_shipments());
     mock_invoices.extend(mock_outbound_returns());
+    mock_invoices.extend(mock_inbound_returns());
 
     mock_invoices
 }

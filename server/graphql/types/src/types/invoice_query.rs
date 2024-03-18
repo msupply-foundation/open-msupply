@@ -490,7 +490,7 @@ mod test {
 
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{
             mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
@@ -549,7 +549,7 @@ mod test {
             })
         }
 
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphq_test_invoice_pricing",

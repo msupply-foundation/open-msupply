@@ -11,7 +11,7 @@ use service::invoice::outbound_return::insert::{
     InsertOutboundReturn as ServiceInput, InsertOutboundReturnError as ServiceError,
 };
 
-use service::invoice::outbound_return::OutboundReturnLineInput as ServiceLineInput;
+use service::invoice::outbound_return::OutboundReturnLineInput as OutboundReturnLineServiceInput;
 
 #[derive(InputObject)]
 #[graphql(name = "OutboundReturnInput")]
@@ -127,7 +127,7 @@ impl InsertInput {
 }
 
 impl OutboundReturnLineInput {
-    pub fn to_domain(self) -> ServiceLineInput {
+    pub fn to_domain(self) -> OutboundReturnLineServiceInput {
         let OutboundReturnLineInput {
             id,
             stock_line_id,
@@ -136,7 +136,7 @@ impl OutboundReturnLineInput {
             note,
         }: OutboundReturnLineInput = self;
 
-        ServiceLineInput {
+        OutboundReturnLineServiceInput {
             id,
             stock_line_id,
             number_of_packs: number_of_packs_to_return,

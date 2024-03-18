@@ -2,7 +2,7 @@ mod graphql {
 
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -55,7 +55,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_names() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_get_names",
@@ -229,7 +229,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_names_query_loaders() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_names_query_loaders",

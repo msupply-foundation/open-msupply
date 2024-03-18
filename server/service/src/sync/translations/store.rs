@@ -1,6 +1,10 @@
+use chrono::NaiveDate;
 use repository::{StorageConnection, StoreMode, StoreRow, StoreRowDelete, SyncBufferRow};
 
-use crate::sync::{sync_serde::empty_str_as_option_string, translations::name::NameTranslation};
+use crate::sync::{
+    sync_serde::{empty_str_as_option_string, zero_date_as_option},
+    translations::name::NameTranslation,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -26,6 +30,9 @@ pub struct LegacyStoreRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     logo: Option<String>,
     store_mode: LegacyStoreMode,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub created_date: Option<NaiveDate>,
 }
 // Needs to be added to all_translators()
 #[deny(dead_code)]
@@ -62,7 +69,7 @@ impl SyncTranslation for StoreTranslation {
             ));
         }
 
-        if data.name_id == "" {
+        if data.name_id.is_empty() {
             return Ok(PullTranslateResult::Ignored(
                 "Ignore stores without name".to_string(),
             ));
@@ -80,6 +87,7 @@ impl SyncTranslation for StoreTranslation {
             site_id: data.site_id,
             logo: data.logo,
             store_mode,
+            created_date: data.created_date,
         };
 
         Ok(PullTranslateResult::upsert(result))

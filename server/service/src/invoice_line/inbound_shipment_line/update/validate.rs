@@ -26,7 +26,7 @@ pub fn validate(
         return Err(PackSizeBelowOne);
     }
     if !check_number_of_packs(input.number_of_packs.clone()) {
-        return Err(NumberOfPacksBelowOne);
+        return Err(NumberOfPacksBelowZero);
     }
 
     let item = check_item_option(&input.item_id, connection)?;
