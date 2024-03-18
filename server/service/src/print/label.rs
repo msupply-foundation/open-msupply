@@ -1,18 +1,26 @@
 use anyhow::Result;
 
-use super::{
-    jetdirect::{Jetdirect, Mode},
-    Printer,
-};
+use crate::settings::LabelPrinterSettingNode;
 
-pub fn print_qr_code(printer: Printer, code: String, message: Option<String>) -> Result<()> {
+use super::jetdirect::{Jetdirect, Mode};
+
+const LINE_HEIGHT_IN_DOTS: i32 = 50;
+
+pub fn print_qr_code(
+    settings: LabelPrinterSettingNode,
+    code: String,
+    message: Option<String>,
+) -> Result<()> {
+    let qr_height = 133; // approx height in dots for the magnification factor of 6
+    let vertical_offset = ((settings.label_height - qr_height) / 2) as i32;
     let formatted_message = match message {
         Some(msg) => {
-            let mut y = 0;
+            // adding max to ensure that the y is not negative
+            let mut y = (vertical_offset - LINE_HEIGHT_IN_DOTS).max(0);
 
             msg.split('\n')
                 .map(|line| {
-                    y = y + 50;
+                    y = y + LINE_HEIGHT_IN_DOTS;
                     format!("^FO200,{}^A0,32,25^FD{}^FS", y, line)
                 })
                 .collect::<Vec<_>>()
@@ -24,13 +32,13 @@ pub fn print_qr_code(printer: Printer, code: String, message: Option<String>) ->
     let payload = format!(
         r#"
         ^XA
-        ^FO50,50
-        ^BQN,2,6
+        ^FO50,{}
+        ^BQN,2,4
         ^FD,{}^FS        
         {}
         ^XZ"#,
-        code, formatted_message
+        vertical_offset, code, formatted_message
     );
-    let printer = Jetdirect::new(printer.ip, printer.port);
+    let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
 }

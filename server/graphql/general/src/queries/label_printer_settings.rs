@@ -6,7 +6,7 @@ pub struct LabelPrinterSettingNode {
     pub address: String,
     pub label_height: i32,
     pub label_width: i32,
-    pub port: i32,
+    pub port: u16,
 }
 
 impl LabelPrinterSettingNode {

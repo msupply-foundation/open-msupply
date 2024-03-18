@@ -9,18 +9,18 @@ import {
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { UpdateStatusButton } from './UpdateStatusButton';
+import { Environment } from '@openmsupply-client/config';
 
 export const AppBarButtonsComponent = ({}) => {
   const { data } = useAssets.document.get();
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
 
-  // TODO check for no code? raise error?
   const printQR = () => {
-    fetch('http://localhost:8000/print/label-qr', {
+    fetch(Environment.PRINT_LABEL_QR, {
       method: 'POST',
       body: JSON.stringify({
-        code: data?.code,
+        code: data?.id,
         message: `${t('label.serial')}: ${data?.serialNumber ?? ''}\n${t(
           'label.code'
         )}: ${data?.code ?? ''}`,
@@ -28,8 +28,12 @@ export const AppBarButtonsComponent = ({}) => {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
     })
-      .then(() => {
-        success(t('messages.success-printing-qr'))();
+      .then(response => {
+        if (response.status === 200) {
+          success(t('messages.success-printing-qr'))();
+          return;
+        }
+        error(t('error.printing-qr'))();
       })
       .catch(() => {
         error(t('error.printing-qr'))();
