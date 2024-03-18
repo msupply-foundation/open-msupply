@@ -36,8 +36,8 @@ export const AppBarButtonsComponent = () => {
       body: JSON.stringify({
         code: data?.id,
         message: `${t('label.serial')}: ${data?.serialNumber ?? ''}\n${t(
-          'label.code'
-        )}: ${data?.code ?? ''}`,
+          'label.asset-number'
+        )}: ${data?.assetNumber ?? ''}`,
       }),
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
