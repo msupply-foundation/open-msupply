@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockMasterList, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_program_a,
+    currency_a, mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_program_a,
     mock_stock_line_a, mock_store_a, MockData,
 };
 
@@ -367,6 +367,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
+            r.currency_id = currency_a().id;
         }),
         lines: vec![
             FullMockInvoiceLine {

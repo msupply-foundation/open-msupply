@@ -84,7 +84,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
 mod item_count_service_test {
     use chrono::{Duration, Utc};
     use repository::{
-        mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
+        mock::{common::FullMockMasterList, currency_a, mock_store_b, MockData, MockDataInserts},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
         InvoiceRowRepository, InvoiceRowType, ItemRow, ItemRowType, MasterListLineRow,
         MasterListNameJoinRow, MasterListRow, StockLineRow, StockLineRowRepository,
@@ -331,7 +331,7 @@ mod item_count_service_test {
             service_context, ..
         } = setup_all_with_data_and_service_provider(
             "omsupply-database-low-stock-items-count",
-            MockDataInserts::none().stores().names(),
+            MockDataInserts::none().stores().names().currencies(),
             MockData {
                 items: vec![
                     ItemRow {
@@ -416,6 +416,7 @@ mod item_count_service_test {
                     store_id: mock_store_b().id,
                     picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
                     r#type: InvoiceRowType::OutboundShipment,
+                    currency_id: currency_a().id,
                     ..InvoiceRow::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
@@ -450,6 +451,7 @@ mod item_count_service_test {
                 r.store_id = "store_b".to_string();
                 r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));
                 r.r#type = InvoiceRowType::OutboundShipment;
+                r.currency_id = currency_a().id;
             }))
             .unwrap();
 
