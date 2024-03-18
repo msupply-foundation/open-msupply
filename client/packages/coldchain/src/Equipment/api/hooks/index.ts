@@ -17,5 +17,5 @@ export const useAssets = {
     update: Document.useAssetUpdate,
   },
 
-  log: { insert: Log.useAssetLogInsert },
+  log: { insert: Log.useAssetLogInsert, list: Log.useAssetLogs },
 };

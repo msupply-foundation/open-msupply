@@ -9,7 +9,6 @@ import {
   useDrawer,
 } from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
-import { debounce } from '@common/utils';
 import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
 import { ShortTabList, Tab } from './Tabs';
@@ -42,17 +41,18 @@ export const DetailTabs: FC<DetailTabsProps> = ({
   const currentTab = isValidTab(currentUrlTab)
     ? currentUrlTab
     : tabs[0]?.value ?? '';
+  const { showConfirmation } = useConfirmOnLeaving(false);
 
   // Inelegant hack to force the "Underline" indicator for the currently active
   // tab to re-render in the correct position when one of the side "drawers" is
   // expanded. See issue #777 for more detail.
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
-  const { showConfirmation } = useConfirmOnLeaving(false);
-  const handleResize = useCallback(
-    () => debounce(() => window.dispatchEvent(new Event('resize')), 100),
-    []
-  );
+  useEffect(() => {
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  }, [detailPanelOpen, drawerOpen]);
 
   const [tabQueryParams, setTabQueryParams] = useState<
     Record<string, UrlQueryObject>
@@ -79,10 +79,6 @@ export const DetailTabs: FC<DetailTabsProps> = ({
       updateQuery(query, true);
     }
   };
-
-  useEffect(() => {
-    handleResize();
-  }, [detailPanelOpen, drawerOpen, handleResize]);
 
   useEffect(() => {
     const tab = urlQuery['tab'] as string | undefined;
