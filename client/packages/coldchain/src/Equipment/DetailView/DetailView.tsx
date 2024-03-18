@@ -59,8 +59,8 @@ export const EquipmentDetailView = () => {
   };
 
   useEffect(() => {
-    setSuffix(data?.code ?? '');
-  }, [setSuffix, data?.code]);
+    setSuffix(data?.assetNumber ?? '');
+  }, [setSuffix, data?.assetNumber]);
 
   useEffect(() => {
     if (!data) return;
