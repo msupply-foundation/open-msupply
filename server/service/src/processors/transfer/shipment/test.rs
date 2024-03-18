@@ -1,8 +1,8 @@
 use chrono::NaiveDate;
 use repository::{
     mock::{currency_a, insert_extra_mock_data, MockData, MockDataInserts},
-    EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRepository, InvoiceRow,
+    CurrencyRow, EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRepository, InvoiceRow,
     InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRow, KeyValueStoreRow,
     KeyValueType, LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository,
     RequisitionRow, RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType,
