@@ -67,6 +67,7 @@
   "messages.last-temperature": "Last temperature reading: {{temperature}} °C",
   "messages.log-saved-successfully": "Log saved successfully",
   "messages.max-or-min-temperature": "Max / min temperature",
+  "messages.no-status-logs": "No status logs have been created for this asset. Click the 'Update Status' button to create a new status log.",
   "messages.temperature": "{{temperature}} °C",
   "messages.location": "Location:",
   "messages.new-sensor": "A new sensor has been added as a result of importing these logs. Would you like to assign a location to the new sensor now?",

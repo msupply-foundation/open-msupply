@@ -9,7 +9,7 @@ import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
-import { getReasonString } from '../../utils';
+import { translateReason } from '../../utils';
 
 interface SummaryProps {
   draft?: AssetFragment;
@@ -166,7 +166,7 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
           </Row>
           <Row label={t('label.reason')}>
             <BasicTextInput
-              value={getReasonString(draft.statusLog?.reason, t)}
+              value={translateReason(draft.statusLog?.reason, t)}
               disabled
               fullWidth
             />

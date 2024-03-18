@@ -65,6 +65,7 @@ import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
 import { TruckIcon } from './Truck';
 import { UploadIcon } from './Upload';
+import { UserCircleIcon } from './UserCircle';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { ZapIcon } from './Zap';
@@ -162,6 +163,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
+    { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
     { icon: <ZapIcon {...args} />, name: 'Zap' },

@@ -62,7 +62,7 @@ mod test {
 
     use repository::{
         mock::{
-            mock_inbound_shipment_number_store_a, mock_name_c,
+            currency_a, mock_inbound_shipment_number_store_a, mock_name_c,
             mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{self, setup_all, setup_all_with_data},
@@ -85,12 +85,17 @@ mod test {
                 r.store_id = mock_store_c().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.invoice_number = 100;
+                r.currency_id = currency_a().id;
             })
         }
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_number_service",
-            MockDataInserts::none().stores().names().numbers(),
+            MockDataInserts::none()
+                .stores()
+                .names()
+                .numbers()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice1()];
             }),

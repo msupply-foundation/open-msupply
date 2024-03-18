@@ -35,7 +35,7 @@ pub fn update_outbound_shipment_service_line(
                 input,
                 existing_line,
                 item,
-                invoice_row.currency_id,
+                &invoice_row.currency_id,
                 &invoice_row.currency_rate,
             )?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;

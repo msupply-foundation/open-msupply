@@ -6,6 +6,7 @@ mod activity_log_add_zero_line;
 mod add_source_site_id;
 mod assets;
 mod central_omsupply;
+mod invoice_required_currency_id;
 mod pack_variant;
 mod store_add_created_date;
 
@@ -23,6 +24,7 @@ impl Migration for V1_08_00 {
         pack_variant::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
+        invoice_required_currency_id::migrate(connection)?;
         Ok(())
     }
 }

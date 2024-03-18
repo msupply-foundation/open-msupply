@@ -6,6 +6,7 @@ import {
   UpdateAssetInput,
   setNullableInput,
   InsertAssetLogInput,
+  AssetLogSortFieldInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
@@ -96,7 +97,8 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     },
     logs: async (assetId: string) => {
       const filter = { assetId: { equalTo: assetId } };
-      const result = await sdk.assetLogs({ filter, storeId });
+      const sort = { key: AssetLogSortFieldInput.LogDatetime, desc: true };
+      const result = await sdk.assetLogs({ filter, sort, storeId });
 
       const items = result?.assetLogs;
 
@@ -105,7 +107,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
   },
   insert: async (input: InsertAssetInput): Promise<string> => {
     const result = await sdk.insertAsset({
-      input,
+      input: { ...input, storeId },
       storeId,
     });
     const { insertAsset } = result;
