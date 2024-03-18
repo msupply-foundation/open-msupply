@@ -434,7 +434,7 @@ export type AssetNode = {
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<StatusType>;
+  statusLog?: Maybe<AssetLogNode>;
   store?: Maybe<StoreNode>;
   storeId?: Maybe<Scalars['String']['output']>;
 };
@@ -3899,7 +3899,6 @@ export type PatientFilterInput = {
   identifier?: InputMaybe<StringFilterInput>;
   lastName?: InputMaybe<StringFilterInput>;
   name?: InputMaybe<StringFilterInput>;
-  nameOrCode?: InputMaybe<StringFilterInput>;
   phone?: InputMaybe<StringFilterInput>;
   programEnrolmentName?: InputMaybe<StringFilterInput>;
 };
@@ -3968,8 +3967,8 @@ export type PatientSearchInput = {
   dateOfBirth?: InputMaybe<Scalars['NaiveDate']['input']>;
   firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderInput>;
+  identifier?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['String']['input']>;
-  nameOrCode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type PatientSearchNode = {
