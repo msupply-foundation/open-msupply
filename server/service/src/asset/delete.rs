@@ -33,10 +33,6 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
                 None,
             )?;
 
-            let _deleted_location = AssetInternalLocationRowRepository::new(&connection)
-                .delete_all_for_asset_id(&asset_id)
-                .map_err(DeleteAssetError::from);
-
             AssetRowRepository::new(&connection)
                 .delete(&asset_id)
                 .map_err(DeleteAssetError::from)
