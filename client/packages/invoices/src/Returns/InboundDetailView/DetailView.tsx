@@ -38,13 +38,11 @@ export const InboundReturnDetailView: FC = () => {
   const onRowClick = (row: InboundReturnLineFragment | InboundReturnItem) =>
     onOpen(row.itemId);
 
-  const onAddItem = () => onOpen();
-
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
-      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onOpen} />,
       value: t('label.details'),
     },
     {
@@ -66,7 +64,7 @@ export const InboundReturnDetailView: FC = () => {
             },
           })}
         >
-          <AppBarButtons onAddItem={onAddItem} />
+          <AppBarButtons onAddItem={onOpen} />
           {isOpen && (
             <InboundReturnEditModal
               isOpen={isOpen}
