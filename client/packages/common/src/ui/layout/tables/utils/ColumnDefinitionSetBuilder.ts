@@ -3,7 +3,7 @@ import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
-import { CurrencyCell, NumberCell } from '../components';
+import { CurrencyCell, NumberCell, TooltipTextCell } from '../components';
 
 const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
@@ -191,6 +191,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.batch',
     key: 'batch',
     width: 100,
+    Cell: TooltipTextCell,
   },
   costPricePerPack: {
     label: 'label.cost',
