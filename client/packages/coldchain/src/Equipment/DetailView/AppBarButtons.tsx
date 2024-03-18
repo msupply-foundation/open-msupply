@@ -11,7 +11,7 @@ import { useAssets } from '../api';
 import { UpdateStatusButton } from './UpdateStatusButton';
 import { Environment } from '@openmsupply-client/config';
 
-export const AppBarButtonsComponent = ({}) => {
+export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
@@ -43,7 +43,7 @@ export const AppBarButtonsComponent = ({}) => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <UpdateStatusButton />
+        <UpdateStatusButton assetId={data?.id} />
         <ButtonWithIcon
           Icon={<PrinterIcon />}
           label={t('button.print-qr')}
