@@ -37,6 +37,11 @@ export type AssetLogsQueryVariables = Types.Exact<{
 
 export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string } | null }> } };
 
+export type LabelPrinterSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type LabelPrinterSettingsQuery = { __typename: 'Queries', labelPrinterSettings?: { __typename: 'LabelPrinterSettingNode', address: string, labelHeight: number, labelWidth: number, port: number } | null };
+
 export type DeleteAssetMutationVariables = Types.Exact<{
   assetId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -162,6 +167,17 @@ export const AssetLogsDocument = gql`
   }
 }
     ${AssetLogFragmentDoc}`;
+export const LabelPrinterSettingsDocument = gql`
+    query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+    `;
 export const DeleteAssetDocument = gql`
     mutation deleteAsset($assetId: String!, $storeId: String!) {
   deleteAsset(assetId: $assetId, storeId: $storeId) {
@@ -244,6 +260,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     assetLogs(variables: AssetLogsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetLogsQuery>(AssetLogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogs', 'query');
     },
+    labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query');
+    },
     deleteAsset(variables: DeleteAssetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteAssetMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetMutation>(DeleteAssetDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAsset', 'mutation');
     },
@@ -308,6 +327,22 @@ export const mockAssetByIdQuery = (resolver: ResponseResolver<GraphQLRequest<Ass
 export const mockAssetLogsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLogsQueryVariables>, GraphQLContext<AssetLogsQuery>, any>) =>
   graphql.query<AssetLogsQuery, AssetLogsQueryVariables>(
     'assetLogs',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLabelPrinterSettingsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ labelPrinterSettings })
+ *   )
+ * })
+ */
+export const mockLabelPrinterSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<LabelPrinterSettingsQueryVariables>, GraphQLContext<LabelPrinterSettingsQuery>, any>) =>
+  graphql.query<LabelPrinterSettingsQuery, LabelPrinterSettingsQueryVariables>(
+    'labelPrinterSettings',
     resolver
   )
 

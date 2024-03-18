@@ -6,7 +6,9 @@ import {
   PrinterIcon,
   ButtonWithIcon,
   useNotification,
+  useDisabledNotification,
 } from '@openmsupply-client/common';
+
 import { useAssets } from '../api';
 import { UpdateStatusButton } from './UpdateStatusButton';
 import { Environment } from '@openmsupply-client/config';
@@ -15,6 +17,18 @@ export const AppBarButtonsComponent = () => {
   const { data } = useAssets.document.get();
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
+  const { data: settings } = useAssets.utils.labelPrinterSettings();
+  const { show, DisabledNotification } = useDisabledNotification({
+    title: t('heading.unable-to-print'),
+    message: t('error.label-printer-not-configured'),
+  });
+  const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (settings === null) {
+      show(e);
+    } else {
+      printQR();
+    }
+  };
 
   const printQR = () => {
     fetch(Environment.PRINT_LABEL_QR, {
@@ -47,9 +61,10 @@ export const AppBarButtonsComponent = () => {
         <ButtonWithIcon
           Icon={<PrinterIcon />}
           label={t('button.print-qr')}
-          onClick={printQR}
+          onClick={onClick}
         />
       </Grid>
+      <DisabledNotification />
     </AppBarButtonsPortal>
   );
 };
