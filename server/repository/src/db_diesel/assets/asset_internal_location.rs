@@ -178,8 +178,6 @@ mod tests {
             .insert_one(&asset_location)
             .unwrap();
 
-        println!("result: {:?}", result);
-
         // Query by id
         let result = asset_internal_location_repository
             .query_one(
@@ -187,8 +185,6 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-
-        println!("result: {:?}", result);
 
         assert_eq!(result.id, asset_location_id);
     }
