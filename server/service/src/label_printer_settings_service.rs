@@ -3,7 +3,7 @@ use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError};
 use crate::{service_provider::ServiceContext, settings::LabelPrinterSettingNode};
 
 pub trait LabelPrinterSettingsServiceTrait: Sync + Send {
-    /// Loads display settings from the DB
+    /// Loads the printer settings from the DB
     fn label_printer_settings(
         &self,
         ctx: &ServiceContext,
