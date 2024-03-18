@@ -85,6 +85,10 @@ export type ActivityLogNode = {
 };
 
 export enum ActivityLogNodeType {
+  AssetCreated = 'ASSET_CREATED',
+  AssetDeleted = 'ASSET_DELETED',
+  AssetLogCreated = 'ASSET_LOG_CREATED',
+  AssetUpdated = 'ASSET_UPDATED',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
@@ -379,6 +383,20 @@ export type AssetLogNode = {
   user?: Maybe<UserNode>;
 };
 
+export enum AssetLogReasonInput {
+  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingInstallation = 'AWAITING_INSTALLATION',
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  LackOfPower = 'LACK_OF_POWER',
+  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
+  NeedsServicing = 'NEEDS_SERVICING',
+  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
+  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
+  Stored = 'STORED',
+  Unknown = 'UNKNOWN'
+}
+
 export enum AssetLogSortFieldInput {
   LogDatetime = 'logDatetime',
   Status = 'status'
@@ -393,6 +411,14 @@ export type AssetLogSortInput = {
   /** Sort query result by `key` */
   key: AssetLogSortFieldInput;
 };
+
+export enum AssetLogStatusInput {
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
+  NotFunctioning = 'NOT_FUNCTIONING',
+  NotInUse = 'NOT_IN_USE'
+}
 
 export type AssetLogsResponse = AssetLogConnector;
 
@@ -1613,9 +1639,9 @@ export type EqualFilterRequisitionTypeInput = {
 };
 
 export type EqualFilterStatusInput = {
-  equalAny?: InputMaybe<Array<StatusInput>>;
-  equalTo?: InputMaybe<StatusInput>;
-  notEqualTo?: InputMaybe<StatusInput>;
+  equalAny?: InputMaybe<Array<AssetLogStatusInput>>;
+  equalTo?: InputMaybe<AssetLogStatusInput>;
+  notEqualTo?: InputMaybe<AssetLogStatusInput>;
 };
 
 export type EqualFilterStocktakeStatusInput = {
@@ -1792,8 +1818,8 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  reason?: InputMaybe<ReasonInput>;
-  status?: InputMaybe<StatusInput>;
+  reason?: InputMaybe<AssetLogReasonInput>;
+  status?: InputMaybe<AssetLogStatusInput>;
   type?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -2732,6 +2758,26 @@ export type JsonschemaNode = {
   jsonSchema: Scalars['JSON']['output'];
 };
 
+export type LabelPrinterSettingNode = {
+  __typename: 'LabelPrinterSettingNode';
+  address: Scalars['String']['output'];
+  labelHeight: Scalars['Int']['output'];
+  labelWidth: Scalars['Int']['output'];
+  port: Scalars['Int']['output'];
+};
+
+export type LabelPrinterSettingsInput = {
+  address: Scalars['String']['input'];
+  labelHeight: Scalars['Int']['input'];
+  labelWidth: Scalars['Int']['input'];
+  port: Scalars['Int']['input'];
+};
+
+export type LabelPrinterUpdateResult = {
+  __typename: 'LabelPrinterUpdateResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export enum LanguageType {
   English = 'ENGLISH',
   French = 'FRENCH',
@@ -3026,6 +3072,7 @@ export type Mutations = {
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
+  updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
   updateOutboundShipment: UpdateOutboundShipmentResponse;
@@ -3438,6 +3485,11 @@ export type MutationsUpdateInboundShipmentLineArgs = {
 export type MutationsUpdateInboundShipmentServiceLineArgs = {
   input: UpdateInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateLabelPrinterSettingsArgs = {
+  input: LabelPrinterSettingsInput;
 };
 
 
@@ -4255,6 +4307,7 @@ export type Queries = {
   itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   /** Query omSupply "locations" entries */
@@ -4847,20 +4900,6 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export enum ReasonInput {
-  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
-  AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decomissioned = 'DECOMISSIONED',
-  Functioning = 'FUNCTIONING',
-  LackOfPower = 'LACK_OF_POWER',
-  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
-  NeedsServicing = 'NEEDS_SERVICING',
-  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
-  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
-  Stored = 'STORED',
-  Unknown = 'UNKNOWN'
-}
-
 export enum ReasonType {
   AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
   AwaitingInstallation = 'AWAITING_INSTALLATION',
@@ -5052,6 +5091,7 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  /** Quantity already issued in outbound shipments */
   alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Int']['output'];
@@ -5294,14 +5334,6 @@ export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & 
   description: Scalars['String']['output'];
   lines: StocktakeLineConnector;
 };
-
-export enum StatusInput {
-  Decomissioned = 'DECOMISSIONED',
-  Functioning = 'FUNCTIONING',
-  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
-  NotFunctioning = 'NOT_FUNCTIONING',
-  NotInUse = 'NOT_IN_USE'
-}
 
 export enum StatusType {
   Decomissioned = 'DECOMISSIONED',
@@ -6057,6 +6089,13 @@ export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
   Verified = 'VERIFIED'
 }
+
+export type UpdateLabelPrinterSettingsError = {
+  __typename: 'UpdateLabelPrinterSettingsError';
+  error: Scalars['String']['output'];
+};
+
+export type UpdateLabelPrinterSettingsResponse = LabelPrinterUpdateResult | UpdateLabelPrinterSettingsError;
 
 export type UpdateLocationError = {
   __typename: 'UpdateLocationError';

@@ -42,6 +42,7 @@ pub enum KeyValueType {
     SettingsDisplayCustomLogoHash,
     SettingsDisplayCustomTheme,
     SettingsDisplayCustomThemeHash,
+    SettingsLabelPrinter,
 
     LogLevel,
     LogDirectory,
