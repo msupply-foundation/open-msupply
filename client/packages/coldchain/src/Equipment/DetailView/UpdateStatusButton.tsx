@@ -95,7 +95,7 @@ export const UpdateStatusButtonComponent = ({
       <Modal
         width={785}
         sx={{ '& .MuiDialogContent-root': { paddingTop: 0 } }}
-        title="Add Item"
+        title={t('button.update-status')}
         cancelButton={
           <DialogButton
             variant="cancel"

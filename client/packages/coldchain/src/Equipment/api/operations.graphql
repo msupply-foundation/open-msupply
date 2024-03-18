@@ -1,7 +1,7 @@
 fragment Asset on AssetNode {
   __typename
   catalogueItemId
-  code
+  assetNumber
   createdDatetime
   id
   installationDate
@@ -41,6 +41,7 @@ fragment AssetLog on AssetLogNode {
     firstName
     lastName
     username
+    jobTitle
   }
 }
 

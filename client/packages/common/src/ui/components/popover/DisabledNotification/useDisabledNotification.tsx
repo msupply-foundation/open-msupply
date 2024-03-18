@@ -31,7 +31,7 @@ export const useDisabledNotification = ({
           <Typography flex={1}>{message}</Typography>
         </PaperPopoverSection>
       }
-    ></PaperClickPopover>
+    />
   );
 
   return { hide, show, DisabledNotification };

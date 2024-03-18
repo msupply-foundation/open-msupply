@@ -199,7 +199,7 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_item_a, mock_locations, mock_locked_stocktake_line, mock_stock_line_b,
+            currency_a, mock_item_a, mock_locations, mock_locked_stocktake_line, mock_stock_line_b,
             mock_stocktake_line_a, mock_stocktake_line_finalised, mock_store_a, MockData,
             MockDataInserts,
         },
@@ -257,6 +257,7 @@ mod stocktake_line_test {
                     .unwrap()
                     .and_hms_milli_opt(20, 30, 0, 0)
                     .unwrap();
+                r.currency_id = currency_a().id;
             })
         }
 
