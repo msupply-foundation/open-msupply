@@ -14,6 +14,11 @@ pub fn get_default_gql_query(query: DefaultQuery) -> GraphQlQuery {
             query: REQUISITION_QUERY.to_string(),
             variables: None,
         },
+        // TODO
+        // DefaultQuery::Return
+        // Technically could use Invoice here, but I think we would want to include return reasons
+        // This will mean we need to add a return_reason loader, so we can resolve the reason from reason_id
+        // Want to validate that this is the correct path forward first
     }
 }
 
