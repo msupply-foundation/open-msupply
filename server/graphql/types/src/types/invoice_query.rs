@@ -326,7 +326,7 @@ impl InvoiceNode {
             .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
             .ok_or(StandardGraphqlError::InternalError(format!(
                 "Cannot find currency ({}) linked to invoice ({})",
-                &&self.row().currency_id,
+                &self.row().currency_id,
                 &self.row().id
             )))?;
 
