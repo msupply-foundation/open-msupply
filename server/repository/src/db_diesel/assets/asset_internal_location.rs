@@ -174,7 +174,7 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        let result = asset_internal_location_row_repository
+        let _result = asset_internal_location_row_repository
             .insert_one(&asset_location)
             .unwrap();
 
