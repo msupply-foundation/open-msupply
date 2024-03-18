@@ -62,9 +62,8 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
-  const showTooltip = !!description || sortable;
   const columnLabel = column.label === '' ? '' : t(column.label);
-  const tooltip = showTooltip ? (
+  const tooltip = (
     <>
       {!!description && <div>{t(description)}</div>}
       {sortable ? (
@@ -76,8 +75,6 @@ export const HeaderCell = <T extends RecordWithId>({
         columnLabel
       )}
     </>
-  ) : (
-    ''
   );
 
   const infoIcon = !!description ? (
