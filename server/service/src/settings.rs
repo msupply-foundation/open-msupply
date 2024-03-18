@@ -123,3 +123,11 @@ pub struct DisplaySettingsInput {
     pub custom_logo: Option<String>,
     pub custom_theme: Option<String>,
 }
+
+#[derive(serde::Deserialize, Clone, serde::Serialize)]
+pub struct LabelPrinterSettingNode {
+    pub address: String,
+    pub label_height: i32,
+    pub label_width: i32,
+    pub port: i32,
+}

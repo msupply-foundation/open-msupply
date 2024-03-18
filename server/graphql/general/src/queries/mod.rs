@@ -50,6 +50,8 @@ pub use self::plugin::*;
 pub mod temperature_chart;
 pub use self::temperature_chart::*;
 pub mod currency;
+pub mod label_printer_settings;
+pub use self::label_printer_settings::*;
 
 #[cfg(test)]
 mod tests;

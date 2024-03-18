@@ -27,6 +27,7 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
+pub mod label_printer_settings_service;
 pub mod location;
 pub mod log_service;
 pub mod login;

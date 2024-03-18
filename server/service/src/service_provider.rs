@@ -21,6 +21,7 @@ use crate::{
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
+    label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -133,6 +134,8 @@ pub struct ServiceProvider {
     pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
     // Assets
     pub asset_service: Box<dyn AssetServiceTrait>,
+    // Label Printer
+    pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -212,6 +215,9 @@ impl ServiceProvider {
             currency_service: Box::new(CurrencyService {}),
             catalogue_service: Box::new(CatalogueService {}),
             asset_service: Box::new(crate::asset::AssetService {}),
+            label_printer_settings_service: Box::new(
+                crate::label_printer_settings_service::LabelPrinterSettingsService {},
+            ),
         }
     }
 

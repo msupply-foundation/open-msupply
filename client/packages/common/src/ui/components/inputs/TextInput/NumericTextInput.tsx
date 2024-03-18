@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { StandardTextFieldProps } from '@common/components';
 import { BasicTextInput } from './BasicTextInput';
 import { NumUtils, RegexUtils } from '@common/utils';
@@ -15,6 +15,7 @@ export interface NumericInputProps {
   multiplier?: number;
   value?: number | undefined;
   focusOnRender?: boolean;
+  noFormatting?: boolean;
 }
 
 export type NumericTextInputProps = NumericInputProps &
@@ -39,6 +40,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       step = 1,
       multiplier = 10,
       value,
+      noFormatting = false,
       ...props
     },
     ref
@@ -47,14 +49,25 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     const {
       options: { separator, decimal },
     } = useCurrency();
-    const [textValue, setTextValue] = useState(format(value ?? defaultValue));
+    const formatValue = useCallback(
+      (val: number | undefined) =>
+        noFormatting
+          ? val === undefined
+            ? undefined
+            : String(val)
+          : format(val),
+      [format, noFormatting]
+    );
+    const [textValue, setTextValue] = useState(
+      formatValue(value ?? defaultValue)
+    );
 
     useEffect(() => {
-      setTextValue(format(value));
+      setTextValue(formatValue(value));
       // Excluding `format` from deps array, despite warning, as its not
       // necessary (static method) and causes problems resulting in the text
       // value not being updated correctly
-    }, [value]);
+    }, [formatValue, value]);
 
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
@@ -94,7 +107,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           const constrained = constrain(parsed, decimalLimit, min, max);
 
-          if (constrained === value) setTextValue(format(constrained));
+          if (constrained === value) setTextValue(formatValue(constrained));
           else onChange(constrained);
         }}
         onKeyDown={e => {
