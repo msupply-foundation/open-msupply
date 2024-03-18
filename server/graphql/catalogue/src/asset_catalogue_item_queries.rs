@@ -98,13 +98,6 @@ pub fn asset_catalogue_items(
 }
 
 pub fn asset_catalogue_item(ctx: &Context<'_>, id: String) -> Result<AssetCatalogueItemResponse> {
-    validate_auth(
-        ctx,
-        &ResourceAccessRequest {
-            resource: Resource::QueryAsset,
-            store_id: None,
-        },
-    )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
     let item = get_asset_catalogue_item(&connection_manager, id)?;
 
