@@ -22,6 +22,7 @@ mod document_registry_config;
 mod document_registry_row;
 pub mod encounter;
 mod name_link_row;
+pub mod sync_file_reference_row;
 
 mod clinician_link_row;
 pub mod encounter_row;
