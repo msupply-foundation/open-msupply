@@ -9,12 +9,11 @@ use graphql_core::loader::{
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{AssetCatalogueItemNode, LocationNode, StoreNode, UserNode};
+use graphql_types::types::{AssetCatalogueItemNode, LocationConnector, StoreNode, UserNode};
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 
-use repository::location::Location;
 use repository::{
     assets::asset::{Asset, AssetFilter, AssetSort},
     EqualFilter,
@@ -83,24 +82,6 @@ pub struct AssetNode {
 pub struct AssetConnector {
     total_count: u32,
     nodes: Vec<AssetNode>,
-}
-
-#[derive(SimpleObject, Debug)]
-pub struct AssetLocationConnector {
-    total_count: u32,
-    nodes: Vec<LocationNode>,
-}
-
-impl AssetLocationConnector {
-    pub fn from_vec(locations: Vec<Location>) -> AssetLocationConnector {
-        AssetLocationConnector {
-            total_count: usize_to_u32(locations.len()),
-            nodes: locations
-                .into_iter()
-                .map(LocationNode::from_domain)
-                .collect(),
-        }
-    }
 }
 
 #[Object]
@@ -174,12 +155,12 @@ impl AssetNode {
             .map(AssetCatalogueItemNode::from_domain))
     }
 
-    pub async fn locations(&self, ctx: &Context<'_>) -> Result<AssetLocationConnector> {
+    pub async fn locations(&self, ctx: &Context<'_>) -> Result<LocationConnector> {
         let asset_id = &self.row().id;
         let loader = ctx.get_loader::<DataLoader<AssetLocationLoader>>();
         let result_option = loader.load_one(asset_id.to_string()).await?;
 
-        let locations = AssetLocationConnector::from_vec(result_option.unwrap_or(vec![]));
+        let locations = LocationConnector::from_vec(result_option.unwrap_or(vec![]));
 
         Ok(locations)
     }
