@@ -1,4 +1,3 @@
-import { isEqual } from 'lodash';
 import {
   isEqualIgnoreUndefinedAndEmpty,
   stripEmptyAdditions,
@@ -94,12 +93,16 @@ describe('stripEmptyAdditions', () => {
       some: 2,
       someMore: 'string',
       array: [{ value: false }],
+      obj: { value: 1.7 },
     };
     const add1 = {
       array: [{ value: false, add1: undefined }],
+      obj: {},
     };
 
     const stripped = stripEmptyAdditions(old, add1);
-    expect(isEqual(add1, stripped)).toBeTruthy();
+    expect(stripped).toStrictEqual({
+      array: [{ value: false, add1: undefined }],
+    });
   });
 });
