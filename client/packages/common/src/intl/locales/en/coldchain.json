@@ -9,6 +9,7 @@
   "error.fetch-notifications": "Unable to display cold chain notifications",
   "error.fridge-tag-import": "Unable to import Fridge-tag logs: {{message}}",
   "error.fridge-tag-import-empty": "No data imported",
+  "error.no-asset-create-permission": "You do not have permission to create a new asset.",
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
   "error.unable-to-create-cce": "Unable to create CCE",
