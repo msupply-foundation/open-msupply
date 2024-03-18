@@ -3,10 +3,10 @@ use actix_web::{
     web::{self, Data},
     HttpRequest, HttpResponse,
 };
+use repository::RepositoryError;
 use service::{
-    auth_data::AuthData,
-    print::{label::print_qr_code, Printer},
-    service_provider::ServiceProvider,
+    auth_data::AuthData, print::label::print_qr_code, service_provider::ServiceProvider,
+    settings::LabelPrinterSettingNode,
 };
 
 #[derive(serde::Deserialize)]
@@ -33,16 +33,33 @@ pub async fn print_label_qr(
             return HttpResponse::Unauthorized().body(formatted_error);
         }
     };
-
-    // get printer settings
-    let printer = Printer {
-        ip: "192.168.178.69".to_string(),
-        port: 9100,
+    let settings = match get_printer_settings(service_provider) {
+        Ok(settings) => settings,
+        Err(error) => {
+            return HttpResponse::InternalServerError()
+                .body(format!("Error getting printer settings: {}", error));
+        }
     };
 
-    // print label
-    if print_qr_code(printer, data.code.clone(), data.message.clone()).is_err() {
+    if print_qr_code(settings, data.code.clone(), data.message.clone()).is_err() {
         return HttpResponse::InternalServerError().body("Error printing QR label");
     }
     HttpResponse::Ok().body("QR label printed")
+}
+
+fn get_printer_settings(
+    service_provider: Data<ServiceProvider>,
+) -> Result<LabelPrinterSettingNode, RepositoryError> {
+    let service_context = service_provider.basic_context()?;
+
+    match service_provider
+        .label_printer_settings_service
+        .label_printer_settings(&service_context)?
+    {
+        Some(setting) => Ok(setting),
+        None => Err(RepositoryError::DBError {
+            msg: "No label printer settings found".to_string(),
+            extra: "".to_string(),
+        }),
+    }
 }
