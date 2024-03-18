@@ -26,7 +26,7 @@ export const useInboundDeleteRows = () => {
   );
 
   const deleteAction = async () => {
-    await mutateAsync(selectedRows)
+    await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
       .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
         throw err;

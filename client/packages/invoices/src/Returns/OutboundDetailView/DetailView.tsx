@@ -24,7 +24,13 @@ import { OutboundReturnEditModal } from '../modals';
 
 export const OutboundReturnsDetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
-  const { onOpen, onClose, isOpen, entity: itemId } = useEditModal<string>();
+  const {
+    onOpen,
+    onClose,
+    isOpen,
+    entity: itemId,
+    mode,
+  } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.outboundReturn();
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
@@ -81,6 +87,7 @@ export const OutboundReturnsDetailView: FC = () => {
               supplierId={data.otherPartyId}
               returnId={data.id}
               initialItemId={itemId}
+              modalMode={mode}
             />
           )}
 

@@ -11,6 +11,7 @@ import {
   createQueryParamsStore,
   DetailTabs,
   useNotification,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import {
@@ -40,6 +41,8 @@ export const DetailView: FC = () => {
     onClose: onCloseReturns,
     isOpen: returnsIsOpen,
     entity: stockLineIds,
+    mode: returnModalMode,
+    setMode: setReturnMode,
   } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
@@ -59,7 +62,10 @@ export const DetailView: FC = () => {
     } else if (!selectedStockLineIds.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
-    } else onOpenReturns(selectedStockLineIds);
+    } else {
+      onOpenReturns(selectedStockLineIds);
+      setReturnMode(ModalMode.Create);
+    }
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -121,6 +127,7 @@ export const DetailView: FC = () => {
               onClose={onCloseReturns}
               stockLineIds={stockLineIds || []}
               supplierId={data.otherParty.id}
+              modalMode={returnModalMode}
             />
           )}
         </TableProvider>

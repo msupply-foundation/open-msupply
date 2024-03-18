@@ -30,6 +30,14 @@ export type Scalars = {
    * * `2000-02-24`
    */
   NaiveDate: { input: string; output: string; }
+  /**
+   * ISO 8601 combined date and time without timezone.
+   *
+   * # Examples
+   *
+   * * `2015-07-01T08:59:60.123`,
+   */
+  NaiveDateTime: { input: string; output: string; }
 };
 
 export type AccountBlocked = AuthTokenErrorInterface & {
@@ -89,6 +97,7 @@ export enum ActivityLogNodeType {
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
+  QuantityForLineHasBeenSetToZero = 'QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO',
   Repack = 'REPACK',
   RequisitionCreated = 'REQUISITION_CREATED',
   RequisitionDeleted = 'REQUISITION_DELETED',
@@ -213,6 +222,269 @@ export type AllocateProgramNumberInput = {
 };
 
 export type AllocateProgramNumberResponse = NumberNode;
+
+export type AssetCatalogueItemConnector = {
+  __typename: 'AssetCatalogueItemConnector';
+  nodes: Array<AssetCatalogueItemNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetCatalogueItemFilterInput = {
+  category?: InputMaybe<StringFilterInput>;
+  categoryId?: InputMaybe<EqualFilterStringInput>;
+  class?: InputMaybe<StringFilterInput>;
+  classId?: InputMaybe<EqualFilterStringInput>;
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  manufacturer?: InputMaybe<StringFilterInput>;
+  model?: InputMaybe<StringFilterInput>;
+  type?: InputMaybe<StringFilterInput>;
+  typeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type AssetCatalogueItemNode = {
+  __typename: 'AssetCatalogueItemNode';
+  assetCategory?: Maybe<AssetCategoryNode>;
+  assetCategoryId: Scalars['String']['output'];
+  assetClass?: Maybe<AssetClassNode>;
+  assetClassId: Scalars['String']['output'];
+  assetType?: Maybe<AssetTypeNode>;
+  assetTypeId: Scalars['String']['output'];
+  code: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  manufacturer?: Maybe<Scalars['String']['output']>;
+  model: Scalars['String']['output'];
+};
+
+export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
+
+export enum AssetCatalogueItemSortFieldInput {
+  Catalogue = 'catalogue',
+  Code = 'code',
+  Manufacturer = 'manufacturer',
+  Model = 'model'
+}
+
+export type AssetCatalogueItemSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetCatalogueItemSortFieldInput;
+};
+
+export type AssetCatalogueItemsResponse = AssetCatalogueItemConnector;
+
+export type AssetCategoriesResponse = AssetCategoryConnector;
+
+export type AssetCategoryConnector = {
+  __typename: 'AssetCategoryConnector';
+  nodes: Array<AssetCategoryNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetCategoryFilterInput = {
+  classId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetCategoryNode = {
+  __typename: 'AssetCategoryNode';
+  classId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AssetCategoryResponse = AssetCategoryNode | NodeError;
+
+export enum AssetCategorySortFieldInput {
+  Name = 'name'
+}
+
+export type AssetCategorySortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetCategorySortFieldInput;
+};
+
+export type AssetClassConnector = {
+  __typename: 'AssetClassConnector';
+  nodes: Array<AssetClassNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetClassFilterInput = {
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetClassNode = {
+  __typename: 'AssetClassNode';
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AssetClassResponse = AssetClassNode | NodeError;
+
+export enum AssetClassSortFieldInput {
+  Name = 'name'
+}
+
+export type AssetClassSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetClassSortFieldInput;
+};
+
+export type AssetClassesResponse = AssetClassConnector;
+
+export type AssetConnector = {
+  __typename: 'AssetConnector';
+  nodes: Array<AssetNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetFilterInput = {
+  catalogueItemId?: InputMaybe<EqualFilterStringInput>;
+  categoryId?: InputMaybe<EqualFilterStringInput>;
+  classId?: InputMaybe<EqualFilterStringInput>;
+  code?: InputMaybe<StringFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  installationDate?: InputMaybe<DateFilterInput>;
+  notes?: InputMaybe<StringFilterInput>;
+  replacementDate?: InputMaybe<DateFilterInput>;
+  serialNumber?: InputMaybe<StringFilterInput>;
+  typeId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type AssetLogConnector = {
+  __typename: 'AssetLogConnector';
+  nodes: Array<AssetLogNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetLogFilterInput = {
+  assetId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  logDatetime?: InputMaybe<DatetimeFilterInput>;
+  status?: InputMaybe<EqualFilterStatusInput>;
+  user?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetLogNode = {
+  __typename: 'AssetLogNode';
+  assetId: Scalars['String']['output'];
+  comment?: Maybe<Scalars['String']['output']>;
+  id: Scalars['String']['output'];
+  logDatetime: Scalars['NaiveDateTime']['output'];
+  reason?: Maybe<ReasonType>;
+  status?: Maybe<StatusType>;
+  type?: Maybe<Scalars['String']['output']>;
+  user?: Maybe<UserNode>;
+};
+
+export enum AssetLogReasonInput {
+  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingInstallation = 'AWAITING_INSTALLATION',
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  LackOfPower = 'LACK_OF_POWER',
+  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
+  NeedsServicing = 'NEEDS_SERVICING',
+  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
+  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
+  Stored = 'STORED',
+  Unknown = 'UNKNOWN'
+}
+
+export enum AssetLogSortFieldInput {
+  LogDatetime = 'logDatetime',
+  Status = 'status'
+}
+
+export type AssetLogSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: AssetLogSortFieldInput;
+};
+
+export enum AssetLogStatusInput {
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
+  NotFunctioning = 'NOT_FUNCTIONING',
+  NotInUse = 'NOT_IN_USE'
+}
+
+export type AssetLogsResponse = AssetLogConnector;
+
+export type AssetNode = {
+  __typename: 'AssetNode';
+  catalogueItem?: Maybe<AssetCatalogueItemNode>;
+  catalogueItemId?: Maybe<Scalars['String']['output']>;
+  code: Scalars['String']['output'];
+  createdDatetime: Scalars['NaiveDateTime']['output'];
+  id: Scalars['String']['output'];
+  installationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  modifiedDatetime: Scalars['NaiveDateTime']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
+  serialNumber?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<StatusType>;
+  store?: Maybe<StoreNode>;
+  storeId?: Maybe<Scalars['String']['output']>;
+};
+
+export enum AssetSortFieldInput {
+  InstallationDate = 'installationDate',
+  ModifiedDatetime = 'modifiedDatetime',
+  ReplacementDate = 'replacementDate',
+  SerialNumber = 'serialNumber'
+}
+
+export type AssetSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: AssetSortFieldInput;
+};
+
+export type AssetTypeConnector = {
+  __typename: 'AssetTypeConnector';
+  nodes: Array<AssetTypeNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetTypeFilterInput = {
+  categoryId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  name?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetTypeNode = {
+  __typename: 'AssetTypeNode';
+  categoryId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type AssetTypeResponse = AssetTypeNode | NodeError;
+
+export enum AssetTypeSortFieldInput {
+  Name = 'name'
+}
+
+export type AssetTypeSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  key: AssetTypeSortFieldInput;
+};
+
+export type AssetTypesResponse = AssetTypeConnector;
+
+export type AssetsResponse = AssetConnector;
 
 export type AuthToken = {
   __typename: 'AuthToken';
@@ -683,7 +955,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteLocationErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -711,6 +983,17 @@ export type DatetimeFilterInput = {
   equalTo?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
+export type DeleteAssetError = {
+  __typename: 'DeleteAssetError';
+  error: DeleteAssetErrorInterface;
+};
+
+export type DeleteAssetErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteAssetResponse = DeleteAssetError | DeleteResponse;
+
 export type DeleteErrorInterface = {
   description: Scalars['String']['output'];
 };
@@ -724,11 +1007,7 @@ export type DeleteInboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteInboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeletedIdsResponse;
+export type DeleteInboundReturnResponse = DeleteInboundReturnError | DeleteResponse;
 
 export type DeleteInboundShipmentError = {
   __typename: 'DeleteInboundShipmentError';
@@ -817,11 +1096,7 @@ export type DeleteOutboundReturnErrorInterface = {
   description: Scalars['String']['output'];
 };
 
-export type DeleteOutboundReturnInput = {
-  ids: Array<Scalars['String']['input']>;
-};
-
-export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeletedIdsResponse;
+export type DeleteOutboundReturnResponse = DeleteOutboundReturnError | DeleteResponse;
 
 export type DeleteOutboundShipmentError = {
   __typename: 'DeleteOutboundShipmentError';
@@ -1030,11 +1305,6 @@ export type DeleteStocktakeResponseWithId = {
   __typename: 'DeleteStocktakeResponseWithId';
   id: Scalars['String']['output'];
   response: DeleteStocktakeResponse;
-};
-
-export type DeletedIdsResponse = {
-  __typename: 'DeletedIdsResponse';
-  deletedIds: Array<Scalars['String']['output']>;
 };
 
 export type DisplaySettingNode = {
@@ -1386,6 +1656,12 @@ export type EqualFilterRequisitionTypeInput = {
   notEqualTo?: InputMaybe<RequisitionNodeType>;
 };
 
+export type EqualFilterStatusInput = {
+  equalAny?: InputMaybe<Array<AssetLogStatusInput>>;
+  equalTo?: InputMaybe<AssetLogStatusInput>;
+  notEqualTo?: InputMaybe<AssetLogStatusInput>;
+};
+
 export type EqualFilterStocktakeStatusInput = {
   equalAny?: InputMaybe<Array<StocktakeNodeStatus>>;
   equalTo?: InputMaybe<StocktakeNodeStatus>;
@@ -1408,6 +1684,11 @@ export type EqualFilterTypeInput = {
   equalAny?: InputMaybe<Array<NameNodeType>>;
   equalTo?: InputMaybe<NameNodeType>;
   notEqualTo?: InputMaybe<NameNodeType>;
+};
+
+export type ExistingLinesInput = {
+  itemId: Scalars['String']['input'];
+  returnId: Scalars['String']['input'];
 };
 
 export type FailedToFetchReportData = PrintReportErrorInterface & {
@@ -1507,21 +1788,47 @@ export enum GenderType {
   Unknown = 'UNKNOWN'
 }
 
-export type GenerateInboundReturnInput = {
-  stockLineIds: Array<Scalars['String']['input']>;
+export type GenerateInboundReturnLinesInput = {
+  existingLinesInput?: InputMaybe<ExistingLinesInput>;
+  /** The ids of the outbound shipment lines to generate new return lines for */
+  outboundShipmentLineIds: Array<Scalars['String']['input']>;
 };
 
-/**
- * At least one input is required.
- * Note that if you provide multiple inputs, they will be applied as an AND filter.
- */
+export type GenerateInboundReturnLinesResponse = GeneratedInboundReturnLineConnector;
+
+/** At least one input is required. */
 export type GenerateOutboundReturnLinesInput = {
+  /** Generate new return lines for all the available stock lines of a specific item */
   itemId?: InputMaybe<Scalars['String']['input']>;
+  /** Include existing return lines in the response. Only has an effect when either `stock_line_ids` or `item_id` is set. */
   returnId?: InputMaybe<Scalars['String']['input']>;
+  /** The stock line ids to generate new return lines for */
   stockLineIds: Array<Scalars['String']['input']>;
 };
 
 export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
+
+export type GeneratedInboundReturnLineConnector = {
+  __typename: 'GeneratedInboundReturnLineConnector';
+  nodes: Array<GeneratedInboundReturnLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type GeneratedInboundReturnLineNode = {
+  __typename: 'GeneratedInboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  itemCode: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
+};
 
 export type InboundInvoiceCounts = {
   __typename: 'InboundInvoiceCounts';
@@ -1535,27 +1842,15 @@ export type InboundReturnInput = {
   inboundReturnLines: Array<InboundReturnLineInput>;
 };
 
-export type InboundReturnLine = {
-  __typename: 'InboundReturnLine';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued: Scalars['Float']['output'];
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId: Scalars['String']['output'];
-};
-
 export type InboundReturnLineInput = {
+  batch?: InputMaybe<Scalars['String']['input']>;
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   numberOfPacksReturned: Scalars['Float']['input'];
+  packSize: Scalars['Int']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
-  stockLineId: Scalars['String']['input'];
 };
 
 export type InitialisationStatusNode = {
@@ -1571,6 +1866,48 @@ export enum InitialisationStatusType {
 }
 
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
+
+export type InsertAssetError = {
+  __typename: 'InsertAssetError';
+  error: InsertAssetErrorInterface;
+};
+
+export type InsertAssetErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertAssetInput = {
+  catalogueItemId?: InputMaybe<Scalars['String']['input']>;
+  code: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  serialNumber?: InputMaybe<Scalars['String']['input']>;
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertAssetLogError = {
+  __typename: 'InsertAssetLogError';
+  error: InsertAssetLogErrorInterface;
+};
+
+export type InsertAssetLogErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertAssetLogInput = {
+  assetId: Scalars['String']['input'];
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  reason?: InputMaybe<AssetLogReasonInput>;
+  status?: InputMaybe<AssetLogStatusInput>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertAssetLogResponse = AssetLogNode | InsertAssetLogError;
+
+export type InsertAssetResponse = AssetNode | InsertAssetError;
 
 export type InsertBarcodeInput = {
   gtin: Scalars['String']['input'];
@@ -2116,7 +2453,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -2755,12 +3092,13 @@ export type Mutations = {
    * lines quantity (placeholder and filled) for requisitionLine.item
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
-  deleteInboundReturns: DeleteInboundReturnResponse;
+  deleteAsset: DeleteAssetResponse;
+  deleteInboundReturn: DeleteInboundReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
   deleteInboundShipmentServiceLine: DeleteInboundShipmentServiceLineResponse;
   deleteLocation: DeleteLocationResponse;
-  deleteOutboundReturns: DeleteOutboundReturnResponse;
+  deleteOutboundReturn: DeleteOutboundReturnResponse;
   deleteOutboundShipment: DeleteOutboundShipmentResponse;
   deleteOutboundShipmentLine: DeleteOutboundShipmentLineResponse;
   deleteOutboundShipmentServiceLine: DeleteOutboundShipmentServiceLineResponse;
@@ -2772,6 +3110,8 @@ export type Mutations = {
   deleteStocktake: DeleteStocktakeResponse;
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
+  insertAsset: InsertAssetResponse;
+  insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
   insertContactTrace: InsertContactTraceResponse;
   insertDocumentRegistry: InsertDocumentResponse;
@@ -2813,10 +3153,13 @@ export type Mutations = {
   manualSync: Scalars['String']['output'];
   /** Set supply quantity to requested quantity */
   supplyRequestedQuantity: SupplyRequestedQuantityResponse;
+  updateAsset: UpdateAssetResponse;
   updateContactTrace: UpdateContactTraceResponse;
   updateDisplaySettings: UpdateDisplaySettingsResponse;
   updateDocument: UpdateDocumentResponse;
   updateEncounter: UpdateEncounterResponse;
+  updateInboundReturn: UpdateInboundReturnResponse;
+  updateInboundReturnLines: UpdateInboundReturnLinesResponse;
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
@@ -2923,8 +3266,14 @@ export type MutationsCreateRequisitionShipmentArgs = {
 };
 
 
-export type MutationsDeleteInboundReturnsArgs = {
-  input: DeleteInboundReturnInput;
+export type MutationsDeleteAssetArgs = {
+  assetId: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsDeleteInboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -2953,8 +3302,8 @@ export type MutationsDeleteLocationArgs = {
 };
 
 
-export type MutationsDeleteOutboundReturnsArgs = {
-  input: DeleteOutboundReturnInput;
+export type MutationsDeleteOutboundReturnArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -3021,6 +3370,18 @@ export type MutationsDeleteStocktakeLineArgs = {
 
 export type MutationsInitialiseSiteArgs = {
   input: SyncSettingsInput;
+};
+
+
+export type MutationsInsertAssetArgs = {
+  input: InsertAssetInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertAssetLogArgs = {
+  input: InsertAssetLogInput;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -3196,6 +3557,12 @@ export type MutationsSupplyRequestedQuantityArgs = {
 };
 
 
+export type MutationsUpdateAssetArgs = {
+  input: UpdateAssetInput;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type MutationsUpdateContactTraceArgs = {
   input: UpdateContactTraceInput;
   storeId: Scalars['String']['input'];
@@ -3215,6 +3582,18 @@ export type MutationsUpdateDocumentArgs = {
 
 export type MutationsUpdateEncounterArgs = {
   input: UpdateEncounterInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateInboundReturnArgs = {
+  input: UpdateInboundReturnInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateInboundReturnLinesArgs = {
+  input: UpdateInboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3546,6 +3925,21 @@ export type NothingRemainingToSupply = CreateRequisitionShipmentErrorInterface &
  * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
  * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
  */
+export type NullableDateUpdate = {
+  value?: InputMaybe<Scalars['NaiveDate']['input']>;
+};
+
+/**
+ * Update a nullable value
+ *
+ * This struct is usually used as an optional value.
+ * For example, in an API update input object like `mutableValue:  NullableUpdate | null | undefined`.
+ * This is done to encode the following cases (using `mutableValue` from previous example):
+ * 1) if `mutableValue` is `null | undefined`, nothing is updated
+ * 2) if `mutableValue` object is set:
+ * a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
+ * b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
+ */
 export type NullableStringUpdate = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
@@ -3611,7 +4005,7 @@ export type OutboundReturnLineNode = {
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksToReturn: Scalars['Int']['output'];
+  numberOfPacksToReturn: Scalars['Float']['output'];
   packSize: Scalars['Int']['output'];
   reasonId?: Maybe<Scalars['String']['output']>;
   stockLineId: Scalars['String']['output'];
@@ -4040,6 +4434,17 @@ export type Queries = {
   activeProgramEvents: ProgramEventResponse;
   activityLogs: ActivityLogResponse;
   apiVersion: Scalars['String']['output'];
+  assetCatalogueItem: AssetCatalogueItemResponse;
+  assetCatalogueItems: AssetCatalogueItemsResponse;
+  assetCategories: AssetCategoriesResponse;
+  assetCategory: AssetCategoryResponse;
+  assetClass: AssetClassResponse;
+  assetClasses: AssetClassesResponse;
+  assetLogs: AssetLogsResponse;
+  assetType: AssetTypeResponse;
+  assetTypes: AssetTypesResponse;
+  /** Query omSupply "assets" entries */
+  assets: AssetsResponse;
   /**
    * Retrieves a new auth bearer and refresh token
    * The refresh token is returned as a cookie
@@ -4059,7 +4464,17 @@ export type Queries = {
   encounterFields: EncounterFieldsResponse;
   encounters: EncounterResponse;
   formSchemas: FormSchemaResponse;
-  generateInboundReturnLines: Array<InboundReturnLine>;
+  /**
+   * Generates new inbound return lines in memory, based on outbound return line ids.
+   * Optionally includes existing inbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
+  generateInboundReturnLines: GenerateInboundReturnLinesResponse;
+  /**
+   * Generates new outbound return lines in memory, based on either stock line ids, or an item id.
+   * Optionally includes existing outbound return lines for a specific item in a return.
+   * Provides an friendly shape to edit these lines before calling the insert/update mutations.
+   */
   generateOutboundReturnLines: GenerateOutboundReturnLinesResponse;
   /** Available without authorisation in operational and initialisation states */
   initialisationStatus: InitialisationStatusNode;
@@ -4162,6 +4577,70 @@ export type QueriesActivityLogsArgs = {
 };
 
 
+export type QueriesAssetCatalogueItemArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetCatalogueItemsArgs = {
+  filter?: InputMaybe<AssetCatalogueItemFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetCatalogueItemSortInput>>;
+};
+
+
+export type QueriesAssetCategoriesArgs = {
+  filter?: InputMaybe<AssetCategoryFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetCategorySortInput>>;
+};
+
+
+export type QueriesAssetCategoryArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetClassArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetClassesArgs = {
+  filter?: InputMaybe<AssetClassFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetLogsArgs = {
+  filter?: InputMaybe<AssetLogFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetLogSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetTypeArgs = {
+  id: Scalars['String']['input'];
+};
+
+
+export type QueriesAssetTypesArgs = {
+  filter?: InputMaybe<AssetTypeFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetTypeSortInput>>;
+};
+
+
+export type QueriesAssetsArgs = {
+  filter?: InputMaybe<AssetFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
 export type QueriesAuthTokenArgs = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
@@ -4259,7 +4738,7 @@ export type QueriesFormSchemasArgs = {
 
 
 export type QueriesGenerateInboundReturnLinesArgs = {
-  input: GenerateInboundReturnInput;
+  input: GenerateInboundReturnLinesInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4622,17 +5101,31 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export type RecordAlreadyExist = InsertLocationErrorInterface & {
+export enum ReasonType {
+  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingInstallation = 'AWAITING_INSTALLATION',
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  LackOfPower = 'LACK_OF_POWER',
+  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
+  NeedsServicing = 'NEEDS_SERVICING',
+  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
+  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
+  Stored = 'STORED',
+  Unknown = 'UNKNOWN'
+}
+
+export type RecordAlreadyExist = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
 
-export type RecordBelongsToAnotherStore = DeleteLocationErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'RecordBelongsToAnotherStore';
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -4692,6 +5185,7 @@ export type ReportConnector = {
 };
 
 export enum ReportContext {
+  Asset = 'ASSET',
   Dispensary = 'DISPENSARY',
   InboundShipment = 'INBOUND_SHIPMENT',
   OutboundShipment = 'OUTBOUND_SHIPMENT',
@@ -4798,6 +5292,8 @@ export type RequisitionLineConnector = {
 
 export type RequisitionLineNode = {
   __typename: 'RequisitionLineNode';
+  /** Quantity already issued in outbound shipments */
+  alreadyIssued: Scalars['Float']['output'];
   approvalComment?: Maybe<Scalars['String']['output']>;
   approvedQuantity: Scalars['Int']['output'];
   comment?: Maybe<Scalars['String']['output']>;
@@ -5075,6 +5571,14 @@ export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & 
   lines: StocktakeLineConnector;
 };
 
+export enum StatusType {
+  Decomissioned = 'DECOMISSIONED',
+  Functioning = 'FUNCTIONING',
+  FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
+  NotFunctioning = 'NOT_FUNCTIONING',
+  NotInUse = 'NOT_IN_USE'
+}
+
 export type StockCounts = {
   __typename: 'StockCounts';
   expired: Scalars['Int']['output'];
@@ -5343,6 +5847,7 @@ export enum StoreModeNodeType {
 export type StoreNode = {
   __typename: 'StoreNode';
   code: Scalars['String']['output'];
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   /**
    * Returns the associated store logo.
@@ -5640,11 +6145,33 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertLocationErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;
 };
+
+export type UpdateAssetError = {
+  __typename: 'UpdateAssetError';
+  error: UpdateAssetErrorInterface;
+};
+
+export type UpdateAssetErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type UpdateAssetInput = {
+  catalogueItemId?: InputMaybe<NullableStringUpdate>;
+  code?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  installationDate?: InputMaybe<NullableDateUpdate>;
+  notes?: InputMaybe<Scalars['String']['input']>;
+  replacementDate?: InputMaybe<NullableDateUpdate>;
+  serialNumber?: InputMaybe<NullableStringUpdate>;
+  storeId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateAssetResponse = AssetNode | UpdateAssetError;
 
 export type UpdateContactTraceInput = {
   /** Contact trace document data */
@@ -5706,6 +6233,28 @@ export type UpdateEncounterResponse = EncounterNode;
 export type UpdateErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type UpdateInboundReturnInput = {
+  colour?: InputMaybe<Scalars['String']['input']>;
+  comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  onHold?: InputMaybe<Scalars['Boolean']['input']>;
+  status?: InputMaybe<UpdateInboundReturnStatusInput>;
+};
+
+export type UpdateInboundReturnLinesInput = {
+  inboundReturnId: Scalars['String']['input'];
+  inboundReturnLines: Array<InboundReturnLineInput>;
+};
+
+export type UpdateInboundReturnLinesResponse = InvoiceNode;
+
+export type UpdateInboundReturnResponse = InvoiceNode;
+
+export enum UpdateInboundReturnStatusInput {
+  Delivered = 'DELIVERED',
+  Verified = 'VERIFIED'
+}
 
 export type UpdateInboundShipmentError = {
   __typename: 'UpdateInboundShipmentError';
@@ -6359,6 +6908,7 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetMutate = 'ASSET_MUTATE',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
@@ -6404,6 +6954,7 @@ export type UserStoreConnector = {
 export type UserStoreNode = {
   __typename: 'UserStoreNode';
   code: Scalars['String']['output'];
+  createdDate?: Maybe<Scalars['NaiveDate']['output']>;
   homeCurrencyCode?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];

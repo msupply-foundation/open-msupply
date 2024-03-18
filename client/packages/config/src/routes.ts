@@ -17,6 +17,7 @@ export enum AppRoute {
   Coldchain = 'cold-chain',
   Sensors = 'sensors',
   Monitoring = 'monitoring',
+  Equipment = 'equipment',
 
   Discovery = 'discovery',
 
@@ -48,6 +49,7 @@ export enum AppRoute {
 
   Catalogue = 'catalogue',
   Items = 'items',
+  Assets = 'assets',
 
   PageNotFound = 'page-not-found',
 }

@@ -89,7 +89,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 #[cfg(test)]
 mod graphql {
     use chrono::{NaiveDate, Utc};
-    use graphql_core::test_helpers::setup_graphl_test_with_data;
+    use graphql_core::test_helpers::setup_graphql_test_with_data;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
 
     use repository::mock::{MockData, MockDataInserts};
@@ -103,7 +103,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_outbound_shipment_delete() {
-        let (_, connection, _, settings) = setup_graphl_test_with_data(
+        let (_, connection, _, settings) = setup_graphql_test_with_data(
             InvoiceQueries,
             InvoiceMutations,
             "omsupply-database-gql-outbound_shipment_delete",

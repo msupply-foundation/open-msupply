@@ -2,10 +2,13 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
+mod activity_log_add_zero_line;
+mod assets;
 mod central_omsupply;
 mod pack_variant;
 mod return_reasons;
 mod return_types;
+mod store_add_created_date;
 
 pub(crate) struct V1_08_00;
 
@@ -15,10 +18,13 @@ impl Migration for V1_08_00 {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        assets::migrate_assets(connection)?;
         pack_variant::migrate(connection)?;
         central_omsupply::migrate(connection)?;
         return_reasons::migrate(connection)?;
         return_types::migrate(connection)?;
+        store_add_created_date::migrate(connection)?;
+        activity_log_add_zero_line::migrate(connection)?;
         Ok(())
     }
 }

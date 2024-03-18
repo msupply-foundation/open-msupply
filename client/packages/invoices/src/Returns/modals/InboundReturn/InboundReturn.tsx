@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -10,6 +10,10 @@ import {
   useTabs,
   TabPanel,
   TabContext,
+  ModalMode,
+  Box,
+  AlertColor,
+  Alert,
 } from '@openmsupply-client/common';
 import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { useDraftInboundReturnLines } from './useDraftInboundReturnLines';
@@ -17,9 +21,10 @@ import { ReturnReasonsTable } from '../ReturnReasonsTable';
 
 interface InboundReturnEditModalProps {
   isOpen: boolean;
-  stockLineIds: string[];
+  outboundShipmentLineIds: string[];
   customerId: string;
   onClose: () => void;
+  modalMode: ModalMode | null;
 }
 
 enum Tabs {
@@ -29,12 +34,19 @@ enum Tabs {
 
 export const InboundReturnEditModal = ({
   isOpen,
-  stockLineIds,
+  outboundShipmentLineIds,
   customerId,
   onClose,
+  modalMode,
 }: InboundReturnEditModalProps) => {
-  const t = useTranslation('distribution');
+  const t = useTranslation(['distribution', 'replenishment']);
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
+    AlertColor | undefined
+  >();
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
@@ -50,12 +62,10 @@ export const InboundReturnEditModal = ({
   const height = useKeyboardHeightAdjustment(600);
 
   const { lines, update, saveInboundReturn } = useDraftInboundReturnLines(
-    stockLineIds,
+    outboundShipmentLineIds,
     customerId
   );
 
-  const okEnabled =
-    currentTab === Tabs.Reason && lines.every(line => line.reasonId);
   const onOk = async () => {
     try {
       await saveInboundReturn();
@@ -65,46 +75,76 @@ export const InboundReturnEditModal = ({
     }
   };
 
+  const handleNext = () => {
+    if (lines.some(line => line.numberOfPacksReturned !== 0)) {
+      onChangeTab(Tabs.Reason);
+      return;
+    }
+    switch (modalMode) {
+      case ModalMode.Create: {
+        setZeroQuantityAlert('error');
+        break;
+      }
+      case ModalMode.Update: {
+        setZeroQuantityAlert('warning');
+        break;
+      }
+    }
+    alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const alertMessage =
+    zeroQuantityAlert === 'warning'
+      ? t('messages.zero-return-quantity-will-delete-lines', {
+          ns: 'replenishment',
+        })
+      : t('messages.alert-zero-return-quantity', {
+          ns: 'replenishment',
+        });
+
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
         title={t('heading.return-items')}
         cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
+        // zeroQuantityAlert === warning implies all lines are 0 and user has
+        // been already warned, so we act immediately to update them
         nextButton={
-          currentTab === Tabs.Quantity ? (
-            <DialogButton
-              onClick={() => onChangeTab(Tabs.Reason)}
-              variant="next"
-            />
+          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning' ? (
+            <DialogButton onClick={handleNext} variant={'next'} />
           ) : undefined
         }
         okButton={
-          currentTab === Tabs.Reason ? (
-            <DialogButton onClick={onOk} variant="ok" disabled={!okEnabled} />
+          currentTab === Tabs.Reason || zeroQuantityAlert === 'warning' ? (
+            <DialogButton onClick={onOk} variant="ok" />
           ) : undefined
         }
         height={height}
         width={1024}
       >
-        <>
+        <Box ref={alertRef}>
           <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
           <TabContext value={currentTab}>
             <TabPanel value={Tabs.Quantity}>
+              {zeroQuantityAlert && (
+                <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+              )}
               <QuantityReturnedTable
                 lines={lines}
                 updateLine={line => {
+                  if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
                   update(line);
                 }}
               />
             </TabPanel>
             <TabPanel value={Tabs.Reason}>
               <ReturnReasonsTable
-                lines={lines}
+                lines={lines.filter(line => line.numberOfPacksReturned > 0)}
                 updateLine={line => update(line)}
               />
             </TabPanel>
           </TabContext>
-        </>
+        </Box>
       </Modal>
     </TableProvider>
   );

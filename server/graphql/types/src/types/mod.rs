@@ -24,6 +24,18 @@ pub use self::location::*;
 pub mod sensor;
 pub use self::sensor::*;
 
+pub mod asset_catalogue_item;
+pub use self::asset_catalogue_item::*;
+
+pub mod asset_category;
+pub use self::asset_category::*;
+
+pub mod asset_class;
+pub use self::asset_class::*;
+
+pub mod asset_type;
+pub use self::asset_type::*;
+
 pub mod temperature_breach;
 pub use self::temperature_breach::*;
 
@@ -100,6 +112,9 @@ pub use self::program_node::*;
 
 pub mod outbound_return_line;
 pub use self::outbound_return_line::*;
+
+pub mod inbound_return_line;
+pub use self::inbound_return_line::*;
 
 pub mod return_reason;
 pub use self::return_reason::*;

@@ -91,6 +91,10 @@ export const BaseDatePickerInput: FC<
             '& .MuiPickersDay-root.Mui-selected': {
               backgroundColor: `${theme.palette.secondary.main}`,
             },
+            // Popper position needs to be fixed in place or it will disappear in some modals
+            '& .MuiPickersPopper-paper': {
+              position: 'fixed',
+            },
           },
         },
         desktopPaper: {
