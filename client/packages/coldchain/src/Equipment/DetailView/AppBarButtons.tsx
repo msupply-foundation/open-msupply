@@ -46,7 +46,7 @@ export const AppBarButtonsComponent = ({}) => {
         <UpdateStatusButton />
         <ButtonWithIcon
           Icon={<PrinterIcon />}
-          label={t('button.print')}
+          label={t('button.print-qr')}
           onClick={printQR}
         />
       </Grid>

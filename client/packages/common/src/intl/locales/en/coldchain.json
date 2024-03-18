@@ -1,5 +1,6 @@
 {
   "button.acknowledge": "Press to acknowledge this breach",
+  "button.print-qr": "Print QR code",
   "button.update-status": "Update Status",
   "button.view-all-breaches": "View all breaches",
   "button.view-details": "View Details",
