@@ -13,15 +13,14 @@ import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
+import { LocationIds } from '../DetailView';
 interface SummaryProps {
-  draft?: AssetFragment;
-  onChange: (patch: Partial<AssetFragment>) => void;
-  locations:
-    | {
-        label: string;
-        value: string;
-      }[]
-    | [];
+  draft?: AssetFragment & LocationIds;
+  onChange: (patch: Partial<AssetFragment & LocationIds>) => void;
+  locations: {
+    label: string;
+    value: string;
+  }[];
 }
 
 const Container = ({ children }: { children: React.ReactNode }) => (
@@ -162,6 +161,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
                 getOptionLabel={option => option.label}
                 defaultValue={defaultLocations}
                 filterSelectedOptions
+                onChange={(
+                  _event,
+                  newValue: {
+                    label: string;
+                    value: string;
+                  }[]
+                ) => {
+                  onChange({
+                    locationIds: newValue.map(location => location.value),
+                  });
+                }}
                 renderInput={params => (
                   <TextField
                     {...params}

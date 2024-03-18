@@ -45,7 +45,7 @@ pub fn update_asset(
     }
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, Debug)]
 pub struct UpdateAssetInput {
     pub id: String,
     pub code: Option<String>,

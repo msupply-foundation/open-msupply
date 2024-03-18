@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
-import { locationIds } from './hooks/utils/locationIdsFromLocations';
+import { LocationIds } from '../DetailView';
 
 export type ListParams<T> = {
   first: number;
@@ -29,7 +29,7 @@ const assetParsers = {
 
     return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
-  toUpdate: (input: AssetFragment): UpdateAssetInput => ({
+  toUpdate: (input: AssetFragment & LocationIds): UpdateAssetInput => ({
     id: input.id,
     catalogueItemId: setNullableInput('catalogueItemId', input),
     code: input.code,
@@ -38,7 +38,7 @@ const assetParsers = {
     replacementDate: setNullableInput('replacementDate', input),
     serialNumber: setNullableInput('serialNumber', input),
     storeId: input.storeId,
-    locationIds: locationIds(input),
+    locationIds: input.locationIds,
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
@@ -120,7 +120,8 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert asset');
   },
-  update: async (input: AssetFragment): Promise<string> => {
+  update: async (input: AssetFragment & LocationIds): Promise<string> => {
+    console.info('input: ', input);
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,

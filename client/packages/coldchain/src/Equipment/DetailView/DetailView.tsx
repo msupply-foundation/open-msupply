@@ -24,6 +24,10 @@ import { Documents } from './Tabs/Documents';
 import { ActivityLogList } from 'packages/system/src';
 import { useLocation } from 'packages/system/src';
 
+export interface LocationIds {
+  locationIds: string[] | [];
+}
+
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
@@ -39,7 +43,7 @@ export const EquipmentDetailView = () => {
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
-  const [draft, setDraft] = useState<AssetFragment>();
+  const [draft, setDraft] = useState<AssetFragment & LocationIds>();
   const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
 
@@ -61,7 +65,7 @@ export const EquipmentDetailView = () => {
     title: t('heading.are-you-sure'),
   });
 
-  const onChange = (patch: Partial<AssetFragment>) => {
+  const onChange = (patch: Partial<AssetFragment & LocationIds>) => {
     if (!draft) return;
     setIsDirty(true);
     setDraft({ ...draft, ...patch });
@@ -73,15 +77,17 @@ export const EquipmentDetailView = () => {
 
   useEffect(() => {
     if (!data) return;
-    setDraft({ ...data });
+    setDraft({
+      ...data,
+      locationIds: draft?.locationIds
+        ? draft.locationIds
+        : data.locations.nodes.map(location => location.id),
+    });
   }, [data, setDraft]);
 
   useEffect(() => {
     fetchLocations();
   }, [fetchLocations]);
-
-  console.info('locations', locationData);
-  console.info('data', data);
 
   const locations =
     locationData?.nodes.map(location => ({
