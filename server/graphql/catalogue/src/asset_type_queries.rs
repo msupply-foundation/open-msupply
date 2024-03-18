@@ -60,7 +60,7 @@ pub fn asset_types(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAssetCatalogueItem,
+            resource: Resource::QueryAsset,
             store_id: None,
         },
     )?;
@@ -83,7 +83,7 @@ pub fn asset_type(ctx: &Context<'_>, id: String) -> Result<AssetTypeResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAssetCatalogueItem,
+            resource: Resource::QueryAsset,
             store_id: None,
         },
     )?;
