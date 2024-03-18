@@ -51,7 +51,6 @@ pub struct InsertAssetInput {
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
-    pub location_ids: Option<Vec<String>>,
 }
 
 impl From<InsertAssetInput> for InsertAsset {
@@ -65,7 +64,6 @@ impl From<InsertAssetInput> for InsertAsset {
             catalogue_item_id,
             installation_date,
             replacement_date,
-            location_ids,
         }: InsertAssetInput,
     ) -> Self {
         InsertAsset {
@@ -77,7 +75,6 @@ impl From<InsertAssetInput> for InsertAsset {
             catalogue_item_id,
             installation_date,
             replacement_date,
-            location_ids,
         }
     }
 }
