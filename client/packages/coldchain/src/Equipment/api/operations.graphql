@@ -97,6 +97,16 @@ query assetLogs(
   }
 }
 
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+
 mutation deleteAsset($assetId: String!, $storeId: String!) {
   deleteAsset(assetId: $assetId, storeId: $storeId) {
     ... on DeleteResponse {
