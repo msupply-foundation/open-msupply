@@ -11,6 +11,7 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  ColumnDataSetter,
 } from '@openmsupply-client/common';
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -18,8 +19,6 @@ import { AppBarButtons } from './AppBarButtons';
 import { InboundReturnRowFragment, useReturns } from '../api';
 
 const InboundReturnListViewComponent: FC = () => {
-  // TODO: for updating colour
-  // const { mutate: onUpdate } = useReturns.document.updateInbound();
   const t = useTranslation('distribution');
   const {
     updateSortQuery,
@@ -38,14 +37,22 @@ const InboundReturnListViewComponent: FC = () => {
   const pagination = { page, first, offset };
   const queryParams = { ...filter, sortBy, first, offset };
 
+  const { mutate } = useReturns.document.updateInboundReturn();
+
+  const onUpdateColour: ColumnDataSetter<InboundReturnRowFragment> = ({
+    id,
+    colour,
+  }) => {
+    mutate({ id, colour });
+  };
+
   const { data, isError, isLoading } =
     useReturns.document.listInbound(queryParams);
   // useDisableInboundRows(data?.nodes); // see inbound shipment for implementation reference
 
   const columns = useColumns<InboundReturnRowFragment>(
     [
-      // [getNameAndColorColumn(), { setter: onUpdate }],
-      [getNameAndColorColumn(), { setter: () => {} }],
+      [getNameAndColorColumn(), { setter: onUpdateColour }],
       [
         'status',
         {

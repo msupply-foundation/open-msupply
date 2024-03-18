@@ -1,10 +1,13 @@
 import {
   GenerateInboundReturnLinesInput,
   InboundReturnInput,
+  InvoiceNodeStatus,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
+  UpdateInboundReturnInput,
   UpdateInboundReturnLinesInput,
+  UpdateInboundReturnStatusInput,
   UpdateOutboundReturnInput,
   UpdateOutboundReturnLinesInput,
 } from '@common/types';
@@ -46,6 +49,7 @@ const outboundParsers = {
     }
   },
 };
+
 const inboundParsers = {
   toSortField: (
     sortBy: SortBy<InboundReturnRowFragment>
@@ -67,6 +71,21 @@ const inboundParsers = {
       default: {
         return InvoiceSortFieldInput.Status;
       }
+    }
+  },
+
+  toUpdateStatusInput: (
+    status: InvoiceNodeStatus | undefined
+  ): UpdateInboundReturnStatusInput | undefined => {
+    switch (status) {
+      case undefined:
+        return;
+      case InvoiceNodeStatus.Delivered:
+        return UpdateInboundReturnStatusInput.Delivered;
+      case InvoiceNodeStatus.Verified:
+        return UpdateInboundReturnStatusInput.Verified;
+      default:
+        throw new Error('Invalid status');
     }
   },
 };
@@ -248,20 +267,7 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not update outbound return');
   },
-  insertInboundReturn: async (input: InboundReturnInput) => {
-    const result = await sdk.insertInboundReturn({
-      input,
-      storeId,
-    });
 
-    const { insertInboundReturn } = result;
-
-    if (insertInboundReturn.__typename === 'InvoiceNode') {
-      return insertInboundReturn.invoiceNumber;
-    }
-
-    throw new Error('Could not insert inbound return');
-  },
   deleteOutbound: async (id: string): Promise<string> => {
     const result = await sdk.deleteOutboundReturn({
       storeId,
@@ -277,6 +283,48 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
     // TODO: handle error response...
     throw new Error('Could not delete outbound return');
   },
+
+  insertInboundReturn: async (input: InboundReturnInput) => {
+    const result = await sdk.insertInboundReturn({
+      input,
+      storeId,
+    });
+
+    const { insertInboundReturn } = result;
+
+    if (insertInboundReturn.__typename === 'InvoiceNode') {
+      return insertInboundReturn.invoiceNumber;
+    }
+
+    throw new Error('Could not insert inbound return');
+  },
+
+  updateInboundReturn: async (
+    input: Omit<UpdateInboundReturnInput, 'status'> & {
+      status?: InvoiceNodeStatus;
+    }
+  ) => {
+    const { id, comment, onHold, colour, status } = input;
+    const result = await sdk.updateInboundReturn({
+      input: {
+        id,
+        comment,
+        onHold,
+        colour,
+        status: inboundParsers.toUpdateStatusInput(status),
+      },
+      storeId,
+    });
+
+    const { updateInboundReturn } = result;
+
+    if (updateInboundReturn.__typename === 'InvoiceNode') {
+      return updateInboundReturn;
+    }
+
+    throw new Error('Could not update inbound return');
+  },
+
   updateInboundReturnLines: async (input: UpdateInboundReturnLinesInput) => {
     const result = await sdk.updateInboundReturnLines({
       input,
@@ -291,20 +339,17 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not update inbound return');
   },
-  deleteInbound: async (
-    returns: InboundReturnRowFragment[]
-  ): Promise<string> => {
-    const result = await sdk.deleteInboundReturns({
+
+  deleteInbound: async (id: string): Promise<string> => {
+    const result = await sdk.deleteInboundReturn({
       storeId,
-      input: {
-        ids: returns.map(({ id }) => id),
-      },
+      id,
     });
 
-    const { deleteInboundReturns } = result;
+    const { deleteInboundReturn } = result;
 
-    if (deleteInboundReturns.__typename === 'DeleteResponse') {
-      return deleteInboundReturns.id;
+    if (deleteInboundReturn.__typename === 'DeleteResponse') {
+      return deleteInboundReturn.id;
     }
 
     // TODO: handle error response...
