@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { StandardTextFieldProps } from '@common/components';
 import { BasicTextInput } from './BasicTextInput';
 import { NumUtils, RegexUtils } from '@common/utils';
@@ -11,6 +11,7 @@ export interface NumericInputProps {
   min?: number;
   max?: number;
   decimalLimit?: number;
+  decimalMin?: number;
   step?: number;
   multiplier?: number;
   value?: number | undefined;
@@ -32,6 +33,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       min = allowNegative ? -NumUtils.MAX_SAFE_API_INTEGER : 0,
       max = NumUtils.MAX_SAFE_API_INTEGER,
       decimalLimit = 0,
+      decimalMin,
       step = 1,
       multiplier = 10,
       value,
@@ -43,14 +45,36 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     const {
       options: { separator, decimal },
     } = useCurrency();
-    const [textValue, setTextValue] = useState(format(value ?? defaultValue));
+    const [textValue, setTextValue] = useState(
+      format(value ?? defaultValue, { minimumFractionDigits: decimalMin })
+    );
+    const isFirstRender = useRef(true);
+
+    const isInputIncomplete = useCallback(
+      (value: string) =>
+        new RegExp(
+          // Checks for a trailing `.` or a `0` (not necessarily immediately)
+          // after a `.`
+          `^\\d*${RegexUtils.escapeChars(
+            decimal
+          )}$|\\d*${RegexUtils.escapeChars(decimal)}\\d*0$`
+        ).test(value),
+      [decimal]
+    );
 
     useEffect(() => {
-      setTextValue(format(value));
-      // Excluding `format` from deps array, despite warning, as its not
-      // necessary (static method) and causes problems resulting in the text
-      // value not being updated correctly
-    }, [value]);
+      if (isFirstRender.current) {
+        // On first render, ensure number value is set from defaultValue prop
+        if (textValue && value === undefined) onChange(parse(textValue));
+        isFirstRender.current = false;
+        return;
+      }
+
+      // On subsequent renders, keep textValue up to date with value if value
+      // has changed externally
+      if (parse(textValue) !== value && !isInputIncomplete(textValue))
+        setTextValue(format(value));
+    }, [value, textValue, format, parse, onChange, isInputIncomplete]);
 
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
@@ -74,6 +98,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
             .replace(decimalLimit === 0 ? decimal : '', '');
 
           if (input === '') {
+            setTextValue(''); // For removing single "."
             onChange(undefined);
             return;
           }
@@ -82,7 +107,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           if (inputRegex.test(input)) setTextValue(input);
           else return;
 
-          if (input.endsWith(decimal)) return;
+          if (isInputIncomplete(input)) return;
 
           const parsed = parse(input);
 
@@ -90,8 +115,8 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           const constrained = constrain(parsed, decimalLimit, min, max);
 
-          if (constrained === value) setTextValue(format(constrained));
-          else onChange(constrained);
+          setTextValue(format(constrained));
+          onChange(constrained);
         }}
         onKeyDown={e => {
           if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
@@ -107,7 +132,12 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
             min,
             max
           );
+          setTextValue(format(newNum, { minimumFractionDigits: decimalMin }));
           onChange(newNum);
+        }}
+        onBlur={() => {
+          onChange(Number(parse(textValue)) || undefined);
+          setTextValue(format(value, { minimumFractionDigits: decimalMin }));
         }}
         onFocus={e => e.target.select()}
         {...props}
