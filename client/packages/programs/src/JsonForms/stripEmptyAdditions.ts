@@ -80,7 +80,8 @@ export const stripEmptyAdditions = (
     if (Object.keys(object).length > 0) {
       return object;
     }
-    if (newData && old) return old;
+    // keep the empty object
+    if (newData && old) return {};
     return undefined;
   }
 
