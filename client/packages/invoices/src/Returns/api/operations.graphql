@@ -30,6 +30,7 @@ fragment InboundReturn on InvoiceNode {
   status
   invoiceNumber
   colour
+  onHold
 
   createdDatetime
   pickedDatetime
@@ -208,6 +209,7 @@ query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
         nodes {
           ...InboundReturnLine
         }
+        totalCount
       }
     }
   }
@@ -282,6 +284,18 @@ mutation deleteOutboundReturn($storeId: String!, $id: String!) {
   }
 }
 
+mutation updateInboundReturn(
+  $storeId: String!
+  $input: UpdateInboundReturnInput!
+) {
+  updateInboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
 mutation updateInboundReturnLines(
   $storeId: String!
   $input: UpdateInboundReturnLinesInput!
@@ -294,11 +308,8 @@ mutation updateInboundReturnLines(
   }
 }
 
-mutation deleteInboundReturns(
-  $storeId: String!
-  $input: [DeleteInboundReturnInput!]!
-) {
-  deleteInboundReturns(storeId: $storeId, input: $input) {
+mutation deleteInboundReturn($storeId: String!, $id: String!) {
+  deleteInboundReturn(storeId: $storeId, id: $id) {
     __typename
     ... on DeleteResponse {
       id

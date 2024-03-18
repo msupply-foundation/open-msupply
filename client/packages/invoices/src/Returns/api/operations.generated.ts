@@ -8,7 +8,7 @@ export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string,
 
 export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null };
 
-export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null };
+export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null };
 
 export type OutboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
 
@@ -68,7 +68,7 @@ export type InboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null } | { __typename: 'NodeError' } };
+export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -110,6 +110,14 @@ export type DeleteOutboundReturnMutationVariables = Types.Exact<{
 
 export type DeleteOutboundReturnMutation = { __typename: 'Mutations', deleteOutboundReturn: { __typename: 'DeleteOutboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
 
+export type UpdateInboundReturnMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateInboundReturnInput;
+}>;
+
+
+export type UpdateInboundReturnMutation = { __typename: 'Mutations', updateInboundReturn: { __typename: 'InvoiceNode', id: string } };
+
 export type UpdateInboundReturnLinesMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
   input: Types.UpdateInboundReturnLinesInput;
@@ -118,13 +126,13 @@ export type UpdateInboundReturnLinesMutationVariables = Types.Exact<{
 
 export type UpdateInboundReturnLinesMutation = { __typename: 'Mutations', updateInboundReturnLines: { __typename: 'InvoiceNode', id: string } };
 
-export type DeleteInboundReturnsMutationVariables = Types.Exact<{
+export type DeleteInboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
-  input: Array<Types.DeleteInboundReturnInput> | Types.DeleteInboundReturnInput;
+  id: Types.Scalars['String']['input'];
 }>;
 
 
-export type DeleteInboundReturnsMutation = { __typename: 'Mutations', deleteInboundReturns: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
+export type DeleteInboundReturnMutation = { __typename: 'Mutations', deleteInboundReturn: { __typename: 'DeleteInboundReturnError' } | { __typename: 'DeleteResponse', id: string } };
 
 export const OutboundReturnRowFragmentDoc = gql`
     fragment OutboundReturnRow on InvoiceNode {
@@ -161,6 +169,7 @@ export const InboundReturnFragmentDoc = gql`
   status
   invoiceNumber
   colour
+  onHold
   createdDatetime
   pickedDatetime
   shippedDatetime
@@ -327,6 +336,7 @@ export const InboundReturnByNumberDocument = gql`
         nodes {
           ...InboundReturnLine
         }
+        totalCount
       }
     }
   }
@@ -400,6 +410,16 @@ export const DeleteOutboundReturnDocument = gql`
   }
 }
     `;
+export const UpdateInboundReturnDocument = gql`
+    mutation updateInboundReturn($storeId: String!, $input: UpdateInboundReturnInput!) {
+  updateInboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+    `;
 export const UpdateInboundReturnLinesDocument = gql`
     mutation updateInboundReturnLines($storeId: String!, $input: UpdateInboundReturnLinesInput!) {
   updateInboundReturnLines(storeId: $storeId, input: $input) {
@@ -410,9 +430,9 @@ export const UpdateInboundReturnLinesDocument = gql`
   }
 }
     `;
-export const DeleteInboundReturnsDocument = gql`
-    mutation deleteInboundReturns($storeId: String!, $input: [DeleteInboundReturnInput!]!) {
-  deleteInboundReturns(storeId: $storeId, input: $input) {
+export const DeleteInboundReturnDocument = gql`
+    mutation deleteInboundReturn($storeId: String!, $id: String!) {
+  deleteInboundReturn(storeId: $storeId, id: $id) {
     __typename
     ... on DeleteResponse {
       id
@@ -461,11 +481,14 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     deleteOutboundReturn(variables: DeleteOutboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteOutboundReturnMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteOutboundReturnMutation>(DeleteOutboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteOutboundReturn', 'mutation');
     },
+    updateInboundReturn(variables: UpdateInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateInboundReturnMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnMutation>(UpdateInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturn', 'mutation');
+    },
     updateInboundReturnLines(variables: UpdateInboundReturnLinesMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateInboundReturnLinesMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateInboundReturnLinesMutation>(UpdateInboundReturnLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateInboundReturnLines', 'mutation');
     },
-    deleteInboundReturns(variables: DeleteInboundReturnsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundReturnsMutation> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnsMutation>(DeleteInboundReturnsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturns', 'mutation');
+    deleteInboundReturn(variables: DeleteInboundReturnMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteInboundReturnMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteInboundReturnMutation>(DeleteInboundReturnDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteInboundReturn', 'mutation');
     }
   };
 }
@@ -662,6 +685,23 @@ export const mockDeleteOutboundReturnMutation = (resolver: ResponseResolver<Grap
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockUpdateInboundReturnMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ updateInboundReturn })
+ *   )
+ * })
+ */
+export const mockUpdateInboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateInboundReturnMutationVariables>, GraphQLContext<UpdateInboundReturnMutation>, any>) =>
+  graphql.mutation<UpdateInboundReturnMutation, UpdateInboundReturnMutationVariables>(
+    'updateInboundReturn',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockUpdateInboundReturnLinesMutation((req, res, ctx) => {
  *   const { storeId, input } = req.variables;
  *   return res(
@@ -679,15 +719,15 @@ export const mockUpdateInboundReturnLinesMutation = (resolver: ResponseResolver<
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockDeleteInboundReturnsMutation((req, res, ctx) => {
- *   const { storeId, input } = req.variables;
+ * mockDeleteInboundReturnMutation((req, res, ctx) => {
+ *   const { storeId, id } = req.variables;
  *   return res(
- *     ctx.data({ deleteInboundReturns })
+ *     ctx.data({ deleteInboundReturn })
  *   )
  * })
  */
-export const mockDeleteInboundReturnsMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundReturnsMutationVariables>, GraphQLContext<DeleteInboundReturnsMutation>, any>) =>
-  graphql.mutation<DeleteInboundReturnsMutation, DeleteInboundReturnsMutationVariables>(
-    'deleteInboundReturns',
+export const mockDeleteInboundReturnMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteInboundReturnMutationVariables>, GraphQLContext<DeleteInboundReturnMutation>, any>) =>
+  graphql.mutation<DeleteInboundReturnMutation, DeleteInboundReturnMutationVariables>(
+    'deleteInboundReturn',
     resolver
   )
