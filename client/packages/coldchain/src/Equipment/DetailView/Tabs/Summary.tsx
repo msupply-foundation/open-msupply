@@ -1,19 +1,27 @@
 import React from 'react';
 import {
+  AutocompleteOption,
   BasicTextInput,
   DateTimePickerInput,
   InputWithLabelRow,
+  TextField,
   Typography,
 } from '@common/components';
+import Autocomplete from '@mui/material/Autocomplete';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
-
 interface SummaryProps {
   draft?: AssetFragment;
   onChange: (patch: Partial<AssetFragment>) => void;
+  locations:
+    | {
+        label: string;
+        value: string;
+      }[]
+    | [];
 }
 
 const Container = ({ children }: { children: React.ReactNode }) => (
@@ -82,11 +90,21 @@ const Row = ({
   </Box>
 );
 
-export const Summary = ({ draft, onChange }: SummaryProps) => {
+export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation('coldchain');
   const { localisedDate } = useFormatDateTime();
 
   if (!draft) return null;
+
+  const defaultLocations:
+    | AutocompleteOption<{
+        label: string;
+        value: string;
+      }>[]
+    | null = draft.locations.nodes.map(location => ({
+    label: location.code,
+    value: location.id,
+  }));
 
   return (
     <Box display="flex" flex={1}>
@@ -136,7 +154,23 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
         </Section>
         <Section heading={t('heading.cold-chain')}>
           <Row label={t('label.cold-storage-location')}>
-            <BasicTextInput value={''} disabled fullWidth />
+            {locations ? (
+              <Autocomplete
+                multiple
+                id="multi-select-location"
+                options={locations}
+                getOptionLabel={option => option.label}
+                defaultValue={defaultLocations}
+                filterSelectedOptions
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label="Current Asset Locations"
+                    placeholder="locations"
+                  />
+                )}
+              />
+            ) : null}
           </Row>
         </Section>
       </Container>

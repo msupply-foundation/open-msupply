@@ -22,11 +22,20 @@ import { AssetFragment, useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList } from 'packages/system/src';
+import { useLocation } from 'packages/system/src';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
+  const {
+    data: locationData,
+    isLoading: isLoadingLocations,
+    mutate: fetchLocations,
+  } = useLocation.document.listAll({
+    key: 'name',
+    direction: 'asc',
+  });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
@@ -67,11 +76,26 @@ export const EquipmentDetailView = () => {
     setDraft({ ...data });
   }, [data, setDraft]);
 
-  if (isLoading) return <DetailFormSkeleton />;
+  useEffect(() => {
+    fetchLocations();
+  }, [fetchLocations]);
+
+  console.info('locations', locationData);
+  console.info('data', data);
+
+  const locations =
+    locationData?.nodes.map(location => ({
+      label: location.code,
+      value: location.id,
+    })) || [];
+
+  if (isLoading || isLoadingLocations) return <DetailFormSkeleton />;
 
   const tabs = [
     {
-      Component: <Summary onChange={onChange} draft={draft} />,
+      Component: (
+        <Summary onChange={onChange} draft={draft} locations={locations} />
+      ),
       value: 'Summary',
     },
     {

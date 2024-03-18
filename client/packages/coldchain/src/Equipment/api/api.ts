@@ -10,6 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
+import { locationIds } from './hooks/utils/locationIdsFromLocations';
 
 export type ListParams<T> = {
   first: number;
@@ -37,6 +38,7 @@ const assetParsers = {
     replacementDate: setNullableInput('replacementDate', input),
     serialNumber: setNullableInput('serialNumber', input),
     storeId: input.storeId,
+    locationIds: locationIds(input),
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
