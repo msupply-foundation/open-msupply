@@ -81,7 +81,6 @@ impl AssetMutations {
         store_id: String,
         input: UpdateAssetInput,
     ) -> Result<UpdateAssetResponse> {
-        println!(" input: {:?}", input);
         update_asset(ctx, &store_id, input)
     }
 

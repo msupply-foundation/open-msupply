@@ -163,13 +163,15 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
                 filterSelectedOptions
                 onChange={(
                   _event,
-                  newValue: {
+                  newSelectedLocations: {
                     label: string;
                     value: string;
                   }[]
                 ) => {
                   onChange({
-                    locationIds: newValue.map(location => location.value),
+                    locationIds: newSelectedLocations.map(
+                      location => location.value
+                    ),
                   });
                 }}
                 renderInput={params => (
