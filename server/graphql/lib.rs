@@ -24,6 +24,7 @@ use graphql_general::{
 };
 
 use graphql_asset::{AssetLogMutations, AssetLogQueries, AssetMutations, AssetQueries};
+use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -34,13 +35,9 @@ use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
-use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
-use graphql_temperature_breach::{TemperatureBreachMutations, TemperatureBreachQueries};
-use graphql_temperature_log::TemperatureLogQueries;
-use graphql_temperature_notification::TemperatureNotificationQueries;
 
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
@@ -84,10 +81,7 @@ pub struct Queries(
     pub InvoiceQueries,
     pub InvoiceLineQueries,
     pub LocationQueries,
-    pub SensorQueries,
-    pub TemperatureBreachQueries,
-    pub TemperatureLogQueries,
-    pub TemperatureNotificationQueries,
+    pub ColdChainQueries,
     pub StocktakeQueries,
     pub StocktakeLineQueries,
     pub GeneralQueries,
@@ -111,10 +105,7 @@ impl Queries {
             InvoiceQueries,
             InvoiceLineQueries,
             LocationQueries,
-            SensorQueries,
-            TemperatureBreachQueries,
-            TemperatureLogQueries,
-            TemperatureNotificationQueries,
+            ColdChainQueries,
             StocktakeQueries,
             StocktakeLineQueries,
             GeneralQueries,
@@ -139,7 +130,6 @@ pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
-    pub SensorMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
@@ -151,7 +141,7 @@ pub struct Mutations(
     pub ProgramsMutations,
     pub FormSchemaMutations,
     pub PluginMutations,
-    pub TemperatureBreachMutations,
+    pub ColdChainMutations,
     pub CentralServerMutations,
     pub AssetMutations,
     pub AssetLogMutations,
@@ -163,7 +153,6 @@ impl Mutations {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            SensorMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
@@ -175,7 +164,7 @@ impl Mutations {
             ProgramsMutations,
             FormSchemaMutations,
             PluginMutations,
-            TemperatureBreachMutations,
+            ColdChainMutations,
             CentralServerMutations,
             AssetMutations,
             AssetLogMutations,

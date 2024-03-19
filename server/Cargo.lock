@@ -2283,6 +2283,7 @@ dependencies = [
  "graphql_asset",
  "graphql_batch_mutations",
  "graphql_clinician",
+ "graphql_cold_chain",
  "graphql_core",
  "graphql_form_schema",
  "graphql_general",
@@ -2296,13 +2297,9 @@ dependencies = [
  "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
- "graphql_sensor",
  "graphql_stock_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
- "graphql_temperature_breach",
- "graphql_temperature_log",
- "graphql_temperature_notification",
  "graphql_types",
  "repository",
  "reqwest",
@@ -2368,6 +2365,29 @@ dependencies = [
 
 [[package]]
 name = "graphql_clinician"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anymap",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "reqwest",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
+ "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_cold_chain"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
@@ -2698,29 +2718,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_sensor"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
 name = "graphql_stock_line"
 version = "0.1.0"
 dependencies = [
@@ -2786,75 +2783,6 @@ dependencies = [
  "serde_json",
  "service",
  "strum 0.25.0",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_breach"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_log"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_notification"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
  "thiserror",
  "util",
 ]

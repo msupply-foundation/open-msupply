@@ -1,5 +1,5 @@
 [package]
-name = "graphql_temperature_notification"
+name = "graphql_cold_chain"
 version = "0.1.0"
 edition = "2018"
 
@@ -16,7 +16,7 @@ graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
 
 actix-web = { workspace = true }
-anymap = { workspace = true }
+anymap= { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
