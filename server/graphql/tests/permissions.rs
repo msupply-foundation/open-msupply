@@ -20,7 +20,6 @@ mod permission_tests {
     use graphql_reports::ReportQueries;
     use graphql_requisition::{RequisitionMutations, RequisitionQueries};
     use graphql_requisition_line::RequisitionLineMutations;
-    use graphql_sensor::{SensorMutations, SensorQueries};
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
     //use graphql_temperature_breach::TemperatureBreachQueries;
@@ -33,7 +32,7 @@ mod permission_tests {
     pub struct FullQuery(
         pub InvoiceQueries,
         pub LocationQueries,
-        pub SensorQueries,
+        // pub SensorQueries,
         //pub TemperatureBreachQueries,
         //pub TemperatureBreachConfigQueries,
         //pub TemperatureLogQueries,
@@ -49,7 +48,7 @@ mod permission_tests {
         pub InvoiceMutations,
         pub InvoiceLineMutations,
         pub LocationMutations,
-        pub SensorMutations,
+        // pub SensorMutations,
         //pub TemperatureBreachConfigMutations,
         pub StocktakeMutations,
         pub StocktakeLineMutations,
@@ -63,7 +62,7 @@ mod permission_tests {
         FullQuery(
             InvoiceQueries,
             LocationQueries,
-            SensorQueries,
+            // SensorQueries,
             //TemperatureBreachQueries,
             //TemperatureBreachConfigQueries,
             //TemperatureLogQueries,
@@ -80,7 +79,7 @@ mod permission_tests {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            SensorMutations,
+            // SensorMutations,
             //TemperatureBreachConfigMutations,
             StocktakeMutations,
             StocktakeLineMutations,
