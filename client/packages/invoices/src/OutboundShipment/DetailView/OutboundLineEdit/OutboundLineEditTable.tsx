@@ -131,7 +131,7 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: 400,
+          maxHeight: 325,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
