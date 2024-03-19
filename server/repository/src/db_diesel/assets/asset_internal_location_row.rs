@@ -2,6 +2,7 @@ use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
 use diesel::prelude::*;
 
@@ -111,5 +112,20 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             .filter(asset_id.eq(asset_id_to_delete_locations))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for AssetInternalLocationRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        let _change_log_id = AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

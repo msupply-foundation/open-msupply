@@ -56,30 +56,131 @@ impl Loader<String> for AssetLocationLoader {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use async_graphql::dataloader::Loader;
-//     use repository::{mock::MockDataInserts, test_db};
+#[cfg(test)]
+mod tests {
+    use async_graphql::dataloader::Loader;
+    use repository::{
+        asset_internal_location_row::AssetInternalLocationRow,
+        location::Location,
+        mock::{
+            mock_asset_a, mock_asset_b, mock_location_1, mock_location_2, mock_location_3,
+            MockDataInserts,
+        },
+        test_db, Upsert,
+    };
 
-//     use crate::loader::AssetLocationLoader;
+    use crate::loader::AssetLocationLoader;
 
-//     #[tokio::test]
-//     async fn asset_location_loader() {
-//         // Prepare
-//         let (_, _storage_connection, connection_manager, _) = test_db::setup_all(
-//             "asset_location_loader",
-//             MockDataInserts::none().assets().locations(),
-//         )
-//         .await;
+    #[tokio::test]
+    async fn asset_location_loader() {
+        // Prepare
+        let (_, storage_connection, connection_manager, _) = test_db::setup_all(
+            "asset_location_loader",
+            MockDataInserts::none().assets().locations(),
+        )
+        .await;
 
-//         let loader = AssetLocationLoader { connection_manager };
+        // add asset internal location to asset_a
 
-//         let ids: &[String] = &["abc".to_string(), "cde".to_string()];
+        let asset_internal_location_row = &AssetInternalLocationRow {
+            id: "asset_location_id".to_string(),
+            asset_id: mock_asset_a().id,
+            location_id: mock_location_1().id,
+        };
 
-//         let result = loader.load(ids).await.unwrap();
+        let _result = asset_internal_location_row.upsert_sync(&storage_connection);
 
-//         println!("{:?}", result);
+        let loader = AssetLocationLoader { connection_manager };
 
-//         assert!(false);
-//     }
-// }
+        // Check location exists on asset_a
+
+        let ids: &[String] = &[mock_asset_a().id, mock_asset_b().id];
+
+        let result: std::collections::HashMap<String, Vec<Location>> =
+            loader.load(ids).await.unwrap();
+
+        println!("{:?}", result);
+
+        assert_eq!(
+            result.get(&mock_asset_a().id),
+            Some(&vec![Location {
+                location_row: mock_location_1()
+            }])
+        );
+
+        // Check loader returns multiple locations
+
+        let asset_internal_location_row = &AssetInternalLocationRow {
+            id: "asset_location_2_id".to_string(),
+            asset_id: mock_asset_a().id,
+            location_id: mock_location_2().id,
+        };
+
+        let _result = asset_internal_location_row.upsert_sync(&storage_connection);
+
+        let result: std::collections::HashMap<String, Vec<Location>> =
+            loader.load(ids).await.unwrap();
+
+        let mut asset_1_locations: Vec<Location> =
+            result.get(&mock_asset_a().id).unwrap().to_owned();
+
+        asset_1_locations
+            .sort_by(|a, b| a.location_row.id.partial_cmp(&b.location_row.id).unwrap());
+
+        assert_eq!(
+            asset_1_locations,
+            vec![
+                Location {
+                    location_row: mock_location_1()
+                },
+                Location {
+                    location_row: mock_location_2()
+                }
+            ]
+        );
+
+        // add asset internal location to asset_b
+
+        let asset_internal_location_row = &AssetInternalLocationRow {
+            id: "asset_location_3_id".to_string(),
+            asset_id: mock_asset_b().id,
+            location_id: mock_location_3().id,
+        };
+
+        let _result = asset_internal_location_row.upsert_sync(&storage_connection);
+
+        let result: std::collections::HashMap<String, Vec<Location>> =
+            loader.load(ids).await.unwrap();
+
+        // Check call for asset 1 only returns asset 1's locations
+
+        let mut asset_1_locations: Vec<Location> =
+            result.get(&mock_asset_a().id).unwrap().to_owned();
+
+        asset_1_locations
+            .sort_by(|a, b| a.location_row.id.partial_cmp(&b.location_row.id).unwrap());
+
+        assert_eq!(
+            asset_1_locations,
+            vec![
+                Location {
+                    location_row: mock_location_1()
+                },
+                Location {
+                    location_row: mock_location_2()
+                }
+            ]
+        );
+
+        // Check call for asset 2 only returns asset 2's location
+
+        let asset_2_locations: Vec<Location> = result.get(&mock_asset_b().id).unwrap().to_owned();
+
+        assert_eq!(
+            asset_2_locations,
+            vec![Location {
+                location_row: mock_location_3()
+            },]
+        );
+    }
+}
