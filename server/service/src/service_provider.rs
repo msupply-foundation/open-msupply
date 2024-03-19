@@ -5,6 +5,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
+    cold_chain::{TemperatureLogService, TemperatureLogServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -55,7 +56,6 @@ use crate::{
     temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
     temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
-    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
 use repository::{

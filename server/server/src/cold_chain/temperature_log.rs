@@ -11,8 +11,10 @@ use repository::RepositoryError;
 use service::temperature_breach::insert::InsertTemperatureBreach;
 use service::{
     auth_data::AuthData,
+    cold_chain::{
+        insert_temperature_log::InsertTemperatureLog, update_temperature_log::UpdateTemperatureLog,
+    },
     service_provider::{ServiceContext, ServiceProvider},
-    temperature_log::{insert::InsertTemperatureLog, update::UpdateTemperatureLog},
     SingleRecordError,
 };
 use util::constants::SYSTEM_USER_ID;
