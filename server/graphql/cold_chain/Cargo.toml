@@ -23,6 +23,7 @@ actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+util = { path = "../../util" }
 
 [features]
 default = ["sqlite"]

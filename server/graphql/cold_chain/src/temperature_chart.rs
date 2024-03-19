@@ -268,9 +268,9 @@ mod test {
             TemperatureChartServiceTrait,
         },
     };
-    use util::*;
+    use util::create_datetime;
 
-    use crate::GeneralQueries;
+    use crate::ColdChainQueries;
 
     type ServiceInput = TemperatureChartInput;
     type ServiceResponse = TemperatureChart;
@@ -301,7 +301,7 @@ mod test {
     #[actix_rt::test]
     async fn test_graphql_temperature_chart_mapping() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
-            GeneralQueries,
+            ColdChainQueries,
             EmptyMutation,
             "test_graphql_temperature_chart_mapping",
             MockDataInserts::none().names().stores().sensors(),
