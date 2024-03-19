@@ -28,7 +28,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     /// Inbound shipment will be created when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source invoice is either Outbound shipment or Outbound Return
     /// 3. Source outbound shipment is either Shipped or Picked
     ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
@@ -95,6 +95,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             match outbound_shipment.invoice_row.r#type {
                 InvoiceRowType::OutboundShipment => InvoiceRowType::InboundShipment,
                 InvoiceRowType::OutboundReturn => InvoiceRowType::InboundReturn,
+                // TODO: is panicking here ok or should we return Ok(None)? (This should never happen bc of check above...)
                 _ => unimplemented!(),
             },
         )?;
