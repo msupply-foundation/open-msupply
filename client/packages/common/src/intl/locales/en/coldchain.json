@@ -1,5 +1,6 @@
 {
   "button.acknowledge": "Press to acknowledge this breach",
+  "button.stop": "Stop",
   "button.update-status": "Update Status",
   "button.view-all-breaches": "View all breaches",
   "button.view-details": "View Details",
@@ -10,6 +11,7 @@
   "error.fridge-tag-import": "Unable to import Fridge-tag logs: {{message}}",
   "error.fridge-tag-import-empty": "No data imported",
   "error.no-asset-create-permission": "You do not have permission to create a new asset.",
+  "error.no-matching-asset": "CCE not found with id: {{id}}",
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
   "error.unable-to-create-cce": "Unable to create CCE",

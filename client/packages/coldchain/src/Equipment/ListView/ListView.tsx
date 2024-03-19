@@ -10,12 +10,14 @@ import {
   useUrlQueryParams,
   useToggle,
   TooltipTextCell,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
 import { Status } from '../Components';
+import { AppRoute } from '@openmsupply-client/config';
 
 const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
   return <Status status={rowData.statusLog?.status} />;
@@ -35,6 +37,9 @@ const AssetListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const modalController = useToggle();
+  const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
+    AppRoute.Equipment
+  );
 
   const columns = useColumns<AssetFragment>(
     [
@@ -96,7 +101,10 @@ const AssetListComponent: FC = () => {
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
       />
-      <AppBarButtons modalController={modalController} />
+      <AppBarButtons
+        modalController={modalController}
+        assets={data?.nodes ?? []}
+      />
       <Toolbar />
       <DataTable
         id="item-list"
@@ -106,9 +114,7 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => {
-          navigate(`/cold-chain/equipment/${row.id}`);
-        }}
+        onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
         noDataElement={<NothingHere body={t('error.no-items')} />}
         enableColumnSelection
       />
