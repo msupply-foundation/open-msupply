@@ -114,7 +114,7 @@ mod test {
         },
     };
 
-    use crate::TemperatureBreachMutations;
+    use crate::ColdChainMutations;
 
     type UpdateLineMethod =
         dyn Fn(ServiceInput) -> Result<TemperatureBreach, ServiceError> + Sync + Send;
@@ -155,7 +155,7 @@ mod test {
     async fn test_graphql_update_temperature_breach_errors() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
-            TemperatureBreachMutations,
+            ColdChainMutations,
             "test_graphql_update_temperature_breach_errors",
             MockDataInserts::all(),
         )
@@ -221,7 +221,7 @@ mod test {
     async fn test_graphql_update_temperature_breach_success() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
-            TemperatureBreachMutations,
+            ColdChainMutations,
             "test_graphql_update_temperature_breach_success",
             MockDataInserts::all(),
         )
