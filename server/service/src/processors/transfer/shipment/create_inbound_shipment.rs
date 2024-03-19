@@ -173,9 +173,16 @@ fn generate_inbound_shipment(
         ),
     };
 
-    let formatted_comment = match &outbound_shipment_row.comment {
-        Some(comment) => format!("Stock transfer ({})", comment),
-        None => format!("Stock transfer"),
+    let formatted_comment = match r#type {
+        InvoiceRowType::InboundShipment => match &outbound_shipment_row.comment {
+            Some(comment) => format!("Stock transfer ({})", comment),
+            None => format!("Stock transfer"),
+        },
+        InvoiceRowType::InboundReturn => match &outbound_shipment_row.comment {
+            Some(comment) => format!("Stock return ({})", comment),
+            None => format!("Stock return"),
+        },
+        _ => unimplemented!(),
     };
 
     let result = InvoiceRow {
