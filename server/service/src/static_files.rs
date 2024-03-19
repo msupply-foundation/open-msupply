@@ -16,7 +16,7 @@ const STATIC_FILE_DIR: &str = "static_files";
 
 pub enum StaticFileCategory {
     Temporary,
-    SyncFile(String, String), // Support Uploads (Table Name, Record Id)
+    SyncFile(String, String), // Files to be synced (Table Name, Record Id)
 }
 
 impl StaticFileCategory {
@@ -257,7 +257,7 @@ mod test {
             .unwrap()
             .is_none());
 
-        // Check that the quote file is not deleted
+        // Check that the sync file is not deleted
         assert!(service
             .find_file(
                 &sync_file_in.id,
