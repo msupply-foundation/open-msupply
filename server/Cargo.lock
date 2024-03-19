@@ -2391,22 +2391,15 @@ name = "graphql_cold_chain"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
- "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
  "chrono",
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
- "util",
 ]
 
 [[package]]
