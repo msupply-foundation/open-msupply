@@ -1,7 +1,11 @@
 use super::asset_type_row::asset_type::dsl::*;
 
+use serde::Deserialize;
+use serde::Serialize;
+
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
 use diesel::prelude::*;
 
@@ -13,7 +17,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+)]
 #[table_name = "asset_type"]
 pub struct AssetTypeRow {
     pub id: String,
@@ -88,5 +94,19 @@ impl<'a> AssetTypeRowRepository<'a> {
             .filter(id.eq(asset_type_id))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for AssetTypeRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        AssetTypeRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetTypeRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

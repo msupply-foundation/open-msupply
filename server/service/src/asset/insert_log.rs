@@ -2,13 +2,16 @@ use std::ops::Not;
 
 use super::{
     query_log::get_asset_log,
-    validate::{check_asset_exists, check_asset_log_exists},
+    validate::{check_asset_exists, check_asset_log_exists, check_reason_matches_status},
 };
-use crate::{service_provider::ServiceContext, SingleRecordError};
+use crate::{
+    activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
+};
 use chrono::Utc;
 use repository::{
+    asset_log_row::{AssetLogReason, AssetLogStatus},
     assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
-    RepositoryError, StorageConnection,
+    ActivityLogType, RepositoryError, StorageConnection,
 };
 
 #[derive(PartialEq, Debug)]
@@ -18,15 +21,16 @@ pub enum InsertAssetLogError {
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
     InsufficientPermission,
+    ReasonInvalidForStatus,
 }
 
 pub struct InsertAssetLog {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<String>,
+    pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
-    pub reason: Option<String>,
+    pub reason: Option<AssetLogReason>,
 }
 
 pub fn insert_asset_log(
@@ -40,6 +44,14 @@ pub fn insert_asset_log(
             let new_asset_log = generate(ctx, input);
             AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
 
+            activity_log_entry(
+                &ctx,
+                ActivityLogType::AssetLogCreated,
+                Some(new_asset_log.id.clone()),
+                None,
+                None,
+            )?;
+
             get_asset_log(ctx, new_asset_log.id).map_err(InsertAssetLogError::from)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -52,6 +64,10 @@ pub fn validate(
 ) -> Result<(), InsertAssetLogError> {
     if check_asset_log_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
+    }
+
+    if !check_reason_matches_status(&input.status, &input.reason) {
+        return Err(InsertAssetLogError::ReasonInvalidForStatus);
     }
     if check_asset_exists(&input.asset_id, connection)?
         .is_some()

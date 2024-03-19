@@ -53,6 +53,7 @@ import { SaveIcon } from './Save';
 import { ScanIcon } from './Scan';
 import { SearchIcon } from './Search';
 import { SettingsIcon } from './Settings';
+import { SettingsCircleIcon } from './SettingsCircle';
 import { SidebarIcon } from './Sidebar';
 import { SnowflakeIcon } from './Snowflake';
 import { SortAscIcon } from './SortAsc';
@@ -65,6 +66,7 @@ import { ToolsIcon } from './Tools';
 import { TranslateIcon } from './Translate';
 import { TruckIcon } from './Truck';
 import { UploadIcon } from './Upload';
+import { UserCircleIcon } from './UserCircle';
 import { UserIcon } from './User';
 import { XCircleIcon } from './XCircle';
 import { ZapIcon } from './Zap';
@@ -150,6 +152,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ScanIcon {...args} />, name: 'Scan' },
     { icon: <SearchIcon {...args} />, name: 'Search' },
     { icon: <SettingsIcon {...args} />, name: 'Settings' },
+    { icon: <SettingsCircleIcon {...args} />, name: 'SettingsCircle' },
     { icon: <SidebarIcon {...args} />, name: 'Sidebar' },
     { icon: <SnowflakeIcon {...args} />, name: 'Snowflake' },
     { icon: <SortAscIcon {...args} />, name: 'SortAsc' },
@@ -162,6 +165,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <TranslateIcon {...args} />, name: 'Translate' },
     { icon: <TruckIcon {...args} />, name: 'Truck' },
     { icon: <UploadIcon {...args} />, name: 'Upload' },
+    { icon: <UserCircleIcon {...args} />, name: 'UserCircle' },
     { icon: <UserIcon {...args} />, name: 'User' },
     { icon: <XCircleIcon {...args} />, name: 'XCircle' },
     { icon: <ZapIcon {...args} />, name: 'Zap' },

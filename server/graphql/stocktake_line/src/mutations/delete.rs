@@ -98,7 +98,7 @@ impl DeleteInput {
 mod graphql {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
@@ -136,7 +136,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_line_delete() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             StocktakeLineMutations,
             "omsupply-database-gql-stocktake_line_delete",

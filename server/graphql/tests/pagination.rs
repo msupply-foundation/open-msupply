@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod pagination_test {
     use async_graphql::EmptyMutation;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use graphql_core::{assert_graphql_query, assert_standard_graphql_error};
     use graphql_location::LocationQueries;
     use repository::PaginationOption;
@@ -51,7 +51,7 @@ mod pagination_test {
 
     #[actix_rt::test]
     async fn test_graphql_locations_pagination() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             LocationQueries,
             EmptyMutation,
             "test_graphql_locations_pagination",

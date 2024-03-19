@@ -139,7 +139,7 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            mock_inbound_shipment_a, mock_patient, mock_patient_b, mock_prescription_a,
+            currency_a, mock_inbound_shipment_a, mock_patient, mock_patient_b, mock_prescription_a,
             mock_prescription_verified, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -178,6 +178,7 @@ mod test {
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
                 );
+                r.currency_id = currency_a().id;
             })
         }
 
@@ -285,6 +286,7 @@ mod test {
                 r.name_link_id = mock_patient().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::Prescription;
+                r.currency_id = currency_a().id;
             })
         }
         fn clinician() -> ClinicianRow {

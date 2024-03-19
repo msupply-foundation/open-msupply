@@ -18,7 +18,7 @@ import { StockOutItem } from '../../types';
 
 interface UsePrescriptionColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
-  onChangeSortBy: (column: Column<StockOutLineFragment | StockOutItem>) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
 const expansionColumn = getRowExpandColumn<

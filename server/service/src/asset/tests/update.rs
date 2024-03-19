@@ -33,7 +33,7 @@ mod query {
                 InsertAsset {
                     id: id.clone(),
                     store_id: Some(mock_store_a().id),
-                    notes: "test_note".to_string(),
+                    notes: Some("test_note".to_string()),
                     code: "test_code".to_string(),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
@@ -87,7 +87,7 @@ mod query {
                 },
             )
             .unwrap();
-        assert_eq!(updated_asset.notes, "new_note".to_string());
+        assert_eq!(updated_asset.notes, Some("new_note".to_string()));
         assert_eq!(
             updated_asset.serial_number,
             Some("new_serial_number".to_string())

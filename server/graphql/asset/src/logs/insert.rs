@@ -1,3 +1,4 @@
+use crate::types::{AssetLogReasonInput, AssetLogStatusInput};
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -20,8 +21,12 @@ pub fn insert_asset_log(
 ) -> Result<InsertAssetLogResponse> {
     let user = validate_auth(
         ctx,
+        // while the Query permission is odd for a mutation,
+        // the decision was that anyone is allowed to create a status log
+        // have added the QueryAsset resource is for consistency,
+        // the UI already only allows asset viewers to add logs
         &ResourceAccessRequest {
-            resource: Resource::MutateAssetLog,
+            resource: Resource::QueryAsset,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -47,8 +52,8 @@ pub fn insert_asset_log(
 pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
-    pub status: Option<String>,
-    pub reason: Option<String>,
+    pub status: Option<AssetLogStatusInput>,
+    pub reason: Option<AssetLogReasonInput>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
 }
@@ -67,8 +72,8 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
         InsertAssetLog {
             id,
             asset_id,
-            status,
-            reason,
+            status: status.map(|s| s.to_domain()),
+            reason: reason.map(|r| r.to_domain()),
             comment,
             r#type,
         }
@@ -106,6 +111,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
         ServiceError::InsufficientPermission => BadUserInput(formatted_error),
+        ServiceError::ReasonInvalidForStatus => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -115,9 +121,10 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
 
 mod test {
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
-        assets::asset_log::AssetLog, mock::MockDataInserts, StorageConnectionManager,
+        asset_log_row::AssetLogStatus, assets::asset_log::AssetLog, mock::MockDataInserts,
+        StorageConnectionManager,
     };
     use serde_json::json;
 
@@ -156,7 +163,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_asset_log_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             AssetLogMutations,
             "test_graphql_insert_asset_log_success",
@@ -171,7 +178,6 @@ mod test {
                     id
                     assetId
                     status
-                    userId
                 }
             }
         }
@@ -181,8 +187,7 @@ mod test {
             "input": {
                 "id": "n/a",
                 "assetId": "asset_a",
-                "status": "status",
-                "userId": "user_account_a"
+                "status": AssetLogStatus::Functioning,
             }
         }));
 
@@ -191,8 +196,7 @@ mod test {
             Ok(AssetLog {
                 id: "id".to_owned(),
                 asset_id: "asset_a".to_owned(),
-                user_id: "user_account_a".to_owned(),
-                status: Some("status".to_owned()),
+                status: Some(AssetLogStatus::Functioning),
                 ..Default::default()
             })
         }));
@@ -201,8 +205,7 @@ mod test {
             "insertAssetLog": {
                 "id": "id",
                 "assetId": "asset_a",
-                "status": "status",
-                "userId": "user_account_a",
+                "status": AssetLogStatus::Functioning,
             }
         });
         assert_graphql_query!(
