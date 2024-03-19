@@ -18,6 +18,8 @@ export const SidePanelComponent = () => {
   const { data } = useReturns.document.inboundReturn();
   const { mutateAsync } = useReturns.document.deleteInbound();
 
+  // const isTransfer = !!data?.linkedShipment?.id;
+
   const canDelete = data?.status === InvoiceNodeStatus.New;
   const deleteAction = async () => {
     if (!data) return;
@@ -64,7 +66,7 @@ export const SidePanelComponent = () => {
       <AdditionalInfoSection />
       {/* <RelatedDocumentsSection /> */}
       {/* <PricingSection /> */}
-      {/* <TransportSection /> */}
+      {/* {isTransfer && <TransportSection />} */}
     </DetailPanelPortal>
   );
 };

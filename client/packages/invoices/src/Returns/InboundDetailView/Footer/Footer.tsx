@@ -12,6 +12,7 @@ import {
 import {
   getStatusTranslator,
   inboundReturnStatuses,
+  manualInboundReturnStatuses,
   outboundStatuses,
 } from '../../../utils';
 import { InboundReturnFragment, useReturns } from '../../api';
@@ -52,6 +53,8 @@ export const FooterComponent: FC = () => {
   const { data } = useReturns.document.inboundReturn();
   const { navigateUpOne } = useBreadcrumbs();
 
+  const isManuallyCreated = !data?.linkedShipment?.id;
+
   return (
     <AppFooterPortal
       Content={
@@ -65,7 +68,11 @@ export const FooterComponent: FC = () => {
           >
             <OnHoldButton />
             <StatusCrumbs
-              statuses={inboundReturnStatuses}
+              statuses={
+                isManuallyCreated
+                  ? manualInboundReturnStatuses
+                  : inboundReturnStatuses
+              }
               statusLog={createStatusLog(data)}
               statusFormatter={getStatusTranslator(t)}
             />
