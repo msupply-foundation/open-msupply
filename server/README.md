@@ -116,7 +116,7 @@ cargo make watch
 
 > Note: watch mode may not always be a part of your desired workflow - particularly when you are making lots of backend changes, it's another competitor for the build directory file lock on every save (alongside tests, rust-analyzer...) and Rust compilation isn't known for its speediness 😁
 >
-> You can play around with debounced re-compile times (`cargo-watch` `--delay` flag), or simply use this for cases such as doing frontend work, where you want the backend to refresh as you switch/pull branches, or when making minor backend changes.
+> It's great for cases such as doing frontend work, where you want the backend to refresh as you switch/pull branches, or when making minor backend changes. Or you can play around with debounced re-compile times, with the `cargo-watch` `--delay` flag.
 
 # Run with postgres
 
