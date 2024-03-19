@@ -1,11 +1,9 @@
 use super::validate::check_asset_exists;
 use crate::activity_log::activity_log_entry;
 use crate::service_provider::ServiceContext;
+use repository::asset_internal_location_row::AssetInternalLocationRowRepository;
 use repository::ActivityLogType;
-use repository::{
-    asset_internal_location_row::AssetInternalLocationRowRepository,
-    assets::asset_row::AssetRowRepository, RepositoryError, StorageConnection,
-};
+use repository::{assets::asset_row::AssetRowRepository, RepositoryError, StorageConnection};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteAssetError {
@@ -34,8 +32,7 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
             )?;
 
             let _deleted_location = AssetInternalLocationRowRepository::new(&connection)
-                .delete_all_for_asset_id(&asset_id)
-                .map_err(DeleteAssetError::from);
+                .delete_all_for_asset_id(&asset_id);
 
             AssetRowRepository::new(&connection)
                 .delete(&asset_id)

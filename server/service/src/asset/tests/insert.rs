@@ -35,7 +35,6 @@ mod query {
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
                     replacement_date: None,
-                    location_ids: None,
                 },
             )
             .unwrap();
@@ -63,7 +62,6 @@ mod query {
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
                     replacement_date: None,
-                    location_ids: None,
                 },
             ),
             Err(InsertAssetError::AssetAlreadyExists)
@@ -82,7 +80,6 @@ mod query {
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
                     replacement_date: None,
-                    location_ids: None,
                 },
             ),
             Err(InsertAssetError::SerialNumberAlreadyExists)

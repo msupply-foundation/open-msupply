@@ -174,11 +174,9 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        let result = asset_internal_location_row_repository
+        let _result = asset_internal_location_row_repository
             .insert_one(&asset_location)
             .unwrap();
-
-        println!("result: {:?}", result);
 
         // Query by id
         let result = asset_internal_location_repository
@@ -187,8 +185,6 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-
-        println!("result: {:?}", result);
 
         assert_eq!(result.id, asset_location_id);
     }

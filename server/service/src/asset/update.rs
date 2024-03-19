@@ -1,4 +1,8 @@
-use super::{location::set_asset_location, query::get_asset, validate::check_asset_exists};
+use super::{
+    location::set_asset_location,
+    query::get_asset,
+    validate::{check_asset_exists, check_locations_are_assigned},
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
@@ -20,6 +24,7 @@ pub enum UpdateAssetError {
     SerialNumberAlreadyExists,
     UpdatedRecordNotFound,
     DatabaseError(RepositoryError),
+    LocationsAlreadyAssigned,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -89,6 +94,20 @@ pub fn validate(
             }
         }
     }
+
+    // Check locations aren't assigned to other assets already
+    match &input.location_ids {
+        Some(location_ids) => match check_locations_are_assigned(location_ids.to_vec(), connection)
+        {
+            Ok(locations) => {
+                if locations.len() > 0 {
+                    return Err(UpdateAssetError::LocationsAlreadyAssigned);
+                };
+            }
+            Err(repository_error) => return Err(UpdateAssetError::DatabaseError(repository_error)),
+        },
+        None => (),
+    };
 
     Ok(asset_row)
 }
