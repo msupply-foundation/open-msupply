@@ -53,9 +53,10 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
                 _ => return Ok(None),
             };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment
-            && outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundReturn
-        {
+        if !matches!(
+            outbound_shipment.invoice_row.r#type,
+            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+        ) {
             return Ok(None);
         }
         // 3.
