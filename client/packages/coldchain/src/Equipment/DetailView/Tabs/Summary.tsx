@@ -1,13 +1,12 @@
 import React from 'react';
 import {
-  AutocompleteOption,
+  AutocompleteMulti,
   BasicTextInput,
   DateTimePickerInput,
   InputWithLabelRow,
-  TextField,
   Typography,
 } from '@common/components';
-import Autocomplete from '@mui/material/Autocomplete';
+// import {Autocomplete} from '@mui/material';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
@@ -95,12 +94,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
 
   if (!draft) return null;
 
-  const defaultLocations:
-    | AutocompleteOption<{
-        label: string;
-        value: string;
-      }>[]
-    | null = draft.locations.nodes.map(location => ({
+  const defaultLocations = draft.locations.nodes.map(location => ({
     label: location.code,
     value: location.id,
   }));
@@ -154,13 +148,11 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('heading.cold-chain')}>
           <Row label={t('label.cold-storage-location')}>
             {locations ? (
-              <Autocomplete
-                multiple
-                id="multi-select-location"
-                options={locations}
-                getOptionLabel={option => option.label}
+              <AutocompleteMulti
                 defaultValue={defaultLocations}
                 filterSelectedOptions
+                getOptionLabel={option => option.label}
+                inputProps={{ fullWidth: true }}
                 onChange={(
                   _event,
                   newSelectedLocations: {
@@ -174,13 +166,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
                     ),
                   });
                 }}
-                renderInput={params => (
-                  <TextField
-                    {...params}
-                    label="Current Asset Locations"
-                    placeholder="locations"
-                  />
-                )}
+                options={locations}
               />
             ) : null}
           </Row>

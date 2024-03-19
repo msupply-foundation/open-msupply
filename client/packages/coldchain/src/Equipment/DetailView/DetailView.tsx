@@ -21,11 +21,10 @@ import { Summary } from './Tabs';
 import { AssetFragment, useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList } from 'packages/system/src';
-import { useLocation } from 'packages/system/src';
+import { ActivityLogList, useLocation } from '@openmsupply-client/system';
 
 export interface LocationIds {
-  locationIds: string[] | [];
+  locationIds: string[];
 }
 
 export const EquipmentDetailView = () => {
@@ -83,6 +82,7 @@ export const EquipmentDetailView = () => {
         ? draft.locationIds
         : data.locations.nodes.map(location => location.id),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
 
   useEffect(() => {

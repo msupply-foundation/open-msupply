@@ -121,7 +121,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not insert asset');
   },
   update: async (input: AssetFragment & LocationIds): Promise<string> => {
-    console.info('input: ', input);
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,
