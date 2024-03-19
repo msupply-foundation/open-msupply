@@ -9,6 +9,7 @@ use graphql_core::{
     ContextExt,
 };
 
+use graphql_types::types::{LocationFilterInput, LocationNode};
 use repository::{
     temperature_breach::{
         TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort,
@@ -20,7 +21,7 @@ use service::{
     temperature_breach::query::get_max_or_min_breach_temperature, usize_to_u32, ListResult,
 };
 
-use super::{LocationFilterInput, LocationNode, SensorFilterInput, SensorNode};
+use super::sensor::{SensorFilterInput, SensorNode};
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 pub enum TemperatureBreachNodeType {

@@ -8,6 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 
+use graphql_types::types::{LocationFilterInput, LocationNode};
 use repository::{
     temperature_log::{
         TemperatureLog, TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
@@ -17,8 +18,8 @@ use repository::{
 use service::{usize_to_u32, ListResult};
 
 use super::{
-    LocationFilterInput, LocationNode, SensorFilterInput, SensorNode, TemperatureBreachFilterInput,
-    TemperatureBreachNode,
+    sensor::{SensorFilterInput, SensorNode},
+    temperature_breach::{TemperatureBreachFilterInput, TemperatureBreachNode},
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

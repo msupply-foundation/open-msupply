@@ -21,9 +21,6 @@ pub use self::stock_line::*;
 pub mod location;
 pub use self::location::*;
 
-pub mod sensor;
-pub use self::sensor::*;
-
 pub mod asset_catalogue_item;
 pub use self::asset_catalogue_item::*;
 
@@ -35,15 +32,6 @@ pub use self::asset_class::*;
 
 pub mod asset_type;
 pub use self::asset_type::*;
-
-pub mod temperature_breach;
-pub use self::temperature_breach::*;
-
-pub mod temperature_log;
-pub use self::temperature_log::*;
-
-pub mod temperature_notification;
-pub use self::temperature_notification::*;
 
 pub mod master_list;
 pub use self::master_list::*;

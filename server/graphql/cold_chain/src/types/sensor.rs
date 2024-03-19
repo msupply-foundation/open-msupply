@@ -5,6 +5,7 @@ use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
 use graphql_core::{generic_filters::EqualFilterStringInput, loader::LocationByIdLoader};
+use graphql_types::types::LocationNode;
 use repository::{
     DatetimeFilter, PaginationOption, SensorType, StringFilter, TemperatureBreachFilter,
     TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
@@ -14,7 +15,8 @@ use service::temperature_breach::query::temperature_breaches;
 use service::temperature_log::query::get_temperature_logs;
 use service::{usize_to_u32, ListResult};
 
-use super::{LocationNode, TemperatureBreachNodeType, TemperatureLogConnector};
+use super::temperature_breach::TemperatureBreachNodeType;
+use super::temperature_log::TemperatureLogConnector;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]

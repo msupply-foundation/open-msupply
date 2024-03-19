@@ -7,7 +7,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{SensorNode, TemperatureLogFilterInput};
 use repository::{StorageConnection, TemperatureChartRow, TemperatureLogFilter};
 use service::temperature_breach::query::get_max_or_min_breach_temperature;
 use service::{
@@ -16,6 +15,8 @@ use service::{
         TemperatureChart, TemperatureChartError as ServiceError, TemperatureChartInput,
     },
 };
+
+use crate::types::{sensor::SensorNode, temperature_log::TemperatureLogFilterInput};
 
 #[derive(Union)]
 pub enum TemperatureChartResponse {
