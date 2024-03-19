@@ -1,12 +1,15 @@
 pub mod mutations;
+pub(crate) mod temperature_chart;
+pub(crate) mod types;
 
 use async_graphql::*;
+use chrono::{DateTime, Utc};
 use graphql_core::{
     pagination::PaginationInput,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::*;
+// use graphql_types::types::*;
 use mutations::{update_sensor, UpdateSensorInput, UpdateSensorResponse};
 use repository::{
     temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption, SensorFilter,
@@ -14,6 +17,23 @@ use repository::{
 };
 use repository::{temperature_log::TemperatureLogFilter, TemperatureBreachSort};
 use service::auth::{Resource, ResourceAccessRequest};
+use temperature_chart::TemperatureChartResponse;
+use types::{
+    sensor::{SensorConnector, SensorFilterInput, SensorsResponse},
+    temperature_breach::{
+        TemperatureBreachConnector, TemperatureBreachFilterInput, TemperatureBreachSortInput,
+        TemperatureBreachesResponse,
+    },
+    temperature_log::{
+        TemperatureLogConnector, TemperatureLogFilterInput, TemperatureLogSortInput,
+        TemperatureLogsResponse,
+    },
+    temperature_notification::{
+        TemperatureNotificationConnector, TemperatureNotificationsResponse,
+    },
+};
+
+use crate::types::sensor::SensorSortInput;
 
 #[derive(Default, Clone)]
 pub struct ColdChainQueries;
@@ -198,6 +218,25 @@ impl ColdChainQueries {
         Ok(SensorsResponse::Response(SensorConnector::from_domain(
             sensors,
         )))
+    }
+
+    pub async fn temperature_chart(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
+        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
+        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
+        filter: Option<TemperatureLogFilterInput>,
+    ) -> Result<TemperatureChartResponse> {
+        temperature_chart::temperature_chart(
+            ctx,
+            store_id,
+            from_datetime,
+            to_datetime,
+            number_of_data_points,
+            filter,
+        )
     }
 }
 

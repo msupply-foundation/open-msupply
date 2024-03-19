@@ -6,10 +6,11 @@ use graphql_core::{
     ContextExt,
 };
 
+use graphql_types::types::LocationNode;
 use repository::{temperature_breach::TemperatureBreach, TemperatureExcursion};
 use service::{usize_to_u32, ListResult};
 
-use super::{LocationNode, SensorNode, TemperatureBreachConnector};
+use super::{sensor::SensorNode, temperature_breach::TemperatureBreachConnector};
 
 #[derive(PartialEq, Debug)]
 pub struct TemperatureExcursionNode {

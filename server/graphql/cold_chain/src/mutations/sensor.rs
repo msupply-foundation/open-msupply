@@ -1,5 +1,6 @@
 use async_graphql::*;
 
+use crate::types::sensor::SensorNode;
 use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::{
     simple_generic_errors::{
@@ -9,7 +10,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::SensorNode;
 use service::NullableUpdate;
 use service::{
     auth::{Resource, ResourceAccessRequest},
