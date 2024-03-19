@@ -67,6 +67,11 @@ export const inboundReturnStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Delivered,
   InvoiceNodeStatus.Verified,
 ];
+export const manualInboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
 
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
@@ -177,13 +182,12 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
 export const isInboundReturnDisabled = (
   inboundReturn: InboundReturnRowFragment
 ): boolean => {
-  // const isManuallyCreated = !inbound.linkedShipment?.id;
-  // return isManuallyCreated
-  //   ? inbound.status === InvoiceNodeStatus.Verified
-  //   : inbound.status === InvoiceNodeStatus.Picked ||
-  //       inbound.status === InvoiceNodeStatus.Shipped ||
-  //       inbound.status === InvoiceNodeStatus.Verified;
-  return inboundReturn.status === InvoiceNodeStatus.Verified;
+  const isManuallyCreated = !inboundReturn.linkedShipment?.id;
+  return isManuallyCreated
+    ? inboundReturn.status === InvoiceNodeStatus.Verified
+    : inboundReturn.status === InvoiceNodeStatus.Picked ||
+        inboundReturn.status === InvoiceNodeStatus.Shipped ||
+        inboundReturn.status === InvoiceNodeStatus.Verified;
 };
 
 export const isPrescriptionDisabled = (
