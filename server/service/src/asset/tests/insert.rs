@@ -30,7 +30,7 @@ mod query {
                     id: id.clone(),
                     store_id: Some(mock_store_a().id),
                     notes: Some("test_note".to_string()),
-                    code: "test_code".to_string(),
+                    asset_number: id.clone(),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
@@ -57,7 +57,7 @@ mod query {
                     id: id.clone(),
                     store_id: Some(mock_store_a().id),
                     notes: Some("test_note".to_string()),
-                    code: "test_code".to_string(),
+                    asset_number: id.clone(),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
@@ -75,7 +75,7 @@ mod query {
                     id: "new_id".to_string(),
                     store_id: Some(mock_store_a().id),
                     notes: Some("test_note".to_string()),
-                    code: "test_code".to_string(),
+                    asset_number: "test_number".to_string(),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
