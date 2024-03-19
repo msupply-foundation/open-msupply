@@ -11,13 +11,15 @@ import {
   DeleteIcon,
   useIsGrouped,
   Switch,
+  Alert,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
-import { useReturns } from '../api';
+import { InboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation('distribution');
   const onDelete = useReturns.lines.deleteSelectedInboundLines();
-  const { data } = useReturns.document.outboundReturn();
+  const { data } = useReturns.document.inboundReturn();
   const { otherPartyName } = data ?? {};
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
   //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
@@ -39,25 +41,29 @@ export const Toolbar: FC = () => {
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherPartyName && (
               <InputWithLabelRow
-                label={t('label.supplier-name')}
+                label={t('label.customer-name')}
                 Input={<BasicTextInput value={otherPartyName} disabled />}
               />
             )}
-            {/* <InputWithLabelRow
+            <InputWithLabelRow
               label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
-                  disabled={isDisabled}
+                  disabled={true}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReferenceBuffer ?? ''}
-                  onChange={event => {
-                    setTheirReferenceBuffer(event.target.value);
-                    update({ theirReference: event.target.value });
-                  }}
+                  value={data?.theirReference ?? ''}
+                  // TODO: once updating theirReference supported by API
+                  // disabled={isDisabled}
+                  // value={theirReferenceBuffer ?? ''}
+                  // onChange={event => {
+                  //   setTheirReferenceBuffer(event.target.value);
+                  //   update({ theirReference: event.target.value });
+                  // }}
                 />
               }
-            /> */}
+            />
+            <InfoAlert inboundReturn={data} />
           </Box>
         </Grid>
         <Grid
@@ -85,4 +91,25 @@ export const Toolbar: FC = () => {
       </Grid>
     </AppBarContentPortal>
   );
+};
+
+const InfoAlert = ({
+  inboundReturn,
+}: {
+  inboundReturn: InboundReturnFragment | undefined;
+}) => {
+  const t = useTranslation('distribution');
+  const loadMessage = (inboundReturn: InboundReturnFragment | undefined) => {
+    if (!inboundReturn?.linkedShipment?.id) {
+      return t('info.manual-return');
+    }
+    if (inboundReturn?.status === InvoiceNodeStatus.Shipped) {
+      return `${t('info.automatic-return')} ${t(
+        'info.automatic-return-no-edit'
+      )}`;
+    }
+    return t('info.automatic-return');
+  };
+
+  return <Alert severity="info">{loadMessage(inboundReturn)}</Alert>;
 };
