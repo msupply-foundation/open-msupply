@@ -10,6 +10,8 @@ import {
   useConfirmationModal,
   useNotification,
   useConfirmOnLeaving,
+  TableProvider,
+  createTableStore,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Toolbar } from './Toolbar';
@@ -19,6 +21,7 @@ import { Summary } from './Tabs';
 import { AssetFragment, useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
+import { ActivityLogList } from 'packages/system/src';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
@@ -56,8 +59,8 @@ export const EquipmentDetailView = () => {
   };
 
   useEffect(() => {
-    setSuffix(data?.code ?? '');
-  }, [setSuffix, data?.code]);
+    setSuffix(data?.assetNumber ?? '');
+  }, [setSuffix, data?.assetNumber]);
 
   useEffect(() => {
     if (!data) return;
@@ -72,12 +75,20 @@ export const EquipmentDetailView = () => {
       value: 'Summary',
     },
     {
-      Component: <StatusLogs />,
+      Component: draft === undefined ? null : <StatusLogs assetId={draft.id} />,
       value: 'StatusLogs',
     },
     {
       Component: <Documents />,
       value: 'Documents',
+    },
+    {
+      Component: (
+        <TableProvider createStore={createTableStore}>
+          <ActivityLogList recordId={data?.id ?? ''} />
+        </TableProvider>
+      ),
+      value: 'Log',
     },
   ];
 

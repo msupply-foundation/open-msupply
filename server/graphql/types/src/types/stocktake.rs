@@ -158,7 +158,7 @@ impl StocktakeNodeStatus {
 mod test {
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
         unknown_user, StocktakeRow,
@@ -173,7 +173,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_stocktake_user_loader",

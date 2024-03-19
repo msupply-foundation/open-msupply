@@ -19,11 +19,11 @@ pub fn check_line_does_not_exist(
 
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1.0 {
+        if number_of_packs < 0.0 {
             return false;
         }
     }
-    return true;
+    true
 }
 
 pub fn check_item_exists(
@@ -59,7 +59,7 @@ pub fn check_line_belongs_to_invoice(line: &InvoiceLineRow, invoice: &InvoiceRow
     if line.invoice_id != invoice.id {
         return false;
     }
-    return true;
+    true
 }
 
 pub fn check_line_not_associated_with_stocktake(

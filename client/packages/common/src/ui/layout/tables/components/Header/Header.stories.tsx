@@ -4,7 +4,6 @@ import { Table, TableHead } from '@mui/material';
 import { HeaderCell, HeaderRow } from './Header';
 import { useColumns } from '../../hooks';
 import { SortBy } from '@common/hooks';
-import { Column } from '../../columns';
 
 export default {
   title: 'Table/HeaderRow',
@@ -27,13 +26,10 @@ const Template: Story = () => {
   const getDirection = (isDesc: boolean): 'asc' | 'desc' =>
     isDesc ? 'desc' : 'asc';
 
-  const onChangeSortBy = (column: Column<Test>) => {
+  const onChangeSortBy = (newSortKey: string, dir: 'desc' | 'asc') => {
     let newSortBy = sortBy;
-    setSortBy(({ key: prevSortKey, isDesc: prevIsDesc = false }) => {
-      const { key: newSortKey, sortBy: { isDesc: maybeNewIsDesc } = {} } =
-        column;
-      const newIsDesc =
-        prevSortKey === newSortKey ? !prevIsDesc : !!maybeNewIsDesc ?? false;
+    setSortBy(() => {
+      const newIsDesc = dir === 'desc';
       newSortBy = {
         key: newSortKey,
         isDesc: newIsDesc,

@@ -46,7 +46,7 @@ pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub code: String,
+    pub asset_number: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
@@ -59,7 +59,7 @@ impl From<InsertAssetInput> for InsertAsset {
             id,
             store_id,
             notes,
-            code,
+            asset_number,
             serial_number,
             catalogue_item_id,
             installation_date,
@@ -70,7 +70,7 @@ impl From<InsertAssetInput> for InsertAsset {
             id,
             store_id,
             notes,
-            code,
+            asset_number,
             serial_number,
             catalogue_item_id,
             installation_date,
@@ -117,7 +117,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetErrorInterface> {
 mod test {
 
     use async_graphql::EmptyMutation;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{assets::asset::Asset, mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
 
@@ -156,7 +156,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_asset_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             AssetMutations,
             "test_graphql_insert_asset_success",
@@ -170,7 +170,7 @@ mod test {
               ... on AssetNode {
                 id
                 notes
-                code
+                asset_number
               }
             }
           }
@@ -180,7 +180,7 @@ mod test {
           "input": {
             "id": "n/a",
             "notes": "notes",
-            "code": "code",
+            "asset_number": "asset_number",
           }
         }));
 
@@ -188,8 +188,8 @@ mod test {
         let test_service = TestService(Box::new(|_| {
             Ok(Asset {
                 id: "id".to_owned(),
-                notes: "notes".to_owned(),
-                code: "code".to_owned(),
+                notes: Some("notes".to_owned()),
+                asset_number: "asset_number".to_owned(),
                 ..Default::default()
             })
         }));
@@ -198,7 +198,7 @@ mod test {
             "insertAsset": {
                 "id": "id",
                 "notes": "notes",
-                "code": "code",
+                "asset_number": "asset_number",
             }
           }
         );
