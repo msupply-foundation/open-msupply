@@ -30,8 +30,9 @@ mod query {
         let service = service_provider.asset_service;
         let asset_location_repository = AssetInternalLocationRowRepository::new(&connection);
 
-        // Create an asset to update
+        // Create two assets to update
         let id = "test_id".to_string();
+        let id2 = "test_id_2".to_string();
         let _asset = service
             .insert_asset(
                 &ctx,
@@ -41,6 +42,22 @@ mod query {
                     notes: Some("test_note".to_string()),
                     code: "test_code".to_string(),
                     serial_number: Some("test_serial_number".to_string()),
+                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
+                    installation_date: None,
+                    replacement_date: None,
+                },
+            )
+            .unwrap();
+
+        let _asset_2 = service
+            .insert_asset(
+                &ctx,
+                InsertAsset {
+                    id: id2.clone(),
+                    store_id: Some(mock_store_a().id),
+                    notes: None,
+                    code: "test_code_2".to_string(),
+                    serial_number: None,
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
                     replacement_date: None,
@@ -141,7 +158,23 @@ mod query {
 
         assert_eq!(asset_location_ids, location_ids_to_add);
 
-        // 7. Check locations are removed when passed empty string
+        // 7. Check fail on trying to add locations which are already assigned to other assets
+
+        assert_eq!(
+            service
+                .update_asset(
+                    &ctx,
+                    UpdateAsset {
+                        id: id2.clone(),
+                        location_ids: Some(location_ids_to_add.clone()),
+                        ..Default::default()
+                    },
+                )
+                .is_err(),
+            true
+        );
+
+        // 8. Check locations are removed when passed empty string
 
         let _updated_asset = service
             .update_asset(
