@@ -118,7 +118,7 @@ export const PrescriptionLineEditTable: React.FC<
       <Divider margin={10} />
       <Box
         style={{
-          maxHeight: 350,
+          maxHeight: 300,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',
