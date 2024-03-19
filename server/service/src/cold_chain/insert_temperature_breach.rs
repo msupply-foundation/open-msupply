@@ -1,4 +1,4 @@
-use super::query::get_temperature_breach;
+use super::query_temperature_breach::get_temperature_breach;
 use super::validate::check_temperature_breach_does_not_exist;
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::NaiveDateTime;

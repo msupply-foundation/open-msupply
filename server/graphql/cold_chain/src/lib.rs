@@ -68,7 +68,7 @@ impl ColdChainQueries {
             .store_id(EqualFilter::equal_to(&store_id));
 
         let temperature_logs = service_provider
-            .temperature_log_service
+            .cold_chain_service
             .get_temperature_logs(
                 &service_context.connection,
                 page.map(PaginationOption::from),
@@ -111,7 +111,7 @@ impl ColdChainQueries {
             .store_id(EqualFilter::equal_to(&store_id));
 
         let temperature_breaches = service_provider
-            .temperature_breach_service
+            .cold_chain_service
             .temperature_breaches(
                 &service_context.connection,
                 page.map(PaginationOption::from),
@@ -151,7 +151,7 @@ impl ColdChainQueries {
             .unacknowledged(true);
 
         let temperature_breaches = service_provider
-            .temperature_breach_service
+            .cold_chain_service
             .temperature_breaches(
                 &service_context.connection,
                 page.map(PaginationOption::from),
@@ -280,8 +280,7 @@ mod test_logs {
     use serde_json::json;
 
     use service::{
-        cold_chain::TemperatureLogServiceTrait, service_provider::ServiceProvider, ListError,
-        ListResult,
+        cold_chain::ColdChainServiceTrait, service_provider::ServiceProvider, ListError, ListResult,
     };
 
     use crate::ColdChainQueries;
@@ -297,7 +296,7 @@ mod test_logs {
 
     pub struct TestService(pub Box<GetTemperatureLogs>);
 
-    impl TemperatureLogServiceTrait for TestService {
+    impl ColdChainServiceTrait for TestService {
         fn get_temperature_logs(
             &self,
             _: &StorageConnection,
@@ -310,11 +309,11 @@ mod test_logs {
     }
 
     pub fn service_provider(
-        temperature_log_service: TestService,
+        cold_chain_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.temperature_log_service = Box::new(temperature_log_service);
+        service_provider.cold_chain_service = Box::new(cold_chain_service);
         service_provider
     }
 
@@ -540,8 +539,7 @@ mod test_breaches {
     use serde_json::json;
 
     use service::{
-        service_provider::ServiceProvider, temperature_breach::TemperatureBreachServiceTrait,
-        ListError, ListResult,
+        cold_chain::ColdChainServiceTrait, service_provider::ServiceProvider, ListError, ListResult,
     };
 
     use crate::ColdChainQueries;
@@ -556,7 +554,7 @@ mod test_breaches {
 
     pub struct TestService(pub Box<GetTemperatureBreaches>);
 
-    impl TemperatureBreachServiceTrait for TestService {
+    impl ColdChainServiceTrait for TestService {
         fn temperature_breaches(
             &self,
             _: &StorageConnection,
@@ -569,11 +567,11 @@ mod test_breaches {
     }
 
     pub fn service_provider(
-        temperature_breach_service: TestService,
+        cold_chain_service: TestService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.temperature_breach_service = Box::new(temperature_breach_service);
+        service_provider.cold_chain_service = Box::new(cold_chain_service);
         service_provider
     }
 
@@ -702,7 +700,7 @@ mod test_notifications {
     };
     use serde_json::json;
 
-    use service::temperature_breach::TemperatureBreachServiceTrait;
+    use service::cold_chain::ColdChainServiceTrait;
     use service::temperature_excursion::TemperatureExcursionServiceTrait;
     use service::{service_provider::ServiceProvider, ListError, ListResult};
 
@@ -721,7 +719,7 @@ mod test_notifications {
     pub struct TestNotificationService(pub Box<GetTemperatureBreaches>);
     pub struct TestExcursionService(pub Box<GetTemperatureExcursions>);
 
-    impl TemperatureBreachServiceTrait for TestNotificationService {
+    impl ColdChainServiceTrait for TestNotificationService {
         fn temperature_breaches(
             &self,
             _: &StorageConnection,
@@ -743,12 +741,12 @@ mod test_notifications {
     }
 
     pub fn service_provider(
-        temperature_breach_service: TestNotificationService,
+        cold_chain_service: TestNotificationService,
         temperature_excursion_service: TestExcursionService,
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.temperature_breach_service = Box::new(temperature_breach_service);
+        service_provider.cold_chain_service = Box::new(cold_chain_service);
         service_provider.temperature_excursion_service = Box::new(temperature_excursion_service);
         service_provider
     }

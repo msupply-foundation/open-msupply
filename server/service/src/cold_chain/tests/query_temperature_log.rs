@@ -11,15 +11,12 @@ mod query {
     use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
 
     #[actix_rt::test]
-    async fn temperature_log_service_pagination() {
-        let (_, connection, connection_manager, _) = setup_all(
-            "test_temperature_log_service_pagination",
-            MockDataInserts::all(),
-        )
-        .await;
+    async fn cold_chain_service_pagination() {
+        let (_, connection, connection_manager, _) =
+            setup_all("test_cold_chain_service_pagination", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let service = service_provider.temperature_log_service;
+        let service = service_provider.cold_chain_service;
 
         assert_eq!(
             service.get_temperature_logs(
@@ -49,13 +46,13 @@ mod query {
     }
 
     #[actix_rt::test]
-    async fn temperature_log_service_single_record() {
+    async fn cold_chain_service_single_record() {
         let (_, _, connection_manager, _) =
             setup_all("test_temperature_log_single_record", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider.basic_context().unwrap();
-        let service = service_provider.temperature_log_service;
+        let service = service_provider.cold_chain_service;
 
         assert_eq!(
             service.get_temperature_log(&context, "invalid_id".to_owned()),
@@ -71,12 +68,12 @@ mod query {
     }
 
     #[actix_rt::test]
-    async fn temperature_log_service_filter() {
+    async fn cold_chain_service_filter() {
         let (_, connection, connection_manager, _) =
             setup_all("test_temperature_log_filter", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let service = service_provider.temperature_log_service;
+        let service = service_provider.cold_chain_service;
 
         let result = service
             .get_temperature_logs(
@@ -108,12 +105,12 @@ mod query {
     }
 
     #[actix_rt::test]
-    async fn temperature_log_service_sort() {
+    async fn cold_chain_service_sort() {
         let (mock_data, connection, connection_manager, _) =
             setup_all("test_temperature_log_sort", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let service = service_provider.temperature_log_service;
+        let service = service_provider.cold_chain_service;
         // Test Datetime sort with default sort order
         let result = service
             .get_temperature_logs(

@@ -5,7 +5,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
-    cold_chain::{TemperatureLogService, TemperatureLogServiceTrait},
+    cold_chain::{ColdChainService, ColdChainServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -53,7 +53,6 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
-    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
     temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
     ListError, ListResult,
@@ -71,9 +70,8 @@ pub struct ServiceProvider {
 
     // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
-    pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
-    pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
+    pub cold_chain_service: Box<dyn ColdChainServiceTrait>,
     pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
 
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
@@ -168,8 +166,7 @@ impl ServiceProvider {
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
             sensor_service: Box::new(SensorService {}),
-            temperature_breach_service: Box::new(TemperatureBreachService {}),
-            temperature_log_service: Box::new(TemperatureLogService {}),
+            cold_chain_service: Box::new(ColdChainService {}),
             temperature_chart_service: Box::new(TemperatureChartService),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),

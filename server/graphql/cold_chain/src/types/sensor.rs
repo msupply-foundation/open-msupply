@@ -11,8 +11,8 @@ use repository::{
     TemperatureLogFilter, TemperatureLogSort, TemperatureLogSortField,
 };
 use repository::{EqualFilter, Sensor, SensorFilter, SensorRow, SensorSort, SensorSortField};
+use service::cold_chain::query_temperature_breach::temperature_breaches;
 use service::cold_chain::query_temperature_log::get_temperature_logs;
-use service::temperature_breach::query::temperature_breaches;
 use service::{usize_to_u32, ListResult};
 
 use super::temperature_breach::TemperatureBreachNodeType;

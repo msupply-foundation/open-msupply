@@ -12,8 +12,11 @@ use mime_guess::mime;
 use repository::{RepositoryError, TemperatureBreachRowType};
 use service::{
     auth_data::AuthData,
+    cold_chain::{
+        insert_temperature_breach::InsertTemperatureBreach,
+        update_temperature_breach::UpdateTemperatureBreach,
+    },
     service_provider::{ServiceContext, ServiceProvider},
-    temperature_breach::{insert::InsertTemperatureBreach, update::UpdateTemperatureBreach},
     SingleRecordError,
 };
 use util::constants::SYSTEM_USER_ID;
@@ -123,7 +126,7 @@ fn upsert_temperature_breach(
     breach: TemperatureBreach,
 ) -> anyhow::Result<repository::TemperatureBreach> {
     let id = breach.id.clone();
-    let service = &service_provider.temperature_breach_service;
+    let service = &service_provider.cold_chain_service;
     let sensor_service = &service_provider.sensor_service;
 
     let sensor = sensor_service
