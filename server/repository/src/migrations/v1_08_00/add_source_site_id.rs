@@ -4,8 +4,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
-            ALTER TABLE changelog ADD COLUMN source_site_id TEXT;
-            ALTER TABLE sync_buffer ADD COLUMN source_site_id TEXT;
+            ALTER TABLE changelog ADD COLUMN source_site_id INTEGER;
+            ALTER TABLE sync_buffer ADD COLUMN source_site_id INTEGER;
         "#
     )?;
 
