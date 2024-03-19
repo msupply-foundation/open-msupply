@@ -16,12 +16,15 @@ import {
   useAuthContext,
   UserPermission,
 } from '@openmsupply-client/common';
-import { useAssets } from '../api';
+import { AssetFragment, useAssets } from '../api';
 import { assetsToCsv } from '../utils';
+import { AddFromScannerButton } from './AddFromScannerButton';
 
 export const AppBarButtonsComponent = ({
+  assets,
   modalController,
 }: {
+  assets: AssetFragment[];
   modalController: ToggleState;
 }) => {
   const { success, error } = useNotification();
@@ -58,7 +61,7 @@ export const AppBarButtonsComponent = ({
           label={t('button.new-asset')}
           onClick={onAdd}
         />
-
+        <AddFromScannerButton assets={assets} />
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}
