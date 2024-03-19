@@ -1,8 +1,8 @@
 use std::io::Error;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
-use util::prepare_file_dir;
 use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
@@ -12,7 +12,23 @@ pub struct StaticFile {
     pub path: String,
 }
 
-const STATIC_FILE_DIR: &'static str = "static_files";
+const STATIC_FILE_DIR: &str = "static_files";
+
+pub enum StaticFileCategory {
+    Temporary,
+    SyncFile(String, String), // Support Uploads (Table Name, Record Id)
+}
+
+impl StaticFileCategory {
+    pub fn to_path_buf(&self) -> PathBuf {
+        match self {
+            StaticFileCategory::Temporary => PathBuf::from("tmp"),
+            StaticFileCategory::SyncFile(table_name, record_id) => {
+                PathBuf::from("sync_files").join(table_name).join(record_id)
+            }
+        }
+    }
+}
 
 /// Stores files in a temp storage and associate an id with each file.
 /// This can, for example, be used to deposition a file for a user and the user can pick up the file
@@ -26,17 +42,43 @@ pub struct StaticFileService {
 }
 impl StaticFileService {
     pub fn new(base_dir: &Option<String>) -> anyhow::Result<Self> {
+        let file_dir = match base_dir {
+            Some(file_dir) => PathBuf::from_str(file_dir)?.join(STATIC_FILE_DIR),
+            None => std::env::current_dir()?.join(STATIC_FILE_DIR),
+        };
         Ok(StaticFileService {
-            dir: prepare_file_dir(STATIC_FILE_DIR, base_dir)?,
+            dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
         })
     }
 
-    pub fn store_file(&self, file_name: &str, bytes: &[u8]) -> anyhow::Result<StaticFile> {
+    /// Checks filepath and creates uuid for a file without creating the file itself
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use service::static_files::StaticFileService;
+    /// use std::io::Write;
+    /// use std::fs::File;
+    ///
+    /// let static_file_service = StaticFileService::new(&Some("/tmp/".to_string())).unwrap();
+    ///
+    /// let static_file = static_file_service.reserve_file("test.txt", StaticFileCategory::Temporary).unwrap();
+    /// let mut file = File::create(static_file.path).unwrap();
+    /// write!(file, "Good thing this filename was reserved, and path created!");
+    ///
+    /// ```
+    pub fn reserve_file(
+        &self,
+        file_name: &str,
+        category: &StaticFileCategory,
+    ) -> anyhow::Result<StaticFile> {
         let id = uuid();
-        std::fs::create_dir_all(&self.dir)?;
-        let file_path = self.dir.join(format!("{}_{}", id, file_name));
-        std::fs::write(&file_path, bytes).unwrap();
+
+        let dir = self.dir.join(category.to_path_buf());
+
+        std::fs::create_dir_all(&dir)?;
+        let file_path = dir.join(format!("{}_{}", id, file_name));
         Ok(StaticFile {
             id,
             name: file_name.to_string(),
@@ -44,17 +86,48 @@ impl StaticFileService {
         })
     }
 
-    pub fn find_file(&self, id: &str) -> anyhow::Result<Option<StaticFile>> {
-        std::fs::create_dir_all(&self.dir).unwrap();
-        // clean up the static file directory
-        delete_old_files(&self.dir, self.max_lifetime_millis)?;
+    pub fn store_file(
+        &self,
+        file_name: &str,
+        category: StaticFileCategory,
+        bytes: &[u8],
+    ) -> anyhow::Result<StaticFile> {
+        let id = uuid();
 
-        let file_path = match find_file(id, &self.dir)? {
+        let dir = self.dir.join(category.to_path_buf());
+
+        std::fs::create_dir_all(&dir)?;
+        let file_path = dir.join(format!("{}_{}", id, file_name));
+        let file = StaticFile {
+            id,
+            name: file_name.to_string(),
+            path: file_path.to_string_lossy().to_string(),
+        };
+        std::fs::write(&file.path, bytes)?;
+        Ok(file)
+    }
+
+    pub fn find_file(
+        &self,
+        id: &str,
+        category: StaticFileCategory,
+    ) -> anyhow::Result<Option<StaticFile>> {
+        let dir = self.dir.join(category.to_path_buf());
+        std::fs::create_dir_all(&dir)?;
+        // clean up the static file directory
+        match category {
+            StaticFileCategory::Temporary => {
+                delete_temporary_files(&dir, self.max_lifetime_millis)?;
+            }
+            _ => {}
+        }
+
+        let file_path = match find_file_in_dir(id, &dir)? {
             Some(path) => path,
             None => return Ok(None),
         };
         let original_file_name = parse_original_file_name(id, &file_path)
-            .ok_or(anyhow::Error::msg("Internal error: can't parse file name"))?;
+            .ok_or_else(|| anyhow::Error::msg("Internal error: can't parse file name"))?;
 
         Ok(Some(StaticFile {
             id: id.to_string(),
@@ -65,11 +138,11 @@ impl StaticFileService {
 }
 
 /// Returns the file name part of the path like:
-/// `./static_file_path/{ui}_{file_name};
-fn parse_original_file_name(id: &str, file_path: &PathBuf) -> Option<String> {
+/// `./static_file_path/{uuid}_{file_name};
+fn parse_original_file_name(id: &str, file_path: &Path) -> Option<String> {
     let file_name = file_path.file_name()?.to_string_lossy();
     let name = &file_name[id.len() + 1..];
-    if name.len() == 0 {
+    if name.is_empty() {
         // something is wrong...
         return None;
     }
@@ -77,7 +150,7 @@ fn parse_original_file_name(id: &str, file_path: &PathBuf) -> Option<String> {
 }
 
 /// Finds file starting with the provided id
-fn find_file(id: &str, file_dir: &PathBuf) -> Result<Option<PathBuf>, Error> {
+fn find_file_in_dir(id: &str, file_dir: &PathBuf) -> Result<Option<PathBuf>, Error> {
     let starts_with = format!("{}_", id);
     let paths = std::fs::read_dir(file_dir)?;
     for path in paths {
@@ -98,7 +171,7 @@ fn find_file(id: &str, file_dir: &PathBuf) -> Result<Option<PathBuf>, Error> {
     Ok(None)
 }
 
-fn delete_old_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(), Error> {
+fn delete_temporary_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(), Error> {
     let paths = std::fs::read_dir(file_dir)?;
     for path in paths {
         let entry = path?;
@@ -117,7 +190,6 @@ fn delete_old_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(),
             log::info!("Delete old static file: {:?}", entry_path);
             std::fs::remove_file(entry_path).unwrap_or_else(|err| {
                 log::error!("Failed to delete old static file: {}", err);
-                ()
             });
         }
     }
@@ -129,9 +201,11 @@ fn delete_old_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Result<(),
 mod test {
     use std::{fs, path::PathBuf, str::FromStr, time::Duration};
 
+    use crate::static_files::StaticFileCategory;
+
     use super::StaticFileService;
 
-    const TEST_DIR: &'static str = "test_static_files";
+    const TEST_DIR: &str = "test_static_files";
 
     #[test]
     fn test_static_file_storage() {
@@ -143,13 +217,56 @@ mod test {
             fs::remove_dir_all(&test_dir).unwrap();
         }
 
-        let file_in = service.store_file("test_file", "data".as_bytes()).unwrap();
-        let file_out = service.find_file(&file_in.id).unwrap().unwrap();
+        // Temporary file
+        let file_in = service
+            .store_file(
+                "test_file",
+                StaticFileCategory::Temporary,
+                "data".as_bytes(),
+            )
+            .unwrap();
+        let file_out = service
+            .find_file(&file_in.id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
         assert_eq!(file_in, file_out);
 
-        std::thread::sleep(Duration::from_millis(101));
+        // sync file upload
+        let sync_file_in = service
+            .store_file(
+                "test_sync_file",
+                StaticFileCategory::SyncFile("asset".to_string(), "asset_id".to_string()),
+                "data".as_bytes(),
+            )
+            .unwrap();
 
-        assert!(service.find_file(&file_in.id).unwrap().is_none());
+        let sync_file_out = service
+            .find_file(
+                &sync_file_in.id,
+                StaticFileCategory::SyncFile("asset".to_string(), "asset_id".to_string()),
+            )
+            .unwrap()
+            .unwrap();
+        assert_eq!(sync_file_in, sync_file_out);
+
+        std::thread::sleep(Duration::from_millis(service.max_lifetime_millis + 1));
+
+        // Check that the temporary file is deleted after expected lifespan
+        assert!(service
+            .find_file(&file_in.id, StaticFileCategory::Temporary)
+            .unwrap()
+            .is_none());
+
+        // Check that the quote file is not deleted
+        assert!(service
+            .find_file(
+                &sync_file_in.id,
+                StaticFileCategory::SyncFile("asset".to_string(), "asset_id".to_string())
+            )
+            .unwrap()
+            .is_some());
+
+        // Clean up
         fs::remove_dir_all(&test_dir).unwrap();
     }
 }

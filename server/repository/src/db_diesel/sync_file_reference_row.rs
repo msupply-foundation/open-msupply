@@ -1,6 +1,5 @@
 use super::sync_file_reference_row::sync_file_reference::dsl::*;
 
-use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
@@ -11,7 +10,7 @@ use serde::{Deserialize, Serialize};
 table! {
     sync_file_reference (id) {
         id -> Text,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
+        table_name -> Text,
         record_id -> Text,
         file_name -> Text,
         created_datetime -> Timestamp,
@@ -25,7 +24,7 @@ table! {
 #[table_name = "sync_file_reference"]
 pub struct SyncFileReferenceRow {
     pub id: String,
-    pub table_name: ChangelogTableName,
+    pub table_name: String, // Maybe should be ChangeLogTableName ? But that causes mapping problems in the api request...
     pub record_id: String,
     pub file_name: String,
     pub created_datetime: NaiveDateTime,
