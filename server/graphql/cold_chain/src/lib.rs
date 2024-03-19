@@ -280,7 +280,7 @@ mod test_logs {
     use serde_json::json;
 
     use service::{
-        service_provider::ServiceProvider, temperature_log::TemperatureLogServiceTrait, ListError,
+        cold_chain::TemperatureLogServiceTrait, service_provider::ServiceProvider, ListError,
         ListResult,
     };
 

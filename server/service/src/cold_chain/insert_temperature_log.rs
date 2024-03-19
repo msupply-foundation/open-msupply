@@ -1,4 +1,4 @@
-use super::query::get_temperature_log;
+use super::query_temperature_log::get_temperature_log;
 use super::validate::check_temperature_log_does_not_exist;
 use crate::{service_provider::ServiceContext, SingleRecordError};
 use chrono::NaiveDateTime;
