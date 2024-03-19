@@ -21,6 +21,8 @@ use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::{StaticFileCategory, StaticFileService};
 
+use crate::middleware::limit_content_length;
+
 // this function could be located in different module
 pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
@@ -28,7 +30,11 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::resource("/sync_files/{table_name}/{record_id}")
             .route(web::get().to(sync_files))
-            .route(web::post().to(upload_sync_file)),
+            .route(
+                web::post()
+                    .to(upload_sync_file)
+                    .wrap(limit_content_length()),
+            ),
     );
 }
 
