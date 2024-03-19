@@ -93,7 +93,6 @@ export const AddFromScannerButtonComponent = ({
     <Box>
       <ButtonWithIcon
         ref={buttonRef}
-        disabled={!isConnected}
         onClick={handleClick}
         Icon={
           isScanning ? (
