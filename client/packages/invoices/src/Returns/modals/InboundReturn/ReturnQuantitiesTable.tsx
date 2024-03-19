@@ -7,9 +7,14 @@ import {
   GeneratedInboundReturnLineNode,
   NumberInputCell,
   TextInputCell,
+  getColumnLookupWithOverrides,
   getExpiryDateInputColumn,
   useColumns,
 } from '@openmsupply-client/common';
+import {
+  PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+  PackVariantEntryCell,
+} from '@openmsupply-client/system';
 import React from 'react';
 
 export const QuantityReturnedTableComponent = ({
@@ -21,9 +26,6 @@ export const QuantityReturnedTableComponent = ({
     line: Partial<GeneratedInboundReturnLineNode> & { id: string }
   ) => void;
 }) => {
-  // what to do here if there are multiple items? Some might have PV and others not...
-  // const { packVariantExists } = usePackVariant(item?.id || '', null);
-
   const columns = useColumns<GeneratedInboundReturnLineNode>(
     [
       'itemCode',
@@ -52,25 +54,12 @@ export const QuantityReturnedTableComponent = ({
             }),
         },
       ],
-      [
-        'packSize',
-        {
-          width: 100,
-          setter: updateLine,
-          Cell: PackSizeInputCell,
-        },
-      ],
-      // TODO: implement pack variant
-      // getColumnLookupWithOverrides('packSize', {
-      //   Cell: PackUnitEntryCell,
-      //   setter: updateLine,
-      //   ...(packVariantExists
-      //     ? {
-      //         label: 'label.unit-variant-and-pack-size',
-      //         minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
-      //       }
-      //     : { label: 'label.pack-size' }),
-      // }),
+      getColumnLookupWithOverrides('packSize', {
+        Cell: PackUnitEntryCell,
+        setter: updateLine,
+        label: 'label.unit-variant-and-pack-size',
+        minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
+      }),
       ...(lines.some(l => l.numberOfPacksIssued !== null) // if any line has a value, show the column
         ? ([
             [
@@ -111,9 +100,12 @@ export const QuantityReturnedTableComponent = ({
 export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
-const PackSizeInputCell: React.FC<
-  CellProps<GeneratedInboundReturnLineNode>
-> = props => <NumberInputCell {...props} isRequired min={1} />;
+// eslint-disable-next-line new-cap
+const PackUnitEntryCell = PackVariantEntryCell<GeneratedInboundReturnLineNode>({
+  getItemId: r => r.itemId,
+  // getUnitName: r => r.item.unitName || null,
+  getUnitName: () => null,
+});
 
 const NumberOfPacksReturnedInputCell: React.FC<
   CellProps<GeneratedInboundReturnLineNode>
