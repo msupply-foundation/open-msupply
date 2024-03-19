@@ -47,8 +47,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateOutboundReturn, // TODO
-            resource: Resource::MutateInboundShipment,
+            resource: Resource::MutateOutboundReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;

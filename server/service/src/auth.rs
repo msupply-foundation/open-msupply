@@ -77,6 +77,9 @@ pub enum Resource {
     MutateInboundShipment,
     // outbound return
     MutateOutboundReturn,
+    // inbound return
+    MutateInboundReturn,
+    // prescription
     MutatePrescription,
     // reporting
     Report,
