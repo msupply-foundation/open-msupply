@@ -23,7 +23,10 @@ diesel-derive-enum = { version = "1.1.1", default-features = false }
 diesel_migrations = "1.4.0"
 futures-util = "0.3.15"
 libsqlite3-sys = { version = "0.22.2", features = ["bundled"], optional = true }
+# 0.25.4 depends on libsqlite3-sys 0.22.2
+rusqlite = "0.25.4"
 uuid = { version = "0.8", features = ["v4"] }
+regex = "1.10.3"
 serde = { version = "1.0.126", features = ["derive"] }
 serde_json = "1.0.66"
 thiserror = {workspace = true}
