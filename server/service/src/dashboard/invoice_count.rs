@@ -201,10 +201,11 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
 mod invoice_count_service_test {
     use repository::{
         mock::{
-            mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a, mock_store_b,
-            MockDataInserts,
+            currency_a, mock_name_store_a, mock_name_store_b, mock_outbound_shipment_a,
+            mock_store_b, MockDataInserts,
         },
-        test_db, InvoiceRowRepository, NameRowRepository, StoreRowRepository,
+        test_db, CurrencyRowRepository, InvoiceRowRepository, NameRowRepository,
+        StoreRowRepository,
     };
     use util::timezone::offset_to_timezone;
 
@@ -230,6 +231,9 @@ mod invoice_count_service_test {
 
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&store_1).await.unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
         let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&invoice_1).unwrap();
 

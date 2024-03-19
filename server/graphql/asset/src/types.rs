@@ -45,7 +45,7 @@ pub struct AssetSortInput {
 #[derive(InputObject, Clone)]
 pub struct AssetFilterInput {
     pub notes: Option<StringFilterInput>,
-    pub code: Option<StringFilterInput>,
+    pub asset_number: Option<StringFilterInput>,
     pub id: Option<EqualFilterStringInput>,
     pub serial_number: Option<StringFilterInput>,
     pub class_id: Option<EqualFilterStringInput>,
@@ -60,7 +60,7 @@ impl From<AssetFilterInput> for AssetFilter {
     fn from(f: AssetFilterInput) -> Self {
         AssetFilter {
             notes: f.notes.map(StringFilter::from),
-            code: f.code.map(StringFilter::from),
+            asset_number: f.asset_number.map(StringFilter::from),
             id: f.id.map(EqualFilter::from),
             serial_number: f.serial_number.map(StringFilter::from),
             class_id: f.class_id.map(EqualFilter::from),
@@ -98,8 +98,8 @@ impl AssetNode {
         &self.row().notes
     }
 
-    pub async fn code(&self) -> &str {
-        &self.row().code
+    pub async fn asset_number(&self) -> &str {
+        &self.row().asset_number
     }
 
     pub async fn serial_number(&self) -> &Option<String> {

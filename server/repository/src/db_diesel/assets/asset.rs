@@ -30,7 +30,7 @@ pub type AssetSort = Sort<AssetSortField>;
 pub struct AssetFilter {
     pub id: Option<EqualFilter<String>>,
     pub notes: Option<StringFilter>,
-    pub code: Option<StringFilter>,
+    pub asset_number: Option<StringFilter>,
     pub serial_number: Option<StringFilter>,
     pub class_id: Option<EqualFilter<String>>,
     pub category_id: Option<EqualFilter<String>>,
@@ -45,7 +45,7 @@ impl AssetFilter {
         AssetFilter {
             id: None,
             notes: None,
-            code: None,
+            asset_number: None,
             serial_number: None,
             class_id: None,
             category_id: None,
@@ -66,8 +66,8 @@ impl AssetFilter {
         self
     }
 
-    pub fn code(mut self, filter: StringFilter) -> Self {
-        self.code = Some(filter);
+    pub fn asset_number(mut self, filter: StringFilter) -> Self {
+        self.asset_number = Some(filter);
         self
     }
 
@@ -189,7 +189,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         let AssetFilter {
             id,
             notes,
-            code,
+            asset_number,
             serial_number,
             class_id,
             category_id,
@@ -201,7 +201,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
 
         apply_equal_filter!(query, id, asset_dsl::id);
         apply_string_filter!(query, notes, asset_dsl::notes);
-        apply_string_filter!(query, code, asset_dsl::code);
+        apply_string_filter!(query, asset_number, asset_dsl::asset_number);
         apply_string_filter!(query, serial_number, asset_dsl::serial_number);
 
         apply_equal_filter!(query, catalogue_item_id, asset_dsl::asset_catalogue_item_id);

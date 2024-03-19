@@ -21,8 +21,12 @@ pub fn insert_asset_log(
 ) -> Result<InsertAssetLogResponse> {
     let user = validate_auth(
         ctx,
+        // while the Query permission is odd for a mutation,
+        // the decision was that anyone is allowed to create a status log
+        // have added the QueryAsset resource is for consistency,
+        // the UI already only allows asset viewers to add logs
         &ResourceAccessRequest {
-            resource: Resource::MutateAssetLog,
+            resource: Resource::QueryAsset,
             store_id: Some(store_id.to_string()),
         },
     )?;

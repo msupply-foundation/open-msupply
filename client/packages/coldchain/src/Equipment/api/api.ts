@@ -31,7 +31,7 @@ const assetParsers = {
   toUpdate: (input: AssetFragment): UpdateAssetInput => ({
     id: input.id,
     catalogueItemId: setNullableInput('catalogueItemId', input),
-    code: input.code,
+    assetNumber: input.assetNumber,
     installationDate: setNullableInput('installationDate', input),
     notes: input.notes,
     replacementDate: setNullableInput('replacementDate', input),
