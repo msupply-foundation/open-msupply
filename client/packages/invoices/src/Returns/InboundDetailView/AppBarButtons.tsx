@@ -10,6 +10,7 @@ import {
   // ReportContext,
   PrinterIcon,
   useUrlQueryParams,
+  ReportContext,
 } from '@openmsupply-client/common';
 import { useReturns } from '../api';
 import {
@@ -58,14 +59,13 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           onClick={() => onAddItem()}
         />
         <ReportSelector
-          // context={ReportContext.InboundReturn} // TODO
+          context={ReportContext.InboundReturn}
           onPrint={printReport}
         >
           <LoadingButton
             variant="outlined"
             startIcon={<PrinterIcon />}
             isLoading={isPrinting}
-            disabled={true} // TODO: remove once print implemented
           >
             {t('button.print')}
           </LoadingButton>
