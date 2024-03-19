@@ -18,7 +18,8 @@ use repository::{
     DatetimeFilter, EqualFilter, TemperatureBreachRow, TemperatureBreachRowType,
 };
 use service::{
-    temperature_breach::query::get_max_or_min_breach_temperature, usize_to_u32, ListResult,
+    cold_chain::query_temperature_breach::get_max_or_min_breach_temperature, usize_to_u32,
+    ListResult,
 };
 
 use super::sensor::{SensorFilterInput, SensorNode};

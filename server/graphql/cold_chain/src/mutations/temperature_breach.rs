@@ -7,7 +7,7 @@ use graphql_core::{
 use repository::TemperatureBreach;
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    temperature_breach::update::{
+    cold_chain::update_temperature_breach::{
         UpdateTemperatureBreachAcknowledgement as ServiceInput,
         UpdateTemperatureBreachError as ServiceError,
     },
@@ -41,7 +41,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
 
     map_response(
         service_provider
-            .temperature_breach_service
+            .cold_chain_service
             .update_temperature_breach_acknowledgement(&service_context, input.to_domain()),
     )
 }
@@ -104,14 +104,14 @@ mod test {
     use serde_json::json;
 
     use service::{
-        service_provider::{ServiceContext, ServiceProvider},
-        temperature_breach::{
-            update::{
+        cold_chain::{
+            update_temperature_breach::{
                 UpdateTemperatureBreach as ServiceInput,
                 UpdateTemperatureBreachError as ServiceError,
             },
-            TemperatureBreachServiceTrait,
+            ColdChainServiceTrait,
         },
+        service_provider::{ServiceContext, ServiceProvider},
     };
 
     use crate::ColdChainMutations;
@@ -121,7 +121,7 @@ mod test {
 
     pub struct TestService(pub Box<UpdateLineMethod>);
 
-    impl TemperatureBreachServiceTrait for TestService {
+    impl ColdChainServiceTrait for TestService {
         fn update_temperature_breach(
             &self,
             _: &ServiceContext,
@@ -136,7 +136,7 @@ mod test {
         connection_manager: &StorageConnectionManager,
     ) -> ServiceProvider {
         let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
-        service_provider.temperature_breach_service = Box::new(test_service);
+        service_provider.cold_chain_service = Box::new(test_service);
         service_provider
     }
 

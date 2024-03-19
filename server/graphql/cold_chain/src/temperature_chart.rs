@@ -8,7 +8,7 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{StorageConnection, TemperatureChartRow, TemperatureLogFilter};
-use service::temperature_breach::query::get_max_or_min_breach_temperature;
+use service::cold_chain::query_temperature_breach::get_max_or_min_breach_temperature;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     temperature_chart::{
