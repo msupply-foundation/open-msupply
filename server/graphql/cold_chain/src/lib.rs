@@ -490,22 +490,18 @@ mod test_breaches {
     use async_graphql::EmptyMutation;
     use chrono::{Duration, NaiveDate};
     use graphql_core::assert_graphql_query;
-    use graphql_core::standard_graphql_error::StandardGraphqlError;
     use graphql_core::test_helpers::setup_graphql_test;
-    use graphql_types::types::{SensorConnector, SensorsResponse};
+    use repository::PaginationOption;
     use repository::{
         mock::MockDataInserts,
         temperature_breach::{TemperatureBreach, TemperatureBreachFilter, TemperatureBreachSort},
-        EqualFilter, StorageConnection, StorageConnectionManager, TemperatureBreachRow,
+        StorageConnection, StorageConnectionManager, TemperatureBreachRow,
         TemperatureBreachRowType,
     };
-    use repository::{PaginationOption, SensorFilter};
     use serde_json::json;
 
     use service::{
-        auth::{Resource, ResourceAccessRequest},
-        service_provider::ServiceProvider,
-        temperature_breach::TemperatureBreachServiceTrait,
+        service_provider::ServiceProvider, temperature_breach::TemperatureBreachServiceTrait,
         ListError, ListResult,
     };
 
