@@ -18,6 +18,7 @@
   "error.unable-to-load-breach": "Error loading breach",
   "error.unable-to-save-asset": "Unable to save asset",
   "error.unable-to-save-log": "Unable to save log",
+  "error.unable-to-scan": "Unable to scan QR code",
   "format.comment": "Acknowledged by {{name}} on {{date}}: {{comment}}.",
   "heading.acknowledgeBreach": "Acknowledge Breach",
   "heading.add-cold-chain-equipment": "Add new CCE",
