@@ -170,7 +170,7 @@ mod test {
               ... on AssetNode {
                 id
                 notes
-                asset_number
+                assetNumber
               }
             }
           }
@@ -180,7 +180,7 @@ mod test {
           "input": {
             "id": "n/a",
             "notes": "notes",
-            "asset_number": "asset_number",
+            "assetNumber": "asset_number",
           }
         }));
 
@@ -198,7 +198,7 @@ mod test {
             "insertAsset": {
                 "id": "id",
                 "notes": "notes",
-                "asset_number": "asset_number",
+                "assetNumber": "asset_number",
             }
           }
         );
