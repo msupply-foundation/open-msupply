@@ -275,6 +275,7 @@ impl PullDeleteRecord {
             ProgramRequisitionSettings => {
                 ProgramRequisitionSettingsRowRepository::new(con).delete(id)
             }
+            MasterListLine => MasterListLineRowRepository::new(con).delete(id),
             MasterListNameJoin => MasterListNameJoinRepository::new(con).delete(id),
             Report => ReportRowRepository::new(con).delete(id),
             NameStoreJoin => NameStoreJoinRepository::new(con).delete(id),
