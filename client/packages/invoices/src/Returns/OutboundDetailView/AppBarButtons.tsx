@@ -6,20 +6,18 @@ import {
   Grid,
   useDetailPanel,
   useTranslation,
-  //   LoadingButton,
-  //   ReportContext,
-  //   PrinterIcon,
-  //   useUrlQueryParams,
+  LoadingButton,
+  ReportContext,
+  PrinterIcon,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
-// import { useReturns } from '../api';
-// import {
-//   useReport,
-//   ReportRowFragment,
-//   ReportSelector,
-// } from '@openmsupply-client/system';
-// import { AddFromMasterListButton } from './AddFromMasterListButton';
-// import { JsonData } from '@openmsupply-client/programs';
-// import { AddFromScannerButton } from './AddFromScannerButton';
+import { useReturns } from '../api';
+import {
+  useReport,
+  ReportRowFragment,
+  ReportSelector,
+} from '@openmsupply-client/system';
+import { JsonData } from '@openmsupply-client/programs';
 import { Draft } from '../..';
 
 interface AppBarButtonProps {
@@ -30,26 +28,26 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
   //   const isDisabled = useOutbound.utils.isDisabled();
-  //   const { data } = useReturns.document.outboundReturn();
+  const { data } = useReturns.document.outboundReturn();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
-  //   const { print, isPrinting } = useReport.utils.print();
-  //   const {
-  //     queryParams: { sortBy },
-  //   } = useUrlQueryParams();
+  const { print, isPrinting } = useReport.utils.print();
+  const {
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
 
-  //   const printReport = (
-  //     report: ReportRowFragment,
-  //     args: JsonData | undefined
-  //   ) => {
-  //     if (!data) return;
-  //     print({
-  //       reportId: report.id,
-  //       dataId: data?.id,
-  //       args,
-  //       sort: { key: sortBy.key, desc: sortBy.isDesc },
-  //     });
-  //   };
+  const printReport = (
+    report: ReportRowFragment,
+    args: JsonData | undefined
+  ) => {
+    if (!data) return;
+    print({
+      reportId: report.id,
+      dataId: data?.id,
+      args,
+      sort: { key: sortBy.key, desc: sortBy.isDesc },
+    });
+  };
 
   return (
     <AppBarButtonsPortal>
@@ -60,10 +58,8 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem()}
         />
-        {/* <AddFromMasterListButton /> */}
-        {/* <AddFromScannerButton onAddItem={onAddItem} /> */}
-        {/* <ReportSelector
-          context={ReportContext.OutboundShipment}
+        <ReportSelector
+          context={ReportContext.OutboundReturn}
           onPrint={printReport}
         >
           <LoadingButton
@@ -73,7 +69,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           >
             {t('button.print')}
           </LoadingButton>
-        </ReportSelector> */}
+        </ReportSelector>
         {OpenButton}
       </Grid>
     </AppBarButtonsPortal>
