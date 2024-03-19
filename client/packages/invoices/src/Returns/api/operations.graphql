@@ -48,6 +48,12 @@ fragment InboundReturn on InvoiceNode {
     username
     email
   }
+
+  linkedShipment {
+    __typename
+    id
+  }
+  theirReference
 }
 
 fragment OutboundReturnDetailRow on InvoiceLineNode {
