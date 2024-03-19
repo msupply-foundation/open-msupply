@@ -98,6 +98,26 @@ cargo run
 
 Explore API available on `http://localhost:8000/graphql` with build in playground or try [online graphiql explorer](https://graphiql-online.com/)
 
+### Start server in watch mode
+
+Sometimes it's nice to have your dev server automatically rebuild and restart on changes.
+
+You'll need to install `cargo-make` and `cargo-watch` globally:
+
+```
+cargo install cargo-make cargo-watch
+```
+
+Then, to start the server in watch mode:
+
+```
+cargo make watch
+```
+
+> Note: watch mode may not always be a part of your desired workflow - particularly when you are making lots of backend changes, it's another competitor for the build directory file lock on every save (alongside tests, rust-analyzer...) and Rust compilation isn't known for its speediness 😁
+>
+> You can play around with debounced re-compile times (`cargo-watch` `--delay` flag), or simply use this for cases such as doing frontend work, where you want the backend to refresh as you switch/pull branches, or when making minor backend changes.
+
 # Run with postgres
 
 ## Dependencies
