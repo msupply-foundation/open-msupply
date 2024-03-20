@@ -26,6 +26,7 @@ export const useReturns = {
 
     generateInboundReturnLines: Lines.useGenerateInboundReturnLines,
     inboundReturnRows: Lines.useInboundReturnRows,
+    updateInboundLines: Lines.useUpdateInboundReturnLines,
     deleteSelectedInboundLines: Lines.useDeleteSelectedInboundReturnLines,
   },
   utils: {

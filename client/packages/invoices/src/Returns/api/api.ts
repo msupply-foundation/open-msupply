@@ -1,10 +1,12 @@
 import {
+  GenerateInboundReturnLinesInput,
   InboundReturnInput,
   InvoiceNodeStatus,
   InvoiceNodeType,
   InvoiceSortFieldInput,
   OutboundReturnInput,
   UpdateInboundReturnInput,
+  UpdateInboundReturnLinesInput,
   UpdateInboundReturnStatusInput,
   UpdateOutboundReturnInput,
   UpdateOutboundReturnLinesInput,
@@ -186,11 +188,11 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
       return result?.generateOutboundReturnLines;
     },
-    inboundReturnLines: async (outboundShipmentLineIds: string[]) => {
+    generateInboundReturnLines: async (
+      input: GenerateInboundReturnLinesInput
+    ) => {
       const result = await sdk.generateInboundReturnLines({
-        input: {
-          outboundShipmentLineIds,
-        },
+        input,
         storeId,
       });
 
@@ -318,6 +320,21 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     if (updateInboundReturn.__typename === 'InvoiceNode') {
       return updateInboundReturn;
+    }
+
+    throw new Error('Could not update inbound return');
+  },
+
+  updateInboundReturnLines: async (input: UpdateInboundReturnLinesInput) => {
+    const result = await sdk.updateInboundReturnLines({
+      input,
+      storeId,
+    });
+
+    const { updateInboundReturnLines } = result;
+
+    if (updateInboundReturnLines.__typename === 'InvoiceNode') {
+      return updateInboundReturnLines;
     }
 
     throw new Error('Could not update inbound return');
