@@ -67,9 +67,9 @@ fn requisition_request_pull_record() -> TestSyncIncomingRecord {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 07, 09)
+                NaiveDate::from_ymd_opt(2020, 7, 9)
                     .unwrap()
-                    .and_hms_opt(05, 36, 46)
+                    .and_hms_opt(5, 36, 46)
                     .unwrap(),
             ),
             finalised_datetime: None,
@@ -113,9 +113,9 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
             ),
             last_modified_at: 1594273006,
             sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 07, 09)
+                NaiveDate::from_ymd_opt(2020, 7, 9)
                     .unwrap()
-                    .and_hms_opt(05, 36, 46)
+                    .and_hms_opt(5, 36, 46)
                     .unwrap()
             ),
             finalised_datetime: None,
@@ -181,9 +181,9 @@ fn requisition_response_pull_record() -> TestSyncIncomingRecord {
                 .unwrap(),
             sent_datetime: None,
             finalised_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 07, 09)
+                NaiveDate::from_ymd_opt(2020, 7, 9)
                     .unwrap()
-                    .and_hms_opt(05, 06, 20)
+                    .and_hms_opt(5, 6, 20)
                     .unwrap(),
             ),
             colour: None,
@@ -300,18 +300,18 @@ fn requisition_om_fields_pull_record() -> TestSyncIncomingRecord {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 03, 24)
+                NaiveDate::from_ymd_opt(2022, 3, 24)
                     .unwrap()
                     .and_hms_opt(14, 48, 00)
                     .unwrap(),
             ),
             finalised_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 03, 25)
+                NaiveDate::from_ymd_opt(2022, 3, 25)
                     .unwrap()
                     .and_hms_opt(14, 48, 00)
                     .unwrap(),
             ),
-            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 03, 26).unwrap()),
+            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 3, 26).unwrap()),
             colour: Some("Colour".to_string()),
             comment: Some("From request requisition 3".to_string()),
             their_reference: Some("From request requisition 3".to_string()),
@@ -345,24 +345,24 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
             comment: Some("From request requisition 3".to_string()),
             last_modified_at: 1648219680,
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 07, 09)
+                NaiveDate::from_ymd_opt(2020, 7, 9)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
             sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 03, 24)
+                NaiveDate::from_ymd_opt(2022, 3, 24)
                     .unwrap()
                     .and_hms_opt(14, 48, 00)
                     .unwrap()
             ),
             finalised_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 03, 25)
+                NaiveDate::from_ymd_opt(2022, 3, 25)
                     .unwrap()
                     .and_hms_opt(14, 48, 00)
                     .unwrap()
             ),
-            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 03, 26).unwrap()),
+            expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 3, 26).unwrap()),
             max_months_of_stock: Some(10.0),
             om_status: Some(RequisitionRowStatus::New),
             om_colour: Some("Colour".to_string()),
@@ -430,9 +430,9 @@ fn program_requisition_request_pull_record() -> TestSyncIncomingRecord {
                 .and_hms_opt(0, 0, 0)
                 .unwrap(),
             sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 07, 09)
+                NaiveDate::from_ymd_opt(2020, 7, 9)
                     .unwrap()
-                    .and_hms_opt(05, 36, 46)
+                    .and_hms_opt(5, 36, 46)
                     .unwrap(),
             ),
             finalised_datetime: None,
@@ -476,9 +476,9 @@ fn program_requisition_request_push_record() -> TestSyncOutgoingRecord {
             ),
             last_modified_at: 1594273006,
             sent_datetime: Some(
-                NaiveDate::from_ymd_opt(2020, 07, 09)
+                NaiveDate::from_ymd_opt(2020, 7, 9)
                     .unwrap()
-                    .and_hms_opt(05, 36, 46)
+                    .and_hms_opt(5, 36, 46)
                     .unwrap()
             ),
             finalised_datetime: None,

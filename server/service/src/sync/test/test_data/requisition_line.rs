@@ -139,7 +139,7 @@ fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
             comment: Some("Some comment".to_string()),
             snapshot_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 04, 04)
+                NaiveDate::from_ymd_opt(2022, 4, 4)
                     .unwrap()
                     .and_hms_opt(14, 48, 11)
                     .unwrap(),
@@ -165,7 +165,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             comment: Some("Some comment".to_string()),
             item_name: "Item A".to_string(),
             snapshot_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 04, 04)
+                NaiveDate::from_ymd_opt(2022, 4, 4)
                     .unwrap()
                     .and_hms_opt(14, 48, 11)
                     .unwrap()

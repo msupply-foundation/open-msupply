@@ -312,7 +312,7 @@ impl SyncTranslation for RequisitionTranslation {
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
 
-        let has_outbound_shipment = !InvoiceRepository::new(&connection)
+        let has_outbound_shipment = !InvoiceRepository::new(connection)
             .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
             .is_empty();
 

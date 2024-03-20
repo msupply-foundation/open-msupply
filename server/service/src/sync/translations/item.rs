@@ -34,7 +34,7 @@ fn to_item_type(type_of: LegacyItemType) -> ItemRowType {
 }
 
 pub(crate) fn ordered_simple_json(text: &str) -> Result<String, serde_json::Error> {
-    let json: serde_json::Value = serde_json::from_str(&text)?;
+    let json: serde_json::Value = serde_json::from_str(text)?;
     serde_json::to_string(&json)
 }
 
