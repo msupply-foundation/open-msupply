@@ -9,20 +9,29 @@ import {
   useTranslation,
   DropdownMenuItem,
   DeleteIcon,
+  useBufferState,
 } from '@openmsupply-client/common';
-import { useReturns } from '../api';
+import { OutboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const onDelete = useReturns.document.deleteOutboundRows();
+  const { mutateAsync } = useReturns.document.updateOutboundReturn();
+
   const { data } = useReturns.document.outboundReturn();
-  const { otherPartyName } = data ?? {};
+  const { otherPartyName, theirReference, id } = data ?? {};
   // const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
-  //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
-  //     useBufferState(theirReference);
-  //   const { mutateAsync: updateName } = useOutbound.document.updateName();
+
+  const [theirReferenceBuffer, setTheirReferenceBuffer] =
+    useBufferState(theirReference);
+
+  const update = (data: Partial<OutboundReturnFragment>) => {
+    if (!id) return;
+    mutateAsync({ id, ...data });
+  };
 
   //   const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = false; // TODO
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -41,8 +50,8 @@ export const Toolbar: FC = () => {
                 Input={<BasicTextInput value={otherPartyName} disabled />}
               />
             )}
-            {/* <InputWithLabelRow
-              label={t('label.customer-ref')}
+            <InputWithLabelRow
+              label={t('label.supplier-ref')}
               Input={
                 <BasicTextInput
                   disabled={isDisabled}
@@ -55,7 +64,7 @@ export const Toolbar: FC = () => {
                   }}
                 />
               }
-            /> */}
+            />
           </Box>
         </Grid>
         <Grid
