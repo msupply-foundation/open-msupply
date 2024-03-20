@@ -1,5 +1,3 @@
-// M1 speced API is moved to their own files
-// Types defined here are prototype types and should be removed before M1 release to avoid confusion (for consumers and devs)
 pub mod name;
 pub use self::name::*;
 
@@ -29,9 +27,6 @@ pub use self::invoice_query::*;
 
 pub mod invoice_line;
 pub use self::invoice_line::*;
-
-pub mod item_chart;
-pub use self::item_chart::*;
 
 pub mod store;
 pub use self::store::*;
