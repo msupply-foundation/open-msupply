@@ -1,6 +1,7 @@
 mod mutations;
 mod queries;
 mod sync_api_error;
+pub mod types;
 
 pub use self::queries::sync_status::*;
 use self::queries::*;
