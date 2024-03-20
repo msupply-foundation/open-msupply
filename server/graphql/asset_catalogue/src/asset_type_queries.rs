@@ -6,9 +6,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{
-    AssetTypeConnector, AssetTypeNode, AssetTypeResponse, AssetTypesResponse,
-};
 
 use repository::{
     asset_type::{AssetTypeFilter, AssetTypeSort, AssetTypeSortField},
@@ -18,6 +15,10 @@ use repository::{EqualFilter, PaginationOption};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::query_type::{get_asset_type, get_asset_types},
+};
+
+use crate::types::asset_type::{
+    AssetTypeConnector, AssetTypeNode, AssetTypeResponse, AssetTypesResponse,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
