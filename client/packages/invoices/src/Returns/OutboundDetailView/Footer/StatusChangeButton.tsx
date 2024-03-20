@@ -128,7 +128,7 @@ const useStatusChangeButton = () => {
 
       if (status) {
         await mutateAsync({
-          outboundReturnId: data?.id,
+          id: data?.id,
           status,
         });
         success(t('messages.return-saved'))();
