@@ -11,20 +11,28 @@ import {
   DeleteIcon,
   useIsGrouped,
   Switch,
+  useBufferState,
 } from '@openmsupply-client/common';
-import { useReturns } from '../api';
+import { InboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation('replenishment');
+  const t = useTranslation('distribution');
   const onDelete = useReturns.lines.deleteSelectedInboundLines();
-  const { data } = useReturns.document.outboundReturn();
-  const { otherPartyName } = data ?? {};
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
-  //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
-  //     useBufferState(theirReference);
-  //   const { mutateAsync: updateName } = useOutbound.document.updateName();
+  const { mutateAsync } = useReturns.document.updateInboundReturn();
 
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const { data } = useReturns.document.inboundReturn();
+  const { otherPartyName, theirReference, id } = data ?? {};
+
+  const update = (data: Partial<InboundReturnFragment>) => {
+    if (!id) return;
+    mutateAsync({ id, ...data });
+  };
+
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
+  const [theirReferenceBuffer, setTheirReferenceBuffer] =
+    useBufferState(theirReference);
+
+  const isDisabled = useReturns.utils.inboundIsDisabled();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -39,11 +47,11 @@ export const Toolbar: FC = () => {
           <Box display="flex" flex={1} flexDirection="column" gap={1}>
             {otherPartyName && (
               <InputWithLabelRow
-                label={t('label.supplier-name')}
+                label={t('label.customer-name')}
                 Input={<BasicTextInput value={otherPartyName} disabled />}
               />
             )}
-            {/* <InputWithLabelRow
+            <InputWithLabelRow
               label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
@@ -57,7 +65,7 @@ export const Toolbar: FC = () => {
                   }}
                 />
               }
-            /> */}
+            />
           </Box>
         </Grid>
         <Grid
