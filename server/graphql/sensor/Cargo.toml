@@ -15,8 +15,8 @@ util = { path = "../../util" }
 graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
 
-actix-web = { version = "4.0.1", features = ["rustls"] }
-anymap= { workspace = true }
+actix-web = { workspace = true }
+anymap = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
