@@ -6,7 +6,6 @@ import {
   InputWithLabelRow,
   Typography,
 } from '@common/components';
-// import {Autocomplete} from '@mui/material';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import { Box, Formatter } from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
