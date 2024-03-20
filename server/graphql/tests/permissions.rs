@@ -3,6 +3,7 @@ mod permission_tests {
     use std::sync::{Arc, Mutex};
 
     use async_graphql::MergedObject;
+    use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
@@ -32,10 +33,7 @@ mod permission_tests {
     pub struct FullQuery(
         pub InvoiceQueries,
         pub LocationQueries,
-        // pub SensorQueries,
-        //pub TemperatureBreachQueries,
-        //pub TemperatureBreachConfigQueries,
-        //pub TemperatureLogQueries,
+        pub ColdChainQueries,
         pub StocktakeQueries,
         pub GeneralQueries,
         pub RequisitionQueries,
@@ -48,8 +46,7 @@ mod permission_tests {
         pub InvoiceMutations,
         pub InvoiceLineMutations,
         pub LocationMutations,
-        // pub SensorMutations,
-        //pub TemperatureBreachConfigMutations,
+        pub ColdChainMutations,
         pub StocktakeMutations,
         pub StocktakeLineMutations,
         pub BatchMutations,
@@ -62,10 +59,7 @@ mod permission_tests {
         FullQuery(
             InvoiceQueries,
             LocationQueries,
-            // SensorQueries,
-            //TemperatureBreachQueries,
-            //TemperatureBreachConfigQueries,
-            //TemperatureLogQueries,
+            ColdChainQueries,
             StocktakeQueries,
             GeneralQueries,
             RequisitionQueries,
@@ -79,8 +73,7 @@ mod permission_tests {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            // SensorMutations,
-            //TemperatureBreachConfigMutations,
+            ColdChainMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
