@@ -195,6 +195,7 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
         username
         email
       }
+      comment
       ...OutboundReturnRow
     }
   }
