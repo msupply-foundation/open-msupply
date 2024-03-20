@@ -30,8 +30,7 @@ pub fn validate(
     // Status check
     let status_changed = check_status_change(&return_row, input.full_status());
     if status_changed {
-        // TODO: on_hold?
-        check_invoice_status(&return_row, input.full_status(), &Some(false)).map_err(
+        check_invoice_status(&return_row, input.full_status(), &input.on_hold).map_err(
             |e| match e {
                 InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
                     CannotChangeStatusOfInvoiceOnHold

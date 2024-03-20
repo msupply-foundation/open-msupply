@@ -27,6 +27,10 @@ pub struct UpdateOutboundReturn {
     // pub other_party_id: String,
     pub comment: Option<String>,
     pub status: Option<UpdateOutboundReturnStatus>,
+    pub colour: Option<String>,
+    pub on_hold: Option<bool>,
+    pub their_reference: Option<String>,
+    pub transport_reference: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
