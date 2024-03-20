@@ -6242,6 +6242,7 @@ export type UpdateInboundReturnInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateInboundReturnStatusInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundReturnLinesInput = {
