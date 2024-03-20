@@ -6,18 +6,14 @@ import {
   TableProvider,
   createTableStore,
   useKeyboardHeightAdjustment,
-  WizardStepper,
   useTabs,
-  TabPanel,
-  TabContext,
   ModalMode,
   Box,
   AlertColor,
-  Alert,
 } from '@openmsupply-client/common';
-import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { useDraftInboundReturnLines } from './useDraftInboundReturnLines';
-import { ReturnReasonsTable } from '../ReturnReasonsTable';
+import { ItemSelector } from './ItemSelector';
+import { ReturnSteps, Tabs } from './ReturnSteps';
 
 interface InboundReturnEditModalProps {
   isOpen: boolean;
@@ -25,11 +21,8 @@ interface InboundReturnEditModalProps {
   customerId: string;
   onClose: () => void;
   modalMode: ModalMode | null;
-}
-
-enum Tabs {
-  Quantity = 'Quantity',
-  Reason = 'Reason',
+  returnId?: string;
+  initialItemId?: string | null;
 }
 
 export const InboundReturnEditModal = ({
@@ -38,9 +31,15 @@ export const InboundReturnEditModal = ({
   customerId,
   onClose,
   modalMode,
+  returnId,
+  initialItemId,
 }: InboundReturnEditModalProps) => {
-  const t = useTranslation(['distribution', 'replenishment']);
+  const t = useTranslation('distribution');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+
+  const [itemId, setItemId] = useState<string | undefined>(
+    initialItemId ?? undefined
+  );
 
   const alertRef = useRef<HTMLDivElement>(null);
 
@@ -48,27 +47,19 @@ export const InboundReturnEditModal = ({
     AlertColor | undefined
   >();
 
-  const returnsSteps = [
-    { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
-    { tab: Tabs.Reason, label: t('label.reason'), description: '' },
-  ];
-
-  const getActiveStep = () => {
-    const step = returnsSteps.findIndex(step => step.tab === currentTab);
-    return step === -1 ? 0 : step;
-  };
-
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
-  const height = useKeyboardHeightAdjustment(600);
+  const height = useKeyboardHeightAdjustment(700);
 
-  const { lines, update, saveInboundReturn } = useDraftInboundReturnLines(
+  const { lines, update, save, addDraftLine } = useDraftInboundReturnLines({
     outboundShipmentLineIds,
-    customerId
-  );
+    customerId,
+    returnId,
+    itemId,
+  });
 
   const onOk = async () => {
     try {
-      await saveInboundReturn();
+      await save();
       onClose();
     } catch {
       // TODO: handle error display...
@@ -93,15 +84,6 @@ export const InboundReturnEditModal = ({
     alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const alertMessage =
-    zeroQuantityAlert === 'warning'
-      ? t('messages.zero-return-quantity-will-delete-lines', {
-          ns: 'replenishment',
-        })
-      : t('messages.alert-zero-return-quantity', {
-          ns: 'replenishment',
-        });
-
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
@@ -123,27 +105,25 @@ export const InboundReturnEditModal = ({
         width={1024}
       >
         <Box ref={alertRef}>
-          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-          <TabContext value={currentTab}>
-            <TabPanel value={Tabs.Quantity}>
-              {zeroQuantityAlert && (
-                <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
-              )}
-              <QuantityReturnedTable
-                lines={lines}
-                updateLine={line => {
-                  if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
-                  update(line);
-                }}
-              />
-            </TabPanel>
-            <TabPanel value={Tabs.Reason}>
-              <ReturnReasonsTable
-                lines={lines.filter(line => line.numberOfPacksReturned > 0)}
-                updateLine={line => update(line)}
-              />
-            </TabPanel>
-          </TabContext>
+          {returnId && (
+            <ItemSelector
+              disabled={!!itemId}
+              itemId={itemId}
+              onChangeItemId={setItemId}
+            />
+          )}
+
+          {lines.length > 0 && (
+            <ReturnSteps
+              currentTab={currentTab}
+              lines={lines}
+              update={update}
+              zeroQuantityAlert={zeroQuantityAlert}
+              setZeroQuantityAlert={setZeroQuantityAlert}
+              // We only allow adding draft lines when we are adding by item
+              addDraftLine={itemId ? addDraftLine : undefined}
+            />
+          )}
         </Box>
       </Modal>
     </TableProvider>

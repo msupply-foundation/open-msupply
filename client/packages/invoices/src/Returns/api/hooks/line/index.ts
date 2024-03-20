@@ -3,6 +3,7 @@ import { useDeleteSelectedInboundReturnLines } from './useDeleteSelectedInboundL
 import { useInboundReturnRows } from './useInboundReturnRows';
 import { useOutboundReturnLines } from './useOutboundReturnLines';
 import { useUpdateOutboundReturnLines } from './useUpdateOutboundReturnLines';
+import { useUpdateInboundReturnLines } from './useUpdateInboundReturnLines';
 
 export const Lines = {
   useOutboundReturnLines,
@@ -10,5 +11,6 @@ export const Lines = {
 
   useGenerateInboundReturnLines,
   useInboundReturnRows,
+  useUpdateInboundReturnLines,
   useDeleteSelectedInboundReturnLines,
 };

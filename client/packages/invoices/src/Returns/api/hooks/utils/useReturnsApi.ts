@@ -25,8 +25,10 @@ export const useReturnsApi = () => {
       [...keys.outboundList(), sortBy] as const,
     outboundParamList: (params: OutboundListParams) =>
       [...keys.outboundList(), params] as const,
-    detail: (invoiceNumber: string) =>
+    outboundDetail: (invoiceNumber: string) =>
       [...keys.base(), storeId, invoiceNumber] as const,
+    inboundDetail: (invoiceNumber: string) =>
+      [...keys.base(), storeId, 'inbound', invoiceNumber] as const,
     generatedOutboundLines: (itemId?: string) =>
       [...keys.base(), storeId, 'generatedOutboundLines', itemId] as const,
     generatedInboundLines: (itemId?: string) =>

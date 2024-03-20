@@ -1,37 +1,76 @@
 import React, { useEffect } from 'react';
 import {
   FnUtils,
-  InboundReturnInput,
   GeneratedInboundReturnLineNode,
   InboundReturnLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
+import { useItemById } from '@openmsupply-client/system';
 
-export const useDraftInboundReturnLines = (
-  outboundReturnLineIds: string[],
-  customerId: string
-) => {
+export const useDraftInboundReturnLines = ({
+  customerId,
+  outboundShipmentLineIds,
+  itemId,
+  returnId,
+}: {
+  outboundShipmentLineIds: string[];
+  customerId: string;
+  itemId?: string;
+  returnId?: string;
+}) => {
   const [draftLines, setDraftLines] = React.useState<
     GeneratedInboundReturnLineNode[]
   >([]);
 
+  const { data: item } = useItemById(itemId);
+
   const { refetch } = useReturns.lines.generateInboundReturnLines(
-    outboundReturnLineIds
+    outboundShipmentLineIds,
+    returnId,
+    itemId
   );
 
-  const { mutateAsync } = useReturns.document.insertInboundReturn();
+  const { mutateAsync: insert } = useReturns.document.insertInboundReturn();
+  const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   useEffect(() => {
-    const getLines = async () => {
+    if (!draftLines.length) getLines();
+
+    async function getLines() {
       const { data } = await refetch();
       const lines = data?.nodes ?? [];
 
-      setDraftLines(lines);
-    };
+      if (lines.length) {
+        setDraftLines(lines);
+      } else {
+        addDraftLine();
+      }
+    }
+  }, [item]);
 
-    getLines();
-  }, []);
+  const addDraftLine = () => {
+    if (!item) return;
+
+    setDraftLines(currLines => {
+      return [
+        ...currLines,
+        {
+          __typename: 'GeneratedInboundReturnLineNode' as const,
+          id: FnUtils.generateUUID(),
+          itemId: item.id,
+          itemCode: item.code,
+          itemName: item.name,
+          packSize: item.defaultPackSize,
+          numberOfPacksReturned: 0,
+          batch: null,
+          expiryDate: null,
+          note: null,
+          reasonId: null,
+        },
+      ];
+    });
+  };
 
   const update = (patch: RecordPatch<GeneratedInboundReturnLineNode>) => {
     setDraftLines(currLines => {
@@ -45,7 +84,7 @@ export const useDraftInboundReturnLines = (
     });
   };
 
-  const saveInboundReturn = async () => {
+  const save = async () => {
     const inboundReturnLines: InboundReturnLineInput[] = draftLines.map(
       ({
         id,
@@ -70,16 +109,21 @@ export const useDraftInboundReturnLines = (
       }
     );
 
-    const input: InboundReturnInput = {
-      id: FnUtils.generateUUID(),
-      customerId,
-      inboundReturnLines,
-    };
-
     // TODO: error handling here
     // also need to consider what we do if the error was on the first page of the wizard
-    await mutateAsync(input);
+    if (!returnId) {
+      await insert({
+        id: FnUtils.generateUUID(),
+        customerId,
+        inboundReturnLines,
+      });
+    } else {
+      await updateLines({
+        inboundReturnId: returnId,
+        inboundReturnLines,
+      });
+    }
   };
 
-  return { lines: draftLines, update, saveInboundReturn };
+  return { lines: draftLines, update, save, addDraftLine };
 };
