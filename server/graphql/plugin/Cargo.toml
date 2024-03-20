@@ -11,7 +11,7 @@ path = "src/lib.rs"
 repository = { path = "../../repository" }
 service = { path = "../../service" }
 graphql_core = { path = "../core" }
-graphql_general = { path = "../general" }
+
 
 actix-web = { version = "4.0.1", default-features = false, features = [
     "macros",

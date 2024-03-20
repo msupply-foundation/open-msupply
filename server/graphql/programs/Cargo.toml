@@ -12,7 +12,6 @@ repository = { path = "../../repository" }
 service = { path = "../../service" }
 util = { path = "../../util" }
 graphql_core = { path = "../core" }
-graphql_general = { path = "../general" }
 graphql_types = { path = "../types" }
 
 async-std = { workspace = true }
