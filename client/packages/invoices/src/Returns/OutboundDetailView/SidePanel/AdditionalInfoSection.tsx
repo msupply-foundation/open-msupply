@@ -5,28 +5,25 @@ import {
   PanelField,
   PanelLabel,
   PanelRow,
-  //   BufferedTextArea,
+  BufferedTextArea,
   useTranslation,
-  //   ColorSelectButton,
-  //   useBufferState,
+  ColorSelectButton,
+  useBufferState,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('replenishment');
-  const { data } = useReturns.document.outboundReturn();
-  //   const isDisabled = useOutbound.utils.isDisabled();
-  //   const { colour, comment, user, update } = useOutbound.document.fields([
-  //     'colour',
-  //     'comment',
-  //     'user',
-  //   ]);
-  //   const [colorBuffer, setColorBuffer] = useBufferState(colour);
-  //   const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
+  const { mutateAsync: update } = useReturns.document.updateOutboundReturn();
+  // const isDisabled = useReturns.utils.outboundIsDisabled();
+  const isDisabled = false; // TODO
 
-  //  TO-DO: Make this work
-  const { user } = data || {};
+  const { data } = useReturns.document.outboundReturn();
+  const { user, colour, comment, id } = data || { id: '' };
+
+  const [colorBuffer, setColorBuffer] = useBufferState(colour);
+  const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -40,26 +37,26 @@ export const AdditionalInfoSectionComponent: FC = () => {
         <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
-            {/* <ColorSelectButton
+            <ColorSelectButton
               disabled={isDisabled}
               onChange={color => {
                 setColorBuffer(color.hex);
-                update({ colour: color.hex });
+                update({ id, colour: color.hex });
               }}
               color={colorBuffer}
-            /> */}
+            />
           </PanelField>
         </PanelRow>
 
-        {/* <PanelLabel>{t('heading.comment')}</PanelLabel> */}
-        {/* <BufferedTextArea
+        <PanelLabel>{t('heading.comment')}</PanelLabel>
+        <BufferedTextArea
           disabled={isDisabled}
           onChange={e => {
             setCommentBuffer(e.target.value);
-            update({ comment: e.target.value });
+            update({ id, comment: e.target.value });
           }}
           value={commentBuffer}
-        /> */}
+        />
       </Grid>
     </DetailPanelSection>
   );
