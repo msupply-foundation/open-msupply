@@ -184,22 +184,6 @@ impl StocktakeIsLocked {
     }
 }
 
-pub struct NotAnOutboundShipment;
-#[Object]
-impl NotAnOutboundShipment {
-    pub async fn description(&self) -> &'static str {
-        "Invoice is not Outbound Shipment"
-    }
-}
-
-pub struct InvoiceDoesNotBelongToCurrentStore;
-#[Object]
-impl InvoiceDoesNotBelongToCurrentStore {
-    pub async fn description(&self) -> &'static str {
-        "Invoice does not belong to current store"
-    }
-}
-
 pub struct CannotReverseInvoiceStatus;
 #[Object]
 impl CannotReverseInvoiceStatus {
