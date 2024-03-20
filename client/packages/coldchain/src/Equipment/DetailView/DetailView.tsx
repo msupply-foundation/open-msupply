@@ -18,10 +18,11 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { Summary } from './Tabs';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import { AssetFragment } from '../api/operations.generated';
 
 export interface LocationIds {
   locationIds: string[];
@@ -31,14 +32,14 @@ export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
-  const {
-    data: locationData,
-    isLoading: isLoadingLocations,
-    mutate: fetchLocations,
-  } = useLocation.document.listAll({
-    key: 'name',
-    direction: 'asc',
-  });
+  const { data: locationData, isLoading: isLoadingLocations } =
+    useLocation.document.list({
+      sortBy: {
+        key: 'name',
+        direction: 'asc',
+      },
+      filterBy: null,
+    });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
@@ -84,10 +85,6 @@ export const EquipmentDetailView = () => {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
-
-  useEffect(() => {
-    fetchLocations();
-  }, [fetchLocations]);
 
   const locations =
     locationData?.nodes.map(location => ({
