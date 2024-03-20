@@ -18,10 +18,11 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { Summary } from './Tabs';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import { AssetFragment } from '../api/operations.generated';
 
 export interface LocationIds {
   locationIds: string[];
