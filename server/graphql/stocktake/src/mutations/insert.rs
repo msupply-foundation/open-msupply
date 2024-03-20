@@ -88,7 +88,7 @@ pub fn map_response(from: Result<Stocktake, ServiceError>) -> Result<InsertRespo
 }
 
 impl InsertInput {
-    pub fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(&self) -> ServiceInput {
         let InsertInput {
             id,
             comment,
@@ -101,16 +101,16 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            id,
-            comment,
-            description,
-            stocktake_date,
-            is_locked,
-            location: location.map(|location| NullableUpdate {
+            id: id.clone(),
+            comment: comment.clone(),
+            description: description.clone(),
+            stocktake_date: *stocktake_date,
+            is_locked: *is_locked,
+            location: location.clone().map(|location| NullableUpdate {
                 value: location.value,
             }),
-            master_list_id,
-            items_have_stock,
+            master_list_id: master_list_id.clone(),
+            items_have_stock: items_have_stock.clone(),
         }
     }
 }
@@ -183,7 +183,7 @@ mod test {
                     id: "id1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                     is_locked: Some(true),
                     location: None,
                     master_list_id: None,

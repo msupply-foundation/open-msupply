@@ -66,7 +66,7 @@ impl CentralPatientNode {
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.patient.date_of_birth.clone()
+        self.patient.date_of_birth
     }
 }
 

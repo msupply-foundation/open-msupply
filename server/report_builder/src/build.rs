@@ -119,7 +119,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         index.query = Some("query_default".to_string());
         entries.insert(
             "query_default".to_string(),
-            ReportDefinitionEntry::DefaultQuery(parse_default_query(&query_default)?),
+            ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
     } else {
         return Err(anyhow::Error::msg(

@@ -27,11 +27,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct PeriodTranslation;
 impl SyncTranslation for PeriodTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "period"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![PeriodScheduleTranslation.table_name()]
     }
 

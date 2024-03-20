@@ -6,9 +6,9 @@ use repository::{RequisitionLineRow, RequisitionLineRowDelete};
 use serde_json::json;
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-const TABLE_NAME: &'static str = "requisition_line";
+const TABLE_NAME: &str = "requisition_line";
 
-const REQUISITION_LINE_1: (&'static str, &'static str) = (
+const REQUISITION_LINE_1: (&str, &str) = (
     "66FB0A41C95441ABBBC7905857466089",
     r#"{
         "ID": "66FB0A41C95441ABBBC7905857466089",
@@ -86,7 +86,7 @@ fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
+const REQUISITION_LINE_OM_FIELD: (&str, &str) = (
     "ABCB0A41C95441ABBBC7905857466089",
     r#"{
         "ID": "ABCB0A41C95441ABBBC7905857466089",

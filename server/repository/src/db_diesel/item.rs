@@ -37,7 +37,7 @@ pub enum ItemSortField {
 
 pub type ItemSort = Sort<ItemSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -51,15 +51,7 @@ pub struct ItemFilter {
 
 impl ItemFilter {
     pub fn new() -> ItemFilter {
-        ItemFilter {
-            id: None,
-            name: None,
-            code: None,
-            r#type: None,
-            is_visible: None,
-            code_or_name: None,
-            is_active: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

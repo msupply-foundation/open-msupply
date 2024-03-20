@@ -206,7 +206,7 @@ impl AssetConnector {
 }
 
 impl AssetSortInput {
-    pub fn to_domain(self) -> AssetSort {
+    pub fn to_domain(&self) -> AssetSort {
         use AssetSortField as to;
         use AssetSortFieldInput as from;
         let key = match self.key {
@@ -477,7 +477,7 @@ impl AssetLogConnector {
 }
 
 impl AssetLogSortInput {
-    pub fn to_domain(self) -> AssetLogSort {
+    pub fn to_domain(&self) -> AssetLogSort {
         use AssetLogSortField as to;
         use AssetLogSortFieldInput as from;
         let key = match self.key {

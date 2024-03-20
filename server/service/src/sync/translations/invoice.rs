@@ -212,11 +212,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 }
 pub(crate) struct InvoiceTranslation;
 impl SyncTranslation for InvoiceTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "transact"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             StoreTranslation.table_name(),

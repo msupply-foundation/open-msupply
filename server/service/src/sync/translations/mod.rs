@@ -107,7 +107,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
 }
 
 /// Calculates the integration order based on the PullDependencies in the SyncTranslators
-pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'static str> {
+pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str> {
     // fill output so that tables with the least dependencies come first
     let mut output = vec![];
 
@@ -283,8 +283,8 @@ pub(crate) enum ToSyncRecordTranslationType {
 pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
-    fn pull_dependencies(&self) -> Vec<&'static str>;
-    fn table_name(&self) -> &'static str;
+    fn pull_dependencies(&self) -> Vec<&str>;
+    fn table_name(&self) -> &str;
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {

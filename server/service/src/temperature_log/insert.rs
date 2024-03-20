@@ -32,7 +32,7 @@ pub fn insert_temperature_log(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_temperature_log = generate(&ctx.store_id, input);
-            TemperatureLogRowRepository::new(&connection).upsert_one(&new_temperature_log)?;
+            TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
 
             get_temperature_log(ctx, new_temperature_log.id)
                 .map_err(InsertTemperatureLogError::from)

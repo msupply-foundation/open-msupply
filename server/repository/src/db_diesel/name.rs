@@ -357,8 +357,7 @@ impl Name {
     pub fn is_system_name(&self) -> bool {
         SYSTEM_NAME_CODES
             .iter()
-            .find(|system_name_code| self.name_row.code == **system_name_code)
-            .is_some()
+            .any(|system_name_code| self.name_row.code == *system_name_code)
     }
 
     pub fn store_id(&self) -> Option<&str> {

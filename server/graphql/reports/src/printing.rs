@@ -11,7 +11,7 @@ pub struct FailedToFetchReportData {
 }
 #[Object]
 impl FailedToFetchReportData {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Failed to query data required for the report"
     }
 

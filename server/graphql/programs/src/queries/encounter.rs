@@ -45,9 +45,7 @@ pub fn encounters(
         .and_then(|f| f.include_deleted)
         .unwrap_or(false)
     {
-        let mut filter = filter
-            .map(EncounterFilter::from)
-            .unwrap_or(EncounterFilter::new());
+        let mut filter = filter.map(EncounterFilter::from).unwrap_or_default();
         let mut status_filter = filter.status.unwrap_or(EqualFilter::default());
         status_filter.not_equal_to = Some(repository::EncounterStatus::Deleted);
         filter.status = Some(status_filter);

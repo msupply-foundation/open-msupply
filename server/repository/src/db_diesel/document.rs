@@ -145,15 +145,7 @@ pub struct DocumentFilter {
 
 impl DocumentFilter {
     pub fn new() -> Self {
-        DocumentFilter {
-            id: None,
-            name: None,
-            r#type: None,
-            datetime: None,
-            data: None,
-            owner: None,
-            context_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, value: EqualFilter<String>) -> Self {

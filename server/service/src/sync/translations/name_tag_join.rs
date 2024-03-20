@@ -21,11 +21,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct NameTagJoinTranslation;
 impl SyncTranslation for NameTagJoinTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "name_tag_join"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             NameTagTranslation.table_name(),

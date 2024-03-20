@@ -20,7 +20,7 @@ use crate::{
     RepositoryError, Sort, StringFilter,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StocktakeLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub stocktake_id: Option<EqualFilter<String>>,
@@ -30,12 +30,7 @@ pub struct StocktakeLineFilter {
 
 impl StocktakeLineFilter {
     pub fn new() -> StocktakeLineFilter {
-        StocktakeLineFilter {
-            id: None,
-            stocktake_id: None,
-            location_id: None,
-            item_code_or_name: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

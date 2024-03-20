@@ -8,9 +8,9 @@ use serde_json::json;
 
 use super::TestSyncOutgoingRecord;
 
-const TABLE_NAME: &'static str = "Stock_take";
+const TABLE_NAME: &str = "Stock_take";
 
-const STOCKTAKE_1: (&'static str, &'static str) = (
+const STOCKTAKE_1: (&str, &str) = (
     "0a375950f0d211eb8dddb54df6d741bc",
     r#"{
       "Description": "Test",
@@ -83,7 +83,7 @@ fn stocktake_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const STOCKTAKE_OM_FIELD: (&'static str, &'static str) = (
+const STOCKTAKE_OM_FIELD: (&str, &str) = (
     "Aa375950f0d211eb8dddb54df6d741bc",
     r#"{
       "Description": "Test",

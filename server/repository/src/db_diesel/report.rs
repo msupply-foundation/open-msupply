@@ -123,7 +123,7 @@ impl<'a> ReportRepository<'a> {
 
         result
             .into_iter()
-            .map(|r| map_report_row_join_to_report(r))
+            .map(map_report_row_join_to_report)
             .collect::<Result<Vec<Report>, RepositoryError>>()
     }
 }

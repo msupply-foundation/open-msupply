@@ -35,11 +35,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct BarcodeTranslation;
 impl SyncTranslation for BarcodeTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "barcode"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![ItemTranslation.table_name()]
     }
 

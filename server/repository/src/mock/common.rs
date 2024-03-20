@@ -46,14 +46,14 @@ impl FullMockInvoice {
 }
 
 pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &StorageConnection) {
-    InvoiceRowRepository::new(&connection)
+    InvoiceRowRepository::new(connection)
         .upsert_one(&invoice.invoice)
         .unwrap();
     for line in invoice.lines.iter() {
-        StockLineRowRepository::new(&connection)
+        StockLineRowRepository::new(connection)
             .upsert_one(&line.stock_line)
             .unwrap();
-        InvoiceLineRowRepository::new(&connection)
+        InvoiceLineRowRepository::new(connection)
             .upsert_one(&line.line)
             .unwrap();
     }

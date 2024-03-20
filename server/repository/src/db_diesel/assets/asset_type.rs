@@ -17,7 +17,7 @@ pub enum AssetTypeSortField {
 
 pub type AssetTypeSort = Sort<AssetTypeSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AssetTypeFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -26,11 +26,7 @@ pub struct AssetTypeFilter {
 
 impl AssetTypeFilter {
     pub fn new() -> AssetTypeFilter {
-        AssetTypeFilter {
-            id: None,
-            name: None,
-            category_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

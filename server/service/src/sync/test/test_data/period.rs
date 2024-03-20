@@ -3,9 +3,9 @@ use repository::PeriodRow;
 
 use crate::sync::test::TestSyncIncomingRecord;
 
-const TABLE_NAME: &'static str = "period";
+const TABLE_NAME: &str = "period";
 
-const PERIOD_1: (&'static str, &'static str) = (
+const PERIOD_1: (&str, &str) = (
     "period_1",
     r#"{
     "ID": "period_1",
@@ -16,7 +16,7 @@ const PERIOD_1: (&'static str, &'static str) = (
   }"#,
 );
 
-const PERIOD_2: (&'static str, &'static str) = (
+const PERIOD_2: (&str, &str) = (
     "period_2",
     r#"{
     "ID": "period_2",
@@ -27,7 +27,7 @@ const PERIOD_2: (&'static str, &'static str) = (
   }"#,
 );
 
-const PERIOD_3: (&'static str, &'static str) = (
+const PERIOD_3: (&str, &str) = (
     "641A3560C84A44BC9E6DDC01F3D75923",
     r#"{
   "ID": "641A3560C84A44BC9E6DDC01F3D75923",
@@ -38,7 +38,7 @@ const PERIOD_3: (&'static str, &'static str) = (
 }
 "#,
 );
-const PERIOD_4: (&'static str, &'static str) = (
+const PERIOD_4: (&str, &str) = (
     "772B3984DBA14A5F941ED0EF857FDB31",
     r#"{
   "ID": "772B3984DBA14A5F941ED0EF857FDB31",

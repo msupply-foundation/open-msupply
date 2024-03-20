@@ -599,7 +599,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
                 )),
                 None,
             )
@@ -610,14 +610,14 @@ mod tests {
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
-            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 20).unwrap())
+            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
         // Query if patient is not alive after date_of_death
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 09, 22).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 9, 22).unwrap(),
                 )),
                 None,
             )
@@ -627,7 +627,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
                 )),
                 None,
             )

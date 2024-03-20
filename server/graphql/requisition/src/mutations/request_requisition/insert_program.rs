@@ -136,7 +136,7 @@ pub struct MaxOrdersReachedForPeriod;
 
 #[Object]
 impl MaxOrdersReachedForPeriod {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Maximum orders reached for program, order type and period"
     }
 }

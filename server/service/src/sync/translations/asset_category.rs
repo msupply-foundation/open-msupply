@@ -18,11 +18,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 pub(crate) struct AssetCategoryTranslation;
 
 impl SyncTranslation for AssetCategoryTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "asset_category"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![AssetClassTranslation.table_name()]
     }
 

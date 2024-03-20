@@ -45,7 +45,7 @@ pub enum StockLineSortField {
     LocationCode,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
@@ -264,17 +264,7 @@ fn to_domain(
 
 impl StockLineFilter {
     pub fn new() -> StockLineFilter {
-        StockLineFilter {
-            expiry_date: None,
-            id: None,
-            is_available: None,
-            item_code_or_name: None,
-            item_id: None,
-            location_id: None,
-            store_id: None,
-            has_packs_in_store: None,
-            location: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -369,7 +359,7 @@ mod test {
                 r.id = "line1".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
             })
         }
         // expiry two
@@ -378,7 +368,7 @@ mod test {
                 r.id = "line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 02, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap());
             })
         }
         // expiry one (expiry null)
@@ -442,7 +432,7 @@ mod test {
                 r.id = "line1".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
                 r.available_number_of_packs = 0.0;
             })
         }
@@ -453,7 +443,7 @@ mod test {
                 r.id = "line2".to_string();
                 r.store_id = mock_store_a().id;
                 r.item_link_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 02, 01).unwrap());
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap());
                 r.available_number_of_packs = 1.0;
             })
         }

@@ -108,7 +108,7 @@ async fn migration_1_00_06() {
         "#
         ))
         .bind::<Timestamp, _>(
-            NaiveDate::from_ymd_opt(2011, 10, 09)
+            NaiveDate::from_ymd_opt(2011, 10, 9)
                 .unwrap()
                 .and_hms_opt(10, 10, 10)
                 .unwrap(),
@@ -127,9 +127,9 @@ async fn migration_1_00_06() {
         "#
         ))
         .bind::<Timestamp, _>(
-            NaiveDate::from_ymd_opt(2022, 01, 03)
+            NaiveDate::from_ymd_opt(2022, 1, 3)
                 .unwrap()
-                .and_hms_opt(01, 02, 03)
+                .and_hms_opt(1, 2, 3)
                 .unwrap(),
         ),
     )
@@ -158,9 +158,9 @@ async fn migration_1_00_06() {
             ),
             (
                 "invoice2_id".to_string(),
-                NaiveDate::from_ymd_opt(2022, 01, 04)
+                NaiveDate::from_ymd_opt(2022, 1, 4)
                     .unwrap()
-                    .and_hms_opt(01, 02, 03)
+                    .and_hms_opt(1, 2, 3)
                     .unwrap()
             )
         ]

@@ -18,7 +18,7 @@ use service::{
     },
 };
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 #[graphql(name = "UpdateRequestRequisitionInput")]
 pub struct UpdateInput {
     pub id: String,
@@ -101,7 +101,7 @@ pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<UpdateRes
 }
 
 impl UpdateInput {
-    pub fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(&self) -> ServiceInput {
         let UpdateInput {
             id,
             colour,
@@ -115,15 +115,15 @@ impl UpdateInput {
         } = self;
 
         ServiceInput {
-            id,
-            colour,
-            their_reference,
-            comment,
-            max_months_of_stock,
-            min_months_of_stock,
+            id: id.to_string(),
+            colour: colour.clone(),
+            their_reference: their_reference.clone(),
+            comment: comment.clone(),
+            max_months_of_stock: *max_months_of_stock,
+            min_months_of_stock: *min_months_of_stock,
             status: status.map(|status| status.to_domain()),
-            other_party_id,
-            expected_delivery_date,
+            other_party_id: other_party_id.clone(),
+            expected_delivery_date: *expected_delivery_date,
         }
     }
 }

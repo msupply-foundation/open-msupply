@@ -7,7 +7,7 @@ impl EqualFilter<String> {
                 equal_any
                     .iter()
                     .filter(|p| allowed.contains(p))
-                    .map(|p| p.clone())
+                    .cloned()
                     .collect(),
             )
         } else {
