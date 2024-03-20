@@ -2583,7 +2583,6 @@ dependencies = [
  "chrono",
  "graphql_core",
  "graphql_general",
- "graphql_types",
  "repository",
  "reqwest",
  "serde 1.0.197",
@@ -2787,21 +2786,15 @@ name = "graphql_types"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
- "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
- "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "regex",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 

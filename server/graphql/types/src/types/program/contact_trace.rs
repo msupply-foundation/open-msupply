@@ -15,10 +15,11 @@ use repository::{
     DateFilter, DatetimeFilter, EqualFilter, ProgramRow, StringFilter,
 };
 
-use crate::types::{EqualFilterGenderInput, GenderInput, GenderType, ProgramNode};
+use crate::types::{EqualFilterGenderInput, GenderInput, GenderType};
 
 use super::{
     document::DocumentNode, patient::PatientNode, program_enrolment::ProgramEnrolmentNode,
+    program_node::ProgramNode,
 };
 
 pub struct ContactTraceNode {
