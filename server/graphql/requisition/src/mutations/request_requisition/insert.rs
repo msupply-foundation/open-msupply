@@ -16,7 +16,7 @@ use service::{
 };
 use util::{constants::expected_delivery_date_offset, date_now_with_offset};
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 #[graphql(name = "InsertRequestRequisitionInput")]
 pub struct InsertInput {
     pub id: String,
@@ -82,7 +82,7 @@ pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<InsertRes
 }
 
 impl InsertInput {
-    pub fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(&self) -> ServiceInput {
         let InsertInput {
             id,
             other_party_id,
@@ -95,13 +95,13 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            id,
-            other_party_id,
-            colour,
-            their_reference,
-            comment,
-            max_months_of_stock,
-            min_months_of_stock,
+            id: id.to_string(),
+            other_party_id: other_party_id.to_string(),
+            colour: colour.clone(),
+            their_reference: their_reference.clone(),
+            comment: comment.clone(),
+            max_months_of_stock: *max_months_of_stock,
+            min_months_of_stock: *min_months_of_stock,
             expected_delivery_date: expected_delivery_date
                 .or(Some(date_now_with_offset(expected_delivery_date_offset()))),
         }

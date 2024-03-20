@@ -22,7 +22,7 @@ pub fn temperature_breaches(
     sort: Option<TemperatureBreachSort>,
 ) -> Result<ListResult<TemperatureBreach>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = TemperatureBreachRepository::new(&connection);
+    let repository = TemperatureBreachRepository::new(connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
@@ -50,11 +50,11 @@ pub fn get_max_or_min_breach_temperature(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<f64>, RepositoryError> {
-    let breach = TemperatureBreachRowRepository::new(&connection)
+    let breach = TemperatureBreachRowRepository::new(connection)
         .find_one_by_id(id)?
         .ok_or(RepositoryError::NotFound)?;
     let logs =
-        TemperatureLogRepository::new(&connection)
+        TemperatureLogRepository::new(connection)
             .query_by_filter(TemperatureLogFilter::new().temperature_breach(
                 TemperatureBreachFilter::new().id(EqualFilter::equal_to(id)),
             ))?;

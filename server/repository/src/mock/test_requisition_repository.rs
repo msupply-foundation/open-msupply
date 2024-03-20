@@ -24,7 +24,7 @@ pub fn mock_request_draft_requisition() -> RequisitionRow {
         r.store_id = "store_a".to_owned();
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -41,7 +41,7 @@ pub fn mock_request_draft_requisition2() -> RequisitionRow {
         r.store_id = "store_a".to_owned();
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -67,7 +67,7 @@ pub fn mock_program_request_draft_requisition() -> RequisitionRow {
         r.store_id = "store_a".to_owned();
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();

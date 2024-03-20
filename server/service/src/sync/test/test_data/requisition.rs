@@ -9,9 +9,9 @@ use repository::{
 };
 use serde_json::json;
 
-const TABLE_NAME: &'static str = "requisition";
+const TABLE_NAME: &str = "requisition";
 
-const REQUISITION_REQUEST: (&'static str, &'static str) = (
+const REQUISITION_REQUEST: (&str, &str) = (
     "B3D3761753DB42A7B3286ACF89FBCA1C",
     r#"{
       "ID": "B3D3761753DB42A7B3286ACF89FBCA1C",
@@ -131,7 +131,7 @@ fn requisition_request_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const REQUISITION_RESPONSE: (&'static str, &'static str) = (
+const REQUISITION_RESPONSE: (&str, &str) = (
     "AA5AA2238EE14654B11B86D52B435FF1",
     r#"{
       "ID": "AA5AA2238EE14654B11B86D52B435FF1",
@@ -244,7 +244,7 @@ fn requisition_response_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const REQUISITION_OM_FIELDS: (&'static str, &'static str) = (
+const REQUISITION_OM_FIELDS: (&str, &str) = (
     "455AA2238EE14654B11B86D52B435FF2",
     r#"{
       "ID": "455AA2238EE14654B11B86D52B435FF2",
@@ -374,7 +374,7 @@ fn requisition_om_fields_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const PROGRAM_REQUISITION_REQUEST: (&'static str, &'static str) = (
+const PROGRAM_REQUISITION_REQUEST: (&str, &str) = (
     "P-B3D3761753DB42A7B3286ACF89FBCA1C",
     r#"{
       "ID": "P-B3D3761753DB42A7B3286ACF89FBCA1C",

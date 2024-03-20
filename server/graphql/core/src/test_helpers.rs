@@ -54,7 +54,7 @@ pub async fn run_test_gql_query<
         debug_no_access_control: true,
     });
 
-    let mut app = actix_web::test::init_service(
+    let app = actix_web::test::init_service(
         actix_web::App::new()
             .app_data(Data::new(
                 Schema::build(
@@ -78,22 +78,18 @@ pub async fn run_test_gql_query<
 
     let mut payload: String;
     if let Some(variables) = variables {
-        payload = format!(
-            "{{\"query\":\"{}\",\"variables\":{}}}",
-            query,
-            variables.to_string()
-        );
+        payload = format!("{{\"query\":\"{}\",\"variables\":{}}}", query, variables);
     } else {
         payload = format!("{{\"query\":\"{}\"}}", query);
     }
-    payload = payload.replace("\n", "");
+    payload = payload.replace('\n', "");
 
     let req = actix_web::test::TestRequest::post()
         .set_payload(payload)
         .uri("/graphql")
         .to_request();
 
-    actix_web::test::call_and_read_body_json(&mut app, req).await
+    actix_web::test::call_and_read_body_json(&app, req).await
 }
 
 async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(

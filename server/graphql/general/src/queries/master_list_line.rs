@@ -88,7 +88,7 @@ pub struct MasterListLineSortInput {
 }
 
 impl MasterListLineSortInput {
-    pub fn to_domain(self) -> MasterListLineSort {
+    pub fn to_domain(&self) -> MasterListLineSort {
         MasterListLineSort {
             key: self.key.into(),
             desc: self.desc,

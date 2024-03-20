@@ -79,11 +79,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(crate) struct TemperatureBreachTranslation;
 impl SyncTranslation for TemperatureBreachTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "temperature_breach"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             SensorTranslation.table_name(),
             StoreTranslation.table_name(),
@@ -196,7 +196,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 }

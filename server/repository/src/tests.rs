@@ -338,7 +338,7 @@ mod repository_test {
         assert_eq!(store_1, loaded_item);
     }
 
-    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) -> () {
+    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) {
         let item_repo = ItemRowRepository::new(&connection);
         item_repo.insert_one(&item).await.unwrap();
 
@@ -848,7 +848,7 @@ mod repository_test {
             )
             .unwrap();
 
-        let raw_result = sql_query(&format!(
+        let raw_result = sql_query(format!(
             r#"select id from requisition where id = '{}'"#,
             mock_request_draft_requisition2().id
         ))
@@ -944,7 +944,7 @@ mod repository_test {
             )))
             .unwrap();
 
-        let raw_result = sql_query(&format!(
+        let raw_result = sql_query(format!(
             r#"SELECT id from requisition_line where id = '{}'"#,
             mock_draft_request_requisition_line2().id
         ))
@@ -973,7 +973,7 @@ mod repository_test {
             )
             .unwrap();
 
-        let raw_result = sql_query(&format!(
+        let raw_result = sql_query(format!(
             r#"SELECT id from requisition_line where requisition_id = '{}' and requested_quantity = 99"#,
             mock_draft_request_requisition_line().requisition_id
         ))
@@ -1136,7 +1136,7 @@ mod repository_test {
                         .expect("Time went backwards");
                     println!("A: Slept for {:?}", sleep_duration);
                     println!("A: writing");
-                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id2".to_string();
                         i.name = "name_a".to_string();
                     }))?;
@@ -1157,13 +1157,13 @@ mod repository_test {
                     let repo = ItemRowRepository::new(&con);
                     let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("B: read");
-                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b".to_string();
                     }))?;
                     println!("B: write 1");
 
-                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b_2".to_string();
                     }))?;

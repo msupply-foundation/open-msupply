@@ -51,7 +51,7 @@ pub fn update_temperature_breach_acknowledgement(
             let temperature_breach_row = validate(connection, &ctx.store_id, &input.id)?;
             let updated_temperature_breach_row =
                 generate_acknowledgement(input, temperature_breach_row);
-            TemperatureBreachRowRepository::new(&connection)
+            TemperatureBreachRowRepository::new(connection)
                 .upsert_one(&updated_temperature_breach_row)?;
 
             get_temperature_breach(ctx, updated_temperature_breach_row.id)
@@ -75,7 +75,7 @@ fn validate_acknowledgement_input(
             return Err(UpdateTemperatureBreachError::CommentNotProvided);
         }
     }
-    Ok({})
+    Ok(())
 }
 
 pub fn update_temperature_breach(
@@ -87,7 +87,7 @@ pub fn update_temperature_breach(
         .transaction_sync(|connection| {
             let temperature_breach_row = validate(connection, &ctx.store_id, &input.id)?;
             let updated_temperature_breach_row = generate(input, temperature_breach_row);
-            TemperatureBreachRowRepository::new(&connection)
+            TemperatureBreachRowRepository::new(connection)
                 .upsert_one(&updated_temperature_breach_row)?;
 
             get_temperature_breach(ctx, updated_temperature_breach_row.id)
@@ -106,7 +106,7 @@ pub fn validate(
         Some(temperature_breach_row) => temperature_breach_row,
         None => return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotExist),
     };
-    if temperature_breach_row.store_id != store_id.to_string() {
+    if temperature_breach_row.store_id != *store_id {
         return Err(UpdateTemperatureBreachError::TemperatureBreachDoesNotBelongToCurrentStore);
     }
 

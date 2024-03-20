@@ -14,7 +14,7 @@ use service::{
     },
 };
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 #[graphql(name = "InsertRequestRequisitionLineInput")]
 pub struct InsertInput {
     pub id: String,
@@ -78,7 +78,7 @@ pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<Inser
 }
 
 impl InsertInput {
-    pub fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(&self) -> ServiceInput {
         let InsertInput {
             id,
             item_id,
@@ -88,11 +88,11 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            id,
-            item_id,
-            requisition_id,
-            requested_quantity,
-            comment,
+            id: id.to_string(),
+            item_id: item_id.to_string(),
+            requisition_id: requisition_id.to_string(),
+            requested_quantity: *requested_quantity,
+            comment: comment.clone(),
         }
     }
 }
@@ -134,7 +134,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 pub struct RequisitionLineWithItemIdExists;
 #[Object]
 impl RequisitionLineWithItemIdExists {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Requisition line already exists for this item"
     }
 }

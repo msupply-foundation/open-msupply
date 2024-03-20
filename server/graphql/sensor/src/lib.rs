@@ -40,7 +40,7 @@ impl SensorQueries {
         // always filter by store_id
         let filter = filter
             .map(SensorFilter::from)
-            .unwrap_or(SensorFilter::new())
+            .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
 
         let sensors = service_provider

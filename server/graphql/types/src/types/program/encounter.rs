@@ -346,7 +346,7 @@ impl EncounterNode {
         self.encounter_row()
             .status
             .as_ref()
-            .map(|status| EncounterNodeStatus::from_domain(status))
+            .map(EncounterNodeStatus::from_domain)
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {

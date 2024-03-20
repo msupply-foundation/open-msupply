@@ -38,7 +38,7 @@ pub fn insert_temperature_breach(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_temperature_breach = generate(&ctx.store_id, input);
-            TemperatureBreachRowRepository::new(&connection).upsert_one(&new_temperature_breach)?;
+            TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
 
             get_temperature_breach(ctx, new_temperature_breach.id)
                 .map_err(InsertTemperatureBreachError::from)

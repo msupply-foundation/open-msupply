@@ -93,7 +93,7 @@ fn update_point_temperatures(
                         None => None,
                     };
                     TemperaturePointNode {
-                        mid_point: mid_point.clone(),
+                        mid_point: *mid_point,
                         temperature: breach_temperature.or(*temperature),
                         breach_ids: breach_ids.clone(),
                     }
@@ -390,8 +390,8 @@ mod test {
             assert_eq!(
                 input,
                 TemperatureChartInput {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 5).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 15).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 00, 5).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 1, 23, 00, 15).unwrap(),
                     number_of_data_points: 20,
                     filter: None
                 }
@@ -399,18 +399,18 @@ mod test {
 
             let intervals = vec![
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 0).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 00, 0).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 1, 23, 00, 10).unwrap(),
                     interval_id: "interval1".to_string(),
                 },
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 10).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 00, 10).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 1, 23, 00, 20).unwrap(),
                     interval_id: "interval2".to_string(),
                 },
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 00, 20).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 00, 30).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 00, 20).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 1, 23, 00, 30).unwrap(),
                     interval_id: "interval3".to_string(),
                 },
             ];

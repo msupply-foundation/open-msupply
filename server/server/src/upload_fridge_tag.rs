@@ -17,7 +17,7 @@ use service::{
 };
 use util::prepare_file_dir;
 
-const TEMP_FRIDGETAG_FILE_DIR: &'static str = "fridge_tag";
+const TEMP_FRIDGETAG_FILE_DIR: &str = "fridge_tag";
 
 pub fn config_upload_fridge_tag(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);

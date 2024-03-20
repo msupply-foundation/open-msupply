@@ -32,7 +32,7 @@ pub enum UpdateStocktakeStatusInput {
 pub struct SnapshotCountCurrentCountMismatch(StocktakeLineConnector);
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Snapshot count doesn't match the current stock count"
     }
 
@@ -45,7 +45,7 @@ pub struct StockLinesReducedBelowZero(pub Vec<StockLine>);
 
 #[Object]
 impl StockLinesReducedBelowZero {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Stock lines exist in new outbound shipments. "
     }
 
@@ -148,7 +148,7 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
 }
 
 impl UpdateInput {
-    pub fn to_domain(self) -> ServiceInput {
+    pub fn to_domain(&self) -> ServiceInput {
         let UpdateInput {
             id,
             comment,
@@ -159,12 +159,12 @@ impl UpdateInput {
         } = self;
 
         ServiceInput {
-            id,
-            comment,
-            description,
+            id: id.to_string(),
+            comment: comment.clone(),
+            description: description.clone(),
             status: status.map(|status| status.to_domain()),
-            is_locked,
-            stocktake_date,
+            is_locked: *is_locked,
+            stocktake_date: *stocktake_date,
         }
     }
 }

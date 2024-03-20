@@ -12,7 +12,7 @@ pub struct StaticFile {
     pub path: String,
 }
 
-const STATIC_FILE_DIR: &'static str = "static_files";
+const STATIC_FILE_DIR: &str = "static_files";
 
 /// Stores files in a temp storage and associate an id with each file.
 /// This can, for example, be used to deposition a file for a user and the user can pick up the file
@@ -131,7 +131,7 @@ mod test {
 
     use super::StaticFileService;
 
-    const TEST_DIR: &'static str = "test_static_files";
+    const TEST_DIR: &str = "test_static_files";
 
     #[test]
     fn test_static_file_storage() {

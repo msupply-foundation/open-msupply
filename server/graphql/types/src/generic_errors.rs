@@ -5,7 +5,7 @@ use repository::StockLine;
 pub struct CannotDeleteInvoiceWithLines(pub InvoiceLineConnector);
 #[Object]
 impl CannotDeleteInvoiceWithLines {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Cannot delete invoice with existing lines"
     }
 
@@ -24,7 +24,7 @@ impl StockLineReducedBelowZero {
 
 #[Object]
 impl StockLineReducedBelowZero {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Stock line reduced below zero."
     }
 

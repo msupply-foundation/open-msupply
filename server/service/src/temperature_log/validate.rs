@@ -10,12 +10,12 @@ pub fn check_temperature_log_does_not_exist(
     let temperature_logs = TemperatureLogRepository::new(connection)
         .query_by_filter(TemperatureLogFilter::new().id(EqualFilter::equal_to(id)))?;
 
-    Ok(temperature_logs.len() == 0)
+    Ok(temperature_logs.is_empty())
 }
 
 pub fn check_temperature_log_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<TemperatureLogRow>, RepositoryError> {
-    Ok(TemperatureLogRowRepository::new(connection).find_one_by_id(id)?)
+    TemperatureLogRowRepository::new(connection).find_one_by_id(id)
 }

@@ -323,7 +323,7 @@ impl SelfRequest for SelfRequestImpl {
         user_data: RequestUserData,
     ) -> async_graphql::Response {
         let query = request.data(user_data);
-        self.schema.execute(query).await.into()
+        self.schema.execute(query).await
     }
 }
 

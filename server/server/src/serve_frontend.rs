@@ -10,7 +10,7 @@ use rust_embed::RustEmbed;
 #[folder = "../../client/packages/host/dist"]
 struct Asset;
 
-const INDEX: &'static str = "index.html";
+const INDEX: &str = "index.html";
 
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs
 fn serve_frontend(path: &str) -> HttpResponse {
