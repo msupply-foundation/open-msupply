@@ -9,7 +9,9 @@ use graphql_core::{
 use repository::assets::asset_catalogue_item_row::AssetCatalogueItemRow;
 use service::ListResult;
 
-use super::{AssetCategoryNode, AssetClassNode, AssetTypeNode};
+use super::asset_category::AssetCategoryNode;
+use super::asset_class::AssetClassNode;
+use super::asset_type::AssetTypeNode;
 
 #[derive(PartialEq, Debug)]
 pub struct AssetCatalogueItemNode {

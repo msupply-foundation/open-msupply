@@ -14,6 +14,7 @@ service = { path = "../../service" }
 util = { path = "../../util" }
 graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
+graphql_asset_catalogue = { path = "../asset_catalogue" }
 
 actix-web = { workspace = true }
 anymap= { workspace = true }

@@ -21,18 +21,6 @@ pub use self::stock_line::*;
 pub mod location;
 pub use self::location::*;
 
-pub mod asset_catalogue_item;
-pub use self::asset_catalogue_item::*;
-
-pub mod asset_category;
-pub use self::asset_category::*;
-
-pub mod asset_class;
-pub use self::asset_class::*;
-
-pub mod asset_type;
-pub use self::asset_type::*;
-
 pub mod master_list;
 pub use self::master_list::*;
 

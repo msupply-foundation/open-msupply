@@ -7,15 +7,15 @@ use graphql_core::{
     ContextExt,
 };
 
-use graphql_types::types::{
-    AssetClassConnector, AssetClassNode, AssetClassResponse, AssetClassesResponse,
-};
-
 use repository::asset_class::{AssetClassFilter, AssetClassSort, AssetClassSortField};
 use repository::{EqualFilter, PaginationOption, StringFilter};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::query_class::{get_asset_class, get_asset_classes},
+};
+
+use crate::types::asset_class::{
+    AssetClassConnector, AssetClassNode, AssetClassResponse, AssetClassesResponse,
 };
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]

@@ -7,7 +7,6 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use asset_catalogue::AssetCatalogueQueries;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
 use async_graphql::{MergedObject, Response};
@@ -24,6 +23,7 @@ use graphql_general::{
 };
 
 use graphql_asset::{AssetLogMutations, AssetLogQueries, AssetMutations, AssetQueries};
+use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
