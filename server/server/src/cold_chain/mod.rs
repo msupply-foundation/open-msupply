@@ -47,7 +47,7 @@ fn validate_request(
         None => None,
     };
 
-    validate_access(&service_provider, &service_context, &auth_data, token)
+    validate_access(service_provider, &service_context, auth_data, token)
 }
 
 /// Validates current user is authenticated and authorized

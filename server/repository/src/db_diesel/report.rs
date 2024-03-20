@@ -160,6 +160,6 @@ fn map_report_row_join_to_report(
 ) -> Result<Report, RepositoryError> {
     Ok(Report {
         report_row,
-        argument_schema: argument_schema.map(|s| schema_from_row(s)).transpose()?,
+        argument_schema: argument_schema.map(schema_from_row).transpose()?,
     })
 }

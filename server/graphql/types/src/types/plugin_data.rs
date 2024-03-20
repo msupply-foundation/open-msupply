@@ -80,7 +80,7 @@ impl PluginDataConnector {
             total_count: plugin_data.len() as u32,
             nodes: plugin_data
                 .into_iter()
-                .map(|plugin_data| PluginDataNode::from_domain(plugin_data))
+                .map(PluginDataNode::from_domain)
                 .collect(),
         }
     }

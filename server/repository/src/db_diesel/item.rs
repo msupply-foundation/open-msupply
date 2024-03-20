@@ -547,13 +547,13 @@ mod tests {
 
         for row in item_rows.iter() {
             ItemRowRepository::new(&storage_connection)
-                .upsert_one(&row)
+                .upsert_one(row)
                 .unwrap();
         }
 
         for row in item_link_rows.iter() {
             ItemLinkRowRepository::new(&storage_connection)
-                .upsert_one(&row)
+                .upsert_one(row)
                 .unwrap();
         }
 

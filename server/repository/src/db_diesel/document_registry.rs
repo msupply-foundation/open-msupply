@@ -94,7 +94,7 @@ impl<'a> DocumentRegistryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<DocumentRegistrySchemaJoin>(&self.connection.connection)?
             .into_iter()
-            .map(|data| to_domain(data))
+            .map(to_domain)
             .collect();
 
         result

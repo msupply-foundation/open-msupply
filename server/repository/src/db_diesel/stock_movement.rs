@@ -280,7 +280,7 @@ mod test {
                     id: "n/a".to_string(),
                     item_id: mock_item_a().id,
                     store_id: store().id,
-                    quantity: 10 * 10 * -1,
+                    quantity: -(10 * 10),
                     datetime: NaiveDate::from_ymd_opt(2020, 11, 3)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)

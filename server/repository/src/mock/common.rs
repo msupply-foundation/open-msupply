@@ -16,11 +16,11 @@ pub fn insert_full_mock_requisition(
     requisition: &FullMockRequisition,
     connection: &StorageConnection,
 ) {
-    RequisitionRowRepository::new(&connection)
+    RequisitionRowRepository::new(connection)
         .upsert_one(&requisition.requisition)
         .unwrap();
     for line in requisition.lines.iter() {
-        RequisitionLineRowRepository::new(&connection)
+        RequisitionLineRowRepository::new(connection)
             .upsert_one(line)
             .unwrap();
     }
@@ -69,18 +69,18 @@ pub fn insert_full_mock_master_list(
     full_master_list: &FullMockMasterList,
     connection: &StorageConnection,
 ) {
-    MasterListRowRepository::new(&connection)
+    MasterListRowRepository::new(connection)
         .upsert_one(&full_master_list.master_list)
         .unwrap();
 
     for line in full_master_list.lines.iter() {
-        MasterListLineRowRepository::new(&connection)
+        MasterListLineRowRepository::new(connection)
             .upsert_one(line)
             .unwrap();
     }
 
     for join in full_master_list.joins.iter() {
-        MasterListNameJoinRepository::new(&connection)
+        MasterListNameJoinRepository::new(connection)
             .upsert_one(join)
             .unwrap();
     }

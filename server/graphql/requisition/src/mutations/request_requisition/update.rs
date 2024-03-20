@@ -101,7 +101,7 @@ pub fn map_response(from: Result<Requisition, ServiceError>) -> Result<UpdateRes
 }
 
 impl UpdateInput {
-    pub fn to_domain(&self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             colour,
@@ -410,7 +410,7 @@ mod test {
                     min_months_of_stock: Some(2.0),
                     other_party_id: Some("other_party_id".to_string()),
                     status: Some(UpdateRequestRequisitionStatus::Sent),
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap())
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
                 }
             );
             Ok(inline_init(|r: &mut Requisition| {
