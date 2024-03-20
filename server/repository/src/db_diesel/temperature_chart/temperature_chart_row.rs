@@ -259,14 +259,8 @@ mod test {
         pretty_assertions::assert_eq!(
             diesel::debug_query::<DBType, _>(&query)
                 .to_string()
-                .replace("\t", "")
-                .replace("\n", "")
-                .replace(" ", ""),
-            result
-                .to_string()
-                .replace("\t", "")
-                .replace("\n", "")
-                .replace(" ", ""),
+                .replace(['\t', '\n', ' '], ""),
+            result.to_string().replace(['\t', '\n', ' '], ""),
         );
     }
 

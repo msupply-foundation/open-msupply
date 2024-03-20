@@ -82,12 +82,7 @@ impl<'a> StockLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -108,12 +103,7 @@ impl<'a> StockLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         if let Some(sort) = sort {
             match sort.key {
@@ -241,7 +231,7 @@ fn apply_item_filter(
             item_filter.is_active = Some(true);
             let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))
-                .unwrap_or(Vec::new()); // if there is a database issue, allow the filter to fail silently
+                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
             return query.filter(item::id.eq_any(item_ids));

@@ -600,7 +600,7 @@ mod repository_test {
 
         // setup
         NameRowRepository::new(&connection)
-            .insert_one(&&data::name_1())
+            .insert_one(&data::name_1())
             .await
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
@@ -650,7 +650,7 @@ mod repository_test {
         insert_item_and_link(&data::item_2(), &connection).await;
 
         NameRowRepository::new(&connection)
-            .insert_one(&&data::name_1())
+            .insert_one(&data::name_1())
             .await
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
@@ -698,7 +698,7 @@ mod repository_test {
         insert_item_and_link(&data::item_service_1(), &connection).await;
 
         NameRowRepository::new(&connection)
-            .insert_one(&&data::name_1())
+            .insert_one(&data::name_1())
             .await
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
@@ -724,7 +724,7 @@ mod repository_test {
         // line stats
         let repo = InvoiceLineRepository::new(&connection);
         let invoice_1_id = data::invoice_1().id;
-        let result = repo.stats(&vec![invoice_1_id.clone()]).unwrap();
+        let result = repo.stats(&[invoice_1_id.clone()]).unwrap();
         let stats_invoice_1 = result
             .into_iter()
             .find(|row| row.invoice_id == invoice_1_id)
@@ -881,7 +881,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() > 0); // Sanity check
+        assert!(!raw_result.is_empty()); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -907,7 +907,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() > 0); // Sanity check
+        assert!(!raw_result.is_empty()); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -951,7 +951,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() == 0); // Record was deleted
+        assert!(raw_result.is_empty()); // Record was deleted
         assert_eq!(
             raw_result,
             result
@@ -980,7 +980,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() > 0); // Sanity check
+        assert!(!raw_result.is_empty()); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -1154,7 +1154,7 @@ mod repository_test {
             let result: Result<(), TransactionError<RepositoryError>> = connection
                 .transaction_sync(|con| {
                     println!("B: transaction started");
-                    let repo = ItemRowRepository::new(&con);
+                    let repo = ItemRowRepository::new(con);
                     let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("B: read");
                     repo.upsert_one(&inline_init(|i: &mut ItemRow| {

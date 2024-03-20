@@ -99,14 +99,15 @@ async fn migration_1_00_06() {
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO invoice 
             (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
             ('invoice1_id', 'store_id', 'name_id', 1, 'INBOUND_SHIPMENT', 'NEW', false, $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(
             NaiveDate::from_ymd_opt(2011, 10, 9)
                 .unwrap()
@@ -118,14 +119,15 @@ async fn migration_1_00_06() {
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO invoice 
             (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
             ('invoice2_id', 'store_id', 'name_id', 2, 'INBOUND_SHIPMENT', 'NEW', false, $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(
             NaiveDate::from_ymd_opt(2022, 1, 3)
                 .unwrap()

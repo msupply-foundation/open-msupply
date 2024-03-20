@@ -7,7 +7,6 @@ use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use repository::contact_trace::ContactTraceFilter;
 use repository::{
     DateFilter, EqualFilter, Pagination, PaginationOption, Patient, PatientFilter,
     ProgramEnrolmentFilter, StringFilter,
@@ -108,7 +107,7 @@ impl PatientNode {
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.patient.date_of_birth.clone()
+        self.patient.date_of_birth
     }
 
     pub async fn age(&self) -> Option<i64> {
@@ -147,7 +146,7 @@ impl PatientNode {
     }
 
     pub async fn date_of_death(&self) -> Option<NaiveDate> {
-        self.patient.date_of_death.clone()
+        self.patient.date_of_death
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
@@ -199,7 +198,7 @@ impl PatientNode {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(ProgramEnrolmentFilter::from)
-            .unwrap_or(ProgramEnrolmentFilter::new())
+            .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(&self.patient.id));
 
         let nodes: Vec<_> = ctx
@@ -237,9 +236,7 @@ impl PatientNode {
         let service_provider = ctx.service_provider();
         let context = service_provider.basic_context()?;
 
-        let mut filter = filter
-            .map(|f| f.to_domain_filter())
-            .unwrap_or(ContactTraceFilter::default());
+        let mut filter = filter.map(|f| f.to_domain_filter()).unwrap_or_default();
         filter.patient_id = Some(EqualFilter::equal_to(&self.patient.id));
         let result = service_provider
             .contact_trace_service

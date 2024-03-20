@@ -40,7 +40,7 @@ impl TemperatureLogQueries {
         // always filter by store_id
         let filter = filter
             .map(TemperatureLogFilter::from)
-            .unwrap_or(TemperatureLogFilter::new())
+            .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
 
         let temperature_logs = service_provider

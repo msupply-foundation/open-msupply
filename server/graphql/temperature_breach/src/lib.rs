@@ -38,7 +38,7 @@ impl TemperatureBreachQueries {
         // always filter by store_id
         let filter = filter
             .map(TemperatureBreachFilter::from)
-            .unwrap_or(TemperatureBreachFilter::new())
+            .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
 
         let temperature_breaches = service_provider
