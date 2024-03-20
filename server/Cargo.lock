@@ -2325,7 +2325,6 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_types",
  "repository",
  "reqwest",
  "serde 1.0.197",
