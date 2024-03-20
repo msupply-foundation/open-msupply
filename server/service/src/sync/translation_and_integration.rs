@@ -44,17 +44,18 @@ impl<'a> TranslationAndIntegration<'a> {
         let mut translation_results = Vec::new();
 
         for translator in translators.iter() {
-            if !translator.should_translate_from_sync_record(&sync_record) {
+            if !translator.should_translate_from_sync_record(sync_record) {
                 continue;
             }
 
             let translation_result = match sync_record.action {
                 SyncBufferAction::Upsert => translator
-                    .try_translate_from_upsert_sync_record(self.connection, &sync_record)?,
+                    .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
                 SyncBufferAction::Delete => translator
-                    .try_translate_from_delete_sync_record(self.connection, &sync_record)?,
-                SyncBufferAction::Merge => translator
-                    .try_translate_from_merge_sync_record(self.connection, &sync_record)?,
+                    .try_translate_from_delete_sync_record(self.connection, sync_record)?,
+                SyncBufferAction::Merge => {
+                    translator.try_translate_from_merge_sync_record(self.connection, sync_record)?
+                }
             };
 
             match translation_result {
@@ -99,7 +100,7 @@ impl<'a> TranslationAndIntegration<'a> {
         };
 
         for (number_of_records_integrated, sync_record) in sync_records.into_iter().enumerate() {
-            let translation_result = match self.translate_sync_record(&sync_record, &translators) {
+            let translation_result = match self.translate_sync_record(&sync_record, translators) {
                 Ok(translation_result) => translation_result,
                 // Record error in sync buffer and in result, continue to next sync_record
                 Err(translation_error) => {
@@ -176,7 +177,7 @@ impl IntegrationOperation {
 
 pub(crate) fn integrate(
     connection: &StorageConnection,
-    integration_records: &Vec<IntegrationOperation>,
+    integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
     let start_nested_transaction = { connection.transaction_level.get() > 0 };
@@ -202,18 +203,12 @@ impl TranslationAndIntegrationResults {
     }
 
     fn insert_error(&mut self, table_name: &str) {
-        let entry = self
-            .0
-            .entry(table_name.to_owned())
-            .or_insert(Default::default());
+        let entry = self.0.entry(table_name.to_owned()).or_default();
         entry.errors_count += 1;
     }
 
     fn insert_success(&mut self, table_name: &str) {
-        let entry = self
-            .0
-            .entry(table_name.to_owned())
-            .or_insert(Default::default());
+        let entry = self.0.entry(table_name.to_owned()).or_default();
         entry.integrated_count += 1;
     }
 }
@@ -241,7 +236,7 @@ mod test {
                 // Doesn't fail
                 let result = integrate(
                     connection,
-                    &vec![IntegrationOperation::upsert(inline_init(
+                    &[IntegrationOperation::upsert(inline_init(
                         |r: &mut UnitRow| {
                             r.id = "unit".to_string();
                         },
@@ -253,7 +248,7 @@ mod test {
                 // Fails due to referencial constraint
                 let result = integrate(
                     connection,
-                    &vec![IntegrationOperation::upsert(inline_init(
+                    &[IntegrationOperation::upsert(inline_init(
                         |r: &mut ItemRow| {
                             r.id = "item".to_string();
                             r.unit_id = Some("invalid".to_string());

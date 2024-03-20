@@ -134,7 +134,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

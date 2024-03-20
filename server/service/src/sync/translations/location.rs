@@ -88,13 +88,13 @@ impl SyncTranslation for LocationTranslation {
             name,
             code,
             on_hold,
-            store_id: store_id,
+            store_id,
         };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

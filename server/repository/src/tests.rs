@@ -339,12 +339,12 @@ mod repository_test {
     }
 
     async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) {
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&item).await.unwrap();
+        let item_repo = ItemRowRepository::new(connection);
+        item_repo.insert_one(item).await.unwrap();
 
-        let item_link_repo = ItemLinkRowRepository::new(&connection);
+        let item_link_repo = ItemLinkRowRepository::new(connection);
         item_link_repo
-            .insert_one_or_ignore(&mock_item_link_from_item(&item))
+            .insert_one_or_ignore(&mock_item_link_from_item(item))
             .unwrap();
     }
 
