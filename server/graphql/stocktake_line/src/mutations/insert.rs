@@ -137,7 +137,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 }
 
 impl InsertInput {
-    pub fn to_domain(&self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
             stocktake_id,
@@ -156,22 +156,22 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            id: id.to_string(),
-            stocktake_id: stocktake_id.to_string(),
-            stock_line_id: stock_line_id.clone(),
-            location: location.clone().map(|location| NullableUpdate {
+            id,
+            stocktake_id,
+            stock_line_id,
+            location: location.map(|location| NullableUpdate {
                 value: location.value,
             }),
-            comment: comment.clone(),
-            counted_number_of_packs: *counted_number_of_packs,
-            item_id: item_id.clone(),
-            batch: batch.clone(),
-            expiry_date: *expiry_date,
-            pack_size: *pack_size,
-            cost_price_per_pack: *cost_price_per_pack,
-            sell_price_per_pack: *sell_price_per_pack,
-            note: note.clone(),
-            inventory_adjustment_reason_id: inventory_adjustment_reason_id.clone(),
+            comment,
+            counted_number_of_packs,
+            item_id,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note,
+            inventory_adjustment_reason_id,
         }
     }
 }

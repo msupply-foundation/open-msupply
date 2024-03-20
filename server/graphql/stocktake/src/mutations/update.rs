@@ -148,7 +148,7 @@ fn map_error(err: ServiceError) -> Result<UpdateErrorInterface> {
 }
 
 impl UpdateInput {
-    pub fn to_domain(&self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             comment,
@@ -159,12 +159,12 @@ impl UpdateInput {
         } = self;
 
         ServiceInput {
-            id: id.to_string(),
-            comment: comment.clone(),
-            description: description.clone(),
+            id,
+            comment,
+            description,
             status: status.map(|status| status.to_domain()),
-            is_locked: *is_locked,
-            stocktake_date: *stocktake_date,
+            is_locked,
+            stocktake_date,
         }
     }
 }

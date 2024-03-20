@@ -14,7 +14,7 @@ use service::{
     },
 };
 
-#[derive(InputObject, Clone)]
+#[derive(InputObject)]
 #[graphql(name = "InsertRequestRequisitionLineInput")]
 pub struct InsertInput {
     pub id: String,
@@ -78,7 +78,7 @@ pub fn map_response(from: Result<RequisitionLine, ServiceError>) -> Result<Inser
 }
 
 impl InsertInput {
-    pub fn to_domain(&self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let InsertInput {
             id,
             item_id,
@@ -88,11 +88,11 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            id: id.to_string(),
-            item_id: item_id.to_string(),
-            requisition_id: requisition_id.to_string(),
-            requested_quantity: *requested_quantity,
-            comment: comment.clone(),
+            id,
+            item_id,
+            requisition_id,
+            requested_quantity,
+            comment,
         }
     }
 }
