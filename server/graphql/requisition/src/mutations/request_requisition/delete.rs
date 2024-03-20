@@ -15,7 +15,7 @@ use graphql_core::{
 };
 
 use crate::mutations::errors::CannotDeleteRequisitionWithLines;
-#[derive(InputObject, Clone)]
+#[derive(InputObject)]
 #[graphql(name = "DeleteRequestRequisitionInput")]
 pub struct DeleteInput {
     pub id: String,
@@ -74,9 +74,9 @@ pub fn map_response(from: Result<String, ServiceError>) -> Result<DeleteResponse
 }
 
 impl DeleteInput {
-    pub fn to_domain(&self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let DeleteInput { id } = self;
-        ServiceInput { id: id.to_string() }
+        ServiceInput { id }
     }
 }
 

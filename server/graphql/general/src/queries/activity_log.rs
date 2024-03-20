@@ -85,7 +85,7 @@ pub fn activity_logs(
 }
 
 impl ActivityLogFilterInput {
-    pub fn to_domain(&self) -> ActivityLogFilter {
+    pub fn to_domain(self) -> ActivityLogFilter {
         let ActivityLogFilterInput {
             id,
             r#type,
@@ -95,13 +95,11 @@ impl ActivityLogFilterInput {
         } = self;
 
         ActivityLogFilter {
-            id: id.clone().map(EqualFilter::from),
-            r#type: r#type
-                .clone()
-                .map(|t| map_filter!(t, ActivityLogNodeType::to_domain)),
-            user_id: user_id.clone().map(EqualFilter::from),
-            store_id: store_id.clone().map(EqualFilter::from),
-            record_id: record_id.clone().map(EqualFilter::from),
+            id: id.map(EqualFilter::from),
+            r#type: r#type.map(|t| map_filter!(t, ActivityLogNodeType::to_domain)),
+            user_id: user_id.map(EqualFilter::from),
+            store_id: store_id.map(EqualFilter::from),
+            record_id: record_id.map(EqualFilter::from),
         }
     }
 }
