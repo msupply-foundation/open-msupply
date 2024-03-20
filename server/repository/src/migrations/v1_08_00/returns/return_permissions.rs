@@ -5,8 +5,10 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TYPE permission_type ADD VALUE 'OUTBOUND_RETURN_MUTATE';
             ALTER TYPE permission_type ADD VALUE 'OUTBOUND_RETURN_QUERY';
+            ALTER TYPE permission_type ADD VALUE 'OUTBOUND_RETURN_MUTATE';
+            ALTER TYPE permission_type ADD VALUE 'INBOUND_RETURN_QUERY';
+            ALTER TYPE permission_type ADD VALUE 'INBOUND_RETURN_MUTATE';
             "#
         )?;
     }
