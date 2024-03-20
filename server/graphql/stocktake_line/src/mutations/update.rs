@@ -90,7 +90,7 @@ pub fn map_response(from: Result<StocktakeLine, ServiceError>) -> Result<UpdateR
 }
 
 impl UpdateInput {
-    pub fn to_domain(&self) -> ServiceInput {
+    pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
             location,
@@ -107,20 +107,20 @@ impl UpdateInput {
         } = self;
 
         ServiceInput {
-            id: id.to_string(),
-            location: location.clone().map(|location| NullableUpdate {
+            id,
+            location: location.map(|location| NullableUpdate {
                 value: location.value,
             }),
-            comment: comment.clone(),
-            snapshot_number_of_packs: *snapshot_number_of_packs,
-            counted_number_of_packs: *counted_number_of_packs,
-            batch: batch.clone(),
-            expiry_date: *expiry_date,
-            pack_size: *pack_size,
-            cost_price_per_pack: *cost_price_per_pack,
-            sell_price_per_pack: *sell_price_per_pack,
-            note: note.clone(),
-            inventory_adjustment_reason_id: inventory_adjustment_reason_id.clone(),
+            comment,
+            snapshot_number_of_packs,
+            counted_number_of_packs,
+            batch,
+            expiry_date,
+            pack_size,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            note,
+            inventory_adjustment_reason_id,
         }
     }
 }
