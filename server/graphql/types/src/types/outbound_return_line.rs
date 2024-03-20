@@ -83,9 +83,7 @@ impl OutboundReturnLineNode {
     }
 
     pub async fn available_number_of_packs(&self) -> f64 {
-        // Quantity available for return should include the number of packs already in the return
-        // (Available stock is reduced as soon as it is added to a return)
-        self.stock_line_row().available_number_of_packs + self.return_line.number_of_packs
+        self.return_line.available_number_of_packs
     }
 
     pub async fn pack_size(&self) -> &i32 {
