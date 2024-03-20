@@ -6376,8 +6376,8 @@ export type UpdateNameErrorInterface = {
 export type UpdateOutboundReturnInput = {
   colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
-  outboundReturnId: Scalars['String']['input'];
   status?: InputMaybe<UpdateOutboundReturnStatusInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
   transportReference?: InputMaybe<Scalars['String']['input']>;
