@@ -20,6 +20,10 @@ pub struct UpdateInput {
     // supplier_id: String,
     status: Option<UpdateOutboundReturnStatusInput>,
     comment: Option<String>,
+    colour: Option<String>,
+    on_hold: Option<bool>,
+    their_reference: Option<String>,
+    transport_reference: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -86,12 +90,20 @@ impl UpdateInput {
             outbound_return_id,
             comment,
             status,
+            colour,
+            on_hold,
+            their_reference,
+            transport_reference,
         }: UpdateInput = self;
 
         ServiceInput {
             outbound_return_id,
             comment,
             status: status.map(|status| status.to_domain()),
+            colour,
+            on_hold,
+            their_reference,
+            transport_reference,
         }
     }
 }
