@@ -9,7 +9,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-// use graphql_types::types::*;
 use mutations::{update_sensor, UpdateSensorInput, UpdateSensorResponse};
 use repository::{
     temperature_breach::TemperatureBreachFilter, EqualFilter, PaginationOption, SensorFilter,
