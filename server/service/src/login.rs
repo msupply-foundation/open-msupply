@@ -381,6 +381,7 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // customer invoices
             Permissions::ViewCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentQuery);
+                output.insert(Permission::InboundReturnQuery);
                 output.insert(Permission::PrescriptionQuery);
             }
             Permissions::CreateCustomerInvoices => {
@@ -394,17 +395,20 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // supplier invoices
             Permissions::ViewSupplierInvoices => {
                 output.insert(Permission::InboundShipmentQuery);
+                output.insert(Permission::OutboundReturnQuery);
             }
             Permissions::EditSupplierInvoices => {
                 output.insert(Permission::InboundShipmentMutate);
-                // TODO: WHICH?
-                output.insert(Permission::OutboundReturnMutate);
-            }
-            Permissions::ReturnStockFromSupplierInvoices => {
-                output.insert(Permission::OutboundReturnMutate);
             }
             Permissions::CreateSupplierInvoices => {
                 output.insert(Permission::InboundShipmentMutate);
+            }
+            // returns
+            Permissions::ReturnStockFromSupplierInvoices => {
+                output.insert(Permission::OutboundReturnMutate);
+            }
+            Permissions::ReturnStockFromCustomerInvoices => {
+                output.insert(Permission::InboundReturnMutate);
             }
             // requisitions
             Permissions::ViewRequisitions => {
