@@ -17,15 +17,12 @@ graphql_types = { path = "../types" }
 graphql_invoice = { path = "../invoice" }
 
 actix-web = { workspace = true }
-anymap= { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
-reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-thiserror = { workspace = true }
 strum = { version = "0.26", features = ["derive"] }
 
 [dev-dependencies]
