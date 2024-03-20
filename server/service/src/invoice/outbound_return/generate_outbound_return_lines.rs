@@ -11,6 +11,7 @@ pub struct OutboundReturnLine {
     pub reason_id: Option<String>,
     pub note: Option<String>,
     pub number_of_packs: f64,
+    pub available_number_of_packs: f64,
     pub stock_line: StockLine,
 }
 
@@ -169,6 +170,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
             reason_id: None,
             note: None,
             number_of_packs: 0.0,
+            available_number_of_packs: stock_line.stock_line_row.available_number_of_packs,
             stock_line,
         };
     };
@@ -181,11 +183,17 @@ fn outbound_line_from_stock_line_and_invoice_line(
         ..
     } = invoice_line.invoice_line_row;
 
+    // Quantity available for return should include the number of packs already in the return
+    // (Available stock is reduced as soon as it is added to a return)
+    let number_of_packs_available_to_return =
+        stock_line.stock_line_row.available_number_of_packs + number_of_packs;
+
     return OutboundReturnLine {
         id,
         note,
         number_of_packs,
         reason_id: return_reason_id,
+        available_number_of_packs: number_of_packs_available_to_return,
         stock_line,
     };
 }
