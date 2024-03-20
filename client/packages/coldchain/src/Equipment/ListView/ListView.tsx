@@ -11,12 +11,13 @@ import {
   useToggle,
   TooltipTextCell,
 } from '@openmsupply-client/common';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
-import { ImportAssetModal } from '../ImportAsset';
+import { EquipmentImportModal } from '../ImportAsset';
 import { Status } from '../Components';
+import { AssetFragment } from '../api/operations.generated';
 
 const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
   return <Status status={rowData.statusLog?.status} />;
@@ -98,7 +99,7 @@ const AssetListComponent: FC = () => {
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
       />
-      <ImportAssetModal
+      <EquipmentImportModal
         isOpen={importModalController.isOn}
         onClose={importModalController.toggleOff}
       />
