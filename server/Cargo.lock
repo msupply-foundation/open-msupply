@@ -1325,7 +1325,6 @@ dependencies = [
  "graphql",
  "log",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "server",
@@ -2250,7 +2249,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2279,11 +2277,9 @@ dependencies = [
  "graphql_stocktake_line",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "tokio",
  "util",
 ]
@@ -2294,7 +2290,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2304,11 +2299,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2318,7 +2311,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2326,11 +2318,9 @@ dependencies = [
  "chrono",
  "graphql_core",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2340,7 +2330,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2355,11 +2344,9 @@ dependencies = [
  "graphql_stocktake_line",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2369,7 +2356,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2378,11 +2364,8 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
- "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2433,7 +2416,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2442,11 +2424,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2456,7 +2436,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2469,7 +2448,6 @@ dependencies = [
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2479,7 +2457,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2488,11 +2465,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2502,7 +2477,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2512,12 +2486,10 @@ dependencies = [
  "graphql_invoice",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
  "strum",
- "thiserror",
  "util",
 ]
 
@@ -2527,7 +2499,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2536,11 +2507,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2550,20 +2519,16 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
- "chrono",
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2573,7 +2538,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2582,11 +2546,9 @@ dependencies = [
  "chrono",
  "graphql_core",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
 ]
 
 [[package]]
@@ -2595,7 +2557,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2605,11 +2566,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2620,7 +2579,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2629,11 +2587,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2644,7 +2600,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2653,11 +2608,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2667,7 +2620,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2676,11 +2628,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2690,7 +2640,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2699,11 +2648,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2713,7 +2660,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2722,11 +2668,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2736,7 +2680,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2745,11 +2688,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2759,7 +2700,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2768,12 +2708,10 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
  "strum",
- "thiserror",
  "util",
 ]
 
@@ -4942,7 +4880,6 @@ dependencies = [
  "futures-util",
  "graphql",
  "graphql_core",
- "graphql_types",
  "httpmock",
  "log",
  "machine-uid",
@@ -4950,15 +4887,12 @@ dependencies = [
  "rcgen",
  "regex",
  "repository",
- "reqwest",
  "rust-embed",
  "rustls 0.20.9",
  "rustls-pemfile",
  "serde 1.0.197",
- "serde_json",
  "service",
  "simple-log",
- "thiserror",
  "tokio",
  "util",
  "winres",
@@ -4971,7 +4905,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-trait",
  "bcrypt",
