@@ -32,6 +32,5 @@ export const useReturns = {
   utils: {
     api: Utils.useReturnsApi,
     inboundIsDisabled: Utils.useInboundReturnIsDisabled,
-    outboundIsDisabled: Utils.useOutboundReturnIsDisabled,
   },
 };

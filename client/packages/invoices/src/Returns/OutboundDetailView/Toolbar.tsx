@@ -22,7 +22,7 @@ export const Toolbar: FC = () => {
   //     useBufferState(theirReference);
   //   const { mutateAsync: updateName } = useOutbound.document.updateName();
 
-  // const isDisabled = useReturns.utils.outboundIsDisabled();
+  //   const isDisabled = useOutbound.utils.isDisabled();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
