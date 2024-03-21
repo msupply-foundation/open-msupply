@@ -16,7 +16,7 @@ import {
 } from '@openmsupply-client/common';
 import Dropzone from 'react-dropzone';
 import * as EquipmentImportModal from './EquipmentImportModal';
-import { ImportRow, toEquipmentInput } from './EquipmentImportModal';
+import { ImportRow, toInsertEquipmentInput } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
 
 interface EquipmentUploadTabProps {
@@ -40,7 +40,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
       emptyRows.map((row: ImportRow): InsertAssetInput => {
-        return toEquipmentInput(row);
+        return toInsertEquipmentInput(row);
       }),
       t
     );

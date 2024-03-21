@@ -90,6 +90,8 @@
   "messages.error-no-file-selected": "No file selected",
   "messages.search": "Search",
   "messages.upload-invite": "Drag and drop a file here or click to upload",
+  "messages.unknown-error": "Unknown error",
+  "messages.import-generic": "generic import message",
   "reason.awaiting-decomissioning": "Awaiting decomissioning",
   "reason.awaiting-installation": "Awaiting installation",
   "reason.decomissioned": "Decomissioned",
