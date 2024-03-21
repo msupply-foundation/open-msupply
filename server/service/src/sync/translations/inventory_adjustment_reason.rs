@@ -1,6 +1,6 @@
 use repository::{
     InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete,
-    InventoryAdjustmentReasonType, StorageConnection, SyncBufferRow,
+    InventoryAdjustmentReasonType, ReturnReasonRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -9,9 +9,11 @@ use super::{PullTranslateResult, SyncTranslation};
 #[derive(Deserialize, Serialize, Debug)]
 pub enum LegacyOptionsType {
     #[serde(rename = "positiveInventoryAdjustment")]
-    Positive,
+    PositiveInventoryAdjustment,
     #[serde(rename = "negativeInventoryAdjustment")]
-    Negative,
+    NegativeInventoryAdjustment,
+    #[serde(rename = "returnReason")]
+    ReturnReason,
 }
 
 #[allow(non_snake_case)]
@@ -50,19 +52,31 @@ impl SyncTranslation for InventoryAdjustmentReasonTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyOptionsRow>(&sync_record.data)?;
 
-        let r#type = match data.r#type {
-            LegacyOptionsType::Positive => InventoryAdjustmentReasonType::Positive,
-            LegacyOptionsType::Negative => InventoryAdjustmentReasonType::Negative,
+        let result = match data.r#type {
+            LegacyOptionsType::PositiveInventoryAdjustment => {
+                PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
+                    id: data.id.to_string(),
+                    r#type: InventoryAdjustmentReasonType::Positive,
+                    is_active: data.is_active,
+                    reason: data.reason,
+                })
+            }
+            LegacyOptionsType::NegativeInventoryAdjustment => {
+                PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
+                    id: data.id.to_string(),
+                    r#type: InventoryAdjustmentReasonType::Negative,
+                    is_active: data.is_active,
+                    reason: data.reason,
+                })
+            }
+            LegacyOptionsType::ReturnReason => PullTranslateResult::upsert(ReturnReasonRow {
+                id: data.id.to_string(),
+                is_active: data.is_active,
+                reason: data.reason,
+            }),
         };
 
-        let result = InventoryAdjustmentReasonRow {
-            id: data.id.to_string(),
-            r#type,
-            is_active: data.is_active,
-            reason: data.reason,
-        };
-
-        Ok(PullTranslateResult::upsert(result))
+        Ok(result)
     }
 
     // TODO soft delete

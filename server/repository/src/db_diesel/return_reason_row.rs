@@ -1,6 +1,6 @@
 use super::{return_reason_row::return_reason::dsl as return_reason_dsl, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
@@ -71,5 +71,19 @@ impl<'a> ReturnReasonRowRepository<'a> {
             .filter(return_reason_dsl::id.eq(return_reason_id))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for ReturnReasonRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ReturnReasonRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ReturnReasonRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
