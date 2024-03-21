@@ -5,13 +5,13 @@ import {
 } from '@openmsupply-client/common';
 import { useReturnsApi } from '../utils/useReturnsApi';
 
-export const useUpdateOutboundReturnLines = () => {
+export const useUpdateInboundReturnLines = () => {
   const queryClient = useQueryClient();
   const api = useReturnsApi();
   const { invoiceNumber = '' } = useParams();
 
-  return useMutation(api.updateOutboundReturnLines, {
+  return useMutation(api.updateInboundReturnLines, {
     onSuccess: () =>
-      queryClient.invalidateQueries(api.keys.outboundDetail(invoiceNumber)),
+      queryClient.invalidateQueries(api.keys.inboundDetail(invoiceNumber)),
   });
 };
