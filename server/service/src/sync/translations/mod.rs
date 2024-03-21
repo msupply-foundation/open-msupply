@@ -231,6 +231,7 @@ pub(crate) enum PullDeleteRecordTable {
     Store,
     ProgramRequisitionSettings,
     ProgramRequisitionOrderType,
+    MasterListLine,
     MasterListNameJoin,
     Report,
     InventoryAdjustmentReason,
