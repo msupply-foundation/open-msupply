@@ -55,17 +55,28 @@ export const DetailView: FC = () => {
     [onOpen]
   );
 
-  const onReturn = async (selectedStockLineIds: string[]) => {
+  const onReturn = async (selectedLines: InboundLineFragment[]) => {
     if (!data || !canReturnInboundLines(data)) {
       const cantReturnSnack = info(t('messages.cant-return-shipment'));
       cantReturnSnack();
-    } else if (!selectedStockLineIds.length) {
+      return;
+    }
+    if (!selectedLines.length) {
       const selectLinesSnack = info(t('messages.select-rows-to-return'));
       selectLinesSnack();
-    } else {
-      onOpenReturns(selectedStockLineIds);
-      setReturnMode(ModalMode.Create);
+      return;
     }
+    if (selectedLines.some(line => !line.stockLine)) {
+      const selectLinesSnack = info('ugh');
+      selectLinesSnack();
+      return;
+    }
+    const selectedStockLineIds = selectedLines.map(
+      line => line.stockLine?.id ?? ''
+    );
+
+    onOpenReturns(selectedStockLineIds);
+    setReturnMode(ModalMode.Create);
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
