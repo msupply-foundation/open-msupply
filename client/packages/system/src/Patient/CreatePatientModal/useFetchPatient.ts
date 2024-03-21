@@ -5,11 +5,10 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { mapSyncError, useSync } from '../../Sync';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { usePatientApi } from '../api/hooks/utils/usePatientApi';
 
 export type Step = 'Start' | 'Linking' | 'Syncing' | 'Synced';
-const STATUS_POLLING_INTERVAL = 500;
 
 /**
  * Links the patient to the current store and sync the patient over.
@@ -25,12 +24,23 @@ export const useFetchPatient = () => {
   const { mutateAsync: linkPatientToStore } = useMutation((nameId: string) =>
     api.linkPatientToStore(nameId)
   );
-  const { mutateAsync: manualSync, data: manualSyncResult } =
-    useSync.sync.manualSync();
-  const { data: syncStatus } = useSync.utils.syncStatus(
-    STATUS_POLLING_INTERVAL,
-    !!manualSyncResult && step !== 'Synced'
-  );
+  const { mutateAsync: manualSync } = useSync.sync.manualSync();
+  const { mutateAsync: getSyncStatus } = useSync.utils.mutateSyncStatus();
+
+  const pollTillSynced = useCallback(async () => {
+    while (true) {
+      const result = await getSyncStatus();
+      if (result?.error) {
+        const error = mapSyncError(t, result.error, 'error.unknown-sync-error');
+        setError(error.error);
+        continue;
+      }
+
+      if (!result?.isSyncing) {
+        break;
+      }
+    }
+  }, [getSyncStatus, t]);
 
   const mutateAsync = useCallback(
     async (patientId: string) => {
@@ -50,26 +60,12 @@ export const useFetchPatient = () => {
 
       setStep('Syncing');
       await manualSync();
+      await pollTillSynced();
+      await queryClient.invalidateQueries(api.keys.list());
+      setStep('Synced');
     },
-    [linkPatientToStore, manualSync, t]
+    [api.keys, linkPatientToStore, manualSync, queryClient, pollTillSynced, t]
   );
-
-  useEffect(() => {
-    if (step !== 'Syncing' || !syncStatus) return;
-    if (syncStatus.error) {
-      const error = mapSyncError(
-        t,
-        syncStatus.error,
-        'error.unknown-sync-error'
-      );
-      setError(error.error);
-    } else if (!syncStatus.isSyncing) {
-      // invalidate all patient queries
-      queryClient.invalidateQueries(api.keys.list()).then(() => {
-        setStep('Synced');
-      });
-    }
-  }, [api.keys, queryClient, step, syncStatus, t]);
 
   return { mutateAsync, error, step };
 };
