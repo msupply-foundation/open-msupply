@@ -11,10 +11,13 @@ import {
   Link,
   UploadIcon,
   FnUtils,
+  FileUtils,
+  InsertAssetInput,
 } from '@openmsupply-client/common';
 import Dropzone from 'react-dropzone';
 import * as EquipmentImportModal from './EquipmentImportModal';
-import { ImportRow } from './EquipmentImportModal';
+import { ImportRow, toEquipmentInput } from './EquipmentImportModal';
+import { importEquipmentToCsv } from '../utils';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -33,16 +36,16 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
 
-  // const csvExample = async () => {
-  //   const emptyRows: ImportRow[] = [];
-  //   const csv = manufacturersToCsv(
-  //     emptyRows.map((row: ImportRow): InsertManufacturerInput => {
-  //       return toManufacturerInput(row);
-  //     }),
-  //     t
-  //   );
-  //   FileUtils.exportCSV(csv, t('filename.manufacturers'));
-  // };
+  const csvExample = async () => {
+    const emptyRows: ImportRow[] = [];
+    const csv = importEquipmentToCsv(
+      emptyRows.map((row: ImportRow): InsertAssetInput => {
+        return toEquipmentInput(row);
+      }),
+      t
+    );
+    FileUtils.exportCSV(csv, t('filename.cce'));
+  };
 
   const csvImport = (files: any) => {
     setErrorMessage('');
@@ -171,7 +174,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           <Typography>
             <Link
               onClick={() => {
-                console.info('csv example');
+                csvExample();
               }}
               to={''}
             >

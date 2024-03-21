@@ -210,8 +210,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           variant="next"
           disabled={exportNotReady}
           onClick={async () => {
-            // csvExport();
             console.info('csv export');
+            // csvExport();
           }}
         />
       }
