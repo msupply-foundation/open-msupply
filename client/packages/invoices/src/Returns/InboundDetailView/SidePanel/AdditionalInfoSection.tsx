@@ -7,16 +7,26 @@ import {
   PanelRow,
   useTranslation,
   InfoTooltipIcon,
+  useBufferState,
+  ColorSelectButton,
+  BufferedTextArea,
 } from '@openmsupply-client/common';
-import { useReturns } from '../../api';
+import { InboundReturnFragment, useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
   const t = useTranslation('distribution');
-  const { data } = useReturns.document.inboundReturn();
-  // const isDisabled = useReturns.utils.inboundIsDisabled();
-  // const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const { mutateAsync } = useReturns.document.updateInboundReturn();
+  const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  const { user } = data || {};
+  const { data } = useReturns.document.inboundReturn();
+  const { user, colour, comment, id } = data || {};
+
+  const [bufferedColor, setBufferedColor] = useBufferState(colour);
+
+  const update = (data: Partial<InboundReturnFragment>) => {
+    if (!id) return;
+    mutateAsync({ id, ...data });
+  };
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -27,7 +37,7 @@ export const AdditionalInfoSectionComponent = () => {
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
 
-        {/* <PanelRow>
+        <PanelRow>
           <PanelLabel>{t('label.color')}</PanelLabel>
           <PanelField>
             <ColorSelectButton
@@ -39,14 +49,14 @@ export const AdditionalInfoSectionComponent = () => {
               color={bufferedColor}
             />
           </PanelField>
-        </PanelRow> */}
+        </PanelRow>
 
-        {/* <PanelLabel>{t('heading.comment')}</PanelLabel>
+        <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
           disabled={isDisabled}
           onChange={e => update({ comment: e.target.value })}
           value={comment || ''}
-        /> */}
+        />
       </Grid>
     </DetailPanelSection>
   );
