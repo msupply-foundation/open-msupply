@@ -15,10 +15,10 @@ graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
 
 async-std = { workspace = true }
-
-actix-web = { version = "4.0.1", default-features = false, features = ["macros"] }
-async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }
-async-graphql-actix-web = "3.0.35"
+actix-web = { workspace = true }
+anymap = "0.12"
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 async-trait = "0.1.30"
 chrono = { version = "0.4", features = ["serde"] }
 serde = "1.0.126"
