@@ -43,6 +43,7 @@ fragment InboundReturn on InvoiceNode {
   deliveredDatetime
   verifiedDatetime
 
+  otherPartyId
   otherPartyName
   otherPartyStore {
     code
@@ -274,6 +275,14 @@ mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
       id
       invoiceNumber
     }
+
+    ... on InsertInboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
   }
 }
 
@@ -291,6 +300,18 @@ mutation updateInboundReturn(
   $input: UpdateInboundReturnInput!
 ) {
   updateInboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateInboundReturnLines(
+  $storeId: String!
+  $input: UpdateInboundReturnLinesInput!
+) {
+  updateInboundReturnLines(storeId: $storeId, input: $input) {
     ... on InvoiceNode {
       __typename
       id
