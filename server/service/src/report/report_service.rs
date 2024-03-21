@@ -7,7 +7,9 @@ use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination, service_provider::ServiceContext, static_files::StaticFileService,
+    get_default_pagination,
+    service_provider::ServiceContext,
+    static_files::{StaticFileCategory, StaticFileService},
     ListError,
 };
 
@@ -135,6 +137,7 @@ fn print_html_report_to_pdf(
     let file = file_service
         .store_file(
             &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report_name),
+            StaticFileCategory::Temporary,
             &pdf,
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
@@ -153,6 +156,7 @@ fn print_html_report_to_html(
     let file = file_service
         .store_file(
             &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
+            StaticFileCategory::Temporary,
             format_html_document(document).as_bytes(),
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
