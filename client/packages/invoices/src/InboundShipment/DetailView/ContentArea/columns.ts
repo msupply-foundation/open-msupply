@@ -55,6 +55,7 @@ export const useInboundShipmentColumns = () => {
       [
         'itemCode',
         {
+          Cell: TooltipTextCell,
           getSortValue: row =>
             getColumnPropertyAsString(row, [
               { path: ['lines', 'item', 'code'] },
