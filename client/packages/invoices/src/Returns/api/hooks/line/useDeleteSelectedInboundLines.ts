@@ -2,21 +2,22 @@ import {
   useTableStore,
   useTranslation,
   useDeleteConfirmation,
-  useParams,
-  useQueryClient,
-  useMutation,
 } from '@openmsupply-client/common';
 import { useInboundReturnRows } from './useInboundReturnRows';
 import { useInboundReturnIsDisabled } from '../utils/useInboundReturnIsDisabled';
-import { useReturnsApi } from '../utils/useReturnsApi';
-import { InboundReturnLineFragment } from '../../operations.generated';
+import { useReturns } from '../../../api';
 
-export const useDeleteSelectedInboundReturnLines = (): (() => void) => {
+export const useDeleteSelectedInboundReturnLines = ({
+  returnId,
+}: {
+  returnId: string;
+}): (() => void) => {
   const { items, lines } = useInboundReturnRows();
   const isDisabled = useInboundReturnIsDisabled();
   const t = useTranslation('distribution');
 
-  const { mutateAsync } = useDeleteInboundLines();
+  // const { mutateAsync } = useDeleteInboundLines();
+  const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   const selectedRows =
     useTableStore(state => {
@@ -28,10 +29,20 @@ export const useDeleteSelectedInboundReturnLines = (): (() => void) => {
             .map(({ lines }) => lines.flat())
             .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) || [];
+    })?.map(({ id, itemId, packSize, batch, expiryDate }) => ({
+      id,
+      itemId,
+      packSize,
+      batch,
+      expiryDate,
+      numberOfPacksReturned: 0,
+    })) || [];
 
   const onDelete = async () => {
-    await mutateAsync(selectedRows).catch(err => {
+    await updateLines({
+      inboundReturnId: returnId,
+      inboundReturnLines: selectedRows,
+    }).catch(err => {
       throw err;
     });
   };
@@ -52,17 +63,4 @@ export const useDeleteSelectedInboundReturnLines = (): (() => void) => {
   });
 
   return confirmAndDelete;
-};
-
-const useDeleteInboundLines = () => {
-  const { invoiceNumber = '' } = useParams();
-  const queryClient = useQueryClient();
-  const api = useReturnsApi();
-  const queryKey = api.keys.inboundDetail(invoiceNumber);
-
-  // TODO: Replace with actual mutation
-  // return useMutation(api.updateInboundReturnLines, {
-  return useMutation(async (_lines: InboundReturnLineFragment[]) => {}, {
-    onSettled: () => queryClient.invalidateQueries(queryKey),
-  });
 };
