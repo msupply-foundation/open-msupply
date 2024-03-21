@@ -23,7 +23,7 @@ pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub asset_number: String,
+    pub asset_number: Option<String>,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
