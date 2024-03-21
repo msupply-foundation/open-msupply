@@ -72,8 +72,8 @@ pub async fn put_logs(
         .json(&results)
 }
 
-fn validate_input(logs: &Vec<TemperatureLog>) -> bool {
-    logs.iter().all(|log| validate_log(log))
+fn validate_input(logs: &[TemperatureLog]) -> bool {
+    logs.iter().all(validate_log)
 }
 
 fn validate_log(log: &TemperatureLog) -> bool {
@@ -111,7 +111,7 @@ fn upsert_temperature_log(
     let service = &service_provider.cold_chain_service;
     let sensor_service = &service_provider.sensor_service;
     let sensor = sensor_service
-        .get_sensor(&ctx, log.sensor_id.clone())
+        .get_sensor(ctx, log.sensor_id.clone())
         .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
     let datetime = NaiveDateTime::from_timestamp_opt(log.unix_timestamp, 0)
         .context(format!("Unable to parse timestamp {}", log.unix_timestamp))?;
@@ -121,7 +121,7 @@ fn upsert_temperature_log(
         Some(breach_id) => {
             let breach = service_provider
                 .cold_chain_service
-                .get_temperature_breach(&ctx, breach_id.clone());
+                .get_temperature_breach(ctx, breach_id.clone());
 
             match breach {
                 Ok(_) => {}
@@ -144,7 +144,7 @@ fn upsert_temperature_log(
                     };
                     service_provider
                         .cold_chain_service
-                        .insert_temperature_breach(&ctx, breach)
+                        .insert_temperature_breach(ctx, breach)
                         .map_err(|e| {
                             anyhow::anyhow!("Unable to insert temperature breach {:?}", e)
                         })?;
@@ -161,7 +161,7 @@ fn upsert_temperature_log(
         None => {}
     };
 
-    let result = match service.get_temperature_log(&ctx, id.clone()) {
+    let result = match service.get_temperature_log(ctx, id.clone()) {
         Ok(_) => {
             let log = UpdateTemperatureLog {
                 id: id.clone(),
@@ -172,7 +172,7 @@ fn upsert_temperature_log(
                 temperature_breach_id: log.temperature_breach_id.clone(),
             };
             service
-                .update_temperature_log(&ctx, log)
+                .update_temperature_log(ctx, log)
                 .map_err(|e| anyhow::anyhow!("Unable to update temperature log {:?}", e))?
         }
         Err(SingleRecordError::NotFound(_)) => {
@@ -185,7 +185,7 @@ fn upsert_temperature_log(
                 temperature_breach_id: log.temperature_breach_id.clone(),
             };
             service
-                .insert_temperature_log(&ctx, log)
+                .insert_temperature_log(ctx, log)
                 .map_err(|e| anyhow::anyhow!("Unable to insert temperature log {:?}", e))?
         }
         Err(e) => {

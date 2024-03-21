@@ -37,14 +37,11 @@ fn file_logger(settings: &LoggingSettings) -> LogConfigBuilder {
     // and the path separator has to be unix-style, even on windows
     let log_dir = format!("{}/", settings.directory.clone().unwrap_or(default_log_dir),);
     #[cfg(not(target_os = "android"))]
-    let log_path = env::current_dir().unwrap_or_default().join(&log_dir);
+    let log_path = env::current_dir().unwrap_or_default().join(log_dir);
     // We are given the full path when running on android
     #[cfg(target_os = "android")]
     let log_path = std::path::PathBuf::from(&log_dir);
-    let log_file = settings
-        .filename
-        .clone()
-        .unwrap_or_else(|| default_log_file);
+    let log_file = settings.filename.clone().unwrap_or(default_log_file);
     let log_file = log_path.join(log_file).to_string_lossy().to_string();
     let max_file_count = settings.max_file_count.unwrap_or(default_max_file_count);
     let max_file_size = settings.max_file_size.unwrap_or(default_max_file_size);
