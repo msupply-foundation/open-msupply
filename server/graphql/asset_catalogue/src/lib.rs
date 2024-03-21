@@ -1,14 +1,12 @@
 use asset_catalogue_item_queries::{AssetCatalogueItemFilterInput, AssetCatalogueItemSortInput};
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
-use types::asset_catalogue_item::AssetCatalogueItemResponse;
-use types::asset_catalogue_item::AssetCatalogueItemsResponse;
-use types::asset_category::AssetCategoriesResponse;
-use types::asset_category::AssetCategoryResponse;
-use types::asset_class::AssetClassResponse;
-use types::asset_class::AssetClassesResponse;
-use types::asset_type::AssetTypeResponse;
-use types::asset_type::AssetTypesResponse;
+use types::{
+    asset_catalogue_item::{AssetCatalogueItemResponse, AssetCatalogueItemsResponse},
+    asset_category::{AssetCategoriesResponse, AssetCategoryResponse},
+    asset_class::{AssetClassResponse, AssetClassesResponse},
+    asset_type::{AssetTypeResponse, AssetTypesResponse},
+};
 
 pub mod asset_catalogue_item_queries;
 use crate::asset_catalogue_item_queries::*;
