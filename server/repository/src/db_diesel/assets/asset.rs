@@ -37,6 +37,7 @@ pub struct AssetFilter {
     pub catalogue_item_id: Option<EqualFilter<String>>,
     pub installation_date: Option<DateFilter>,
     pub replacement_date: Option<DateFilter>,
+    pub is_non_catalogue: Option<bool>,
 }
 
 impl AssetFilter {
@@ -52,6 +53,7 @@ impl AssetFilter {
             catalogue_item_id: None,
             installation_date: None,
             replacement_date: None,
+            is_non_catalogue: None,
         }
     }
 
@@ -102,6 +104,11 @@ impl AssetFilter {
 
     pub fn replacement_date(mut self, filter: DateFilter) -> Self {
         self.replacement_date = Some(filter);
+        self
+    }
+
+    pub fn is_non_catalogue(mut self, filter: bool) -> Self {
+        self.is_non_catalogue = Some(filter);
         self
     }
 }
@@ -196,6 +203,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             catalogue_item_id,
             installation_date,
             replacement_date,
+            is_non_catalogue,
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
@@ -210,6 +218,14 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
         apply_equal_filter!(query, class_id, asset_dsl::asset_class_id);
         apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
+
+        if let Some(value) = is_non_catalogue {
+            apply_equal_filter!(
+                query,
+                Some(EqualFilter::is_null(value)),
+                asset_dsl::asset_catalogue_item_id
+            );
+        }
     }
     query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
 }

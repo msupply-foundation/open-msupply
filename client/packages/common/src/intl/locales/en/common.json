@@ -155,6 +155,7 @@
   "label.breach": "Breach",
   "label.breach-type": "Breach type",
   "label.cant-delete-disabled-requisition": "Can only delete lines when requisition is in Draft",
+  "label.non-catalogue": "Non-catalogue",
   "label.category": "Category",
   "label.cce": "CCE",
   "label.change-currency": "Change currency",

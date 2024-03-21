@@ -53,6 +53,7 @@ pub struct AssetFilterInput {
     pub category_id: Option<EqualFilterStringInput>,
     pub type_id: Option<EqualFilterStringInput>,
     pub catalogue_item_id: Option<EqualFilterStringInput>,
+    pub is_non_catalogue: Option<bool>,
     pub installation_date: Option<DateFilterInput>,
     pub replacement_date: Option<DateFilterInput>,
 }
@@ -70,6 +71,7 @@ impl From<AssetFilterInput> for AssetFilter {
             catalogue_item_id: f.catalogue_item_id.map(EqualFilter::from),
             installation_date: f.installation_date.map(DateFilter::from),
             replacement_date: f.replacement_date.map(DateFilter::from),
+            is_non_catalogue: f.is_non_catalogue,
         }
     }
 }

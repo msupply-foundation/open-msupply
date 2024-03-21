@@ -424,7 +424,10 @@ export type AssetLogsResponse = AssetLogConnector;
 
 export type AssetNode = {
   __typename: 'AssetNode';
+  assetCategory?: Maybe<AssetCategoryNode>;
+  assetClass?: Maybe<AssetClassNode>;
   assetNumber: Scalars['String']['output'];
+  assetType?: Maybe<AssetTypeNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
@@ -1797,12 +1800,15 @@ export type InsertAssetErrorInterface = {
 export type InsertAssetInput = {
   assetNumber: Scalars['String']['input'];
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
+  categoryId?: InputMaybe<Scalars['String']['input']>;
+  classId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
+  typeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertAssetLogError = {
@@ -2541,7 +2547,7 @@ export type InvoiceNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
-  currency?: Maybe<CurrencyNode>;
+  currency: CurrencyNode;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -6604,7 +6610,9 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetCatalogueItemMutate = 'ASSET_CATALOGUE_ITEM_MUTATE',
   AssetMutate = 'ASSET_MUTATE',
+  AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
