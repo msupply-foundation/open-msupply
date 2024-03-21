@@ -1168,9 +1168,9 @@ mod permission_tests {
             let mut actual = self.actual.lock().unwrap();
             *actual = Some(resource_request.clone());
             // we collected the info we needed just abort the request:
-            return Err(AuthError::InternalError(
+            Err(AuthError::InternalError(
                 "Just abort the request".to_string(),
-            ));
+            ))
         }
     }
 
@@ -1202,7 +1202,7 @@ mod permission_tests {
             let _ = graphql_core::test_helpers::run_test_gql_query(
                 &settings,
                 // escape query quotes
-                &data.query.replace("\"", "\\\""),
+                &data.query.replace('\"', "\\\""),
                 &None,
                 Some(service_provider(&test_service, &connection_manager)),
             )

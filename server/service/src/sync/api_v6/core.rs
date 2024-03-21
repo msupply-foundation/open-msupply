@@ -95,7 +95,7 @@ impl SyncApiV6 {
         let error = match response_or_err(result).await {
             Ok(SyncPullResponseV6::Data(data)) => return Ok(data),
             Ok(SyncPullResponseV6::Error(error)) => error.into(),
-            Err(error) => error.into(),
+            Err(error) => error,
         };
 
         Err(SyncApiErrorV6 {

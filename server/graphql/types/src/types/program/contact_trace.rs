@@ -270,11 +270,11 @@ impl ContactTraceNode {
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.trace_row().date_of_birth.clone()
+        self.trace_row().date_of_birth
     }
 
     pub async fn age(&self) -> Option<i64> {
-        self.trace_row().date_of_birth.clone().map(|dob| {
+        self.trace_row().date_of_birth.map(|dob| {
             let diff = Local::now().naive_utc().date().signed_duration_since(dob);
             diff.num_days() / 365
         })

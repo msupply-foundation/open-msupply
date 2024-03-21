@@ -33,7 +33,7 @@ pub fn update_temperature_log(
         .transaction_sync(|connection| {
             let temperature_log_row = validate(connection, &ctx.store_id, &input)?;
             let updated_temperature_log_row = generate(&ctx.store_id, input, temperature_log_row);
-            TemperatureLogRowRepository::new(&connection)
+            TemperatureLogRowRepository::new(connection)
                 .upsert_one(&updated_temperature_log_row)?;
 
             get_temperature_log(ctx, updated_temperature_log_row.id)
@@ -52,7 +52,7 @@ pub fn validate(
         Some(temperature_log_row) => temperature_log_row,
         None => return Err(UpdateTemperatureLogError::TemperatureLogDoesNotExist),
     };
-    if temperature_log_row.store_id != store_id.to_string() {
+    if temperature_log_row.store_id != *store_id {
         return Err(UpdateTemperatureLogError::TemperatureLogDoesNotBelongToCurrentStore);
     }
 

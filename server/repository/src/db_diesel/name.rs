@@ -249,7 +249,7 @@ impl Name {
         self.name_row
             .custom_data_string
             .as_ref()
-            .map(|custom_data_string| serde_json::from_str(&custom_data_string))
+            .map(|custom_data_string| serde_json::from_str(custom_data_string))
             .transpose()
     }
 }
@@ -357,8 +357,7 @@ impl Name {
     pub fn is_system_name(&self) -> bool {
         SYSTEM_NAME_CODES
             .iter()
-            .find(|system_name_code| self.name_row.code == **system_name_code)
-            .is_some()
+            .any(|system_name_code| self.name_row.code == *system_name_code)
     }
 
     pub fn store_id(&self) -> Option<&str> {
@@ -636,7 +635,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(
-            result.get(0).unwrap().name_row.code,
+            result.first().unwrap().name_row.code,
             INVENTORY_ADJUSTMENT_NAME_CODE
         );
 
@@ -658,7 +657,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 1);
         assert_eq!(
-            result.get(0).unwrap().name_row.id,
+            result.first().unwrap().name_row.id,
             mock_test_name_query_store_2().name_id
         );
 
@@ -687,7 +686,7 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 1);
-        assert_eq!(result.get(0).unwrap().name_row.id, mock_name_1().id);
+        assert_eq!(result.first().unwrap().name_row.id, mock_name_1().id);
 
         // Test sort
 
@@ -702,6 +701,6 @@ mod tests {
                 }),
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().name_row.code, "code3");
+        assert_eq!(result.first().unwrap().name_row.code, "code3");
     }
 }

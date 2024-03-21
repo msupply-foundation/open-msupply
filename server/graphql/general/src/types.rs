@@ -206,20 +206,20 @@ mod test {
                         ConsumptionHistory {
                             consumption: 10,
                             average_monthly_consumption: 11.0,
-                            date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
+                            date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
                         },
                     ]),
                     stock_evolution: Some(vec![
                         StockEvolution {
                             quantity: 30.5,
-                            date: NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
+                            date: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
                         },
                         StockEvolution {
                             quantity: 32.5,
-                            date: NaiveDate::from_ymd_opt(2021, 01, 02).unwrap(),
+                            date: NaiveDate::from_ymd_opt(2021, 1, 2).unwrap(),
                         },
                     ]),
-                    reference_date: Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap()),
+                    reference_date: Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap()),
                     suggested_quantity_calculation: SuggestedQuantityCalculation {
                         average_monthly_consumption: 10.5,
                         stock_on_hand: 10,

@@ -11,10 +11,10 @@ use url::ParseError;
 use super::*;
 
 #[cfg(target_os = "android")]
-const APP_NAME: &'static str = "Open mSupply Android";
+const APP_NAME: &str = "Open mSupply Android";
 
 #[cfg(not(target_os = "android"))]
-const APP_NAME: &'static str = "Open mSupply Desktop";
+const APP_NAME: &str = "Open mSupply Desktop";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

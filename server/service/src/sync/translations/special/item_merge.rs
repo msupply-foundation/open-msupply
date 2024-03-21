@@ -19,11 +19,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 // Conceptually this isn't a translation, so the abstraction should probably be changed or this doesn't belong here
 pub(crate) struct ItemMergeTranslation;
 impl SyncTranslation for ItemMergeTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         ItemTranslation.table_name()
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -36,7 +36,7 @@ impl SyncTranslation for ItemMergeTranslation {
 
         let item_link_repo = ItemLinkRowRepository::new(connection);
         let item_links = item_link_repo.find_many_by_item_id(&data.merge_id_to_delete)?;
-        if item_links.len() == 0 {
+        if item_links.is_empty() {
             return Ok(PullTranslateResult::Ignored(
                 "No mergeable item links found".to_string(),
             ));
@@ -130,9 +130,7 @@ mod tests {
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
-        let mut item_links = item_link_repo
-            .find_many_by_item_id(&"item_c".to_string())
-            .unwrap();
+        let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
 
         item_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(item_links, expected_item_links);
@@ -153,9 +151,7 @@ mod tests {
             .unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
-        let mut item_links = item_link_repo
-            .find_many_by_item_id(&"item_c".to_string())
-            .unwrap();
+        let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
 
         item_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(item_links, expected_item_links);

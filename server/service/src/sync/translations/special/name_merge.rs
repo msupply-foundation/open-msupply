@@ -18,11 +18,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 }
 pub(crate) struct NameMergeTranslation;
 impl SyncTranslation for NameMergeTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         NameTranslation.table_name()
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
     fn try_translate_from_merge_sync_record(
@@ -34,7 +34,7 @@ impl SyncTranslation for NameMergeTranslation {
 
         let name_link_repo = NameLinkRowRepository::new(connection);
         let name_links = name_link_repo.find_many_by_name_id(&data.merge_id_to_delete)?;
-        if name_links.len() == 0 {
+        if name_links.is_empty() {
             return Ok(PullTranslateResult::Ignored(
                 "No mergeable name links found".to_string(),
             ));
@@ -127,9 +127,7 @@ mod tests {
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
-        let mut name_links = name_link_repo
-            .find_many_by_name_id(&"name_c".to_string())
-            .unwrap();
+        let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
 
         name_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(name_links, expected_name_links);
@@ -150,9 +148,7 @@ mod tests {
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
-        let mut name_links = name_link_repo
-            .find_many_by_name_id(&"name_c".to_string())
-            .unwrap();
+        let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
 
         name_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(name_links, expected_name_links);

@@ -22,11 +22,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct MasterListLineTranslation;
 impl SyncTranslation for MasterListLineTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "list_master_line"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             MasterListTranslation.table_name(),
             ItemTranslation.table_name(),

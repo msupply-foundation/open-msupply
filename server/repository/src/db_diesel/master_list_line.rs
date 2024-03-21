@@ -25,7 +25,7 @@ pub struct MasterListLine {
 
 type MasterListLineJoin = (MasterListLineRow, (ItemLinkRow, ItemRow));
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct MasterListLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
@@ -136,11 +136,7 @@ fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> Maste
 
 impl MasterListLineFilter {
     pub fn new() -> MasterListLineFilter {
-        MasterListLineFilter {
-            id: None,
-            item_id: None,
-            master_list_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

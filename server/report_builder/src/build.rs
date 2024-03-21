@@ -119,7 +119,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         index.query = Some("query_default".to_string());
         entries.insert(
             "query_default".to_string(),
-            ReportDefinitionEntry::DefaultQuery(parse_default_query(&query_default)?),
+            ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
     } else {
         return Err(anyhow::Error::msg(
@@ -169,7 +169,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 
 pub fn build(args: BuildArgs) -> anyhow::Result<()> {
     let project_dir = Path::new(&args.dir);
-    let files = find_project_files(&project_dir)?;
+    let files = find_project_files(project_dir)?;
     let definition = make_report(&args, files)?;
 
     let output_path = args.output.unwrap_or("./generated/output.json".to_string());
@@ -179,7 +179,7 @@ pub fn build(args: BuildArgs) -> anyhow::Result<()> {
         output_path
     )))?)?;
 
-    fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
+    fs::write(output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
         anyhow::Error::msg(format!(
             "Failed to write to {:?}. Does output dir exist?",
             output_path

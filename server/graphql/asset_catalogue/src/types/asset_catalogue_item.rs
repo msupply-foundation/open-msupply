@@ -46,7 +46,7 @@ impl AssetCatalogueItemNode {
     }
 
     pub async fn manufacturer(&self) -> Option<String> {
-        self.row().manufacturer.as_ref().map(|it| it.clone())
+        self.row().manufacturer.clone()
     }
 
     pub async fn model(&self) -> &str {

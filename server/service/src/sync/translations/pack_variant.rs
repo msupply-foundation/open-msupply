@@ -18,11 +18,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 struct PackVariantTranslation;
 
 impl SyncTranslation for PackVariantTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "pack_variant"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![ItemTranslation.table_name()]
     }
 
@@ -69,7 +69,7 @@ impl SyncTranslation for PackVariantTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&row)?,
+            serde_json::to_value(row)?,
         ))
     }
 }

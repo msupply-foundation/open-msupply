@@ -94,7 +94,7 @@ pub fn document(ctx: &Context<'_>, store_id: String, name: String) -> Result<Opt
 
     let node = service_provider
         .document_service
-        .document(&context, &name, Some(&allowed_ctx))?
+        .document(&context, &name, Some(allowed_ctx))?
         .map(|document| DocumentNode {
             allowed_ctx: allowed_ctx.clone(),
             document,
@@ -131,7 +131,7 @@ pub fn documents(
             page.map(PaginationOption::from),
             filter,
             sort.map(DocumentSortInput::to_domain),
-            Some(&allowed_ctx),
+            Some(allowed_ctx),
         )
         .map_err(StandardGraphqlError::from_list_error)?;
 
