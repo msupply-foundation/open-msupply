@@ -78,6 +78,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const processUploadedDataChunk = (data: any) => {
     if (!data.data || !Array.isArray(data.data)) {
       // Don't think this is likely to happen...
+      console.info('data not data');
       setErrorMessage(t('messages.import-error'));
     }
 
@@ -113,6 +114,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       rows.push(importRow);
     }
     if (hasErrors) {
+      console.info('has errors');
       setErrorMessage(t('messages.import-error'));
     }
     EquipmentBuffer.push(...rows);

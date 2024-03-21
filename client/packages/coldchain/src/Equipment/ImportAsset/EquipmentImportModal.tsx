@@ -28,7 +28,7 @@ enum Tabs {
 
 export type ImportRow = {
   assetNumber: string;
-  catalogueItemId: string;
+  catalogueItemId: string | null | undefined;
   id: string;
   errorMessage: string;
   isUpdate: boolean;
@@ -100,6 +100,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
                 if (!err) {
                   err = { message: t('messages.unknown-error') };
                 }
+                console.info(err.message);
                 importErrorRows.push({
                   ...asset,
                   errorMessage: err.message,
@@ -129,6 +130,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         const importMessage = t('messages.import-generic', {
           count: numberImportRecords,
         });
+        console.info('import errors: ', importErrorRows);
         const successSnack = success(importMessage);
         successSnack();
         onChangeTab(Tabs.Upload);
@@ -137,6 +139,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         onClose();
       } else {
         // Load the error rows in to the component for review
+        console.info('errors exist');
         setErrorMessage(t('messages.import-error'));
         setBufferedEquipment(importErrorRows);
         setImportErrorCount(importErrorRows.length);
