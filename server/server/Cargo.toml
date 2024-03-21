@@ -48,6 +48,7 @@ rcgen = "0.9.2"
 regex = "1.5.5"
 actix-multipart = "0.6.1"
 futures-util = "0.3"
+sanitize-filename = "0.4"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
