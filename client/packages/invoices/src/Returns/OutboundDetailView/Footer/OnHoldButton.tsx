@@ -4,14 +4,14 @@ import {
   useTranslation,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { useReturns } from '../../api';
 
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation('distribution');
   //   const { onHold, update } = useOutbound.document.fields('onHold');
-  const isDisabled = useReturns.utils.outboundIsDisabled();
+  //   const isDisabled = useOutbound.utils.isDisabled();
 
   // TEMP until 'onHold' update query is available:
+  const isDisabled = false;
   const [onHold, setOnHold] = useState(false);
   const update = ({ onHold }: { onHold: boolean }) => setOnHold(onHold);
 
