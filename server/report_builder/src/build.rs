@@ -57,12 +57,16 @@ fn extract_sql_entry(
             let query_sqlite_sql = fs::read_to_string(file_path).map_err(|err| {
                 anyhow::Error::msg(format!("Failed to load Sqlite query file: {}", err))
             })?;
-            let file_path = files
-                .remove(query_postgres)
-                .ok_or(anyhow::Error::msg("Postgres query file does not exist"))?;
-            let query_postgres_sql = fs::read_to_string(file_path).map_err(|err| {
-                anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
-            })?;
+            let query_postgres_sql = if query_postgres == query_sqlite {
+                query_sqlite_sql.clone()
+            } else {
+                let file_path = files
+                    .remove(query_postgres)
+                    .ok_or(anyhow::Error::msg("Postgres query file does not exist"))?;
+                fs::read_to_string(file_path).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
+                })?
+            };
             Ok(Some((
                 // Use the Sqlite file name for reference...
                 query_sqlite.clone(),
