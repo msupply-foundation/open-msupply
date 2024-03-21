@@ -1,5 +1,9 @@
 import { MasterListLineFragment } from '../api/operations.generated';
-import { useColumns, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  TooltipTextCell,
+  useColumns,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 
 export const useMasterListColumns = () => {
   const {
@@ -11,6 +15,7 @@ export const useMasterListColumns = () => {
       [
         'itemCode',
         {
+          Cell: TooltipTextCell,
           width: 100,
           accessor: ({ rowData }) => rowData.item.code,
           getSortValue: rowData => rowData.item.code,

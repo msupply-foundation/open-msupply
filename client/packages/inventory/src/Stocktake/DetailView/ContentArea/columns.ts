@@ -71,6 +71,7 @@ export const useStocktakeColumns = ({
       [
         'itemCode',
         {
+          Cell: TooltipTextCell,
           getSortValue: row => {
             return row.item?.code ?? '';
           },

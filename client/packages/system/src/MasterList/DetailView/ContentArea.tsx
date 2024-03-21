@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   DataTable,
+  TooltipTextCell,
   useColumns,
   useTranslation,
   useUrlQueryParams,
@@ -25,6 +26,7 @@ export const ContentArea = () => {
       [
         'itemCode',
         {
+          Cell: TooltipTextCell,
           width: 100,
           accessor: ({ rowData }) => rowData.item.code,
           getSortValue: rowData => rowData.item.code,
