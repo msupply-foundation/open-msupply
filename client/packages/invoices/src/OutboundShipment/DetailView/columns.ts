@@ -71,7 +71,6 @@ export const useOutboundColumns = ({
       [
         'itemCode',
         {
-          Cell: TooltipTextCell,
           getSortValue: row =>
             getColumnPropertyAsString(row, [
               { path: ['lines', 'item', 'code'], default: '' },

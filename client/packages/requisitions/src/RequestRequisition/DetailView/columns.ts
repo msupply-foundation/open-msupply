@@ -54,7 +54,6 @@ export const useRequestColumns = () => {
     [
       'itemCode',
       {
-        Cell: TooltipTextCell,
         width: 130,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,

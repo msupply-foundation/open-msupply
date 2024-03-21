@@ -11,7 +11,6 @@ import {
   useTranslation,
   useColumnUtils,
   NumberCell,
-  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { PackVariantCell } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
@@ -62,7 +61,6 @@ export const usePrescriptionColumn = ({
       [
         'itemCode',
         {
-          Cell: TooltipTextCell,
           getSortValue: row =>
             getColumnPropertyAsString<StockOutLineFragment | StockOutItem>(
               row,

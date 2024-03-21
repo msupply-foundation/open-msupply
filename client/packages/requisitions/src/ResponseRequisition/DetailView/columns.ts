@@ -26,7 +26,6 @@ export const useResponseColumns = () => {
     [
       'itemCode',
       {
-        Cell: TooltipTextCell,
         accessor: ({ rowData }) => rowData.item.code,
         getSortValue: rowData => rowData.item.code,
         width: 125,
