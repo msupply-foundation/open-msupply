@@ -8,11 +8,13 @@ use chrono::NaiveDateTime;
 use log::error;
 use mime_guess::mime;
 use repository::RepositoryError;
-use service::temperature_breach::insert::InsertTemperatureBreach;
+use service::cold_chain::insert_temperature_breach::InsertTemperatureBreach;
 use service::{
     auth_data::AuthData,
+    cold_chain::{
+        insert_temperature_log::InsertTemperatureLog, update_temperature_log::UpdateTemperatureLog,
+    },
     service_provider::{ServiceContext, ServiceProvider},
-    temperature_log::{insert::InsertTemperatureLog, update::UpdateTemperatureLog},
     SingleRecordError,
 };
 use util::constants::SYSTEM_USER_ID;
@@ -106,7 +108,7 @@ fn upsert_temperature_log(
     log: TemperatureLog,
 ) -> anyhow::Result<repository::TemperatureLog> {
     let id = log.id.clone();
-    let service = &service_provider.temperature_log_service;
+    let service = &service_provider.cold_chain_service;
     let sensor_service = &service_provider.sensor_service;
     let sensor = sensor_service
         .get_sensor(&ctx, log.sensor_id.clone())
@@ -118,7 +120,7 @@ fn upsert_temperature_log(
     match &log.temperature_breach_id {
         Some(breach_id) => {
             let breach = service_provider
-                .temperature_breach_service
+                .cold_chain_service
                 .get_temperature_breach(&ctx, breach_id.clone());
 
             match breach {
@@ -141,7 +143,7 @@ fn upsert_temperature_log(
                         location_id: None,
                     };
                     service_provider
-                        .temperature_breach_service
+                        .cold_chain_service
                         .insert_temperature_breach(&ctx, breach)
                         .map_err(|e| {
                             anyhow::anyhow!("Unable to insert temperature breach {:?}", e)

@@ -11,24 +11,21 @@ path = "src/lib.rs"
 repository = { path = "../../repository" }
 service = { path = "../../service" }
 graphql_core = { path = "../core" }
-graphql_general = { path = "../general" }
-graphql_types = { path = "../types" }
+
 
 actix-web = { workspace = true }
-anymap = "0.12"
 async-std = "1.9.0"
-async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }
+async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = "0.1.30"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { workspace = true }
-serde = "1.0.126"
-serde_json = "1.0.66"
-thiserror = "1.0.30"
+
 
 [dev-dependencies]
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
+serde = "1.0.126"
+serde_json = "1.0.66"
 
 
 [features]

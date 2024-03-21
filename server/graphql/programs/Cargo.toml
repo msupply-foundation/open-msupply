@@ -12,7 +12,6 @@ repository = { path = "../../repository" }
 service = { path = "../../service" }
 util = { path = "../../util" }
 graphql_core = { path = "../core" }
-graphql_general = { path = "../general" }
 graphql_types = { path = "../types" }
 
 async-std = { workspace = true }
@@ -22,10 +21,8 @@ async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = "0.1.30"
 chrono = { version = "0.4", features = ["serde"] }
-reqwest = { workspace = true } 
 serde = "1.0.126"
 serde_json = "1.0.66"
-thiserror = "1.0.30"
 
 [dev-dependencies]
 actix-rt = "2.6.0"
