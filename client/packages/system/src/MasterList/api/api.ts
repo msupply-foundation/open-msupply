@@ -30,7 +30,7 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
         offset,
         key,
         desc,
-        filter: { ...filterBy, existsForStoreId: { equalTo: storeId } },
+        filter: filterBy,
         storeId,
       });
       return result?.masterLists;
