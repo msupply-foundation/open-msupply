@@ -345,6 +345,9 @@ pub(crate) async fn check_records_against_database(
             ProgramRequisitionSettings => {
                 check_delete_record_by_id!(ProgramRequisitionSettingsRowRepository, con, id)
             }
+            MasterListLine => {
+                check_delete_record_by_id_option!(MasterListLineRowRepository, con, id)
+            }
             MasterListNameJoin => {
                 check_delete_record_by_id_option!(MasterListNameJoinRepository, con, id)
             }
