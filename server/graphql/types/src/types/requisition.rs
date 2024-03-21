@@ -237,10 +237,10 @@ impl RequisitionNode {
     }
 
     pub async fn period(&self) -> Option<PeriodNode> {
-        match &self.requisition.period {
-            Some(period) => Some(PeriodNode::from_domain(period.to_owned())),
-            None => None,
-        }
+        self.requisition
+            .period
+            .as_ref()
+            .map(|period| PeriodNode::from_domain(period.to_owned()))
     }
 
     // % allocated ?

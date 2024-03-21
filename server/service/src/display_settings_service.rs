@@ -32,14 +32,12 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
                 value,
                 hash: custom_logo_hash,
             });
-        let custom_theme =
-            match key_value_store.get_string(KeyValueType::SettingsDisplayCustomTheme)? {
-                Some(value) => Some(DisplaySettingNode {
-                    value,
-                    hash: custom_theme_hash,
-                }),
-                None => None,
-            };
+        let custom_theme = key_value_store
+            .get_string(KeyValueType::SettingsDisplayCustomTheme)?
+            .map(|value| DisplaySettingNode {
+                value,
+                hash: custom_theme_hash,
+            });
 
         let display_settings = DisplaySettingsNode {
             custom_logo,
@@ -54,44 +52,41 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         settings: &DisplaySettingsInput,
     ) -> Result<UpdateResult, RepositoryError> {
-        let result = ctx
-            .connection
-            .transaction_sync(|con| {
-                let key_value_store = KeyValueStoreRepository::new(con);
-                let mut update_result = UpdateResult {
-                    logo: None,
-                    theme: None,
-                };
+        let result = ctx.connection.transaction_sync(|con| {
+            let key_value_store = KeyValueStoreRepository::new(con);
+            let mut update_result = UpdateResult {
+                logo: None,
+                theme: None,
+            };
 
-                if let Some(logo) = &settings.custom_logo {
-                    key_value_store.set_string(
-                        KeyValueType::SettingsDisplayCustomLogo,
-                        settings.custom_logo.clone(),
-                    )?;
-                    let logo_hash = Some(sha256(&logo));
-                    key_value_store.set_string(
-                        KeyValueType::SettingsDisplayCustomLogoHash,
-                        logo_hash.clone(),
-                    )?;
-                    update_result.logo = logo_hash;
-                }
+            if let Some(logo) = &settings.custom_logo {
+                key_value_store.set_string(
+                    KeyValueType::SettingsDisplayCustomLogo,
+                    settings.custom_logo.clone(),
+                )?;
+                let logo_hash = Some(sha256(logo));
+                key_value_store.set_string(
+                    KeyValueType::SettingsDisplayCustomLogoHash,
+                    logo_hash.clone(),
+                )?;
+                update_result.logo = logo_hash;
+            }
 
-                if let Some(theme) = &settings.custom_theme {
-                    key_value_store.set_string(
-                        KeyValueType::SettingsDisplayCustomTheme,
-                        settings.custom_theme.clone(),
-                    )?;
-                    let theme_hash = Some(sha256(&theme));
-                    key_value_store.set_string(
-                        KeyValueType::SettingsDisplayCustomThemeHash,
-                        theme_hash.clone(),
-                    )?;
-                    update_result.theme = theme_hash;
-                }
+            if let Some(theme) = &settings.custom_theme {
+                key_value_store.set_string(
+                    KeyValueType::SettingsDisplayCustomTheme,
+                    settings.custom_theme.clone(),
+                )?;
+                let theme_hash = Some(sha256(theme));
+                key_value_store.set_string(
+                    KeyValueType::SettingsDisplayCustomThemeHash,
+                    theme_hash.clone(),
+                )?;
+                update_result.theme = theme_hash;
+            }
 
-                Ok(update_result)
-            })
-            .map_err(|err| err)?;
+            Ok(update_result)
+        })?;
         Ok(result)
     }
 }

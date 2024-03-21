@@ -149,7 +149,7 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         let oldest = match range {
             CountTimeRange::Today => to_utc(&start_of_day(&now), timezone_offset)
                 .ok_or(InvoiceCountError::BadTimezoneOffset)?,
-            CountTimeRange::ThisWeek => to_utc(&start_of_week(&now), &timezone_offset)
+            CountTimeRange::ThisWeek => to_utc(&start_of_week(&now), timezone_offset)
                 .ok_or(InvoiceCountError::BadTimezoneOffset)?,
         };
         let count = invoices_count(
