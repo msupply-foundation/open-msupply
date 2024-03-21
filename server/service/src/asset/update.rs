@@ -97,15 +97,18 @@ pub fn validate(
 
     // Check locations aren't assigned to other assets already
     match &input.location_ids {
-        Some(location_ids) => match check_locations_are_assigned(location_ids.to_vec(), connection)
-        {
-            Ok(locations) => {
-                if locations.len() > 0 {
-                    return Err(UpdateAssetError::LocationsAlreadyAssigned);
-                };
+        Some(location_ids) => {
+            match check_locations_are_assigned(location_ids.to_vec(), &input.id, connection) {
+                Ok(locations) => {
+                    if locations.len() > 0 {
+                        return Err(UpdateAssetError::LocationsAlreadyAssigned);
+                    };
+                }
+                Err(repository_error) => {
+                    return Err(UpdateAssetError::DatabaseError(repository_error))
+                }
             }
-            Err(repository_error) => return Err(UpdateAssetError::DatabaseError(repository_error)),
-        },
+        }
         None => (),
     };
 
