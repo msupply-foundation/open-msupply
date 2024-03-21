@@ -28,16 +28,19 @@ const assetParsers = {
 
     return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
-  toUpdate: (input: AssetFragment): UpdateAssetInput => ({
-    id: input.id,
-    catalogueItemId: setNullableInput('catalogueItemId', input),
-    assetNumber: input.assetNumber,
-    installationDate: setNullableInput('installationDate', input),
-    notes: input.notes,
-    replacementDate: setNullableInput('replacementDate', input),
-    serialNumber: setNullableInput('serialNumber', input),
-    storeId: input.storeId,
-  }),
+  toUpdate: (input: AssetFragment): UpdateAssetInput => {
+    console.info('input for parser: ', input);
+    return {
+      id: input.id,
+      catalogueItemId: setNullableInput('catalogueItemId', input),
+      assetNumber: input.assetNumber,
+      installationDate: setNullableInput('installationDate', input),
+      notes: input.notes,
+      replacementDate: setNullableInput('replacementDate', input),
+      serialNumber: setNullableInput('serialNumber', input),
+      storeId: input.storeId,
+    };
+  },
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
     assetId: input.assetId ?? '',
@@ -119,10 +122,16 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     throw new Error('Could not insert asset');
   },
   update: async (input: AssetFragment): Promise<string> => {
+    console.info('input', input);
+    console.info('graphql call:', {
+      input: assetParsers.toUpdate(input),
+      storeId,
+    });
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,
     });
+    console.info('result:', result);
     const { updateAsset } = result;
 
     if (updateAsset?.__typename === 'AssetNode') {
