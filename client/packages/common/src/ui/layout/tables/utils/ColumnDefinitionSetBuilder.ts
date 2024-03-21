@@ -92,6 +92,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'itemCode',
     label: 'label.code',
     width: 125,
+    Cell: TooltipTextCell,
   },
   itemName: {
     key: 'itemName',
