@@ -184,22 +184,6 @@ impl StocktakeIsLocked {
     }
 }
 
-pub struct NotAnOutboundShipment;
-#[Object]
-impl NotAnOutboundShipment {
-    pub async fn description(&self) -> &str {
-        "Invoice is not Outbound Shipment"
-    }
-}
-
-pub struct InvoiceDoesNotBelongToCurrentStore;
-#[Object]
-impl InvoiceDoesNotBelongToCurrentStore {
-    pub async fn description(&self) -> &str {
-        "Invoice does not belong to current store"
-    }
-}
-
 pub struct CannotReverseInvoiceStatus;
 #[Object]
 impl CannotReverseInvoiceStatus {
@@ -321,5 +305,13 @@ pub struct ConnectionError;
 impl ConnectionError {
     pub async fn description(&self) -> &str {
         "Failed to reach central server"
+    }
+}
+
+pub struct MasterListNotFoundForThisStore;
+#[Object]
+impl MasterListNotFoundForThisStore {
+    pub async fn description(&self) -> &'static str {
+        "Master list not found (might not be visible to this store)"
     }
 }

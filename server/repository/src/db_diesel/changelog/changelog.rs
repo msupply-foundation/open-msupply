@@ -7,6 +7,7 @@ use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use util::inline_init;
 
@@ -46,7 +47,7 @@ pub enum ChangelogAction {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,
@@ -77,6 +78,8 @@ pub enum ChangelogTableName {
     AssetCategory,
     AssetType,
     AssetCatalogueItem,
+    #[default]
+    SyncFileReference,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]

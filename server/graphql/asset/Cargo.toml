@@ -14,19 +14,17 @@ service = { path = "../../service" }
 util = { path = "../../util" }
 graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
+graphql_asset_catalogue = { path = "../asset_catalogue" }
 
 actix-web = { workspace = true }
-anymap= { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
-reqwest = { workspace = true }
 serde = { workspace = true }
-serde_json = { workspace = true }
-thiserror = { workspace = true }
 
 [dev-dependencies]
+serde_json = { workspace = true }
 actix-rt = { workspace = true }
 assert-json-diff = { workspace = true }
 

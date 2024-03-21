@@ -1,10 +1,10 @@
+use crate::types::ItemChartNode;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::ItemChartNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition_line::chart::{

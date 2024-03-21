@@ -1,18 +1,17 @@
 mod mutations;
 mod queries;
 mod sync_api_error;
+pub mod types;
 
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
 use util::is_central_server;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, StorePreferenceNode,
-    TemperatureLogFilterInput,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -299,25 +298,6 @@ impl GeneralQueries {
         get_plugins(ctx)
     }
 
-    pub async fn temperature_chart(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
-        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
-        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
-        filter: Option<TemperatureLogFilterInput>,
-    ) -> Result<TemperatureChartResponse> {
-        temperature_chart(
-            ctx,
-            store_id,
-            from_datetime,
-            to_datetime,
-            number_of_data_points,
-            filter,
-        )
-    }
-
     pub async fn currencies(
         &self,
         ctx: &Context<'_>,
@@ -430,14 +410,6 @@ impl InitialisationMutations {
 
     pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
         manual_sync(ctx, false)
-    }
-}
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &str {
-        "Master list not found (might not be visible to this store)"
     }
 }
 
