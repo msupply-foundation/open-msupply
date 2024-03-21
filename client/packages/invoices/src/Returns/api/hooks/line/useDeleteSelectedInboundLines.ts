@@ -16,7 +16,6 @@ export const useDeleteSelectedInboundReturnLines = ({
   const isDisabled = useInboundReturnIsDisabled();
   const t = useTranslation('distribution');
 
-  // const { mutateAsync } = useDeleteInboundLines();
   const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   const selectedRows =
