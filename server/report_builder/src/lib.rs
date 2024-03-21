@@ -38,6 +38,11 @@ pub struct BuildArgs {
     /// Default query type, one of: "invoice" | "stocktake" | "requisition",
     #[clap(long)]
     pub query_default: Option<String>,
+
+    #[clap(long)]
+    pub query_sqlite: Option<String>,
+    #[clap(long)]
+    pub query_postgres: Option<String>,
 }
 
 #[derive(clap::Args)]
