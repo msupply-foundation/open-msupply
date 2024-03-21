@@ -49,6 +49,7 @@
   "label.reason": "Reason",
   "label.rtmd": "mSupply RTMD",
   "label.unacknowledged": "Unacknowledged",
+  "label.use-catalogue": "Use asset catalogue",
   "label.upload-files": "Upload files",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",

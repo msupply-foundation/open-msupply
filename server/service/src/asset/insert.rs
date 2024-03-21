@@ -43,17 +43,19 @@ pub fn insert_asset(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
 
-            // populate category_id, class_id, type_id from catalogue_item_id if present
+            // populate category_id, class_id, type_id from catalogue_item_id if present and valid
             let input = match input.catalogue_item_id.clone() {
                 Some(catalogue_item_id) => {
-                    let catalogue_item = AssetCatalogueItemRowRepository::new(connection)
+                    match AssetCatalogueItemRowRepository::new(connection)
                         .find_one_by_id(&catalogue_item_id)?
-                        .ok_or(InsertAssetError::DatabaseError(RepositoryError::NotFound))?;
-                    InsertAsset {
-                        category_id: Some(catalogue_item.category_id),
-                        class_id: Some(catalogue_item.class_id),
-                        type_id: Some(catalogue_item.type_id),
-                        ..input
+                    {
+                        Some(catalogue_item) => InsertAsset {
+                            category_id: Some(catalogue_item.category_id),
+                            class_id: Some(catalogue_item.class_id),
+                            type_id: Some(catalogue_item.type_id),
+                            ..input
+                        },
+                        None => input,
                     }
                 }
                 None => input,
