@@ -8,13 +8,14 @@ import {
   MiniTable,
 } from '@openmsupply-client/common';
 import { useExpansionColumns, useOutboundReturnColumns } from './columns';
-import { OutboundReturnLineFragment } from '../api';
+import { OutboundReturnLineFragment, useReturns } from '../api';
 import { OutboundReturnItem } from '../../types';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: OutboundReturnLineFragment) => void);
-  rows: OutboundReturnLineFragment[];
+  onRowClick?:
+    | null
+    | ((rowData: OutboundReturnLineFragment | OutboundReturnItem) => void);
 }
 
 const Expand: FC<{
@@ -29,17 +30,14 @@ const Expand: FC<{
   }
 };
 
-export const ContentAreaComponent: FC<ContentAreaProps> = ({
-  onRowClick,
-  rows,
-}) => {
+export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
   const t = useTranslation('distribution');
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  //   const { isGrouped } = useIsGrouped('outboundShipment');
-  //   const { rows } = useOutbound.line.rows(isGrouped);
+
+  const { rows } = useReturns.lines.outboundReturnRows();
   const columns = useOutboundReturnColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,

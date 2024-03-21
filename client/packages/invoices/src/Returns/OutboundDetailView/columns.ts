@@ -1,8 +1,5 @@
 import {
   useColumns,
-  //   getRowExpandColumn,
-  //   getNotePopoverColumn,
-  ColumnAlign,
   GenericColumnKey,
   SortBy,
   Column,
@@ -11,13 +8,16 @@ import {
   useColumnUtils,
   NumberCell,
   getRowExpandColumn,
+  ArrayUtils,
 } from '@openmsupply-client/common';
 import { OutboundReturnLineFragment } from '../api';
 import { OutboundReturnItem } from '../../types';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<OutboundReturnLineFragment>;
-  onChangeSortBy: (column: Column<OutboundReturnLineFragment>) => void;
+  sortBy: SortBy<OutboundReturnLineFragment | OutboundReturnItem>;
+  onChangeSortBy: (
+    column: Column<OutboundReturnLineFragment | OutboundReturnItem>
+  ) => void;
 }
 
 const expansionColumn = getRowExpandColumn<
@@ -26,10 +26,6 @@ const expansionColumn = getRowExpandColumn<
 // const notePopoverColumn = getNotePopoverColumn<
 //   StockOutLineFragment | StockOutItem
 // >();
-
-const getPackSize = (row: OutboundReturnLineFragment) => row.packSize;
-
-const getNumberOfPacks = (row: OutboundReturnLineFragment) => row.numberOfPacks;
 
 const getUnitQuantity = (row: OutboundReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
@@ -69,22 +65,32 @@ export const useOutboundReturnColumns = ({
       [
         'itemCode',
         {
-          getSortValue: (row: OutboundReturnLineFragment) =>
+          getSortValue: row =>
             getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemCode'] },
               { path: ['itemCode'], default: '' },
             ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['itemCode'], default: '' }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemCode'] },
+              { path: ['itemCode'], default: '' },
+            ]),
         },
       ],
       [
         'itemName',
         {
           Cell: TooltipTextCell,
-          getSortValue: (row: OutboundReturnLineFragment) =>
-            getColumnPropertyAsString(row, [{ path: ['itemName'] }]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['itemName'] }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
         },
       ],
       //   [
@@ -139,60 +145,75 @@ export const useOutboundReturnColumns = ({
         'numberOfPacks',
         {
           Cell: NumberCell,
-          getSortValue: row => {
-            return getNumberOfPacks(row);
-          },
           accessor: ({ rowData }) => {
-            return getNumberOfPacks(rowData);
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
           },
         },
       ],
       [
         'packSize',
         {
-          getSortValue: row => {
-            return getPackSize(row) ?? '';
-          },
-          accessor: ({ rowData }) => {
-            return getPackSize(rowData);
-          },
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
         },
       ],
-      [
-        'unitQuantity',
-        {
-          Cell: NumberCell,
-          accessor: ({ rowData }) => {
-            return getUnitQuantity(rowData);
-          },
-        },
-      ],
-      {
-        label: 'label.unit-price',
-        key: 'sellPricePerUnit',
-        align: ColumnAlign.Right,
-        accessor: ({ rowData }) => {
-          return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
-        },
-        getSortValue: rowData => {
-          return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
-        },
-      },
-      {
-        label: 'label.line-total',
-        key: 'lineTotal',
-        align: ColumnAlign.Right,
-        accessor: ({ rowData }) => {
-          const x = c(
-            rowData.sellPricePerPack * rowData.numberOfPacks
-          ).format();
-          return x;
-        },
-        getSortValue: row => {
-          const x = c(row.sellPricePerPack * row.numberOfPacks).format();
-          return x;
-        },
-      },
+      // TODO: COME BACK TO THESE
+      // [
+      //   'unitQuantity',
+      //   {
+      //     Cell: NumberCell,
+      //     accessor: ({ rowData }) => {
+      //       return getUnitQuantity(rowData);
+      //     },
+      //   },
+      // ],
+      // {
+      //   label: 'label.unit-price',
+      //   key: 'sellPricePerUnit',
+      //   align: ColumnAlign.Right,
+      //   accessor: ({ rowData }) => {
+      //     return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
+      //   },
+      //   getSortValue: rowData => {
+      //     return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
+      //   },
+      // },
+      // {
+      //   label: 'label.line-total',
+      //   key: 'lineTotal',
+      //   align: ColumnAlign.Right,
+      //   accessor: ({ rowData }) => {
+      //     const x = c(
+      //       rowData.sellPricePerPack * rowData.numberOfPacks
+      //     ).format();
+      //     return x;
+      //   },
+      //   getSortValue: row => {
+      //     const x = c(row.sellPricePerPack * row.numberOfPacks).format();
+      //     return x;
+      //   },
+      // },
       expansionColumn,
       GenericColumnKey.Selection,
     ],
