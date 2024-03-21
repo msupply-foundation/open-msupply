@@ -6,9 +6,9 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type OutboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null };
 
-export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null };
+export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null };
 
-export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null };
+export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null };
 
 export type OutboundReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
 
@@ -36,7 +36,7 @@ export type InboundReturnsQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null }> } };
+export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null }> } };
 
 export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
   input: Types.GenerateOutboundReturnLinesInput;
@@ -68,7 +68,7 @@ export type InboundReturnByNumberQueryVariables = Types.Exact<{
 }>;
 
 
-export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null } | { __typename: 'NodeError' } };
+export type InboundReturnByNumberQuery = { __typename: 'Queries', invoiceByNumber: { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, lines: { __typename: 'InvoiceLineConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number }> }, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null } | { __typename: 'NodeError' } };
 
 export type InsertOutboundReturnMutationVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -160,6 +160,10 @@ export const InboundReturnRowFragmentDoc = gql`
   colour
   createdDatetime
   deliveredDatetime
+  linkedShipment {
+    __typename
+    id
+  }
 }
     `;
 export const InboundReturnFragmentDoc = gql`
@@ -170,6 +174,7 @@ export const InboundReturnFragmentDoc = gql`
   invoiceNumber
   colour
   onHold
+  comment
   createdDatetime
   pickedDatetime
   shippedDatetime
@@ -185,6 +190,11 @@ export const InboundReturnFragmentDoc = gql`
     username
     email
   }
+  linkedShipment {
+    __typename
+    id
+  }
+  theirReference
 }
     `;
 export const OutboundReturnLineFragmentDoc = gql`

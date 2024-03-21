@@ -19,6 +19,10 @@ use super::{
 const DESCRIPTION: &str = "Create inbound shipment from outbound shipment";
 
 pub(crate) struct CreateInboundShipmentProcessor;
+pub enum InboundInvoiceType {
+    InboundReturn,
+    InboundShipment,
+}
 
 impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     fn get_description(&self) -> String {
@@ -28,7 +32,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     /// Inbound shipment will be created when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source invoice is either Outbound shipment or Outbound Return
     /// 3. Source outbound shipment is either Shipped or Picked
     ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
@@ -53,9 +57,13 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
                 _ => return Ok(None),
             };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
-            return Ok(None);
-        }
+        // Also get type for new invoice
+        let new_invoice_type = match outbound_shipment.invoice_row.r#type {
+            InvoiceRowType::OutboundShipment => InboundInvoiceType::InboundShipment,
+            InvoiceRowType::OutboundReturn => InboundInvoiceType::InboundReturn,
+            _ => return Ok(None),
+        };
+
         // 3.
         if !matches!(
             outbound_shipment.invoice_row.status,
@@ -89,6 +97,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &outbound_shipment,
             record_for_processing,
             request_requisition,
+            new_invoice_type,
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
@@ -136,6 +145,7 @@ fn generate_inbound_shipment(
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
     request_requisition: &Option<Requisition>,
+    r#type: InboundInvoiceType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_link_id = outbound_shipment.store_row.name_id.clone();
@@ -163,15 +173,31 @@ fn generate_inbound_shipment(
         ),
     };
 
-    let formatted_comment = match &outbound_shipment_row.comment {
-        Some(comment) => format!("Stock transfer ({})", comment),
-        None => format!("Stock transfer"),
+    let formatted_comment = match r#type {
+        InboundInvoiceType::InboundShipment => match &outbound_shipment_row.comment {
+            Some(comment) => format!("Stock transfer ({})", comment),
+            None => format!("Stock transfer"),
+        },
+        InboundInvoiceType::InboundReturn => match &outbound_shipment_row.comment {
+            Some(comment) => format!("Stock return ({})", comment),
+            None => format!("Stock return"),
+        },
     };
 
     let result = InvoiceRow {
         id: uuid(),
-        invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
-        r#type: InvoiceRowType::InboundShipment,
+        invoice_number: next_number(
+            connection,
+            &match r#type {
+                InboundInvoiceType::InboundShipment => NumberRowType::InboundShipment,
+                InboundInvoiceType::InboundReturn => NumberRowType::InboundReturn,
+            },
+            &store_id,
+        )?,
+        r#type: match r#type {
+            InboundInvoiceType::InboundReturn => InvoiceRowType::InboundReturn,
+            InboundInvoiceType::InboundShipment => InvoiceRowType::InboundShipment,
+        },
         name_link_id,
         store_id,
         status,

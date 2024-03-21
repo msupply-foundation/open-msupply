@@ -28,11 +28,10 @@ pub fn validate(
     // Status check
     let status_changed = check_status_change(&return_row, patch.invoice_row_status_option());
     if status_changed {
-        let on_hold_input = None;
         check_invoice_status(
             &return_row,
             patch.invoice_row_status_option(),
-            &on_hold_input,
+            &patch.on_hold,
         )
         .map_err(|e| match e {
             InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {

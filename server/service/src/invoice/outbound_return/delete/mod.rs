@@ -1,4 +1,4 @@
-use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError};
+use repository::{ActivityLogType, InvoiceRowRepository, RepositoryError, TransactionError};
 
 pub mod validate;
 
@@ -18,7 +18,8 @@ pub fn delete_outbound_return(
     ctx: &ServiceContext,
     id: String,
 ) -> Result<String, DeleteOutboundReturnError> {
-    ctx.connection
+    let invoice_id = ctx
+        .connection
         .transaction_sync(|connection| {
             validate(&id, &ctx.store_id, &connection)?;
 
@@ -51,7 +52,12 @@ pub fn delete_outbound_return(
 
             Ok(id)
         })
-        .map_err(|error| error.to_inner_error())
+        .map_err(|error: TransactionError<DeleteOutboundReturnError>| error.to_inner_error())?;
+
+    ctx.processors_trigger
+        .trigger_shipment_transfer_processors();
+
+    Ok(invoice_id)
 }
 
 #[derive(Debug, PartialEq, Clone)]
