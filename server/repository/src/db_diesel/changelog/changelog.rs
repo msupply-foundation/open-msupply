@@ -79,7 +79,7 @@ pub enum ChangelogTableName {
     AssetType,
     AssetCatalogueItem,
     #[default]
-    SyncFileReferenceRow,
+    SyncFileReference,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
