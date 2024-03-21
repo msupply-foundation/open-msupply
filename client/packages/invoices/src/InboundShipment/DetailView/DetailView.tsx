@@ -46,7 +46,7 @@ export const DetailView: FC = () => {
   } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
-  const { info } = useNotification();
+  const { info, error } = useNotification();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -67,10 +67,12 @@ export const DetailView: FC = () => {
       return;
     }
     if (selectedLines.some(line => !line.stockLine)) {
-      const selectLinesSnack = info('ugh');
+      console.error('No stock line associated with the selected line(s)');
+      const selectLinesSnack = error(t('error.something-wrong'));
       selectLinesSnack();
       return;
     }
+
     const selectedStockLineIds = selectedLines.map(
       line => line.stockLine?.id ?? ''
     );
