@@ -99,7 +99,6 @@ mod tests {
         let result: std::collections::HashMap<String, Vec<Location>> =
             loader.load(ids).await.unwrap();
 
-        println!("{:?}", result);
 
         assert_eq!(
             result.get(&mock_asset_a().id),

@@ -173,8 +173,34 @@ mod query {
                 .is_err(),
             true
         );
+        // 8. Check that adding a new location array which includes locations already assigned won't prompt error
 
-        // 8. Check locations are removed when passed empty string
+        let location_ids_to_add = vec![
+            "location_1".to_string(),
+            "location_2".to_string(),
+            "location_3".to_string(),
+        ];
+
+        let _updated_asset = service
+            .update_asset(
+                &ctx,
+                UpdateAsset {
+                    id: id.clone(),
+                    location_ids: Some(location_ids_to_add.clone()),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        let asset_location_ids: Vec<String> = asset_location_repository
+            .find_all_by_asset(id.clone())
+            .unwrap()
+            .into_iter()
+            .map(|location| location.location_id)
+            .collect();
+
+        assert_eq!(asset_location_ids, location_ids_to_add);
+
+        // 9. Check locations are removed when passed empty string
 
         let _updated_asset = service
             .update_asset(
