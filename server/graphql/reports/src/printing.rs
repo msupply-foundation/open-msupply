@@ -130,7 +130,7 @@ pub async fn print_report_definition(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::Report,
+            resource: Resource::ReportDev,
             store_id: Some(store_id.to_string()),
         },
     )?;

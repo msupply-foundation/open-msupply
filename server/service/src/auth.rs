@@ -78,6 +78,7 @@ pub enum Resource {
     MutatePrescription,
     // reporting
     Report,
+    ReportDev,
     QueryLog,
     // view/edit server setting
     ServerAdmin,
@@ -350,6 +351,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::Report),
+        ]),
+    );
+    // report development
+    map.insert(
+        Resource::ReportDev,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            // SQL reports can do raw queries, i.e. you need to be server admin
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
         ]),
     );
 
