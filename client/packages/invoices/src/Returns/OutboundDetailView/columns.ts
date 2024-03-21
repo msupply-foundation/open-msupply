@@ -10,33 +10,36 @@ import {
   TooltipTextCell,
   useColumnUtils,
   NumberCell,
+  getRowExpandColumn,
 } from '@openmsupply-client/common';
-import { OutboundReturnDetailRowFragment } from '../api';
+import { OutboundReturnLineFragment } from '../api';
+import { OutboundReturnItem } from '../../types';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<OutboundReturnDetailRowFragment>;
-  onChangeSortBy: (column: Column<OutboundReturnDetailRowFragment>) => void;
+  sortBy: SortBy<OutboundReturnLineFragment>;
+  onChangeSortBy: (column: Column<OutboundReturnLineFragment>) => void;
 }
 
-// const expansionColumn = getRowExpandColumn<
-//   StockOutLineFragment | StockOutItem
-// >();
+const expansionColumn = getRowExpandColumn<
+  OutboundReturnLineFragment | OutboundReturnItem
+>();
 // const notePopoverColumn = getNotePopoverColumn<
 //   StockOutLineFragment | StockOutItem
 // >();
 
-const getPackSize = (row: OutboundReturnDetailRowFragment) => row.packSize;
+const getPackSize = (row: OutboundReturnLineFragment) => row.packSize;
 
-const getNumberOfPacks = (row: OutboundReturnDetailRowFragment) =>
-  row.numberOfPacks;
+const getNumberOfPacks = (row: OutboundReturnLineFragment) => row.numberOfPacks;
 
-const getUnitQuantity = (row: OutboundReturnDetailRowFragment) =>
+const getUnitQuantity = (row: OutboundReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
 
 export const useOutboundReturnColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<OutboundReturnDetailRowFragment>[] => {
+}: UseOutboundColumnOptions): Column<
+  OutboundReturnLineFragment | OutboundReturnItem
+>[] => {
   const { c } = useCurrency();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
@@ -66,7 +69,7 @@ export const useOutboundReturnColumns = ({
       [
         'itemCode',
         {
-          getSortValue: (row: OutboundReturnDetailRowFragment) =>
+          getSortValue: (row: OutboundReturnLineFragment) =>
             getColumnPropertyAsString(row, [
               { path: ['itemCode'], default: '' },
             ]),
@@ -78,7 +81,7 @@ export const useOutboundReturnColumns = ({
         'itemName',
         {
           Cell: TooltipTextCell,
-          getSortValue: (row: OutboundReturnDetailRowFragment) =>
+          getSortValue: (row: OutboundReturnLineFragment) =>
             getColumnPropertyAsString(row, [{ path: ['itemName'] }]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [{ path: ['itemName'] }]),
@@ -190,10 +193,13 @@ export const useOutboundReturnColumns = ({
           return x;
         },
       },
-      //   expansionColumn,
+      expansionColumn,
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
 };
+
+export const useExpansionColumns = (): Column<OutboundReturnLineFragment>[] =>
+  useColumns(['batch', 'expiryDate', 'numberOfPacks', 'packSize']);

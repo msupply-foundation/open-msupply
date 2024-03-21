@@ -17,7 +17,7 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { OutboundReturnDetailRowFragment, useReturns } from '../api';
+import { OutboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
 import { OutboundReturnEditModal } from '../modals';
@@ -35,8 +35,7 @@ export const OutboundReturnsDetailView: FC = () => {
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
-  const onRowClick = (row: OutboundReturnDetailRowFragment) =>
-    onOpen(row.itemId);
+  const onRowClick = (row: OutboundReturnLineFragment) => onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
   //  (draft?: Draft) => {
@@ -70,13 +69,11 @@ export const OutboundReturnsDetailView: FC = () => {
       {data ? (
         <TableProvider
           createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<OutboundReturnDetailRowFragment>(
-            {
-              initialSortBy: {
-                key: 'itemName',
-              },
-            }
-          )}
+          queryParamsStore={createQueryParamsStore<OutboundReturnLineFragment>({
+            initialSortBy: {
+              key: 'itemName',
+            },
+          })}
         >
           <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
