@@ -19,6 +19,10 @@ use super::{
 const DESCRIPTION: &str = "Create inbound shipment from outbound shipment";
 
 pub(crate) struct CreateInboundShipmentProcessor;
+pub enum InboundInvoiceType {
+    InboundReturn,
+    InboundShipment,
+}
 
 impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     fn get_description(&self) -> String {
@@ -53,12 +57,13 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
                 _ => return Ok(None),
             };
         // 2.
-        if !matches!(
-            outbound_shipment.invoice_row.r#type,
-            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
-        ) {
-            return Ok(None);
-        }
+        // Also get type for new invoice
+        let new_invoice_type = match outbound_shipment.invoice_row.r#type {
+            InvoiceRowType::OutboundShipment => InboundInvoiceType::InboundShipment,
+            InvoiceRowType::OutboundReturn => InboundInvoiceType::InboundReturn,
+            _ => return Ok(None),
+        };
+
         // 3.
         if !matches!(
             outbound_shipment.invoice_row.status,
@@ -92,12 +97,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &outbound_shipment,
             record_for_processing,
             request_requisition,
-            match outbound_shipment.invoice_row.r#type {
-                InvoiceRowType::OutboundShipment => InvoiceRowType::InboundShipment,
-                InvoiceRowType::OutboundReturn => InvoiceRowType::InboundReturn,
-                // TODO: is panicking here ok or should we return Ok(None)? (This should never happen bc of check above...)
-                _ => unimplemented!(),
-            },
+            new_invoice_type,
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
@@ -145,7 +145,7 @@ fn generate_inbound_shipment(
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
     request_requisition: &Option<Requisition>,
-    r#type: InvoiceRowType,
+    r#type: InboundInvoiceType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_link_id = outbound_shipment.store_row.name_id.clone();
@@ -174,15 +174,14 @@ fn generate_inbound_shipment(
     };
 
     let formatted_comment = match r#type {
-        InvoiceRowType::InboundShipment => match &outbound_shipment_row.comment {
+        InboundInvoiceType::InboundShipment => match &outbound_shipment_row.comment {
             Some(comment) => format!("Stock transfer ({})", comment),
             None => format!("Stock transfer"),
         },
-        InvoiceRowType::InboundReturn => match &outbound_shipment_row.comment {
+        InboundInvoiceType::InboundReturn => match &outbound_shipment_row.comment {
             Some(comment) => format!("Stock return ({})", comment),
             None => format!("Stock return"),
         },
-        _ => unimplemented!(),
     };
 
     let result = InvoiceRow {
@@ -190,13 +189,15 @@ fn generate_inbound_shipment(
         invoice_number: next_number(
             connection,
             &match r#type {
-                InvoiceRowType::InboundShipment => NumberRowType::InboundShipment,
-                InvoiceRowType::InboundReturn => NumberRowType::InboundReturn,
-                _ => unimplemented!(),
+                InboundInvoiceType::InboundShipment => NumberRowType::InboundShipment,
+                InboundInvoiceType::InboundReturn => NumberRowType::InboundReturn,
             },
             &store_id,
         )?,
-        r#type,
+        r#type: match r#type {
+            InboundInvoiceType::InboundReturn => InvoiceRowType::InboundReturn,
+            InboundInvoiceType::InboundShipment => InvoiceRowType::InboundShipment,
+        },
         name_link_id,
         store_id,
         status,
