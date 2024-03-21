@@ -129,7 +129,7 @@ const useStatusChangeButton = () => {
   const { mutateAsync } = useReturns.document.updateInboundReturn();
 
   const {
-    data: { status, lines, onHold, id } = {
+    data: { status, lines, onHold, linkedShipment, id } = {
       status: InvoiceNodeStatus.New,
       lines: { totalCount: 0 },
       onHold: false,
@@ -138,9 +138,7 @@ const useStatusChangeButton = () => {
 
   const lineCount = lines.totalCount;
 
-  // TODO manual vs automatic returns
-  // const isManuallyCreated = !linkedShipment?.id;
-  const isManuallyCreated = true;
+  const isManuallyCreated = !linkedShipment?.id;
 
   const options = useMemo(
     () =>
