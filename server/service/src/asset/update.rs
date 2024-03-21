@@ -103,7 +103,7 @@ pub fn generate(
 ) -> AssetRow {
     asset_row.store_id = store_id;
     asset_row.notes = notes;
-    asset_row.asset_number = asset_number.unwrap_or(asset_row.asset_number);
+    asset_row.asset_number = asset_number;
 
     if let Some(serial_number) = serial_number {
         asset_row.serial_number = serial_number.value;
