@@ -79,19 +79,17 @@ pub async fn put_breaches(
         .json(&results)
 }
 
-fn validate_input(breaches: &Vec<TemperatureBreach>) -> bool {
-    breaches.iter().all(|breach| validate_breach(breach))
+fn validate_input(breaches: &[TemperatureBreach]) -> bool {
+    breaches.iter().all(validate_breach)
 }
 
 fn validate_breach(breach: &TemperatureBreach) -> bool {
-    match breach.end_unix_timestamp {
-        Some(end_unix_timestamp) => {
-            if end_unix_timestamp < 0 {
-                return false;
-            }
+    if let Some(end_unix_timestamp) = breach.end_unix_timestamp {
+        if end_unix_timestamp < 0 {
+            return false;
         }
-        None => {}
     }
+
     if breach.start_unix_timestamp < 0 {
         return false;
     }
@@ -130,7 +128,7 @@ fn upsert_temperature_breach(
     let sensor_service = &service_provider.sensor_service;
 
     let sensor = sensor_service
-        .get_sensor(&ctx, breach.sensor_id.clone())
+        .get_sensor(ctx, breach.sensor_id.clone())
         .map_err(|e| anyhow::anyhow!("Unable to get sensor {:?}", e))?;
     let start_datetime = NaiveDateTime::from_timestamp_opt(breach.start_unix_timestamp, 0)
         .context(format!(
@@ -152,7 +150,7 @@ fn upsert_temperature_breach(
 
     // acknowledgement is the concern of open mSupply - to allow entry of comments
     // therefore ignore the acknowledgement status of the incoming breach
-    let result = match service.get_temperature_breach(&ctx, id.clone()) {
+    let result = match service.get_temperature_breach(ctx, id.clone()) {
         Ok(existing_breach) => {
             let breach = UpdateTemperatureBreach {
                 id: id.clone(),
@@ -171,7 +169,7 @@ fn upsert_temperature_breach(
                 comment: existing_breach.temperature_breach_row.comment,
             };
             service
-                .update_temperature_breach(&ctx, breach)
+                .update_temperature_breach(ctx, breach)
                 .map_err(|e| anyhow::anyhow!("Unable to update temperature breach {:?}", e))?
         }
         Err(SingleRecordError::NotFound(_)) => {
@@ -190,7 +188,7 @@ fn upsert_temperature_breach(
                 comment: breach.comment,
             };
             service
-                .insert_temperature_breach(&ctx, breach)
+                .insert_temperature_breach(ctx, breach)
                 .map_err(|e| anyhow::anyhow!("Unable to insert temperature breach {:?}", e))?
         }
         Err(e) => {

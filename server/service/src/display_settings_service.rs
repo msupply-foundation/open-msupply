@@ -26,14 +26,12 @@ pub trait DisplaySettingsServiceTrait: Sync + Send {
             .get_string(KeyValueType::SettingsDisplayCustomThemeHash)?
             .unwrap_or("".to_string());
 
-        let custom_logo =
-            match key_value_store.get_string(KeyValueType::SettingsDisplayCustomLogo)? {
-                Some(value) => Some(DisplaySettingNode {
-                    value,
-                    hash: custom_logo_hash,
-                }),
-                None => None,
-            };
+        let custom_logo = key_value_store
+            .get_string(KeyValueType::SettingsDisplayCustomLogo)?
+            .map(|value| DisplaySettingNode {
+                value,
+                hash: custom_logo_hash,
+            });
         let custom_theme =
             match key_value_store.get_string(KeyValueType::SettingsDisplayCustomTheme)? {
                 Some(value) => Some(DisplaySettingNode {

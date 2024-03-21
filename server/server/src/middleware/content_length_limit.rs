@@ -66,10 +66,7 @@ where
         let content_length = match req.headers().get("content-length") {
             None => 0,
             Some(content_length) => match content_length.to_str() {
-                Ok(content_length) => match content_length.parse::<u64>() {
-                    Ok(content_length) => content_length,
-                    Err(_) => 0,
-                },
+                Ok(content_length) => content_length.parse::<u64>().unwrap_or(0),
                 Err(_) => 0,
             },
         };

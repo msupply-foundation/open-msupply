@@ -202,7 +202,7 @@ mod tests {
                         end_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
                     },
                     ConsumptionHistoryPoint {
-                        reference_date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap(),
+                        reference_date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
                         start_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
                         end_of_consumption_lookup: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap(),
                         start_of_amc_lookup: NaiveDate::from_ymd_opt(2020, 9, 1).unwrap(),

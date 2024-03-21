@@ -17,20 +17,19 @@ impl From<RepositoryError> for DeleteAssetError {
 }
 
 pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, DeleteAssetError> {
-    let _deleted = ctx
-        .connection
+    ctx.connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &asset_id)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetDeleted,
                 Some(asset_id.clone()),
                 None,
                 None,
             )?;
 
-            AssetRowRepository::new(&connection)
+            AssetRowRepository::new(connection)
                 .delete(&asset_id)
                 .map_err(DeleteAssetError::from)
         })
@@ -43,7 +42,7 @@ pub fn validate(
     ctx_store_id: &str,
     asset_id: &str,
 ) -> Result<(), DeleteAssetError> {
-    let asset_row = match check_asset_exists(&asset_id, connection)? {
+    let asset_row = match check_asset_exists(asset_id, connection)? {
         Some(asset_row) => asset_row,
         None => return Err(DeleteAssetError::AssetDoesNotExist),
     };
