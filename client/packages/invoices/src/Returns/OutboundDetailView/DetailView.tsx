@@ -11,7 +11,6 @@ import {
   useEditModal,
   DetailTabs,
 } from '@openmsupply-client/common';
-// import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -19,11 +18,9 @@ import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
 import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-// import { Draft } from '../..';
 import { OutboundReturnEditModal } from '../modals';
 
 export const OutboundReturnsDetailView: FC = () => {
-  // const isDisabled = useReturn.utils.isDisabled();
   const {
     onOpen,
     onClose,
@@ -39,10 +36,6 @@ export const OutboundReturnsDetailView: FC = () => {
     onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
-  //  (draft?: Draft) => {
-  //   onOpen(draft);
-  //   setMode(ModalMode.Create);
-  // };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
