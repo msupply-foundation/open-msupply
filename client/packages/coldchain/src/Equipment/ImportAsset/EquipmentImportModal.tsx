@@ -2,7 +2,7 @@ import React, { FC, useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
 import { EquipmentImportTab } from './ImportTab';
-import { useDialog } from '@common/hooks';
+import { useDialog, useNotification } from '@common/hooks';
 import {
   DialogButton,
   HorizontalStepper,
@@ -14,6 +14,7 @@ import {
   InsertAssetInput,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
+import { AssetFragment, useAssets } from '../api';
 interface EquipmentImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,10 +34,21 @@ export type ImportRow = {
   isUpdate: boolean;
 };
 
-export const toEquipmentInput = (row: ImportRow): InsertAssetInput => ({
+export const toInsertEquipmentInput = (row: ImportRow): InsertAssetInput => ({
   assetNumber: row.assetNumber,
   catalogueItemId: row.catalogueItemId,
   id: row.id,
+});
+
+export const toUpdateEquipmentInput = (row: ImportRow): AssetFragment => ({
+  assetNumber: row.assetNumber,
+  catalogueItemId: row.catalogueItemId,
+  id: row.id,
+  // Assigning default values here as the parser in the API will ignore.
+  // Better type management would be gelpful here
+  __typename: 'AssetNode',
+  createdDatetime: undefined,
+  modifiedDatetime: undefined,
 });
 
 export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
@@ -44,16 +56,16 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   onClose,
 }) => {
   const t = useTranslation('coldchain');
-  // const { error, success } = useNotification();
+  const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
-  const [importProgress] = useState(0);
-  const [importErrorCount] = useState(0);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importErrorCount, setImportErrorCount] = useState(0);
 
-  // const { mutateAsync: insertManufacturer } = useManufacturer.document.insert();
-  // const { mutateAsync: updateManufacturer } = useManufacturer.document.update();
+  const { mutateAsync: insertAssets } = useAssets.document.insert();
+  const { mutateAsync: updateAssets } = useAssets.document.update();
 
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
@@ -72,70 +84,66 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   //   success(t('success'))();
   // };
 
-  // const importAction = async () => {
-  //   changeTab(Tabs.Import);
-  //   const numberImportRecords = bufferedManufacturers?.length ?? 0;
-  //   if (bufferedManufacturers && numberImportRecords > 0) {
-  //     const importErrorRows: ImportRow[] = [];
-  //     // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
-  //     // A dedicated endpoint for this should probably be created on the backend
-  //     const remainingRecords = bufferedManufacturers;
-  //     while (remainingRecords.length) {
-  //       await Promise.all(
-  //         remainingRecords.splice(0, 100).map(async manufacturer => {
-  //           if (manufacturer.isUpdate) {
-  //             await updateManufacturer(toManufacturerInput(manufacturer)).catch(
-  //               err => {
-  //                 if (!err) {
-  //                   err = { message: t('messages.unknown-error') };
-  //                 }
-  //                 importErrorRows.push({
-  //                   ...manufacturer,
-  //                   errorMessage: err.message,
-  //                 });
-  //               }
-  //             );
-  //           } else {
-  //             await insertManufacturer(toManufacturerInput(manufacturer)).catch(
-  //               err => {
-  //                 if (!err) {
-  //                   err = { message: t('messages.unknown-error') };
-  //                 }
-  //                 importErrorRows.push({
-  //                   ...manufacturer,
-  //                   errorMessage: err.message,
-  //                 });
-  //               }
-  //             );
-  //           }
-  //         })
-  //       ).then(() => {
-  //         // Update Progress Bar
-  //         const percentComplete =
-  //           100 - (remainingRecords.length / numberImportRecords) * 100.0;
-  //         setImportProgress(percentComplete);
-  //         setImportErrorCount(importErrorRows.length);
-  //       });
-  //     }
-  //     if (importErrorRows.length === 0) {
-  //       const importMessage = t('messages.import-generic', {
-  //         count: numberImportRecords,
-  //       });
-  //       const successSnack = success(importMessage);
-  //       successSnack();
-  //       changeTab(Tabs.Upload);
-  //       setBufferedManufacturers([]);
-  //       setErrorMessage('');
-  //       onClose();
-  //     } else {
-  //       // Load the error rows in to the component for review
-  //       setErrorMessage(t('messages.import-error'));
-  //       setBufferedManufacturers(importErrorRows);
-  //       setImportErrorCount(importErrorRows.length);
-  //       changeTab(Tabs.Review);
-  //     }
-  //   }
-  // };
+  const importAction = async () => {
+    onChangeTab(Tabs.Import);
+    const numberImportRecords = bufferedEquipment?.length ?? 0;
+    if (bufferedEquipment && numberImportRecords > 0) {
+      const importErrorRows: ImportRow[] = [];
+      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
+      // A dedicated endpoint for this should probably be created on the backend
+      const remainingRecords = bufferedEquipment;
+      while (remainingRecords.length) {
+        await Promise.all(
+          remainingRecords.splice(0, 100).map(async asset => {
+            if (asset.isUpdate) {
+              await updateAssets(toUpdateEquipmentInput(asset)).catch(err => {
+                if (!err) {
+                  err = { message: t('messages.unknown-error') };
+                }
+                importErrorRows.push({
+                  ...asset,
+                  errorMessage: err.message,
+                });
+              });
+            } else {
+              await insertAssets(toInsertEquipmentInput(asset)).catch(err => {
+                if (!err) {
+                  err = { message: t('messages.unknown-error') };
+                }
+                importErrorRows.push({
+                  ...asset,
+                  errorMessage: err.message,
+                });
+              });
+            }
+          })
+        ).then(() => {
+          // Update Progress Bar
+          const percentComplete =
+            100 - (remainingRecords.length / numberImportRecords) * 100.0;
+          setImportProgress(percentComplete);
+          setImportErrorCount(importErrorRows.length);
+        });
+      }
+      if (importErrorRows.length === 0) {
+        const importMessage = t('messages.import-generic', {
+          count: numberImportRecords,
+        });
+        const successSnack = success(importMessage);
+        successSnack();
+        onChangeTab(Tabs.Upload);
+        setBufferedEquipment([]);
+        setErrorMessage('');
+        onClose();
+      } else {
+        // Load the error rows in to the component for review
+        setErrorMessage(t('messages.import-error'));
+        setBufferedEquipment(importErrorRows);
+        setImportErrorCount(importErrorRows.length);
+        onChangeTab(Tabs.Review);
+      }
+    }
+  };
 
   // const onClickStep = (tabName: string) => {
   //   switch (tabName) {
@@ -191,7 +199,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           variant="ok"
           disabled={importNotReady}
           onClick={async () => {
-            // importAction();
+            importAction();
             console.info('import');
           }}
         />
