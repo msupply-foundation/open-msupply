@@ -15,7 +15,7 @@ import { InboundReturnFragment, useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent = () => {
   const t = useTranslation('distribution');
-  const { mutateAsync } = useReturns.document.updateInboundReturn();
+  const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
   const { data } = useReturns.document.inboundReturn();
@@ -25,7 +25,7 @@ export const AdditionalInfoSectionComponent = () => {
 
   const update = (data: Partial<InboundReturnFragment>) => {
     if (!id) return;
-    mutateAsync({ id, ...data });
+    debouncedMutateAsync({ id, ...data });
   };
 
   return (

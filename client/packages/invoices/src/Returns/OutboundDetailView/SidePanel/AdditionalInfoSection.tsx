@@ -15,7 +15,8 @@ import { useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('replenishment');
-  const { mutateAsync: update } = useReturns.document.updateOutboundReturn();
+  const { debouncedMutateAsync: update } =
+    useReturns.document.updateOutboundReturn();
   // const isDisabled = useReturns.utils.outboundIsDisabled();
   const isDisabled = false; // TODO
 
