@@ -20,7 +20,7 @@ import { InboundReturnFragment, useReturns } from '../api';
 export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
   const onDelete = useReturns.lines.deleteSelectedInboundLines();
-  const { mutateAsync } = useReturns.document.updateInboundReturn();
+  const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
   const { data } = useReturns.document.inboundReturn();
@@ -28,7 +28,7 @@ export const Toolbar: FC = () => {
 
   const update = (data: Partial<InboundReturnFragment>) => {
     if (!id) return;
-    mutateAsync({ id, ...data });
+    debouncedMutateAsync({ id, ...data });
   };
 
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');

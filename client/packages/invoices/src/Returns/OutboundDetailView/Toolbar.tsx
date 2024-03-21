@@ -16,7 +16,7 @@ import { OutboundReturnFragment, useReturns } from '../api';
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
   const onDelete = useReturns.document.deleteOutboundRows();
-  const { mutateAsync } = useReturns.document.updateOutboundReturn();
+  const { debouncedMutateAsync } = useReturns.document.updateOutboundReturn();
 
   const { data } = useReturns.document.outboundReturn();
   const { otherPartyName, theirReference, id } = data ?? {};
@@ -27,7 +27,7 @@ export const Toolbar: FC = () => {
 
   const update = (data: Partial<OutboundReturnFragment>) => {
     if (!id) return;
-    mutateAsync({ id, ...data });
+    debouncedMutateAsync({ id, ...data });
   };
 
   //   const isDisabled = useOutbound.utils.isDisabled();
