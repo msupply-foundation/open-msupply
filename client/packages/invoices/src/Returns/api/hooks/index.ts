@@ -22,6 +22,7 @@ export const useReturns = {
   },
   lines: {
     outboundReturnLines: Lines.useOutboundReturnLines,
+    outboundReturnRows: Lines.useOutboundReturnRows,
     updateOutboundLines: Lines.useUpdateOutboundReturnLines,
 
     generateInboundReturnLines: Lines.useGenerateInboundReturnLines,

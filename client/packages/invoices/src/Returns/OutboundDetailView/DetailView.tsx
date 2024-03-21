@@ -47,13 +47,7 @@ export const OutboundReturnsDetailView: FC = () => {
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={onRowClick}
-          onAddItem={onAddItem}
-          rows={data?.lines?.nodes ?? []}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {
