@@ -29,6 +29,7 @@ interface StepperProps {
   steps: StepDefinition[];
   colour?: StepperColour;
   nowrap?: boolean;
+  onClick?: (index: number) => void;
 }
 
 type PaletteColour = Omit<PaletteColor, 'contrastText'> & { error: string };
@@ -187,6 +188,7 @@ export const HorizontalStepper: FC<StepperProps> = ({
   colour = 'secondary',
   steps,
   nowrap = false,
+  onClick = () => {},
 }) => {
   const paletteColour = usePaletteColour(colour);
   const StyledConnector = getConnector(paletteColour);
@@ -200,11 +202,11 @@ export const HorizontalStepper: FC<StepperProps> = ({
         orientation="horizontal"
         alternativeLabel
       >
-        {steps.map(step => {
+        {steps.map((step, index) => {
           const { active, completed, label, optional, icon, error } = step;
-          // There is no accessability role that I can find to accurately describe
-          // a stepper, so turning to testids to mark the active/completed steps
-          // for tests
+          // There is no accessability role that I can find to accurately
+          // describe a stepper, so turning to testids to mark the
+          // active/completed steps for tests
           const stepIcon = icon ? undefined : getCircle(paletteColour);
 
           return (
@@ -213,6 +215,7 @@ export const HorizontalStepper: FC<StepperProps> = ({
               key={label}
               active={active}
               completed={completed}
+              onClick={() => onClick(index)}
             >
               <StepLabel
                 StepIconComponent={stepIcon}
