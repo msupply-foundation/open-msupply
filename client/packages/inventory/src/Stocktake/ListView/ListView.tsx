@@ -11,6 +11,7 @@ import {
   useToggle,
   NothingHere,
   useUrlQueryParams,
+  ColumnFormat,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -53,7 +54,7 @@ export const StocktakeListView: FC = () => {
         },
       ],
       ['description', { sortable: false }],
-      'createdDatetime',
+      ['createdDatetime', { format: ColumnFormat.Date }],
       ['stocktakeDate', { sortable: false }],
       ['comment', { sortable: false }],
       'selection',
