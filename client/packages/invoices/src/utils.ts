@@ -162,7 +162,9 @@ export const getStatusTranslator =
     );
   };
 
-export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
+export const isOutboundDisabled = (
+  outbound: OutboundRowFragment | OutboundReturnRowFragment
+): boolean => {
   return (
     outbound.status === InvoiceNodeStatus.Shipped ||
     outbound.status === InvoiceNodeStatus.Verified ||

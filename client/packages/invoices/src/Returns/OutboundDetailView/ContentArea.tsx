@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 // import { useOutbound } from '../api';
 import { useOutboundReturnColumns } from './columns';
-import { OutboundReturnDetailRowFragment } from '../api';
+import { OutboundReturnDetailRowFragment, useReturns } from '../api';
 // import { useExpansionColumns } from './OutboundLineEdit/columns';
 
 interface ContentAreaProps {
@@ -36,6 +36,7 @@ interface ContentAreaProps {
 
 export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onRowClick,
+  onAddItem,
   rows,
 }) => {
   const t = useTranslation('distribution');
@@ -49,7 +50,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.outboundIsDisabled();
   //   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
@@ -67,7 +68,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
           noDataElement={
             <NothingHere
               body={t('error.no-outbound-items')}
-              //   onCreate={isDisabled ? undefined : () => onAddItem()}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
               buttonText={t('button.add-item')}
             />
           }
