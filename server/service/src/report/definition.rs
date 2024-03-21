@@ -5,6 +5,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct SQLQuery {
+    pub query_sqlite: String,
+    pub query_postgres: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct GraphQlQuery {
     pub query: String,
     /// Must be an Object. If `dataId` is set it will be overwritten.
@@ -18,52 +24,6 @@ pub struct PrintReportSort {
     pub key: String,
     /// Whether to sort in descending order
     pub desc: Option<bool>,
-}
-
-impl GraphQlQuery {
-    /// Create query variables for the query
-    pub fn query_variables(
-        &self,
-        store_id: &str,
-        data_id: Option<String>,
-        arguments: Option<Value>,
-        sort: Option<PrintReportSort>,
-    ) -> Value {
-        let mut variables = match &self.variables {
-            Some(variables) => {
-                if matches!(variables, Value::Object(_)) {
-                    variables.clone()
-                } else {
-                    // ensure variables are an object
-                    serde_json::json!({})
-                }
-            }
-            None => serde_json::json!({}),
-        };
-
-        if let Some(data_id) = data_id {
-            variables["dataId"] = Value::String(data_id);
-        }
-        // allow the arguments to overwrite the dataId but not the storeId (to reduce the attack
-        // vector)
-        if let Some(Value::Object(arguments)) = arguments {
-            for (key, value) in arguments {
-                variables[key] = value;
-            }
-        };
-
-        if let Some(sort) = sort {
-            variables["sort"] = serde_json::json!({
-                "key": sort.key,
-                "desc": sort.desc
-            });
-        }
-
-        variables["storeId"] = Value::String(store_id.to_string());
-        variables["now"] = Value::String(Utc::now().to_rfc3339());
-
-        variables
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -102,6 +62,7 @@ pub enum ReportDefinitionEntry {
     GraphGLQuery(GraphQlQuery),
     /// Use default predefined query
     DefaultQuery(DefaultQuery),
+    SQLQuery(SQLQuery),
     Resource(serde_json::Value),
     /// Entry reference to another report definition
     Ref(ReportRef),
