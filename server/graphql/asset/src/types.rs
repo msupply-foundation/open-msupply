@@ -4,11 +4,14 @@ use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetStatusLogLoader, StoreByIdLoader, UserLoader,
+    AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetStatusLogLoader,
+    AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{AssetCatalogueItemNode, StoreNode, UserNode};
+use graphql_types::types::{
+    AssetCatalogueItemNode, AssetCategoryNode, AssetClassNode, AssetTypeNode, StoreNode, UserNode,
+};
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
@@ -151,6 +154,33 @@ impl AssetNode {
             .load_one(catalogue_item_id.clone())
             .await?
             .map(AssetCatalogueItemNode::from_domain))
+    }
+
+    pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetCategoryLoader>>();
+
+        Ok(loader
+            .load_one(self.row().asset_category_id.clone())
+            .await?
+            .map(AssetCategoryNode::from_domain))
+    }
+
+    pub async fn asset_class(&self, ctx: &Context<'_>) -> Result<Option<AssetClassNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetClassLoader>>();
+
+        Ok(loader
+            .load_one(self.row().asset_class_id.clone())
+            .await?
+            .map(AssetClassNode::from_domain))
+    }
+
+    pub async fn asset_type(&self, ctx: &Context<'_>) -> Result<Option<AssetTypeNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetTypeLoader>>();
+
+        Ok(loader
+            .load_one(self.row().asset_type_id.clone())
+            .await?
+            .map(AssetTypeNode::from_domain))
     }
 
     pub async fn status_log(&self, ctx: &Context<'_>) -> Result<Option<AssetLogNode>> {
