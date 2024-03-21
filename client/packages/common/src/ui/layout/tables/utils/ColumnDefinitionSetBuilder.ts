@@ -3,7 +3,7 @@ import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
-import { NumberCell } from '../components';
+import { NumberCell, TooltipTextCell } from '../components';
 
 const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
@@ -180,6 +180,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.code',
     key: 'code',
     width: 20,
+    Cell: TooltipTextCell,
   },
   packSize: {
     label: 'label.pack-size',
