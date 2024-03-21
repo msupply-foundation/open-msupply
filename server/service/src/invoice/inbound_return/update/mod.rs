@@ -74,8 +74,8 @@ pub fn update_inbound_return(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // ctx.processors_trigger
-    //     .trigger_shipment_transfer_processors();
+    ctx.processors_trigger
+        .trigger_shipment_transfer_processors();
 
     Ok(invoice)
 }

@@ -12,6 +12,8 @@ import {
   useIsGrouped,
   Switch,
   useBufferState,
+  Alert,
+  InvoiceNodeStatus,
 } from '@openmsupply-client/common';
 import { InboundReturnFragment, useReturns } from '../api';
 
@@ -19,6 +21,7 @@ export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
   const onDelete = useReturns.lines.deleteSelectedInboundLines();
   const { mutateAsync } = useReturns.document.updateInboundReturn();
+  const isDisabled = useReturns.utils.inboundIsDisabled();
 
   const { data } = useReturns.document.inboundReturn();
   const { otherPartyName, theirReference, id } = data ?? {};
@@ -31,8 +34,6 @@ export const Toolbar: FC = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
-
-  const isDisabled = useReturns.utils.inboundIsDisabled();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -55,9 +56,9 @@ export const Toolbar: FC = () => {
               label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
-                  disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
+                  disabled={isDisabled}
                   value={theirReferenceBuffer ?? ''}
                   onChange={event => {
                     setTheirReferenceBuffer(event.target.value);
@@ -66,6 +67,7 @@ export const Toolbar: FC = () => {
                 />
               }
             />
+            <InfoAlert inboundReturn={data} />
           </Box>
         </Grid>
         <Grid
@@ -93,4 +95,25 @@ export const Toolbar: FC = () => {
       </Grid>
     </AppBarContentPortal>
   );
+};
+
+const InfoAlert = ({
+  inboundReturn,
+}: {
+  inboundReturn: InboundReturnFragment | undefined;
+}) => {
+  const t = useTranslation('distribution');
+  const loadMessage = (inboundReturn: InboundReturnFragment | undefined) => {
+    if (!inboundReturn?.linkedShipment?.id) {
+      return t('info.manual-return');
+    }
+    if (inboundReturn?.status === InvoiceNodeStatus.Shipped) {
+      return `${t('info.automatic-return')} ${t(
+        'info.automatic-return-no-edit'
+      )}`;
+    }
+    return t('info.automatic-return');
+  };
+
+  return <Alert severity="info">{loadMessage(inboundReturn)}</Alert>;
 };
