@@ -22,10 +22,10 @@ pub fn validate(
     let line = check_line_exists_option(connection, &input.id)?.ok_or(LineDoesNotExist)?;
     let line_row = &line.invoice_line_row;
 
-    if !check_pack_size(input.pack_size.clone()) {
+    if !check_pack_size(input.pack_size) {
         return Err(PackSizeBelowOne);
     }
-    if !check_number_of_packs(input.number_of_packs.clone()) {
+    if !check_number_of_packs(input.number_of_packs) {
         return Err(NumberOfPacksBelowZero);
     }
 
