@@ -59,6 +59,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     () => []
   );
 
+  console.info('buffered equipment:', bufferedEquipment);
+
   // const csvExport = async () => {
   //   const csv = manufacturersToCsv(
   //     bufferedManufacturers.map((row: ImportRow): any => {

@@ -83,6 +83,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 
     const rows: EquipmentImportModal.ImportRow[] = [];
     let hasErrors = false;
+    console.info('row: ', data.data);
     for (const row of data.data) {
       const importRow = {} as EquipmentImportModal.ImportRow;
       const rowErrors: string[] = [];

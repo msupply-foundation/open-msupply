@@ -2,23 +2,21 @@ import React, { FC, useState } from 'react';
 import {
   DataTable,
   Grid,
+  InsertAssetInput,
   NothingHere,
   Pagination,
   SearchBar,
-  TooltipTextCell,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
-import { AssetFragment } from '../api/operations.generated';
-import { Status } from '../Components';
 
 interface ImportReviewDataTableProps {
   importRows: any[];
 }
 
-const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
-  return <Status status={rowData.statusLog?.status} />;
-};
+// const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
+//   return <Status status={rowData.statusLog?.status} />;
+// };
 
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
@@ -30,7 +28,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     offset: 0,
   });
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columns = useColumns<AssetFragment>(
+  const columns = useColumns<InsertAssetInput>(
     [
       {
         key: 'assetNumber',
@@ -39,41 +37,10 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         label: 'label.asset-number',
       },
       {
-        key: 'type',
-        label: 'label.type',
+        key: 'catalogueItemId',
+        width: 150,
         sortable: false,
-        width: 200,
-        accessor: ({ rowData }) => rowData.catalogueItem?.assetType?.name,
-        Cell: TooltipTextCell,
-      },
-      {
-        key: 'manufacturer',
-        Cell: TooltipTextCell,
-        maxWidth: 200,
-        label: 'label.manufacturer',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.catalogueItem?.manufacturer,
-      },
-      {
-        key: 'model',
-        label: 'label.model',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.catalogueItem?.model,
-      },
-      {
-        key: 'status',
-        label: 'label.functional-status',
-        Cell: StatusCell,
-        sortable: false,
-      },
-      {
-        key: 'serialNumber',
-        label: 'label.serial',
-      },
-      {
-        key: 'notes',
-        label: 'label.notes',
-        sortable: false,
+        label: 'label.catalogue-item-id',
       },
       'selection',
     ],
