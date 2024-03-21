@@ -75,7 +75,7 @@ fn to_local(datetime: &DateTime<Utc>, timezone: &FixedOffset) -> NaiveDateTime {
 }
 
 fn to_utc(datetime: &NaiveDateTime, timezone: &FixedOffset) -> Option<DateTime<Utc>> {
-    let datetime_tz = timezone.from_local_datetime(&datetime).single()?;
+    let datetime_tz = timezone.from_local_datetime(datetime).single()?;
     Some(DateTime::from(datetime_tz))
 }
 
@@ -145,9 +145,9 @@ impl InvoiceCountServiceTrait for InvoiceCountService {
         timezone_offset: &FixedOffset,
     ) -> Result<i64, InvoiceCountError> {
         let repo = InvoiceRepository::new(&ctx.connection);
-        let now = to_local(now, &timezone_offset);
+        let now = to_local(now, timezone_offset);
         let oldest = match range {
-            CountTimeRange::Today => to_utc(&start_of_day(&now), &timezone_offset)
+            CountTimeRange::Today => to_utc(&start_of_day(&now), timezone_offset)
                 .ok_or(InvoiceCountError::BadTimezoneOffset)?,
             CountTimeRange::ThisWeek => to_utc(&start_of_week(&now), &timezone_offset)
                 .ok_or(InvoiceCountError::BadTimezoneOffset)?,
@@ -282,7 +282,7 @@ mod invoice_count_service_test {
         //Test that invoice isn't found for invalid store id
         let oldest = invoice_1.created_datetime - chrono::Duration::milliseconds(50);
         let count =
-            invoices_count(&repo, &item1_type, &status, oldest, None, &invalid_store_id).unwrap();
+            invoices_count(&repo, &item1_type, &status, oldest, None, invalid_store_id).unwrap();
         assert_eq!(0, count);
     }
 
