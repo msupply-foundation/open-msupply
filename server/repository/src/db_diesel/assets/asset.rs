@@ -6,7 +6,6 @@ use super::asset_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    assets::asset_catalogue_item_row::asset_catalogue_item::dsl as asset_catalogue_item_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -208,41 +207,9 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         apply_date_filter!(query, installation_date, asset_dsl::installation_date);
         apply_date_filter!(query, replacement_date, asset_dsl::replacement_date);
 
-        if let Some(category_id) = category_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(category_id),
-                asset_catalogue_item_dsl::asset_category_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
-
-        if let Some(class_id) = class_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(class_id),
-                asset_catalogue_item_dsl::asset_class_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
-
-        if let Some(type_id) = type_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(type_id),
-                asset_catalogue_item_dsl::asset_type_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
+        apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
+        apply_equal_filter!(query, class_id, asset_dsl::asset_class_id);
+        apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
     }
     query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
 }
