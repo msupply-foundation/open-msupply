@@ -13,6 +13,7 @@ table! {
         table_name -> Text,
         record_id -> Text,
         file_name -> Text,
+        mime_type -> Nullable<Text>,
         created_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -24,9 +25,10 @@ table! {
 #[table_name = "sync_file_reference"]
 pub struct SyncFileReferenceRow {
     pub id: String,
-    pub table_name: String, // Maybe should be ChangeLogTableName ? But that causes mapping problems in the api request...
+    pub table_name: String,
     pub record_id: String,
     pub file_name: String,
+    pub mime_type: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }

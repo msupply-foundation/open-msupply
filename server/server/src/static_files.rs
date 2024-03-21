@@ -45,9 +45,11 @@ pub struct FileRequestQuery {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UploadedFile {
     id: String,
-    name: String,
     filename: String,
-    mime_type: String,
+    #[serde(skip_serializing)]
+    mime_type: Option<String>,
+    #[serde(skip_serializing)]
+    path: String,
 }
 
 async fn files(
@@ -124,18 +126,12 @@ async fn handle_file_upload(
 
         files.push(UploadedFile {
             id: static_file.id.clone(),
-            name: content_disposition
-                .get_name()
-                .unwrap_or_default()
-                .to_string(),
             filename: content_disposition
                 .get_filename()
                 .unwrap_or_default()
                 .to_string(),
-            mime_type: field
-                .content_type()
-                .map(|mime| mime.to_string())
-                .unwrap_or_default(),
+            mime_type: field.content_type().map(|mime| mime.to_string()),
+            path: static_file.path.clone(),
         });
 
         // File::create is blocking operation, use threadpool
@@ -175,7 +171,7 @@ async fn upload_sync_file(
             id: file.id,
             file_name: file.filename,
             table_name: table_name.clone(),
-            // content_type: file.mime_type,
+            mime_type: file.mime_type,
             created_datetime: chrono::Utc::now().naive_utc(),
             deleted_datetime: None,
             record_id: record_id.clone(),
@@ -183,7 +179,16 @@ async fn upload_sync_file(
         match result {
             Ok(_) => {}
             Err(err) => {
-                // TODO: delete the files that were uploaded?
+                log::error!(
+                    "Error saving file reference: {} - DELETING UPLOADED FILES",
+                    err
+                );
+                // delete any files that were uploaded...
+                for file in files {
+                    // File::create is blocking operation, use threadpool
+                    web::block(|| std::fs::remove_file(file.path)).await??;
+                }
+
                 return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
             }
         }
