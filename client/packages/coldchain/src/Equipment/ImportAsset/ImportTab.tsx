@@ -14,7 +14,7 @@ export const EquipmentImportTab: FC<ImportPanel & EquipmentImportTabProps> = ({
   importProgress,
   importErrorCount,
 }) => {
-  const t = useTranslation(['coldchain']);
+  const t = useTranslation('coldchain');
   return (
     <ImportPanel tab={tab}>
       <Grid
