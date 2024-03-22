@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   Grid,
   CopyIcon,
@@ -16,6 +17,8 @@ import {
   DeleteIcon,
   useDeleteConfirmation,
   useFormatDateTime,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
@@ -57,8 +60,9 @@ const AdditionalInfoSection: FC = () => {
 };
 
 export const SidePanel = () => {
-  const { success } = useNotification();
   const t = useTranslation('inventory');
+  const { success } = useNotification();
+  const navigate = useNavigate();
   const { mutateAsync } = useStocktake.document.delete();
   const { data: stocktake } = useStocktake.document.get();
   const canDelete = stocktake ? canDeleteStocktake(stocktake) : false;
@@ -71,7 +75,13 @@ export const SidePanel = () => {
 
   const deleteAction = async () => {
     if (!stocktake) return;
-    await mutateAsync([stocktake]);
+    await mutateAsync([stocktake]).then(() => {
+      navigate(
+        RouteBuilder.create(AppRoute.Inventory)
+          .addPart(AppRoute.Stocktakes)
+          .build()
+      );
+    })
   };
 
   const onDelete = useDeleteConfirmation({
