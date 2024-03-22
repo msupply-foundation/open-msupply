@@ -241,9 +241,9 @@ mod tests {
         let result = query(
             &connection,
             &settings,
-            "SELECT id, code FROM store WHERE code=$code LIMIT $limit", // test without trailing ";"
+            "SELECT id, code FROM store WHERE id=$store LIMIT $limit", // test without trailing ";"
             &json!({
-                "code": "code",
+                "store": "store_a",
                 "limit": 2,
             })
             .as_object()
@@ -253,7 +253,7 @@ mod tests {
 
         assert_eq!(
             &format!("{}", serde_json::to_string(&result).unwrap()),
-            "[{\"code\":\"code\",\"id\":\"store_a\"},{\"code\":\"code\",\"id\":\"store_b\"}]"
+            "[{\"code\":\"code\",\"id\":\"store_a\"}]"
         );
 
         // multiple used params
