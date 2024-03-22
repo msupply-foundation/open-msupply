@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { FC, memo, useEffect, useState } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -8,7 +8,6 @@ import {
   BufferedTextArea,
   useTranslation,
   ColorSelectButton,
-  useBufferState,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
@@ -20,11 +19,15 @@ export const AdditionalInfoSectionComponent: FC = () => {
   // const isDisabled = useReturns.utils.outboundIsDisabled();
   const isDisabled = false; // TODO
 
-  const { data } = useReturns.document.outboundReturn();
-  const { user, colour, comment, id } = data || { id: '' };
+  const { data, isFetched } = useReturns.document.outboundReturn();
+  const { user, id } = data || { id: '' };
 
-  const [colorBuffer, setColorBuffer] = useBufferState(colour);
-  const [commentBuffer, setCommentBuffer] = useBufferState(comment ?? '');
+  const [colorBuffer, setColorBuffer] = useState('');
+  const [commentBuffer, setCommentBuffer] = useState('');
+  useEffect(() => {
+    setColorBuffer(data?.colour ?? '');
+    setCommentBuffer(data?.comment ?? '');
+  }, [isFetched]);
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
