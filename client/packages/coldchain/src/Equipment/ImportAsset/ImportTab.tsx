@@ -21,7 +21,7 @@ export const EquipmentImportTab: FC<ImportPanel & EquipmentImportTabProps> = ({
         container
         direction="column"
         justifyContent="center"
-        style={{ minHeight: '75vh' }}
+        style={{ minHeight: '50vh' }}
       >
         <Typography>
           {importErrorCount ?? 0 > 0

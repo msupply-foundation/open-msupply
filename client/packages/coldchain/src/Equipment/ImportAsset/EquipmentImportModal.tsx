@@ -12,9 +12,11 @@ import {
   Alert,
   InsertAssetInput,
   ClickableStepper,
+  FileUtils,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { AssetFragment, useAssets } from '../api';
+import { importEquipmentToCsv } from '../utils';
 interface EquipmentImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -76,16 +78,16 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
 
   console.info('buffered equipment:', bufferedEquipment);
 
-  // const csvExport = async () => {
-  //   const csv = manufacturersToCsv(
-  //     bufferedManufacturers.map((row: ImportRow): any => {
-  //       return toManufacturerInput(row);
-  //     }),
-  //     t
-  //   );
-  //   FileUtils.exportCSV(csv, t('filename.manufacturers'));
-  //   success(t('success'))();
-  // };
+  const csvExport = async () => {
+    const csv = importEquipmentToCsv(
+      bufferedEquipment.map((row: ImportRow): any => {
+        return toInsertEquipmentInput(row);
+      }),
+      t
+    );
+    FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
+    success(t('success'))();
+  };
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
@@ -223,11 +225,11 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
       }
       nextButton={
         <DialogButton
-          variant="next"
+          variant="export"
           disabled={exportNotReady}
           onClick={async () => {
             console.info('csv export');
-            // csvExport();
+            csvExport();
           }}
         />
       }
