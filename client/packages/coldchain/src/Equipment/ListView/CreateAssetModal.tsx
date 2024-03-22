@@ -10,15 +10,17 @@ import {
   Select,
   Autocomplete,
   FnUtils,
-  InsertAssetInput,
   BasicTextInput,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
+  StoreRowFragment,
+  StoreSearchInput,
   mapIdNameToOptions,
   useAssetData,
 } from '@openmsupply-client/system';
-import { useAssets } from '../api';
+import { AssetFragment, useAssets } from '../api';
 import { CCE_CLASS_ID } from '../utils';
 
 interface CreateAssetModalProps {
@@ -77,11 +79,12 @@ export const CreateAssetModal = ({
   const { error, success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
   const [categoryId, setCategoryId] = useState('');
-  const [draft, setDraft] = useState<InsertAssetInput>(getEmptyAsset());
+  const [draft, setDraft] = useState<Partial<AssetFragment>>(getEmptyAsset());
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
   const { data: catalogueItemData } = useAssetData.document.list(categoryId);
   const { mutateAsync: save } = useAssets.document.insert();
+  const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
     setCategoryId('');
@@ -89,7 +92,7 @@ export const CreateAssetModal = ({
     onClose();
   };
 
-  const updateDraft = (patch: Partial<InsertAssetInput>) => {
+  const updateDraft = (patch: Partial<AssetFragment>) => {
     setDraft({ ...draft, ...patch });
   };
 
@@ -97,6 +100,26 @@ export const CreateAssetModal = ({
   const selectedCatalogueItem = catalogueItems.find(
     ci => ci.id === draft.catalogueItemId
   );
+
+  const onStoreChange = (store: StoreRowFragment) => {
+    updateDraft({
+      store: {
+        __typename: 'StoreNode',
+        id: store.id,
+        code: store.code ?? '',
+        storeName: '',
+      },
+    });
+  };
+
+  const onStoreInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') updateDraft({ store: null });
+  };
+
   return (
     <Modal
       title={t('heading.add-cold-chain-equipment')}
@@ -168,6 +191,20 @@ export const CreateAssetModal = ({
               />
             }
           />
+          {isCentralServer && (
+            <InputRow
+              label={t('label.store')}
+              Input={
+                <StoreSearchInput
+                  clearable
+                  fullWidth
+                  value={draft.store ?? undefined}
+                  onChange={onStoreChange}
+                  onInputChange={onStoreInputChange}
+                />
+              }
+            />
+          )}
           <InputRow
             label={t('label.notes')}
             Input={

@@ -9,6 +9,7 @@ import {
 
 type StoreSearchInputProps = {
   clearable?: boolean;
+  fullWidth?: boolean;
   isDisabled?: boolean;
   value?: StoreRowFragment;
   onChange: (newStore: StoreRowFragment) => void;
@@ -21,6 +22,7 @@ type StoreSearchInputProps = {
 
 const StoreSearchComponent = ({
   clearable = false,
+  fullWidth = false,
   isDisabled = false,
   value,
   onInputChange,
@@ -30,6 +32,8 @@ const StoreSearchComponent = ({
 
   return (
     <Autocomplete
+      width={fullWidth ? '100%' : undefined}
+      sx={fullWidth ? { width: '100%' } : undefined}
       onInputChange={onInputChange}
       clearable={clearable}
       loading={isLoading}

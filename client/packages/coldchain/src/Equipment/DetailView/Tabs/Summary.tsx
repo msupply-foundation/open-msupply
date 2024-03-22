@@ -71,8 +71,7 @@ const Row = ({
   children: React.ReactNode;
   label: string;
 }) => (
-  // the .MuiFormControl-root ensures that the autocomplete input is full width
-  <Box paddingTop={1.5} sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
+  <Box paddingTop={1.5}>
     <InputWithLabelRow
       labelWidth="150px"
       label={label}
@@ -172,6 +171,7 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
             <Row label={t('label.store')}>
               <StoreSearchInput
                 clearable
+                fullWidth
                 value={draft?.store ?? undefined}
                 onChange={onStoreChange}
                 onInputChange={onStoreInputChange}

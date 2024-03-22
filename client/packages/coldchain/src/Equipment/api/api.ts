@@ -28,6 +28,16 @@ const assetParsers = {
 
     return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
+  toInsert: (input: Partial<AssetFragment>): InsertAssetInput => ({
+    id: input.id ?? '',
+    catalogueItemId: input.catalogueItemId,
+    assetNumber: input.assetNumber ?? '',
+    installationDate: input.installationDate,
+    notes: input.notes,
+    replacementDate: input.replacementDate,
+    serialNumber: input.serialNumber,
+    storeId: input.store?.id,
+  }),
   toUpdate: (input: AssetFragment): UpdateAssetInput => ({
     id: input.id,
     catalogueItemId: setNullableInput('catalogueItemId', input),
@@ -105,9 +115,9 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       return items;
     },
   },
-  insert: async (input: InsertAssetInput): Promise<string> => {
+  insert: async (input: Partial<AssetFragment>): Promise<string> => {
     const result = await sdk.insertAsset({
-      input: { ...input, storeId },
+      input: assetParsers.toInsert(input),
       storeId,
     });
     const { insertAsset } = result;
