@@ -354,6 +354,16 @@ mod test {
             .unwrap();
 
         assert_eq!(result.count, 2);
+
+        let return_line_for_stock_line_a = result
+            .rows
+            .iter()
+            .find(|line| line.stock_line.stock_line_row.id == mock_stock_line_a().id)
+            .unwrap();
+
+        assert_eq!(return_line_for_stock_line_a.number_of_packs, 0.0);
+        assert_eq!(return_line_for_stock_line_a.available_number_of_packs, 30.0);
+        // available on stock_line_a
     }
 
     #[actix_rt::test]
@@ -541,14 +551,13 @@ mod test {
             existing_line.stock_line.stock_line_row.id,
             unavailable_stock_line().id
         );
-        assert_eq!(existing_line.number_of_packs, 1.0);
         assert_eq!(existing_line.note, item_a_return_line().note);
+        assert_eq!(existing_line.number_of_packs, 1.0);
+        assert_eq!(existing_line.available_number_of_packs, 1.0); // num of packs in stock line (0.0) + num of packs in return (1.0)
 
         assert!(result.rows.iter().all(|line| {
-            // except for the line that is already in the return
-            line.stock_line.stock_line_row.id == unavailable_stock_line().id
-                // all lines have available packs
-                || line.stock_line.stock_line_row.available_number_of_packs > 0.0
+            // all lines have available packs (even if no further available stock, packs already included in the return are counted as available here)
+            line.available_number_of_packs > 0.0
         }));
     }
 
