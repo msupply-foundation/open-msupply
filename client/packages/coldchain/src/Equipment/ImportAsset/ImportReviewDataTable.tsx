@@ -51,7 +51,6 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         label: 'label.asset-notes',
         Cell: TooltipTextCell,
       },
-      'selection',
     ],
     {},
     []
