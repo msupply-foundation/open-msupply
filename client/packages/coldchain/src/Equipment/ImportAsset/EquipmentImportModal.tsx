@@ -5,13 +5,13 @@ import { EquipmentImportTab } from './ImportTab';
 import { useDialog, useNotification } from '@common/hooks';
 import {
   DialogButton,
-  HorizontalStepper,
   TabContext,
   useTabs,
   Box,
   Grid,
   Alert,
   InsertAssetInput,
+  ClickableStepper,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { AssetFragment, useAssets } from '../api';
@@ -60,6 +60,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const t = useTranslation('coldchain');
   const { success } = useNotification();
   const { currentTab, onChangeTab } = useTabs(Tabs.Upload);
+  const [activeStep, setActiveStep] = useState(0);
   const { Modal } = useDialog({ isOpen, onClose });
 
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
@@ -148,36 +149,36 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     }
   };
 
-  // const onClickStep = (tabName: string) => {
-  //   switch (tabName) {
-  //     case Tabs.Upload:
-  //       changeTab(tabName as Tabs);
-  //       break;
-  //     case Tabs.Review:
-  //       changeTab(tabName as Tabs);
-  //       break;
-  //     case Tabs.Import:
-  //       // Do nothing, user can't get to the import page without clicking the import button
-  //       break;
-  //   }
-  // };
+  const onClickStep = (tabName: string) => {
+    switch (tabName) {
+      case Tabs.Upload:
+        changeTab(tabName as Tabs);
+        break;
+      case Tabs.Review:
+        changeTab(tabName as Tabs);
+        break;
+      case Tabs.Import:
+        // Do nothing, user can't get to the import page without clicking the import button
+        break;
+    }
+  };
 
-  // const changeTab = (tabName: Tabs) => {
-  //   switch (tabName) {
-  //     case Tabs.Upload:
-  //       setErrorMessage('');
-  //       setBufferedManufacturers([]);
-  //       setActiveStep(0);
-  //       break;
-  //     case Tabs.Review:
-  //       setActiveStep(1);
-  //       break;
-  //     case Tabs.Import:
-  //       setActiveStep(2);
-  //       break;
-  //   }
-  //   onChangeTab(tabName);
-  // };
+  const changeTab = (tabName: Tabs) => {
+    switch (tabName) {
+      case Tabs.Upload:
+        setErrorMessage('');
+        setBufferedEquipment([]);
+        setActiveStep(0);
+        break;
+      case Tabs.Review:
+        setActiveStep(1);
+        break;
+      case Tabs.Import:
+        setActiveStep(2);
+        break;
+    }
+    onChangeTab(tabName);
+  };
 
   const importNotReady =
     bufferedEquipment.length == 0 || errorMessage.length > 0;
@@ -215,7 +216,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           onClick={async () => {
             setBufferedEquipment([]);
             setErrorMessage('');
-            onChangeTab(Tabs.Upload);
+            changeTab(Tabs.Upload);
             onClose();
           }}
         />
@@ -235,10 +236,11 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
       width={1600}
     >
       <>
-        <HorizontalStepper
+        <ClickableStepper
           steps={importSteps}
-          // onClickStep={onClickStep}
-        ></HorizontalStepper>
+          activeStep={activeStep}
+          onClickStep={onClickStep}
+        ></ClickableStepper>
         {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
         <TabContext value={currentTab}>
           <Grid container flex={1} flexDirection="column" gap={1}>
@@ -251,7 +253,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
               setEquipment={setBufferedEquipment}
               setErrorMessage={setErrorMessage}
               onUploadComplete={() => {
-                onChangeTab(Tabs.Review);
+                changeTab(Tabs.Review);
               }}
             />
             <EquipmentReviewTab
