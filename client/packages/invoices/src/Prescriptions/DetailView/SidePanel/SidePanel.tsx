@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   CopyIcon,
   DeleteIcon,
@@ -7,6 +8,8 @@ import {
   useNotification,
   useDeleteConfirmation,
   useTranslation,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { usePrescription } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
@@ -14,15 +17,22 @@ import { PricingSection } from './PricingSection';
 import { canDeleteInvoice } from '../../../utils';
 
 export const SidePanelComponent = () => {
-  const { success } = useNotification();
   const t = useTranslation('dispensary');
+  const navigate = useNavigate();
+  const { success } = useNotification();
   const { data } = usePrescription.document.get();
   const { mutateAsync } = usePrescription.document.delete();
   const canDelete = data ? canDeleteInvoice(data) : false;
 
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]);
+    await mutateAsync([data]).then(() => {
+      navigate(
+        RouteBuilder.create(AppRoute.Dispensary)
+          .addPart(AppRoute.Prescription)
+          .build()
+      );
+    })
   };
 
   const copyToClipboard = () => {
