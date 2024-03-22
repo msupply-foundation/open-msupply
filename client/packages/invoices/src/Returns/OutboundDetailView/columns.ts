@@ -9,6 +9,7 @@ import {
   NumberCell,
   getRowExpandColumn,
   ArrayUtils,
+  ColumnAlign,
 } from '@openmsupply-client/common';
 import { OutboundReturnLineFragment } from '../api';
 import { OutboundReturnItem } from '../../types';
@@ -179,41 +180,97 @@ export const useOutboundReturnColumns = ({
         },
       ],
       // TODO: COME BACK TO THESE
-      // [
-      //   'unitQuantity',
-      //   {
-      //     Cell: NumberCell,
-      //     accessor: ({ rowData }) => {
-      //       return getUnitQuantity(rowData);
-      //     },
-      //   },
-      // ],
-      // {
-      //   label: 'label.unit-price',
-      //   key: 'sellPricePerUnit',
-      //   align: ColumnAlign.Right,
-      //   accessor: ({ rowData }) => {
-      //     return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
-      //   },
-      //   getSortValue: rowData => {
-      //     return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
-      //   },
-      // },
-      // {
-      //   label: 'label.line-total',
-      //   key: 'lineTotal',
-      //   align: ColumnAlign.Right,
-      //   accessor: ({ rowData }) => {
-      //     const x = c(
-      //       rowData.sellPricePerPack * rowData.numberOfPacks
-      //     ).format();
-      //     return x;
-      //   },
-      //   getSortValue: row => {
-      //     const x = c(row.sellPricePerPack * row.numberOfPacks).format();
-      //     return x;
-      //   },
-      // },
+      [
+        'unitQuantity',
+        {
+          accessor: ({ rowData }) => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+        },
+      ],
+      {
+        label: 'label.unit-price',
+        key: 'sellPricePerUnit',
+        align: ColumnAlign.Right,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                0
+              )
+            ).format();
+          } else {
+            return c(
+              (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            ).format();
+          }
+        },
+        getSortValue: rowData => {
+          if ('lines' in rowData) {
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                0
+              )
+            ).format();
+          } else {
+            return c(
+              (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            ).format();
+          }
+        },
+      },
+      {
+        label: 'label.line-total',
+        key: 'lineTotal',
+        align: ColumnAlign.Right,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + batch.sellPricePerPack * batch.numberOfPacks,
+                0
+              )
+            ).format();
+          } else {
+            const x = c(
+              rowData.sellPricePerPack * rowData.numberOfPacks
+            ).format();
+            return x;
+          }
+        },
+        getSortValue: row => {
+          if ('lines' in row) {
+            return c(
+              Object.values(row.lines).reduce(
+                (sum, batch) =>
+                  sum + batch.sellPricePerPack * batch.numberOfPacks,
+                0
+              )
+            ).format();
+          } else {
+            const x = c(row.sellPricePerPack * row.numberOfPacks).format();
+            return x;
+          }
+        },
+      },
       expansionColumn,
       GenericColumnKey.Selection,
     ],
