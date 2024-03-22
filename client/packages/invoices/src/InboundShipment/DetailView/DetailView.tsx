@@ -67,8 +67,8 @@ export const DetailView: FC = () => {
       return;
     }
     if (selectedLines.some(line => !line.stockLine)) {
-      console.error('No stock line associated with the selected line(s)');
-      const selectLinesSnack = error(t('error.something-wrong'));
+      const errMsg = 'No stock line associated with the selected line(s).';
+      const selectLinesSnack = error(`${t('error.something-wrong')} ${errMsg}`);
       selectLinesSnack();
       return;
     }
