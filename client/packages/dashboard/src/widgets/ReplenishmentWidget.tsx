@@ -25,7 +25,7 @@ import {
 } from '@common/types';
 import { useDashboard } from '../api';
 import { useInbound } from '@openmsupply-client/invoices';
-import { InternalSupplierSearchModal } from '@openmsupply-client/system';
+import { SupplierSearchModal } from '@openmsupply-client/system';
 import { AppRoute } from '@openmsupply-client/config';
 
 export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
@@ -79,7 +79,7 @@ export const ReplenishmentWidget: React.FC<PropsWithChildrenOnly> = () => {
   return (
     <>
       {modalControl.isOn ? (
-        <InternalSupplierSearchModal
+        <SupplierSearchModal
           open={true}
           onClose={modalControl.toggleOff}
           onChange={async ({ id: otherPartyId }) => {
