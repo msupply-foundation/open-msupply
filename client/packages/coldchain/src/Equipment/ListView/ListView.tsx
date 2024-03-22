@@ -10,6 +10,8 @@ import {
   useUrlQueryParams,
   useToggle,
   TooltipTextCell,
+  useIsCentralServerApi,
+  ColumnDescription,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
@@ -35,54 +37,68 @@ const AssetListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const modalController = useToggle();
+  const isCentralServer = useIsCentralServerApi();
+
+  const columnsToCreate: ColumnDescription<AssetFragment>[] = [
+    {
+      key: 'assetNumber',
+      width: 150,
+      sortable: false,
+      label: 'label.asset-number',
+    },
+    {
+      key: 'type',
+      label: 'label.type',
+      sortable: false,
+      width: 200,
+      accessor: ({ rowData }) => rowData.catalogueItem?.assetType?.name,
+      Cell: TooltipTextCell,
+    },
+    {
+      key: 'manufacturer',
+      Cell: TooltipTextCell,
+      maxWidth: 200,
+      label: 'label.manufacturer',
+      sortable: false,
+      accessor: ({ rowData }) => rowData.catalogueItem?.manufacturer,
+    },
+    {
+      key: 'model',
+      label: 'label.model',
+      sortable: false,
+      accessor: ({ rowData }) => rowData.catalogueItem?.model,
+    },
+    {
+      key: 'status',
+      label: 'label.functional-status',
+      Cell: StatusCell,
+      sortable: false,
+    },
+    {
+      key: 'serialNumber',
+      label: 'label.serial',
+    },
+  ];
+
+  if (isCentralServer)
+    columnsToCreate.push({
+      key: 'store',
+      label: 'label.store',
+      accessor: ({ rowData }) => rowData.store?.code,
+      sortable: false,
+    });
+
+  columnsToCreate.push(
+    {
+      key: 'notes',
+      label: 'label.notes',
+      sortable: false,
+    },
+    'selection'
+  );
 
   const columns = useColumns<AssetFragment>(
-    [
-      {
-        key: 'assetNumber',
-        width: 150,
-        sortable: false,
-        label: 'label.asset-number',
-      },
-      {
-        key: 'type',
-        label: 'label.type',
-        sortable: false,
-        width: 200,
-        accessor: ({ rowData }) => rowData.catalogueItem?.assetType?.name,
-        Cell: TooltipTextCell,
-      },
-      {
-        key: 'manufacturer',
-        Cell: TooltipTextCell,
-        maxWidth: 200,
-        label: 'label.manufacturer',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.catalogueItem?.manufacturer,
-      },
-      {
-        key: 'model',
-        label: 'label.model',
-        sortable: false,
-        accessor: ({ rowData }) => rowData.catalogueItem?.model,
-      },
-      {
-        key: 'status',
-        label: 'label.functional-status',
-        Cell: StatusCell,
-        sortable: false,
-      },
-      {
-        key: 'serialNumber',
-        label: 'label.serial',
-      },
-      {
-        key: 'notes',
-        label: 'label.notes',
-        sortable: false,
-      },
-      'selection',
-    ],
+    columnsToCreate,
     {
       sortBy,
       onChangeSortBy: updateSortQuery,

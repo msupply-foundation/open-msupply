@@ -6,10 +6,15 @@ import {
   Typography,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
-import { Box, Formatter } from '@openmsupply-client/common';
+import {
+  Box,
+  Formatter,
+  useIsCentralServerApi,
+} from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
+import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
 
 interface SummaryProps {
   draft?: AssetFragment;
@@ -66,12 +71,17 @@ const Row = ({
   children: React.ReactNode;
   label: string;
 }) => (
-  <Box paddingTop={1.5}>
+  // the .MuiFormControl-root ensures that the autocomplete input is full width
+  <Box paddingTop={1.5} sx={{ '& .MuiFormControl-root': { width: '100%' } }}>
     <InputWithLabelRow
       labelWidth="150px"
       label={label}
       labelProps={{
-        sx: { fontSize: '16px', paddingRight: 2, textAlign: 'right' },
+        sx: {
+          fontSize: '16px',
+          paddingRight: 2,
+          textAlign: 'right',
+        },
       }}
       Input={
         <Box sx={{}} flex={1}>
@@ -85,8 +95,28 @@ const Row = ({
 export const Summary = ({ draft, onChange }: SummaryProps) => {
   const t = useTranslation('coldchain');
   const { localisedDate } = useFormatDateTime();
+  const isCentralServer = useIsCentralServerApi();
 
   if (!draft) return null;
+
+  const onStoreChange = (store: StoreRowFragment) => {
+    onChange({
+      store: {
+        __typename: 'StoreNode',
+        id: store.id,
+        code: store.code ?? '',
+        storeName: '',
+      },
+    });
+  };
+
+  const onStoreInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') onChange({ store: null });
+  };
 
   return (
     <Box display="flex" flex={1}>
@@ -138,6 +168,16 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
           <Row label={t('label.cold-storage-location')}>
             <BasicTextInput value={''} disabled fullWidth />
           </Row>
+          {isCentralServer && (
+            <Row label={t('label.store')}>
+              <StoreSearchInput
+                clearable
+                value={draft?.store ?? undefined}
+                onChange={onStoreChange}
+                onInputChange={onStoreInputChange}
+              />
+            </Row>
+          )}
         </Section>
       </Container>
       <Box

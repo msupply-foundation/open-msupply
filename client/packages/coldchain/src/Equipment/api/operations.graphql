@@ -15,6 +15,11 @@ fragment Asset on AssetNode {
     status
   }
   storeId
+  store {
+    id
+    code
+    storeName
+  }
   catalogueItem {
     manufacturer
     model
