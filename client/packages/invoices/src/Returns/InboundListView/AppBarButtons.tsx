@@ -45,6 +45,15 @@ export const AppBarButtonsComponent: FC<{
     success(t('success'))();
   };
 
+  const openModal = () => {
+    if (!userHasPermission(UserPermission.InboundReturnMutate)) {
+      const errorSnack = error(t('auth.permission-denied', { ns: 'app' }));
+      errorSnack();
+      return;
+    }
+    modalController.toggleOn();
+  };
+
   return (
     <AppBarButtonsPortal>
       <CustomerSearchModal
@@ -70,8 +79,7 @@ export const AppBarButtonsComponent: FC<{
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
-          onClick={modalController.toggleOn}
-          disabled={!userHasPermission(UserPermission.InboundReturnMutate)}
+          onClick={openModal}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
