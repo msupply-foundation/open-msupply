@@ -1,9 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
-    StockLineRow, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    ActivityLogType, EqualFilter, ItemRowType, MasterListFilter, MasterListLineFilter,
+    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError,
+    StockLineFilter, StockLineRepository, StockLineRow, Stocktake, StocktakeFilter,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
+    StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -157,7 +158,9 @@ fn generate_lines_from_master_list(
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let item_ids: Vec<String> = MasterListLineRepository::new(&connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(&master_list_id))
+                .item_type(ItemRowType::Stock.equal_to()),
         )?
         .into_iter()
         .map(|r| r.item_id)
@@ -514,7 +517,7 @@ mod test {
                 stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                 is_locked: Some(true),
                 location: None,
-                master_list_id: Some("master_list_filter_test".to_string()),
+                master_list_id: Some("invalid_master_list".to_string()),
                 items_have_stock: None,
             },
         );
