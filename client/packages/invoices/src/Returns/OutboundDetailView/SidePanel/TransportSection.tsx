@@ -16,19 +16,14 @@ export const TransportSectionComponent: FC = () => {
   const { debouncedMutateAsync: debouncedUpdate } =
     useReturns.document.updateOutboundReturn();
 
-  const { refetch, data } = useReturns.document.outboundReturn();
+  const { data, isFetched } = useReturns.document.outboundReturn();
   const id = data?.id ?? '';
 
-  const [reference, setReference] = useState('');
-
-  useEffect(() => {
-    async function setTransportReference() {
-      const { data } = await refetch();
-      setReference(data?.transportReference ?? '');
-    }
-
-    setTransportReference();
-  }, []);
+  const [referenceBuffer, setReferenceBuffer] = useState('');
+  useEffect(
+    () => setReferenceBuffer(data?.transportReference ?? ''),
+    [isFetched]
+  );
 
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
@@ -39,10 +34,10 @@ export const TransportSectionComponent: FC = () => {
         <BufferedTextInput
           disabled={isDisabled}
           onChange={e => {
-            setReference(e.target.value);
+            setReferenceBuffer(e.target.value);
             debouncedUpdate({ id, transportReference: e.target.value });
           }}
-          value={reference}
+          value={referenceBuffer}
           InputProps={{
             style: {
               backgroundColor: 'white',
