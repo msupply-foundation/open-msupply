@@ -1,7 +1,7 @@
 use anyhow::Result;
 use service::report::definition::{
     DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
-    ReportOutputType, TeraTemplate,
+    ReportOutputType, SQLQuery, TeraTemplate,
 };
 use std::{
     collections::HashMap,
@@ -41,6 +41,50 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
         }
     };
     Ok(query)
+}
+
+/// Returns query name and SQLQuery
+fn extract_sql_entry(
+    args: &BuildArgs,
+    files: &mut HashMap<String, PathBuf>,
+) -> Result<Option<(String, SQLQuery)>> {
+    match (&args.query_sqlite, &args.query_postgres) {
+        (None, None) => Ok(None),
+        (Some(query_sqlite), Some(query_postgres)) => {
+            let file_path = files
+                .remove(query_sqlite)
+                .ok_or(anyhow::Error::msg("Sqlite query file does not exist"))?;
+            let query_sqlite_sql = fs::read_to_string(file_path).map_err(|err| {
+                anyhow::Error::msg(format!("Failed to load Sqlite query file: {}", err))
+            })?;
+            let query_postgres_sql = if query_postgres == query_sqlite {
+                query_sqlite_sql.clone()
+            } else {
+                let file_path = files
+                    .remove(query_postgres)
+                    .ok_or(anyhow::Error::msg("Postgres query file does not exist"))?;
+                fs::read_to_string(file_path).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
+                })?
+            };
+            Ok(Some((
+                // Use the Sqlite file name for reference...
+                query_sqlite.clone(),
+                SQLQuery {
+                    query_sqlite: query_sqlite_sql,
+                    query_postgres: query_postgres_sql,
+                },
+            )))
+        }
+        (None, Some(_)) => {
+            return Err(anyhow::Error::msg("Sqlite query must be specified as well"))
+        }
+        (Some(_), None) => {
+            return Err(anyhow::Error::msg(
+                "Postgres query must be specified as well",
+            ))
+        }
+    }
 }
 
 fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
@@ -115,6 +159,9 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 variables: None,
             }),
         );
+    } else if let Some((query, sql_query)) = extract_sql_entry(&args, &mut files)? {
+        index.query = Some(query.clone());
+        entries.insert(query, ReportDefinitionEntry::SQLQuery(sql_query));
     } else if let Some(query_default) = &args.query_default {
         index.query = Some("query_default".to_string());
         entries.insert(
