@@ -89,7 +89,7 @@
   "messages.error-generic_one": "{{count}} error",
   "messages.error-generic_other": "{{count}} errors",
   "messages.invalid-file": "Invalid file",
-  "messages.import-error": "Import error",
+  "messages.import-error": "Errors were encountered during processing, please fix and re-upload for the following assets",
   "messages.error-no-file-selected": "No file selected",
   "messages.search": "Search",
   "messages.upload-invite": "Drag and drop a file here or click to upload",
