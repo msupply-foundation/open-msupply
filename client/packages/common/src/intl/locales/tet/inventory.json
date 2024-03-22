@@ -53,7 +53,6 @@
   "messages.on-hold-stock-take": "Stocktake ida ne'e iha Hold hela no labele atu hadia",
   "stocktake.description-template": "Kria husi {{username}} iha {{date}}",
   "error.stocktake-has-stock-reduced-below-zero": "Stock take labele atu finaliza tamba stock sira ne'e balun utiliza ona iha remessas sasan sai nian.",
-  "label.location": "Lokalizasaun",
   "label.cant-delete-disabled": "Bele deit hamos linas wainhira nia estatus foun",
   "error.not-editable": "Stocktake labele atu hadia.",
   "error.is-locked": "Stocktake xave metin.",

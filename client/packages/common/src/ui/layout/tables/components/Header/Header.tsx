@@ -62,15 +62,21 @@ export const HeaderCell = <T extends RecordWithId>({
     150
   );
 
-  const showTooltip = !!description || sortable;
-  const tooltip = showTooltip ? (
+  const columnLabel = column.label === '' ? '' : t(column.label);
+  const tooltip = (
     <>
       {!!description && <div>{t(description)}</div>}
-      {sortable && <div>{t('label.click-to-sort')}</div>}
+      {sortable ? (
+        <div>
+          {t('label.click-to-sort')}
+          {` ${columnLabel}`}
+        </div>
+      ) : (
+        columnLabel
+      )}
     </>
-  ) : (
-    ''
   );
+
   const infoIcon = !!description ? (
     <InfoOutlineIcon
       sx={{
@@ -84,9 +90,10 @@ export const HeaderCell = <T extends RecordWithId>({
   const child = (
     <div
       style={{
-        display: 'inline-flex',
         flexWrap: 'nowrap',
         alignItems: 'center',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
       <Header column={column} />
@@ -100,6 +107,7 @@ export const HeaderCell = <T extends RecordWithId>({
       active={isSorted}
       direction={direction}
       IconComponent={SortDescIcon}
+      sx={{ maxWidth: maxWidth }}
     >
       {child}
     </TableSortLabel>

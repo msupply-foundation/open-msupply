@@ -16,7 +16,7 @@ export const useFormatNumber = () => {
       if (value === undefined) return '';
       const locale = options?.locale ?? currentLanguage;
       return new Intl.NumberFormat(locale, {
-        maximumFractionDigits: 21, // maximum allowed
+        maximumFractionDigits: 20, // maximum allowed
         ...options,
       }).format(value);
     },

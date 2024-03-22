@@ -1,4 +1,4 @@
-use repository::{MasterListLineRow, StorageConnection, SyncBufferRow};
+use repository::{MasterListLineRow, MasterListLineRowDelete, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -31,6 +31,17 @@ impl SyncTranslation for MasterListLineTranslation {
             MasterListTranslation.table_name(),
             ItemTranslation.table_name(),
         ]
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        // TODO, check site ? (should never get delete records for this site, only transfer other half)
+        Ok(PullTranslateResult::delete(MasterListLineRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
     fn try_translate_from_upsert_sync_record(
