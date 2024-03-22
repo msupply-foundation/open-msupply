@@ -195,6 +195,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     },
   ];
 
+  console.info('current tab', currentTab);
+
   return (
     <Modal
       okButton={
