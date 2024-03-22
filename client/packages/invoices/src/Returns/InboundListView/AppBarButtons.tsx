@@ -13,6 +13,8 @@ import {
   useNotification,
   FileUtils,
   FnUtils,
+  useAuthContext,
+  UserPermission,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -23,6 +25,8 @@ export const AppBarButtonsComponent: FC<{
 }> = ({ modalController }) => {
   const t = useTranslation('distribution');
   const { success, error } = useNotification();
+  const { userHasPermission } = useAuthContext();
+
   const { mutateAsync: onCreate } = useReturns.document.insertInboundReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllInbound({
     key: 'createdDateTime',
@@ -67,6 +71,7 @@ export const AppBarButtonsComponent: FC<{
           Icon={<PlusCircleIcon />}
           label={t('button.new-return')}
           onClick={modalController.toggleOn}
+          disabled={!userHasPermission(UserPermission.InboundReturnMutate)}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
