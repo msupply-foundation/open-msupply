@@ -11,7 +11,6 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
-use serde_json;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
@@ -27,7 +26,7 @@ pub struct UpdateAsset {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub code: Option<String>,
+    pub asset_number: Option<String>,
     pub serial_number: Option<NullableUpdate<String>>,
     pub catalogue_item_id: Option<NullableUpdate<String>>,
     pub installation_date: Option<NullableUpdate<NaiveDate>>,
@@ -43,10 +42,10 @@ pub fn update_asset(
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input, asset_row.clone());
-            AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
+            AssetRowRepository::new(connection).upsert_one(&updated_asset_row)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetUpdated,
                 Some(updated_asset_row.id.clone()),
                 Some(serde_json::to_string(&asset_row).unwrap_or_default()),
@@ -93,7 +92,7 @@ pub fn generate(
         id: _,
         store_id,
         notes,
-        code,
+        asset_number,
         serial_number,
         catalogue_item_id,
         installation_date,
@@ -103,7 +102,7 @@ pub fn generate(
 ) -> AssetRow {
     asset_row.store_id = store_id;
     asset_row.notes = notes;
-    asset_row.code = code.unwrap_or(asset_row.code);
+    asset_row.asset_number = asset_number.unwrap_or(asset_row.asset_number);
 
     if let Some(serial_number) = serial_number {
         asset_row.serial_number = serial_number.value;

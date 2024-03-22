@@ -36,16 +36,13 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         let service_context = self.service_provider.basic_context()?;
 
         let (store_id, amc_lookback_months) = if let Some(loader_input) = loader_inputs.first() {
-            (
-                loader_input.primary_id.clone(),
-                loader_input.payload.clone(),
-            )
+            (loader_input.primary_id.clone(), loader_input.payload)
         } else {
             return Ok(HashMap::new());
         };
 
         let filter = ItemStatsFilter::new().item_id(EqualFilter::equal_any(
-            IdPair::get_all_secondary_ids(&loader_inputs),
+            IdPair::get_all_secondary_ids(loader_inputs),
         ));
 
         let item_stats = self.service_provider.item_stats_service.get_item_stats(

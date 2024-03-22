@@ -212,11 +212,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 }
 pub(crate) struct InvoiceTranslation;
 impl SyncTranslation for InvoiceTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "transact"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             StoreTranslation.table_name(),
@@ -417,7 +417,7 @@ impl SyncTranslation for InvoiceTranslation {
             clinician_id: clinician_row.map(|row| row.id),
         };
 
-        let json_record = serde_json::to_value(&legacy_row)?;
+        let json_record = serde_json::to_value(legacy_row)?;
 
         // log::info!(
         //     "Translated row {}",
@@ -459,7 +459,7 @@ fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceRowTy
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
         LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
-        _ => return None,
+        _ => None,
     }
 }
 
@@ -506,12 +506,12 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
     match invoice_type {
         InvoiceRowType::OutboundShipment => match data.status {
             LegacyTransactStatus::Cn => {
-                mapping.allocated_datetime = confirm_datetime.clone();
+                mapping.allocated_datetime = confirm_datetime;
                 mapping.picked_datetime = confirm_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.allocated_datetime = confirm_datetime.clone();
-                mapping.picked_datetime = confirm_datetime.clone();
+                mapping.allocated_datetime = confirm_datetime;
+                mapping.picked_datetime = confirm_datetime;
                 mapping.shipped_datetime = confirm_datetime;
             }
             _ => {}
@@ -524,7 +524,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
                     mapping.delivered_datetime = confirm_datetime;
                 }
                 LegacyTransactStatus::Fn => {
-                    mapping.delivered_datetime = confirm_datetime.clone();
+                    mapping.delivered_datetime = confirm_datetime;
                     mapping.verified_datetime = confirm_datetime;
                 }
                 _ => {}
@@ -535,7 +535,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
                 mapping.picked_datetime = confirm_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.picked_datetime = confirm_datetime.clone();
+                mapping.picked_datetime = confirm_datetime;
                 mapping.verified_datetime = confirm_datetime;
             }
             _ => {}
@@ -641,7 +641,7 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
         InvoiceRowType::InventoryReduction => LegacyTransactType::Sc,
         InvoiceRowType::Repack => LegacyTransactType::Sr,
     };
-    return Some(t);
+    Some(t)
 }
 
 fn legacy_invoice_status(

@@ -105,7 +105,7 @@ impl ResponseNode {
         } = from;
         ResponseNode {
             updates: InvoiceLineConnector::from_vec(updates),
-            deletes: deletes.into_iter().map(|id| DeleteResponse(id)).collect(),
+            deletes: deletes.into_iter().map(DeleteResponse).collect(),
             inserts: InvoiceLineConnector::from_vec(inserts),
             skipped_expired_stock_lines: StockLineConnector::from_vec(skipped_expired_stock_lines),
             skipped_on_hold_stock_lines: StockLineConnector::from_vec(skipped_on_hold_stock_lines),

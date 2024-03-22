@@ -1,8 +1,8 @@
+use actix_web::http::StatusCode;
 use actix_web::{
     get, http::header::ContentType, web::ServiceConfig, HttpRequest, HttpResponse, Responder,
 };
 use mime_guess::{from_path, mime};
-use reqwest::StatusCode;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
@@ -10,7 +10,7 @@ use rust_embed::RustEmbed;
 #[folder = "../../client/packages/host/dist"]
 struct Asset;
 
-const INDEX: &'static str = "index.html";
+const INDEX: &str = "index.html";
 
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs
 fn serve_frontend(path: &str) -> HttpResponse {

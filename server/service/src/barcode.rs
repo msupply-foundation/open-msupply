@@ -120,7 +120,7 @@ pub(crate) fn generate(
 
     Ok(BarcodeRow {
         item_id: input.item_id,
-        pack_size: input.pack_size.or(new_barcode.pack_size.clone()),
+        pack_size: input.pack_size.or(new_barcode.pack_size),
         ..new_barcode
     })
 }

@@ -88,7 +88,7 @@ pub struct MasterListLineSortInput {
 }
 
 impl MasterListLineSortInput {
-    pub fn to_domain(self) -> MasterListLineSort {
+    pub fn to_domain(&self) -> MasterListLineSort {
         MasterListLineSort {
             key: self.key.into(),
             desc: self.desc,
@@ -109,6 +109,7 @@ impl MasterListLineFilterInput {
             id: self.id.map(EqualFilter::from),
             item_id: self.item_id.map(EqualFilter::from),
             master_list_id: self.master_list_id.map(EqualFilter::from),
+            item_type: None,
         }
     }
 }

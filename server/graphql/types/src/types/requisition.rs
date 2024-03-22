@@ -78,7 +78,7 @@ impl RequisitionNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime.clone(), Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
@@ -113,12 +113,12 @@ impl RequisitionNode {
 
     /// Applicable to request requisition only
     pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
-        let sent_datetime = self.row().sent_datetime.clone();
+        let sent_datetime = self.row().sent_datetime;
         sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
-        let finalised_datetime = self.row().finalised_datetime.clone();
+        let finalised_datetime = self.row().finalised_datetime;
         finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
@@ -237,10 +237,10 @@ impl RequisitionNode {
     }
 
     pub async fn period(&self) -> Option<PeriodNode> {
-        match &self.requisition.period {
-            Some(period) => Some(PeriodNode::from_domain(period.to_owned())),
-            None => None,
-        }
+        self.requisition
+            .period
+            .as_ref()
+            .map(|period| PeriodNode::from_domain(period.to_owned()))
     }
 
     // % allocated ?

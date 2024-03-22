@@ -2,9 +2,9 @@ use crate::sync::test::TestSyncIncomingRecord;
 use chrono::NaiveDate;
 use repository::CurrencyRow;
 
-const TABLE_NAME: &'static str = "currency";
+const TABLE_NAME: &str = "currency";
 
-const CURRENCY_1: (&'static str, &'static str) = (
+const CURRENCY_1: (&str, &str) = (
     "NEW_ZEALAND_DOLLARS",
     r#"{
     "ID": "NEW_ZEALAND_DOLLARS",
@@ -16,7 +16,7 @@ const CURRENCY_1: (&'static str, &'static str) = (
     }"#,
 );
 
-const CURRENCY_2: (&'static str, &'static str) = (
+const CURRENCY_2: (&str, &str) = (
     "AUSTRALIAN_DOLLARS",
     r#"{
     "ID": "AUSTRALIAN_DOLLARS",

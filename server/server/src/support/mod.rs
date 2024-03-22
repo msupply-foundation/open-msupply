@@ -47,7 +47,7 @@ fn validate_request(
             .to_str()
             .ok()
             .and_then(|header| {
-                let cookies = header.split(" ").collect::<Vec<&str>>();
+                let cookies = header.split(' ').collect::<Vec<&str>>();
                 cookies
                     .into_iter()
                     .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
@@ -86,9 +86,9 @@ fn validate_request(
     };
 
     validate_access(
-        &service_provider,
+        service_provider,
         &service_context,
-        &auth_data,
+        auth_data,
         Some(pair.token),
     )
 }
