@@ -216,12 +216,8 @@ impl TranslationAndIntegrationResults {
 #[cfg(test)]
 mod test {
     use super::*;
-    use repository::{
-        mock::MockDataInserts, test_db, ItemRow, ItemRowRepository, UnitRow, UnitRowRepository,
-    };
+    use repository::mock::MockDataInserts;
     use util::{assert_matches, inline_init};
-
-    use crate::sync::translations::IntegrationOperation;
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
