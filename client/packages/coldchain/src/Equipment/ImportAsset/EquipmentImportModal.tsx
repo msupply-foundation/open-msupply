@@ -39,6 +39,7 @@ export const toInsertEquipmentInput = (row: ImportRow): InsertAssetInput => ({
   assetNumber: row.assetNumber,
   catalogueItemId: row.catalogueItemId,
   id: row.id,
+  notes: row.notes,
 });
 
 export const toUpdateEquipmentInput = (row: ImportRow): AssetFragment => ({
