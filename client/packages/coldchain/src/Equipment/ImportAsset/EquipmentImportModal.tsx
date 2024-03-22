@@ -76,8 +76,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     () => []
   );
 
-  console.info('buffered equipment:', bufferedEquipment);
-
   const csvExport = async () => {
     const csv = importEquipmentToCsv(
       bufferedEquipment.map((row: ImportRow): any => {
@@ -105,7 +103,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
                 if (!err) {
                   err = { message: t('messages.unknown-error') };
                 }
-                console.info(err.message);
                 importErrorRows.push({
                   ...asset,
                   errorMessage: err.message,
@@ -198,8 +195,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     },
   ];
 
-  console.info('current tab', currentTab);
-
   return (
     <Modal
       okButton={
@@ -208,7 +203,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           disabled={importNotReady}
           onClick={async () => {
             importAction();
-            console.info('import');
           }}
         />
       }
@@ -228,7 +222,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
           variant="export"
           disabled={exportNotReady}
           onClick={async () => {
-            console.info('csv export');
             csvExport();
           }}
         />

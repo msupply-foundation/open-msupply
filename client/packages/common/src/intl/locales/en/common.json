@@ -141,6 +141,8 @@
   "label.amc": "AMC",
   "label.amount": "Amount",
   "label.asset-number": "Asset Number",
+  "label.catalogue-item-id": "Catalogue Item Id",
+  "label.asset-notes": "Notes",
   "label.app-version": "Version:",
   "label.approval-comment": "Approval Comment",
   "label.approved-packs": "Approved packs",

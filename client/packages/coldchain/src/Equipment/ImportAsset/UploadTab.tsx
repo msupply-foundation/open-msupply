@@ -94,7 +94,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         importRow.id = FnUtils.generateUUID();
         importRow.isUpdate = false;
       }
-      console.info('row: ', row);
       if (row[t('label.asset-number')] !== undefined) {
         importRow.assetNumber = row[t('label.asset-number')];
       } else {

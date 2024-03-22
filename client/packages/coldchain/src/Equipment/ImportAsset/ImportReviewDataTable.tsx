@@ -10,9 +10,10 @@ import {
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
+import { ImportRow } from './EquipmentImportModal';
 
 interface ImportReviewDataTableProps {
-  importRows: any[];
+  importRows: ImportRow[];
 }
 
 // const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
@@ -56,18 +57,18 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     []
   );
 
-  const filteredManufacturers = importRows.filter(row => {
+  const filteredEquipment = importRows.filter(row => {
     if (!searchString) {
       return true;
     }
     return (
-      row.name.includes(searchString) ||
-      row.code.includes(searchString) ||
+      row.assetNumber.includes(searchString) ||
+      (row.catalogueItemId && row.catalogueItemId.includes(searchString)) ||
       row.errorMessage.includes(searchString) ||
       row.id === searchString
     );
   });
-  const currentManufacturerPage = filteredManufacturers.slice(
+  const currentEquipmentPage = filteredEquipment.slice(
     pagination.offset,
     pagination.offset + pagination.first
   );
@@ -90,7 +91,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       <DataTable
         pagination={{
           ...pagination,
-          total: filteredManufacturers.length,
+          total: filteredEquipment.length,
         }}
         onChangePage={page => {
           setPagination({
@@ -100,7 +101,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
           });
         }}
         columns={columns}
-        data={currentManufacturerPage}
+        data={currentEquipmentPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}
         id={''}
       />
