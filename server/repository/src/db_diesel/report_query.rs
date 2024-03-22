@@ -1,4 +1,6 @@
-use crate::{RepositoryError, StorageConnection};
+use crate::RepositoryError;
+#[cfg(feature = "postgres")]
+use crate::StorageConnection;
 #[cfg(feature = "postgres")]
 use diesel::sql_types::*;
 
