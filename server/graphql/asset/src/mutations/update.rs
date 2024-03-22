@@ -50,7 +50,7 @@ pub struct UpdateAssetInput {
     pub id: String,
     pub asset_number: Option<String>,
     pub notes: Option<String>,
-    pub store_id: Option<String>,
+    pub store_id: Option<NullableUpdateInput<String>>,
     pub serial_number: Option<NullableUpdateInput<String>>,
     pub catalogue_item_id: Option<NullableUpdateInput<String>>,
     pub installation_date: Option<NullableUpdateInput<NaiveDate>>,
@@ -74,7 +74,9 @@ impl From<UpdateAssetInput> for UpdateAsset {
             id,
             asset_number,
             notes,
-            store_id,
+            store_id: store_id.map(|store_id| NullableUpdate {
+                value: store_id.value,
+            }),
             serial_number: serial_number.map(|serial_number| NullableUpdate {
                 value: serial_number.value,
             }),

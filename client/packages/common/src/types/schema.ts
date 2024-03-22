@@ -2541,7 +2541,7 @@ export type InvoiceNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
-  currency?: Maybe<CurrencyNode>;
+  currency: CurrencyNode;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -5904,7 +5904,7 @@ export type UpdateAssetInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  storeId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;
@@ -6604,7 +6604,9 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetCatalogueItemMutate = 'ASSET_CATALOGUE_ITEM_MUTATE',
   AssetMutate = 'ASSET_MUTATE',
+  AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',

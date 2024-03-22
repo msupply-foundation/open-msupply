@@ -25,6 +25,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize)]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset"]
 pub struct AssetRow {
     pub id: String,
