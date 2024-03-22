@@ -16,10 +16,10 @@ import { useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
-  const onDelete = useReturns.document.deleteOutboundRows();
   const { data } = useReturns.document.outboundReturn();
-  const { otherPartyName } = data ?? {};
+  const { otherPartyName, id: returnId = '' } = data ?? {};
   const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundReturn');
+  const onDelete = useReturns.lines.deleteSelectedOutboundLines({ returnId });
   //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
   //     useBufferState(theirReference);
   //   const { mutateAsync: updateName } = useOutbound.document.updateName();

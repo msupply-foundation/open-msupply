@@ -29,6 +29,7 @@ export const useReturns = {
     inboundReturnRows: Lines.useInboundReturnRows,
     updateInboundLines: Lines.useUpdateInboundReturnLines,
     deleteSelectedInboundLines: Lines.useDeleteSelectedInboundReturnLines,
+    deleteSelectedOutboundLines: Lines.useDeleteSelectedOutboundReturnLines,
   },
   utils: {
     api: Utils.useReturnsApi,

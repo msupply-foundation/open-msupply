@@ -21,6 +21,7 @@ import { OutboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 // import { Draft } from '../..';
 import { OutboundReturnEditModal } from '../modals';
+import { OutboundReturnItem } from '../../types';
 
 export const OutboundReturnsDetailView: FC = () => {
   // const isDisabled = useReturn.utils.isDisabled();
@@ -35,7 +36,8 @@ export const OutboundReturnsDetailView: FC = () => {
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
-  const onRowClick = (row: OutboundReturnLineFragment) => onOpen(row.itemId);
+  const onRowClick = (row: OutboundReturnLineFragment | OutboundReturnItem) =>
+    onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
   //  (draft?: Draft) => {
