@@ -31,7 +31,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   setEquipment,
   onUploadComplete,
 }) => {
-  const t = useTranslation(['coldchain']);
+  const t = useTranslation('coldchain');
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
@@ -84,7 +84,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 
     const rows: EquipmentImportModal.ImportRow[] = [];
     let hasErrors = false;
-    console.info('row: ', data.data);
     for (const row of data.data) {
       const importRow = {} as EquipmentImportModal.ImportRow;
       const rowErrors: string[] = [];
@@ -95,26 +94,30 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         importRow.id = FnUtils.generateUUID();
         importRow.isUpdate = false;
       }
-      if (row.AssetNumber !== undefined) {
-        importRow.assetNumber = row.AssetNumber;
+      console.info('row: ', row);
+      if (row[t('label.asset-number')] !== undefined) {
+        importRow.assetNumber = row[t('label.asset-number')];
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: 'AssetNumber' })
         );
       }
-      if (row.CatalogueItemId !== undefined) {
-        importRow.catalogueItemId = row.CatalogueItemId;
+      if (row[t('label.catalogue-item-id')] !== undefined) {
+        importRow.catalogueItemId = row[t('label.catalogue-item-id')];
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: 'CatalogueItemId' })
         );
+      }
+      // notes aren't essential for bulk upload
+      if (row[t('label.asset-notes')] !== undefined) {
+        importRow.notes = row[t('label.asset-notes')];
       }
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
     }
     if (hasErrors) {
-      console.info('has errors');
       setErrorMessage(t('messages.import-error'));
     }
     EquipmentBuffer.push(...rows);

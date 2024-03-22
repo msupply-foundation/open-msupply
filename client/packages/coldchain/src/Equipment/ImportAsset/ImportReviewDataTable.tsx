@@ -6,6 +6,7 @@ import {
   NothingHere,
   Pagination,
   SearchBar,
+  TooltipTextCell,
   useColumns,
   useTranslation,
 } from '@openmsupply-client/common';
@@ -21,7 +22,7 @@ interface ImportReviewDataTableProps {
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
 }) => {
-  const t = useTranslation(['system']);
+  const t = useTranslation('coldchain');
   const [pagination, setPagination] = useState<Pagination>({
     page: 0,
     first: 100,
@@ -38,9 +39,16 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       },
       {
         key: 'catalogueItemId',
-        width: 150,
+        width: 180,
         sortable: false,
         label: 'label.catalogue-item-id',
+      },
+      {
+        key: 'notes',
+        width: 300,
+        sortable: false,
+        label: 'label.asset-notes',
+        Cell: TooltipTextCell,
       },
       'selection',
     ],

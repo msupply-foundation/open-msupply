@@ -147,12 +147,20 @@ export const importEquipmentToCsv = (
     'id',
     t('label.asset-number'),
     t('label.catalogue-item-id'),
+    t('label.asset-notes'),
   ];
+  // console.log(
+  //   'translations',
+  //   t('label.asset-number'),
+  //   t('label.catalogue-item-id'),
+  //   t('label.asset-notes')
+  // );
 
   const data = assets.map(node => [
     node.id,
     node.assetNumber,
     node.catalogueItemId,
+    node.notes,
   ]);
 
   return Formatter.csv({ fields, data });
