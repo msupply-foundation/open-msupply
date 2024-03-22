@@ -25,7 +25,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const t = useTranslation('coldchain');
   const [pagination, setPagination] = useState<Pagination>({
     page: 0,
-    first: 100,
+    first: 10,
     offset: 0,
   });
   const [searchString, setSearchString] = useState<string>(() => '');
