@@ -91,6 +91,7 @@ fragment InboundReturn on InvoiceNode {
     id
   }
   theirReference
+  transportReference
 }
 
 fragment OutboundReturnDetailRow on InvoiceLineNode {
