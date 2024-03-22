@@ -62,6 +62,7 @@
   "label.catalogue-item-id": "Catalogue Item Id",
   "label.asset-notes": "Notes",
   "filename.cce": "equipment upload template",
+  "filename.cce-failed-uploads": "Assets failed to upload",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",
   "messages.cce-created": "CCE created successfully",
