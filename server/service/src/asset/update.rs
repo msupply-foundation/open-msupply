@@ -11,7 +11,6 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
-use serde_json;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
