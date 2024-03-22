@@ -492,11 +492,10 @@ mod test {
             .get(Url::parse("http://0.0.0.0:0").unwrap())
             .send()
             .await
-            .err()
-            .expect("Must be error")
+            .expect_err("Must be error")
     }
 
     fn parse_error() -> ParseError {
-        Url::parse("not url at all").err().expect("must be error")
+        Url::parse("not url at all").expect_err("must be error")
     }
 }

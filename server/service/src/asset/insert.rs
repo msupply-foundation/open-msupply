@@ -23,7 +23,7 @@ pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub code: String,
+    pub asset_number: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
@@ -39,10 +39,10 @@ pub fn insert_asset(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_asset = generate(input);
-            AssetRowRepository::new(&connection).upsert_one(&new_asset)?;
+            AssetRowRepository::new(connection).upsert_one(&new_asset)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetCreated,
                 Some(new_asset.id.clone()),
                 None,
@@ -81,7 +81,7 @@ pub fn generate(
         id,
         store_id,
         notes,
-        code,
+        asset_number,
         serial_number,
         catalogue_item_id,
         installation_date,
@@ -92,7 +92,7 @@ pub fn generate(
         id,
         store_id,
         notes,
-        code,
+        asset_number,
         serial_number,
         catalogue_item_id,
         installation_date,

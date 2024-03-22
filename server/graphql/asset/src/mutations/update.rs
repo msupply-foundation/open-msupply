@@ -48,7 +48,7 @@ pub fn update_asset(
 #[derive(InputObject)]
 pub struct UpdateAssetInput {
     pub id: String,
-    pub code: Option<String>,
+    pub asset_number: Option<String>,
     pub notes: Option<String>,
     pub store_id: Option<String>,
     pub serial_number: Option<NullableUpdateInput<String>>,
@@ -61,7 +61,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
     fn from(
         UpdateAssetInput {
             id,
-            code,
+            asset_number,
             notes,
             store_id,
             serial_number,
@@ -72,7 +72,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
     ) -> Self {
         UpdateAsset {
             id,
-            code,
+            asset_number,
             notes,
             store_id,
             serial_number: serial_number.map(|serial_number| NullableUpdate {

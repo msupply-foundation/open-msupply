@@ -16,7 +16,7 @@ pub fn get_asset_classes(
     sort: Option<AssetClassSort>,
 ) -> Result<ListResult<AssetClassRow>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = AssetClassRepository::new(&connection);
+    let repository = AssetClassRepository::new(connection);
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
         count: i64_to_u32(repository.count(filter)?),
@@ -27,7 +27,7 @@ pub fn get_asset_class(
     connection: &StorageConnection,
     id: String,
 ) -> Result<Option<AssetClassRow>, RepositoryError> {
-    let repository = AssetClassRepository::new(&connection);
+    let repository = AssetClassRepository::new(connection);
     let mut result =
         repository.query_by_filter(AssetClassFilter::new().id(EqualFilter::equal_to(&id)))?;
     Ok(result.pop())

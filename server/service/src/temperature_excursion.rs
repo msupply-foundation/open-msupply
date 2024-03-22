@@ -149,11 +149,11 @@ mod test {
             ("log_2".to_string(), 10, (10, 59, 50), 26.0, s1, None), // (S1 no location, over temp)
             ("log_3".to_string(), 10, (11, 59, 55), 5.0, s1, None), // (S1 no location, returned to within range)
             ("log_4".to_string(), 9, (23, 59, 56), 20.0, s1, l1),   // (S1-L1)
-            ("log_5".to_string(), 1, (23, 56, 03), 40.0, s1, l1),   // (S1-L1, too short)
-            ("log_6".to_string(), 8, (02, 00, 07), 30.0, s1, None), // (S1 no location)
-            ("log_7".to_string(), 8, (03, 00, 08), 31.5, s1, None), // (S1 no location, excursion, too hot)
+            ("log_5".to_string(), 1, (23, 56, 3), 40.0, s1, l1),    // (S1-L1, too short)
+            ("log_6".to_string(), 8, (2, 00, 7), 30.0, s1, None),   // (S1 no location)
+            ("log_7".to_string(), 8, (3, 00, 8), 31.5, s1, None), // (S1 no location, excursion, too hot)
             ("log_8".to_string(), 7, (12, 00, 00), -20.0, s2, None), // (S2-L1)
-            ("log_9".to_string(), 7, (12, 06, 00), -30.0, s2, None), // (S2-L1, too cold)
+            ("log_9".to_string(), 7, (12, 6, 00), -30.0, s2, None), // (S2-L1, too cold)
         ]
         .into_iter()
         .map(
@@ -209,7 +209,7 @@ mod test {
             .checked_sub_days(Days::new(8))
             .unwrap()
             .date()
-            .and_time(NaiveTime::from_hms_opt(02, 00, 07).unwrap());
+            .and_time(NaiveTime::from_hms_opt(2, 00, 7).unwrap());
         let duration1 = today.timestamp() - datetime1.timestamp();
         let datetime2 = today
             .checked_sub_days(Days::new(7))

@@ -6,6 +6,7 @@ use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
@@ -68,7 +69,7 @@ pub enum ChangelogAction {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, EnumIter)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,
@@ -99,6 +100,8 @@ pub enum ChangelogTableName {
     AssetCategory,
     AssetType,
     AssetCatalogueItem,
+    #[default]
+    SyncFileReference,
     Asset,
 }
 
@@ -106,8 +109,9 @@ pub(crate) enum ChangeLogSyncStyle {
     Legacy,
     Central,
     Remote,
+    File,
     // Transfer,
-    // Files?? Patient??  etc
+    // Patient??  etc
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
@@ -143,6 +147,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetType => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
         }
     }
 }

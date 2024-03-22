@@ -37,7 +37,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 "#
         )?;
 
-        for operation in vec!["insert", "update"] {
+        for operation in ["insert", "update"] {
             sql!(
                 connection,
                 r#"

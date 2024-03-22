@@ -215,7 +215,7 @@ fn get_initialisation_status(
         return Ok(InitialisationStatus::PreInitialisation);
     };
 
-    if sync_log.sync_log_row.finished_datetime == None {
+    if sync_log.sync_log_row.finished_datetime.is_none() {
         return Ok(InitialisationStatus::Initialising);
     };
 

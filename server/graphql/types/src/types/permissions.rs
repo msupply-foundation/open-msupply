@@ -46,6 +46,8 @@ pub enum UserPermission {
     DocumentMutate,
     ColdChainApi,
     AssetMutate,
+    AssetQuery,
+    AssetCatalogueItemMutate,
 }
 
 #[Object]
@@ -122,6 +124,8 @@ impl UserPermission {
 
             Permission::ColdChainApi => UserPermission::ColdChainApi,
             Permission::AssetMutate => UserPermission::AssetMutate,
+            Permission::AssetQuery => UserPermission::AssetQuery,
+            Permission::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
         }
     }
 
@@ -158,9 +162,10 @@ impl UserPermission {
             UserPermission::ItemNamesCodesAndUnitsMutate => {
                 Permission::ItemNamesCodesAndUnitsMutate
             }
-
             UserPermission::ColdChainApi => Permission::ColdChainApi,
             UserPermission::AssetMutate => Permission::AssetMutate,
+            UserPermission::AssetQuery => Permission::AssetQuery,
+            UserPermission::AssetCatalogueItemMutate => Permission::AssetCatalogueItemMutate,
         }
     }
 }
@@ -174,7 +179,7 @@ impl UserStorePermissionConnector {
             nodes: permissions
                 .rows
                 .into_iter()
-                .map(|row| UserStorePermissionNode::from_domain(row))
+                .map(UserStorePermissionNode::from_domain)
                 .collect(),
         }
     }
@@ -184,7 +189,7 @@ impl UserStorePermissionConnector {
             total_count: usize_to_u32(permissions.len()),
             nodes: permissions
                 .into_iter()
-                .map(|row| UserStorePermissionNode::from_domain(row))
+                .map(UserStorePermissionNode::from_domain)
                 .collect(),
         }
     }

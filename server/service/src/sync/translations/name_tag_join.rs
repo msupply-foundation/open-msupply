@@ -21,11 +21,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct NameTagJoinTranslation;
 impl SyncTranslation for NameTagJoinTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "name_tag_join"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             NameTagTranslation.table_name(),
@@ -42,7 +42,7 @@ impl SyncTranslation for NameTagJoinTranslation {
             name_ID,
             name_tag_ID,
         } = serde_json::from_str::<LegacyNameTagJoinRow>(&sync_record.data)?;
-        if name_ID == "" {
+        if name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Name id is empty".to_string()));
         }
 

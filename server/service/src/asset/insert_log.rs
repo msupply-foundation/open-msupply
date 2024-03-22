@@ -42,10 +42,10 @@ pub fn insert_asset_log(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_asset_log = generate(ctx, input);
-            AssetLogRowRepository::new(&connection).upsert_one(&new_asset_log)?;
+            AssetLogRowRepository::new(connection).upsert_one(&new_asset_log)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetLogCreated,
                 Some(new_asset_log.id.clone()),
                 None,

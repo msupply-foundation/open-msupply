@@ -36,7 +36,7 @@ const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
 
 const getEmptyAsset = () => ({
   id: FnUtils.generateUUID(),
-  code: '',
+  assetNumber: '',
   catalogueItemId: '',
 });
 
@@ -60,10 +60,10 @@ const parseInsertError = (e: unknown) => {
   if (
     message.includes('DatabaseError(') &&
     message.includes('UniqueViolation(') &&
-    message.includes('asset_code_key') &&
+    message.includes('asset_asset_number_key') &&
     message.includes('duplicate key')
   ) {
-    return 'error.cce-code-already-used';
+    return 'error.cce-asset-number-already-used';
   }
 
   return 'error.unable-to-create-cce';
@@ -106,7 +106,7 @@ export const CreateAssetModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!draft.catalogueItemId || !draft.code}
+          disabled={!draft.catalogueItemId || !draft.assetNumber}
           onClick={async () => {
             try {
               await save(draft);
@@ -159,12 +159,12 @@ export const CreateAssetModal = ({
             }
           />
           <InputRow
-            label={t('label.code')}
+            label={t('label.asset-number')}
             Input={
               <BasicTextInput
                 fullWidth
-                value={draft.code}
-                onChange={e => updateDraft({ code: e.target.value })}
+                value={draft.assetNumber}
+                onChange={e => updateDraft({ assetNumber: e.target.value })}
               />
             }
           />
