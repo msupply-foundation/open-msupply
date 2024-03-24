@@ -68,9 +68,7 @@ pub enum Permission {
     DocumentMutate,
     // Cold chain
     ColdChainApi,
-    AssetQuery,
     AssetMutate,
-    AssetCatalogueItemMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]

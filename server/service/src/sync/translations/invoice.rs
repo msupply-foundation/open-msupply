@@ -10,10 +10,9 @@ use crate::sync::{
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
-    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowStatus,
-    InvoiceRowType, NameRow, NameRowRepository, StorageConnection, StoreRowRepository,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository,
+    InvoiceRow, InvoiceRowDelete, InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository,
+    StorageConnection, StoreRowRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -97,7 +96,7 @@ pub struct LegacyTransactRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
-    pub currency_rate: Option<f64>,
+    pub currency_rate: f64,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
@@ -260,18 +259,6 @@ impl SyncTranslation for InvoiceTranslation {
         ))?;
         let mapping = map_legacy(&invoice_type, &data);
 
-        let currency_id = match data.currency_id {
-            Some(currency_id) => currency_id,
-            None => {
-                CurrencyRepository::new(connection)
-                    .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
-                    .pop()
-                    .ok_or(anyhow::Error::msg("Default currency not found"))?
-                    .currency_row
-                    .id
-            }
-        };
-
         let result = InvoiceRow {
             id: data.ID,
             user_id: data.user_id,
@@ -285,8 +272,8 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            currency_id,
-            currency_rate: data.currency_rate.unwrap_or(1.0),
+            currency_id: data.currency_id,
+            currency_rate: data.currency_rate,
             clinician_link_id: data.clinician_id,
 
             // new om field mappings
@@ -412,8 +399,8 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            currency_id: Some(currency_id),
-            currency_rate: Some(currency_rate),
+            currency_id,
+            currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
         };
 
@@ -706,7 +693,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_invoice_translation",
-            MockDataInserts::none().names().stores().currencies(),
+            MockDataInserts::none().names().stores(),
         )
         .await;
 

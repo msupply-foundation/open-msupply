@@ -57,7 +57,7 @@ pub(crate) fn generate(
     update_invoice.tax = input_tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax);
-    update_invoice.currency_id = input_currency_id.unwrap_or(update_invoice.currency_id);
+    update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
 
     if let Some(status) = input_status.clone() {
@@ -92,7 +92,7 @@ pub(crate) fn generate(
             connection,
             &update_invoice.id,
             update_invoice.tax,
-            &update_invoice.currency_id,
+            update_invoice.currency_id.clone(),
             &update_invoice.currency_rate,
         )?)
     } else {
@@ -223,7 +223,7 @@ fn generate_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
     tax: Option<f64>,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
@@ -245,7 +245,7 @@ fn generate_update_for_lines(
         invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
             connection,
             invoice_line_row.total_before_tax,
-            &currency_id,
+            currency_id.clone(),
             currency_rate,
         )?;
 

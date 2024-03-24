@@ -4,7 +4,7 @@ mod repository_test {
         use chrono::{NaiveDate, NaiveDateTime};
         use util::inline_init;
 
-        use crate::{db_diesel::*, mock::currency_a};
+        use crate::db_diesel::*;
 
         pub fn name_1() -> NameRow {
             inline_init(|r: &mut NameRow| {
@@ -125,7 +125,6 @@ mod repository_test {
                 r.their_reference = Some("".to_string());
                 // Note: keep nsecs small enough for Postgres which has limited precision;
                 r.created_datetime = NaiveDateTime::from_timestamp_opt(1000, 0).unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -140,7 +139,6 @@ mod repository_test {
                 r.comment = Some("".to_string());
                 r.their_reference = Some("".to_string());
                 r.created_datetime = NaiveDateTime::from_timestamp_opt(2000, 0).unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -278,7 +276,7 @@ mod repository_test {
 
     use crate::{
         mock::{
-            currency_a, mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
+            mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_item_link_from_item,
             mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
             mock_request_draft_requisition, mock_request_draft_requisition2,
@@ -287,10 +285,10 @@ mod repository_test {
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
-        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
-        InvoiceRowType, ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository,
-        KeyValueType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        test_db, ActivityLogRowRepository, InvoiceFilter, InvoiceLineRepository,
+        InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository, InvoiceRowType,
+        ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
+        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
         MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
         RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
@@ -605,9 +603,6 @@ mod repository_test {
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
-        CurrencyRowRepository::new(&connection)
-            .upsert_one(&currency_a())
-            .unwrap();
 
         let repo = InvoiceRowRepository::new(&connection);
         let invoice_repo = InvoiceRepository::new(&connection);
@@ -657,10 +652,6 @@ mod repository_test {
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
-        CurrencyRowRepository::new(&connection)
-            .upsert_one(&currency_a())
-            .unwrap();
-
         let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
@@ -705,9 +696,6 @@ mod repository_test {
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
-        CurrencyRowRepository::new(&connection)
-            .upsert_one(&currency_a())
-            .unwrap();
         let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();

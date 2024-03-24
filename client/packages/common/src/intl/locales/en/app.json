@@ -4,6 +4,7 @@
   "assets": "Assets",
   "auth.alert-title": "Authentication Error",
   "auth.no-store-assigned": "You are not assigned to any stores. Please login as a different user, or contact your administrator.",
+  "auth.permission-denied": "Permission denied",
   "auth.server-error": "The server has returned an error when fetching user details!\nUnable to continue, please contact support@msupply.foundation.",
   "auth.timeout-message": "You have been logged out of your session due to inactivity. Click OK to return to the login screen.",
   "auth.timeout-title": "Session Timed Out",

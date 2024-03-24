@@ -440,16 +440,6 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::ColdChainApi => {
                 output.insert(Permission::ColdChainApi);
             }
-            // assets
-            Permissions::ViewAssets => {
-                output.insert(Permission::AssetQuery);
-            }
-            Permissions::AddEditAssets => {
-                output.insert(Permission::AssetMutate);
-            }
-            Permissions::SetupAssets => {
-                output.insert(Permission::AssetCatalogueItemMutate);
-            }
             _ => continue,
         }
     }

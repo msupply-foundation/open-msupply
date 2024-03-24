@@ -49,7 +49,6 @@ export { SaveIcon } from './Save';
 export { ScanIcon } from './Scan';
 export { SearchIcon } from './Search';
 export { SettingsIcon } from './Settings';
-export { SettingsCircleIcon } from './SettingsCircle';
 export { SidebarIcon } from './Sidebar';
 export { SnowflakeIcon } from './Snowflake';
 export { SortAscIcon } from './SortAsc';

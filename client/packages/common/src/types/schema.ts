@@ -345,10 +345,10 @@ export type AssetConnector = {
 };
 
 export type AssetFilterInput = {
-  assetNumber?: InputMaybe<StringFilterInput>;
   catalogueItemId?: InputMaybe<EqualFilterStringInput>;
   categoryId?: InputMaybe<EqualFilterStringInput>;
   classId?: InputMaybe<EqualFilterStringInput>;
+  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   installationDate?: InputMaybe<DateFilterInput>;
   notes?: InputMaybe<StringFilterInput>;
@@ -430,9 +430,9 @@ export type AssetLogsResponse = AssetLogConnector;
 
 export type AssetNode = {
   __typename: 'AssetNode';
-  assetNumber: Scalars['String']['output'];
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
+  code: Scalars['String']['output'];
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1802,8 +1802,8 @@ export type InsertAssetErrorInterface = {
 };
 
 export type InsertAssetInput = {
-  assetNumber: Scalars['String']['input'];
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
+  code: Scalars['String']['input'];
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -5905,8 +5905,8 @@ export type UpdateAssetErrorInterface = {
 };
 
 export type UpdateAssetInput = {
-  assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
+  code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
   locationIds?: InputMaybe<Array<Scalars['String']['input']>>;

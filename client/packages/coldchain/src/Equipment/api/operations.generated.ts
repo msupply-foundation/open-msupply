@@ -4,9 +4,9 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null };
+export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'AssetLocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null };
 
-export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
+export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string } | null };
 
 export type AssetsQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
@@ -18,7 +18,7 @@ export type AssetsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null }> } };
+export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'AssetLocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null }> } };
 
 export type AssetByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -26,7 +26,7 @@ export type AssetByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null }> } };
+export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, code: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'AssetLocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', code: string, id: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null } | null }> } };
 
 export type AssetLogsQueryVariables = Types.Exact<{
   filter: Types.AssetLogFilterInput;
@@ -35,7 +35,7 @@ export type AssetLogsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null }> } };
+export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string } | null }> } };
 
 export type DeleteAssetMutationVariables = Types.Exact<{
   assetId: Types.Scalars['String']['input'];
@@ -73,10 +73,19 @@ export const AssetFragmentDoc = gql`
     fragment Asset on AssetNode {
   __typename
   catalogueItemId
-  assetNumber
+  code
   createdDatetime
   id
   installationDate
+  locations {
+    nodes {
+      code
+      id
+      name
+      onHold
+    }
+    totalCount
+  }
   modifiedDatetime
   notes
   replacementDate
@@ -114,7 +123,6 @@ export const AssetLogFragmentDoc = gql`
     firstName
     lastName
     username
-    jobTitle
   }
 }
     `;

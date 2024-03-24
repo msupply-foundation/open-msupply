@@ -9,10 +9,9 @@ use crate::{
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    CurrencyRow, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, LocationRowRepository, NameRow, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
-    StoreRow,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, StorageConnection, StoreRow,
 };
 
 #[actix_rt::test]
@@ -352,20 +351,11 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         })
     }
 
-    fn currency() -> CurrencyRow {
-        inline_init(|r: &mut CurrencyRow| {
-            r.id = "currency".to_string();
-            r.is_home_currency = true;
-            r.code = "NZD".to_string();
-        })
-    }
-
     fn invoice() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice".to_string();
             r.name_link_id = name().id;
             r.store_id = store().id;
-            r.currency_id = currency().id;
         })
     }
 
@@ -399,7 +389,6 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         inline_init(|r: &mut MockData| {
             r.names = vec![name()];
             r.stores = vec![store()];
-            r.currencies = vec![currency()];
             r.invoices = vec![invoice()];
             r.invoice_lines = vec![invoice_line()];
             r.requisitions = vec![requisition()];

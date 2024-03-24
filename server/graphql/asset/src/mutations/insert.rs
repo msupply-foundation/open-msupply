@@ -46,7 +46,7 @@ pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub asset_number: String,
+    pub code: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
@@ -59,7 +59,7 @@ impl From<InsertAssetInput> for InsertAsset {
             id,
             store_id,
             notes,
-            asset_number,
+            code,
             serial_number,
             catalogue_item_id,
             installation_date,
@@ -70,7 +70,7 @@ impl From<InsertAssetInput> for InsertAsset {
             id,
             store_id,
             notes,
-            asset_number,
+            code,
             serial_number,
             catalogue_item_id,
             installation_date,
@@ -170,7 +170,7 @@ mod test {
               ... on AssetNode {
                 id
                 notes
-                assetNumber
+                code
               }
             }
           }
@@ -180,7 +180,7 @@ mod test {
           "input": {
             "id": "n/a",
             "notes": "notes",
-            "assetNumber": "asset_number",
+            "code": "code",
           }
         }));
 
@@ -189,7 +189,7 @@ mod test {
             Ok(Asset {
                 id: "id".to_owned(),
                 notes: Some("notes".to_owned()),
-                asset_number: "asset_number".to_owned(),
+                code: "code".to_owned(),
                 ..Default::default()
             })
         }));
@@ -198,7 +198,7 @@ mod test {
             "insertAsset": {
                 "id": "id",
                 "notes": "notes",
-                "assetNumber": "asset_number",
+                "code": "code",
             }
           }
         );

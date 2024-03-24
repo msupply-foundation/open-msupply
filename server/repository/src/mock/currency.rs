@@ -20,26 +20,6 @@ pub fn currency_b() -> CurrencyRow {
     }
 }
 
-pub fn currency_c() -> CurrencyRow {
-    CurrencyRow {
-        id: String::from("NEW_ZEALAND_DOLLARS"),
-        code: String::from("NZD"),
-        rate: 1.6,
-        is_home_currency: false,
-        date_updated: None,
-    }
-}
-
-pub fn currency_d() -> CurrencyRow {
-    CurrencyRow {
-        id: String::from("AUSTRALIAN_DOLLAR"),
-        code: String::from("AUD"),
-        rate: 1.4,
-        is_home_currency: false,
-        date_updated: None,
-    }
-}
-
 pub fn mock_currencies() -> Vec<CurrencyRow> {
     vec![currency_a(), currency_b()]
 }

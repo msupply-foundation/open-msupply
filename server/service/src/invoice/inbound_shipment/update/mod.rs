@@ -176,7 +176,7 @@ mod test {
     use chrono::{Duration, NaiveDate, Utc};
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
             mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
             mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
@@ -358,7 +358,6 @@ mod test {
                     .unwrap()
                     .and_hms_milli_opt(20, 30, 0, 0)
                     .unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 

@@ -47,7 +47,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_log", "datetime"),
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
-        ("asset_log", "log_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -376,7 +375,6 @@ mod tests {
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
                     .unwrap();
-                r.currency_id = "currency_a".to_string();
             })
         }
 
@@ -395,7 +393,6 @@ mod tests {
                         .and_hms_opt(00, 00, 00)
                         .unwrap(),
                 );
-                r.currency_id = "currency_a".to_string();
             })
         }
 
@@ -410,12 +407,7 @@ mod tests {
 
         let (_, connection, _, _) = setup_all_with_data(
             "refresh_dates",
-            MockDataInserts::none()
-                .stores()
-                .names()
-                .items()
-                .units()
-                .currencies(),
+            MockDataInserts::none().stores().names().items().units(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice1(), invoice2()];
                 r.stock_lines = vec![stock_line1()];

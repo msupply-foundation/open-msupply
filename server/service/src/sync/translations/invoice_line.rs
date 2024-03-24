@@ -370,8 +370,7 @@ mod tests {
                 .names()
                 .stores()
                 .locations()
-                .stock_lines()
-                .currencies(),
+                .stock_lines(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![mock_outbound_shipment_a()];
                 r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {

@@ -56,14 +56,6 @@ query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInpu
         address1
         address2
       }
-      currency {
-        id
-        code
-        rate
-        isHomeCurrency
-        dateUpdated
-      }
-      currencyRate
     }
   }
   invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {

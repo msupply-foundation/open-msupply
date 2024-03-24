@@ -27,13 +27,6 @@ impl SyncRecordTester for StocktakeRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
         };
-        let currency_row = CurrencyRow {
-            id: uuid(),
-            rate: 1.0,
-            code: "NZD".to_string(),
-            is_home_currency: true,
-            date_updated: None,
-        };
         let stocktake_row = StocktakeRow {
             id: uuid(),
             store_id: store_id.to_string(),
@@ -73,12 +66,6 @@ impl SyncRecordTester for StocktakeRecordTester {
             central_upsert: json!({"item": [{
                 "ID": stocktake_line_row.item_link_id,
                 "type_of": "general"
-            }],
-            "currency": [{
-                "ID": currency_row.id,
-                "rate": currency_row.rate,
-                "currency": currency_row.code,
-                "is_home_currency": currency_row.is_home_currency,
             }]}),
             integration_records: vec![
                 IntegrationOperation::upsert(location_row),
@@ -94,7 +81,6 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.store_id = store_id.clone();
             r.name_store_id = Some(store_id.clone());
             r.tax = Some(0.0);
-            r.currency_id = currency_row.id.clone();
         });
 
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
@@ -139,12 +125,6 @@ impl SyncRecordTester for StocktakeRecordTester {
             central_upsert: json!({"item": [{
                 "ID": stock_line_row.item_link_id,
                 "type_of": "general"
-            }],
-            "currency": [{
-                "ID": currency_row.id,
-                "rate": currency_row.rate,
-                "currency": currency_row.code,
-                "is_home_currency": currency_row.is_home_currency,
             }]}),
             integration_records: vec![
                 IntegrationOperation::upsert(invoice_row),

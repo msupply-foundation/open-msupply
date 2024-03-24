@@ -1,11 +1,6 @@
 import React from 'react';
 import { BasicSpinner, NothingHere, Typography } from '@common/components';
-import {
-  Box,
-  Paper,
-  SettingsCircleIcon,
-  UserCircleIcon,
-} from '@openmsupply-client/common';
+import { Box, Paper, UserCircleIcon } from '@openmsupply-client/common';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import { AssetLogFragment, useAssets } from '../../api';
 import { Status } from '../../Components';
@@ -15,7 +10,7 @@ const Divider = () => (
   <Box
     sx={{
       backgroundColor: 'gray.dark',
-      height: '12px',
+      height: '20px',
       marginX: 1,
       marginY: '4px',
       width: '2px',
@@ -48,32 +43,8 @@ const User = ({ user }: { user: AssetLogFragment['user'] }) => {
           {t('label.name')}: {fullName}
         </Typography>
       )}
-      {!!user?.jobTitle && (
-        <Typography sx={{ fontWeight: 'bold', fontSize: '12px' }}>
-          , {user?.jobTitle}
-        </Typography>
-      )}
     </Box>
   );
-};
-
-const Icon = ({ username }: { username: string | undefined }) => {
-  switch (username) {
-    case 'omsupply_system':
-      return (
-        <SettingsCircleIcon
-          sx={{ color: 'gray.main', width: 30, height: 30 }}
-          stroke="#fff"
-        />
-      );
-    default:
-      return (
-        <UserCircleIcon
-          sx={{ color: 'gray.main', width: 30, height: 30 }}
-          stroke="#fff"
-        />
-      );
-  }
 };
 
 const StatusLog = ({
@@ -97,7 +68,10 @@ const StatusLog = ({
     <Box sx={sx} flex={1} display="flex">
       <Box flex={0} display="flex" flexDirection="column" alignItems="center">
         <Connector visible={!isFirst} />
-        <Icon username={log.user?.username} />
+        <UserCircleIcon
+          sx={{ color: 'gray.main', width: 30, height: 30 }}
+          stroke="#fff"
+        />
         <Connector visible={!isLast} />
       </Box>
       <Paper
@@ -107,6 +81,10 @@ const StatusLog = ({
         <Box display="flex" alignItems="flex-start">
           <Typography sx={{ fontWeight: 'bold', lineHeight: 2 }}>
             {localisedDate(log.logDatetime)}
+          </Typography>
+          {!!log.type && <Divider />}
+          <Typography sx={{ fontWeight: 'bold', lineHeight: 2 }}>
+            {log.type}
           </Typography>
           <div style={{ width: 16 }} />
           <Status status={log.status} />

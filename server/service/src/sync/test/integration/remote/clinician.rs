@@ -4,7 +4,6 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use chrono::NaiveDate;
 use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreMode, StoreRow};
 use serde_json::json;
 use util::{
@@ -24,15 +23,13 @@ impl SyncRecordTester for ClinicianRecordTester {
             site_id: new_site_properties.site_id as i32,
             logo: None,
             store_mode: StoreMode::Dispensary,
-            created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
         };
         let store_json = json!({
             "ID": store_row.id,
             "code": store_row.code,
             "name_ID": store_row.name_id,
             "sync_id_remote_site": store_row.site_id,
-            "store_mode": "dispensary",
-            "created_date": "2021-01-01"
+            "store_mode": "dispensary"
         });
 
         let clinician_row = ClinicianRow {

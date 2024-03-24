@@ -219,7 +219,6 @@ pub struct MockDataInserts {
     pub periods: bool,
     pub stores: bool,
     pub units: bool,
-    pub currencies: bool,
     pub items: bool,
     pub locations: bool,
     pub sensors: bool,
@@ -256,6 +255,7 @@ pub struct MockDataInserts {
     pub contexts: bool,
     pub pack_variants: bool,
     pub plugin_data: bool,
+    pub currencies: bool,
     pub assets: bool,
     pub asset_logs: bool,
 }
@@ -273,7 +273,6 @@ impl MockDataInserts {
             periods: true,
             stores: true,
             units: true,
-            currencies: true,
             items: true,
             locations: true,
             sensors: true,
@@ -310,6 +309,7 @@ impl MockDataInserts {
             contexts: true,
             pack_variants: true,
             plugin_data: true,
+            currencies: true,
             assets: true,
             asset_logs: true,
         }
@@ -372,11 +372,6 @@ impl MockDataInserts {
 
     pub fn units(mut self) -> Self {
         self.units = true;
-        self
-    }
-
-    pub fn currencies(mut self) -> Self {
-        self.currencies = true;
         self
     }
 
@@ -532,6 +527,11 @@ impl MockDataInserts {
 
     pub fn plugin_data(mut self) -> Self {
         self.plugin_data = true;
+        self
+    }
+
+    pub fn currencies(mut self) -> Self {
+        self.currencies = true;
         self
     }
 

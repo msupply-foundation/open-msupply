@@ -71,6 +71,12 @@ export const StatusTab = ({
 
   const statuses = getOptionsFromEnum(StatusType, parseLogStatus);
   const reasons = getOptionsFromEnum(ReasonType, parseLogReason);
+  const types = [
+    getOption(t('label.cold-temperature-breach')),
+    getOption(t('label.hot-temperature-breach')),
+    getOption(t('label.maintenance-repair')),
+    getOption(t('label.preventative-maintenance')),
+  ];
 
   const filteredReasons = !draft.status
     ? reasons
@@ -84,6 +90,16 @@ export const StatusTab = ({
   return (
     <AssetLogPanel value={value} draft={draft}>
       <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
+        <Row label={t('label.type')}>
+          <Autocomplete
+            isOptionEqualToValue={option => option?.value === draft.type}
+            onChange={(_e, selected) =>
+              onChange({ type: selected?.value as string })
+            }
+            options={types}
+            width="100%"
+          />
+        </Row>
         <Row label={t('label.new-functional-status')}>
           <Autocomplete
             isOptionEqualToValue={option => option?.value === draft.status}

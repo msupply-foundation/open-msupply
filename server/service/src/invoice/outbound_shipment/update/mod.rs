@@ -175,8 +175,8 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_a, mock_item_a, mock_name_a,
-            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
+            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
+            mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
             mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -217,7 +217,6 @@ mod test {
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
                 );
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -338,7 +337,6 @@ mod test {
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -396,7 +394,6 @@ mod test {
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -555,7 +552,6 @@ mod test {
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -583,12 +579,7 @@ mod test {
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_outbound_shipment_check_stock_adjustments",
-            MockDataInserts::none()
-                .units()
-                .items()
-                .names()
-                .stores()
-                .currencies(),
+            MockDataInserts::none().units().items().names().stores(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.stock_lines = vec![stock_line()];
@@ -667,12 +658,7 @@ mod test {
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "update_outbound_shipment_check_stock_adjustments2",
-            MockDataInserts::none()
-                .units()
-                .items()
-                .names()
-                .stores()
-                .currencies(),
+            MockDataInserts::none().units().items().names().stores(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice()];
                 r.stock_lines = vec![stock_line()];

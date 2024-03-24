@@ -115,8 +115,8 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            currency_a, mock_item_a, mock_location_1, mock_location_on_hold, mock_store_a,
-            mock_user_account_a, MockData, MockDataInserts,
+            mock_item_a, mock_location_1, mock_location_on_hold, mock_store_a, mock_user_account_a,
+            MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
         EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
@@ -141,7 +141,6 @@ mod test {
             verified_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0),
-            currency_id: currency_a().id,
             ..Default::default()
         };
 

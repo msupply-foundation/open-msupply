@@ -184,7 +184,12 @@ export const themeOptions = {
       dark: '#c43c11',
       contrastText: '#fff',
     },
-    secondary: { main: '#3e7bfa', light: '#5b8def', dark: '#3568d4' },
+    secondary: {
+      main: '#3e7bfa',
+      light: '#5b8def',
+      dark: '#3568d4',
+      contrastText: '#fff',
+    },
     background: {
       drawer: '#f2f2f5',
       menu: '#f2f2f5',

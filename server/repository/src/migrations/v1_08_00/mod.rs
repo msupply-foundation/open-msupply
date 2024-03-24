@@ -2,11 +2,10 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
-mod activity_log_add_zero_line;
 mod assets;
 mod central_omsupply;
-mod invoice_required_currency_id;
 mod pack_variant;
+mod activity_log_add_zero_line;
 mod store_add_created_date;
 
 pub(crate) struct V1_08_00;
@@ -22,7 +21,6 @@ impl Migration for V1_08_00 {
         central_omsupply::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
-        invoice_required_currency_id::migrate(connection)?;
         Ok(())
     }
 }

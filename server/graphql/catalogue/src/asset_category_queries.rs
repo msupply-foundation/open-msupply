@@ -57,7 +57,7 @@ pub fn asset_categories(
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAsset,
+            resource: Resource::QueryAssetCatalogueItem,
             store_id: None,
         },
     )?;
@@ -80,7 +80,7 @@ pub fn asset_category(ctx: &Context<'_>, id: String) -> Result<AssetCategoryResp
     validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryAsset,
+            resource: Resource::QueryAssetCatalogueItem,
             store_id: None,
         },
     )?;
