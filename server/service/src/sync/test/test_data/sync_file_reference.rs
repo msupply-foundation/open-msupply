@@ -21,10 +21,10 @@ const ASSET_LOG1: (&'static str, &'static str) = (
 fn sync_file_reference1() -> SyncFileReferenceRow {
     SyncFileReferenceRow {
         id: ASSET_LOG1.0.to_string(),
-        table_name: String::new(),
-        record_id: String::new(),
-        file_name: String::new(),
-        mime_type: None,
+        table_name: "asset".to_string(),
+        record_id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
+        file_name: "asset1.jpg".to_string(),
+        mime_type: Some("image/jpeg".to_string()),
         created_datetime: Defaults::naive_date_time(),
         deleted_datetime: None,
     }
