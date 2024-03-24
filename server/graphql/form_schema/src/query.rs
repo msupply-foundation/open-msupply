@@ -24,7 +24,7 @@ pub struct FormSchemaSortInput {
 }
 
 impl FormSchemaSortInput {
-    fn to_domain(self) -> FormSchemaSort {
+    fn to_domain(&self) -> FormSchemaSort {
         FormSchemaSort {
             key: match self.key {
                 FormSchemaSortFieldInput::Id => FormSchemaSortField::Id,

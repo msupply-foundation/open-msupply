@@ -2,9 +2,9 @@ use crate::sync::test::TestSyncIncomingRecord;
 
 use repository::{NameTagJoinRow, NameTagJoinRowDelete};
 
-const TABLE_NAME: &'static str = "name_tag_join";
+const TABLE_NAME: &str = "name_tag_join";
 
-const NAME_TAG_JOIN_1: (&'static str, &'static str) = (
+const NAME_TAG_JOIN_1: (&str, &str) = (
     "44F59B35C8FE3C41B779CFF6AC823F57",
     r#"{
         "ID": "44F59B35C8FE3C41B779CFF6AC823F57",
@@ -25,7 +25,7 @@ fn name_tag_join_1() -> TestSyncIncomingRecord {
     )
 }
 
-const NAME_TAG_JOIN_2: (&'static str, &'static str) = (
+const NAME_TAG_JOIN_2: (&str, &str) = (
     "1D70E1B015B2694B8998B2BE1C018B66",
     r#"{ 
         "ID": "1D70E1B015B2694B8998B2BE1C018B66",

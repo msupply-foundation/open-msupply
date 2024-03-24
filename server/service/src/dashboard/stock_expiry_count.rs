@@ -35,7 +35,7 @@ impl StockExpiryCountServiceTrait for StockExpiryServiceCount {
                         before_or_equal_to: Some(date_time),
                         after_or_equal_to: None,
                     })
-                    .store_id(EqualFilter::equal_to(&store_id))
+                    .store_id(EqualFilter::equal_to(store_id))
                     .is_available(true),
             ),
             None,

@@ -1,9 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
-    StockLineRow, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    ActivityLogType, EqualFilter, ItemRowType, MasterListFilter, MasterListLineFilter,
+    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError,
+    StockLineFilter, StockLineRepository, StockLineRow, Stocktake, StocktakeFilter,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
+    StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -157,7 +158,9 @@ fn generate_lines_from_master_list(
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let item_ids: Vec<String> = MasterListLineRepository::new(&connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(&master_list_id))
+                .item_type(ItemRowType::Stock.equal_to()),
         )?
         .into_iter()
         .map(|r| r.item_id)
@@ -456,7 +459,7 @@ mod test {
                     id: "new_stocktake".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: None,
                     master_list_id: None,
@@ -479,7 +482,7 @@ mod test {
                 i.id = "new_stocktake".to_string();
                 i.comment = Some("comment".to_string());
                 i.description = Some("description".to_string());
-                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap());
+                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap());
                 i.is_locked = true;
                 i.status = StocktakeStatus::New;
                 i.store_id = mock_store_a().id;
@@ -511,10 +514,10 @@ mod test {
                 id: "stocktake_2".to_string(),
                 comment: Some("comment".to_string()),
                 description: Some("description".to_string()),
-                stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                 is_locked: Some(true),
                 location: None,
-                master_list_id: Some("master_list_filter_test".to_string()),
+                master_list_id: Some("invalid_master_list".to_string()),
                 items_have_stock: None,
             },
         );
@@ -537,7 +540,7 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: None,
                     master_list_id: Some(master_list_id.clone()),
@@ -587,7 +590,7 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: None,
                     master_list_id: Some(master_list_id.clone()),
@@ -636,7 +639,7 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: Some(NullableUpdate {
                         value: Some(location_id.clone()),
@@ -676,7 +679,7 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: Some(NullableUpdate {
                         value: Some(location_id.clone()),
@@ -766,7 +769,7 @@ mod test {
                     id: "stocktake_1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: Some(NullableUpdate { value: None }),
                     master_list_id: None,
@@ -791,7 +794,7 @@ mod test {
                     id: "stocktake_2".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                     is_locked: Some(true),
                     location: Some(NullableUpdate { value: None }),
                     master_list_id: None,

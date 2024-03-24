@@ -50,24 +50,20 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let no_stock = item_stats
             .iter()
-            .filter(|i| i.available_stock_on_hand <= 0)
+            .filter(|i| i.available_stock_on_hand == 0)
             .count() as i64;
 
         let low_stock = item_stats
             .iter()
-            .filter_map(|i| {
-                (i.available_stock_on_hand > 0)
-                    .then(|| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
-            })
+            .filter(|&i| (i.available_stock_on_hand > 0))
+            .map(|i| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
             .count() as i64;
 
         let more_than_six_months_stock = item_stats
             .iter()
-            .filter_map(|i| {
-                (i.available_stock_on_hand > 0)
-                    .then(|| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
-            })
+            .filter(|&i| (i.available_stock_on_hand > 0))
+            .map(|i| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
             .count() as i64;
 

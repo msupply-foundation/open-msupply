@@ -39,7 +39,7 @@ impl Loader<ClinicianLoaderInput> for ClinicianLoader {
         // store_id -> Vec of clinician_id
         let mut store_map = HashMap::<String, Vec<String>>::new();
         for item in ids_with_store_id {
-            let entry = store_map.entry(item.primary_id.clone()).or_insert(vec![]);
+            let entry = store_map.entry(item.primary_id.clone()).or_default();
             entry.push(item.secondary_id.clone())
         }
         let mut output = HashMap::<ClinicianLoaderInput, Self::Value>::new();

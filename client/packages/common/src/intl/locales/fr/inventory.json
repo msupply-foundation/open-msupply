@@ -52,7 +52,6 @@
   "error.provide-valid-reason": "La raison de l'ajustement de stock ne correspond pas à la direction de l'ajustement (positif ou négatif)",
   "error.reduced-below-zero": "Une ligne de stock existe dans une nouvelle livraison sortante. La quantité ne peut pas être en dessous de zéro.",
   "label.supplier": "Fournisseur",
-  "label.location": "Emplacement",
   "error.stocktake-has-stock-reduced-below-zero": "L'inventaire ne peut pas être finalisé car une partie du stock est utilisé dans une nouvelle livraison sortante.",
   "label.master-list": "Liste Maîtresse",
   "message.no-supplier": "Ajustement de stock",

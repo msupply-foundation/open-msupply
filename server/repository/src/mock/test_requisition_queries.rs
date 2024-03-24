@@ -64,23 +64,23 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
             r.sent_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 02)
+                NaiveDate::from_ymd_opt(2021, 1, 2)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
             r.finalised_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 03)
+                NaiveDate::from_ymd_opt(2021, 1, 3)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
-            r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 01, 04).unwrap());
+            r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 4).unwrap());
             r.colour = Some("colour".to_owned());
             r.comment = Some("comment".to_owned());
             r.their_reference = Some("their_reference".to_owned());
@@ -121,18 +121,18 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
             r.sent_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 02)
+                NaiveDate::from_ymd_opt(2021, 1, 2)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
             r.finalised_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 03)
+                NaiveDate::from_ymd_opt(2021, 1, 3)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),

@@ -83,7 +83,7 @@ pub fn allocate_outbound_shipment_unallocated_line(
                 skipped_expired_stock_lines,
                 skipped_on_hold_stock_lines,
                 issued_expiring_soon_stock_lines,
-            } = generate(&connection, &ctx.store_id, unallocated_line)?;
+            } = generate(connection, &ctx.store_id, unallocated_line)?;
 
             let mut result = ServiceResult {
                 inserts: vec![],

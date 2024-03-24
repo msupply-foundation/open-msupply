@@ -32,7 +32,7 @@ pub enum UpdateStocktakeStatusInput {
 pub struct SnapshotCountCurrentCountMismatch(StocktakeLineConnector);
 #[Object]
 impl SnapshotCountCurrentCountMismatch {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Snapshot count doesn't match the current stock count"
     }
 
@@ -45,7 +45,7 @@ pub struct StockLinesReducedBelowZero(pub Vec<StockLine>);
 
 #[Object]
 impl StockLinesReducedBelowZero {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Stock lines exist in new outbound shipments. "
     }
 

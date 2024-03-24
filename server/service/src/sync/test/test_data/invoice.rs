@@ -11,9 +11,9 @@ use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
 use super::TestSyncOutgoingRecord;
 
-const TABLE_NAME: &'static str = "transact";
+const TABLE_NAME: &str = "transact";
 
-const TRANSACT_1: (&'static str, &'static str) = (
+const TRANSACT_1: (&str, &str) = (
     "12e889c0f0d211eb8dddb54df6d741bc",
     r#"{
       "Colour": 0,

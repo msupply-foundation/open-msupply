@@ -13,7 +13,7 @@ export default {
 
 const StyledPaper = styled(Paper)({
   textAlign: 'center',
-  height: 90,
+  minHeight: 90,
   padding: 10,
   width: 300,
 });
@@ -56,6 +56,7 @@ const NumericTemplate: Story = () => {
   const [negative, setNegative] = useState<number | undefined>();
   const [decimal, setDecimal] = useState<number | undefined>();
   const [rangeVal, setRangeVal] = useState<number | undefined>();
+  const [fixedDecimal, setFixedDecimal] = useState<number | undefined>(1);
 
   return (
     <Grid>
@@ -79,11 +80,11 @@ const NumericTemplate: Story = () => {
               />
             </StyledPaper>
             <StyledPaper>
-              <Typography>Decimals allowed (2dp), default 5, min 1</Typography>
+              <Typography>Decimals allowed (3dp), default 5, min 1</Typography>
               <NumericTextInput
                 value={decimal}
                 defaultValue={5}
-                decimalLimit={2}
+                decimalLimit={3}
                 onChange={setDecimal}
                 min={1}
               />
@@ -99,6 +100,17 @@ const NumericTemplate: Story = () => {
                 max={20}
                 step={2}
                 multiplier={5}
+              />
+            </StyledPaper>
+            <StyledPaper>
+              <Typography>
+                Fixed-length decimal (2), init value 1, positive
+              </Typography>
+              <NumericTextInput
+                value={fixedDecimal}
+                onChange={setFixedDecimal}
+                decimalLimit={2}
+                decimalMin={2}
               />
             </StyledPaper>
           </Grid>

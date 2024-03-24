@@ -14,9 +14,9 @@ pub struct DocumentRegistryLoaderInput {
 }
 
 impl DocumentRegistryLoaderInput {
-    pub fn new(allowed_ctx: &Vec<String>, key: &str) -> Self {
+    pub fn new(allowed_ctx: &[String], key: &str) -> Self {
         DocumentRegistryLoaderInput {
-            allowed_ctx: allowed_ctx.clone(),
+            allowed_ctx: allowed_ctx.to_vec(),
             registry_id: key.to_string(),
         }
     }
@@ -47,7 +47,7 @@ impl Loader<DocumentRegistryLoaderInput> for DocumentRegistryLoader {
 
         let mut map = HashMap::<Vec<String>, Vec<String>>::new();
         for item in document_types {
-            let entry = map.entry(item.allowed_ctx.clone()).or_insert(vec![]);
+            let entry = map.entry(item.allowed_ctx.clone()).or_default();
             entry.push(item.registry_id.clone())
         }
         let mut out = HashMap::<DocumentRegistryLoaderInput, Self::Value>::new();

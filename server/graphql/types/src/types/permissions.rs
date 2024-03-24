@@ -174,7 +174,7 @@ impl UserStorePermissionConnector {
             nodes: permissions
                 .rows
                 .into_iter()
-                .map(|row| UserStorePermissionNode::from_domain(row))
+                .map(UserStorePermissionNode::from_domain)
                 .collect(),
         }
     }
@@ -184,7 +184,7 @@ impl UserStorePermissionConnector {
             total_count: usize_to_u32(permissions.len()),
             nodes: permissions
                 .into_iter()
-                .map(|row| UserStorePermissionNode::from_domain(row))
+                .map(UserStorePermissionNode::from_domain)
                 .collect(),
         }
     }

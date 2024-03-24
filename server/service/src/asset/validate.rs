@@ -13,14 +13,14 @@ pub fn check_asset_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<AssetRow>, RepositoryError> {
-    Ok(AssetRowRepository::new(connection).find_one_by_id(id)?)
+    AssetRowRepository::new(connection).find_one_by_id(id)
 }
 
 pub fn check_asset_log_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<AssetLogRow>, RepositoryError> {
-    Ok(AssetLogRowRepository::new(connection).find_one_by_id(id)?)
+    AssetLogRowRepository::new(connection).find_one_by_id(id)
 }
 
 pub fn check_reason_matches_status(

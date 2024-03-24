@@ -7,7 +7,7 @@ impl EqualFilter<String> {
                 equal_any
                     .iter()
                     .filter(|p| allowed.contains(p))
-                    .map(|p| p.clone())
+                    .cloned()
                     .collect(),
             )
         } else {
@@ -117,8 +117,7 @@ mod tests {
         // equal_to: allow query allowed id
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to(&"A".to_string()).restrict_results(&allowed)),
+                InvoiceFilter::new().user_id(EqualFilter::equal_to("A").restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()
@@ -203,7 +202,7 @@ mod tests {
         // return empty list when allowed is empty
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new().user_id(EqualFilter::default().restrict_results(&vec![])),
+                InvoiceFilter::new().user_id(EqualFilter::default().restrict_results(&[])),
             )
             .unwrap();
         assert!(result.is_empty());

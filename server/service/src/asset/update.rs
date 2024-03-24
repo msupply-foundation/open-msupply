@@ -15,7 +15,6 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
-use serde_json;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
@@ -52,7 +51,7 @@ pub fn update_asset(
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetUpdated,
                 Some(updated_asset_row.id.clone()),
                 Some(serde_json::to_string(&asset_row).unwrap_or_default()),

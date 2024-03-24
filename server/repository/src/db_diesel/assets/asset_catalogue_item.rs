@@ -15,7 +15,7 @@ use crate::asset_type_row::asset_type::dsl as asset_type_dsl;
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct AssetCatalogueItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub category: Option<StringFilter>,
@@ -163,18 +163,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
 
 impl AssetCatalogueItemFilter {
     pub fn new() -> AssetCatalogueItemFilter {
-        AssetCatalogueItemFilter {
-            id: None,
-            category: None,
-            category_id: None,
-            class: None,
-            class_id: None,
-            code: None,
-            manufacturer: None,
-            model: None,
-            r#type: None,
-            type_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

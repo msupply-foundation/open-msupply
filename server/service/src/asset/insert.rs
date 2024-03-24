@@ -44,7 +44,7 @@ pub fn insert_asset(
             AssetRowRepository::new(&connection).upsert_one(&new_asset)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetCreated,
                 Some(new_asset.id.clone()),
                 None,

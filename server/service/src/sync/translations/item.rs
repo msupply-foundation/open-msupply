@@ -34,7 +34,7 @@ fn to_item_type(type_of: LegacyItemType) -> ItemRowType {
 }
 
 pub(crate) fn ordered_simple_json(text: &str) -> Result<String, serde_json::Error> {
-    let json: serde_json::Value = serde_json::from_str(&text)?;
+    let json: serde_json::Value = serde_json::from_str(text)?;
     serde_json::to_string(&json)
 }
 
@@ -46,11 +46,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct ItemTranslation;
 impl SyncTranslation for ItemTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "item"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![UnitTranslation.table_name()]
     }
 
