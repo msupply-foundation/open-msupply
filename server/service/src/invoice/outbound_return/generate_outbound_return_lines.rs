@@ -11,6 +11,7 @@ pub struct OutboundReturnLine {
     pub reason_id: Option<String>,
     pub note: Option<String>,
     pub number_of_packs: f64,
+    pub available_number_of_packs: f64,
     pub stock_line: StockLine,
 }
 
@@ -169,6 +170,7 @@ fn outbound_line_from_stock_line_and_invoice_line(
             reason_id: None,
             note: None,
             number_of_packs: 0.0,
+            available_number_of_packs: stock_line.stock_line_row.available_number_of_packs,
             stock_line,
         };
     };
@@ -181,11 +183,17 @@ fn outbound_line_from_stock_line_and_invoice_line(
         ..
     } = invoice_line.invoice_line_row;
 
+    // Quantity available for return should include the number of packs already in the return
+    // (Available stock is reduced as soon as it is added to a return)
+    let number_of_packs_available_to_return =
+        stock_line.stock_line_row.available_number_of_packs + number_of_packs;
+
     return OutboundReturnLine {
         id,
         note,
         number_of_packs,
         reason_id: return_reason_id,
+        available_number_of_packs: number_of_packs_available_to_return,
         stock_line,
     };
 }
@@ -346,6 +354,16 @@ mod test {
             .unwrap();
 
         assert_eq!(result.count, 2);
+
+        let return_line_for_stock_line_a = result
+            .rows
+            .iter()
+            .find(|line| line.stock_line.stock_line_row.id == mock_stock_line_a().id)
+            .unwrap();
+
+        assert_eq!(return_line_for_stock_line_a.number_of_packs, 0.0);
+        assert_eq!(return_line_for_stock_line_a.available_number_of_packs, 30.0);
+        // available on stock_line_a
     }
 
     #[actix_rt::test]
@@ -533,14 +551,13 @@ mod test {
             existing_line.stock_line.stock_line_row.id,
             unavailable_stock_line().id
         );
-        assert_eq!(existing_line.number_of_packs, 1.0);
         assert_eq!(existing_line.note, item_a_return_line().note);
+        assert_eq!(existing_line.number_of_packs, 1.0);
+        assert_eq!(existing_line.available_number_of_packs, 1.0); // num of packs in stock line (0.0) + num of packs in return (1.0)
 
         assert!(result.rows.iter().all(|line| {
-            // except for the line that is already in the return
-            line.stock_line.stock_line_row.id == unavailable_stock_line().id
-                // all lines have available packs
-                || line.stock_line.stock_line_row.available_number_of_packs > 0.0
+            // all lines have available packs (even if no further available stock, packs already included in the return are counted as available here)
+            line.available_number_of_packs > 0.0
         }));
     }
 
