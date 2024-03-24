@@ -5,6 +5,7 @@ use crate::StorageConnection;
 mod activity_log_add_zero_line;
 mod assets;
 mod central_omsupply;
+mod invoice_required_currency_id;
 mod pack_variant;
 mod store_add_created_date;
 mod sync_file_reference;

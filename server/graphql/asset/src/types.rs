@@ -10,7 +10,7 @@ use graphql_core::loader::{
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{AssetCatalogueItemNode, LocationConnector, StoreNode, UserNode};
+use graphql_types::types::{LocationConnector, StoreNode, UserNode};
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
