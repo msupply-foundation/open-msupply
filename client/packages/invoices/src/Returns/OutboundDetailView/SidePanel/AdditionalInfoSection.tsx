@@ -20,13 +20,14 @@ export const AdditionalInfoSectionComponent: FC = () => {
   const isDisabled = false; // TODO
 
   const { data, isFetched } = useReturns.document.outboundReturn();
-  const { user, id } = data || { id: '' };
+  const { user, colour, comment, id } = data || { id: '' };
 
   const [colorBuffer, setColorBuffer] = useState('');
   const [commentBuffer, setCommentBuffer] = useState('');
   useEffect(() => {
-    setColorBuffer(data?.colour ?? '');
-    setCommentBuffer(data?.comment ?? '');
+    // Sets the buffer state once, after the API is fetched.
+    setColorBuffer(colour ?? '');
+    setCommentBuffer(comment ?? '');
   }, [isFetched]);
 
   return (
