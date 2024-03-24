@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InboundRowFragment, useInbound } from '../api';
+import { InboundLineFragment, InboundRowFragment, useInbound } from '../api';
 
 const InboundInfoPanel = ({
   shipment,
@@ -41,7 +41,7 @@ const InboundInfoPanel = ({
 };
 
 export const Toolbar: FC<{
-  onReturnLines: (stockLineIds: string[]) => void;
+  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
 }> = ({ onReturnLines }) => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
@@ -56,7 +56,7 @@ export const Toolbar: FC<{
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
 
-  const selectedStockLineIds = useInbound.utils.selectedStockLineIds();
+  const selectedLines = useInbound.utils.selectedLines();
 
   const isTransfer = !!shipment?.linkedShipment?.id;
   if (!data) return null;
@@ -124,7 +124,7 @@ export const Toolbar: FC<{
           <DropdownMenu label={t('label.actions')}>
             <DropdownMenuItem
               IconComponent={ArrowLeftIcon}
-              onClick={() => onReturnLines(selectedStockLineIds)}
+              onClick={() => onReturnLines(selectedLines)}
             >
               {t('button.return-lines')}
             </DropdownMenuItem>

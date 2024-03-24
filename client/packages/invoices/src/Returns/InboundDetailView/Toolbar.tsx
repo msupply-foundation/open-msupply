@@ -19,19 +19,23 @@ import { InboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
-  const onDelete = useReturns.lines.deleteSelectedInboundLines();
-  const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
   const { data } = useReturns.document.inboundReturn();
-  const { otherPartyName, theirReference, id } = data ?? {};
+  const { otherPartyName, theirReference, id = '' } = data ?? {};
+
+  const onDelete = useReturns.lines.deleteSelectedInboundLines({
+    returnId: id,
+  });
+  const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
+
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
 
   const update = (data: Partial<InboundReturnFragment>) => {
     if (!id) return;
     debouncedMutateAsync({ id, ...data });
   };
 
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
   const [theirReferenceBuffer, setTheirReferenceBuffer] =
     useBufferState(theirReference);
 
