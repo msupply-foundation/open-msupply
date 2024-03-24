@@ -189,7 +189,7 @@ mod test {
             Ok(Asset {
                 id: "id".to_owned(),
                 notes: Some("notes".to_owned()),
-                asset_number: "asset_number".to_owned(),
+                asset_number: Some("asset_number".to_owned()),
                 ..Default::default()
             })
         }));
