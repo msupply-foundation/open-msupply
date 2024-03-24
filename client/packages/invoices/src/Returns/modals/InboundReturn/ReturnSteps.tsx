@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   useTranslation,
   WizardStepper,
@@ -8,13 +8,10 @@ import {
   Alert,
   RecordPatch,
   GeneratedInboundReturnLineNode,
-  ButtonWithIcon,
-  PlusCircleIcon,
-  Box,
 } from '@openmsupply-client/common';
 import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
-import { useReturns } from '../..';
+import { AddBatchButton, useAddBatchKeyBinding } from './AddBatch';
 
 export enum Tabs {
   Quantity = 'Quantity',
@@ -41,9 +38,8 @@ export const ReturnSteps = ({
   setZeroQuantityAlert,
 }: ReturnStepsProps) => {
   const t = useTranslation(['distribution', 'replenishment']);
-  const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  useAddDraftLineKeyBinding(addDraftLine);
+  useAddBatchKeyBinding(addDraftLine);
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
@@ -67,18 +63,7 @@ export const ReturnSteps = ({
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-      {addDraftLine && (
-        <Box flex={1} justifyContent="flex-end" display="flex">
-          <ButtonWithIcon
-            disabled={isDisabled}
-            color="primary"
-            variant="outlined"
-            onClick={addDraftLine}
-            label={`${t('label.add-batch')} (+)`}
-            Icon={<PlusCircleIcon />}
-          />
-        </Box>
-      )}
+      {addDraftLine && <AddBatchButton addDraftLine={addDraftLine} />}
       <TabPanel value={Tabs.Quantity}>
         {zeroQuantityAlert && (
           <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
@@ -99,18 +84,4 @@ export const ReturnSteps = ({
       </TabPanel>
     </TabContext>
   );
-};
-
-const useAddDraftLineKeyBinding = (addDraftLine: (() => void) | undefined) => {
-  useEffect(() => {
-    const keyBinding = (e: KeyboardEvent) => {
-      if (addDraftLine && e.key === '+') {
-        e.preventDefault();
-        addDraftLine();
-      }
-    };
-
-    window.addEventListener('keydown', keyBinding);
-    return () => window.removeEventListener('keydown', keyBinding);
-  }, [addDraftLine]);
 };
