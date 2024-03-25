@@ -1,14 +1,31 @@
-import { useParams, useQuery } from '@openmsupply-client/common';
+import {
+  RouteBuilder,
+  useMatch,
+  useParams,
+  useQuery,
+} from '@openmsupply-client/common';
 import { useReturnsApi } from '../utils/useReturnsApi';
 import { useState, useEffect } from 'react';
 import { InboundReturnFragment } from '../../operations.generated';
+import { AppRoute } from 'packages/config/src';
 
 export const useInboundReturn = () => {
+  const isInboundReturnPage = useMatch(
+    RouteBuilder.create(AppRoute.Distribution)
+      .addPart(AppRoute.InboundReturn)
+      .addWildCard()
+      .build()
+  );
+
   const { invoiceNumber = '' } = useParams();
   const api = useReturnsApi();
 
-  const query = useQuery(api.keys.inboundDetail(invoiceNumber), () =>
-    api.get.inboundReturnByNumber(Number(invoiceNumber))
+  const query = useQuery(
+    api.keys.inboundDetail(invoiceNumber),
+    () => api.get.inboundReturnByNumber(Number(invoiceNumber)),
+    {
+      enabled: !!isInboundReturnPage,
+    }
   );
 
   const [bufferedState, setBufferedState] = useState(query.data);

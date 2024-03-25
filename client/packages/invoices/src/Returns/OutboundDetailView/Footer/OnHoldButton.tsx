@@ -9,8 +9,7 @@ import { useReturns } from '../../api';
 export const OnHoldButtonComponent = memo(() => {
   const t = useTranslation('distribution');
   const { mutateAsync } = useReturns.document.updateOutboundReturn();
-  //   const isDisabled = useOutbound.utils.isDisabled();
-  const isDisabled = false; // TODO
+  const isDisabled = useReturns.utils.outboundIsDisabled();
 
   const { data: { id, onHold } = { onHold: false } } =
     useReturns.document.outboundReturn();

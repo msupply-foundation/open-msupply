@@ -33,8 +33,7 @@ export const Toolbar: FC = () => {
     debouncedMutateAsync({ id, ...data });
   };
 
-  //   const isDisabled = useOutbound.utils.isDisabled();
-  const isDisabled = false; // TODO
+  const isDisabled = useReturns.utils.outboundIsDisabled();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
