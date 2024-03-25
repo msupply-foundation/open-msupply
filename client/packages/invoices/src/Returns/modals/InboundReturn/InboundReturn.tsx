@@ -24,6 +24,7 @@ interface InboundReturnEditModalProps {
   returnId?: string;
   initialItemId?: string | null;
   loadNextItem?: () => void;
+  isNewReturn?: boolean;
 }
 
 export const InboundReturnEditModal = ({
@@ -35,6 +36,7 @@ export const InboundReturnEditModal = ({
   returnId,
   initialItemId,
   loadNextItem,
+  isNewReturn = false,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation('distribution');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -60,7 +62,8 @@ export const InboundReturnEditModal = ({
   });
 
   useEffect(() => {
-    if (initialItemId) setItemId(initialItemId);
+    if (initialItemId === undefined) return;
+    setItemId(initialItemId === null ? undefined : initialItemId);
   }, [initialItemId]);
 
   const onOk = async () => {
@@ -133,11 +136,7 @@ export const InboundReturnEditModal = ({
             ? NextStepButton
             : OkButton
         }
-        nextButton={
-          modalMode === ModalMode.Update && loadNextItem
-            ? OkAndNextButton
-            : undefined
-        }
+        nextButton={!isNewReturn ? OkAndNextButton : undefined}
         height={height}
         width={1024}
       >
