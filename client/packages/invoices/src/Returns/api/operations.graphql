@@ -94,7 +94,7 @@ fragment InboundReturn on InvoiceNode {
   transportReference
 }
 
-fragment OutboundReturnDetailRow on InvoiceLineNode {
+fragment OutboundReturnLine on InvoiceLineNode {
   id
   itemCode
   itemName
@@ -222,7 +222,7 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
       ...OutboundReturn
       lines {
         nodes {
-          ...OutboundReturnDetailRow
+          ...OutboundReturnLine
         }
       }
     }
