@@ -8,7 +8,11 @@ import {
   SplitButtonOption,
   useConfirmationModal,
 } from '@openmsupply-client/common';
-import { getNextInboundStatus, getStatusTranslation } from '../../../utils';
+import {
+  getNextInboundStatus,
+  getStatusTranslation,
+  isInboundStatusChangeDisabled,
+} from '../../../utils';
 import { useReturns } from '../../api';
 
 const getStatusOptions = (
@@ -128,13 +132,14 @@ const useStatusChangeButton = () => {
   const t = useTranslation('distribution');
   const { mutateAsync } = useReturns.document.updateInboundReturn();
 
-  const {
-    data: { status, lines, onHold, linkedShipment, id } = {
-      status: InvoiceNodeStatus.New,
-      lines: { totalCount: 0 },
-      onHold: false,
-    },
-  } = useReturns.document.inboundReturn();
+  const { data } = useReturns.document.inboundReturn();
+
+  const { status, lines, linkedShipment, id } = data ?? {
+    status: InvoiceNodeStatus.New,
+    lines: { totalCount: 0 },
+  };
+
+  const isDisabled = data ? isInboundStatusChangeDisabled(data) : true;
 
   const lineCount = lines.totalCount;
 
@@ -186,7 +191,7 @@ const useStatusChangeButton = () => {
     selectedOption,
     setSelectedOption,
     getConfirmation,
-    onHold,
+    isDisabled,
     lineCount,
   };
 };
@@ -197,10 +202,9 @@ export const StatusChangeButton = () => {
     selectedOption,
     setSelectedOption,
     getConfirmation,
-    onHold,
+    isDisabled,
     lineCount,
   } = useStatusChangeButton();
-  const isDisabled = useReturns.utils.inboundIsDisabled();
   const t = useTranslation();
   const noLines = lineCount === 0;
 
@@ -214,7 +218,7 @@ export const StatusChangeButton = () => {
   return (
     <SplitButton
       label={noLines ? t('messages.no-lines') : ''}
-      isDisabled={noLines || onHold}
+      isDisabled={noLines}
       options={options}
       selectedOption={selectedOption}
       onSelectOption={setSelectedOption}
