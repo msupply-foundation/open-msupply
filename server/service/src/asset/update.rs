@@ -24,7 +24,7 @@ pub enum UpdateAssetError {
 #[derive(Debug, Default)]
 pub struct UpdateAsset {
     pub id: String,
-    pub store_id: Option<String>,
+    pub store_id: Option<NullableUpdate<String>>,
     pub notes: Option<String>,
     pub asset_number: Option<String>,
     pub serial_number: Option<NullableUpdate<String>>,
@@ -100,9 +100,12 @@ pub fn generate(
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
-    asset_row.store_id = store_id;
     asset_row.notes = notes;
     asset_row.asset_number = asset_number.unwrap_or(asset_row.asset_number);
+
+    if let Some(store_id) = store_id {
+        asset_row.store_id = store_id.value;
+    }
 
     if let Some(serial_number) = serial_number {
         asset_row.serial_number = serial_number.value;

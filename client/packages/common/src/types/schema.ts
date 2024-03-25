@@ -351,6 +351,7 @@ export type AssetFilterInput = {
   classId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   installationDate?: InputMaybe<DateFilterInput>;
+  isNonCatalogue?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<StringFilterInput>;
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
@@ -4315,6 +4316,10 @@ export type Queries = {
    * The printed report can be retrieved from the `/files` endpoint using the returned file id.
    */
   printReport: PrintReportResponse;
+  /**
+   * Can be used when developing reports, e.g. to print a report that is not already in the
+   * system.
+   */
   printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -5910,7 +5915,7 @@ export type UpdateAssetInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  storeId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;

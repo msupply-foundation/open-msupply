@@ -1,6 +1,9 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
+use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
+use graphql_asset_catalogue::types::asset_class::AssetClassNode;
+use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
@@ -10,9 +13,7 @@ use graphql_core::loader::{
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{
-    AssetCatalogueItemNode, AssetCategoryNode, AssetClassNode, AssetTypeNode, StoreNode, UserNode,
-};
+use graphql_types::types::{StoreNode, UserNode};
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
