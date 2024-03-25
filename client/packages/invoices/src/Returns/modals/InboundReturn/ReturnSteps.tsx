@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   useTranslation,
   WizardStepper,
@@ -8,13 +8,11 @@ import {
   Alert,
   RecordPatch,
   GeneratedInboundReturnLineNode,
-  ButtonWithIcon,
-  PlusCircleIcon,
-  Box,
 } from '@openmsupply-client/common';
 import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
-import { useReturns } from '../..';
+import { AddBatchButton, useAddBatchKeyBinding } from './AddBatch';
+import { useReturns } from '../../api';
 
 export enum Tabs {
   Quantity = 'Quantity',
@@ -30,6 +28,7 @@ interface ReturnStepsProps {
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
   >;
+  returnId?: string;
 }
 
 export const ReturnSteps = ({
@@ -39,11 +38,12 @@ export const ReturnSteps = ({
   addDraftLine,
   zeroQuantityAlert,
   setZeroQuantityAlert,
+  returnId,
 }: ReturnStepsProps) => {
   const t = useTranslation(['distribution', 'replenishment']);
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  useAddDraftLineKeyBinding(addDraftLine);
+  useAddBatchKeyBinding(addDraftLine);
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.quantity'), description: '' },
@@ -64,27 +64,19 @@ export const ReturnSteps = ({
           ns: 'replenishment',
         });
 
+  const inputsDisabled = !!returnId && isDisabled;
+
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
-      {addDraftLine && (
-        <Box flex={1} justifyContent="flex-end" display="flex">
-          <ButtonWithIcon
-            disabled={isDisabled}
-            color="primary"
-            variant="outlined"
-            onClick={addDraftLine}
-            label={`${t('label.add-batch')} (+)`}
-            Icon={<PlusCircleIcon />}
-          />
-        </Box>
-      )}
+      {addDraftLine && <AddBatchButton addDraftLine={addDraftLine} />}
       <TabPanel value={Tabs.Quantity}>
         {zeroQuantityAlert && (
           <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
         )}
         <QuantityReturnedTable
           lines={lines}
+          isDisabled={inputsDisabled}
           updateLine={line => {
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
             update(line);
@@ -93,24 +85,11 @@ export const ReturnSteps = ({
       </TabPanel>
       <TabPanel value={Tabs.Reason}>
         <ReturnReasonsTable
+          isDisabled={inputsDisabled}
           lines={lines.filter(line => line.numberOfPacksReturned > 0)}
           updateLine={line => update(line)}
         />
       </TabPanel>
     </TabContext>
   );
-};
-
-const useAddDraftLineKeyBinding = (addDraftLine: (() => void) | undefined) => {
-  useEffect(() => {
-    const keyBinding = (e: KeyboardEvent) => {
-      if (addDraftLine && e.key === '+') {
-        e.preventDefault();
-        addDraftLine();
-      }
-    };
-
-    window.addEventListener('keydown', keyBinding);
-    return () => window.removeEventListener('keydown', keyBinding);
-  }, [addDraftLine]);
 };

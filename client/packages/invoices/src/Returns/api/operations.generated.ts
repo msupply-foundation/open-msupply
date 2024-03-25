@@ -10,7 +10,7 @@ export type InboundReturnRowFragment = { __typename: 'InvoiceNode', id: string, 
 
 export type InboundReturnFragment = { __typename: 'InvoiceNode', id: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, onHold: boolean, comment?: string | null, createdDatetime: string, pickedDatetime?: string | null, shippedDatetime?: string | null, deliveredDatetime?: string | null, verifiedDatetime?: string | null, otherPartyId: string, otherPartyName: string, theirReference?: string | null, otherPartyStore?: { __typename: 'StoreNode', code: string } | null, user?: { __typename: 'UserNode', username: string, email?: string | null } | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null, originalShipment?: { __typename: 'InvoiceNode', invoiceNumber: number, createdDatetime: string, user?: { __typename: 'UserNode', username: string } | null } | null };
 
-export type OutboundReturnDetailRowFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
+export type OutboundReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemCode: string, itemName: string, itemId: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number, sellPricePerPack: number };
 
 export type InboundReturnLineFragment = { __typename: 'InvoiceLineNode', id: string, itemId: string, itemCode: string, itemName: string, batch?: string | null, expiryDate?: string | null, numberOfPacks: number, packSize: number };
 
@@ -205,8 +205,8 @@ export const InboundReturnFragmentDoc = gql`
   }
 }
     `;
-export const OutboundReturnDetailRowFragmentDoc = gql`
-    fragment OutboundReturnDetailRow on InvoiceLineNode {
+export const OutboundReturnLineFragmentDoc = gql`
+    fragment OutboundReturnLine on InvoiceLineNode {
   id
   itemCode
   itemName
@@ -321,7 +321,7 @@ export const OutboundReturnByNumberDocument = gql`
       id
       lines {
         nodes {
-          ...OutboundReturnDetailRow
+          ...OutboundReturnLine
         }
       }
       originalShipment {
@@ -345,7 +345,7 @@ export const OutboundReturnByNumberDocument = gql`
     }
   }
 }
-    ${OutboundReturnDetailRowFragmentDoc}
+    ${OutboundReturnLineFragmentDoc}
 ${OutboundReturnRowFragmentDoc}`;
 export const InboundReturnByNumberDocument = gql`
     query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {

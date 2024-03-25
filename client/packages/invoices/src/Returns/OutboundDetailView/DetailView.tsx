@@ -11,19 +11,17 @@ import {
   useEditModal,
   DetailTabs,
 } from '@openmsupply-client/common';
-// import { toItemRow } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { SidePanel } from './SidePanel';
-import { OutboundReturnDetailRowFragment, useReturns } from '../api';
+import { OutboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
-// import { Draft } from '../..';
 import { OutboundReturnEditModal } from '../modals';
+import { OutboundReturnItem } from '../../types';
 
 export const OutboundReturnsDetailView: FC = () => {
-  // const isDisabled = useReturn.utils.isDisabled();
   const {
     onOpen,
     onClose,
@@ -35,26 +33,16 @@ export const OutboundReturnsDetailView: FC = () => {
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
-  const onRowClick = (row: OutboundReturnDetailRowFragment) =>
+  const onRowClick = (row: OutboundReturnLineFragment | OutboundReturnItem) =>
     onOpen(row.itemId);
 
   const onAddItem = () => onOpen();
-  //  (draft?: Draft) => {
-  //   onOpen(draft);
-  //   setMode(ModalMode.Create);
-  // };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
   const tabs = [
     {
-      Component: (
-        <ContentArea
-          onRowClick={onRowClick}
-          onAddItem={onAddItem}
-          rows={data?.lines?.nodes ?? []}
-        />
-      ),
+      Component: <ContentArea onRowClick={onRowClick} onAddItem={onAddItem} />,
       value: 'Details',
     },
     {
@@ -70,13 +58,11 @@ export const OutboundReturnsDetailView: FC = () => {
       {data ? (
         <TableProvider
           createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<OutboundReturnDetailRowFragment>(
-            {
-              initialSortBy: {
-                key: 'itemName',
-              },
-            }
-          )}
+          queryParamsStore={createQueryParamsStore<OutboundReturnLineFragment>({
+            initialSortBy: {
+              key: 'itemName',
+            },
+          })}
         >
           <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (

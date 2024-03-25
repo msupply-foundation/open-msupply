@@ -3,53 +3,49 @@ import {
   DataTable,
   useTranslation,
   Box,
-  //   MiniTable,
-  //   useIsGrouped,
-  //   InvoiceLineNodeType,
-  //   useRowStyle,
-  //   AppSxProp,
   NothingHere,
   useUrlQueryParams,
+  MiniTable,
 } from '@openmsupply-client/common';
-// import { useOutbound } from '../api';
-import { useOutboundReturnColumns } from './columns';
-import { OutboundReturnDetailRowFragment } from '../api';
-// import { useExpansionColumns } from './OutboundLineEdit/columns';
+import { useExpansionColumns, useOutboundReturnColumns } from './columns';
+import { OutboundReturnLineFragment, useReturns } from '../api';
+import { OutboundReturnItem } from '../../types';
 
 interface ContentAreaProps {
   onAddItem: () => void;
-  onRowClick?: null | ((rowData: OutboundReturnDetailRowFragment) => void);
-  rows: OutboundReturnDetailRowFragment[];
+  onRowClick?:
+    | null
+    | ((rowData: OutboundReturnLineFragment | OutboundReturnItem) => void);
 }
 
-// const Expand: FC<{
-//   rowData: StockOutLineFragment | StockOutItem;
-// }> = ({ rowData }) => {
-//   const expandoColumns = useExpansionColumns();
+const Expand: FC<{
+  rowData: OutboundReturnLineFragment | OutboundReturnItem;
+}> = ({ rowData }) => {
+  const expandoColumns = useExpansionColumns();
 
-//   if ('lines' in rowData && rowData.lines.length > 1) {
-//     return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
-//   } else {
-//     return null;
-//   }
-// };
+  if ('lines' in rowData && rowData.lines.length > 1) {
+    return <MiniTable rows={rowData.lines} columns={expandoColumns} />;
+  } else {
+    return null;
+  }
+};
 
 export const ContentAreaComponent: FC<ContentAreaProps> = ({
   onRowClick,
-  rows,
+  onAddItem,
 }) => {
   const t = useTranslation('distribution');
   const {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams();
-  //   const { isGrouped } = useIsGrouped('outboundShipment');
-  //   const { rows } = useOutbound.line.rows(isGrouped);
+
+  const { rows } = useReturns.lines.outboundReturnRows();
   const columns = useOutboundReturnColumns({
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.outboundIsDisabled();
   //   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
@@ -60,14 +56,14 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({
         <DataTable
           id="outbound-detail"
           onRowClick={onRowClick}
-          //   ExpandContent={Expand}
+          ExpandContent={Expand}
           columns={columns}
           data={rows}
           enableColumnSelection
           noDataElement={
             <NothingHere
               body={t('error.no-outbound-items')}
-              //   onCreate={isDisabled ? undefined : () => onAddItem()}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
               buttonText={t('button.add-item')}
             />
           }

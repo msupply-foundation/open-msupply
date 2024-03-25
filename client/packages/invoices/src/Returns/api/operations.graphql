@@ -71,7 +71,7 @@ fragment InboundReturn on InvoiceNode {
   }
 }
 
-fragment OutboundReturnDetailRow on InvoiceLineNode {
+fragment OutboundReturnLine on InvoiceLineNode {
   id
   itemCode
   itemName
@@ -199,7 +199,7 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
       id
       lines {
         nodes {
-          ...OutboundReturnDetailRow
+          ...OutboundReturnLine
         }
       }
       originalShipment {
