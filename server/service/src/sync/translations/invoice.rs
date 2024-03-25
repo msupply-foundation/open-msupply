@@ -175,11 +175,6 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
-
-    #[serde(default)]
-    #[serde(rename = "om_original_shipment_id")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub original_shipment_id: Option<String>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -296,7 +291,6 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
-            original_shipment_id: data.original_shipment_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -357,7 +351,6 @@ impl SyncTranslation for InvoiceTranslation {
                     clinician_link_id: _,
                     currency_id,
                     currency_rate,
-                    original_shipment_id,
                 },
             name_row,
             clinician_row,
@@ -412,7 +405,6 @@ impl SyncTranslation for InvoiceTranslation {
             currency_id,
             currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
-            original_shipment_id,
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;
