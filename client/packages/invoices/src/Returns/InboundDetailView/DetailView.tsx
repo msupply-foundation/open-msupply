@@ -21,6 +21,7 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { InboundReturnItem } from '../../types';
 import { InboundReturnEditModal } from '../modals';
+import { getNextItemId } from '../OutboundDetailView/DetailView';
 
 export const InboundReturnDetailView: FC = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
@@ -51,19 +52,7 @@ export const InboundReturnDetailView: FC = () => {
     },
   ];
 
-  const getNextItemId = () => {
-    const lines = data?.lines?.nodes;
-    if (!lines) return undefined;
-    const currentItemIndex = lines.findIndex(line => line.itemId === itemId);
-    if (currentItemIndex === -1) return;
-
-    const nextItemIndex = lines.findIndex(
-      (line, index) => index > currentItemIndex && line.itemId !== itemId
-    );
-    return nextItemIndex === -1 ? undefined : lines[nextItemIndex]?.itemId;
-  };
-
-  const nextItemId = getNextItemId();
+  const nextItemId = getNextItemId(data?.lines?.nodes ?? [], itemId);
 
   return (
     <React.Suspense
@@ -88,10 +77,17 @@ export const InboundReturnDetailView: FC = () => {
               returnId={data.id}
               initialItemId={itemId}
               modalMode={mode}
-              loadNextItem={nextItemId ? () => onOpen(nextItemId) : undefined}
+              loadNextItem={() => {
+                if (nextItemId) onOpen(nextItemId);
+                else {
+                  // Closing and re-opening forces the modal to launch with the
+                  // item selector in focus
+                  onClose();
+                  setTimeout(() => onOpen(), 50);
+                }
+              }}
             />
           )}
-
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <SidePanel />

@@ -24,6 +24,7 @@ interface OutboundReturnEditModalProps {
   initialItemId?: string | null;
   loadNextItem?: () => void;
   modalMode: ModalMode | null;
+  isNewReturn?: boolean;
 }
 
 export const OutboundReturnEditModal = ({
@@ -35,6 +36,7 @@ export const OutboundReturnEditModal = ({
   initialItemId,
   modalMode,
   loadNextItem,
+  isNewReturn = false,
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -58,7 +60,8 @@ export const OutboundReturnEditModal = ({
   });
 
   useEffect(() => {
-    if (initialItemId) setItemId(initialItemId);
+    if (initialItemId === undefined) return;
+    setItemId(initialItemId === null ? undefined : initialItemId);
   }, [initialItemId]);
 
   const onOk = async () => {
@@ -131,11 +134,7 @@ export const OutboundReturnEditModal = ({
             ? NextStepButton
             : OkButton
         }
-        nextButton={
-          modalMode === ModalMode.Update && loadNextItem
-            ? OkAndNextButton
-            : undefined
-        }
+        nextButton={!isNewReturn ? OkAndNextButton : undefined}
         height={height}
         width={1024}
       >
