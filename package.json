@@ -8,8 +8,5 @@
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test"
   },
-  "dependencies": {
-    "papaparse": "^5.4.1",
-    "react-dropzone": "^14.2.3"
-  }
+  "dependencies": {}
 }
