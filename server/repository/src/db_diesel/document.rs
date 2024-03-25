@@ -196,7 +196,7 @@ type BoxedDocumentQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
+fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
     let mut query = latest_document::dsl::latest_document
         .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .into_boxed();

@@ -48,8 +48,11 @@ pub fn validate(
         Some(input.stock_line_id.to_string()),
         connection,
     )?;
-    if unique_stock.is_some() {
-        return Err(StockLineAlreadyExistsInInvoice(unique_stock.unwrap().id));
+    if let Some(unique_stock) = unique_stock {
+        return Err(StockLineAlreadyExistsInInvoice(unique_stock.id));
+    }
+    if let Some(unique_stock) = unique_stock {
+        return Err(StockLineAlreadyExistsInInvoice(unique_stock.id));
     }
 
     if let Some(r#type) = &input.r#type {
@@ -68,7 +71,7 @@ pub fn validate(
     check_location_on_hold(&batch).map_err(|e| match e {
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
-    check_reduction_below_zero(&input, &batch)?;
+    check_reduction_below_zero(input, &batch)?;
 
     Ok((item, invoice, batch))
 }

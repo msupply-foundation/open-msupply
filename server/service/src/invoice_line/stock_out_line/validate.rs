@@ -27,11 +27,11 @@ pub fn check_unique_stock_line(
 
     if let Some(batch_id) = batch_id_option {
         match InvoiceLineRowRepository::new(connection)
-            .find_many_by_invoice_and_batch_id(&batch_id, &invoice_id)
+            .find_many_by_invoice_and_batch_id(&batch_id, invoice_id)
         {
             Ok(lines) => {
                 if let Some(line) = lines.iter().find(find_another_line) {
-                    return Ok(Some(line.clone()));
+                    Ok(Some(line.clone()))
                 } else {
                     Ok(None)
                 }
@@ -47,14 +47,14 @@ pub fn check_item_matches_batch(batch: &StockLine, item: &ItemRow) -> bool {
     if batch.item_row.id != item.id {
         return false;
     }
-    return true;
+    true
 }
 
 pub fn check_batch_on_hold(batch: &StockLine) -> bool {
     if batch.stock_line_row.on_hold {
         return false;
     }
-    return true;
+    true
 }
 
 pub enum LocationIsOnHoldError {
