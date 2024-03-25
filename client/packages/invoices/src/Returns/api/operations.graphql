@@ -193,6 +193,13 @@ query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
           ...OutboundReturnDetailRow
         }
       }
+      originalShipment {
+        invoiceNumber
+        createdDatetime
+        user {
+          username
+        }
+      }
       otherPartyName
       otherPartyId
       otherPartyStore {

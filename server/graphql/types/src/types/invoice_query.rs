@@ -344,6 +344,25 @@ impl InvoiceNode {
     pub async fn currency_rate(&self) -> &f64 {
         &self.row().currency_rate
     }
+
+    // TODO: this doesn't allow for inverse (i.e. return that originated from shipment?)
+    // Pretty sure we agreed not to worry about it just yet, but still..
+
+    /// Inbound Shipment that is the origin of this Outbound Return
+    /// OR Outbound Shipment that is the origin of this Inbound Return
+    pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let original_shipment_id = if let Some(id) = &self.row().original_shipment_id {
+            id
+        } else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        Ok(loader
+            .load_one(original_shipment_id.to_string())
+            .await?
+            .map(InvoiceNode::from_domain))
+    }
 }
 
 impl InvoiceNode {

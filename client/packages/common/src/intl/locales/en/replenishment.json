@@ -40,6 +40,7 @@
   "label.draft": "Draft",
   "label.finalised": "Finalised",
   "label.hide-stock-over-minimum": "Hide stock over minimum",
+  "label.inbound-shipment": "Inbound shipment",
   "label.location": "Location",
   "label.max": "Max",
   "label.max-months-of-stock": "Target MOS",
