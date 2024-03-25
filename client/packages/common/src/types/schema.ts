@@ -424,7 +424,7 @@ export type AssetLogsResponse = AssetLogConnector;
 
 export type AssetNode = {
   __typename: 'AssetNode';
-  assetNumber: Scalars['String']['output'];
+  assetNumber?: Maybe<Scalars['String']['output']>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
@@ -1795,7 +1795,7 @@ export type InsertAssetErrorInterface = {
 };
 
 export type InsertAssetInput = {
-  assetNumber: Scalars['String']['input'];
+  assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
