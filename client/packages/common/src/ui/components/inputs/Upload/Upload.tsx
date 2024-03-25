@@ -10,7 +10,7 @@ export interface UploadProps {
 }
 
 export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
-  const t = useTranslation('common');
+  const t = useTranslation('coldchain');
   return (
     <Paper
       sx={{
