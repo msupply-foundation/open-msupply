@@ -1,11 +1,10 @@
 use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, User};
 
-use crate::{lower, repository_error::RepositoryError};
+use crate::{lower, repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use util::Defaults;
 
 table! {
     user_account (id) {
@@ -22,10 +21,11 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Language {
+    #[default]
     English,
     French,
     Spanish,
@@ -36,13 +36,7 @@ pub enum Language {
     Tetum,
 }
 
-impl Default for Language {
-    fn default() -> Self {
-        Self::English
-    }
-}
-
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "user_account"]
 pub struct UserAccountRow {
     pub id: String,
@@ -55,23 +49,6 @@ pub struct UserAccountRow {
     pub phone_number: Option<String>,
     pub job_title: Option<String>,
     pub last_successful_sync: NaiveDateTime,
-}
-
-impl Default for UserAccountRow {
-    fn default() -> Self {
-        Self {
-            id: "".to_string(),
-            username: "".to_string(),
-            hashed_password: "".to_string(),
-            email: None,
-            language: Default::default(),
-            first_name: None,
-            last_name: None,
-            phone_number: None,
-            job_title: None,
-            last_successful_sync: Defaults::naive_date_time(),
-        }
-    }
 }
 
 pub struct UserAccountRowRepository<'a> {
@@ -160,7 +137,7 @@ impl<'a> UserAccountRowRepository<'a> {
 // TODO
 // Users don't sync and will only be available after first log in, thus in schema reference is not enforced
 // API consumers would like users to be returned for records that are linked to them, as if reference was enforced
-// Using uknown user until we start syncing users
+// Using unknown user until we start syncing users
 pub fn unknown_user() -> User {
     User {
         user_row: UserAccountRow {
