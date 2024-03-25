@@ -151,6 +151,7 @@ export const OutboundReturnEditModal = ({
               currentTab={currentTab}
               lines={lines}
               update={update}
+              returnId={returnId}
               zeroQuantityAlert={zeroQuantityAlert}
               setZeroQuantityAlert={setZeroQuantityAlert}
             />
