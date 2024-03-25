@@ -10,6 +10,8 @@ import {
   useUrlQueryParams,
   useToggle,
   TooltipTextCell,
+  ColumnAlign,
+  DotCell,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
@@ -54,7 +56,7 @@ const AssetListComponent: FC = () => {
         label: 'label.type',
         sortable: false,
         width: 200,
-        accessor: ({ rowData }) => rowData.catalogueItem?.assetType?.name,
+        accessor: ({ rowData }) => rowData.assetType?.name,
         Cell: TooltipTextCell,
       },
       {
@@ -80,6 +82,14 @@ const AssetListComponent: FC = () => {
       {
         key: 'serialNumber',
         label: 'label.serial',
+      },
+      {
+        key: 'catalogueItem',
+        label: 'label.non-catalogue',
+        accessor: ({ rowData }) => !rowData.catalogueItem,
+        align: ColumnAlign.Center,
+        Cell: DotCell,
+        sortable: false,
       },
       {
         key: 'notes',
