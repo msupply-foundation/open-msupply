@@ -24,10 +24,8 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 async-std = { workspace = true }
-
 tokio = { version = "1.17.0", features = ["macros"] }
-
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26", features = ["derive"] }
 
 [features]
 default = ["sqlite"]

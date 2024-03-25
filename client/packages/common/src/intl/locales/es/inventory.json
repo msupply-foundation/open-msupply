@@ -2,7 +2,6 @@
   "label.finalised": "Finalizado",
   "heading.description": "Descripción",
   "label.batch": "Lote",
-  "label.location": "Ubicación",
   "label.suggested": "Sugerido",
   "label.supplier": "Proveedor",
   "placeholder.enter-an-item-code-or-name": "Ingrese el código o el nombre del artículo",

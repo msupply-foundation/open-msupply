@@ -182,7 +182,7 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(&self.connection.connection);
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     // TODO replace find_one_by_id with this one

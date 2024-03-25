@@ -129,10 +129,10 @@ impl RawDocumentNode {
     }
 
     pub async fn data(&self) -> Result<String> {
-        Ok(serde_json::to_string(&self.document.data).map_err(|e| {
+        serde_json::to_string(&self.document.data).map_err(|e| {
             StandardGraphqlError::InternalError(format!("Failed to stringify json value: {}", e))
                 .extend()
-        })?)
+        })
     }
 
     pub async fn schema_id(&self) -> &Option<String> {

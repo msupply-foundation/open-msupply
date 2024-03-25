@@ -8,7 +8,7 @@ pub mod requisition_row;
 pub use self::requisition::*;
 pub use self::requisition_row::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct RequisitionFilter {
     pub id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
@@ -50,25 +50,7 @@ pub type RequisitionSort = Sort<RequisitionSortField>;
 
 impl RequisitionFilter {
     pub fn new() -> RequisitionFilter {
-        RequisitionFilter {
-            id: None,
-            user_id: None,
-            requisition_number: None,
-            r#type: None,
-            status: None,
-            created_datetime: None,
-            sent_datetime: None,
-            finalised_datetime: None,
-            expected_delivery_date: None,
-            name_id: None,
-            name: None,
-            colour: None,
-            their_reference: None,
-            comment: None,
-            store_id: None,
-            linked_requisition_id: None,
-            order_type: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
