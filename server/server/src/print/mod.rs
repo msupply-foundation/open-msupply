@@ -3,8 +3,8 @@ use actix_web::{web, HttpRequest};
 mod label;
 use label::print_label_qr;
 use service::{
-    auth::{AuthDeniedKind, AuthError},
-    service_provider::ServiceProvider,
+    auth::{validate_auth, AuthDeniedKind, AuthError, ValidatedUserAuth},
+    auth_data::AuthData,
 };
 
 use self::label::test_printer;
@@ -30,8 +30,8 @@ struct AuthCookie {
 
 fn validate_request(
     request: HttpRequest,
-    service_provider: &ServiceProvider,
-) -> Result<String, AuthError> {
+    auth_data: &AuthData,
+) -> Result<ValidatedUserAuth, AuthError> {
     let token = match request.cookie(COOKIE_NAME) {
         Some(cookie) => {
             let auth_cookie: AuthCookie = match serde_json::from_str(&cookie.value().to_string()) {
@@ -47,10 +47,5 @@ fn validate_request(
         None => None,
     };
 
-    match token {
-        Some(token) => Ok(token),
-        None => Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
-            "No authentication token in cookie".to_string(),
-        ))),
-    }
+    validate_auth(auth_data, &token)
 }
