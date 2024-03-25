@@ -101,6 +101,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
 
   const csvExport = async () => {
     const csv = importEquipmentToCsv(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bufferedEquipment.map((row: ImportRow): any => {
         return toInsertEquipmentInput(row, catalogueItemData?.nodes);
       }),
