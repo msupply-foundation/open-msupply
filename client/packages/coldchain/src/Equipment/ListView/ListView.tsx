@@ -39,7 +39,16 @@ const AssetListComponent: FC = () => {
   const modalController = useToggle();
   const isCentralServer = useIsCentralServerApi();
 
-  const columnsToCreate: ColumnDescription<AssetFragment>[] = [
+  const columnsToCreate: ColumnDescription<AssetFragment>[] = [];
+  if (isCentralServer)
+    columnsToCreate.push({
+      key: 'store',
+      label: 'label.store',
+      accessor: ({ rowData }) => rowData.store?.code,
+      sortable: false,
+    });
+
+  columnsToCreate.push(
     {
       key: 'assetNumber',
       width: 150,
@@ -78,17 +87,6 @@ const AssetListComponent: FC = () => {
       key: 'serialNumber',
       label: 'label.serial',
     },
-  ];
-
-  if (isCentralServer)
-    columnsToCreate.push({
-      key: 'store',
-      label: 'label.store',
-      accessor: ({ rowData }) => rowData.store?.code,
-      sortable: false,
-    });
-
-  columnsToCreate.push(
     {
       key: 'notes',
       label: 'label.notes',
