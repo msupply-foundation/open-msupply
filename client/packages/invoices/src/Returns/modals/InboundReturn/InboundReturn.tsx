@@ -22,6 +22,7 @@ interface InboundReturnEditModalProps {
   onClose: () => void;
   modalMode: ModalMode | null;
   returnId?: string;
+  outboundShipmentId?: string;
   initialItemId?: string | null;
 }
 
@@ -33,6 +34,7 @@ export const InboundReturnEditModal = ({
   modalMode,
   returnId,
   initialItemId,
+  outboundShipmentId,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation('distribution');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -55,6 +57,7 @@ export const InboundReturnEditModal = ({
     customerId,
     returnId,
     itemId,
+    outboundShipmentId,
   });
 
   const onOk = async () => {

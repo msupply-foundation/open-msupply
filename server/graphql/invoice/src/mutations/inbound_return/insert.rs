@@ -18,6 +18,7 @@ use service::invoice::inbound_return::InboundReturnLineInput as InboundReturnLin
 pub struct InsertInput {
     pub id: String,
     pub customer_id: String,
+    pub outbound_shipment_id: Option<String>,
     pub inbound_return_lines: Vec<InboundReturnLineInput>,
 }
 
@@ -98,9 +99,13 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
 
         // Standard Graphql Errors
-        ServiceError::InvoiceAlreadyExists | ServiceError::OtherPartyDoesNotExist => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::OutboundShipmentDoesNotExist
+        | ServiceError::OutboundShipmentDoesNotBelongToCurrentStore
+        | ServiceError::OriginalInvoiceNotAnOutboundShipment
+        | ServiceError::CannotReturnOutboundShipment
+        | ServiceError::InvoiceAlreadyExists
+        | ServiceError::OtherPartyDoesNotExist => BadUserInput(formatted_error),
+
         ServiceError::NewlyCreatedInvoiceDoesNotExist
         | ServiceError::LineInsertError { .. }
         | ServiceError::LineReturnReasonUpdateError { .. }
@@ -115,12 +120,14 @@ impl InsertInput {
         let InsertInput {
             id,
             customer_id,
+            outbound_shipment_id,
             inbound_return_lines,
         }: InsertInput = self;
 
         ServiceInput {
             id,
             other_party_id: customer_id,
+            outbound_shipment_id,
             inbound_return_lines: inbound_return_lines
                 .into_iter()
                 .map(|line| line.to_domain())

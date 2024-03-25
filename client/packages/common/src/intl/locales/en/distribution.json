@@ -63,6 +63,7 @@
   "label.edited-by": "Edited by",
   "label.issue": "Issue",
   "label.no-unallocated-rows-selected": "All of the selected rows are already allocated",
+  "label.outbound-shipment": "Outbound shipment",
   "label.placeholder": "Placeholder",
   "label.delete": "Delete",
   "label.quantity": "Quantity",

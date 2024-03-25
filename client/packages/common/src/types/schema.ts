@@ -1840,6 +1840,7 @@ export type InboundReturnInput = {
   customerId: Scalars['String']['input'];
   id: Scalars['String']['input'];
   inboundReturnLines: Array<InboundReturnLineInput>;
+  outboundShipmentId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InboundReturnLineInput = {

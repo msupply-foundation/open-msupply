@@ -22,12 +22,18 @@ use super::InboundReturnLineInput;
 pub struct InsertInboundReturn {
     pub id: String,
     pub other_party_id: String,
+    pub outbound_shipment_id: Option<String>,
     pub inbound_return_lines: Vec<InboundReturnLineInput>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum InsertInboundReturnError {
     InvoiceAlreadyExists,
+    // Original invoice/shipment validation
+    OutboundShipmentDoesNotExist,
+    OutboundShipmentDoesNotBelongToCurrentStore,
+    OriginalInvoiceNotAnOutboundShipment,
+    CannotReturnOutboundShipment,
     // Name validation
     OtherPartyNotACustomer,
     OtherPartyNotVisible,
@@ -123,10 +129,12 @@ mod test {
     use repository::{
         mock::{
             mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a, mock_item_b,
-            mock_name_customer_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
+            mock_name_customer_a, mock_outbound_return_a, mock_outbound_shipment_a,
+            mock_outbound_shipment_e, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRowRepository, InvoiceRowRepository, NameRow, NameStoreJoinRow, ReturnReasonRow,
+        InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
+        InvoiceRowType, NameRow, NameStoreJoinRow, ReturnReasonRow,
     };
     use util::{inline_edit, inline_init};
 
@@ -196,6 +204,54 @@ mod test {
             Err(ServiceError::InvoiceAlreadyExists)
         );
 
+        // OutboundShipmentDoesNotExist
+        assert_eq!(
+            service_provider.invoice_service.insert_inbound_return(
+                &context,
+                inline_init(|r: &mut InsertInboundReturn| {
+                    r.id = "new_id".to_string();
+                    r.outbound_shipment_id = Some("does_not_exist".to_string());
+                })
+            ),
+            Err(ServiceError::OutboundShipmentDoesNotExist)
+        );
+
+        assert_eq!(
+            service_provider.invoice_service.insert_inbound_return(
+                &context,
+                inline_init(|r: &mut InsertInboundReturn| {
+                    r.id = "new_id".to_string();
+                    r.outbound_shipment_id = Some(mock_outbound_shipment_a().id);
+                })
+            ),
+            Err(ServiceError::OutboundShipmentDoesNotBelongToCurrentStore)
+        );
+
+        // OriginalInvoiceNotAnOutboundShipment
+        assert_eq!(
+            service_provider.invoice_service.insert_inbound_return(
+                &context,
+                inline_init(|r: &mut InsertInboundReturn| {
+                    r.id = "new_id".to_string();
+                    r.outbound_shipment_id = Some(mock_outbound_return_a().id);
+                })
+            ),
+            Err(ServiceError::OriginalInvoiceNotAnOutboundShipment)
+        );
+
+        // CannotReturnOutboundShipment
+        assert_eq!(
+            service_provider.invoice_service.insert_inbound_return(
+                &context,
+                inline_init(|r: &mut InsertInboundReturn| {
+                    r.id = "new_id".to_string();
+                    // in NEW status
+                    r.outbound_shipment_id = Some(mock_outbound_shipment_e().id);
+                })
+            ),
+            Err(ServiceError::CannotReturnOutboundShipment)
+        );
+
         // OtherPartyDoesNotExist
         assert_eq!(
             service_provider.invoice_service.insert_inbound_return(
@@ -244,6 +300,7 @@ mod test {
                         number_of_packs: 1.0,
                         ..Default::default()
                     }],
+                    ..Default::default()
                 },
             ),
             Err(ServiceError::LineInsertError {
@@ -267,6 +324,7 @@ mod test {
                         reason_id: Some("does_not_exist".to_string()),
                         ..Default::default()
                     }],
+                    ..Default::default()
                 },
             ),
             Err(ServiceError::LineReturnReasonUpdateError {
@@ -285,10 +343,21 @@ mod test {
             })
         }
 
+        fn returnable_outbound_shipment() -> InvoiceRow {
+            inline_init(|r: &mut InvoiceRow| {
+                r.id = "returnable_outbound_shipment".to_string();
+                r.r#type = InvoiceRowType::OutboundShipment;
+                r.status = InvoiceRowStatus::Verified;
+                r.store_id = mock_store_a().id;
+                r.name_link_id = mock_name_customer_a().id;
+            })
+        }
+
         let (_, connection, connection_manager, _) = setup_all_with_data(
             "test_insert_inbound_return_success",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
+                r.invoices = vec![returnable_outbound_shipment()];
                 r.return_reasons = vec![return_reason()];
             }),
         )
@@ -306,6 +375,7 @@ mod test {
                 inline_init(|r: &mut InsertInboundReturn| {
                     r.id = "new_inbound_return_id".to_string();
                     r.other_party_id = mock_name_customer_a().id;
+                    r.outbound_shipment_id = Some(returnable_outbound_shipment().id);
                     r.inbound_return_lines = vec![
                         InboundReturnLineInput {
                             id: "new_inbound_return_line_id".to_string(),
@@ -338,6 +408,7 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.name_link_id = mock_name_customer_a().id;
                 u.user_id = Some(mock_user_account_a().id);
+                u.original_shipment_id = Some(returnable_outbound_shipment().id);
                 u
             })
         );
