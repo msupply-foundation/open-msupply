@@ -85,6 +85,7 @@ export const OutboundReturnsDetailView: FC = () => {
                   setTimeout(() => onOpen(), 50);
                 }
               }}
+              hasNextItem={!!nextItemId}
             />
           )}
 

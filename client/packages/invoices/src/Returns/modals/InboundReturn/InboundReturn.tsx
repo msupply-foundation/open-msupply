@@ -14,6 +14,7 @@ import {
 import { useDraftInboundReturnLines } from './useDraftInboundReturnLines';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
+import { useReturns } from '../../api';
 
 interface InboundReturnEditModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ interface InboundReturnEditModalProps {
   returnId?: string;
   initialItemId?: string | null;
   loadNextItem?: () => void;
+  hasNextItem?: boolean;
   isNewReturn?: boolean;
 }
 
@@ -36,6 +38,7 @@ export const InboundReturnEditModal = ({
   returnId,
   initialItemId,
   loadNextItem,
+  hasNextItem = false,
   isNewReturn = false,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation('distribution');
@@ -50,6 +53,10 @@ export const InboundReturnEditModal = ({
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
   >();
+
+  // The inboundIsDisabled hook returns true when there is no data, so in the
+  // case of a new return, we want to make sure it is *not* disabled
+  const isDisabled = useReturns.utils.inboundIsDisabled() && !isNewReturn;
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(700);
@@ -68,7 +75,7 @@ export const InboundReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      await save();
+      !isDisabled && (await save());
       onClose();
     } catch {
       // TODO: handle error display...
@@ -77,7 +84,7 @@ export const InboundReturnEditModal = ({
 
   const handleNextItem = async () => {
     try {
-      await save();
+      !isDisabled && (await save());
       loadNextItem && loadNextItem();
       onChangeTab(Tabs.Quantity);
     } catch {
@@ -120,7 +127,7 @@ export const InboundReturnEditModal = ({
     <DialogButton
       onClick={handleNextItem}
       variant="next"
-      disabled={currentTab !== Tabs.Reason}
+      disabled={currentTab !== Tabs.Reason || (isDisabled && !hasNextItem)}
     />
   );
 
