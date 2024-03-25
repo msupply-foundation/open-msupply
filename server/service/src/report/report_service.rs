@@ -32,6 +32,7 @@ pub enum ReportError {
     ReportDefinitionNotFound { report_id: String, msg: String },
     TemplateNotSpecified,
     QueryNotSpecified,
+    MultipleGraphqlQueriesNotAllowed,
     InvalidReportDefinition(String),
     QueryError(String),
     DocGenerationError(String),
@@ -57,7 +58,7 @@ pub struct ResolvedReportDefinition {
     pub footer: Option<String>,
     /// Map of all found Tera templates in the report definition
     pub templates: HashMap<String, TeraTemplate>,
-    pub query: ResolvedReportQuery,
+    pub queries: Vec<ResolvedReportQuery>,
     pub resources: HashMap<String, serde_json::Value>,
 }
 
@@ -267,36 +268,32 @@ fn resolve_report_definition(
             )));
         }
     }
-    let query =
-        fully_loaded_report
-            .index
-            .query
-            .clone()
-            .ok_or(ReportError::InvalidReportDefinition(
-                "Query reference missing".to_string(),
-            ))?;
-    let query_entry = match fully_loaded_report.entries.get(&query) {
-        Some(query_entry) => query_entry,
-        None => {
-            return Err(ReportError::InvalidReportDefinition(format!(
-                "Invalid query reference: {}",
-                query
-            )))
-        }
-    };
+    let query_entry = fully_loaded_report
+        .index
+        .query
+        .iter()
+        .map(|query| match fully_loaded_report.entries.get(query) {
+            Some(query_entry) => Ok(query_entry),
+            None => {
+                return Err(ReportError::InvalidReportDefinition(format!(
+                    "Invalid query reference: {}",
+                    query
+                )))
+            }
+        })
+        .collect::<Result<Vec<_>, ReportError>>()?;
 
     // resolve the query entry
-    let query = query_from_resolved_template(query_entry).ok_or(ReportError::QueryNotSpecified)?;
+    let queries = query_from_resolved_template(query_entry)?;
 
     let resources = resources_from_resolved_template(&fully_loaded_report);
-
     Ok(ResolvedReportDefinition {
         name,
         template,
         header: fully_loaded_report.index.header.clone(),
         footer: fully_loaded_report.index.footer.clone(),
         templates,
-        query,
+        queries,
         resources,
     })
 }
@@ -381,19 +378,36 @@ fn tera_templates_from_resolved_template(
 }
 
 fn query_from_resolved_template(
-    query_entry: &ReportDefinitionEntry,
-) -> Option<ResolvedReportQuery> {
-    let query = match query_entry {
+    query_entries: Vec<&ReportDefinitionEntry>,
+) -> Result<Vec<ResolvedReportQuery>, ReportError> {
+    let mut graphql_queries = Vec::<ResolvedReportQuery>::new();
+    let mut default_queries = Vec::<ResolvedReportQuery>::new();
+    let mut sql_queries = Vec::<ResolvedReportQuery>::new();
+
+    query_entries.into_iter().for_each(|entry| match entry {
         ReportDefinitionEntry::GraphGLQuery(query) => {
-            ResolvedReportQuery::GraphQlQuery(query.clone())
+            graphql_queries.push(ResolvedReportQuery::GraphQlQuery(query.clone()))
         }
-        ReportDefinitionEntry::SQLQuery(query) => ResolvedReportQuery::SQLQuery(query.clone()),
-        ReportDefinitionEntry::DefaultQuery(query) => {
-            ResolvedReportQuery::GraphQlQuery(get_default_gql_query(query.clone()))
+        ReportDefinitionEntry::SQLQuery(query) => {
+            sql_queries.push(ResolvedReportQuery::SQLQuery(query.clone()))
         }
-        _ => return None,
-    };
-    Some(query)
+        ReportDefinitionEntry::DefaultQuery(query) => default_queries.push(
+            ResolvedReportQuery::GraphQlQuery(get_default_gql_query(query.clone())),
+        ),
+        _ => {}
+    });
+    if graphql_queries.len() + default_queries.len() > 1 {
+        return Err(ReportError::MultipleGraphqlQueriesNotAllowed);
+    }
+    let queries: Vec<_> = graphql_queries
+        .into_iter()
+        .chain(default_queries.into_iter())
+        .chain(sql_queries.into_iter())
+        .collect();
+    if queries.is_empty() {
+        return Err(ReportError::QueryNotSpecified);
+    }
+    Ok(queries)
 }
 
 fn resources_from_resolved_template(
@@ -506,7 +520,7 @@ mod report_service_test {
                 template: Some("template.html".to_string()),
                 header: None,
                 footer: Some("footer.html".to_string()),
-                query: Some("query".to_string()),
+                query: vec!["query".to_string()],
             },
             entries: HashMap::from([
                 (
@@ -535,7 +549,7 @@ mod report_service_test {
                 template: None,
                 header: None,
                 footer: Some("footer.html".to_string()),
-                query: None,
+                query: vec![],
             },
             entries: HashMap::from([(
                 "footer.html".to_string(),
