@@ -52,7 +52,7 @@ table! {
 allow_tables_to_appear_in_same_query!(clinician, clinician_link);
 allow_tables_to_appear_in_same_query!(clinician, name_link);
 
-fn insert_or_ignore_clinician_link<'a>(
+fn insert_or_ignore_clinician_link(
     connection: &StorageConnection,
     row: &ClinicianRow,
 ) -> Result<(), RepositoryError> {
@@ -96,7 +96,7 @@ impl<'a> ClinicianRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        insert_or_ignore_clinician_link(&self.connection, &row)?;
+        insert_or_ignore_clinician_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -117,7 +117,7 @@ impl<'a> ClinicianRowRepository<'a> {
             .filter(clinician::dsl::id.eq(row_id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
@@ -128,7 +128,7 @@ impl<'a> ClinicianRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
-        insert_or_ignore_clinician_link(&self.connection, &row)?;
+        insert_or_ignore_clinician_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())

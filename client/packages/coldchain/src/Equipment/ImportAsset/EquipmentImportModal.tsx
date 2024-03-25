@@ -10,7 +10,6 @@ import {
   Box,
   Grid,
   Alert,
-  InsertAssetInput,
   ClickableStepper,
   FileUtils,
 } from '@openmsupply-client/common';
@@ -44,7 +43,7 @@ export type ImportRow = {
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): InsertAssetInput => ({
+): AssetFragment => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
@@ -55,6 +54,9 @@ export const toInsertEquipmentInput = (
     .pop(),
   id: row.id,
   notes: row.notes,
+  __typename: 'AssetNode',
+  createdDatetime: undefined,
+  modifiedDatetime: undefined,
 });
 
 export const toUpdateEquipmentInput = (

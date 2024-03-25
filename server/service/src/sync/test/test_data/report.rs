@@ -1,9 +1,9 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::{ReportContext, ReportRow, ReportRowDelete, ReportType};
 
-const TABLE_NAME: &'static str = "report";
+const TABLE_NAME: &str = "report";
 
-const REPORT_1: (&'static str, &'static str) = (
+const REPORT_1: (&str, &str) = (
     "76B6C424E1935C4DAF36A7A8F451FE72",
     r#"{
         "ID": "76B6C424E1935C4DAF36A7A8F451FE72",

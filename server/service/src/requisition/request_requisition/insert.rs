@@ -51,7 +51,7 @@ pub fn insert_request_requisition(
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
             let new_requisition = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
-            RequisitionRowRepository::new(&connection).upsert_one(&new_requisition)?;
+            RequisitionRowRepository::new(connection).upsert_one(&new_requisition)?;
 
             activity_log_entry(
                 &ctx,
@@ -62,7 +62,7 @@ pub fn insert_request_requisition(
             )?;
 
             get_requisition(ctx, None, &new_requisition.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedRequisitionDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -119,7 +119,7 @@ fn generate(
     let result = RequisitionRow {
         id,
         user_id: Some(user_id.to_string()),
-        requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
+        requisition_number: next_number(connection, &NumberRowType::RequestRequisition, store_id)?,
         name_link_id: other_party_id,
         store_id: store_id.to_owned(),
         r#type: RequisitionRowType::Request,
@@ -277,7 +277,7 @@ mod test_insert {
                     comment: Some("new comment".to_owned()),
                     max_months_of_stock: 1.0,
                     min_months_of_stock: 0.5,
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                 },
             )
             .unwrap();
@@ -300,7 +300,7 @@ mod test_insert {
                 u.comment = Some("new comment".to_owned());
                 u.max_months_of_stock = 1.0;
                 u.min_months_of_stock = 0.5;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap());
+                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
                 u
             })
         );

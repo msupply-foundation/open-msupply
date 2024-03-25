@@ -47,7 +47,7 @@ impl RequestStoreStatsNode {
     }
 
     pub async fn average_monthly_consumption(&self) -> i32 {
-        self.request_store_stats.amc.clone()
+        self.request_store_stats.amc
     }
 
     pub async fn max_months_of_stock(&self) -> f64 {

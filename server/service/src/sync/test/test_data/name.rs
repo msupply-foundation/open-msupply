@@ -6,9 +6,9 @@ use chrono::NaiveDate;
 use repository::{Gender, NameRow, NameRowDelete, NameType};
 use serde_json::json;
 
-const TABLE_NAME: &'static str = "name";
+const TABLE_NAME: &str = "name";
 
-const NAME_1: (&'static str, &'static str) = (
+const NAME_1: (&str, &str) = (
     "1FB32324AF8049248D929CFB35F255BA",
     r#"{
     "ID": "1FB32324AF8049248D929CFB35F255BA",
@@ -137,7 +137,7 @@ fn name_1() -> TestSyncIncomingRecord {
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -148,7 +148,7 @@ fn name_1() -> TestSyncIncomingRecord {
     )
 }
 
-const NAME_2: (&'static str, &'static str) = (
+const NAME_2: (&str, &str) = (
     "9EDD3F83C3D64C22A3CC9C98CF4967C4",
     r#"{
     "ID": "9EDD3F83C3D64C22A3CC9C98CF4967C4",
@@ -282,7 +282,7 @@ fn name_2() -> TestSyncIncomingRecord {
     )
 }
 
-const NAME_3: (&'static str, &'static str) = (
+const NAME_3: (&str, &str) = (
     "CB929EB86530455AB0392277FAC3DBA4",
     r#"{
     "ID": "CB929EB86530455AB0392277FAC3DBA4",
@@ -416,7 +416,7 @@ fn name_3() -> TestSyncIncomingRecord {
     )
 }
 
-const NAME_4: (&'static str, &'static str) = (
+const NAME_4: (&str, &str) = (
     "C3FB3B30A8D04DDF9AF59A15BB48668A",
     r#"{
       "ID": "C3FB3B30A8D04DDF9AF59A15BB48668A",
@@ -530,7 +530,7 @@ fn name_4() -> TestSyncIncomingRecord {
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
             gender: Some(Gender::Female),
-            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 07, 29).unwrap()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 7, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
             comment: Some("name comment 1".to_string()),
@@ -543,7 +543,7 @@ fn name_4() -> TestSyncIncomingRecord {
             is_donor: false,
             on_hold: false,
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -584,10 +584,10 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
             on_hold: true,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
-            created_date: Some(NaiveDate::from_ymd_opt(2022, 05, 22).unwrap()),
+            created_date: Some(NaiveDate::from_ymd_opt(2022, 5, 22).unwrap()),
             female: true,
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
@@ -613,7 +613,7 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             supplying_store_id: Some("store_a".to_string()),
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
-            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 07, 29).unwrap()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 7, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
             comment: Some("name comment 1".to_string()),
@@ -628,9 +628,9 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             female: true,
-            created_date: Some(NaiveDate::from_ymd_opt(2022, 05, 22).unwrap()),
+            created_date: Some(NaiveDate::from_ymd_opt(2022, 5, 22).unwrap()),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()

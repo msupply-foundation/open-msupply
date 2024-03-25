@@ -40,9 +40,7 @@ impl Loader<NameByIdLoaderInput> for NameByIdLoader {
         // store_id -> Vec of name_id
         let mut store_name_map = HashMap::<String, Vec<String>>::new();
         for item in ids_with_store_id {
-            let entry = store_name_map
-                .entry(item.primary_id.clone())
-                .or_insert(vec![]);
+            let entry = store_name_map.entry(item.primary_id.clone()).or_default();
             entry.push(item.secondary_id.clone())
         }
         let mut output = HashMap::<NameByIdLoaderInput, Self::Value>::new();

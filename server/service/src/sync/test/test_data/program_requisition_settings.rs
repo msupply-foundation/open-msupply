@@ -12,9 +12,9 @@ use crate::sync::{
     translations::{IntegrationOperation, PullTranslateResult},
 };
 
-const TABLE_NAME: &'static str = "list_master";
+const TABLE_NAME: &str = "list_master";
 
-const MASTER_LIST_WITH_PROGRAM_1: (&'static str, &'static str) = (
+const MASTER_LIST_WITH_PROGRAM_1: (&str, &str) = (
     "program_test",
     r#"{
     "ID": "program_test",
@@ -89,7 +89,7 @@ const MASTER_LIST_WITH_PROGRAM_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const MASTER_LIST_WITH_PROGRAM_2: (&'static str, &'static str) = (
+const MASTER_LIST_WITH_PROGRAM_2: (&str, &str) = (
     "program_test_2",
     r#"{
     "ID": "program_test_2",

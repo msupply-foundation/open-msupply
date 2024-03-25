@@ -69,7 +69,7 @@ pub fn patient_search(
         &context,
         service_provider,
         input.to_domain(),
-        Some(&allowed_ctx),
+        Some(allowed_ctx),
     )?;
     let nodes = result
         .rows
