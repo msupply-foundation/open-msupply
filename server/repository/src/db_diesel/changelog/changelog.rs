@@ -43,18 +43,6 @@ table! {
 joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
-table! {
-    #[sql_name = "changelog"]
-    changelog_insert (cursor) {
-        cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
-        record_id -> Text,
-        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_link_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
-    }
-}
-
 #[cfg(not(feature = "postgres"))]
 no_arg_sql_function!(
     last_insert_rowid,
@@ -153,7 +141,7 @@ impl ChangelogTableName {
 }
 
 #[derive(Debug, PartialEq, Insertable)]
-#[table_name = "changelog_insert"]
+#[table_name = "changelog"]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -355,7 +343,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
         // SQLite docs say this is safe if you don't have different threads sharing a single connection
-        diesel::insert_into(changelog_insert::table)
+        diesel::insert_into(changelog::table)
             .values(row)
             .execute(&self.connection.connection)?;
         let cursor_id =
