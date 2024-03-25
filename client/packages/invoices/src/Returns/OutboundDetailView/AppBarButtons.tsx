@@ -27,7 +27,7 @@ interface AppBarButtonProps {
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
 }) => {
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.outboundIsDisabled();
   const { data } = useReturns.document.outboundReturn();
   const { OpenButton } = useDetailPanel();
   const t = useTranslation('common');
@@ -53,7 +53,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
-          //   disabled={isDisabled}
+          disabled={isDisabled}
           label={t('button.add-item')}
           Icon={<PlusCircleIcon />}
           onClick={() => onAddItem()}

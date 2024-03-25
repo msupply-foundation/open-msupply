@@ -1,5 +1,8 @@
 import { InboundLineFragment } from './InboundShipment/api';
-import { InboundReturnLineFragment } from './Returns';
+import {
+  InboundReturnLineFragment,
+  OutboundReturnLineFragment,
+} from './Returns';
 import { StockOutLineFragment } from './StockOut/operations.generated';
 
 export interface DraftInboundLine extends InboundLineFragment {
@@ -30,4 +33,10 @@ export type InboundReturnItem = {
   id: string;
   itemId: string;
   lines: InboundReturnLineFragment[];
+};
+
+export type OutboundReturnItem = {
+  id: string;
+  itemId: string;
+  lines: OutboundReturnLineFragment[];
 };
