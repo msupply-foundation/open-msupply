@@ -7,11 +7,12 @@ import {
   Box,
   NumericTextInput,
 } from '@openmsupply-client/common';
-import { SaveIcon } from '@common/icons';
+import { CheckIcon, SaveIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
 import { Setting } from './Setting';
 import { useHost } from '../api';
 import { SettingsSubHeading } from './SettingsSection';
+import { Environment } from '@openmsupply-client/config';
 
 interface LabelPrinterSettings {
   address: string;
@@ -41,6 +42,29 @@ export const LabelPrinterSettings = () => {
       .then(() => success(t('success.data-saved'))())
       .catch(() => {
         error(t('error.problem-saving'))();
+      });
+  };
+
+  const test = () => {
+    fetch(Environment.PRINT_LABEL_TEST, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(response => {
+        if (response.status !== 200) {
+          throw new Error('Server error');
+        }
+        return response.json();
+      })
+      .then(json => {
+        if (!json.is_valid) {
+          throw new Error('Invalid response');
+        }
+        const formatted = JSON.stringify(json, null, 2);
+        success(`${t('messages.connected-to-printer')} ${formatted}`)();
+      })
+      .catch(e => {
+        error(`${t('error.unable-to-connect-to-printer')} ${e.message}`)();
       });
   };
 
@@ -104,7 +128,15 @@ export const LabelPrinterSettings = () => {
         }
         title={t('settings.printer-label-width')}
       />
-      <Box display="flex" justifyContent="flex-end">
+      <Box display="flex" justifyContent="flex-end" gap={1}>
+        <ButtonWithIcon
+          Icon={<CheckIcon />}
+          label={t('button.test')}
+          variant="contained"
+          sx={{ fontSize: '12px' }}
+          onClick={test}
+          disabled={isInvalid}
+        />
         <ButtonWithIcon
           Icon={<SaveIcon />}
           label={t('button.save')}
