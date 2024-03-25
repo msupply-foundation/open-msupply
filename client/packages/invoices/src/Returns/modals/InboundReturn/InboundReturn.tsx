@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   useTranslation,
   useDialog,
@@ -23,6 +23,7 @@ interface InboundReturnEditModalProps {
   modalMode: ModalMode | null;
   returnId?: string;
   initialItemId?: string | null;
+  loadNextItem?: () => void;
 }
 
 export const InboundReturnEditModal = ({
@@ -33,6 +34,7 @@ export const InboundReturnEditModal = ({
   modalMode,
   returnId,
   initialItemId,
+  loadNextItem,
 }: InboundReturnEditModalProps) => {
   const t = useTranslation('distribution');
   const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
@@ -57,6 +59,10 @@ export const InboundReturnEditModal = ({
     itemId,
   });
 
+  useEffect(() => {
+    if (initialItemId) setItemId(initialItemId);
+  }, [initialItemId]);
+
   const onOk = async () => {
     try {
       await save();
@@ -66,7 +72,17 @@ export const InboundReturnEditModal = ({
     }
   };
 
-  const handleNext = () => {
+  const handleNextItem = async () => {
+    try {
+      await save();
+      loadNextItem && loadNextItem();
+      onChangeTab(Tabs.Quantity);
+    } catch {
+      // TODO: handle error display...
+    }
+  };
+
+  const handleNextStep = () => {
     if (lines.some(line => line.numberOfPacksReturned !== 0)) {
       onChangeTab(Tabs.Reason);
       return;
@@ -84,22 +100,43 @@ export const InboundReturnEditModal = ({
     alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const CancelButton = <DialogButton onClick={onClose} variant="cancel" />;
+  const BackButton = (
+    <DialogButton onClick={() => onChangeTab(Tabs.Quantity)} variant="back" />
+  );
+  const NextStepButton = (
+    <DialogButton
+      onClick={handleNextStep}
+      variant="next"
+      disabled={!lines.length}
+      customLabel={t('button.next-step')}
+    />
+  );
+  const OkButton = <DialogButton onClick={onOk} variant="ok" />;
+  const OkAndNextButton = (
+    <DialogButton
+      onClick={handleNextItem}
+      variant="next"
+      disabled={currentTab !== Tabs.Reason}
+    />
+  );
+
   return (
     <TableProvider createStore={createTableStore}>
       <Modal
         title={t('heading.return-items')}
-        cancelButton={<DialogButton onClick={onClose} variant="cancel" />}
+        cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
         // zeroQuantityAlert === warning implies all lines are 0 and user has
         // been already warned, so we act immediately to update them
-        nextButton={
-          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning' ? (
-            <DialogButton onClick={handleNext} variant={'next'} />
-          ) : undefined
-        }
         okButton={
-          currentTab === Tabs.Reason || zeroQuantityAlert === 'warning' ? (
-            <DialogButton onClick={onOk} variant="ok" />
-          ) : undefined
+          currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
+            ? NextStepButton
+            : OkButton
+        }
+        nextButton={
+          modalMode === ModalMode.Update && loadNextItem
+            ? OkAndNextButton
+            : undefined
         }
         height={height}
         width={1024}
