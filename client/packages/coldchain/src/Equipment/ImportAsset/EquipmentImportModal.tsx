@@ -17,6 +17,10 @@ import {
 import { useTranslation } from '@common/intl';
 import { AssetFragment, useAssets } from '../api';
 import { importEquipmentToCsv } from '../utils';
+import {
+  AssetCatalogueItemFragment,
+  useAssetData,
+} from '@openmsupply-client/system';
 interface EquipmentImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -30,23 +34,41 @@ enum Tabs {
 
 export type ImportRow = {
   assetNumber: string;
-  catalogueItemId: string | null | undefined;
+  catalogueItemCode: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
   isUpdate: boolean;
 };
 
-export const toInsertEquipmentInput = (row: ImportRow): InsertAssetInput => ({
+export const toInsertEquipmentInput = (
+  row: ImportRow,
+  catalogueItemData: AssetCatalogueItemFragment[] | undefined
+): InsertAssetInput => ({
   assetNumber: row.assetNumber,
-  catalogueItemId: row.catalogueItemId,
+  catalogueItemId: catalogueItemData
+    ?.filter(
+      (item: { code: string | null | undefined }) =>
+        item.code == row.catalogueItemCode
+    )
+    ?.map((item: { id: string }) => item.id)
+    .pop(),
   id: row.id,
   notes: row.notes,
 });
 
-export const toUpdateEquipmentInput = (row: ImportRow): AssetFragment => ({
+export const toUpdateEquipmentInput = (
+  row: ImportRow,
+  catalogueItemData: AssetCatalogueItemFragment[] | undefined
+): AssetFragment => ({
   assetNumber: row.assetNumber,
-  catalogueItemId: row.catalogueItemId,
+  catalogueItemId: catalogueItemData
+    ?.filter(
+      (item: { code: string | null | undefined }) =>
+        item.code == row.catalogueItemCode
+    )
+    ?.map((item: { id: string }) => item.id)
+    .pop(),
   id: row.id,
   // Assigning default values here as the parser in the API will ignore.
   // Better type management would be gelpful here
@@ -68,6 +90,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
+  const { data: catalogueItemData } = useAssetData.document.list();
 
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { mutateAsync: updateAssets } = useAssets.document.update();
@@ -79,7 +102,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const csvExport = async () => {
     const csv = importEquipmentToCsv(
       bufferedEquipment.map((row: ImportRow): any => {
-        return toInsertEquipmentInput(row);
+        return toInsertEquipmentInput(row, catalogueItemData?.nodes);
       }),
       t
     );
@@ -99,7 +122,9 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         await Promise.all(
           remainingRecords.splice(0, 100).map(async asset => {
             if (asset.isUpdate) {
-              await updateAssets(toUpdateEquipmentInput(asset)).catch(err => {
+              await updateAssets(
+                toUpdateEquipmentInput(asset, catalogueItemData?.nodes)
+              ).catch(err => {
                 if (!err) {
                   err = { message: t('messages.unknown-error') };
                 }
@@ -109,7 +134,9 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
                 });
               });
             } else {
-              await insertAssets(toInsertEquipmentInput(asset)).catch(err => {
+              await insertAssets(
+                toInsertEquipmentInput(asset, catalogueItemData?.nodes)
+              ).catch(err => {
                 if (!err) {
                   err = { message: t('messages.unknown-error') };
                 }
@@ -245,6 +272,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
             </Grid>
             <EquipmentUploadTab
               tab={Tabs.Upload}
+              catalogueItemData={catalogueItemData?.nodes}
               setEquipment={setBufferedEquipment}
               setErrorMessage={setErrorMessage}
               onUploadComplete={() => {
