@@ -30,7 +30,10 @@ const Expand: FC<{
   }
 };
 
-export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
+export const ContentAreaComponent: FC<ContentAreaProps> = ({
+  onRowClick,
+  onAddItem,
+}) => {
   const t = useTranslation('distribution');
   const {
     updateSortQuery,
@@ -42,7 +45,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
     onChangeSortBy: updateSortQuery,
     sortBy,
   });
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.outboundIsDisabled();
   //   useHighlightPlaceholderRows(rows);
 
   if (!rows) return null;
@@ -60,7 +63,7 @@ export const ContentAreaComponent: FC<ContentAreaProps> = ({ onRowClick }) => {
           noDataElement={
             <NothingHere
               body={t('error.no-outbound-items')}
-              //   onCreate={isDisabled ? undefined : () => onAddItem()}
+              onCreate={isDisabled ? undefined : () => onAddItem()}
               buttonText={t('button.add-item')}
             />
           }
