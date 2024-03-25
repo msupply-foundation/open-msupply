@@ -1,4 +1,4 @@
-import React, { FC, memo, useEffect, useState } from 'react';
+import React, { FC, memo } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -10,25 +10,23 @@ import {
   ColorSelectButton,
   InfoTooltipIcon,
 } from '@openmsupply-client/common';
-import { useReturns } from '../../api';
+import { OutboundReturnFragment, useReturns } from '../../api';
 
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('replenishment');
-  const { debouncedMutateAsync: update } =
+  const { debouncedMutateAsync: debouncedUpdate } =
     useReturns.document.updateOutboundReturn();
   // const isDisabled = useReturns.utils.outboundIsDisabled();
   const isDisabled = false; // TODO
 
-  const { data, isFetched } = useReturns.document.outboundReturn();
-  const { user, colour, comment, id } = data || { id: '' };
+  const { bufferedState, setBufferedState } =
+    useReturns.document.outboundReturn();
+  const { user, colour, comment, id } = bufferedState || { id: '' };
 
-  const [colorBuffer, setColorBuffer] = useState('');
-  const [commentBuffer, setCommentBuffer] = useState('');
-  useEffect(() => {
-    // Sets the buffer state once, after the API is fetched.
-    setColorBuffer(colour ?? '');
-    setCommentBuffer(comment ?? '');
-  }, [isFetched]);
+  const onChange = (patch: Partial<OutboundReturnFragment>) => {
+    setBufferedState(patch);
+    debouncedUpdate({ id, ...patch });
+  };
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -44,11 +42,8 @@ export const AdditionalInfoSectionComponent: FC = () => {
           <PanelField>
             <ColorSelectButton
               disabled={isDisabled}
-              onChange={color => {
-                setColorBuffer(color.hex);
-                update({ id, colour: color.hex });
-              }}
-              color={colorBuffer}
+              onChange={color => onChange({ colour: color.hex })}
+              color={colour}
             />
           </PanelField>
         </PanelRow>
@@ -56,11 +51,8 @@ export const AdditionalInfoSectionComponent: FC = () => {
         <PanelLabel>{t('heading.comment')}</PanelLabel>
         <BufferedTextArea
           disabled={isDisabled}
-          onChange={e => {
-            setCommentBuffer(e.target.value);
-            update({ id, comment: e.target.value });
-          }}
-          value={commentBuffer}
+          onChange={e => onChange({ comment: e.target.value })}
+          value={comment}
         />
       </Grid>
     </DetailPanelSection>
