@@ -22,15 +22,18 @@ export const useReturns = {
   },
   lines: {
     outboundReturnLines: Lines.useOutboundReturnLines,
+    outboundReturnRows: Lines.useOutboundReturnRows,
     updateOutboundLines: Lines.useUpdateOutboundReturnLines,
 
     generateInboundReturnLines: Lines.useGenerateInboundReturnLines,
     inboundReturnRows: Lines.useInboundReturnRows,
     updateInboundLines: Lines.useUpdateInboundReturnLines,
     deleteSelectedInboundLines: Lines.useDeleteSelectedInboundReturnLines,
+    deleteSelectedOutboundLines: Lines.useDeleteSelectedOutboundReturnLines,
   },
   utils: {
     api: Utils.useReturnsApi,
     inboundIsDisabled: Utils.useInboundReturnIsDisabled,
+    outboundIsDisabled: Utils.useOutboundReturnIsDisabled,
   },
 };
