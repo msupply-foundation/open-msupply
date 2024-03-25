@@ -151,6 +151,7 @@ export const InboundReturnEditModal = ({
 
           {lines.length > 0 && (
             <ReturnSteps
+              returnId={returnId}
               currentTab={currentTab}
               lines={lines}
               update={update}

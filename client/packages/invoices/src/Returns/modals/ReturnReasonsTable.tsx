@@ -21,20 +21,24 @@ const ReturnReasonCell = ({
   rowData,
   rowIndex,
   column,
+  isDisabled,
 }: CellProps<ReturnWithReason>): JSX.Element => (
   <ReturnReasonSearchInput
     autoFocus={rowIndex === 0}
     selectedReasonId={rowData.reasonId ?? null}
     onChange={id => column.setter({ ...rowData, reasonId: id })}
+    isDisabled={isDisabled}
   />
 );
 
 export const ReturnReasonsComponent = ({
   lines,
   updateLine,
+  isDisabled,
 }: {
   lines: ReturnWithReason[];
   updateLine: (line: Partial<ReturnWithReason> & { id: string }) => void;
+  isDisabled: boolean;
 }) => {
   const columns = useColumns<ReturnWithReason>(
     [
@@ -43,7 +47,14 @@ export const ReturnReasonsComponent = ({
       'batch',
       'expiryDate',
       // 'itemUnit', // not implemented for now
-      ['returnReason', { Cell: ReturnReasonCell, setter: updateLine }],
+      [
+        'returnReason',
+        {
+          Cell: ReturnReasonCell,
+          setter: updateLine,
+          getIsDisabled: () => isDisabled,
+        },
+      ],
       {
         key: 'note',
         label: 'label.comment',
@@ -51,6 +62,7 @@ export const ReturnReasonsComponent = ({
         width: 200,
         setter: updateLine,
         accessor: ({ rowData }) => rowData.note ?? '',
+        getIsDisabled: () => isDisabled,
       },
     ],
     {},

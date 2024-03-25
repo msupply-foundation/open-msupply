@@ -16,7 +16,8 @@ import { useReturns } from '../../api';
 export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('replenishment');
   const { data } = useReturns.document.outboundReturn();
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  // const isDisabled = useReturns.utils.outboundIsDisabled();
+
   //   const { colour, comment, user, update } = useOutbound.document.fields([
   //     'colour',
   //     'comment',

@@ -15,7 +15,11 @@ import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { DraftStockOutLine, InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
-import { InboundReturnRowFragment, OutboundReturnRowFragment } from './Returns';
+import {
+  InboundReturnFragment,
+  InboundReturnRowFragment,
+  OutboundReturnRowFragment,
+} from './Returns';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -162,7 +166,9 @@ export const getStatusTranslator =
     );
   };
 
-export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
+export const isOutboundDisabled = (
+  outbound: OutboundRowFragment | OutboundReturnRowFragment
+): boolean => {
   return (
     outbound.status === InvoiceNodeStatus.Shipped ||
     outbound.status === InvoiceNodeStatus.Verified ||
@@ -210,7 +216,7 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment
+  inbound: InboundFragment | InboundReturnFragment
 ): boolean => {
   if (inbound.onHold) return true;
 
