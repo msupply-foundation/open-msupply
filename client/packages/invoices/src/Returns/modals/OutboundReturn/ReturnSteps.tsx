@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
+import { useReturns } from '../../api';
 
 export enum Tabs {
   Quantity = 'Quantity',
@@ -25,6 +26,8 @@ interface ReturnStepsProps {
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
   >;
+
+  returnId?: string;
 }
 
 export const ReturnSteps = ({
@@ -33,8 +36,10 @@ export const ReturnSteps = ({
   update,
   zeroQuantityAlert,
   setZeroQuantityAlert,
+  returnId,
 }: ReturnStepsProps) => {
   const t = useTranslation('replenishment');
+  const isDisabled = useReturns.utils.outboundIsDisabled();
 
   const returnsSteps = [
     { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
@@ -51,6 +56,8 @@ export const ReturnSteps = ({
       ? t('messages.zero-return-quantity-will-delete-lines')
       : t('messages.alert-zero-return-quantity');
 
+  const inputsDisabled = !!returnId && isDisabled;
+
   return (
     <TabContext value={currentTab}>
       <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
@@ -59,6 +66,7 @@ export const ReturnSteps = ({
           <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
         )}
         <QuantityToReturnTable
+          isDisabled={inputsDisabled}
           lines={lines}
           updateLine={line => {
             if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
@@ -68,6 +76,7 @@ export const ReturnSteps = ({
       </TabPanel>
       <TabPanel value={Tabs.Reason}>
         <ReturnReasonsTable
+          isDisabled={inputsDisabled}
           lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
           updateLine={line => update(line)}
         />
