@@ -55,6 +55,7 @@ pub fn generate(
         clinician_link_id: None,
         currency_id: None,
         currency_rate: 0.0,
+        original_shipment_id: None,
     };
 
     let lines_with_packs: Vec<&OutboundReturnLineInput> = input

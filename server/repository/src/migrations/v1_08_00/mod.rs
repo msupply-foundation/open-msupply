@@ -5,6 +5,7 @@ use crate::StorageConnection;
 mod activity_log_add_zero_line;
 mod assets;
 mod central_omsupply;
+mod linked_shipment;
 mod pack_variant;
 mod return_context_types;
 mod return_reasons;
@@ -27,6 +28,7 @@ impl Migration for V1_08_00 {
         return_types::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
+        linked_shipment::migrate(connection)?;
         Ok(())
     }
 }

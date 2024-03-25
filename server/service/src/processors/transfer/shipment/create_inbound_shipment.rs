@@ -222,6 +222,7 @@ fn generate_inbound_shipment(
         delivered_datetime: None,
         verified_datetime: None,
         clinician_link_id: None,
+        original_shipment_id: None,
     };
 
     Ok(result)
