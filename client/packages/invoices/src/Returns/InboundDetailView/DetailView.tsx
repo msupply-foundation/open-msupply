@@ -86,6 +86,7 @@ export const InboundReturnDetailView: FC = () => {
                   setTimeout(() => onOpen(), 50);
                 }
               }}
+              hasNextItem={!!nextItemId}
             />
           )}
           <Toolbar />

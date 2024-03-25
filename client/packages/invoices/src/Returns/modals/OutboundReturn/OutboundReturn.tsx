@@ -14,6 +14,7 @@ import {
 import { useDraftOutboundReturnLines } from './useDraftOutboundReturnLines';
 import { ItemSelector } from './ItemSelector';
 import { ReturnSteps, Tabs } from './ReturnSteps';
+import { useReturns } from '../../api';
 
 interface OutboundReturnEditModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface OutboundReturnEditModalProps {
   returnId?: string;
   initialItemId?: string | null;
   loadNextItem?: () => void;
+  hasNextItem?: boolean;
   modalMode: ModalMode | null;
   isNewReturn?: boolean;
 }
@@ -36,6 +38,7 @@ export const OutboundReturnEditModal = ({
   initialItemId,
   modalMode,
   loadNextItem,
+  hasNextItem = false,
   isNewReturn = false,
 }: OutboundReturnEditModalProps) => {
   const t = useTranslation('replenishment');
@@ -48,6 +51,10 @@ export const OutboundReturnEditModal = ({
   const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
     AlertColor | undefined
   >();
+
+  // The inboundIsDisabled hook returns true when there is no data, so in the
+  // case of a new return, we want to make sure it is *not* disabled
+  const isDisabled = useReturns.utils.outboundIsDisabled() && !isNewReturn;
 
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const height = useKeyboardHeightAdjustment(600);
@@ -66,7 +73,7 @@ export const OutboundReturnEditModal = ({
 
   const onOk = async () => {
     try {
-      await save();
+      !isDisabled && (await save());
       onClose();
     } catch {
       // TODO: handle error display...
@@ -75,7 +82,7 @@ export const OutboundReturnEditModal = ({
 
   const handleNextItem = async () => {
     try {
-      await save();
+      !isDisabled && (await save());
       loadNextItem && loadNextItem();
       onChangeTab(Tabs.Quantity);
     } catch {
@@ -118,7 +125,7 @@ export const OutboundReturnEditModal = ({
     <DialogButton
       onClick={handleNextItem}
       variant="next"
-      disabled={currentTab !== Tabs.Reason}
+      disabled={currentTab !== Tabs.Reason || (isDisabled && !hasNextItem)}
     />
   );
 
