@@ -5,6 +5,7 @@ use actix_web::{
 };
 use repository::RepositoryError;
 use service::{
+    auth_data::AuthData,
     print::label::{host_status, print_qr_code},
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
@@ -18,10 +19,11 @@ pub struct LabelData {
 
 pub async fn print_label_qr(
     request: HttpRequest,
-    data: web::Json<LabelData>,
     service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    data: web::Json<LabelData>,
 ) -> HttpResponse {
-    let auth_result = validate_request(request.clone(), &service_provider);
+    let auth_result = validate_request(request.clone(), &auth_data);
     match auth_result {
         Ok(_) => (),
         Err(error) => {
