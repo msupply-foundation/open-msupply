@@ -10,6 +10,7 @@
   "breadcrumb.item": "#{{id}}",
   "button.add-item": "Add Item",
   "button.allocate": "Allocate",
+  "button.back": "Back",
   "button.cancel": "Cancel",
   "button.close": "Close",
   "button.create": "Create",

@@ -63,6 +63,20 @@ export const OutboundReturnsDetailView: FC = () => {
     },
   ];
 
+  const getNextItemId = () => {
+    const lines = data?.lines?.nodes;
+    if (!lines) return undefined;
+    const currentItemIndex = lines.findIndex(line => line.itemId === itemId);
+    if (currentItemIndex === -1) return;
+
+    const nextItemIndex = lines.findIndex(
+      (line, index) => index > currentItemIndex && line.itemId !== itemId
+    );
+    return nextItemIndex === -1 ? undefined : lines[nextItemIndex]?.itemId;
+  };
+
+  const nextItemId = getNextItemId();
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -88,6 +102,7 @@ export const OutboundReturnsDetailView: FC = () => {
               returnId={data.id}
               initialItemId={itemId}
               modalMode={mode}
+              loadNextItem={nextItemId ? () => onOpen(nextItemId) : undefined}
             />
           )}
 
