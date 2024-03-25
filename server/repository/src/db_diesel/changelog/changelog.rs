@@ -211,9 +211,7 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter)
-            .order(changelog_deduped::cursor.asc())
-            .limit(limit.into());
+        let query = create_filtered_query(earliest, filter).limit(limit.into());
 
         // // Debug diesel query
         // println!(
