@@ -85,7 +85,6 @@ export const OutboundReturnEditModal = ({
       onChangeTab(Tabs.Reason);
       return;
     }
-
     switch (modalMode) {
       case ModalMode.Create: {
         setZeroQuantityAlert('error');
@@ -108,7 +107,7 @@ export const OutboundReturnEditModal = ({
       onClick={handleNextStep}
       variant="next"
       disabled={!lines.length}
-      customLabel="Next step"
+      customLabel={t('button.next-step')}
     />
   );
   const OkButton = <DialogButton onClick={onOk} variant="ok" />;
