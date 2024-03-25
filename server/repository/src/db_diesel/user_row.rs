@@ -1,4 +1,4 @@
-use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, User};
+use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection};
 
 use crate::{lower, repository_error::RepositoryError, Upsert};
 
@@ -131,23 +131,6 @@ impl<'a> UserAccountRowRepository<'a> {
             .filter(user_account_dsl::id.eq(id))
             .execute(&self.connection.connection)?;
         Ok(result)
-    }
-}
-
-// TODO
-// Users don't sync and will only be available after first log in, thus in schema reference is not enforced
-// API consumers would like users to be returned for records that are linked to them, as if reference was enforced
-// Using unknown user until we start syncing users
-pub fn unknown_user() -> User {
-    User {
-        user_row: UserAccountRow {
-            id: "unknown".to_string(),
-            username: "unknown".to_string(),
-            hashed_password: "unknown".to_string(),
-            email: Some("unknown@sussol.net".to_string()),
-            ..UserAccountRow::default()
-        },
-        stores: vec![],
     }
 }
 
