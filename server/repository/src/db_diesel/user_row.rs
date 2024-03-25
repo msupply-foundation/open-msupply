@@ -17,7 +17,7 @@ table! {
         last_name -> Nullable<Text>,
         phone_number -> Nullable<Text>,
         job_title -> Nullable<Text>,
-        last_successful_sync -> Timestamp,
+        last_successful_sync -> Nullable<Timestamp>,
     }
 }
 
@@ -48,7 +48,7 @@ pub struct UserAccountRow {
     pub last_name: Option<String>,
     pub phone_number: Option<String>,
     pub job_title: Option<String>,
-    pub last_successful_sync: NaiveDateTime,
+    pub last_successful_sync: Option<NaiveDateTime>,
 }
 
 pub struct UserAccountRowRepository<'a> {
