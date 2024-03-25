@@ -18,6 +18,12 @@ export type ListParams<T> = {
   filterBy?: FilterByWithBoolean | null;
 };
 
+export type InsertAsset = Partial<AssetFragment> & {
+  categoryId?: string;
+  typeId?: string;
+  classId?: string;
+};
+
 const assetParsers = {
   toSortField: (sortBy: SortBy<AssetFragment>) => {
     const fields: Record<string, AssetSortFieldInput> = {
@@ -28,15 +34,18 @@ const assetParsers = {
 
     return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
-  toInsert: (input: Partial<AssetFragment>): InsertAssetInput => ({
+  toInsert: (input: InsertAsset): InsertAssetInput => ({
     id: input.id ?? '',
-    catalogueItemId: input.catalogueItemId,
     assetNumber: input.assetNumber ?? '',
+    catalogueItemId: input.catalogueItemId,
+    categoryId: input.categoryId,
+    classId: input.classId,
     installationDate: input.installationDate,
     notes: input.notes,
     replacementDate: input.replacementDate,
     serialNumber: input.serialNumber,
     storeId: input.store?.id,
+    typeId: input.typeId,
   }),
   toUpdate: (input: AssetFragment): UpdateAssetInput => ({
     id: input.id,

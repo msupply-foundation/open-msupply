@@ -21,8 +21,9 @@ import {
   mapIdNameToOptions,
   useAssetData,
 } from '@openmsupply-client/system';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { CCE_CLASS_ID } from '../utils';
+import { InsertAsset } from '../api/api';
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -80,7 +81,7 @@ export const CreateAssetModal = ({
   const { error, success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
   const [isCatalogueAsset, setIsCatalogueAsset] = useState(true);
-  const [draft, setDraft] = useState<Partial<AssetFragment>>(getEmptyAsset());
+  const [draft, setDraft] = useState<Partial<InsertAsset>>(getEmptyAsset());
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
   const { data: typeData, isLoading: isLoadingTypes } =
@@ -94,12 +95,11 @@ export const CreateAssetModal = ({
   const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
-    setIsCatalogueAsset(true);
     setDraft(getEmptyAsset());
     onClose();
   };
 
-  const updateDraft = (patch: Partial<AssetFragment>) => {
+  const updateDraft = (patch: Partial<InsertAsset>) => {
     setDraft({ ...draft, ...patch });
   };
 

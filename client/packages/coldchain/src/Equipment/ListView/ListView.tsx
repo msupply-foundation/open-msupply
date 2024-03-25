@@ -67,7 +67,7 @@ const AssetListComponent: FC = () => {
       label: 'label.type',
       sortable: false,
       width: 200,
-      accessor: ({ rowData }) => rowData.catalogueItem?.assetType?.name,
+      accessor: ({ rowData }) => rowData.assetType?.name,
       Cell: TooltipTextCell,
     },
     {
