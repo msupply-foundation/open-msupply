@@ -1,5 +1,6 @@
 use repository::{
-    RepositoryError, Requisition, RequisitionFilter, RequisitionRepository, StorageConnection,
+    Invoice, InvoiceFilter, InvoiceRepository, RepositoryError, Requisition, RequisitionFilter,
+    RequisitionRepository, StorageConnection,
 };
 use thiserror::Error;
 
@@ -12,6 +13,16 @@ pub(crate) enum GetRequisitionAndLinkedRequisitionError {
     RequisitionNotFound(String),
     #[error("Linked requisition not found {0:?}")]
     LinkedRequisitionNotFound(Requisition),
+    #[error("Database error {0:?}")]
+    DatabaseError(RepositoryError),
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum GetLinkedOriginalShipmentError {
+    #[error("Original shipment not found {0:?}")]
+    ShipmentNotFound(String),
+    #[error("Linked original shipment not found {0:?}")]
+    LinkedShipmentNotFound(Invoice),
     #[error("Database error {0:?}")]
     DatabaseError(RepositoryError),
 }
@@ -44,4 +55,34 @@ pub(crate) fn get_requisition_and_linked_requisition(
     };
 
     Ok((requisition, linked_requisition))
+}
+
+pub(crate) fn get_linked_original_shipment(
+    connection: &StorageConnection,
+    original_shipment_id: &str,
+) -> Result<Option<Invoice>, GetLinkedOriginalShipmentError> {
+    use GetLinkedOriginalShipmentError as Error;
+    let repo = InvoiceRepository::new(connection);
+
+    let original_shipment = repo
+        .query_one(InvoiceFilter::by_id(original_shipment_id))
+        .map_err(Error::DatabaseError)?
+        .ok_or_else(|| Error::ShipmentNotFound(original_shipment_id.to_string()))?;
+
+    let linked_original_shipment = match &original_shipment.invoice_row.linked_invoice_id {
+        Some(id) => {
+            let linked_shipment = repo
+                .query_one(InvoiceFilter::by_id(id))
+                .map_err(Error::DatabaseError)?
+                .ok_or_else(|| Error::LinkedShipmentNotFound(original_shipment.clone()))?;
+            Some(linked_shipment)
+        }
+        None => repo
+            .query_one(InvoiceFilter::new_match_linked_invoice_id(
+                &original_shipment.invoice_row.id,
+            ))
+            .map_err(Error::DatabaseError)?,
+    };
+
+    Ok(linked_original_shipment)
 }

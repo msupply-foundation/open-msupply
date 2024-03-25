@@ -1,7 +1,7 @@
 use crate::{
     cursor_controller::CursorController,
     processors::transfer::{
-        get_requisition_and_linked_requisition,
+        get_linked_original_shipment, get_requisition_and_linked_requisition,
         shipment::{
             assign_invoice_number::AssignInvoiceNumberProcessor,
             create_inbound_shipment::CreateInboundShipmentProcessor,
@@ -21,7 +21,7 @@ use repository::{
 };
 use thiserror::Error;
 
-use super::GetRequisitionAndLinkedRequisitionError;
+use super::{GetLinkedOriginalShipmentError, GetRequisitionAndLinkedRequisitionError};
 
 pub(crate) mod assign_invoice_number;
 pub(crate) mod common;
@@ -56,6 +56,14 @@ enum Operation {
         /// OR
         /// `shipment.requisition_id -> requisition.id -> linked_requisition.linked_requisition_id`
         linked_shipment_requisition: Option<Requisition>,
+        /// Original shipment for linked return, required for linking inbound return to outbound shipment
+        /// could be Some() even if linked_shipment is None
+        ///
+        /// Deduced through:
+        /// `return.original_shipment_id -> original_shipment.linked_invoice_id = linked_invoice.id`
+        /// OR
+        /// `return.original_shipment_id -> original_shipment.id -> linked_invoice.linked_invoice_id`
+        linked_original_shipment: Option<Invoice>,
     },
 }
 
@@ -171,6 +179,8 @@ pub(crate) enum GetUpsertOperationError {
     DatabaseError(String, RepositoryError),
     #[error("Error while fetching shipment operation {0:?} {1}")]
     GetRequisitionAndLinkedRequisitionError(ChangelogRow, GetRequisitionAndLinkedRequisitionError),
+    #[error("Error while fetching shipment operation {0:?} {1}")]
+    GetLinkedOriginalShipmentError(ChangelogRow, GetLinkedOriginalShipmentError),
 }
 
 fn get_upsert_operation(
@@ -207,10 +217,21 @@ fn get_upsert_operation(
         None => None,
     };
 
+    let linked_original_shipment = match &shipment.invoice_row.original_shipment_id {
+        Some(original_shipment_id) => {
+            let linked_original_shipment =
+                get_linked_original_shipment(connection, original_shipment_id)
+                    .map_err(|e| GetLinkedOriginalShipmentError(changelog_row.clone(), e))?;
+            linked_original_shipment
+        }
+        None => None,
+    };
+
     Ok(Operation::Upsert {
         shipment,
         linked_shipment,
         linked_shipment_requisition,
+        linked_original_shipment,
     })
 }
 
