@@ -29,17 +29,7 @@ pub struct ProgramEnrolmentFilter {
 
 impl ProgramEnrolmentFilter {
     pub fn new() -> ProgramEnrolmentFilter {
-        ProgramEnrolmentFilter {
-            patient_id: None,
-            program_id: None,
-            program_context_id: None,
-            enrolment_datetime: None,
-            program_enrolment_id: None,
-            status: None,
-            document_type: None,
-            document_name: None,
-            program_name: None,
-        }
+        Self::default()
     }
 
     pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {

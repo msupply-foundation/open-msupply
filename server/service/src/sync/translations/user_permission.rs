@@ -39,11 +39,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct UserPermissionTranslation;
 impl SyncTranslation for UserPermissionTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "om_user_permission"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             StoreTranslation.table_name(),
             // include Master List to populate context entries, e.g. program contexts

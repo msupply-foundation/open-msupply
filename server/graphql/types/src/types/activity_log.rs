@@ -79,7 +79,7 @@ impl ActivityLogNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime.clone(), Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime, Utc)
     }
 
     pub async fn to(&self) -> &Option<String> {
@@ -225,7 +225,7 @@ impl ActivityLogConnector {
             nodes: activity_logs
                 .rows
                 .into_iter()
-                .map(|activity_log| ActivityLogNode::from_domain(activity_log))
+                .map(ActivityLogNode::from_domain)
                 .collect(),
         }
     }

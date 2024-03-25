@@ -6,9 +6,9 @@ use crate::sync::{test::TestSyncIncomingRecord, translations::stock_line::Legacy
 
 use super::TestSyncOutgoingRecord;
 
-const TABLE_NAME: &'static str = "item_line";
+const TABLE_NAME: &str = "item_line";
 
-const ITEM_LINE_1: (&'static str, &'static str) = (
+const ITEM_LINE_1: (&str, &str) = (
     "0a3b02d0f0d211eb8dddb54df6d741bc",
     r#"{
       "ID": "0a3b02d0f0d211eb8dddb54df6d741bc",
@@ -98,7 +98,7 @@ fn item_line_1_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const ITEM_LINE_2: (&'static str, &'static str) = (
+const ITEM_LINE_2: (&str, &str) = (
     "4E8AAB798EBA42819E24CC753C800242",
     r#"{
       "ID": "4E8AAB798EBA42819E24CC753C800242",

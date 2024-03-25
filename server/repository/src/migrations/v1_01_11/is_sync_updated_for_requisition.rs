@@ -64,7 +64,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 DROP TRIGGER requisition_update_trigger;
                 "#
         )?;
-        for operation in vec!["insert", "update"] {
+        for operation in ["insert", "update"] {
             sql!(
                 connection,
                 r#"
@@ -105,7 +105,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 DROP TRIGGER requisition_line_update_trigger;
                 "#
         )?;
-        for operation in vec!["insert", "update"] {
+        for operation in ["insert", "update"] {
             sql!(
                 connection,
                 r#"

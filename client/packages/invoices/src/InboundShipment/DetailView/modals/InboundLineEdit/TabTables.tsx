@@ -13,9 +13,10 @@ import {
   createQueryParamsStore,
   CellProps,
   getColumnLookupWithOverrides,
-  CurrencyCell,
   ColumnAlign,
   NumberInputCell,
+  Currencies,
+  useCurrencyCell,
   useAuthContext,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
@@ -154,6 +155,10 @@ export const PricingTableComponent: FC<
   const { packVariantExists } = usePackVariant(item?.id || '', null);
   const { store } = useAuthContext();
 
+  const CurrencyCell = useCurrencyCell<DraftInboundLine>(
+    currency?.code as Currencies
+  );
+
   const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
     [
       'batch',
@@ -198,13 +203,11 @@ export const PricingTableComponent: FC<
       description: 'description.fc-cost-price',
       width: 100,
       align: ColumnAlign.Right,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
+      Cell: CurrencyCell,
       accessor: ({ rowData }) => {
         if (currency) {
           return rowData.costPricePerPack / currency.rate;
         }
-        return null;
       },
     });
   }
@@ -223,8 +226,7 @@ export const PricingTableComponent: FC<
       label: 'label.fc-line-total',
       description: 'description.fc-line-total',
       width: 100,
-      // eslint-disable-next-line new-cap
-      Cell: CurrencyCell({ currency: currency?.code }),
+      Cell: CurrencyCell,
       align: ColumnAlign.Right,
       accessor: ({ rowData }) => {
         if (currency) {
@@ -232,7 +234,6 @@ export const PricingTableComponent: FC<
             (rowData.numberOfPacks * rowData.costPricePerPack) / currency.rate
           );
         }
-        return null;
       },
     });
   }

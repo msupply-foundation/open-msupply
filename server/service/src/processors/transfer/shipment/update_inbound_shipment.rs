@@ -14,7 +14,7 @@ use super::{
     Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord,
 };
 
-const DESCRIPTION: &'static str = "Update inbound shipment from outbound shipment";
+const DESCRIPTION: &str = "Update inbound shipment from outbound shipment";
 
 pub(crate) struct UpdateInboundShipmentProcessor;
 

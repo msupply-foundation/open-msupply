@@ -99,6 +99,6 @@ impl<'a> EncounterRowRepository<'a> {
             .filter(encounter::dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 }

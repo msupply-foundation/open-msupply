@@ -371,7 +371,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0), None);
+        assert_eq!(result.first(), None);
 
         let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
@@ -388,7 +388,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        result.get(0).unwrap();
+        result.first().unwrap();
     }
 
     #[actix_rt::test]
@@ -466,21 +466,21 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("nhnPatient")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
                 PatientFilter::new()
@@ -489,7 +489,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         // no result when having an `AND code is "does not exist"` clause
         let result = repo
             .query_by_filter(
@@ -514,7 +514,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
 
         // Test identifier OR
         let result = repo
@@ -599,7 +599,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
                 )),
                 None,
             )
@@ -610,14 +610,14 @@ mod tests {
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
-            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 20).unwrap())
+            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
         // Query if patient is not alive after date_of_death
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 09, 22).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 9, 22).unwrap(),
                 )),
                 None,
             )
@@ -627,7 +627,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
                 )),
                 None,
             )

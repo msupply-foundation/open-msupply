@@ -4,7 +4,7 @@ use repository::{
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str = "Link outbound shipment to inbound shipment";
+const DESCRIPTION: &str = "Link outbound shipment to inbound shipment";
 
 pub(crate) struct LinkOutboundShipmentProcessor;
 
