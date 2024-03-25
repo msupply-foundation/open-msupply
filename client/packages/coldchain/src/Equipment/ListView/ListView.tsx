@@ -101,10 +101,7 @@ const AssetListComponent: FC = () => {
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
       />
-      <AppBarButtons
-        modalController={modalController}
-        assets={data?.nodes ?? []}
-      />
+      <AppBarButtons modalController={modalController} />
       <Toolbar />
       <DataTable
         id="item-list"

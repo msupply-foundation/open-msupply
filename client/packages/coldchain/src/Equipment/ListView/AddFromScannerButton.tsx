@@ -13,14 +13,10 @@ import {
   useDisabledNotification,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { AssetFragment } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
+import { useAssets } from '../api';
 
-export const AddFromScannerButtonComponent = ({
-  assets,
-}: {
-  assets: AssetFragment[];
-}) => {
+export const AddFromScannerButtonComponent = () => {
   const t = useTranslation('coldchain');
   const { isConnected, isEnabled, isScanning, startScanning, stopScan } =
     useBarcodeScannerContext();
@@ -34,12 +30,14 @@ export const AddFromScannerButtonComponent = ({
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
   );
+  const { mutateAsync: fetchAsset } = useAssets.document.fetch();
 
   const handleScanResult = async (result: ScanResult) => {
     if (!!result.content) {
       const { content } = result;
       const id = content;
-      if (assets.some(asset => asset.id === id)) {
+      const asset = await fetchAsset(id).catch(() => {});
+      if (asset) {
         navigate(equipmentRoute.addPart(id).build());
         return;
       }
