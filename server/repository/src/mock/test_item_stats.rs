@@ -166,7 +166,7 @@ pub fn stock_line_1_store_b() -> StockLineRow {
 }
 
 pub fn item_1_store_b_soh() -> u32 {
-    1 * 10
+    10
 }
 
 pub fn item2() -> ItemRow {

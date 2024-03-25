@@ -87,4 +87,22 @@ describe('stripEmptyAdditions', () => {
 
     expect(isEqualIgnoreUndefinedAndEmpty(old, add1)).toBeTruthy();
   });
+
+  it('should allow removing item with simple types', () => {
+    const old = {
+      some: 2,
+      someMore: 'string',
+      array: [{ value: false }],
+      obj: { value: 1.7 },
+    };
+    const add1 = {
+      array: [{ value: false, add1: undefined }],
+      obj: {},
+    };
+
+    const stripped = stripEmptyAdditions(old, add1);
+    expect(stripped).toStrictEqual({
+      array: [{ value: false, add1: undefined }],
+    });
+  });
 });

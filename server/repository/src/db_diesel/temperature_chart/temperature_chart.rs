@@ -71,10 +71,7 @@ impl TemperatureChartRow {
             interval_id,
             average_temperature,
             sensor_id,
-            breach_ids: breach_ids_with_nulls
-                .into_iter()
-                .filter_map(|id_or_none| id_or_none)
-                .collect(),
+            breach_ids: breach_ids_with_nulls.into_iter().flatten().collect(),
         })
     }
 }

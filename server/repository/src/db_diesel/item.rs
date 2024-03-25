@@ -13,6 +13,7 @@ use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use util::inline_init;
 
 use crate::{
     diesel_macros::{
@@ -239,6 +240,16 @@ impl Item {
         self.unit_row
             .as_ref()
             .map(|unit_row| unit_row.name.as_str())
+    }
+}
+
+impl ItemRowType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 }
 

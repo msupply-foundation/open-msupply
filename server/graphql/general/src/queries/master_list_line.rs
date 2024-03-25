@@ -109,6 +109,7 @@ impl MasterListLineFilterInput {
             id: self.id.map(EqualFilter::from),
             item_id: self.item_id.map(EqualFilter::from),
             master_list_id: self.master_list_id.map(EqualFilter::from),
+            item_type: None,
         }
     }
 }

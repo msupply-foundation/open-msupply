@@ -123,14 +123,14 @@ export const Summary = ({ draft, onChange }: SummaryProps) => {
         <Section heading={t('heading.asset-identification')}>
           <Row label={t('label.category')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetCategory?.name ?? ''}
+              value={draft.assetCategory?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
           <Row label={t('label.type')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetType?.name ?? ''}
+              value={draft.assetType?.name ?? ''}
               disabled
               fullWidth
             />

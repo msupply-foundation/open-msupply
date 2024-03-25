@@ -829,7 +829,7 @@ pub fn insert_mock_data(
 
         if inserts.full_requisitions {
             for row in mock_data.full_requisitions.iter() {
-                insert_full_mock_requisition(&row, connection)
+                insert_full_mock_requisition(row, connection)
             }
         }
 
@@ -893,7 +893,7 @@ pub fn insert_mock_data(
         if inserts.numbers {
             let repo = NumberRowRepository::new(connection);
             for row in &mock_data.numbers {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 

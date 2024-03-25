@@ -12,12 +12,16 @@ import {
   TooltipTextCell,
   useIsCentralServerApi,
   ColumnDescription,
+  ColumnAlign,
+  DotCell,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { AssetFragment, useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
 import { Status } from '../Components';
+import { AppRoute } from '@openmsupply-client/config';
 
 const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
   return <Status status={rowData.statusLog?.status} />;
@@ -38,6 +42,9 @@ const AssetListComponent: FC = () => {
   const t = useTranslation('catalogue');
   const modalController = useToggle();
   const isCentralServer = useIsCentralServerApi();
+  const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
+    AppRoute.Equipment
+  );
 
   const columnsToCreate: ColumnDescription<AssetFragment>[] = [];
   if (isCentralServer)
@@ -88,6 +95,14 @@ const AssetListComponent: FC = () => {
       label: 'label.serial',
     },
     {
+      key: 'catalogueItem',
+      label: 'label.non-catalogue',
+      accessor: ({ rowData }) => !rowData.catalogueItem,
+      align: ColumnAlign.Center,
+      Cell: DotCell,
+      sortable: false,
+    },
+    {
       key: 'notes',
       label: 'label.notes',
       sortable: false,
@@ -95,7 +110,7 @@ const AssetListComponent: FC = () => {
     'selection'
   );
 
-  const columns = useColumns<AssetFragment>(
+  const columns = useColumns(
     columnsToCreate,
     {
       sortBy,
@@ -120,9 +135,7 @@ const AssetListComponent: FC = () => {
         data={data?.nodes}
         isError={isError}
         isLoading={isLoading}
-        onRowClick={row => {
-          navigate(`/cold-chain/equipment/${row.id}`);
-        }}
+        onRowClick={row => navigate(equipmentRoute.addPart(row.id).build())}
         noDataElement={<NothingHere body={t('error.no-items')} />}
         enableColumnSelection
       />
