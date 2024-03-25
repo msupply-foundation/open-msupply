@@ -24,7 +24,7 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();

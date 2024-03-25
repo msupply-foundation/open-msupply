@@ -61,10 +61,10 @@ pub fn insert_asset(
                 None => input,
             };
             let new_asset = generate(input);
-            AssetRowRepository::new(&connection).upsert_one(&new_asset)?;
+            AssetRowRepository::new(connection).upsert_one(&new_asset)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetCreated,
                 Some(new_asset.id.clone()),
                 None,

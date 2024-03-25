@@ -27,7 +27,6 @@
   "info.manual-shipment": "Este envio foi criado manualmente. O status the entrega será automaticamente atualizado.",
   "label.consumption": "Consumo",
   "label.draft": "Rascunho",
-  "label.location": "Local",
   "label.hide-stock-over-minimum": "Ocultar estoque acima do mínimo",
   "label.max": "Máximo",
   "label.min": "Mínimo",

@@ -164,11 +164,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct RequisitionTranslation;
 impl SyncTranslation for RequisitionTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "requisition"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             StoreTranslation.table_name(),
@@ -312,10 +312,9 @@ impl SyncTranslation for RequisitionTranslation {
             .pop()
             .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
 
-        let has_outbound_shipment = InvoiceRepository::new(&connection)
+        let has_outbound_shipment = !InvoiceRepository::new(connection)
             .query_by_filter(InvoiceFilter::new().requisition_id(EqualFilter::equal_to(&id)))?
-            .len()
-            > 0;
+            .is_empty();
 
         let legacy_row = LegacyRequisitionRow {
             ID: id.clone(),
@@ -357,7 +356,7 @@ impl SyncTranslation for RequisitionTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

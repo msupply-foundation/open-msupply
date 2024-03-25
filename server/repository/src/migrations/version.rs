@@ -161,9 +161,6 @@ mod test {
         assert!(Version::from_str("12.10.03") < Version::from_str("12.11.02"));
         assert!(Version::from_str("10.11.01") < Version::from_str("10.11.2"));
 
-        assert_eq!(
-            Version::from_str("10.11.01-RC1") < Version::from_str("10.11.1-RC2"),
-            false
-        );
+        assert!(Version::from_str("10.11.01-RC1") >= Version::from_str("10.11.1-RC2"));
     }
 }

@@ -1,4 +1,4 @@
-use repository::{MasterListLineRow, StorageConnection, SyncBufferRow};
+use repository::{MasterListLineRow, MasterListLineRowDelete, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
@@ -22,15 +22,26 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct MasterListLineTranslation;
 impl SyncTranslation for MasterListLineTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "list_master_line"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             MasterListTranslation.table_name(),
             ItemTranslation.table_name(),
         ]
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        // TODO, check site ? (should never get delete records for this site, only transfer other half)
+        Ok(PullTranslateResult::delete(MasterListLineRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
     fn try_translate_from_upsert_sync_record(

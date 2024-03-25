@@ -38,6 +38,17 @@ pub struct BuildArgs {
     /// Default query type, one of: "invoice" | "stocktake" | "requisition",
     #[clap(long)]
     pub query_default: Option<String>,
+
+    /// File name of the SQLite query.
+    /// If specified the query_postgres must be provided as well.
+    /// However, query_sqlite and query_postgres can point to the same file.
+    #[clap(long)]
+    pub query_sqlite: Option<String>,
+    /// File name of the Postgres query.
+    /// If specified the query_sqlite must be provided as well.
+    /// However, query_sqlite and query_postgres can point to the same file.
+    #[clap(long)]
+    pub query_postgres: Option<String>,
 }
 
 #[derive(clap::Args)]

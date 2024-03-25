@@ -243,7 +243,7 @@ impl ProgramEnrolmentNode {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(EncounterFilter::from)
-            .unwrap_or(EncounterFilter::new())
+            .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(&self.patient_row().id))
             .context_id(EqualFilter::equal_to(&self.program_row().context_id));
 
@@ -285,7 +285,7 @@ impl ProgramEnrolmentNode {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(|f| f.to_domain())
-            .unwrap_or(ProgramEventFilter::new())
+            .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(&self.patient_row().id))
             .document_type(EqualFilter::equal_to(&self.row().document_type));
         let list_result = ctx

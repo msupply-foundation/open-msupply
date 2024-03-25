@@ -25,7 +25,7 @@ pub enum AssetSortField {
 
 pub type AssetSort = Sort<AssetSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AssetFilter {
     pub id: Option<EqualFilter<String>>,
     pub notes: Option<StringFilter>,
@@ -42,19 +42,7 @@ pub struct AssetFilter {
 
 impl AssetFilter {
     pub fn new() -> AssetFilter {
-        AssetFilter {
-            id: None,
-            notes: None,
-            asset_number: None,
-            serial_number: None,
-            class_id: None,
-            category_id: None,
-            type_id: None,
-            catalogue_item_id: None,
-            installation_date: None,
-            replacement_date: None,
-            is_non_catalogue: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -266,7 +254,7 @@ mod tests {
             ..Default::default()
         };
 
-        let _result = asset_row_repository.insert_one(&asset).unwrap();
+        asset_row_repository.insert_one(&asset).unwrap();
 
         // Query by id
         let result = asset_repository

@@ -16,7 +16,7 @@ pub struct Currency {
     pub currency_row: CurrencyRow,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CurrencyFilter {
     pub id: Option<EqualFilter<String>>,
     pub is_home_currency: Option<bool>,
@@ -102,10 +102,7 @@ pub fn to_domain(currency_row: CurrencyRow) -> Currency {
 
 impl CurrencyFilter {
     pub fn new() -> CurrencyFilter {
-        CurrencyFilter {
-            id: None,
-            is_home_currency: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

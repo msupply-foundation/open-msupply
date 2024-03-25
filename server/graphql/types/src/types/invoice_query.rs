@@ -285,7 +285,7 @@ impl InvoiceNode {
         Ok(loader
             .load_one(ClinicianLoaderInput::new(
                 &self.row().store_id,
-                &clinician_id,
+                clinician_id,
             ))
             .await?
             .map(ClinicianNode::from_domain))

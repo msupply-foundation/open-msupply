@@ -65,7 +65,7 @@ pub fn generate(
         connection,
         update_line.total_before_tax,
         currency_id,
-        &currency_rate,
+        currency_rate,
     )?;
 
     Ok(update_line)
@@ -92,12 +92,12 @@ mod inbound_shipment_service_line_update_test {
         .await;
 
         let items = mock_items();
-        let item1 = items.get(0).unwrap().clone();
+        let item1 = items.first().unwrap().clone();
         let item2 = items.get(1).unwrap().clone();
         assert_ne!(item1.name, item2.name);
         let mut line = InvoiceLine {
             invoice_line_row: mock_inbound_shipment_invoice_lines()
-                .get(0)
+                .first()
                 .unwrap()
                 .clone(),
             invoice_row: mock_inbound_shipment_a(),
