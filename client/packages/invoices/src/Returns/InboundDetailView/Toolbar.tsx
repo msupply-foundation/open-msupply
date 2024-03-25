@@ -11,7 +11,6 @@ import {
   DeleteIcon,
   useIsGrouped,
   Switch,
-  useBufferState,
   Alert,
   InvoiceNodeStatus,
 } from '@openmsupply-client/common';
@@ -21,8 +20,9 @@ export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  const { data } = useReturns.document.inboundReturn();
-  const { otherPartyName, theirReference, id = '' } = data ?? {};
+  const { bufferedState, setBufferedState } =
+    useReturns.document.inboundReturn();
+  const { otherPartyName, theirReference, id = '' } = bufferedState ?? {};
 
   const onDelete = useReturns.lines.deleteSelectedInboundLines({
     returnId: id,
@@ -33,11 +33,9 @@ export const Toolbar: FC = () => {
 
   const update = (data: Partial<InboundReturnFragment>) => {
     if (!id) return;
+    setBufferedState({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
-
-  const [theirReferenceBuffer, setTheirReferenceBuffer] =
-    useBufferState(theirReference);
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -63,15 +61,14 @@ export const Toolbar: FC = () => {
                   size="small"
                   sx={{ width: 250 }}
                   disabled={isDisabled}
-                  value={theirReferenceBuffer ?? ''}
+                  value={theirReference}
                   onChange={event => {
-                    setTheirReferenceBuffer(event.target.value);
                     update({ theirReference: event.target.value });
                   }}
                 />
               }
             />
-            <InfoAlert inboundReturn={data} />
+            <InfoAlert inboundReturn={bufferedState} />
           </Box>
         </Grid>
         <Grid

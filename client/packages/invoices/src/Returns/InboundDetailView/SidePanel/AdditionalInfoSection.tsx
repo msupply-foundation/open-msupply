@@ -7,7 +7,6 @@ import {
   PanelRow,
   useTranslation,
   InfoTooltipIcon,
-  useBufferState,
   ColorSelectButton,
   BufferedTextArea,
 } from '@openmsupply-client/common';
@@ -18,13 +17,13 @@ export const AdditionalInfoSectionComponent = () => {
   const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
   const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  const { data } = useReturns.document.inboundReturn();
-  const { user, colour, comment, id } = data || {};
-
-  const [bufferedColor, setBufferedColor] = useBufferState(colour);
+  const { bufferedState, setBufferedState } =
+    useReturns.document.inboundReturn();
+  const { user, colour, comment, id } = bufferedState || {};
 
   const update = (data: Partial<InboundReturnFragment>) => {
     if (!id) return;
+    setBufferedState({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
 
@@ -43,10 +42,9 @@ export const AdditionalInfoSectionComponent = () => {
             <ColorSelectButton
               disabled={isDisabled}
               onChange={({ hex }) => {
-                setBufferedColor(hex);
                 update({ colour: hex });
               }}
-              color={bufferedColor}
+              color={colour}
             />
           </PanelField>
         </PanelRow>

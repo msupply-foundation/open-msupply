@@ -9,7 +9,6 @@ import {
   useTranslation,
   DropdownMenuItem,
   DeleteIcon,
-  useBufferState,
 } from '@openmsupply-client/common';
 import { OutboundReturnFragment, useReturns } from '../api';
 
@@ -18,15 +17,14 @@ export const Toolbar: FC = () => {
   const onDelete = useReturns.document.deleteOutboundRows();
   const { debouncedMutateAsync } = useReturns.document.updateOutboundReturn();
 
-  const { data } = useReturns.document.outboundReturn();
-  const { otherPartyName, theirReference, id } = data ?? {};
+  const { bufferedState, setBufferedState } =
+    useReturns.document.outboundReturn();
+  const { otherPartyName, theirReference, id } = bufferedState ?? {};
   // const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
-
-  const [theirReferenceBuffer, setTheirReferenceBuffer] =
-    useBufferState(theirReference);
 
   const update = (data: Partial<OutboundReturnFragment>) => {
     if (!id) return;
+    setBufferedState({ ...data });
     debouncedMutateAsync({ id, ...data });
   };
 
@@ -57,9 +55,8 @@ export const Toolbar: FC = () => {
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReferenceBuffer ?? ''}
+                  value={theirReference}
                   onChange={event => {
-                    setTheirReferenceBuffer(event.target.value);
                     update({ theirReference: event.target.value });
                   }}
                 />

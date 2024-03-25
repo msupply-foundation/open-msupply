@@ -1,4 +1,4 @@
-import React, { FC, memo, useEffect, useState } from 'react';
+import React, { FC, memo } from 'react';
 import {
   Grid,
   DetailPanelSection,
@@ -16,14 +16,10 @@ export const TransportSectionComponent: FC = () => {
   const { debouncedMutateAsync: debouncedUpdate } =
     useReturns.document.updateOutboundReturn();
 
-  const { data, isFetched } = useReturns.document.outboundReturn();
-  const id = data?.id ?? '';
-
-  const [referenceBuffer, setReferenceBuffer] = useState('');
-  useEffect(
-    () => setReferenceBuffer(data?.transportReference ?? ''),
-    [isFetched]
-  );
+  const {
+    bufferedState: { id, transportReference } = { id: '' },
+    setBufferedState,
+  } = useReturns.document.outboundReturn();
 
   return (
     <DetailPanelSection title={t('heading.transport-details')}>
@@ -34,10 +30,11 @@ export const TransportSectionComponent: FC = () => {
         <BufferedTextInput
           disabled={isDisabled}
           onChange={e => {
-            setReferenceBuffer(e.target.value);
-            debouncedUpdate({ id, transportReference: e.target.value });
+            const transportReference = e.target.value;
+            setBufferedState({ transportReference });
+            debouncedUpdate({ id, transportReference });
           }}
-          value={referenceBuffer}
+          value={transportReference}
           InputProps={{
             style: {
               backgroundColor: 'white',
