@@ -345,9 +345,6 @@ impl InvoiceNode {
         &self.row().currency_rate
     }
 
-    // TODO: this doesn't allow for inverse (i.e. return that originated from shipment?)
-    // Pretty sure we agreed not to worry about it just yet, but still..
-
     /// Inbound Shipment that is the origin of this Outbound Return
     /// OR Outbound Shipment that is the origin of this Inbound Return
     pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
