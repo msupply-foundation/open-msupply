@@ -15,6 +15,7 @@ export const useIsGrouped = (key: keyof GroupByItem): IsGroupedControl => {
   const [groupByItem, setGroupByItem] = useLocalStorage('/groupbyitem', {
     outboundShipment: false,
     inboundShipment: false,
+    outboundReturn: false,
     inboundReturn: false,
     stocktake: true,
   });

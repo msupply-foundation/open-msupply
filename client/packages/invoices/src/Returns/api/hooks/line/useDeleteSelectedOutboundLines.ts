@@ -3,20 +3,20 @@ import {
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-import { useInboundReturnRows } from './useInboundReturnRows';
-import { useInboundReturnIsDisabled } from '../utils/useInboundReturnIsDisabled';
-import { useReturns } from '../../../api';
+// import { useInboundReturnIsDisabled } from '../utils/useInboundReturnIsDisabled';
+import { useReturns } from '../..';
+import { useOutboundReturnRows } from './useOutboundReturnRows';
 
-export const useDeleteSelectedInboundReturnLines = ({
+export const useDeleteSelectedOutboundReturnLines = ({
   returnId,
 }: {
   returnId: string;
 }): (() => void) => {
-  const { items, lines } = useInboundReturnRows();
-  const isDisabled = useInboundReturnIsDisabled();
+  const { items, lines } = useOutboundReturnRows();
+  // const isDisabled = useOutboundReturnIsDisabled();
   const t = useTranslation('distribution');
 
-  const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
+  const { mutateAsync: updateLines } = useReturns.lines.updateOutboundLines();
 
   const selectedRows =
     useTableStore(state => {
@@ -28,19 +28,16 @@ export const useDeleteSelectedInboundReturnLines = ({
             .map(({ lines }) => lines.flat())
             .flat()
         : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    })?.map(({ id, itemId, packSize, batch, expiryDate }) => ({
+    })?.map(({ id }) => ({
       id,
-      itemId,
-      packSize,
-      batch,
-      expiryDate,
-      numberOfPacksReturned: 0,
+      stockLineId: '',
+      numberOfPacksToReturn: 0,
     })) || [];
 
   const onDelete = async () => {
     await updateLines({
-      inboundReturnId: returnId,
-      inboundReturnLines: selectedRows,
+      outboundReturnId: returnId,
+      outboundReturnLines: selectedRows,
     }).catch(err => {
       throw err;
     });
@@ -49,7 +46,7 @@ export const useDeleteSelectedInboundReturnLines = ({
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: onDelete,
-    canDelete: !isDisabled,
+    // canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-lines', {
         count: selectedRows.length,
