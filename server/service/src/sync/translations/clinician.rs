@@ -49,11 +49,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct ClinicianTranslation;
 impl SyncTranslation for ClinicianTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "clinician"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -128,10 +128,7 @@ impl SyncTranslation for ClinicianTranslation {
             )))?;
 
         let is_female = gender
-            .map(|gender| match gender {
-                Gender::Female => true,
-                _ => false,
-            })
+            .map(|gender| matches!(gender, Gender::Female))
             .unwrap_or(false);
 
         let legacy_row = LegacyClinicianRow {
@@ -151,7 +148,7 @@ impl SyncTranslation for ClinicianTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

@@ -17,7 +17,7 @@ use crate::EqualFilter;
 
 pub type NameTag = NameTagRow;
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct NameTagFilter {
     pub store_id: Option<EqualFilter<String>>,
 }
@@ -68,7 +68,7 @@ impl<'a> NameTagRepository<'a> {
 
 impl NameTagFilter {
     pub fn new() -> NameTagFilter {
-        NameTagFilter { store_id: None }
+        Self::default()
     }
 
     pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {

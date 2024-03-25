@@ -37,7 +37,7 @@ pub trait FormSchemaServiceTrait: Sync + Send {
     ) -> Result<FormSchema, InsertFormSchemaError> {
         let repo = FormSchemaRowRepository::new(&ctx.connection);
         repo.upsert_one(&schema)
-            .map_err(|e| InsertFormSchemaError::DatabaseError(e))?;
+            .map_err(InsertFormSchemaError::DatabaseError)?;
         Ok(schema)
     }
 }

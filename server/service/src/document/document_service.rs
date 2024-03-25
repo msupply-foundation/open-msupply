@@ -103,7 +103,7 @@ pub trait DocumentServiceTrait: Sync + Send {
         sort: Option<DocumentSort>,
         allowed_ctx: Option<&[String]>,
     ) -> Result<ListResult<Document>, ListError> {
-        let mut filter = filter.unwrap_or(DocumentFilter::new());
+        let mut filter = filter.unwrap_or_default();
         if let Some(allowed_ctx) = allowed_ctx {
             filter.context_id = Some(
                 filter
@@ -149,8 +149,8 @@ pub trait DocumentServiceTrait: Sync + Send {
                 }
                 let validator = json_validator(con, &doc)?;
                 if let Some(validator) = &validator {
-                    validate_json(&validator, &doc.data)
-                        .map_err(|errors| DocumentInsertError::InvalidDataSchema(errors))?;
+                    validate_json(validator, &doc.data)
+                        .map_err(DocumentInsertError::InvalidDataSchema)?;
                 }
                 if let Some(invalid_parent) = validate_parents(con, &doc)? {
                     return Err(DocumentInsertError::InvalidParent(invalid_parent));
@@ -183,7 +183,7 @@ fn json_validator(
 
     let schema_repo = FormSchemaRowRepository::new(connection);
     let schema = schema_repo
-        .find_one_by_id(&form_schema_id)?
+        .find_one_by_id(form_schema_id)?
         .ok_or(DocumentInsertError::DataSchemaDoesNotExist)?;
     let compiled = match JSONSchema::compile(&schema.json_schema) {
         Ok(v) => Ok(v),
@@ -209,7 +209,7 @@ fn validate_parents(
 ) -> Result<Option<String>, RepositoryError> {
     let repo = DocumentRepository::new(connection);
     for parent in &doc.parents {
-        if repo.find_one_by_id(&parent)?.is_none() {
+        if repo.find_one_by_id(parent)?.is_none() {
             return Ok(Some(parent.clone()));
         }
     }
@@ -221,9 +221,7 @@ fn insert_document(
     connection: &StorageConnection,
     doc: RawDocument,
 ) -> Result<Document, DocumentInsertError> {
-    let doc = doc
-        .finalise()
-        .map_err(|err| DocumentInsertError::InternalError(err))?;
+    let doc = doc.finalise().map_err(DocumentInsertError::InternalError)?;
     let repo = DocumentRepository::new(connection);
     repo.insert(&doc)?;
     Ok(doc)
@@ -280,7 +278,7 @@ mod document_service_test {
                 owner_name_id: None,
                 context_id: doc_context.clone(),
             },
-            &vec!["Wrong type".to_string()],
+            &["Wrong type".to_string()],
         );
         assert!(matches!(
             result,
@@ -308,7 +306,7 @@ mod document_service_test {
                     owner_name_id: None,
                     context_id: doc_context.clone(),
                 },
-                &vec![doc_context.clone()],
+                &[doc_context.clone()],
             )
             .unwrap();
         let found = service.document(&context, doc_name, None).unwrap().unwrap();
@@ -334,7 +332,7 @@ mod document_service_test {
                 owner_name_id: None,
                 context_id: doc_context.clone(),
             },
-            &vec![doc_context.clone()],
+            &[doc_context.clone()],
         );
         assert!(matches!(result, Err(DocumentInsertError::InvalidParent(_))));
 
@@ -359,7 +357,7 @@ mod document_service_test {
                     owner_name_id: None,
                     context_id: doc_context.clone(),
                 },
-                &vec![doc_context.clone()],
+                &[doc_context.clone()],
             )
             .unwrap();
         assert_eq!(v2.parent_ids[0], v1.id);
@@ -388,7 +386,7 @@ mod document_service_test {
                     owner_name_id: None,
                     context_id: doc_context.clone(),
                 },
-                &vec![doc_context.clone()],
+                &[doc_context.clone()],
             )
             .unwrap();
         // should still find the correct document
@@ -433,7 +431,7 @@ mod document_service_test {
                     owner_name_id: None,
                     context_id: doc_context.clone(),
                 },
-                &vec![doc_context.clone()],
+                &[doc_context.clone()],
             )
             .unwrap();
 
@@ -459,7 +457,7 @@ mod document_service_test {
                 owner_name_id: None,
                 context_id: doc_context.clone(),
             },
-            &vec![doc_context.clone()],
+            &[doc_context.clone()],
         );
         assert!(matches!(
             result,
@@ -488,7 +486,7 @@ mod document_service_test {
                 owner_name_id: None,
                 context_id: doc_context.clone(),
             },
-            &vec![doc_context.clone()],
+            &[doc_context.clone()],
         );
         assert!(matches!(
             result,
@@ -518,7 +516,7 @@ mod document_service_test {
                     owner_name_id: None,
                     context_id: doc_context.clone(),
                 },
-                &vec![doc_context.clone()],
+                &[doc_context.clone()],
             )
             .unwrap();
     }

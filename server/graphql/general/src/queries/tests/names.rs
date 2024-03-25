@@ -146,7 +146,7 @@ mod graphql {
                   "nodes": [{
                       "id": mock_name_a().id,
                   }],
-                  "totalCount": 1 as i32
+                  "totalCount": 1_i32
               }
           }
         );

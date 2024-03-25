@@ -20,7 +20,7 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         sort: Option<DocumentRegistrySort>,
         allowed_ctx: &[String],
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
-        let mut filter = filter.unwrap_or(DocumentRegistryFilter::new());
+        let mut filter = filter.unwrap_or_default();
         filter.context_id = Some(
             filter
                 .context_id
@@ -29,7 +29,7 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         );
 
         let repo = DocumentRegistryRepository::new(&ctx.connection);
-        Ok(repo.query(Pagination::new(), Some(filter), sort)?)
+        repo.query(Pagination::new(), Some(filter), sort)
     }
 
     fn get_entries_by_doc_type(
@@ -44,7 +44,7 @@ pub trait DocumentRegistryServiceTrait: Sync + Send {
         if let Some(allowed_ctx) = allowed_ctx {
             filter = filter.context_id(EqualFilter::default().restrict_results(allowed_ctx));
         }
-        Ok(repo.query_by_filter(filter)?)
+        repo.query_by_filter(filter)
     }
 
     fn insert(

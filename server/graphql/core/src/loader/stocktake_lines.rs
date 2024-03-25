@@ -31,9 +31,7 @@ impl Loader<String> for StocktakeLineByStocktakeIdLoader {
 
         let mut map: HashMap<String, Vec<StocktakeLine>> = HashMap::new();
         for line in all_lines {
-            let list = map
-                .entry(line.line.stocktake_id.clone())
-                .or_insert_with(|| Vec::<StocktakeLine>::new());
+            let list = map.entry(line.line.stocktake_id.clone()).or_default();
             list.push(line);
         }
         Ok(map)

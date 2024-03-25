@@ -70,13 +70,11 @@ pub async fn put_sensors(
         .json(&results)
 }
 
-fn validate_input(sensors: &Vec<Sensor>) -> Result<(), String> {
-    let (_, errors): (Vec<_>, Vec<_>) = sensors
-        .iter()
-        .map(|sensor| validate_sensor(sensor))
-        .partition(Result::is_ok);
+fn validate_input(sensors: &[Sensor]) -> Result<(), String> {
+    let (_, errors): (Vec<_>, Vec<_>) =
+        sensors.iter().map(validate_sensor).partition(Result::is_ok);
 
-    if errors.len() > 0 {
+    if !errors.is_empty() {
         let error = errors
             .into_iter()
             .map(Result::unwrap_err)
@@ -105,7 +103,7 @@ fn validate_sensor(sensor: &Sensor) -> Result<(), String> {
             sensor.id
         ));
     }
-    if sensor.name.len() < 1 {
+    if sensor.name.is_empty() {
         return Err(format!(" {}: Sensor name must be specified", sensor.id));
     }
     if sensor.battery_level < 0 || sensor.battery_level > 100 {
@@ -114,14 +112,12 @@ fn validate_sensor(sensor: &Sensor) -> Result<(), String> {
             sensor.id
         ));
     }
-    match sensor.log_delay {
-        Some(log_delay) => {
-            if log_delay < 0 {
-                return Err(format!(" {}: Log delay must be positive", sensor.id));
-            }
+    if let Some(log_delay) = sensor.log_delay {
+        if log_delay < 0 {
+            return Err(format!(" {}: Log delay must be positive", sensor.id));
         }
-        None => {}
-    };
+    }
+
     Ok(())
 }
 
@@ -152,7 +148,7 @@ fn upsert_sensor(
     let service = &service_provider.sensor_service;
     let id = sensor.id.clone();
 
-    let result = match service.get_sensor(&ctx, id.clone()) {
+    let result = match service.get_sensor(ctx, id.clone()) {
         Ok(_) => {
             let sensor = UpdateSensor {
                 id: id.clone(),
@@ -163,7 +159,7 @@ fn upsert_sensor(
                 battery_level: Some(sensor.battery_level),
             };
             service
-                .update_sensor(&ctx, sensor)
+                .update_sensor(ctx, sensor)
                 .map_err(|e| anyhow::anyhow!("Unable to update sensor {}. {:?}", &id, e))?
         }
         Err(SingleRecordError::NotFound(_)) => {
@@ -177,7 +173,7 @@ fn upsert_sensor(
                 battery_level: Some(sensor.battery_level),
             };
             service
-                .insert_sensor(&ctx, sensor)
+                .insert_sensor(ctx, sensor)
                 .map_err(|e| anyhow::anyhow!("Unable to insert sensor {}. {:?}", &id, e))?
         }
         Err(e) => return Err(anyhow::anyhow!("Unable to get sensor {}. {:?}", &id, e)),

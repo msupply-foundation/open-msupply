@@ -194,7 +194,8 @@ export const inboundLinesToSummaryItems = (
 };
 export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
-  invoice.status === InvoiceNodeStatus.Allocated;
+  invoice.status === InvoiceNodeStatus.Allocated ||
+  invoice.status === InvoiceNodeStatus.Picked;
 
 export const canDeletePrescription = (
   invoice: PrescriptionRowFragment

@@ -148,8 +148,7 @@ mod test {
         let result = create_api("http://localhost:9999", "", "")
             .post_initialise()
             .await
-            .err()
-            .expect("Should result in error");
+            .expect_err("Should result in error");
 
         assert_matches!(
             result,
@@ -175,8 +174,7 @@ mod test {
         let result = create_api(&url, "", "")
             .post_initialise()
             .await
-            .err()
-            .expect("Should result in error");
+            .expect_err("Should result in error");
         assert_matches!(
             result,
             SyncApiError {
@@ -208,8 +206,7 @@ mod test {
         let result = create_api(&url, "", "")
             .post_initialise()
             .await
-            .err()
-            .expect("Should result in error");
+            .expect_err("Should result in error");
 
         mock.assert();
         assert_matches!(
@@ -235,8 +232,7 @@ mod test {
         let result = create_api(&url, "", "")
             .post_initialise()
             .await
-            .err()
-            .expect("Should result in error");
+            .expect_err("Should result in error");
 
         mock.assert();
         assert_matches!(
@@ -270,8 +266,7 @@ mod test {
         let result = create_api(&url, "", "")
             .post_initialise()
             .await
-            .err()
-            .expect("Should result in error");
+            .expect_err("Should result in error");
 
         mock.assert();
 
@@ -313,8 +308,7 @@ mod test {
         let result = create_api(&url, "", "")
             .post_initialise()
             .await
-            .err()
-            .expect("Should result in error");
+            .expect_err("Should result in error");
 
         mock.assert();
 
