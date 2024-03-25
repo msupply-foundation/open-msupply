@@ -10,7 +10,7 @@ pub fn print_qr_code(
     settings: LabelPrinterSettingNode,
     code: String,
     message: Option<String>,
-) -> Result<()> {
+) -> Result<String> {
     let qr_height = 133; // approx height in dots for the magnification factor of 4 when printing a uuid
     let vertical_offset = ((settings.label_height - qr_height) / 2) as i32;
     let formatted_message = match message {
@@ -41,4 +41,9 @@ pub fn print_qr_code(
     );
     let printer = Jetdirect::new(settings.address, settings.port);
     printer.send_string(payload, Mode::Print)
+}
+
+pub fn host_status(settings: LabelPrinterSettingNode) -> Result<String> {
+    let printer = Jetdirect::new(settings.address, settings.port);
+    printer.send_string("~HS".to_string(), Mode::Sgd)
 }

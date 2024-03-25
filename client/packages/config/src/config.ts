@@ -30,6 +30,7 @@ export const Environment = {
   PLUGIN_URL: pluginUrl,
   UPLOAD_FRIDGE_TAG: `${apiHost}/fridge-tag`,
   PRINT_LABEL_QR: `${apiHost}/print/label-qr`,
+  PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
 };
 
 export default Environment;
