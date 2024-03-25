@@ -1,6 +1,4 @@
 use repository::{ChangelogRepository, SyncBufferRowRepository};
-
-use simple_log::warn;
 use util::{format_error, is_central_server};
 
 use crate::{
@@ -70,7 +68,7 @@ pub async fn pull(
     .map(SyncRecordV6::from)
     .collect();
 
-    warn!("Sending records as central server: {:#?}", records);
+    log::debug!("Sending records as central server: {:#?}", records);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -89,8 +87,6 @@ pub async fn push(
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    warn!("Push!: {:#?}", batch);
-    // TODO consolidate at top level ? As middleware ?
     if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
@@ -101,7 +97,7 @@ pub async fn push(
         .await
         .map_err(Error::from)?;
 
-    warn!("Receiving records as central server: {:#?}", batch);
+    log::debug!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
         records,
