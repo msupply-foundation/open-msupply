@@ -227,7 +227,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     { label: t('label.upload'), description: '', clickable: true },
     { label: t('label.review'), description: '', clickable: true },
     {
-      label: t('label.import-cce'),
+      label: t('label.import'),
       description: '',
       clickable: false,
     },
