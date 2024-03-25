@@ -48,7 +48,6 @@ export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { _
 
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
-  __typename
   assetCategoryId
   assetClassId
   assetTypeId

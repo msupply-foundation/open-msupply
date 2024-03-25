@@ -1,5 +1,4 @@
 fragment AssetCatalogueItem on AssetCatalogueItemNode {
-  __typename
   assetCategoryId
   assetClassId
   assetTypeId
