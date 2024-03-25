@@ -132,23 +132,6 @@ impl Upsert for AssetRow {
     }
 
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        // If the store has changed for this asset, we need to add an extra changelog row with the old store_id
-        // as well as the one with the new store_id, so that sync will send the new record to the old site.
-
-        // Get the existing asset
-        let existing_asset = AssetRowRepository::new(con).find_one_by_id(&self.id)?;
-        if let Some(existing_asset) = existing_asset {
-            if existing_asset.store_id != self.store_id {
-                // The store has changed
-                let _change_log_id = AssetRowRepository::new(con).insert_changelog(
-                    self.id.to_owned(),
-                    ChangelogAction::Upsert,
-                    Some(existing_asset.clone()),
-                )?;
-            }
-        }
-
-        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
         let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
