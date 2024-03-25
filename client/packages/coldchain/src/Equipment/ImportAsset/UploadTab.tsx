@@ -96,18 +96,25 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         importRow.id = FnUtils.generateUUID();
         importRow.isUpdate = false;
       }
-      if (row[t('label.asset-number')] !== undefined) {
+      if (
+        row[t('label.asset-number')] &&
+        row[t('label.asset-number')].trim() != ''
+      ) {
         importRow.assetNumber = row[t('label.asset-number')];
       } else {
         rowErrors.push(
-          t('error.field-must-be-specified', { field: 'AssetNumber' })
+          t('error.field-must-be-specified', { field: 'Asset Number' })
         );
       }
-      if (row[t('label.catalogue-item-code')] !== undefined) {
+      if (
+        row[t('label.catalogue-item-code')] !== undefined &&
+        row[t('label.catalogue-item-code')].trim() != ''
+      ) {
+        console.info('working with empty string');
         importRow.catalogueItemCode = row[t('label.catalogue-item-code')];
       } else {
         rowErrors.push(
-          t('error.field-must-be-specified', { field: 'CatalogueItemId' })
+          t('error.field-must-be-specified', { field: 'Catalogue Item Code' })
         );
       }
       // notes aren't essential for bulk upload
@@ -139,24 +146,16 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       <Stack spacing={2}>
         <Upload onUpload={csvImport} />
         <Paper>
-          <Typography variant="h4" textAlign="center">
-            {'import this'}
-          </Typography>
-          {/* <Typography>{t('text.importing-manufacturers-p1')}</Typography> */}
-          <Typography>
+          <Typography variant="h5" textAlign="center">
             <Link
               onClick={() => {
                 csvExample();
               }}
               to={''}
             >
-              {'download example'}
+              {t('heading.download-example')}
             </Link>
           </Typography>
-          {/* <Typography>{t('text.importing-manufacturers-p2')}</Typography>
-          <Typography>{t('text.importing-manufacturers-p3')}</Typography>
-          <Typography>{t('text.importing-manufacturers-p4')}</Typography>
-          <Typography>{t('text.importing-manufacturers-p5')}</Typography> */}
         </Paper>
       </Stack>
     </ImportPanel>

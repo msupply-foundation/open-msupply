@@ -38,7 +38,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         label: 'label.asset-number',
       },
       {
-        key: 'catalogue Item Code',
+        key: 'catalogueItemCode',
         width: 60,
         sortable: false,
         label: 'label.catalogue-item-code',
