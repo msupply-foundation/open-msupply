@@ -1,4 +1,4 @@
-import { useParams } from '@openmsupply-client/common';
+import { useMutation, useParams } from '@openmsupply-client/common';
 import { useQuery } from 'react-query';
 import { useAssetApi } from '../utils/useAssetApi';
 
@@ -21,4 +21,11 @@ export const useAssetById = (assetId: string | undefined) => {
       enabled: !!assetId,
     }
   );
+};
+
+export const useFetchAssetById = () => {
+  const api = useAssetApi();
+  return useMutation(api.get.byId, {
+    onError: () => {},
+  });
 };

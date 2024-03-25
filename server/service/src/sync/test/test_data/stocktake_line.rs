@@ -5,9 +5,9 @@ use crate::sync::{
 use repository::StocktakeLineRow;
 use serde_json::json;
 
-const TABLE_NAME: &'static str = "Stock_take_lines";
+const TABLE_NAME: &str = "Stock_take_lines";
 
-const STOCKTAKE_LINE_1: (&'static str, &'static str) = (
+const STOCKTAKE_LINE_1: (&str, &str) = (
     "0a3de900f0d211eb8dddb54df6d741bc",
     r#"{
       "Batch": "item_c_batch_a",
@@ -80,7 +80,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const STOCKTAKE_LINE_OM_FIELDS: (&'static str, &'static str) = (
+const STOCKTAKE_LINE_OM_FIELDS: (&str, &str) = (
     "0a3de900f0d211eb8dddb54df6d741b1",
     r#"{
       "Batch": "item_c_batch_a",

@@ -306,12 +306,12 @@ mod test {
                             r.address1 = Some("address1".to_string());
                             r.address2 = Some("address2".to_string());
                             r.created_datetime = Some(
-                                NaiveDate::from_ymd_opt(2022, 05, 18)
+                                NaiveDate::from_ymd_opt(2022, 5, 18)
                                     .unwrap()
-                                    .and_hms_opt(12, 07, 12)
+                                    .and_hms_opt(12, 7, 12)
                                     .unwrap(),
                             );
-                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
+                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap());
                             r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
                         }),
                         name_store_join_row: None,

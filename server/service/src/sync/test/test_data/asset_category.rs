@@ -3,9 +3,9 @@ use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &'static str = "asset_category";
+const TABLE_NAME: &str = "asset_category";
 
-const ASSET_CATEGORY1: (&'static str, &'static str) = (
+const ASSET_CATEGORY1: (&str, &str) = (
     "035d2847-1eec-4595-a161-b7cfefc17381",
     r#"{
         "id": "035d2847-1eec-4595-a161-b7cfefc17381",

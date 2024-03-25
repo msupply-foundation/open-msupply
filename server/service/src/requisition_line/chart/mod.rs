@@ -266,7 +266,7 @@ mod test {
                 r.requisition_id = requisition().id;
                 r.item_link_id = mock_item_a().id;
                 r.snapshot_datetime = Some(
-                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -313,7 +313,7 @@ mod test {
             })
             .join(inline_edit(&consumption_point(), |mut u| {
                 u.invoices[0].picked_datetime = Some(
-                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -363,7 +363,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 u.invoices[0].picked_datetime = Some(
-                    NaiveDate::from_ymd_opt(2020, 09, 25)
+                    NaiveDate::from_ymd_opt(2020, 9, 25)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -373,7 +373,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 u.invoices[0].picked_datetime = Some(
-                    NaiveDate::from_ymd_opt(2020, 09, 10)
+                    NaiveDate::from_ymd_opt(2020, 9, 10)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -383,7 +383,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 u.invoices[0].picked_datetime = Some(
-                    NaiveDate::from_ymd_opt(2020, 08, 07)
+                    NaiveDate::from_ymd_opt(2020, 8, 7)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -393,7 +393,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 u.invoices[0].picked_datetime = Some(
-                    NaiveDate::from_ymd_opt(2020, 07, 03)
+                    NaiveDate::from_ymd_opt(2020, 7, 3)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -403,7 +403,7 @@ mod test {
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
                 u.invoices[0].picked_datetime = Some(
-                    NaiveDate::from_ymd_opt(2020, 06, 20)
+                    NaiveDate::from_ymd_opt(2020, 6, 20)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap(),
@@ -441,7 +441,7 @@ mod test {
                     // 2020-07-01 to 2020-11-30
                     average_monthly_consumption: (30 + 40 + 5 + 5 + 20 + 15 + 40) as f64
                         / (NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
-                            - NaiveDate::from_ymd_opt(2020, 07, 01).unwrap())
+                            - NaiveDate::from_ymd_opt(2020, 7, 1).unwrap())
                         .num_days() as f64
                         * NUMBER_OF_DAYS_IN_A_MONTH,
                     date: NaiveDate::from_ymd_opt(2020, 11, 30).unwrap()
@@ -452,7 +452,7 @@ mod test {
                     // 2020-08-01 to 2020-12-31
                     average_monthly_consumption: (10 + 30 + 40 + 5 + 5 + 20 + 15) as f64
                         / (NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
-                            - NaiveDate::from_ymd_opt(2020, 08, 01).unwrap())
+                            - NaiveDate::from_ymd_opt(2020, 8, 1).unwrap())
                         .num_days() as f64
                         * NUMBER_OF_DAYS_IN_A_MONTH,
                     date: NaiveDate::from_ymd_opt(2020, 12, 31).unwrap()
@@ -463,17 +463,17 @@ mod test {
                     // 2020-09-01 to 2021-01-31
                     // average_monthly_consumption: 25.657894736842106,
                     average_monthly_consumption: (20 + 10 + 30 + 40 + 5 + 5 + 20) as f64
-                        / (NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
-                            - NaiveDate::from_ymd_opt(2020, 09, 01).unwrap())
+                        / (NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
+                            - NaiveDate::from_ymd_opt(2020, 9, 1).unwrap())
                         .num_days() as f64
                         * NUMBER_OF_DAYS_IN_A_MONTH,
-                    date: NaiveDate::from_ymd_opt(2021, 01, 31).unwrap()
+                    date: NaiveDate::from_ymd_opt(2021, 1, 31).unwrap()
                 },
                 ConsumptionHistory {
                     // This is populated by requisition line amc
                     consumption: 333,
                     average_monthly_consumption: 333.0,
-                    date: NaiveDate::from_ymd_opt(2021, 02, 28).unwrap()
+                    date: NaiveDate::from_ymd_opt(2021, 2, 28).unwrap()
                 },
             ]
         );

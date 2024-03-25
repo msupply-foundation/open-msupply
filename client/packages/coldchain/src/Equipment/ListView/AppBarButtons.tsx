@@ -18,6 +18,7 @@ import {
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
+import { AddFromScannerButton } from './AddFromScannerButton';
 
 export const AppBarButtonsComponent = ({
   modalController,
@@ -58,7 +59,7 @@ export const AppBarButtonsComponent = ({
           label={t('button.new-asset')}
           onClick={onAdd}
         />
-
+        <AddFromScannerButton />
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}

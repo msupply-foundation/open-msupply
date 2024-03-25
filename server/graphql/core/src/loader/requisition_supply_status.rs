@@ -72,7 +72,7 @@ impl Loader<String> for RequisitionLinesRemainingToSupplyLoader {
             let requisition_line = supply_status.requisition_line;
             let list = result
                 .entry(requisition_line.requisition_line_row.requisition_id.clone())
-                .or_insert_with(|| Vec::<RequisitionLine>::new());
+                .or_default();
             list.push(requisition_line);
         }
         Ok(result)

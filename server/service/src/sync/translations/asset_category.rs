@@ -18,11 +18,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 pub(crate) struct AssetCategoryTranslation;
 
 impl SyncTranslation for AssetCategoryTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "asset_category"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![AssetClassTranslation.table_name()]
     }
 
@@ -69,7 +69,7 @@ impl SyncTranslation for AssetCategoryTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&row)?,
+            serde_json::to_value(row)?,
         ))
     }
 }

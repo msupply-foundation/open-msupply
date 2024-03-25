@@ -49,11 +49,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct StockLineTranslation;
 impl SyncTranslation for StockLineTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "item_line"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             ItemTranslation.table_name(),
             NameTranslation.table_name(),
@@ -147,14 +147,14 @@ impl SyncTranslation for StockLineTranslation {
             cost_price: cost_price_per_pack,
             sell_price: sell_price_per_pack,
             note,
-            supplier_id: supplier_name_row.and_then(|supplier| Some(supplier.id)),
+            supplier_id: supplier_name_row.map(|supplier| supplier.id),
             barcode_id,
         };
 
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 
