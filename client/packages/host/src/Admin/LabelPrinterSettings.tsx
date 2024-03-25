@@ -6,6 +6,7 @@ import {
   ButtonWithIcon,
   Box,
   NumericTextInput,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import { CheckIcon, SaveIcon } from '@common/icons';
 import { useTranslation } from '@common/intl';
@@ -26,6 +27,7 @@ export const LabelPrinterSettings = () => {
   const { mutateAsync: updateSettings } =
     useHost.settings.updateLabelPrinterSettings();
   const { data: settings } = useHost.settings.labelPrinterSettings();
+  const [isTesting, setIsTesting] = React.useState(false);
   const [draft, setDraft] = React.useState<LabelPrinterSettings>({
     address: '',
     labelHeight: 290,
@@ -46,13 +48,15 @@ export const LabelPrinterSettings = () => {
   };
 
   const test = () => {
+    setIsTesting(true);
     fetch(Environment.PRINT_LABEL_TEST, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     })
-      .then(response => {
+      .then(async response => {
         if (response.status !== 200) {
-          throw new Error('Server error');
+          const text = await response.text();
+          throw new Error(text);
         }
         return response.json();
       })
@@ -65,6 +69,9 @@ export const LabelPrinterSettings = () => {
       })
       .catch(e => {
         error(`${t('error.unable-to-connect-to-printer')} ${e.message}`)();
+      })
+      .finally(() => {
+        setIsTesting(false);
       });
   };
 
@@ -129,14 +136,15 @@ export const LabelPrinterSettings = () => {
         title={t('settings.printer-label-width')}
       />
       <Box display="flex" justifyContent="flex-end" gap={1}>
-        <ButtonWithIcon
-          Icon={<CheckIcon />}
-          label={t('button.test')}
-          variant="contained"
-          sx={{ fontSize: '12px' }}
+        <LoadingButton
+          startIcon={<CheckIcon />}
+          isLoading={isTesting}
           onClick={test}
           disabled={isInvalid}
-        />
+          sx={{ fontSize: '12px' }}
+        >
+          {t('button.test')}
+        </LoadingButton>
         <ButtonWithIcon
           Icon={<SaveIcon />}
           label={t('button.save')}

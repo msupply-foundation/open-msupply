@@ -1,10 +1,17 @@
 use anyhow::Result;
-use std::io::Write;
+use std::net::IpAddr;
+use std::str::FromStr;
 use std::time::Duration;
+use std::{io::Write, net::SocketAddr};
 use telnet::{Event, Telnet};
 
+const PRINTER_COMMAND_TIMEOUT: Duration = Duration::new(0, 500);
+const PRINTER_CONNECTION_TIMEOUT: Duration = Duration::new(5, 0);
+
+// Note: this file is mostly taken from https://github.com/fearful-symmetry/zebrasend/blob/main/src/cmd/jetdirect.rs
+
 pub struct Jetdirect {
-    pub addr: String,
+    addr: String,
     port: u16,
 }
 
@@ -60,8 +67,13 @@ impl Jetdirect {
     }
 
     pub fn send_string(&self, data: String, mode: Mode) -> Result<String> {
-        let mut telnet = Telnet::connect((self.addr.clone(), self.port), 512)?;
-        self.send_command(data, &mut telnet, mode, Duration::new(0, 500))
+        let ip_addr = IpAddr::from_str(&self.addr).expect("Invalid IP address");
+
+        println!("Parsed IP address: {:?}", ip_addr);
+
+        let socket = SocketAddr::new(ip_addr, self.port);
+        let mut telnet = Telnet::connect_timeout(&socket, 512, PRINTER_CONNECTION_TIMEOUT)?;
+        self.send_command(data, &mut telnet, mode, PRINTER_COMMAND_TIMEOUT)
     }
 }
 
