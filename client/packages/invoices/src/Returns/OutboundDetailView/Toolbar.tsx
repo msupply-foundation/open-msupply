@@ -9,18 +9,23 @@ import {
   useTranslation,
   DropdownMenuItem,
   DeleteIcon,
+  useIsGrouped,
+  Switch,
 } from '@openmsupply-client/common';
 import { OutboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
-  const onDelete = useReturns.document.deleteOutboundRows();
   const { debouncedMutateAsync } = useReturns.document.updateOutboundReturn();
 
   const { bufferedState, setBufferedState } =
     useReturns.document.outboundReturn();
-  const { otherPartyName, theirReference, id } = bufferedState ?? {};
-  // const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundShipment');
+  const { otherPartyName, theirReference, id } = bufferedState ?? { id: '' };
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundReturn');
+
+  const onDelete = useReturns.lines.deleteSelectedOutboundLines({
+    returnId: id,
+  });
 
   const update = (data: Partial<OutboundReturnFragment>) => {
     if (!id) return;
@@ -71,7 +76,7 @@ export const Toolbar: FC = () => {
           justifyContent="flex-end"
           alignItems="center"
         >
-          {/* <Box sx={{ marginRight: 2 }}>
+          <Box sx={{ marginRight: 2 }}>
             <Switch
               label={t('label.group-by-item')}
               onChange={toggleIsGrouped}
@@ -79,7 +84,7 @@ export const Toolbar: FC = () => {
               size="small"
               color="secondary"
             />
-          </Box> */}
+          </Box>
           <DropdownMenu label={t('label.actions')}>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}

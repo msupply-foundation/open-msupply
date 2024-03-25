@@ -6,6 +6,7 @@ import { AuthError } from '../authentication/AuthContext';
 export type GroupByItem = {
   outboundShipment?: boolean;
   inboundShipment?: boolean;
+  outboundReturn?: boolean;
   inboundReturn?: boolean;
   stocktake?: boolean;
 };
