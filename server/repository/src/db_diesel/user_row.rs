@@ -151,6 +151,20 @@ pub fn unknown_user() -> User {
     }
 }
 
+impl Upsert for UserAccountRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UserAccountRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserAccountRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{
