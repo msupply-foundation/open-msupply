@@ -50,10 +50,7 @@ impl StocktakeLineNode {
         let location_option: Option<repository::location::Location> =
             loader.load_one(location_id.clone()).await.ok().flatten();
 
-        match location_option {
-            Some(location) => Some(LocationNode::from_domain(location)),
-            None => None,
-        }
+        location_option.map(LocationNode::from_domain)
     }
 
     pub async fn comment(&self) -> Option<String> {

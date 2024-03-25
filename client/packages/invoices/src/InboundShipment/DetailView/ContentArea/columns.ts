@@ -5,11 +5,11 @@ import {
   useColumns,
   Column,
   ArrayUtils,
-  useCurrency,
   useUrlQueryParams,
   ColumnAlign,
   TooltipTextCell,
   useColumnUtils,
+  CurrencyCell,
 } from '@openmsupply-client/common';
 import { PackVariantCell } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
@@ -24,9 +24,8 @@ export const useInboundShipmentColumns = () => {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
-    isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
+    isInboundPlaceholderRow(row) ? 0 : row.sellPricePerPack;
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
@@ -190,6 +189,7 @@ export const useInboundShipmentColumns = () => {
         key: 'sellPricePerPack',
         align: ColumnAlign.Right,
         width: 120,
+        Cell: CurrencyCell,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
             const { lines } = rowData;
@@ -205,9 +205,11 @@ export const useInboundShipmentColumns = () => {
         getSortValue: rowData => {
           if ('lines' in rowData) {
             const { lines } = rowData;
-            return c(
-              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-            ).format();
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'sellPricePerPack',
+              ''
+            );
           } else {
             return getSellPrice(rowData);
           }

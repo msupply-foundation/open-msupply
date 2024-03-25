@@ -6,9 +6,9 @@ use chrono::NaiveDate;
 use repository::{ActivityLogRow, ActivityLogType};
 use serde_json::json;
 
-const TABLE_NAME: &'static str = "om_activity_log";
+const TABLE_NAME: &str = "om_activity_log";
 
-const ACTIVITY_LOG_1: (&'static str, &'static str) = (
+const ACTIVITY_LOG_1: (&str, &str) = (
     "log_d",
     r#"{
     "ID": "log_d",
@@ -22,7 +22,7 @@ const ACTIVITY_LOG_1: (&'static str, &'static str) = (
     }"#,
 );
 
-const ACTIVITY_LOG_2: (&'static str, &'static str) = (
+const ACTIVITY_LOG_2: (&str, &str) = (
     "log_e",
     r#"{
     "ID": "log_e",

@@ -194,7 +194,7 @@ mod test {
                 nodes {
                   id
                   notes
-                  asset_number
+                  assetNumber
                 }
                 totalCount
               }
@@ -221,7 +221,7 @@ mod test {
                       {
                           "id": "test_id",
                           "notes": "test_note",
-                          "asset_number": "test_asset_number",
+                          "assetNumber": "test_asset_number",
                       },
                   ],
                   "totalCount": 1

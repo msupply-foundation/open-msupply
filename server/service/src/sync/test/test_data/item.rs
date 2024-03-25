@@ -1,9 +1,9 @@
 use crate::sync::{test::TestSyncIncomingRecord, translations::item::ordered_simple_json};
 use repository::{ItemRow, ItemRowDelete, ItemRowType};
 
-const TABLE_NAME: &'static str = "item";
+const TABLE_NAME: &str = "item";
 
-const ITEM_1: (&'static str, &'static str) = (
+const ITEM_1: (&str, &str) = (
     "8F252B5884B74888AAB73A0D42C09E7A",
     r#"{
     "ID": "8F252B5884B74888AAB73A0D42C09E7A",
@@ -83,7 +83,7 @@ const ITEM_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const ITEM_2: (&'static str, &'static str) = (
+const ITEM_2: (&str, &str) = (
     "8F252B5884B74888AAB73A0D42C09E7F",
     r#"{
     "ID": "8F252B5884B74888AAB73A0D42C09E7F",

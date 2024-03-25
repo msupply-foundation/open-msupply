@@ -208,14 +208,11 @@ pub fn print_report(
     })?;
 
     println!("> Send report print request ");
-    let file_name = output_filename
-        .as_ref()
-        .map(|p| {
-            Path::new(&p)
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-        })
-        .flatten();
+    let file_name = output_filename.as_ref().and_then(|p| {
+        Path::new(&p)
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+    });
     let file_id = print_request(
         gql_url.clone(),
         &token,

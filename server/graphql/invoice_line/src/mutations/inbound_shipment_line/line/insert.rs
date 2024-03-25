@@ -431,7 +431,7 @@ mod test {
                     batch: Some("batch".to_string()),
                     cost_price_per_pack: 1.1,
                     sell_price_per_pack: 2.2,
-                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 01, 01).unwrap()),
+                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
                     tax: Some(5.0)

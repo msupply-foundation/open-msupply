@@ -22,7 +22,7 @@ impl Logout {
 pub struct MissingAuthToken;
 #[Object]
 impl MissingAuthToken {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Auth token was not provided"
     }
 }
@@ -30,7 +30,7 @@ impl MissingAuthToken {
 pub struct ExpiredSignature;
 #[Object]
 impl ExpiredSignature {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Provided token is expired"
     }
 }
@@ -38,7 +38,7 @@ impl ExpiredSignature {
 pub struct InvalidToken;
 #[Object]
 impl InvalidToken {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Provided token is invalid"
     }
 }
@@ -46,7 +46,7 @@ impl InvalidToken {
 pub struct TokenInvalided;
 #[Object]
 impl TokenInvalided {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Token has been invalidated by the server"
     }
 }
@@ -54,7 +54,7 @@ impl TokenInvalided {
 pub struct NotAnApiToken;
 #[Object]
 impl NotAnApiToken {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Not an api token"
     }
 }

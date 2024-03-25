@@ -17,7 +17,7 @@ pub struct Sensor {
     pub sensor_row: SensorRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct SensorFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -111,13 +111,7 @@ fn to_domain(sensor_row: SensorRow) -> Sensor {
 
 impl SensorFilter {
     pub fn new() -> SensorFilter {
-        SensorFilter {
-            id: None,
-            name: None,
-            serial: None,
-            is_active: None,
-            store_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

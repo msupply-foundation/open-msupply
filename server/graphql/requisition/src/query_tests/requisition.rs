@@ -202,7 +202,7 @@ mod graphql {
             assert_eq!(
                 created_datetime,
                 Some(DatetimeFilter::equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 01)
+                    NaiveDate::from_ymd_opt(2021, 1, 1)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
@@ -211,7 +211,7 @@ mod graphql {
             assert_eq!(
                 sent_datetime,
                 Some(DatetimeFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 02)
+                    NaiveDate::from_ymd_opt(2021, 1, 2)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
@@ -220,7 +220,7 @@ mod graphql {
             assert_eq!(
                 finalised_datetime,
                 Some(DatetimeFilter::before_or_equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 03)
+                    NaiveDate::from_ymd_opt(2021, 1, 3)
                         .unwrap()
                         .and_hms_opt(0, 0, 0)
                         .unwrap()
@@ -229,7 +229,7 @@ mod graphql {
             assert_eq!(
                 expected_delivery_date,
                 Some(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2021, 01, 04).unwrap()
+                    NaiveDate::from_ymd_opt(2021, 1, 4).unwrap()
                 ))
             );
             assert_eq!(name, Some(StringFilter::like("like_other_party_name")));

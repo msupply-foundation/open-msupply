@@ -23,11 +23,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct MasterListNameJoinTranslation;
 impl SyncTranslation for MasterListNameJoinTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "list_master_name_join"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             MasterListTranslation.table_name(),
@@ -40,7 +40,7 @@ impl SyncTranslation for MasterListNameJoinTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterNameJoinRow>(&sync_record.data)?;
-        if data.name_ID == "" {
+        if data.name_ID.is_empty() {
             return Ok(PullTranslateResult::Ignored("Missing name_id".to_string()));
         }
 

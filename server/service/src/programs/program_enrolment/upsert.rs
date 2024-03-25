@@ -201,10 +201,10 @@ fn validate(
         )])
     })?;
 
-    if input.parent.is_none() {
-        if !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)? {
-            return Err(UpsertProgramEnrolmentError::ProgramEnrolmentExists);
-        }
+    if input.parent.is_none()
+        && !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)?
+    {
+        return Err(UpsertProgramEnrolmentError::ProgramEnrolmentExists);
     }
 
     Ok((program_enrolment_json, document_registry, program_row))

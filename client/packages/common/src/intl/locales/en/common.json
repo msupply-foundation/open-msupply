@@ -164,7 +164,7 @@
   "label.class": "Class",
   "label.clear-filter": "Clear filter",
   "label.clear-selection": "Clear selection",
-  "label.click-to-sort": "Click to sort by this column",
+  "label.click-to-sort": "Click to sort by ",
   "label.client": "Client",
   "label.code": "Code",
   "label.collapse": "Collapse",

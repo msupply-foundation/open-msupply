@@ -16,7 +16,7 @@ pub fn get_asset_logs(
     sort: Option<AssetLogSort>,
 ) -> Result<ListResult<AssetLog>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = AssetLogRepository::new(&connection);
+    let repository = AssetLogRepository::new(connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
