@@ -248,7 +248,7 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result as u64)
     }
 
-    pub fn outgoing_sync_records(
+    pub fn outgoing_sync_records_from_central(
         &self,
         earliest: u64,
         batch_size: u32,
@@ -284,7 +284,7 @@ impl<'a> ChangelogRepository<'a> {
     /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
     /// This looks up associated records to decide if change log should be sent to the site or not
     /// Update this method when adding new record types to the system
-    pub fn count_outgoing_sync_records(
+    pub fn count_outgoing_sync_records_from_central(
         &self,
         earliest: u64,
         sync_site_id: i32,
