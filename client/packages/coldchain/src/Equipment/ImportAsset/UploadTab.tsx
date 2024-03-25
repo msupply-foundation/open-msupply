@@ -47,6 +47,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     FileUtils.exportCSV(csv, t('filename.cce'));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const csvImport = (files: any) => {
     setErrorMessage('');
     EquipmentBuffer.length = 0; // Reset the import buffer
@@ -75,6 +76,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     error(t('messages.error-no-file-selected'));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const processUploadedDataChunk = (data: any) => {
     if (!data.data || !Array.isArray(data.data)) {
       // Don't think this is likely to happen...
