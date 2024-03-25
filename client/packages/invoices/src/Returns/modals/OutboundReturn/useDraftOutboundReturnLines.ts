@@ -12,11 +12,13 @@ export const useDraftOutboundReturnLines = ({
   supplierId,
   itemId,
   returnId,
+  inboundShipmentId,
 }: {
   stockLineIds: string[];
   supplierId: string;
   itemId?: string;
   returnId?: string;
+  inboundShipmentId?: string;
 }) => {
   const [draftLines, setDraftLines] = React.useState<OutboundReturnLineNode[]>(
     []
@@ -62,6 +64,7 @@ export const useDraftOutboundReturnLines = ({
       await insert({
         id: FnUtils.generateUUID(),
         supplierId,
+        inboundShipmentId,
         outboundReturnLines,
       });
     } else {
