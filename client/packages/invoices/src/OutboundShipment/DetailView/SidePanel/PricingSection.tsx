@@ -235,7 +235,7 @@ export const PricingSectionComponent = () => {
           currencyRate={currencyRate}
           onChange={value => {
             update({
-              currency: value,
+              currency: value ?? undefined,
             });
           }}
         />
