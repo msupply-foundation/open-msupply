@@ -3978,6 +3978,7 @@ export type OutboundInvoiceCounts = {
 
 export type OutboundReturnInput = {
   id: Scalars['String']['input'];
+  inboundShipmentId?: InputMaybe<Scalars['String']['input']>;
   outboundReturnLines: Array<OutboundReturnLineInput>;
   supplierId: Scalars['String']['input'];
 };

@@ -128,6 +128,7 @@ export const DetailView: FC = () => {
               stockLineIds={stockLineIds || []}
               supplierId={data.otherParty.id}
               modalMode={returnModalMode}
+              inboundShipmentId={data.id}
             />
           )}
         </TableProvider>
