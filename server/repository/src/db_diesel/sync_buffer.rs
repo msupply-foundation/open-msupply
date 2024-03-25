@@ -194,7 +194,7 @@ impl<'a> SyncBufferRepository<'a> {
 
 type BoxedSyncBufferQuery = IntoBoxed<'static, sync_buffer::table, DBType>;
 
-fn create_filtered_query<'a>(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQuery {
+fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQuery {
     let mut query = sync_buffer_dsl::sync_buffer.into_boxed();
 
     if let Some(f) = filter {

@@ -157,8 +157,8 @@ pub struct NameRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-fn insert_or_ignore_name_link<'a>(
-    connection: &'a StorageConnection,
+fn insert_or_ignore_name_link(
+    connection: &StorageConnection,
     name_row: &NameRow,
 ) -> Result<(), RepositoryError> {
     let name_link_row = NameLinkRow {
