@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
 import { EquipmentImportTab } from './ImportTab';
@@ -90,7 +90,11 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string>(() => '');
   const [importProgress, setImportProgress] = useState(0);
   const [importErrorCount, setImportErrorCount] = useState(0);
-  const { data: catalogueItemData } = useAssetData.document.list();
+  const {
+    data: catalogueItemData,
+    fetchAsync,
+    isLoading,
+  } = useAssetData.document.listAll();
 
   const { mutateAsync: insertAssets } = useAssets.document.insert();
   const { mutateAsync: updateAssets } = useAssets.document.update();
@@ -98,6 +102,10 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
   );
+
+  useEffect(() => {
+    fetchAsync();
+  }, [fetchAsync]);
 
   const csvExport = async () => {
     const csv = importEquipmentToCsv(
@@ -208,7 +216,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   };
 
   const importNotReady =
-    bufferedEquipment.length == 0 || errorMessage.length > 0;
+    bufferedEquipment.length == 0 || errorMessage.length > 0 || isLoading;
   const exportNotReady = !(
     bufferedEquipment.length >= 0 && errorMessage.length > 0
   );

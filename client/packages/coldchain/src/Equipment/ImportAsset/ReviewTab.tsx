@@ -11,7 +11,6 @@ export const EquipmentReviewTab: FC<ImportPanel & EquipmentReviewTabProps> = ({
   tab,
   uploadedRows,
 }) => {
-  console.info('rows:', uploadedRows);
   return (
     <ImportPanel tab={tab}>
       <ImportReviewDataTable importRows={uploadedRows} />
