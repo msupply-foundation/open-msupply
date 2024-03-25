@@ -11,6 +11,7 @@ import {
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
+import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
@@ -64,7 +65,7 @@ export const SidePanelComponent = () => {
       }
     >
       <AdditionalInfoSection />
-      {/* <RelatedDocumentsSection /> */}
+      <RelatedDocumentsSection />
       {/* <PricingSection /> */}
       {/* {isTransfer && <TransportSection />} */}
     </DetailPanelPortal>

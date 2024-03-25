@@ -60,6 +60,15 @@ fragment InboundReturn on InvoiceNode {
     id
   }
   theirReference
+
+  originalShipment {
+    __typename
+    invoiceNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
 }
 
 fragment OutboundReturnDetailRow on InvoiceLineNode {

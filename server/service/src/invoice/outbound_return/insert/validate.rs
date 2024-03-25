@@ -1,14 +1,9 @@
-use repository::InvoiceRow;
-use repository::InvoiceRowStatus;
-use repository::InvoiceRowType;
-use repository::Name;
-use repository::StorageConnection;
+use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, Name, StorageConnection};
 
-use crate::invoice::check_invoice_does_not_exists;
-use crate::invoice::check_invoice_exists;
-use crate::invoice::check_invoice_type;
-use crate::invoice::check_store;
-use crate::invoice::InvoiceAlreadyExistsError;
+use crate::invoice::{
+    check_invoice_does_not_exists, check_invoice_exists, check_invoice_type, check_store,
+    InvoiceAlreadyExistsError,
+};
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
 
 use super::{InsertOutboundReturn, InsertOutboundReturnError};
