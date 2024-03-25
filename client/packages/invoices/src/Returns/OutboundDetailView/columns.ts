@@ -1,8 +1,5 @@
 import {
   useColumns,
-  //   getRowExpandColumn,
-  //   getNotePopoverColumn,
-  ColumnAlign,
   GenericColumnKey,
   SortBy,
   Column,
@@ -10,33 +7,36 @@ import {
   TooltipTextCell,
   useColumnUtils,
   NumberCell,
+  getRowExpandColumn,
+  ArrayUtils,
+  ColumnAlign,
 } from '@openmsupply-client/common';
-import { OutboundReturnDetailRowFragment } from '../api';
+import { OutboundReturnLineFragment } from '../api';
+import { OutboundReturnItem } from '../../types';
 
 interface UseOutboundColumnOptions {
-  sortBy: SortBy<OutboundReturnDetailRowFragment>;
-  onChangeSortBy: (column: Column<OutboundReturnDetailRowFragment>) => void;
+  sortBy: SortBy<OutboundReturnLineFragment | OutboundReturnItem>;
+  onChangeSortBy: (
+    column: Column<OutboundReturnLineFragment | OutboundReturnItem>
+  ) => void;
 }
 
-// const expansionColumn = getRowExpandColumn<
-//   StockOutLineFragment | StockOutItem
-// >();
+const expansionColumn = getRowExpandColumn<
+  OutboundReturnLineFragment | OutboundReturnItem
+>();
 // const notePopoverColumn = getNotePopoverColumn<
 //   StockOutLineFragment | StockOutItem
 // >();
 
-const getPackSize = (row: OutboundReturnDetailRowFragment) => row.packSize;
-
-const getNumberOfPacks = (row: OutboundReturnDetailRowFragment) =>
-  row.numberOfPacks;
-
-const getUnitQuantity = (row: OutboundReturnDetailRowFragment) =>
+const getUnitQuantity = (row: OutboundReturnLineFragment) =>
   row.packSize * row.numberOfPacks;
 
 export const useOutboundReturnColumns = ({
   sortBy,
   onChangeSortBy,
-}: UseOutboundColumnOptions): Column<OutboundReturnDetailRowFragment>[] => {
+}: UseOutboundColumnOptions): Column<
+  OutboundReturnLineFragment | OutboundReturnItem
+>[] => {
   const { c } = useCurrency();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
@@ -66,22 +66,32 @@ export const useOutboundReturnColumns = ({
       [
         'itemCode',
         {
-          getSortValue: (row: OutboundReturnDetailRowFragment) =>
+          getSortValue: row =>
             getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemCode'] },
               { path: ['itemCode'], default: '' },
             ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['itemCode'], default: '' }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemCode'] },
+              { path: ['itemCode'], default: '' },
+            ]),
         },
       ],
       [
         'itemName',
         {
           Cell: TooltipTextCell,
-          getSortValue: (row: OutboundReturnDetailRowFragment) =>
-            getColumnPropertyAsString(row, [{ path: ['itemName'] }]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
           accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [{ path: ['itemName'] }]),
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
         },
       ],
       //   [
@@ -136,31 +146,57 @@ export const useOutboundReturnColumns = ({
         'numberOfPacks',
         {
           Cell: NumberCell,
-          getSortValue: row => {
-            return getNumberOfPacks(row);
-          },
           accessor: ({ rowData }) => {
-            return getNumberOfPacks(rowData);
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
+            } else {
+              return rowData.numberOfPacks;
+            }
           },
         },
       ],
       [
         'packSize',
         {
-          getSortValue: row => {
-            return getPackSize(row) ?? '';
-          },
-          accessor: ({ rowData }) => {
-            return getPackSize(rowData);
-          },
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'packSize'], default: '' },
+              { path: ['packSize'], default: '' },
+            ]),
         },
       ],
       [
         'unitQuantity',
         {
-          Cell: NumberCell,
           accessor: ({ rowData }) => {
-            return getUnitQuantity(rowData);
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
+          },
+          getSortValue: rowData => {
+            if ('lines' in rowData) {
+              const { lines } = rowData;
+              return ArrayUtils.getUnitQuantity(lines);
+            } else {
+              return getUnitQuantity(rowData);
+            }
           },
         },
       ],
@@ -169,10 +205,34 @@ export const useOutboundReturnColumns = ({
         key: 'sellPricePerUnit',
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
-          return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
+          if ('lines' in rowData) {
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                0
+              )
+            ).format();
+          } else {
+            return c(
+              (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            ).format();
+          }
         },
         getSortValue: rowData => {
-          return c((rowData.sellPricePerPack ?? 0) / rowData.packSize).format();
+          if ('lines' in rowData) {
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+                0
+              )
+            ).format();
+          } else {
+            return c(
+              (rowData.sellPricePerPack ?? 0) / rowData.packSize
+            ).format();
+          }
         },
       },
       {
@@ -180,20 +240,43 @@ export const useOutboundReturnColumns = ({
         key: 'lineTotal',
         align: ColumnAlign.Right,
         accessor: ({ rowData }) => {
-          const x = c(
-            rowData.sellPricePerPack * rowData.numberOfPacks
-          ).format();
-          return x;
+          if ('lines' in rowData) {
+            return c(
+              Object.values(rowData.lines).reduce(
+                (sum, batch) =>
+                  sum + batch.sellPricePerPack * batch.numberOfPacks,
+                0
+              )
+            ).format();
+          } else {
+            const x = c(
+              rowData.sellPricePerPack * rowData.numberOfPacks
+            ).format();
+            return x;
+          }
         },
         getSortValue: row => {
-          const x = c(row.sellPricePerPack * row.numberOfPacks).format();
-          return x;
+          if ('lines' in row) {
+            return c(
+              Object.values(row.lines).reduce(
+                (sum, batch) =>
+                  sum + batch.sellPricePerPack * batch.numberOfPacks,
+                0
+              )
+            ).format();
+          } else {
+            const x = c(row.sellPricePerPack * row.numberOfPacks).format();
+            return x;
+          }
         },
       },
-      //   expansionColumn,
+      expansionColumn,
       GenericColumnKey.Selection,
     ],
     { onChangeSortBy, sortBy },
     [sortBy]
   );
 };
+
+export const useExpansionColumns = (): Column<OutboundReturnLineFragment>[] =>
+  useColumns(['batch', 'expiryDate', 'numberOfPacks', 'packSize']);
