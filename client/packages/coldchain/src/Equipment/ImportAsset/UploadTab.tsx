@@ -103,19 +103,29 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         importRow.assetNumber = row[t('label.asset-number')];
       } else {
         rowErrors.push(
-          t('error.field-must-be-specified', { field: 'Asset Number' })
+          t('error.field-must-be-specified', { field: t('label.asset-number') })
         );
       }
       if (
-        row[t('label.catalogue-item-code')] !== undefined &&
-        row[t('label.catalogue-item-code')].trim() != ''
+        row[t('label.catalogue-item-code')] === undefined ||
+        row[t('label.catalogue-item-code')].trim() === ''
       ) {
-        console.info('working with empty string');
-        importRow.catalogueItemCode = row[t('label.catalogue-item-code')];
-      } else {
         rowErrors.push(
-          t('error.field-must-be-specified', { field: 'Catalogue Item Code' })
+          t('error.field-must-be-specified', {
+            field: t('label.catalogue-item-code'),
+          })
         );
+      } else if (
+        catalogueItemData?.filter(
+          (item: { code: string | null | undefined }) =>
+            item.code == row[t('label.catalogue-item-code')]
+        ).length === 0
+      ) {
+        rowErrors.push(
+          t('error.code-no-match', { field: t('label.catalogue-item-code') })
+        );
+      } else {
+        importRow.catalogueItemCode = row[t('label.catalogue-item-code')];
       }
       // notes aren't essential for bulk upload
       if (row[t('label.asset-notes')] !== undefined) {
