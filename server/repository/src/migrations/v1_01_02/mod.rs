@@ -18,9 +18,9 @@ impl Migration for V1_01_02 {
         )?;
 
         #[cfg(not(feature = "postgres"))]
-        const INVENTORY_ADJUSTMENT_REASON_TYPE: &'static str = "TEXT";
+        const INVENTORY_ADJUSTMENT_REASON_TYPE: &str = "TEXT";
         #[cfg(feature = "postgres")]
-        const INVENTORY_ADJUSTMENT_REASON_TYPE: &'static str = "inventory_adjustment_type";
+        const INVENTORY_ADJUSTMENT_REASON_TYPE: &str = "inventory_adjustment_type";
         #[cfg(feature = "postgres")]
         sql!(
             connection,

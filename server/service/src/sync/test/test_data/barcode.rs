@@ -6,9 +6,9 @@ use crate::sync::{
 use repository::BarcodeRow;
 use serde_json::json;
 
-const TABLE_NAME: &'static str = "barcode";
+const TABLE_NAME: &str = "barcode";
 
-const BARCODE_1: (&'static str, &'static str) = (
+const BARCODE_1: (&str, &str) = (
     "barcode_a",
     r#"{
     "ID": "barcode_a",
@@ -20,7 +20,7 @@ const BARCODE_1: (&'static str, &'static str) = (
     }"#,
 );
 
-const BARCODE_2: (&'static str, &'static str) = (
+const BARCODE_2: (&str, &str) = (
     "barcode_b",
     r#"{
     "ID": "barcode_b",

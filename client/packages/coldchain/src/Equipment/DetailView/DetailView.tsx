@@ -21,7 +21,7 @@ import { Summary } from './Tabs';
 import { AssetFragment, useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList } from 'packages/system/src';
+import { ActivityLogList } from '@openmsupply-client/system';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();

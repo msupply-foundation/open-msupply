@@ -276,7 +276,6 @@ mod test {
             .get(Url::parse("http://0.0.0.0:0").unwrap())
             .send()
             .await
-            .err()
-            .expect("Must be error")
+            .expect_err("Must be error")
     }
 }

@@ -38,7 +38,7 @@ pub enum SensorType {
 
 // TODO put this somewhere more sensible
 // perhaps the cold chain service
-pub fn get_sensor_type(serial: &String) -> SensorType {
+pub fn get_sensor_type(serial: &str) -> SensorType {
     match serial.split('|').nth(1) {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,

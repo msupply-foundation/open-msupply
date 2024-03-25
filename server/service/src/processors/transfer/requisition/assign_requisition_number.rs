@@ -6,7 +6,7 @@ use repository::{
     RequisitionRowStatus, RequisitionRowType, StorageConnection,
 };
 
-const DESCRIPTION: &'static str =
+const DESCRIPTION: &str =
     "Allocate a requisition_number to response requisitions if they have a requisition_number of -1";
 
 pub struct AssignRequisitionNumberProcessor;

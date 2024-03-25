@@ -92,7 +92,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         .invoice_service
         .batch_prescription(&service_context, input.to_domain())?;
 
-    Ok(BatchResponse::from_domain(response)?)
+    BatchResponse::from_domain(response)
 }
 
 impl BatchInput {

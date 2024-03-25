@@ -25,7 +25,7 @@ pub struct MasterListRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct MasterListFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -166,17 +166,7 @@ type BoxedMasterListQuery = master_list::BoxedQuery<'static, DBType>;
 
 impl MasterListFilter {
     pub fn new() -> MasterListFilter {
-        MasterListFilter {
-            id: None,
-            name: None,
-            code: None,
-            description: None,
-            exists_for_name: None,
-            exists_for_name_id: None,
-            exists_for_store_id: None,
-            is_program: None,
-            item_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

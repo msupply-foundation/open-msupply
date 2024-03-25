@@ -9,7 +9,7 @@ pub fn check_pack_size(pack_size_option: Option<u32>) -> bool {
             return false;
         }
     }
-    return true;
+    true
 }
 
 pub fn check_batch(
@@ -22,7 +22,7 @@ pub fn check_batch(
             Err(error) => return Err(error),
         };
     }
-    return Ok(true);
+    Ok(true)
 }
 
 pub fn check_batch_stock_reserved(
