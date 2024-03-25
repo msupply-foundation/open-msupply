@@ -67,10 +67,7 @@ impl Jetdirect {
     }
 
     pub fn send_string(&self, data: String, mode: Mode) -> Result<String> {
-        let ip_addr = IpAddr::from_str(&self.addr).expect("Invalid IP address");
-
-        println!("Parsed IP address: {:?}", ip_addr);
-
+        let ip_addr = IpAddr::from_str(&self.addr)?;
         let socket = SocketAddr::new(ip_addr, self.port);
         let mut telnet = Telnet::connect_timeout(&socket, 512, PRINTER_CONNECTION_TIMEOUT)?;
         self.send_command(data, &mut telnet, mode, PRINTER_COMMAND_TIMEOUT)
