@@ -11,7 +11,7 @@ import {
 import { useReturns } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 // import { PricingSection } from './PricingSection';
-// import { RelatedDocumentsSection } from './RelatedDocumentsSection';
+import { RelatedDocumentsSection } from './RelatedDocumentsSection';
 // import { TransportSection } from './TransportSection';
 import { canDeleteInvoice } from '../../../utils';
 
@@ -64,7 +64,7 @@ export const SidePanelComponent = () => {
       }
     >
       <AdditionalInfoSection />
-      {/* <RelatedDocumentsSection /> */}
+      <RelatedDocumentsSection />
       {/* <PricingSection /> */}
       {/* <TransportSection /> */}
     </DetailPanelPortal>

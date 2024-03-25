@@ -2653,6 +2653,11 @@ export type InvoiceNode = {
   /** Inbound Shipment <-> Outbound Shipment, where Inbound Shipment originated from Outbound Shipment */
   linkedShipment?: Maybe<InvoiceNode>;
   onHold: Scalars['Boolean']['output'];
+  /**
+   * Inbound Shipment that is the origin of this Outbound Return
+   * OR Outbound Shipment that is the origin of this Inbound Return
+   */
+  originalShipment?: Maybe<InvoiceNode>;
   otherParty: NameNode;
   otherPartyId: Scalars['String']['output'];
   otherPartyName: Scalars['String']['output'];
