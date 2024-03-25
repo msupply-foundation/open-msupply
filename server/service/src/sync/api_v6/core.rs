@@ -1,7 +1,6 @@
-use crate::sync::api::{ParsingResponseError, SyncApiSettings};
 use reqwest::{Client, Response};
 use thiserror::Error;
-use url::{ParseError, Url};
+use url::ParseError;
 
 use super::*;
 

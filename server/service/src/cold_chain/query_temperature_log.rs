@@ -18,7 +18,7 @@ pub fn get_temperature_logs(
     sort: Option<TemperatureLogSort>,
 ) -> Result<ListResult<TemperatureLog>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = TemperatureLogRepository::new(&connection);
+    let repository = TemperatureLogRepository::new(connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,

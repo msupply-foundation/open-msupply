@@ -7,7 +7,6 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
@@ -288,7 +287,7 @@ async fn graphql_index(
 async fn graphql_playground() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
+        .body(include_str!("playground.html"))
 }
 
 // TODO remove this and just do reqwest query to self

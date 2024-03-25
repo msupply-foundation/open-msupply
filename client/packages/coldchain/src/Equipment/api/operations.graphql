@@ -23,15 +23,15 @@ fragment Asset on AssetNode {
   catalogueItem {
     manufacturer
     model
-    assetType {
-      name
-    }
-    assetClass {
-      name
-    }
-    assetCategory {
-      name
-    }
+  }
+  assetType {
+    name
+  }
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
   }
 }
 

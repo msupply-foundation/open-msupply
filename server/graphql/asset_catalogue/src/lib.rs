@@ -1,4 +1,3 @@
-use asset_catalogue_item_queries::{AssetCatalogueItemFilterInput, AssetCatalogueItemSortInput};
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use types::{

@@ -5,6 +5,7 @@ export const useAssets = {
   utils: {},
 
   document: {
+    fetch: Document.useFetchAssetById,
     get: Document.useAsset,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,

@@ -3,7 +3,7 @@ import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
-import { NumberCell } from '../components';
+import { CurrencyCell, NumberCell, TooltipTextCell } from '../components';
 
 const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
@@ -92,6 +92,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'itemCode',
     label: 'label.code',
     width: 125,
+    Cell: TooltipTextCell,
   },
   itemName: {
     key: 'itemName',
@@ -161,6 +162,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.total',
     key: 'totalAfterTax',
     width: 100,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
     align: ColumnAlign.Right,
     sortable: false,
@@ -180,6 +182,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.code',
     key: 'code',
     width: 20,
+    Cell: TooltipTextCell,
   },
   packSize: {
     label: 'label.pack-size',
@@ -198,12 +201,14 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.batch',
     key: 'batch',
     width: 100,
+    Cell: TooltipTextCell,
   },
   costPricePerPack: {
     label: 'label.cost',
     key: 'costPricePerPack',
     width: 50,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   sellPricePerPack: {
@@ -211,6 +216,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerPack',
     width: 120,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   sellPricePerUnit: {
@@ -218,6 +224,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerUnit',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   location: {
@@ -242,6 +249,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'lineTotal',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   requestedQuantity: {

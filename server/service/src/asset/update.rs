@@ -11,7 +11,6 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
-use serde_json;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
@@ -43,10 +42,10 @@ pub fn update_asset(
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input, asset_row.clone());
-            AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
+            AssetRowRepository::new(connection).upsert_one(&updated_asset_row)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetUpdated,
                 Some(updated_asset_row.id.clone()),
                 Some(serde_json::to_string(&asset_row).unwrap_or_default()),
