@@ -160,27 +160,39 @@ impl AssetNode {
 
     pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
         let loader = ctx.get_loader::<DataLoader<AssetCategoryLoader>>();
+        let category_id = match self.row().asset_category_id.clone() {
+            Some(category_id) => category_id,
+            None => return Ok(None),
+        };
 
         Ok(loader
-            .load_one(self.row().asset_category_id.clone())
+            .load_one(category_id)
             .await?
             .map(AssetCategoryNode::from_domain))
     }
 
     pub async fn asset_class(&self, ctx: &Context<'_>) -> Result<Option<AssetClassNode>> {
         let loader = ctx.get_loader::<DataLoader<AssetClassLoader>>();
+        let class_id = match self.row().asset_class_id.clone() {
+            Some(class_id) => class_id,
+            None => return Ok(None),
+        };
 
         Ok(loader
-            .load_one(self.row().asset_class_id.clone())
+            .load_one(class_id)
             .await?
             .map(AssetClassNode::from_domain))
     }
 
     pub async fn asset_type(&self, ctx: &Context<'_>) -> Result<Option<AssetTypeNode>> {
         let loader = ctx.get_loader::<DataLoader<AssetTypeLoader>>();
+        let type_id = match self.row().asset_type_id.clone() {
+            Some(type_id) => type_id,
+            None => return Ok(None),
+        };
 
         Ok(loader
-            .load_one(self.row().asset_type_id.clone())
+            .load_one(type_id)
             .await?
             .map(AssetTypeNode::from_domain))
     }

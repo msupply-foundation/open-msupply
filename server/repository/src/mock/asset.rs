@@ -26,9 +26,9 @@ pub fn mock_asset_a() -> AssetRow {
         )
         .unwrap(),
         deleted_datetime: None,
-        asset_category_id: "02cbea92-d5bf-4832-863b-c04e093a7760".to_string(),
-        asset_class_id: "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(),
-        asset_type_id: "710194ce-8c6c-47ab-b7fe-13ba8cf091f6".to_string(),
+        asset_category_id: Some("02cbea92-d5bf-4832-863b-c04e093a7760".to_string()),
+        asset_class_id: Some("fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string()),
+        asset_type_id: Some("710194ce-8c6c-47ab-b7fe-13ba8cf091f6".to_string()),
     }
 }
 
@@ -49,9 +49,9 @@ pub fn mock_asset_b() -> AssetRow {
         created_datetime: NaiveDateTime::default(),
         modified_datetime: NaiveDateTime::default(),
         deleted_datetime: None,
-        asset_category_id: "b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d".to_string(),
-        asset_class_id: "fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string(),
-        asset_type_id: "0b7ac91d-6cfa-49bb-bac2-35e7cb31564b".to_string(),
+        asset_category_id: Some("b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d".to_string()),
+        asset_class_id: Some("fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string()),
+        asset_type_id: Some("0b7ac91d-6cfa-49bb-bac2-35e7cb31564b".to_string()),
     }
 }
 
@@ -68,9 +68,9 @@ pub fn mock_deleted_asset() -> AssetRow {
         created_datetime: NaiveDateTime::default(),
         modified_datetime: NaiveDateTime::default(),
         deleted_datetime: Some(NaiveDateTime::default()),
-        asset_category_id: String::new(),
-        asset_class_id: String::new(),
-        asset_type_id: String::new(),
+        asset_category_id: None,
+        asset_class_id: None,
+        asset_type_id: None,
     }
 }
 

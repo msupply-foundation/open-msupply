@@ -125,9 +125,9 @@ pub fn generate(
         created_datetime: Utc::now().naive_utc(),
         modified_datetime: Utc::now().naive_utc(),
         deleted_datetime: None,
-        asset_category_id: category_id.unwrap_or_default(),
-        asset_class_id: class_id.unwrap_or_default(),
-        asset_type_id: type_id.unwrap_or_default(),
+        asset_category_id: Some(category_id.unwrap_or_default()),
+        asset_class_id: Some(class_id.unwrap_or_default()),
+        asset_type_id: Some(type_id.unwrap_or_default()),
     }
 }
 
