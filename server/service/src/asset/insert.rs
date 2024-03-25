@@ -19,6 +19,7 @@ pub enum InsertAssetError {
     SerialNumberAlreadyExists,
 }
 
+#[derive(PartialEq, Debug, Clone)]
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
@@ -38,8 +39,8 @@ pub fn insert_asset(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
-            let new_asset = generate(input);
-            AssetRowRepository::new(connection).upsert_one(&new_asset)?;
+            let new_asset = generate(input.clone());
+            AssetRowRepository::new(&connection).upsert_one(&new_asset)?;
 
             activity_log_entry(
                 ctx,

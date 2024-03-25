@@ -18,19 +18,32 @@ import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
 import { Summary } from './Tabs';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList } from 'packages/system/src';
+import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import { AssetFragment } from '../api/operations.generated';
+
+export interface LocationIds {
+  locationIds: string[];
+}
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
+  const { data: locationData, isLoading: isLoadingLocations } =
+    useLocation.document.list({
+      sortBy: {
+        key: 'name',
+        direction: 'asc',
+      },
+      filterBy: null,
+    });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
-  const [draft, setDraft] = useState<AssetFragment>();
+  const [draft, setDraft] = useState<AssetFragment & LocationIds>();
   const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
 
@@ -52,7 +65,7 @@ export const EquipmentDetailView = () => {
     title: t('heading.are-you-sure'),
   });
 
-  const onChange = (patch: Partial<AssetFragment>) => {
+  const onChange = (patch: Partial<AssetFragment & LocationIds>) => {
     if (!draft) return;
     setIsDirty(true);
     setDraft({ ...draft, ...patch });
@@ -64,14 +77,28 @@ export const EquipmentDetailView = () => {
 
   useEffect(() => {
     if (!data) return;
-    setDraft({ ...data });
+    setDraft({
+      ...data,
+      locationIds: draft?.locationIds
+        ? draft.locationIds
+        : data.locations.nodes.map(location => location.id),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, setDraft]);
 
-  if (isLoading) return <DetailFormSkeleton />;
+  const locations =
+    locationData?.nodes.map(location => ({
+      label: location.code,
+      value: location.id,
+    })) || [];
+
+  if (isLoading || isLoadingLocations) return <DetailFormSkeleton />;
 
   const tabs = [
     {
-      Component: <Summary onChange={onChange} draft={draft} />,
+      Component: (
+        <Summary onChange={onChange} draft={draft} locations={locations} />
+      ),
       value: 'Summary',
     },
     {

@@ -430,6 +430,7 @@ export type AssetNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -2541,7 +2542,7 @@ export type InvoiceNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
-  currency?: Maybe<CurrencyNode>;
+  currency: CurrencyNode;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -4309,6 +4310,10 @@ export type Queries = {
    * The printed report can be retrieved from the `/files` endpoint using the returned file id.
    */
   printReport: PrintReportResponse;
+  /**
+   * Can be used when developing reports, e.g. to print a report that is not already in the
+   * system.
+   */
   printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -5901,6 +5906,7 @@ export type UpdateAssetInput = {
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
+  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
@@ -6604,7 +6610,9 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetCatalogueItemMutate = 'ASSET_CATALOGUE_ITEM_MUTATE',
   AssetMutate = 'ASSET_MUTATE',
+  AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
