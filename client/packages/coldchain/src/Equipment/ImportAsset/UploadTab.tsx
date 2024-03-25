@@ -2,27 +2,26 @@ import React, { FC, useState } from 'react';
 import Papa from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
-import { InlineProgress, Typography } from '@common/components';
+import { InlineProgress, Typography, Upload } from '@common/components';
 import { useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
   Paper,
   Link,
-  UploadIcon,
   FnUtils,
   FileUtils,
   InsertAssetInput,
 } from '@openmsupply-client/common';
-import Dropzone from 'react-dropzone';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow, toInsertEquipmentInput } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
-
+import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
   onUploadComplete: () => void;
+  catalogueItemData?: AssetCatalogueItemFragment[];
 }
 
 export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
@@ -30,6 +29,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   setErrorMessage,
   setEquipment,
   onUploadComplete,
+  catalogueItemData,
 }) => {
   const t = useTranslation('coldchain');
   const { error } = useNotification();
@@ -40,7 +40,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
       emptyRows.map((row: ImportRow): InsertAssetInput => {
-        return toInsertEquipmentInput(row);
+        return toInsertEquipmentInput(row, catalogueItemData);
       }),
       t
     );
@@ -101,8 +101,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           t('error.field-must-be-specified', { field: 'AssetNumber' })
         );
       }
-      if (row[t('label.catalogue-item-id')] !== undefined) {
-        importRow.catalogueItemId = row[t('label.catalogue-item-id')];
+      if (row[t('label.catalogue-item-code')] !== undefined) {
+        importRow.catalogueItemCode = row[t('label.catalogue-item-code')];
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: 'CatalogueItemId' })
@@ -135,42 +135,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         </Grid>
       ) : null}
       <Stack spacing={2}>
-        <Paper
-          sx={{
-            borderRadius: '16px',
-            marginTop: '20px',
-            marginBottom: '20px',
-            boxShadow: theme => theme.shadows[1],
-            backgroundColor: theme => theme.palette.grey[300],
-            padding: '14px 24px',
-            minWidth: '300px',
-            width: '100%',
-            alignContent: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-            justifyContent: 'center',
-            borderStyle: 'dashed',
-            borderWidth: '2px',
-            borderColor: theme => theme.palette.grey[500],
-            ':hover': {
-              borderColor: theme => theme.palette.grey[800],
-              cursor: 'pointer',
-            },
-          }}
-        >
-          <Dropzone
-            onDrop={acceptedFiles => csvImport(acceptedFiles)}
-            // accept={accept}
-          >
-            {({ getRootProps, getInputProps }) => (
-              <div {...getRootProps()}>
-                <input {...getInputProps()} />
-                <UploadIcon sx={{ fontSize: 100 }} />
-                <p>{t('messages.upload-invite')}</p>
-              </div>
-            )}
-          </Dropzone>
-        </Paper>
+        <Upload onUpload={csvImport} />
         <Paper>
           <Typography variant="h4" textAlign="center">
             {'import this'}

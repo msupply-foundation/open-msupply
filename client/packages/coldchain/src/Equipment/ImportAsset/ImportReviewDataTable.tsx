@@ -2,7 +2,6 @@ import React, { FC, useState } from 'react';
 import {
   DataTable,
   Grid,
-  InsertAssetInput,
   NothingHere,
   Pagination,
   SearchBar,
@@ -30,25 +29,31 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     offset: 0,
   });
   const [searchString, setSearchString] = useState<string>(() => '');
-  const columns = useColumns<InsertAssetInput>(
+  const columns = useColumns<ImportRow>(
     [
       {
         key: 'assetNumber',
-        width: 150,
+        width: 60,
         sortable: false,
         label: 'label.asset-number',
       },
       {
-        key: 'catalogueItemId',
-        width: 180,
+        key: 'catalogueCode',
+        width: 100,
         sortable: false,
-        label: 'label.catalogue-item-id',
+        label: 'label.catalogue-item-code',
       },
       {
         key: 'notes',
-        width: 300,
+        width: 100,
         sortable: false,
         label: 'label.asset-notes',
+        Cell: TooltipTextCell,
+      },
+      {
+        key: 'errorMessage',
+        label: 'label.error-message',
+        width: 150,
         Cell: TooltipTextCell,
       },
     ],
@@ -62,7 +67,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     }
     return (
       row.assetNumber.includes(searchString) ||
-      (row.catalogueItemId && row.catalogueItemId.includes(searchString)) ||
+      (row.catalogueItemCode && row.catalogueItemCode.includes(searchString)) ||
       row.errorMessage.includes(searchString) ||
       row.id === searchString
     );

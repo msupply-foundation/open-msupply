@@ -146,15 +146,9 @@ export const importEquipmentToCsv = (
   const fields: string[] = [
     'id',
     t('label.asset-number'),
-    t('label.catalogue-item-id'),
+    t('label.catalogue-item-code'),
     t('label.asset-notes'),
   ];
-  // console.log(
-  //   'translations',
-  //   t('label.asset-number'),
-  //   t('label.catalogue-item-id'),
-  //   t('label.asset-notes')
-  // );
 
   const data = assets.map(node => [
     node.id,
