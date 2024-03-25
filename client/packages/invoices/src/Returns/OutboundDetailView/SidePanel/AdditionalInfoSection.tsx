@@ -16,8 +16,8 @@ export const AdditionalInfoSectionComponent: FC = () => {
   const t = useTranslation('replenishment');
   const { debouncedMutateAsync: debouncedUpdate } =
     useReturns.document.updateOutboundReturn();
-  // const isDisabled = useReturns.utils.outboundIsDisabled();
-  const isDisabled = false; // TODO
+
+  const isDisabled = useReturns.utils.outboundIsDisabled();
 
   const { bufferedState, setBufferedState } =
     useReturns.document.outboundReturn();

@@ -155,12 +155,12 @@ export const StatusChangeButton = () => {
     onHold,
     lines,
   } = useStatusChangeButton();
-  // const isDisabled = useOutbound.utils.isDisabled();
+  const isDisabled = useReturns.utils.outboundIsDisabled();
   const t = useTranslation();
   const noLines = lines?.totalCount === 0;
 
   if (!selectedOption) return null;
-  // if (isDisabled) return null;
+  if (isDisabled) return null;
 
   const onStatusClick = () => {
     return getConfirmation();

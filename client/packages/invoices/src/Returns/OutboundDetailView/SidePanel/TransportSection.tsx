@@ -10,8 +10,7 @@ import { useReturns } from '../../api';
 
 export const TransportSectionComponent: FC = () => {
   const t = useTranslation('distribution');
-  // const isDisabled = useReturns.utils.outboundIsDisabled();
-  const isDisabled = false; // TODO: fix after merge
+  const isDisabled = useReturns.utils.outboundIsDisabled();
 
   const { debouncedMutateAsync: debouncedUpdate } =
     useReturns.document.updateOutboundReturn();

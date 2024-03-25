@@ -13,6 +13,7 @@ interface ReturnReasonSearchInputProps {
   onChange: (reasonId: string) => void;
   autoFocus?: boolean;
   isError?: boolean;
+  isDisabled?: boolean;
 }
 
 export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
@@ -20,6 +21,7 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
   onChange,
   autoFocus = false,
   isError,
+  isDisabled,
 }) => {
   const { data, isLoading } = useReturnReason.document.listAllActive();
   const reasons = data?.nodes ?? [];
@@ -31,6 +33,7 @@ export const ReturnReasonSearchInput: FC<ReturnReasonSearchInputProps> = ({
       <Autocomplete
         fullWidth
         autoFocus={autoFocus}
+        disabled={isDisabled}
         clearable={false}
         value={
           value
