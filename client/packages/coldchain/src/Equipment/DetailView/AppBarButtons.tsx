@@ -4,9 +4,9 @@ import {
   Grid,
   useTranslation,
   PrinterIcon,
-  ButtonWithIcon,
   useNotification,
   useDisabledNotification,
+  LoadingButton,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../api';
@@ -18,6 +18,7 @@ export const AppBarButtonsComponent = () => {
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
   const { data: settings } = useAssets.utils.labelPrinterSettings();
+  const [isPrinting, setIsPrinting] = React.useState(false);
   const { show, DisabledNotification } = useDisabledNotification({
     title: t('heading.unable-to-print'),
     message: t('error.label-printer-not-configured'),
@@ -31,6 +32,7 @@ export const AppBarButtonsComponent = () => {
   };
 
   const printQR = () => {
+    setIsPrinting(true);
     fetch(Environment.PRINT_LABEL_QR, {
       method: 'POST',
       body: JSON.stringify({
@@ -42,27 +44,30 @@ export const AppBarButtonsComponent = () => {
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
     })
-      .then(response => {
-        if (response.status === 200) {
-          success(t('messages.success-printing-qr'))();
-          return;
+      .then(async response => {
+        if (response.status !== 200) {
+          const text = await response.text();
+          throw new Error(text);
         }
-        error(t('error.printing-qr'))();
+        success(t('messages.success-printing-qr'))();
       })
-      .catch(() => {
-        error(t('error.printing-qr'))();
-      });
+      .catch(e => {
+        error(`${t('error.printing-qr')}: ${e.message}`)();
+      })
+      .finally(() => setIsPrinting(false));
   };
 
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <UpdateStatusButton assetId={data?.id} />
-        <ButtonWithIcon
-          Icon={<PrinterIcon />}
-          label={t('button.print-qr')}
+        <LoadingButton
+          startIcon={<PrinterIcon />}
+          isLoading={isPrinting}
           onClick={onClick}
-        />
+        >
+          {t('button.print-qr')}
+        </LoadingButton>
       </Grid>
       <DisabledNotification />
     </AppBarButtonsPortal>

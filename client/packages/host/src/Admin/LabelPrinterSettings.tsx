@@ -141,7 +141,6 @@ export const LabelPrinterSettings = () => {
           isLoading={isTesting}
           onClick={test}
           disabled={isInvalid}
-          sx={{ fontSize: '12px' }}
         >
           {t('button.test')}
         </LoadingButton>
@@ -149,7 +148,6 @@ export const LabelPrinterSettings = () => {
           Icon={<SaveIcon />}
           label={t('button.save')}
           variant="contained"
-          sx={{ fontSize: '12px' }}
           onClick={save}
           disabled={isInvalid}
         />

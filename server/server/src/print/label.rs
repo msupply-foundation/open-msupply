@@ -5,7 +5,6 @@ use actix_web::{
 };
 use repository::RepositoryError;
 use service::{
-    auth_data::AuthData,
     print::label::{host_status, print_qr_code},
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
@@ -21,20 +20,16 @@ pub async fn print_label_qr(
     request: HttpRequest,
     data: web::Json<LabelData>,
     service_provider: Data<ServiceProvider>,
-    auth_data: Data<AuthData>,
 ) -> HttpResponse {
-    let auth_result = validate_request(request.clone(), &service_provider, &auth_data);
-    if auth_result.is_err() {
-        return HttpResponse::Unauthorized().body("Access Denied");
-    }
-
-    match validate_request(request, &service_provider, &auth_data) {
-        Ok((_user, _store_id)) => {}
+    let auth_result = validate_request(request.clone(), &service_provider);
+    match auth_result {
+        Ok(_) => (),
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             return HttpResponse::Unauthorized().body(formatted_error);
         }
-    };
+    }
+
     let settings = match get_printer_settings(service_provider) {
         Ok(settings) => settings,
         Err(error) => {
@@ -43,10 +38,10 @@ pub async fn print_label_qr(
         }
     };
 
-    if print_qr_code(settings, data.code.clone(), data.message.clone()).is_err() {
-        return HttpResponse::InternalServerError().body("Error printing QR label");
+    match print_qr_code(settings, data.code.clone(), data.message.clone()) {
+        Ok(_) => HttpResponse::Ok().body("QR label printed"),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
-    HttpResponse::Ok().body("QR label printed")
 }
 
 pub async fn test_printer(service_provider: Data<ServiceProvider>) -> HttpResponse {
