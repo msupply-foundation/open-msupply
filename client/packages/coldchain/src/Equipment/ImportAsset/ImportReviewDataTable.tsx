@@ -14,11 +14,6 @@ import { ImportRow } from './EquipmentImportModal';
 interface ImportReviewDataTableProps {
   importRows: ImportRow[];
 }
-
-// const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
-//   return <Status status={rowData.statusLog?.status} />;
-// };
-
 export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   importRows,
 }) => {
