@@ -387,6 +387,7 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
 // The idea for this method is to build a query in such a way as to allow
 // extracting all relevant records for a site from change_log
 // A resulting SQL might look something like this...
+//
 // SELECT * FROM changelog_dedup
 // WHERE cursor > {remote site SyncPullCursorV6} AND last_sync_site_id != {remote site id}
 // AND
@@ -415,13 +416,11 @@ fn create_filtered_outgoing_sync_query(
     // The rest of the time we want to exclude any records that were created by the site
 
     if is_initialized {
-        query = query
-            .filter(
-                changelog_deduped::source_site_id
-                    .ne(Some(sync_site_id.clone()))
-                    .or(changelog_deduped::source_site_id.is_null()),
-            )
-            .filter(changelog_deduped::is_sync_update.eq(false))
+        query = query.filter(
+            changelog_deduped::source_site_id
+                .ne(Some(sync_site_id.clone()))
+                .or(changelog_deduped::source_site_id.is_null()),
+        )
     }
 
     // Loop through all the Sync tables and add them to the query if they have the right sync style
