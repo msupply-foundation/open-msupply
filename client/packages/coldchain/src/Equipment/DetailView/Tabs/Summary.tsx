@@ -7,10 +7,15 @@ import {
   Typography,
 } from '@common/components';
 import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
-import { Box, Formatter } from '@openmsupply-client/common';
+import {
+  Box,
+  Formatter,
+  useIsCentralServerApi,
+} from '@openmsupply-client/common';
 import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
+import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
 import { LocationIds } from '../DetailView';
 interface SummaryProps {
   draft?: AssetFragment & LocationIds;
@@ -76,7 +81,11 @@ const Row = ({
       labelWidth="150px"
       label={label}
       labelProps={{
-        sx: { fontSize: '16px', paddingRight: 2, textAlign: 'right' },
+        sx: {
+          fontSize: '16px',
+          paddingRight: 2,
+          textAlign: 'right',
+        },
       }}
       Input={
         <Box sx={{}} flex={1}>
@@ -90,6 +99,7 @@ const Row = ({
 export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
   const t = useTranslation('coldchain');
   const { localisedDate } = useFormatDateTime();
+  const isCentralServer = useIsCentralServerApi();
 
   if (!draft) return null;
 
@@ -98,20 +108,39 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
     value: location.id,
   }));
 
+  const onStoreChange = (store: StoreRowFragment) => {
+    onChange({
+      store: {
+        __typename: 'StoreNode',
+        id: store.id,
+        code: store.code ?? '',
+        storeName: '',
+      },
+    });
+  };
+
+  const onStoreInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') onChange({ store: null });
+  };
+
   return (
     <Box display="flex" flex={1}>
       <Container>
         <Section heading={t('heading.asset-identification')}>
           <Row label={t('label.category')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetCategory?.name ?? ''}
+              value={draft.assetCategory?.name ?? ''}
               disabled
               fullWidth
             />
           </Row>
           <Row label={t('label.type')}>
             <BasicTextInput
-              value={draft.catalogueItem?.assetType?.name ?? ''}
+              value={draft.assetType?.name ?? ''}
               disabled
               fullWidth
             />
@@ -169,6 +198,17 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
               />
             ) : null}
           </Row>
+          {isCentralServer && (
+            <Row label={t('label.store')}>
+              <StoreSearchInput
+                clearable
+                fullWidth
+                value={draft?.store ?? undefined}
+                onChange={onStoreChange}
+                onInputChange={onStoreInputChange}
+              />
+            </Row>
+          )}
         </Section>
       </Container>
       <Box
