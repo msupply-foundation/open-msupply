@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title>mSupply Run</title>
@@ -14,10 +14,14 @@
     </script>
     <link rel="stylesheet" href="style.css" type="text/css" />
   </head>
-  <body class="offline" onload="getUserName()">
+  <body class="offline" onload="getUserName();">
     <div class="controlsec">
-      <button class="btn" id="user" onclick="setUserName()" type="button">name</button>
-      <button class="btn" id="mutebtn" onclick="Mute()" type="button">mute</button>
+      <button class="btn" id="user" onclick="setUserName()" type="button">
+        name
+      </button>
+      <button class="btn" id="mutebtn" onclick="Mute()" type="button">
+        mute
+      </button>
       <button class="btn" id="zoombtn" onclick="Zoom()" type="button">
         <span class="zoom"><span class="zoom-inner"></span></span>
       </button>
@@ -29,8 +33,16 @@
     />
     <header id="main-frame-error" class="interstitial-wrapper"></header>
     <section id="offline-resources">
-      <img id="offline-resources-1x" src="img/offline-sprite-1x.png" alt="T-Rex Runner Sprite" />
-      <img id="offline-resources-2x" src="img/offline-sprite-2x.png" alt="T-Rex Runner Sprite 1" />
+      <img
+        id="offline-resources-1x"
+        src="img/offline-sprite-1x.png"
+        alt="T-Rex Runner Sprite"
+      />
+      <img
+        id="offline-resources-2x"
+        src="img/offline-sprite-2x.png"
+        alt="T-Rex Runner Sprite 1"
+      />
       <template id="audio-resources">
         <audio
           id="offline-sound-press"
