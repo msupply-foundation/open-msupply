@@ -35,7 +35,6 @@ export const LanguageMenu: React.FC = () => {
       options={languageOptions}
       value={currentLanguage}
       renderOption={renderOption}
-      clearable={false}
     />
   );
 };
