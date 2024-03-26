@@ -1,9 +1,13 @@
-use repository::{NameLinkRow, NameLinkRowRepository, StorageConnection, SyncBufferRow};
+use repository::{
+    EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
+    StorageConnection, SyncBufferRow,
+};
 
 use serde::Deserialize;
 
 use crate::sync::translations::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullDependency,
+    PullUpsertRecord, SyncTranslation,
 };
 
 #[derive(Deserialize)]
@@ -46,7 +50,7 @@ impl SyncTranslation for NameMergeTranslation {
                 data.merge_id_to_keep
             ))?;
 
-        let upsert_records: Vec<PullUpsertRecord> = name_links
+        let upserts = name_links
             .into_iter()
             .map(|NameLinkRow { id, .. }| {
                 PullUpsertRecord::NameLink(NameLinkRow {
@@ -56,7 +60,34 @@ impl SyncTranslation for NameMergeTranslation {
             })
             .collect();
 
-        Ok(Some(IntegrationRecords::from_upserts(upsert_records)))
+        // When 2 names are merged, we clean up name_store_joins to ensure there only remains 1 NSJ for each store that
+        // had the "deleted" name visible. We also make sure a store doesn't end up with NSJs to itself.
+        // e.g. for nameD and nameK where nameD is merged into nameK:
+        // storeA has just nameD visible, so we leave the NSJ and rely on the name_link being updated correctly in the merge process
+        // storeB has both nameD and nameK visible. After the merge, the store has effectively 2 identical name_store_joins pointing to nameK. Thus we delete the name_store_join pointing to nameD.
+        // This prevents names (nameK in this case) showing twice in lists after a merge.
+        // What's more, a store shouldn't become visible to itself! e.g. if storeA above is actually nameK.
+        let name_store_join_repo = NameStoreJoinRepository::new(connection);
+        let name_store_joins_for_delete = name_store_join_repo.query(Some(
+            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_delete)),
+        ))?;
+        let name_store_joins_for_keep = name_store_join_repo.query(Some(
+            NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)),
+        ))?;
+
+        let mut deletes: Vec<PullDeleteRecord> = vec![];
+        for nsj_delete in name_store_joins_for_delete {
+            if name_store_joins_for_keep.iter().any(|nsj_keep| {
+                nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
+            }) {
+                deletes.push(PullDeleteRecord {
+                    id: nsj_delete.name_store_join.id.clone(),
+                    table: PullDeleteRecordTable::NameStoreJoin,
+                });
+            }
+        }
+
+        Ok(Some(IntegrationRecords { upserts, deletes }))
     }
 }
 
@@ -75,7 +106,7 @@ mod tests {
     async fn test_name_merge() {
         let mut sync_records = vec![
             SyncBufferRow {
-                record_id: "name_b_merge".to_string(),
+                record_id: "name_b".to_string(),
                 table_name: LegacyTableName::NAME.to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
@@ -86,7 +117,7 @@ mod tests {
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
-                record_id: "name_c_merge".to_string(),
+                record_id: "name_c".to_string(),
                 table_name: LegacyTableName::NAME.to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
@@ -118,7 +149,28 @@ mod tests {
             MockDataInserts::none().units().names(),
         )
         .await;
+        let mut logger = SyncLogger::start(&connection).unwrap();
 
+        SyncBufferRowRepository::new(&connection)
+            .upsert_many(&sync_records)
+            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
+            .await
+            .unwrap();
+
+        let name_link_repo = NameLinkRowRepository::new(&connection);
+        let mut name_links = name_link_repo
+            .find_many_by_name_id(&"name_c".to_string())
+            .unwrap();
+
+        name_links.sort_by_key(|i| i.id.to_owned());
+        assert_eq!(name_links, expected_name_links);
+        let (_, connection, _, _) = setup_all(
+            "test_name_merge_message_translation_in_reverse_order",
+            MockDataInserts::none().units().names(),
+        )
+        .await;
+        sync_records.reverse();
         let mut logger = SyncLogger::start(&connection).unwrap();
 
         SyncBufferRowRepository::new(&connection)
@@ -136,27 +188,87 @@ mod tests {
         name_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(name_links, expected_name_links);
 
+        // When 2 names are merged, we clean up name_store_joins to ensure there only remains 1 NSJ for each store that
+        // had the "deleted" name visible.
+        // e.g. for nameD and nameK where nameD is merged into nameK:
+        // storeA has just nameD visible, so we leave the NSJ and rely on the name_link being updated correctly in the merge process
+        // storeB has both nameD and nameK visible. After the merge, the store has effectively 2 identical name_store_joins pointing to nameK. Thus we delete the name_store_join pointing to nameD.
+        // This prevents names (nameK in this case) showing twice in lists after a merge.
+        // What's more, a store shouldn't become visible to itself! e.g. if storeA above is actually nameK.
         let (_, connection, _, _) = setup_all(
-            "test_name_merge_message_translation_in_reverse_order",
-            MockDataInserts::none().units().names(),
+            "test_name_merge_message_translation_removes_duplicate_name_store_joins",
+            MockDataInserts::none()
+                .units()
+                .names()
+                .stores()
+                .name_store_joins(),
         )
         .await;
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let name_store_join_repo = NameStoreJoinRepository::new(&connection);
+        let name_store_joins = name_store_join_repo
+            .query(Some(
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to(&"name_store_a".to_string())),
+            ))
+            .unwrap();
+        assert_eq!(name_store_joins.len(), 1); // Ensure the test data expected is correct
 
-        sync_records.reverse();
+        // panic!("Stop here so i can inspect the sql DB state");
+
+        let sync_records = vec![
+            SyncBufferRow {
+                record_id: "name_store_b_merge".to_string(),
+                table_name: LegacyTableName::NAME.to_string(),
+                action: SyncBufferAction::Merge,
+                data: r#"{
+                        "mergeIdToKeep": "name_store_b",
+                        "mergeIdToDelete": "name_store_a"
+                    }"#
+                .to_string(),
+                ..SyncBufferRow::default()
+            },
+            SyncBufferRow {
+                record_id: "name_store_c_merge".to_string(),
+                table_name: LegacyTableName::NAME.to_string(),
+                action: SyncBufferAction::Merge,
+                data: r#"{
+                      "mergeIdToKeep": "name_store_c",
+                      "mergeIdToDelete": "name_store_b"
+                    }"#
+                .to_string(),
+                ..SyncBufferRow::default()
+            },
+        ];
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-
         integrate_and_translate_sync_buffer(&connection, true, &mut logger)
             .await
             .unwrap();
 
-        let name_link_repo = NameLinkRowRepository::new(&connection);
-        let mut name_links = name_link_repo
-            .find_many_by_name_id(&"name_c".to_string())
+        let name_store_joins = name_store_join_repo
+            .query(Some(
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to(&"name_store_a".to_string())),
+            ))
             .unwrap();
+        assert_eq!(name_store_joins.len(), 0);
 
-        name_links.sort_by_key(|i| i.id.to_owned());
-        assert_eq!(name_links, expected_name_links);
+        let name_store_joins = name_store_join_repo
+            .query(Some(
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to(&"name_store_b".to_string())),
+            ))
+            .unwrap();
+        assert_eq!(name_store_joins.len(), 0);
+
+        let name_store_joins = name_store_join_repo
+            .query(Some(
+                NameStoreJoinFilter::new()
+                    .name_id(EqualFilter::equal_to(&"name_store_c".to_string())),
+            ))
+            .unwrap();
+        assert_eq!(name_store_joins.len(), 1);
     }
 }
