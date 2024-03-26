@@ -140,7 +140,7 @@ export const translateReason = (
 };
 
 export const importEquipmentToCsv = (
-  assets: InsertAssetInput[],
+  assets: Partial<InsertAssetInput>[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [

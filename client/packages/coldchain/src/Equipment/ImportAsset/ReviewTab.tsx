@@ -10,10 +10,8 @@ interface EquipmentReviewTabProps {
 export const EquipmentReviewTab: FC<ImportPanel & EquipmentReviewTabProps> = ({
   tab,
   uploadedRows,
-}) => {
-  return (
-    <ImportPanel tab={tab}>
-      <ImportReviewDataTable importRows={uploadedRows} />
-    </ImportPanel>
-  );
-};
+}) => (
+  <ImportPanel tab={tab}>
+    <ImportReviewDataTable importRows={uploadedRows} />
+  </ImportPanel>
+);

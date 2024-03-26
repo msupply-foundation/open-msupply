@@ -6,10 +6,13 @@ export const useAssetUpdate = () => {
   const queryClient = useQueryClient();
   const api = useAssetApi();
 
-  return useMutation(async (asset: AssetFragment) => api.update(asset), {
-    onSuccess: id => queryClient.invalidateQueries(api.keys.detail(id)),
-    onError: e => {
-      console.error(e);
-    },
-  });
+  return useMutation(
+    async (asset: Partial<AssetFragment>) => api.update(asset),
+    {
+      onSuccess: id => queryClient.invalidateQueries(api.keys.detail(id)),
+      onError: e => {
+        console.error(e);
+      },
+    }
+  );
 };

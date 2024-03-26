@@ -7,6 +7,5 @@
     "start": "cd ./server && cargo run & cd ./client && yarn start-local",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test"
-  },
-  "dependencies": {}
+  }
 }
