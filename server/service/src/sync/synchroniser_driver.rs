@@ -2,7 +2,9 @@ use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
 
-use super::{settings::SyncSettings, synchroniser::Synchroniser};
+use super::{
+    file_sync_driver::FileSyncTrigger, settings::SyncSettings, synchroniser::Synchroniser,
+};
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
@@ -10,6 +12,7 @@ use tokio::{
 
 pub struct SynchroniserDriver {
     receiver: Receiver<()>,
+    file_sync_trigger: FileSyncTrigger,
 }
 
 #[derive(Clone)]
@@ -21,14 +24,20 @@ pub struct SyncTrigger {
 /// * Expose channel for manually triggering sync
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl SynchroniserDriver {
-    pub fn init() -> (SyncTrigger, SynchroniserDriver) {
+    pub fn init(file_sync_trigger: FileSyncTrigger) -> (SyncTrigger, SynchroniserDriver) {
         // We use a single-element channel so that we can only have one sync pending at a time.
         // We consume this at the *start* of sync, so we could schedule a sync while syncing.
         // Worst-case scenario, we produce an infinite stream of sync instructions and always go
         // straight from one sync to the next, but that's OK.
         let (sender, receiver) = mpsc::channel(1);
 
-        (SyncTrigger { sender }, SynchroniserDriver { receiver })
+        (
+            SyncTrigger { sender },
+            SynchroniserDriver {
+                receiver,
+                file_sync_trigger,
+            },
+        )
     }
 
     /// SynchroniserDriver entry point, this method is meant to be run within main `select!` macro
@@ -76,10 +85,17 @@ impl SynchroniserDriver {
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) {
         // Error is already logged, keeping result with `_` to avoid compilation warning
         // We initialise new instance of Syncrhoniser since SyncSettings could have changed
+
+        // Pause file sync
+        self.file_sync_trigger.pause();
+
         let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
             .unwrap()
             .sync()
             .await;
+
+        // Unpause file sync
+        self.file_sync_trigger.unpause();
     }
 }
 

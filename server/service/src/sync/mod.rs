@@ -5,6 +5,7 @@ pub mod api;
 pub mod api_v6;
 pub(crate) mod central_data_synchroniser;
 pub(crate) mod central_data_synchroniser_v6;
+pub mod file_sync_driver;
 mod integrate_document;
 pub(crate) mod remote_data_synchroniser;
 pub mod settings;

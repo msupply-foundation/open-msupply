@@ -19,7 +19,7 @@ use service::{
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     sync::{
-        settings::SyncSettings, sync_status::logger::SyncLogger,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
@@ -143,7 +143,10 @@ async fn initialise_from_central(
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
-    let (_, sync_driver) = SynchroniserDriver::init();
+
+    // Not used here yet, but easier than making file sync trigger optional
+    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init();
+    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
     sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
