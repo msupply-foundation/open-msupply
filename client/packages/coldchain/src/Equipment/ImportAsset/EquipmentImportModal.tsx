@@ -230,7 +230,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     <Modal
       okButton={
         <DialogButton
-          variant="ok"
+          variant="next"
           disabled={importNotReady}
           onClick={() => {
             importAction();
