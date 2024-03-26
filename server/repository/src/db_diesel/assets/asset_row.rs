@@ -1,12 +1,18 @@
 use super::asset_row::asset::dsl::*;
 
+use serde::{Deserialize, Serialize};
+
+use crate::ChangeLogInsertRow;
+use crate::ChangelogAction;
+use crate::ChangelogRepository;
+use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
 use chrono::NaiveDate;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-use serde::Serialize;
 
 table! {
     asset (id) {
@@ -27,7 +33,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset"]
 pub struct AssetRow {
@@ -58,7 +66,7 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset)
             .values(asset_row)
             .on_conflict(id)
@@ -69,18 +77,36 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset)
             .values(asset_row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub fn insert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
-        diesel::insert_into(asset)
-            .values(asset_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
+    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(asset_row)?;
+        self.insert_changelog(
+            asset_row.id.to_owned(),
+            ChangelogAction::Upsert,
+            Some(asset_row.clone()),
+        )
+    }
+
+    fn insert_changelog(
+        &self,
+        asset_id: String,
+        action: ChangelogAction,
+        row: Option<AssetRow>,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::Asset,
+            record_id: asset_id,
+            row_action: action,
+            store_id: row.map(|r| r.store_id).unwrap_or(None),
+            name_link_id: None,
+        };
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&self) -> Result<Vec<AssetRow>, RepositoryError> {
@@ -102,6 +128,27 @@ impl<'a> AssetRowRepository<'a> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
+        _ = self.insert_changelog(asset_id.to_owned(), ChangelogAction::Delete, None); // TODO: return this and enable delete sync...
         Ok(())
+    }
+}
+
+impl Upsert for AssetRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        let _change_log_id = AssetRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(cursor_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
