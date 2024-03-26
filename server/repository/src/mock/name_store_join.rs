@@ -2,16 +2,6 @@ use crate::NameStoreJoinRow;
 
 use super::{mock_name_a, mock_name_store_a, mock_name_store_b, program_master_list_store};
 
-pub fn mock_name_store_join_a() -> NameStoreJoinRow {
-    NameStoreJoinRow {
-        id: String::from("name_store_join_a"),
-        name_link_id: String::from("name_store_a"),
-        store_id: String::from("store_a"),
-        name_is_customer: true,
-        name_is_supplier: false,
-    }
-}
-
 pub fn mock_name_store_join_b() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("name_store_join_b"),
@@ -104,7 +94,6 @@ pub fn name_store_join_program_a_name_a() -> NameStoreJoinRow {
 
 pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
     vec![
-        mock_name_store_join_a(),
         mock_name_store_join_b(),
         mock_name_store_join_c(),
         mock_name_store_join_d(),
