@@ -70,7 +70,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     pub fn upsert_one(&self, sync_file_reference_row: &SyncFileReferenceRow) -> Result<i64, RepositoryError> {
-        self._upsert_one(sync_file_reference_row);
+        self._upsert_one(sync_file_reference_row)?;
         self.insert_changelog(
             sync_file_reference_row.id.to_owned(),
             ChangelogAction::Upsert,
