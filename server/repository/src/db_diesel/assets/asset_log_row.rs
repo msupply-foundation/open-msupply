@@ -125,26 +125,27 @@ impl<'a> AssetLogRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_log)
             .values(asset_log_row)
             .on_conflict(id)
             .do_update()
             .set(asset_log_row)
             .execute(&self.connection.connection)?;
-        self.insert_changelog(
-            asset_log_row.id.to_owned(),
-            ChangelogAction::Upsert,
-            Some(asset_log_row.clone()),
-        )
+        Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_log)
             .values(asset_log_row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
 
+
+    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(asset_log_row)?;
         // Return the changelog id
         self.insert_changelog(
             asset_log_row.id.to_owned(),
