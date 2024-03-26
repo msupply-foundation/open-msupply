@@ -19,7 +19,7 @@ const StyledTabContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
 }));
 
-type Draft = InsertAssetLogInput & { files?: File[] };
+export type Draft = InsertAssetLogInput & { files?: File[] };
 
 export interface AssetLogPanel {
   draft: Partial<Draft>;

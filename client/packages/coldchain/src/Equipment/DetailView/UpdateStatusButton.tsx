@@ -9,15 +9,17 @@ import {
   TabContext,
   Box,
   useTabs,
-  WizardStepper,
   useDebounceCallback,
   DetailContainer,
   InsertAssetLogInput,
   FnUtils,
+  ClickableStepper,
 } from '@openmsupply-client/common';
 import { StatusTab } from './StatusTab';
 import { UploadTab } from './UploadTab';
 import { useAssets } from '../api';
+import { Draft } from '../Components';
+import { Environment } from 'packages/config/src';
 
 enum Tabs {
   Status = 'Status',
@@ -42,9 +44,7 @@ export const UpdateStatusButtonComponent = ({
   const t = useTranslation('coldchain');
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
   const { error, success } = useNotification();
-  const [draft, setDraft] = useState<Partial<InsertAssetLogInput>>(
-    getEmptyAssetLog('')
-  );
+  const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
   const { mutateAsync: insert } = useAssets.log.insert();
 
   const onNext = useDebounceCallback(() => {
@@ -53,7 +53,23 @@ export const UpdateStatusButtonComponent = ({
 
   const onOk = async () => {
     await insert(draft)
-      .then(() => {
+      .then(id => {
+        const url = `${Environment.SYNC_FILES_URL}/asset_log/${id}`;
+        const formData = new FormData();
+        draft.files?.forEach(file => {
+          formData.append('files', file);
+        });
+
+        return fetch(url, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+          },
+          body: formData,
+        });
+      })
+      .then(response => response.json())
+      .then(_json => {
         success(t('messages.log-saved-successfully'))();
         hideDialog();
         onClose();
@@ -66,6 +82,7 @@ export const UpdateStatusButtonComponent = ({
       description: '',
       label: t('label.status'),
       tab: Tabs.Status,
+      clickable: true,
     },
     {
       description: '',
@@ -84,6 +101,17 @@ export const UpdateStatusButtonComponent = ({
   const onChange = (patch: Partial<InsertAssetLogInput>) => {
     if (!draft) return;
     setDraft({ ...draft, ...patch });
+  };
+
+  const onClickStep = (tabName: string) => {
+    switch (tabName) {
+      case Tabs.Upload:
+        onChangeTab(tabName as Tabs);
+        break;
+      case Tabs.Status:
+        onChangeTab(tabName as Tabs);
+        break;
+    }
   };
 
   useEffect(() => {
@@ -128,15 +156,15 @@ export const UpdateStatusButtonComponent = ({
             flexDirection="column"
             gap={2}
             sx={{
-              '& .MuiStep-horizontal': {
-                minWidth: '175px',
+              '& .MuiStepConnector-root': {
+                minWidth: '75px',
               },
             }}
           >
-            <WizardStepper
+            <ClickableStepper
               activeStep={getActiveStep()}
               steps={logSteps}
-              nowrap
+              onClickStep={onClickStep}
             />
             <TabContext value={currentTab}>
               <StatusTab

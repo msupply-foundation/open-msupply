@@ -21,16 +21,12 @@ export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
     <Paper
       sx={{
         borderRadius: '16px',
-        marginTop: '20px',
-        marginBottom: '20px',
+        marginTop: '20px 0',
         backgroundColor: theme => alpha(theme.palette.secondary.main, 0.1),
-        padding: '24px 24px',
-        minWidth: '300px',
+        padding: '24px',
         width: '100%',
         alignContent: 'center',
-        alignItems: 'center',
         textAlign: 'center',
-        justifyContent: 'center',
         borderStyle: 'dashed',
         borderWidth: '2px',
         borderColor: 'secondary.main',
