@@ -139,7 +139,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       rows.push(importRow);
     }
     if (hasErrors) {
-      setErrorMessage(t('messages.import-error'));
+      setErrorMessage(t('messages.import-error-on-upload'));
     }
     EquipmentBuffer.push(...rows);
   };
