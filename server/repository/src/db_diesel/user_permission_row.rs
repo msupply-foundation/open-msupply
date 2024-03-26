@@ -54,6 +54,9 @@ pub enum Permission {
     // outbound return
     OutboundReturnQuery,
     OutboundReturnMutate,
+    // inbound return
+    InboundReturnQuery,
+    InboundReturnMutate,
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,

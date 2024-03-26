@@ -27,8 +27,7 @@ pub fn delete(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteRes
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateInboundReturn, // TODO
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutateInboundReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
