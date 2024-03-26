@@ -29,6 +29,7 @@
   "button.ok-and-next": "OK & Next",
   "button.print": "Print",
   "button.refresh": "Refresh",
+  "button.remove-file": "Remove file",
   "button.retry": "Retry",
   "button.save": "Save",
   "button.save-and-confirm-status": "Confirm {{status}}",
