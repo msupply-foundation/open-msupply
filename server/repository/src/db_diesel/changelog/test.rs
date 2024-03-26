@@ -3,16 +3,18 @@ use diesel::prelude::*;
 use util::{inline_edit, inline_init};
 
 use crate::{
+    asset_class_row::AssetClassRow,
+    asset_row::AssetRow,
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
-        mock_location_on_hold, MockData, MockDataInserts,
+        mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
     CurrencyRow, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
     InvoiceRowRepository, LocationRowRepository, NameRow, RequisitionLineRow,
     RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
-    StoreRow,
+    StoreRow, Upsert,
 };
 
 #[actix_rt::test]
@@ -209,6 +211,7 @@ async fn test_changelog_filter() {
         name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
         is_sync_update: false,
+        source_site_id: None,
     };
 
     let log2 = ChangelogRow {
@@ -219,6 +222,7 @@ async fn test_changelog_filter() {
         name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
         is_sync_update: false,
+        source_site_id: None,
     };
 
     let log3 = ChangelogRow {
@@ -229,6 +233,7 @@ async fn test_changelog_filter() {
         name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
         is_sync_update: false,
+        source_site_id: None,
     };
 
     let log4 = ChangelogRow {
@@ -239,6 +244,7 @@ async fn test_changelog_filter() {
         name_id: None,
         store_id: None,
         is_sync_update: false,
+        source_site_id: None,
     };
 
     for log in [&log1, &log2, &log3, &log4] {
@@ -607,4 +613,81 @@ async fn test_changelog_name_and_store_id_in_trigger() {
                 .unwrap()
         },
     );
+}
+
+#[actix_rt::test]
+async fn test_changelog_outgoing_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_sync_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 10, 1, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
+
+    let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
+    let site1_store_id = mock_store_a().id;
+
+    let site2_id = mock_store_b().site_id; // Site 2 is used in mock_store_b
+
+    assert_ne!(site1_id, site2_id);
+
+    // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
+    let asset_class_id = "asset_class_id".to_string();
+    let row = AssetClassRow {
+        id: asset_class_id.clone(),
+        ..Default::default()
+    };
+    let _result = row.upsert(&connection).unwrap();
+
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, 1, true)
+        .unwrap();
+    // outgoing_results should contain the changelog record for the asset class
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // Insert an asset for the site `1``
+
+    let asset_id = "asset_id".to_string();
+    let row = AssetRow {
+        id: asset_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    };
+
+    let cursor_id = row.upsert(&connection).unwrap().unwrap();
+
+    // Set the source_site_id (usually this happens during integration step in sync)
+    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
+        .unwrap();
+
+    // Now we should have two records to send to site 1 the remote site on initialisation
+    // The asset class and the asset
+
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site1_id, false)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+    assert_eq!(outgoing_results[1].record_id, asset_id);
+
+    // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site1_id, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // Site 2 should only get the asset_class
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site2_id, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
 }

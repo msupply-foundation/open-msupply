@@ -434,6 +434,7 @@ export type AssetNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1766,6 +1767,7 @@ export type FullSyncStatusNode = {
   pullRemote?: Maybe<SyncStatusWithProgressNode>;
   pullV6?: Maybe<SyncStatusWithProgressNode>;
   push?: Maybe<SyncStatusWithProgressNode>;
+  pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
 };
 
@@ -2874,6 +2876,26 @@ export type JsonschemaNode = {
   jsonSchema: Scalars['JSON']['output'];
 };
 
+export type LabelPrinterSettingNode = {
+  __typename: 'LabelPrinterSettingNode';
+  address: Scalars['String']['output'];
+  labelHeight: Scalars['Int']['output'];
+  labelWidth: Scalars['Int']['output'];
+  port: Scalars['Int']['output'];
+};
+
+export type LabelPrinterSettingsInput = {
+  address: Scalars['String']['input'];
+  labelHeight: Scalars['Int']['input'];
+  labelWidth: Scalars['Int']['input'];
+  port: Scalars['Int']['input'];
+};
+
+export type LabelPrinterUpdateResult = {
+  __typename: 'LabelPrinterUpdateResult';
+  success: Scalars['Boolean']['output'];
+};
+
 export enum LanguageType {
   English = 'ENGLISH',
   French = 'FRENCH',
@@ -3174,6 +3196,7 @@ export type Mutations = {
   updateInboundShipment: UpdateInboundShipmentResponse;
   updateInboundShipmentLine: UpdateInboundShipmentLineResponse;
   updateInboundShipmentServiceLine: UpdateInboundShipmentServiceLineResponse;
+  updateLabelPrinterSettings: UpdateLabelPrinterSettingsResponse;
   updateLocation: UpdateLocationResponse;
   updateLogLevel: UpsertLogLevelResponse;
   updateOutboundReturn: UpdateOutboundReturnResponse;
@@ -3624,6 +3647,11 @@ export type MutationsUpdateInboundShipmentLineArgs = {
 export type MutationsUpdateInboundShipmentServiceLineArgs = {
   input: UpdateInboundShipmentServiceLineInput;
   storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsUpdateLabelPrinterSettingsArgs = {
+  input: LabelPrinterSettingsInput;
 };
 
 
@@ -4499,6 +4527,7 @@ export type Queries = {
   itemCounts: ItemCounts;
   /** Query omSupply "item" entries */
   items: ItemsResponse;
+  labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
   /** Query omSupply "locations" entries */
@@ -6181,6 +6210,7 @@ export type UpdateAssetInput = {
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
+  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
@@ -6363,6 +6393,13 @@ export enum UpdateInboundShipmentStatusInput {
   Delivered = 'DELIVERED',
   Verified = 'VERIFIED'
 }
+
+export type UpdateLabelPrinterSettingsError = {
+  __typename: 'UpdateLabelPrinterSettingsError';
+  error: Scalars['String']['output'];
+};
+
+export type UpdateLabelPrinterSettingsResponse = LabelPrinterUpdateResult | UpdateLabelPrinterSettingsError;
 
 export type UpdateLocationError = {
   __typename: 'UpdateLocationError';

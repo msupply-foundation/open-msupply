@@ -40,6 +40,7 @@ pub struct FullSyncStatus {
     pub pull_central: Option<SyncStatusWithProgress>,
     pub pull_v6: Option<SyncStatusWithProgress>,
     pub pull_remote: Option<SyncStatusWithProgress>,
+    pub push_v6: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
 }
 
@@ -71,6 +72,10 @@ impl FullSyncStatus {
             pull_v6_finished_datetime,
             pull_v6_progress_total,
             pull_v6_progress_done,
+            push_v6_started_datetime,
+            push_v6_finished_datetime,
+            push_v6_progress_total,
+            push_v6_progress_done,
             integration_progress_total,
             integration_progress_done,
         } = sync_log_row;
@@ -116,6 +121,12 @@ impl FullSyncStatus {
                 finished: pull_v6_finished_datetime,
                 total: pull_v6_progress_total.map(i32_to_u32),
                 done: pull_v6_progress_done.map(i32_to_u32),
+            }),
+            push_v6: push_v6_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: push_v6_finished_datetime,
+                total: push_v6_progress_total.map(i32_to_u32),
+                done: push_v6_progress_done.map(i32_to_u32),
             }),
         }
     }
@@ -216,8 +227,8 @@ fn get_initialisation_status(
 }
 
 /// During initial sync remote server asks central server to initialise remote data
-/// preparte initial done datetime is set on associated sync log, this is check to see
-/// if synce queue was initialised
+/// prepare initial done datetime is set on associated sync log, this is check to see
+/// if sync queue was initialised
 fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
     let log_with_done_prepare_initial_datetime = SyncLogRepository::new(&ctx.connection)
         .query_one(SyncLogFilter::new().prepare_initial_finished_datetime(

@@ -133,9 +133,6 @@ export const ServerSettings = () => {
     </>
   ) : (
     <>
-      <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-        {t('heading.support')}
-      </Typography>
       <Setting
         title={t('label.server-log')}
         component={

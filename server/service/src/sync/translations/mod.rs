@@ -1,7 +1,9 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
+pub(crate) mod asset_log;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
@@ -99,10 +101,13 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::name_merge::boxed(),
         special::item_merge::boxed(),
         special::clinician_merge::boxed(),
+        // Assets
+        asset::boxed(),
         asset_class::boxed(),
         asset_category::boxed(),
         asset_type::boxed(),
         asset_catalogue_item::boxed(),
+        asset_log::boxed(),
     ]
 }
 
@@ -140,8 +145,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str>
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>),
-    Delete(Box<dyn Delete>),
+    Upsert(Box<dyn Upsert>, Option<i32>), // Upsert record, and source_site_id
+    Delete(Box<dyn Delete>),              // Todo: add source site id?
 }
 
 impl IntegrationOperation {
@@ -149,7 +154,7 @@ impl IntegrationOperation {
     where
         U: Upsert + 'static,
     {
-        Self::Upsert(Box::new(upsert))
+        Self::Upsert(Box::new(upsert), None) // TODO?
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
@@ -191,9 +196,22 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert)))
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None)) // Source site is added later using add_source_site_id
                 .collect(),
         )
+    }
+
+    pub(crate) fn add_source_site_id(&mut self, source_site_id: i32) {
+        match self {
+            Self::IntegrationOperations(operations) => {
+                for operation in operations {
+                    if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
+                        *site_id = Some(source_site_id);
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 
     pub(crate) fn delete<U>(upsert: U) -> Self
@@ -266,7 +284,6 @@ pub(crate) enum ToSyncRecordTranslationType {
     /// When omSupply remote is pushing to og mSupply central
     PushToLegacyCentral,
     /// When omSupply remote is pushing to omSupply central
-    #[allow(dead_code)]
     PushToOmSupplyCentral,
     // When omSupply remote is pulling from omSupply central
     PullFromOmSupplyCentral,
@@ -277,7 +294,7 @@ pub(crate) enum ToSyncRecordTranslationType {
 ///  * pulled from legacy and omSupply central servers
 ///  * pushed to legacy and omSupply central servers
 /// also used on central site when responding to pull requests
-/// from remote sites, to trasnalte to sync record sent in response
+/// from remote sites, to translate to sync record sent in response
 ///
 /// "sync_record" in this context refers to transport layer records (json representation of database record alongside metadata like table_name)
 pub(crate) trait SyncTranslation {
@@ -335,7 +352,7 @@ pub(crate) trait SyncTranslation {
             // Have to manually specify in the translation
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => false,
             // Have to manually specify in the translation
-            ToSyncRecordTranslationType::PushToOmSupplyCentral => unimplemented!(),
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => false,
         }
     }
 
