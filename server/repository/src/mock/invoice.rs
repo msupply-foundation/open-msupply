@@ -462,6 +462,7 @@ pub fn mock_outbound_return_a() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -470,7 +471,7 @@ pub fn mock_outbound_return_b() -> InvoiceRow {
         r.id = String::from("outbound_return_b");
         r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_b");
-        r.invoice_number = 1;
+        r.invoice_number = 2;
         r.r#type = InvoiceRowType::OutboundReturn;
         r.status = InvoiceRowStatus::New;
         r.their_reference = Some(String::from(""));
@@ -478,6 +479,7 @@ pub fn mock_outbound_return_b() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -494,6 +496,7 @@ pub fn mock_inbound_return_a() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.delivered_datetime = Some(Utc::now().naive_utc());
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -509,6 +512,7 @@ pub fn mock_inbound_return_b() -> InvoiceRow {
             .unwrap()
             .and_hms_opt(12, 30, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
