@@ -15,11 +15,12 @@ pub trait MasterListServiceTrait: Sync + Send {
     fn get_master_lists(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
         pagination: Option<PaginationOption>,
         filter: Option<MasterListFilter>,
         sort: Option<MasterListSort>,
     ) -> Result<ListResult<MasterList>, ListError> {
-        get_master_lists(ctx, pagination, filter, sort)
+        get_master_lists(ctx, store_id, pagination, filter, sort)
     }
 
     fn get_master_list_lines(

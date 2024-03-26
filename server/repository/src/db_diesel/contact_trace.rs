@@ -63,7 +63,7 @@ type BoxedProgramQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query<'a>(filter: Option<ContactTraceFilter>) -> BoxedProgramQuery {
+fn create_filtered_query(filter: Option<ContactTraceFilter>) -> BoxedProgramQuery {
     let mut query = contact_trace_dsl::contact_trace_name_link_view
         .inner_join(document_dsl::document)
         .inner_join(program_dsl::program)

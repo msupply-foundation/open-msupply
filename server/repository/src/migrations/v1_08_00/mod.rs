@@ -5,11 +5,13 @@ use crate::StorageConnection;
 mod activity_log_add_zero_line;
 mod assets;
 mod central_omsupply;
+mod invoice_required_currency_id;
 mod pack_variant;
 mod return_context_types;
 mod return_reasons;
 mod return_types;
 mod store_add_created_date;
+mod sync_file_reference;
 
 pub(crate) struct V1_08_00;
 
@@ -27,6 +29,8 @@ impl Migration for V1_08_00 {
         return_types::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
+        invoice_required_currency_id::migrate(connection)?;
+        sync_file_reference::migrate(connection)?;
         Ok(())
     }
 }

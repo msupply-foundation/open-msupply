@@ -10,16 +10,20 @@ import {
   Select,
   Autocomplete,
   FnUtils,
-  InsertAssetInput,
   BasicTextInput,
+  useIsCentralServerApi,
+  Switch,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
+  StoreRowFragment,
+  StoreSearchInput,
   mapIdNameToOptions,
   useAssetData,
 } from '@openmsupply-client/system';
 import { useAssets } from '../api';
 import { CCE_CLASS_ID } from '../utils';
+import { InsertAsset } from '../api/api';
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -36,8 +40,8 @@ const mapCatalogueItems = (catalogueItems: AssetCatalogueItemFragment[]) =>
 
 const getEmptyAsset = () => ({
   id: FnUtils.generateUUID(),
-  code: '',
-  catalogueItemId: '',
+  assetNumber: '',
+  classId: CCE_CLASS_ID,
 });
 
 const InputRow = ({
@@ -60,10 +64,10 @@ const parseInsertError = (e: unknown) => {
   if (
     message.includes('DatabaseError(') &&
     message.includes('UniqueViolation(') &&
-    message.includes('asset_code_key') &&
+    message.includes('asset_asset_number_key') &&
     message.includes('duplicate key')
   ) {
-    return 'error.cce-code-already-used';
+    return 'error.cce-asset-number-already-used';
   }
 
   return 'error.unable-to-create-cce';
@@ -76,20 +80,26 @@ export const CreateAssetModal = ({
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose });
-  const [categoryId, setCategoryId] = useState('');
-  const [draft, setDraft] = useState<InsertAssetInput>(getEmptyAsset());
+  const [isCatalogueAsset, setIsCatalogueAsset] = useState(true);
+  const [draft, setDraft] = useState<Partial<InsertAsset>>(getEmptyAsset());
   const { data: categoryData, isLoading: isLoadingCategories } =
     useAssetData.utils.categories({ classId: { equalTo: CCE_CLASS_ID } });
-  const { data: catalogueItemData } = useAssetData.document.list(categoryId);
+  const { data: typeData, isLoading: isLoadingTypes } =
+    useAssetData.utils.types({
+      categoryId: { equalTo: draft.categoryId ?? '' },
+    });
+  const { data: catalogueItemData } = useAssetData.document.list(
+    draft.categoryId ?? ''
+  );
   const { mutateAsync: save } = useAssets.document.insert();
+  const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
-    setCategoryId('');
     setDraft(getEmptyAsset());
     onClose();
   };
 
-  const updateDraft = (patch: Partial<InsertAssetInput>) => {
+  const updateDraft = (patch: Partial<InsertAsset>) => {
     setDraft({ ...draft, ...patch });
   };
 
@@ -97,6 +107,29 @@ export const CreateAssetModal = ({
   const selectedCatalogueItem = catalogueItems.find(
     ci => ci.id === draft.catalogueItemId
   );
+
+  const onStoreChange = (store: StoreRowFragment) => {
+    updateDraft({
+      store: {
+        __typename: 'StoreNode',
+        id: store.id,
+        code: store.code ?? '',
+        storeName: '',
+      },
+    });
+  };
+
+  const onStoreInputChange = (
+    _event: React.SyntheticEvent<Element, Event>,
+    _value: string,
+    reason: string
+  ) => {
+    if (reason === 'clear') updateDraft({ store: null });
+  };
+  const isDisabled =
+    !draft.assetNumber ||
+    (isCatalogueAsset ? !draft.catalogueItemId : !draft.typeId);
+
   return (
     <Modal
       title={t('heading.add-cold-chain-equipment')}
@@ -106,7 +139,7 @@ export const CreateAssetModal = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={!draft.catalogueItemId || !draft.code}
+          disabled={isDisabled}
           onClick={async () => {
             try {
               await save(draft);
@@ -123,6 +156,13 @@ export const CreateAssetModal = ({
         <BasicSpinner messageKey="loading" />
       ) : (
         <Box>
+          <Box display="flex" justifyContent="flex-end">
+            <Switch
+              onChange={() => setIsCatalogueAsset(!isCatalogueAsset)}
+              checked={isCatalogueAsset}
+              label={t('label.use-catalogue')}
+            />
+          </Box>
           <InputRow
             label={t('label.category')}
             Input={
@@ -130,44 +170,83 @@ export const CreateAssetModal = ({
                 options={mapIdNameToOptions(categoryData?.nodes ?? [])}
                 fullWidth
                 onChange={e => {
-                  updateDraft({ catalogueItemId: '' });
-                  setCategoryId(e.target.value);
+                  updateDraft({
+                    catalogueItemId: undefined,
+                    categoryId: e.target.value,
+                    typeId: '',
+                  });
                 }}
-                value={categoryId}
+                value={draft.categoryId}
               />
             }
           />
+          {isCatalogueAsset ? (
+            <InputRow
+              label={t('label.catalogue-item')}
+              Input={
+                <Autocomplete
+                  value={
+                    !!selectedCatalogueItem
+                      ? mapCatalogueItem(selectedCatalogueItem)
+                      : null
+                  }
+                  isOptionEqualToValue={option =>
+                    option.value === selectedCatalogueItem?.id
+                  }
+                  options={mapCatalogueItems(catalogueItems)}
+                  width="100%"
+                  sx={{ width: '100%' }}
+                  onChange={(_event, selected) =>
+                    updateDraft({ catalogueItemId: selected?.value ?? '' })
+                  }
+                />
+              }
+            />
+          ) : (
+            <InputRow
+              label={t('label.type')}
+              Input={
+                <Select
+                  options={
+                    isLoadingTypes
+                      ? []
+                      : mapIdNameToOptions(typeData?.nodes ?? [])
+                  }
+                  fullWidth
+                  onChange={e => {
+                    updateDraft({
+                      typeId: e.target.value,
+                    });
+                  }}
+                  value={draft.typeId}
+                />
+              }
+            />
+          )}
           <InputRow
-            label={t('label.catalogue-item')}
-            Input={
-              <Autocomplete
-                value={
-                  !!selectedCatalogueItem
-                    ? mapCatalogueItem(selectedCatalogueItem)
-                    : null
-                }
-                isOptionEqualToValue={option =>
-                  option.value === selectedCatalogueItem?.id
-                }
-                options={mapCatalogueItems(catalogueItems)}
-                width="100%"
-                sx={{ width: '100%' }}
-                onChange={(_event, selected) =>
-                  updateDraft({ catalogueItemId: selected?.value ?? '' })
-                }
-              />
-            }
-          />
-          <InputRow
-            label={t('label.code')}
+            label={t('label.asset-number')}
             Input={
               <BasicTextInput
                 fullWidth
-                value={draft.code}
-                onChange={e => updateDraft({ code: e.target.value })}
+                value={draft.assetNumber}
+                onChange={e => updateDraft({ assetNumber: e.target.value })}
               />
             }
           />
+          {isCentralServer && (
+            <InputRow
+              label={t('label.store')}
+              Input={
+                <StoreSearchInput
+                  clearable
+                  fullWidth
+                  value={draft.store ?? undefined}
+                  onChange={onStoreChange}
+                  onInputChange={onStoreInputChange}
+                />
+              }
+            />
+          )}
           <InputRow
             label={t('label.notes')}
             Input={

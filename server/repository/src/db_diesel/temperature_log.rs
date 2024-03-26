@@ -29,7 +29,7 @@ pub type TemperatureLogJoin = (
     Option<TemperatureBreachRow>,
 );
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -154,14 +154,7 @@ fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
 
 impl TemperatureLogFilter {
     pub fn new() -> TemperatureLogFilter {
-        TemperatureLogFilter {
-            id: None,
-            store_id: None,
-            datetime: None,
-            sensor: None,
-            location: None,
-            temperature_breach: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

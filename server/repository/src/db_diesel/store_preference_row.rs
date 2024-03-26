@@ -97,7 +97,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
             .filter(store_preference_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(

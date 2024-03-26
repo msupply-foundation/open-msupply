@@ -2,9 +2,9 @@ use repository::{UnitRow, UnitRowDelete};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
-const TABLE_NAME: &'static str = "unit";
+const TABLE_NAME: &str = "unit";
 
-const UNIT_1: (&'static str, &'static str) = (
+const UNIT_1: (&str, &str) = (
     "A02C91EB6C77400BA783C4CD7C565F2A",
     r#"{
         "ID": "A02C91EB6C77400BA783C4CD7C565F2A",
@@ -14,7 +14,7 @@ const UNIT_1: (&'static str, &'static str) = (
     }"#,
 );
 
-const UNIT_2: (&'static str, &'static str) = (
+const UNIT_2: (&str, &str) = (
     "EC87200254974C609293D88E470598C4",
     r#"{
         "ID": "EC87200254974C609293D88E470598C4",
@@ -24,7 +24,7 @@ const UNIT_2: (&'static str, &'static str) = (
     }"#,
 );
 
-const UNIT_3: (&'static str, &'static str) = (
+const UNIT_3: (&str, &str) = (
     "A02C91EB6C77400BA783C4CD7C565F29",
     r#"{
         "ID": "A02C91EB6C77400BA783C4CD7C565F29",

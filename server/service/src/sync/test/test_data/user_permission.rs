@@ -2,9 +2,9 @@ use repository::{mock::context_program_a, Permission, UserPermissionRow, UserPer
 
 use crate::sync::test::TestSyncIncomingRecord;
 
-const TABLE_NAME: &'static str = "om_user_permission";
+const TABLE_NAME: &str = "om_user_permission";
 
-const USER_PERMISSION_1: (&'static str, &'static str) = (
+const USER_PERMISSION_1: (&str, &str) = (
     "user_permission_1",
     r#"{
     "ID": "user_permission_1",
@@ -15,7 +15,7 @@ const USER_PERMISSION_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const USER_PERMISSION_2: (&'static str, &'static str) = (
+const USER_PERMISSION_2: (&str, &str) = (
     "user_permission_2",
     r#"{
     "ID": "user_permission_2",

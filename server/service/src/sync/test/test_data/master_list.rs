@@ -2,9 +2,9 @@ use repository::MasterListRow;
 
 use crate::sync::test::TestSyncIncomingRecord;
 
-const TABLE_NAME: &'static str = "list_master";
+const TABLE_NAME: &str = "list_master";
 
-const MASTER_LIST_1: (&'static str, &'static str) = (
+const MASTER_LIST_1: (&str, &str) = (
     "87027C44835B48E6989376F42A58F7EA",
     r#"{
     "ID": "87027C44835B48E6989376F42A58F7EA",
@@ -24,7 +24,7 @@ const MASTER_LIST_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const MASTER_LIST_2: (&'static str, &'static str) = (
+const MASTER_LIST_2: (&str, &str) = (
     "87027C44835B48E6989376F42A58F7E3",
     r#"{
     "ID": "87027C44835B48E6989376F42A58F7E3",

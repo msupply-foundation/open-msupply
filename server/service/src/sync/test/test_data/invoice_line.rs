@@ -9,9 +9,9 @@ use repository::{
     InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineRowType,
 };
 use serde_json::json;
-const TABLE_NAME: &'static str = "trans_line";
+const TABLE_NAME: &str = "trans_line";
 
-const TRANS_LINE_1: (&'static str, &'static str) = (
+const TRANS_LINE_1: (&str, &str) = (
     "12ee2f10f0d211eb8dddb54df6d741bc",
     r#"{
         "ID": "12ee2f10f0d211eb8dddb54df6d741bc",
@@ -127,7 +127,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
 }
 
 // placeholder
-const TRANS_LINE_2: (&'static str, &'static str) = (
+const TRANS_LINE_2: (&str, &str) = (
     "C9A2D5854A15457388C8266D95DE1945",
     r#"{
         "ID": "C9A2D5854A15457388C8266D95DE1945",
@@ -196,7 +196,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             stock_line_id: Some(mock_stock_line_a().id),
             location_id: None,
             batch: None,
-            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 02, 22).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 22).unwrap()),
             pack_size: 5,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 2.0,
@@ -224,7 +224,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             stock_line_id: Some(mock_stock_line_a().id),
             location_id: None,
             batch: None,
-            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 02, 22).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 22).unwrap()),
             pack_size: 5,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 2.0,
@@ -241,7 +241,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const TRANS_LINE_OM_FIELDS: (&'static str, &'static str) = (
+const TRANS_LINE_OM_FIELDS: (&str, &str) = (
     "A9A2D5854A15457388C8266D95DE1945",
     r#"{
         "ID": "A9A2D5854A15457388C8266D95DE1945",
@@ -314,7 +314,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             stock_line_id: Some(mock_stock_line_a().id),
             location_id: None,
             batch: None,
-            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 02, 22).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 22).unwrap()),
             pack_size: 5,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 2.0,
@@ -342,7 +342,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             stock_line_id: Some(mock_stock_line_a().id),
             location_id: None,
             batch: None,
-            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 02, 22).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 22).unwrap()),
             pack_size: 5,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 2.0,
@@ -359,7 +359,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
     }
 }
 
-const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&'static str, &'static str) = (
+const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&str, &str) = (
     "4A15457388C8266D95DE1945A9A2D585",
     r#"{
         "ID": "4A15457388C8266D95DE1945A9A2D585",
@@ -432,7 +432,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             stock_line_id: Some(mock_stock_line_a().id),
             location_id: None,
             batch: None,
-            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 02, 22).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 22).unwrap()),
             pack_size: 5,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 2.0,
@@ -460,7 +460,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             stock_line_id: Some(mock_stock_line_a().id),
             location_id: None,
             batch: None,
-            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 02, 22).unwrap()),
+            expiry_date: Some(NaiveDate::from_ymd_opt(2022, 2, 22).unwrap()),
             pack_size: 5,
             cost_price_per_pack: 5.0,
             sell_price_per_pack: 2.0,

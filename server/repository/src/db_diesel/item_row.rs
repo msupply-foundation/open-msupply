@@ -112,7 +112,7 @@ impl<'a> ItemRowRepository<'a> {
             .values(item_row)
             .execute(&self.connection.connection)?;
 
-        insert_or_ignore_item_link(&self.connection, item_row)?;
+        insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
     }
 
@@ -121,7 +121,7 @@ impl<'a> ItemRowRepository<'a> {
             .values(item_row)
             .execute(&self.connection.connection)?;
 
-        insert_or_ignore_item_link(&self.connection, item_row)?;
+        insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
     }
 
@@ -133,7 +133,7 @@ impl<'a> ItemRowRepository<'a> {
     pub fn find_active_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = self
             .find_one_by_id(item_id)?
-            .and_then(|r| r.is_active.then(|| r));
+            .and_then(|r| r.is_active.then_some(r));
         Ok(result)
     }
 

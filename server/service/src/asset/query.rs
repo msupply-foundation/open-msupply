@@ -16,7 +16,7 @@ pub fn get_assets(
     sort: Option<AssetSort>,
 ) -> Result<ListResult<Asset>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = AssetRepository::new(&connection);
+    let repository = AssetRepository::new(connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,

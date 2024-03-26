@@ -3,9 +3,9 @@ use chrono::NaiveDate;
 use repository::{StoreRow, StoreRowDelete, SyncBufferRow};
 use util::inline_init;
 
-const TABLE_NAME: &'static str = "store";
+const TABLE_NAME: &str = "store";
 
-const STORE_1: (&'static str, &'static str) = (
+const STORE_1: (&str, &str) = (
     "4E27CEB263354EB7B1B33CEA8F7884D8",
     r#"{
     "ID": "4E27CEB263354EB7B1B33CEA8F7884D8",

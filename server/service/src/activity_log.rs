@@ -41,12 +41,12 @@ pub fn activity_log_entry(
     let log = &ActivityLogRow {
         id: uuid(),
         r#type: log_type,
-        user_id: if ctx.user_id != "" {
+        user_id: if !ctx.user_id.is_empty() {
             Some(ctx.user_id.clone())
         } else {
             None
         },
-        store_id: if ctx.store_id != "" {
+        store_id: if !ctx.store_id.is_empty() {
             Some(ctx.store_id.clone())
         } else {
             None
@@ -57,7 +57,7 @@ pub fn activity_log_entry(
         changed_from,
     };
 
-    Ok(ActivityLogRowRepository::new(&ctx.connection).insert_one(log)?)
+    ActivityLogRowRepository::new(&ctx.connection).insert_one(log)
 }
 
 pub fn system_activity_log_entry(
@@ -77,7 +77,7 @@ pub fn system_activity_log_entry(
         changed_to: None,
     };
 
-    Ok(ActivityLogRowRepository::new(&connection).insert_one(log)?)
+    ActivityLogRowRepository::new(connection).insert_one(log)
 }
 
 pub fn log_type_from_invoice_status(
@@ -108,7 +108,7 @@ mod test {
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
     use repository::{
-        mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
+        mock::{currency_a, mock_name_a, mock_store_a, MockData, MockDataInserts},
         ActivityLogType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
     };
     use util::inline_init;
@@ -123,7 +123,7 @@ mod test {
             ..
         } = setup_all_with_data_and_service_provider(
             "invoice_log",
-            MockDataInserts::none().names().stores(),
+            MockDataInserts::none().names().stores().currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_init(|r: &mut InvoiceRow| {
                     r.id = "test".to_string();
@@ -131,6 +131,7 @@ mod test {
                     r.store_id = mock_store_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                     r.status = InvoiceRowStatus::Allocated;
+                    r.currency_id = currency_a().id;
                 })]
             }),
         )

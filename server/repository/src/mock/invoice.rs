@@ -18,6 +18,7 @@ pub fn mock_outbound_shipment_a() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -43,6 +44,7 @@ pub fn mock_outbound_shipment_b() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -60,6 +62,7 @@ pub fn mock_outbound_shipment_c() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -89,6 +92,7 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -106,6 +110,7 @@ pub fn mock_outbound_shipment_e() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -131,6 +136,7 @@ pub fn mock_outbound_shipment_picked() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -156,6 +162,7 @@ pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -181,6 +188,7 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -191,6 +199,7 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
         r.store_id = String::from("store_c");
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -205,6 +214,7 @@ pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -229,6 +239,7 @@ pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -246,7 +257,7 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
-        r.delivered_datetime = Some(Utc::now().naive_utc());
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -272,6 +283,7 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
         );
         r.delivered_datetime = Some(Utc::now().naive_utc());
         r.verified_datetime = Some(Utc::now().naive_utc());
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -289,6 +301,7 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -312,6 +325,7 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
                 .and_hms_milli_opt(21, 30, 0, 0)
                 .unwrap(),
         );
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -330,6 +344,7 @@ pub fn mock_inbound_shipment_e() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -347,6 +362,7 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -363,6 +379,7 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -395,6 +412,7 @@ pub fn mock_prescription_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -410,6 +428,7 @@ pub fn mock_prescription_picked() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -425,6 +444,7 @@ pub fn mock_prescription_verified() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 

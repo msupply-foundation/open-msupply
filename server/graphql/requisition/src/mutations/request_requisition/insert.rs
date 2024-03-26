@@ -322,7 +322,7 @@ mod test {
                     comment: Some("comment input".to_string()),
                     max_months_of_stock: 1.0,
                     min_months_of_stock: 2.0,
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap())
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
                 }
             );
             Ok(inline_init(|r: &mut Requisition| {
