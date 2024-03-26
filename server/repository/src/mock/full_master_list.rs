@@ -22,7 +22,7 @@ pub fn mock_master_list_item_query_test1() -> FullMockMasterList {
         joins: vec![MasterListNameJoinRow {
             id: "item_query_test1".to_owned(),
             master_list_id: "item_query_test1".to_owned(),
-            name_link_id: "id_master_list_filter_test".to_owned(),
+            name_link_id: "name_store_a".to_owned(),
         }],
         lines: vec![MasterListLineRow {
             id: "item_query_test1".to_owned(),
@@ -44,7 +44,7 @@ pub fn mock_master_list_master_list_filter_test() -> FullMockMasterList {
         joins: vec![MasterListNameJoinRow {
             id: "master_list_filter_test".to_owned(),
             master_list_id: "master_list_filter_test".to_owned(),
-            name_link_id: "name_store_a".to_owned(),
+            name_link_id: "id_master_list_filter_test".to_owned(),
         }],
         lines: Vec::new(),
     }
