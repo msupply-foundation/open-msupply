@@ -7,14 +7,14 @@ pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceRowType) -> bool 
     if invoice.r#type == r#type {
         return true;
     }
-    return false;
+    false
 }
 
 pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> bool {
     if invoice.store_id == store_id {
         return true;
     }
-    return false;
+    false
 }
 
 pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRowStatus>) -> bool {
@@ -23,7 +23,7 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRo
             return true;
         }
     }
-    return false;
+    false
 }
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
@@ -61,7 +61,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     if is_editable {
         return true;
     }
-    return false;
+    false
 }
 
 pub enum InvoiceRowStatusError {

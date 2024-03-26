@@ -79,9 +79,12 @@ pub(crate) fn generate(
     let location_movements = if let Some(batches) = &batches_to_update {
         let generate_movement = batches
             .iter()
-            .filter_map(|batch| match batch.line.location_id {
-                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
-                None => None,
+            .filter_map(|batch| {
+                batch
+                    .line
+                    .location_id
+                    .clone()
+                    .map(|_| generate_location_movements(store_id.to_owned(), batch))
             })
             .collect();
 
