@@ -20,6 +20,7 @@ import { OutboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundReturnEditModal } from '../modals';
 import { OutboundReturnItem } from '../../types';
+import { getNextItemId } from '../../utils';
 
 export const OutboundReturnsDetailView: FC = () => {
   const {
@@ -110,20 +111,4 @@ export const OutboundReturnsDetailView: FC = () => {
       )}
     </React.Suspense>
   );
-};
-
-export const getNextItemId = (
-  lines: { itemId: string }[],
-  currentItemId: string | null
-) => {
-  if (!lines || !currentItemId) return undefined;
-  const currentItemIndex = lines.findIndex(
-    line => line.itemId === currentItemId
-  );
-  if (currentItemIndex === -1) return;
-
-  const nextItemIndex = lines.findIndex(
-    (line, index) => index > currentItemIndex && line.itemId !== currentItemId
-  );
-  return nextItemIndex === -1 ? undefined : lines[nextItemIndex]?.itemId;
 };

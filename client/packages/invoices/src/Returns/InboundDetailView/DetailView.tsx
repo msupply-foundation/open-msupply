@@ -21,7 +21,7 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { InboundReturnItem } from '../../types';
 import { InboundReturnEditModal } from '../modals';
-import { getNextItemId } from '../OutboundDetailView/DetailView';
+import { getNextItemId } from '../../utils';
 
 export const InboundReturnDetailView: FC = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
