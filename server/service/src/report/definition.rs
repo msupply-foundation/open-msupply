@@ -3,8 +3,11 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::string_or_vec::string_or_vec;
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct SQLQuery {
+    pub name: String,
     pub query_sqlite: String,
     pub query_postgres: String,
 }
@@ -73,7 +76,8 @@ pub struct ReportDefinitionIndex {
     pub template: Option<String>,
     pub header: Option<String>,
     pub footer: Option<String>,
-    pub query: Option<String>,
+    #[serde(deserialize_with = "string_or_vec")]
+    pub query: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -144,7 +148,7 @@ mod report_dsl_test {
                     template: Some("template.html".to_string()),
                     header: None,
                     footer: Some("local_footer.html".to_string()),
-                    query: Some("query".to_string()),
+                    query: vec!["query".to_string()],
                 },
                 entries: HashMap::from([
                     (
