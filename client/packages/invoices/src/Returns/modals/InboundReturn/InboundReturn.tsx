@@ -127,7 +127,11 @@ export const InboundReturnEditModal = ({
     <DialogButton
       onClick={handleNextItem}
       variant="next"
-      disabled={currentTab !== Tabs.Reason || (isDisabled && !hasNextItem)}
+      disabled={
+        currentTab !== Tabs.Reason ||
+        (isDisabled && !hasNextItem) ||
+        (modalMode === ModalMode.Update && !hasNextItem)
+      }
     />
   );
 
