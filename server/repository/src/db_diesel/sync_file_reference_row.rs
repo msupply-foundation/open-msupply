@@ -45,35 +45,35 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(
+    fn _upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_file_reference)
             .values(sync_file_reference_row)
             .on_conflict(id)
             .do_update()
             .set(sync_file_reference_row)
             .execute(&self.connection.connection)?;
-        self.insert_changelog(
-            sync_file_reference_row.id.to_owned(),
-            ChangelogAction::Upsert,
-            Some(sync_file_reference_row.clone()),
-        )
+        Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
+    fn _upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
-    ) -> Result<i64, RepositoryError> {
+    ) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_file_reference)
             .values(sync_file_reference_row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, sync_file_reference_row: &SyncFileReferenceRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(sync_file_reference_row);
         self.insert_changelog(
             sync_file_reference_row.id.to_owned(),
             ChangelogAction::Upsert,
-            Some(sync_file_reference_row.clone()),
         )
     }
 
@@ -81,24 +81,12 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         &self,
         sync_file_reference_id: String,
         action: ChangelogAction,
-        row: Option<SyncFileReferenceRow>,
     ) -> Result<i64, RepositoryError> {
-        let store_id = match &row {
-            Some(r) => {
-                // TODO: look up if there is an associated store_id for this record
-                log::warn!(
-                    "store_id NOT IMPLEMENTED for sync_file_reference_id: {}",
-                    r.id
-                );
-                None
-            }
-            None => None,
-        };
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncFileReference,
             record_id: sync_file_reference_id,
             row_action: action,
-            store_id: store_id,
+            store_id: None,
             name_link_id: None,
         };
 
@@ -120,6 +108,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
+        self.insert_changelog(
+            sync_file_reference_id.to_owned(),
+            ChangelogAction::Delete,
+        )?;
         Ok(())
     }
 }
