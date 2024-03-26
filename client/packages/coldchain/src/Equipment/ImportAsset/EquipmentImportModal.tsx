@@ -20,6 +20,7 @@ import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
+import { LocationIds } from '../DetailView';
 
 interface EquipmentImportModalProps {
   isOpen: boolean;
@@ -44,7 +45,7 @@ export type ImportRow = {
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<AssetFragment> => ({
+): Partial<AssetFragment & LocationIds> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
@@ -60,7 +61,7 @@ export const toInsertEquipmentInput = (
 export const toUpdateEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<AssetFragment> => ({
+): Partial<AssetFragment & LocationIds> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(

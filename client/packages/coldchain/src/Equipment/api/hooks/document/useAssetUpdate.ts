@@ -8,7 +8,7 @@ export const useAssetUpdate = () => {
   const api = useAssetApi();
 
   return useMutation(
-    async (asset: Partial<AssetFragment> & LocationIds) => api.update(asset),
+    async (asset: Partial<AssetFragment & LocationIds>) => api.update(asset),
     {
       onSuccess: id => queryClient.invalidateQueries(api.keys.detail(id)),
       onError: e => {
