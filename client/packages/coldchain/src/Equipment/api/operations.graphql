@@ -5,6 +5,15 @@ fragment Asset on AssetNode {
   createdDatetime
   id
   installationDate
+  locations {
+    nodes {
+      id
+      code
+      name
+      onHold
+    }
+    totalCount
+  }
   modifiedDatetime
   notes
   replacementDate
@@ -100,6 +109,16 @@ query assetLogs(
         ...AssetLog
       }
     }
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
   }
 }
 

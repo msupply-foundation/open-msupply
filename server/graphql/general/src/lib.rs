@@ -20,6 +20,10 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    label_printer_settings::{
+        update_label_printer_settings, LabelPrinterSettingsInput,
+        UpdateLabelPrinterSettingsResponse,
+    },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
@@ -346,6 +350,13 @@ impl GeneralQueries {
     ) -> Result<GenerateInboundReturnLinesResponse> {
         generate_inbound_return_lines(&ctx, store_id, input)
     }
+
+    pub async fn label_printer_settings(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LabelPrinterSettingNode>> {
+        label_printer_settings(ctx)
+    }
 }
 
 #[derive(Default, Clone)]
@@ -402,6 +413,14 @@ impl GeneralMutations {
 
     pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
         update_user::update_user(ctx).await
+    }
+
+    pub async fn update_label_printer_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: LabelPrinterSettingsInput,
+    ) -> Result<UpdateLabelPrinterSettingsResponse> {
+        update_label_printer_settings(ctx, input)
     }
 }
 

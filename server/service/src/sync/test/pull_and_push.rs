@@ -4,7 +4,7 @@ use crate::sync::{
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
-        test_data::{get_all_omsupply_central_push_records, get_all_push_test_records},
+        test_data::{get_all_push_test_records, get_all_sync_v6_records},
         TestSyncOutgoingRecord,
     },
     translations::{
@@ -75,13 +75,10 @@ async fn test_sync_pull_and_push() {
     check_test_records_against_database(&connection, test_records).await;
 
     // PUSH UPSERT
-    let mut test_records = vec![
-        get_all_push_test_records(),
-        get_all_omsupply_central_push_records(),
-    ]
-    .into_iter()
-    .flatten()
-    .collect::<Vec<TestSyncOutgoingRecord>>();
+    let mut test_records = vec![get_all_push_test_records(), get_all_sync_v6_records()]
+        .into_iter()
+        .flatten()
+        .collect::<Vec<TestSyncOutgoingRecord>>();
 
     // Not using get_sync_push_changelogs_filter, since this test uses record integrated via sync as push records
     // which are usually filtered out via is_sync_updated flag
@@ -111,8 +108,14 @@ async fn test_sync_pull_and_push() {
     .collect::<Vec<PushSyncRecord>>();
 
     // Combine and sort
-    translated.sort_by(|a, b| a.record.record_id.cmp(&b.record.record_id));
-    test_records.sort_by(|a, b| a.record_id.cmp(&b.record_id));
+    translated.sort_by(|a, b| match a.record.table_name.cmp(&b.record.table_name) {
+        std::cmp::Ordering::Equal => a.record.record_id.cmp(&b.record.record_id),
+        other => other,
+    });
+    test_records.sort_by(|a, b| match a.table_name.cmp(&b.table_name) {
+        std::cmp::Ordering::Equal => a.record_id.cmp(&b.record_id),
+        other => other,
+    });
 
     // Test ids and table names
     assert_eq!(

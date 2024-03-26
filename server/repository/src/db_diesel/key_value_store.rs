@@ -23,6 +23,7 @@ pub enum KeyValueType {
     #[default]
     CentralSyncPullCursor,
     SyncPullCursorV6,
+    SyncPushCursorV6,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
@@ -43,6 +44,7 @@ pub enum KeyValueType {
     SettingsDisplayCustomLogoHash,
     SettingsDisplayCustomTheme,
     SettingsDisplayCustomThemeHash,
+    SettingsLabelPrinter,
 
     LogLevel,
     LogDirectory,
