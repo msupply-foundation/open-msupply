@@ -1,5 +1,5 @@
 import React, { FC, useState } from 'react';
-import Papa from 'papaparse';
+import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
@@ -7,7 +7,6 @@ import { useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
-  Paper,
   Link,
   FnUtils,
   FileUtils,
@@ -17,11 +16,18 @@ import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow, toInsertEquipmentInput } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
 import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
+
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
   onUploadComplete: () => void;
   catalogueItemData?: AssetCatalogueItemFragment[];
+}
+
+// introduce new interface to accomomdate dynamic keys of parsed result
+interface ParsedAsset {
+  id: string;
+  [key: string]: string | undefined;
 }
 
 export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
@@ -39,21 +45,21 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const csvExample = async () => {
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
-      emptyRows.map((row: ImportRow): InsertAssetInput => {
-        return toInsertEquipmentInput(row, catalogueItemData);
-      }),
+      emptyRows.map(
+        (row: ImportRow): Partial<InsertAssetInput> =>
+          toInsertEquipmentInput(row, catalogueItemData)
+      ),
       t
     );
     FileUtils.exportCSV(csv, t('filename.cce'));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const csvImport = (files: any) => {
+  const csvImport = <T extends File>(files: T[]) => {
     setErrorMessage('');
     EquipmentBuffer.length = 0; // Reset the import buffer
     const csvFile = files[0];
 
-    if (!csvFile.name.endsWith('.csv')) {
+    if (!csvFile?.name.endsWith('.csv')) {
       setErrorMessage(t('messages.invalid-file'));
       return;
     }
@@ -76,11 +82,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     error(t('messages.error-no-file-selected'));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const processUploadedDataChunk = (data: any) => {
+  const processUploadedDataChunk = (data: ParseResult<ParsedAsset>) => {
     if (!data.data || !Array.isArray(data.data)) {
-      // Don't think this is likely to happen...
-      console.info('data not data');
       setErrorMessage(t('messages.import-error'));
     }
 
@@ -98,9 +101,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       }
       if (
         row[t('label.asset-number')] &&
-        row[t('label.asset-number')].trim() != ''
+        row[t('label.asset-number')]?.trim() != ''
       ) {
-        importRow.assetNumber = row[t('label.asset-number')];
+        importRow.assetNumber = row[t('label.asset-number')] ?? '';
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: t('label.asset-number') })
@@ -108,7 +111,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       }
       if (
         row[t('label.catalogue-item-code')] === undefined ||
-        row[t('label.catalogue-item-code')].trim() === ''
+        row[t('label.catalogue-item-code')]?.trim() === ''
       ) {
         rowErrors.push(
           t('error.field-must-be-specified', {
@@ -129,7 +132,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       }
       // notes aren't essential for bulk upload
       if (row[t('label.asset-notes')] !== undefined) {
-        importRow.notes = row[t('label.asset-notes')];
+        importRow.notes = row[t('label.asset-notes')] ?? '';
       }
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
@@ -155,18 +158,17 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       ) : null}
       <Stack spacing={2}>
         <Upload onUpload={csvImport} />
-        <Paper>
-          <Typography variant="h5" textAlign="center">
-            <Link
-              onClick={() => {
-                csvExample();
-              }}
-              to={''}
-            >
-              {t('heading.download-example')}
-            </Link>
-          </Typography>
-        </Paper>
+        <Typography textAlign="center">
+          {t('messages.template-download-text')}
+          <Link
+            onClick={() => {
+              csvExample();
+            }}
+            to={''}
+          >
+            {t('heading.download-example')}
+          </Link>
+        </Typography>
       </Stack>
     </ImportPanel>
   );

@@ -47,8 +47,8 @@ const assetParsers = {
     storeId: input.store?.id,
     typeId: input.typeId,
   }),
-  toUpdate: (input: AssetFragment): UpdateAssetInput => ({
-    id: input.id,
+  toUpdate: (input: Partial<AssetFragment>): UpdateAssetInput => ({
+    id: input.id ?? '',
     catalogueItemId: setNullableInput('catalogueItemId', input),
     assetNumber: input.assetNumber,
     installationDate: setNullableInput('installationDate', input),
@@ -137,17 +137,11 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert asset');
   },
-  update: async (input: AssetFragment): Promise<string> => {
-    console.info('input', input);
-    console.info('graphql call:', {
-      input: assetParsers.toUpdate(input),
-      storeId,
-    });
+  update: async (input: Partial<AssetFragment>): Promise<string> => {
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,
     });
-    console.info('result:', result);
     const { updateAsset } = result;
 
     if (updateAsset?.__typename === 'AssetNode') {

@@ -20,6 +20,7 @@ import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
+
 interface EquipmentImportModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -43,7 +44,7 @@ export type ImportRow = {
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): AssetFragment => ({
+): Partial<AssetFragment> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
@@ -54,15 +55,12 @@ export const toInsertEquipmentInput = (
     .pop(),
   id: row.id,
   notes: row.notes,
-  __typename: 'AssetNode',
-  createdDatetime: undefined,
-  modifiedDatetime: undefined,
 });
 
 export const toUpdateEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): AssetFragment => ({
+): Partial<AssetFragment> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
@@ -72,11 +70,6 @@ export const toUpdateEquipmentInput = (
     ?.map((item: { id: string }) => item.id)
     .pop(),
   id: row.id,
-  // Assigning default values here as the parser in the API will ignore.
-  // Better type management would be gelpful here
-  __typename: 'AssetNode',
-  createdDatetime: undefined,
-  modifiedDatetime: undefined,
 });
 
 export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
@@ -112,9 +105,9 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const csvExport = async () => {
     const csv = importEquipmentToCsv(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bufferedEquipment.map((row: ImportRow): any => {
-        return toInsertEquipmentInput(row, catalogueItemData?.nodes);
-      }),
+      bufferedEquipment.map((row: ImportRow) =>
+        toInsertEquipmentInput(row, catalogueItemData?.nodes)
+      ),
       t
     );
     FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
@@ -127,7 +120,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     if (bufferedEquipment && numberImportRecords > 0) {
       const importErrorRows: ImportRow[] = [];
       // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
-      // A dedicated endpoint for this should probably be created on the backend
       const remainingRecords = bufferedEquipment;
       while (remainingRecords.length) {
         await Promise.all(
@@ -239,7 +231,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         <DialogButton
           variant="ok"
           disabled={importNotReady}
-          onClick={async () => {
+          onClick={() => {
             importAction();
           }}
         />
