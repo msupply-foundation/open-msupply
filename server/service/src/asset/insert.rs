@@ -4,6 +4,7 @@ use crate::{
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
+    asset_catalogue_item_row::AssetCatalogueItemRowRepository,
     assets::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
@@ -19,6 +20,7 @@ pub enum InsertAssetError {
     SerialNumberAlreadyExists,
 }
 
+#[derive(PartialEq, Debug, Clone)]
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
@@ -26,6 +28,9 @@ pub struct InsertAsset {
     pub asset_number: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
+    pub category_id: Option<String>,
+    pub class_id: Option<String>,
+    pub type_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
 }
@@ -38,6 +43,24 @@ pub fn insert_asset(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
+
+            // populate category_id, class_id, type_id from catalogue_item_id if present and valid
+            let input = match input.catalogue_item_id.clone() {
+                Some(catalogue_item_id) => {
+                    match AssetCatalogueItemRowRepository::new(connection)
+                        .find_one_by_id(&catalogue_item_id)?
+                    {
+                        Some(catalogue_item) => InsertAsset {
+                            category_id: Some(catalogue_item.category_id),
+                            class_id: Some(catalogue_item.class_id),
+                            type_id: Some(catalogue_item.type_id),
+                            ..input
+                        },
+                        None => input,
+                    }
+                }
+                None => input,
+            };
             let new_asset = generate(input);
             AssetRowRepository::new(connection).upsert_one(&new_asset)?;
 
@@ -86,6 +109,9 @@ pub fn generate(
         catalogue_item_id,
         installation_date,
         replacement_date,
+        category_id,
+        class_id,
+        type_id,
     }: InsertAsset,
 ) -> AssetRow {
     AssetRow {
@@ -100,6 +126,9 @@ pub fn generate(
         created_datetime: Utc::now().naive_utc(),
         modified_datetime: Utc::now().naive_utc(),
         deleted_datetime: None,
+        asset_category_id: Some(category_id.unwrap_or_default()),
+        asset_class_id: Some(class_id.unwrap_or_default()),
+        asset_type_id: Some(type_id.unwrap_or_default()),
     }
 }
 

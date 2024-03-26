@@ -517,7 +517,7 @@ mod test {
                 stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                 is_locked: Some(true),
                 location: None,
-                master_list_id: Some("invalid_master_list".to_string()),
+                master_list_id: Some("item_query_test1".to_string()),
                 items_have_stock: None,
             },
         );
