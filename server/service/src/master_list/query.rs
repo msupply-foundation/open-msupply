@@ -1,4 +1,4 @@
-use repository::{EqualFilter, PaginationOption};
+use repository::PaginationOption;
 use repository::{MasterList, MasterListFilter, MasterListRepository, MasterListSort};
 
 use crate::{
