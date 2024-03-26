@@ -5,6 +5,15 @@ fragment Asset on AssetNode {
   createdDatetime
   id
   installationDate
+  locations {
+    nodes {
+      id
+      code
+      name
+      onHold
+    }
+    totalCount
+  }
   modifiedDatetime
   notes
   replacementDate
@@ -15,18 +24,23 @@ fragment Asset on AssetNode {
     status
   }
   storeId
+  store {
+    id
+    code
+    storeName
+  }
   catalogueItem {
     manufacturer
     model
-    assetType {
-      name
-    }
-    assetClass {
-      name
-    }
-    assetCategory {
-      name
-    }
+  }
+  assetType {
+    name
+  }
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
   }
 }
 

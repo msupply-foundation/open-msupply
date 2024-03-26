@@ -3,6 +3,7 @@ pub(crate) mod asset;
 pub(crate) mod asset_catalogue_item;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
+pub(crate) mod asset_log;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
@@ -107,6 +108,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_category::boxed(),
         asset_type::boxed(),
         asset_catalogue_item::boxed(),
+        asset_log::boxed(),
         //Sync file reference
         sync_file_reference::boxed(),
     ]

@@ -1,6 +1,4 @@
 use repository::{ChangelogRepository, SyncBufferRowRepository};
-
-use simple_log::warn;
 use util::{format_error, is_central_server};
 
 use crate::{
@@ -42,14 +40,17 @@ pub async fn pull(
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
     // We don't need a filter here, as we are filtering in the repository layer
-    let changelogs = changelog_repo.outgoing_sync_records(
+    let changelogs = changelog_repo.outgoing_sync_records_from_central(
         cursor,
         batch_size,
         response.site_id,
         is_initialised,
     )?;
-    let total_records =
-        changelog_repo.count_outgoing_sync_records(cursor, response.site_id, is_initialised)?;
+    let total_records = changelog_repo.count_outgoing_sync_records_from_central(
+        cursor,
+        response.site_id,
+        is_initialised,
+    )?;
     let max_cursor = changelog_repo.latest_cursor()?;
 
     let end_cursor = changelogs
@@ -67,7 +68,7 @@ pub async fn pull(
     .map(SyncRecordV6::from)
     .collect();
 
-    warn!("Sending records as central server: {:#?}", records);
+    log::debug!("Sending records as central server: {:#?}", records);
 
     Ok(SyncBatchV6 {
         total_records,
@@ -86,8 +87,6 @@ pub async fn push(
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    warn!("Push!: {:#?}", batch);
-    // TODO consolidate at top level ? As middleware ?
     if !is_central_server() {
         return Err(Error::NotACentralServer);
     }
@@ -98,7 +97,7 @@ pub async fn push(
         .await
         .map_err(Error::from)?;
 
-    warn!("Receiving records as central server: {:#?}", batch);
+    log::debug!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
         records,

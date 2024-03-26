@@ -9,6 +9,7 @@ import {
   LoadingButton,
   EnvUtils,
   Platform,
+  useAuthContext,
 } from '@openmsupply-client/common';
 import { useMasterList } from '../api/hooks';
 import { masterListsToCsv } from '../../utils';
@@ -16,10 +17,14 @@ import { masterListsToCsv } from '../../utils';
 export const AppBarButtons = () => {
   const { success, error } = useNotification();
   const t = useTranslation('inventory');
-  const { isLoading, fetchAsync } = useMasterList.document.listAll({
-    key: 'name',
-    direction: 'asc',
-  });
+  const { storeId } = useAuthContext();
+  const { isLoading, fetchAsync } = useMasterList.document.listAll(
+    {
+      key: 'name',
+      direction: 'asc',
+    },
+    { existsForStoreId: { equalTo: storeId } }
+  );
 
   const csvExport = async () => {
     const data = await fetchAsync();
