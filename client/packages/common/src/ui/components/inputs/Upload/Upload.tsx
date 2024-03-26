@@ -1,7 +1,13 @@
 import React, { FC } from 'react';
 import Dropzone, { Accept } from 'react-dropzone';
 import { useTranslation } from '@common/intl';
-import { Paper, UploadIcon } from '@openmsupply-client/common';
+import {
+  alpha,
+  Paper,
+  FileUploadIcon,
+  Typography,
+  BaseButton,
+} from '@openmsupply-client/common';
 
 export interface UploadProps {
   onUpload: <T extends File>(files: T[]) => void;
@@ -10,16 +16,15 @@ export interface UploadProps {
 }
 
 export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
-  const t = useTranslation('coldchain');
+  const t = useTranslation();
   return (
     <Paper
       sx={{
         borderRadius: '16px',
         marginTop: '20px',
         marginBottom: '20px',
-        boxShadow: theme => theme.shadows[1],
-        backgroundColor: theme => theme.palette.grey[300],
-        padding: '14px 24px',
+        backgroundColor: theme => alpha(theme.palette.secondary.main, 0.1),
+        padding: '24px 24px',
         minWidth: '300px',
         width: '100%',
         alignContent: 'center',
@@ -28,9 +33,9 @@ export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
         justifyContent: 'center',
         borderStyle: 'dashed',
         borderWidth: '2px',
-        borderColor: theme => theme.palette.grey[500],
+        borderColor: 'secondary.main',
         ':hover': {
-          borderColor: theme => theme.palette.grey[800],
+          borderColor: 'secondary.dark',
           cursor: 'pointer',
         },
       }}
@@ -42,8 +47,19 @@ export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
         {({ getRootProps, getInputProps }) => (
           <div {...getRootProps()}>
             <input {...getInputProps()} />
-            <UploadIcon sx={{ fontSize: 100 }} />
-            <p>{t('messages.upload-invite')}</p>
+            <FileUploadIcon
+              sx={{
+                fontSize: 36,
+                stroke: theme => theme.palette.secondary.main,
+              }}
+            />
+            <Typography sx={{ fontWeight: 'bold' }} color="secondary">
+              {t('messages.upload-invite')}
+            </Typography>
+            <Typography color="secondary">{t('messages.upload-or')}</Typography>
+            <BaseButton color="secondary" variant="outlined">
+              {t('button.browse-files')}
+            </BaseButton>
           </div>
         )}
       </Dropzone>
