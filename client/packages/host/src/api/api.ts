@@ -1,6 +1,7 @@
 import {
   DisplaySettingsInput,
   DisplaySettingsHash,
+  LabelPrinterSettingsInput,
 } from '@openmsupply-client/common';
 
 import { Sdk } from './operations.generated';
@@ -21,10 +22,22 @@ export const getHostQueries = (sdk: Sdk) => ({
 
       throw new Error('Unable to fetch plugins');
     },
+    labelPrinterSettings: async () => {
+      const result = await sdk.labelPrinterSettings();
+      return result.labelPrinterSettings;
+    },
   },
 
   updateDisplaySettings: async (displaySettings: DisplaySettingsInput) => {
     const result = await sdk.updateDisplaySettings({ displaySettings });
     return result?.updateDisplaySettings;
+  },
+  updateLabelPrinterSettings: async (
+    labelPrinterSettings: LabelPrinterSettingsInput
+  ) => {
+    const result = await sdk.updateLabelPrinterSettings({
+      labelPrinterSettings,
+    });
+    return result?.updateLabelPrinterSettings;
   },
 });
