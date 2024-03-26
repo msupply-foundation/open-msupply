@@ -61,12 +61,12 @@ impl SyncTranslation for NameMergeTranslation {
             .collect();
 
         let name_store_join_repo = NameStoreJoinRepository::new(connection);
-        let name_store_joins_for_delete = name_store_join_repo.query(Some(
+        let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_delete)),
-        ))?;
-        let name_store_joins_for_keep = name_store_join_repo.query(Some(
+        )?;
+        let name_store_joins_for_keep = name_store_join_repo.query_by_filter(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)),
-        ))?;
+        )?;
         let mut deletes: Vec<PullDeleteRecord> = vec![];
 
         // We need to delete the name_store_joins that are no longer needed after the merge
