@@ -20,7 +20,7 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_name_id(EqualFilter::equal_to("id_master_list_filter_test")),
+                        .exists_for_name_id(EqualFilter::equal_to("name_store_a")),
                 ),
                 None,
             )
@@ -35,13 +35,12 @@ mod query {
                 None,
                 Some(
                     MasterListFilter::new()
-                        .exists_for_name(StringFilter::like("e_master_list_filter_te")),
+                        .exists_for_name(StringFilter::like("name_master_list_filter_test")),
                 ),
                 None,
             )
             .unwrap();
 
-        let master_list_row = result.rows[0].clone();
         assert_eq!(result.count, 1);
         assert_eq!(result.rows[0].id, "master_list_filter_test");
 
