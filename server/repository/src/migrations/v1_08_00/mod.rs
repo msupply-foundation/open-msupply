@@ -2,8 +2,8 @@ use super::{version::Version, Migration};
 
 use crate::StorageConnection;
 
-mod add_source_site_id;
 mod activity_log_add_zero_line;
+mod add_source_site_id;
 mod assets;
 mod central_omsupply;
 mod invoice_required_currency_id;

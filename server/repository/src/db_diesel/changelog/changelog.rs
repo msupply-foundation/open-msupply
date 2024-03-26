@@ -43,18 +43,6 @@ table! {
 joinable!(changelog_deduped -> name_link (name_link_id));
 allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
-table! {
-    #[sql_name = "changelog"]
-    changelog_insert (cursor) {
-        cursor -> BigInt,
-        table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
-        record_id -> Text,
-        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_link_id -> Nullable<Text>,
-        store_id -> Nullable<Text>,
-    }
-}
-
 #[cfg(not(feature = "postgres"))]
 no_arg_sql_function!(
     last_insert_rowid,
@@ -69,6 +57,7 @@ pub enum ChangelogAction {
     Delete,
 }
 
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
@@ -110,8 +99,9 @@ pub(crate) enum ChangeLogSyncStyle {
     Legacy,
     Central,
     Remote,
+    File,
     // Transfer,
-    // Files?? Patient??  etc
+    // Patient??  etc
 }
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
@@ -147,14 +137,14 @@ impl ChangelogTableName {
             ChangelogTableName::AssetType => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
-            ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::Remote,
         }
     }
 }
 
 #[derive(Debug, PartialEq, Insertable)]
-#[table_name = "changelog_insert"]
+#[table_name = "changelog"]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
@@ -212,9 +202,7 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter)
-            .order(changelog_deduped::cursor.asc())
-            .limit(limit.into());
+        let query = create_filtered_query(earliest, filter).limit(limit.into());
 
         // // Debug diesel query
         // println!(
@@ -249,7 +237,7 @@ impl<'a> ChangelogRepository<'a> {
         Ok(result as u64)
     }
 
-    pub fn outgoing_sync_records(
+    pub fn outgoing_sync_records_from_central(
         &self,
         earliest: u64,
         batch_size: u32,
@@ -285,7 +273,7 @@ impl<'a> ChangelogRepository<'a> {
     /// This returns the number of changelog records that should be evaluated to send to the remote site when doing a v6_pull
     /// This looks up associated records to decide if change log should be sent to the site or not
     /// Update this method when adding new record types to the system
-    pub fn count_outgoing_sync_records(
+    pub fn count_outgoing_sync_records_from_central(
         &self,
         earliest: u64,
         sync_site_id: i32,
@@ -358,7 +346,7 @@ impl<'a> ChangelogRepository<'a> {
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
         // SQLite docs say this is safe if you don't have different threads sharing a single connection
-        diesel::insert_into(changelog_insert::table)
+        diesel::insert_into(changelog::table)
             .values(row)
             .execute(&self.connection.connection)?;
         let cursor_id =
@@ -399,6 +387,22 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
     query
 }
 
+// The idea for this method is to build a query in such a way as to allow
+// extracting all relevant records for a site from change_log
+// A resulting SQL might look something like this...
+//
+// SELECT * FROM changelog_dedup
+// WHERE cursor > {remote site SyncPullCursorV6} AND last_sync_site_id != {remote site id}
+// AND
+// (
+// 	table_name in {central_record_names}
+//  OR
+// 	(table_name in {transfer record names}  AND name_id IN {name_ids of active stores on remote site})
+//  OR
+// 	// Special cases
+// 	(table_name in {patient record name} AND patient_id IN {select name_id from name_store_join where store_id in {active stores on remote site})
+// )
+
 /// This looks up associated records to decide if change log should be sent to the site or not
 /// Update this method when adding new sync styles to the system
 fn create_filtered_outgoing_sync_query(
@@ -415,13 +419,11 @@ fn create_filtered_outgoing_sync_query(
     // The rest of the time we want to exclude any records that were created by the site
 
     if is_initialized {
-        query = query
-            .filter(
-                changelog_deduped::source_site_id
-                    .ne(Some(sync_site_id.clone()))
-                    .or(changelog_deduped::source_site_id.is_null()),
-            )
-            .filter(changelog_deduped::is_sync_update.eq(false))
+        query = query.filter(
+            changelog_deduped::source_site_id
+                .ne(Some(sync_site_id.clone()))
+                .or(changelog_deduped::source_site_id.is_null()),
+        )
     }
 
     // Loop through all the Sync tables and add them to the query if they have the right sync style

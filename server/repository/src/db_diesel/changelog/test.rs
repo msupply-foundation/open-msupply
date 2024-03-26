@@ -625,9 +625,10 @@ async fn test_changelog_outgoing_sync_records() {
 
     let repo = ChangelogRepository::new(&connection);
 
-    let outgoing_results = repo.outgoing_sync_records(0, 10, 1, true).unwrap();
-
-    assert_eq!(outgoing_results.len(), 0); // Nothing to send to a remote site yet...
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 10, 1, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
 
     let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
     let site1_store_id = mock_store_a().id;
@@ -644,7 +645,9 @@ async fn test_changelog_outgoing_sync_records() {
     };
     let _result = row.upsert(&connection).unwrap();
 
-    let outgoing_results = repo.outgoing_sync_records(0, 1000, 1, true).unwrap();
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, 1, true)
+        .unwrap();
     // outgoing_results should contain the changelog record for the asset class
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
@@ -668,19 +671,23 @@ async fn test_changelog_outgoing_sync_records() {
     // The asset class and the asset
 
     let outgoing_results = repo
-        .outgoing_sync_records(0, 1000, site1_id, false)
+        .outgoing_sync_records_from_central(0, 1000, site1_id, false)
         .unwrap();
     assert_eq!(outgoing_results.len(), 2);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
     assert_eq!(outgoing_results[1].record_id, asset_id);
 
     // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
-    let outgoing_results = repo.outgoing_sync_records(0, 1000, site1_id, true).unwrap();
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site1_id, true)
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // Site 2 should only get the asset_class
-    let outgoing_results = repo.outgoing_sync_records(0, 1000, site2_id, true).unwrap();
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site2_id, true)
+        .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 }
