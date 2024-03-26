@@ -125,6 +125,10 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
       return items;
     },
+    labelPrinterSettings: async () => {
+      const result = await sdk.labelPrinterSettings();
+      return result.labelPrinterSettings;
+    },
   },
   insert: async (input: Partial<AssetFragment>): Promise<string> => {
     const result = await sdk.insertAsset({
