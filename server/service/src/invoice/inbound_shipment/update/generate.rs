@@ -51,7 +51,7 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.tax);
 
     if let Some(status) = patch.status.clone() {
-        update_invoice.status = status.full_status().into()
+        update_invoice.status = status.full_status()
     }
 
     if let Some(other_party) = other_party_option {
@@ -145,7 +145,7 @@ fn generate_update_for_lines(
         invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
             connection,
             invoice_line_row.total_before_tax,
-            &currency_id,
+            currency_id,
             currency_rate,
         )?;
         result.push(invoice_line_row);
@@ -189,13 +189,13 @@ fn empty_lines_to_trim(
     }
 
     let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
-    return Ok(Some(invoice_line_rows));
+    Ok(Some(invoice_line_rows))
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipment) {
     if let Some(new_invoice_status) = patch.full_status() {
         let current_datetime = Utc::now().naive_utc();
-        let invoice_status_index = InvoiceRowStatus::from(invoice.status.clone()).index();
+        let invoice_status_index = invoice.status.clone().index();
         let new_invoice_status_index = new_invoice_status.index();
 
         let is_status_update = |status: InvoiceRowStatus| {
@@ -204,7 +204,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
         };
 
         if is_status_update(InvoiceRowStatus::Delivered) {
-            invoice.delivered_datetime = Some(current_datetime.clone());
+            invoice.delivered_datetime = Some(current_datetime);
         }
 
         if is_status_update(InvoiceRowStatus::Verified) {
@@ -236,7 +236,7 @@ pub fn generate_lines_and_stock_lines(
         line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
             connection,
             line.total_before_tax,
-            &currency_id,
+            currency_id,
             currency_rate,
         )?;
 

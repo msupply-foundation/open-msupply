@@ -116,7 +116,7 @@ pub fn generate_batches_total_number_of_packs_update(
                 .invoice_id(EqualFilter::equal_to(invoice_id))
                 .r#type(InvoiceLineRowType::StockOut.equal_to()),
         )
-        .map_err(|err| InvoiceLineHasNoStockLine::DatabaseError(err))?;
+        .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
 
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
@@ -125,8 +125,7 @@ pub fn generate_batches_total_number_of_packs_update(
             InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
         )?;
 
-        stock_line.total_number_of_packs =
-            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
+        stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
     Ok(result)

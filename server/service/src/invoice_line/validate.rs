@@ -72,9 +72,7 @@ pub fn check_line_not_associated_with_stocktake(
         Some(store_id),
     );
     match result {
-        Ok(line) => {
-            return if line.len() == 0 { true } else { false };
-        }
+        Ok(line) => line.is_empty(),
         Err(RepositoryError::NotFound) => true,
         Err(_error) => false,
     }
