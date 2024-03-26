@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    StorageConnection, SyncBufferRow,
+    Pagination, StorageConnection, StoreRepository, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -60,13 +60,6 @@ impl SyncTranslation for NameMergeTranslation {
             })
             .collect();
 
-        // When 2 names are merged, we clean up name_store_joins to ensure there only remains 1 NSJ for each store that
-        // had the "deleted" name visible. We also make sure a store doesn't end up with NSJs to itself.
-        // e.g. for nameD and nameK where nameD is merged into nameK:
-        // storeA has just nameD visible, so we leave the NSJ and rely on the name_link being updated correctly in the merge process
-        // storeB has both nameD and nameK visible. After the merge, the store has effectively 2 identical name_store_joins pointing to nameK. Thus we delete the name_store_join pointing to nameD.
-        // This prevents names (nameK in this case) showing twice in lists after a merge.
-        // What's more, a store shouldn't become visible to itself! e.g. if storeA above is actually nameK.
         let name_store_join_repo = NameStoreJoinRepository::new(connection);
         let name_store_joins_for_delete = name_store_join_repo.query(Some(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_delete)),
@@ -74,9 +67,18 @@ impl SyncTranslation for NameMergeTranslation {
         let name_store_joins_for_keep = name_store_join_repo.query(Some(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)),
         ))?;
-
         let mut deletes: Vec<PullDeleteRecord> = vec![];
-        for nsj_delete in name_store_joins_for_delete {
+
+        // We need to delete the name_store_joins that are no longer needed after the merge
+        // Situation A: ("Joined to" meaning store->nsj->name_link->name)
+        // storeA joined to nameK
+        // storeA joined to nameD
+        // storeB joined to nameD
+        // nameD merged into nameK
+        // storeA joined to nameK
+        // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
+        // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
+        name_store_joins_for_delete.iter().for_each(|nsj_delete| {
             if name_store_joins_for_keep.iter().any(|nsj_keep| {
                 nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
             }) {
@@ -85,7 +87,29 @@ impl SyncTranslation for NameMergeTranslation {
                     table: PullDeleteRecordTable::NameStoreJoin,
                 });
             }
-        }
+        });
+
+        // Situation B:
+        // storeK.name_id == nameK.id
+        // storeK joined to nameD
+        // nameD merged into nameK
+        // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
+        let store_repo = StoreRepository::new(connection);
+
+        let stores = store_repo.query(Pagination::new(), None, None)?; // If there were thousands of stores this would probably be bad, at a certain scale theres probably a smarter DB query we could be making.
+        name_store_joins_for_delete
+            .into_iter()
+            .for_each(|nsj_delete| {
+                if stores
+                    .iter()
+                    .any(|store| store.store_row.id == nsj_delete.name_store_join.store_id)
+                {
+                    deletes.push(PullDeleteRecord {
+                        id: nsj_delete.name_store_join.id,
+                        table: PullDeleteRecordTable::NameStoreJoin,
+                    });
+                }
+            });
 
         Ok(Some(IntegrationRecords { upserts, deletes }))
     }
