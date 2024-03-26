@@ -65,6 +65,7 @@
   "label.upload-files": "Upload files",
   "label.asset-number": "Asset Number",
   "label.catalogue-item-code": "Catalogue item code",
+  "label.line-number": "Line number",
   "label.asset-notes": "Notes",
   "label.error-message": "Error message",
   "filename.cce": "equipment upload template",

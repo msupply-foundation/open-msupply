@@ -13,7 +13,11 @@ import {
   InsertAssetInput,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
-import { ImportRow, toInsertEquipmentInput } from './EquipmentImportModal';
+import {
+  ImportRow,
+  LineNumber,
+  toInsertEquipmentInput,
+} from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
 import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
 
@@ -46,7 +50,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
       emptyRows.map(
-        (row: ImportRow): Partial<InsertAssetInput> =>
+        (row: ImportRow): Partial<InsertAssetInput & LineNumber> =>
           toInsertEquipmentInput(row, catalogueItemData)
       ),
       t
