@@ -384,6 +384,21 @@ fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> Boxe
     query
 }
 
+// The idea for this method is to build a query in such a way as to allow
+// extracting all relevant records for a site from change_log
+// A resulting SQL might look something like this...
+// SELECT * FROM changelog_dedup
+// WHERE cursor > {remote site SyncPullCursorV6} AND last_sync_site_id != {remote site id}
+// AND
+// (
+// 	table_name in {central_record_names}
+//  OR
+// 	(table_name in {transfer record names}  AND name_id IN {name_ids of active stores on remote site})
+//  OR
+// 	// Special cases
+// 	(table_name in {patient record name} AND patient_id IN {select name_id from name_store_join where store_id in {active stores on remote site})
+// )
+
 /// This looks up associated records to decide if change log should be sent to the site or not
 /// Update this method when adding new sync styles to the system
 fn create_filtered_outgoing_sync_query(
