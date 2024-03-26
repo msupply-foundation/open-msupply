@@ -16,10 +16,14 @@ use service::{
 #[derive(InputObject)]
 #[graphql(name = "UpdateOutboundReturnInput")]
 pub struct UpdateInput {
-    pub outbound_return_id: String,
+    pub id: String,
     // supplier_id: String,
     status: Option<UpdateOutboundReturnStatusInput>,
     comment: Option<String>,
+    colour: Option<String>,
+    on_hold: Option<bool>,
+    their_reference: Option<String>,
+    transport_reference: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -82,15 +86,23 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
 impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
-            outbound_return_id,
+            id,
             comment,
             status,
+            colour,
+            on_hold,
+            their_reference,
+            transport_reference,
         }: UpdateInput = self;
 
         ServiceInput {
-            outbound_return_id,
+            outbound_return_id: id,
             comment,
             status: status.map(|status| status.to_domain()),
+            colour,
+            on_hold,
+            their_reference,
+            transport_reference,
         }
     }
 }

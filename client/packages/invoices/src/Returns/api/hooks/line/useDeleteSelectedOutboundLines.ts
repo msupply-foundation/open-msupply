@@ -3,9 +3,9 @@ import {
   useTranslation,
   useDeleteConfirmation,
 } from '@openmsupply-client/common';
-// import { useInboundReturnIsDisabled } from '../utils/useInboundReturnIsDisabled';
 import { useReturns } from '../..';
 import { useOutboundReturnRows } from './useOutboundReturnRows';
+import { useOutboundReturnIsDisabled } from '../utils/useOutboundReturnIsDisabled';
 
 export const useDeleteSelectedOutboundReturnLines = ({
   returnId,
@@ -13,7 +13,7 @@ export const useDeleteSelectedOutboundReturnLines = ({
   returnId: string;
 }): (() => void) => {
   const { items, lines } = useOutboundReturnRows();
-  // const isDisabled = useOutboundReturnIsDisabled();
+  const isDisabled = useOutboundReturnIsDisabled();
   const t = useTranslation('distribution');
 
   const { mutateAsync: updateLines } = useReturns.lines.updateOutboundLines();
@@ -46,7 +46,7 @@ export const useDeleteSelectedOutboundReturnLines = ({
   const confirmAndDelete = useDeleteConfirmation({
     selectedRows,
     deleteAction: onDelete,
-    // canDelete: !isDisabled,
+    canDelete: !isDisabled,
     messages: {
       confirmMessage: t('messages.confirm-delete-lines', {
         count: selectedRows.length,

@@ -27,6 +27,7 @@ pub struct UpdateInboundReturn {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub colour: Option<String>,
+    pub their_reference: Option<String>,
     // pub other_party_id: Option<String>,
 }
 
