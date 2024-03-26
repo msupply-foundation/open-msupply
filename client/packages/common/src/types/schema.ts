@@ -6286,6 +6286,7 @@ export type UpdateInboundReturnInput = {
   id: Scalars['String']['input'];
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateInboundReturnStatusInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateInboundReturnLinesInput = {
@@ -6424,9 +6425,13 @@ export type UpdateNameErrorInterface = {
 };
 
 export type UpdateOutboundReturnInput = {
+  colour?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<Scalars['String']['input']>;
-  outboundReturnId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  onHold?: InputMaybe<Scalars['Boolean']['input']>;
   status?: InputMaybe<UpdateOutboundReturnStatusInput>;
+  theirReference?: InputMaybe<Scalars['String']['input']>;
+  transportReference?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOutboundReturnLinesInput = {

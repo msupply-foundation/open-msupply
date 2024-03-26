@@ -22,6 +22,7 @@ pub struct UpdateInput {
     on_hold: Option<bool>,
     comment: Option<String>,
     colour: Option<String>,
+    their_reference: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -89,6 +90,7 @@ impl UpdateInput {
             status,
             on_hold,
             colour,
+            their_reference,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -97,6 +99,7 @@ impl UpdateInput {
             comment,
             on_hold,
             colour,
+            their_reference,
         }
     }
 }
