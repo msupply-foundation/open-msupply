@@ -28,7 +28,7 @@ embed_migrations!("./migrations/postgres");
 embed_migrations!("./migrations/sqlite");
 
 pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
-    let mut boxed_buffer = Box::new(Vec::new());
+    let mut boxed_buffer = Box::<Vec<u8>>::default();
     embedded_migrations::run_with_output(&connection.connection, &mut boxed_buffer)
         .map_err(|e| e.to_string())?;
     // Using log::info for migrations result will make sure they don't appear in test
@@ -70,15 +70,14 @@ pub trait Upsert: DebugTrait {
 #[test]
 fn downcast_example() {
     let mut boxed: Vec<Box<dyn Upsert>> = vec![
-        Box::new(InvoiceRow::default()),
-        Box::new(InvoiceLineRow::default()),
+        Box::<InvoiceRow>::default(),
+        Box::<InvoiceLineRow>::default(),
     ];
 
     for record in &mut boxed {
         let Some(mut_invoice) = record
             .as_mut_any()
-            .map(|any| any.downcast_mut::<InvoiceRow>())
-            .flatten()
+            .and_then(|any| any.downcast_mut::<InvoiceRow>())
         else {
             continue;
         };
@@ -91,7 +90,7 @@ fn downcast_example() {
             id: "changed_id".to_string(),
             ..Default::default()
         }),
-        Box::new(InvoiceLineRow::default()),
+        Box::<InvoiceLineRow>::default(),
     ];
 
     assert_eq!(format!("{boxed:?}"), format!("{compare_to:?}"))

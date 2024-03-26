@@ -18,7 +18,10 @@ table! {
     asset (id) {
         id -> Text,
         notes -> Nullable<Text>,
-        code -> Text,
+        asset_category_id -> Nullable<Text>,
+        asset_class_id -> Nullable<Text>,
+        asset_number -> Text,
+        asset_type_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         serial_number -> Nullable<Text>,
         asset_catalogue_item_id -> Nullable<Text>,
@@ -33,11 +36,15 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
+#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset"]
 pub struct AssetRow {
     pub id: String,
     pub notes: Option<String>,
-    pub code: String,
+    pub asset_category_id: Option<String>,
+    pub asset_class_id: Option<String>,
+    pub asset_number: String,
+    pub asset_type_id: Option<String>,
     pub store_id: Option<String>,
     pub serial_number: Option<String>,
     #[column_name = "asset_catalogue_item_id"]

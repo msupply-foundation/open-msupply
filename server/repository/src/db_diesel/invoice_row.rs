@@ -39,7 +39,7 @@ table! {
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
-        currency_id -> Nullable<Text>,
+        currency_id -> Text,
         currency_rate -> Double,
         clinician_link_id -> Nullable<Text>,
     }
@@ -107,7 +107,7 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
-    pub currency_id: Option<String>,
+    pub currency_id: String,
     pub currency_rate: f64,
     pub clinician_link_id: Option<String>,
 }
@@ -182,7 +182,7 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(&self.connection.connection);
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     // TODO replace find_one_by_id with this one

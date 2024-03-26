@@ -20,11 +20,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 }
 pub(crate) struct ClinicianMergeTranslation;
 impl SyncTranslation for ClinicianMergeTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         ClinicianTranslation.table_name()
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -136,7 +136,7 @@ mod tests {
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
-            .find_many_by_clinician_id(&"clinician_c")
+            .find_many_by_clinician_id("clinician_c")
             .unwrap();
 
         clinician_links.sort_by_key(|i| i.id.to_owned());
@@ -159,7 +159,7 @@ mod tests {
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
-            .find_many_by_clinician_id(&"clinician_c".to_string())
+            .find_many_by_clinician_id("clinician_c")
             .unwrap();
 
         clinician_links.sort_by_key(|i| i.id.to_owned());

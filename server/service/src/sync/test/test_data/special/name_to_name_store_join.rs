@@ -7,9 +7,9 @@ use crate::sync::{
     translations::{name_store_join::LegacyNameStoreJoinRow, PullTranslateResult},
 };
 
-const TABLE_NAME: &'static str = "name_store_join";
+const TABLE_NAME: &str = "name_store_join";
 
-const NAME_1: (&'static str, &'static str) = (
+const NAME_1: (&str, &str) = (
     "BEB2D69692C44B32B24BEBD5020BCD14",
     r#"{
         "ID": "BEB2D69692C44B32B24BEBD5020BCD14",

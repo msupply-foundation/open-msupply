@@ -121,7 +121,7 @@ pub fn stocktake_lines(
             nodes: stocktake_lines
                 .rows
                 .into_iter()
-                .map(|line| StocktakeLineNode::from_domain(line))
+                .map(StocktakeLineNode::from_domain)
                 .collect(),
         }))
     } else {

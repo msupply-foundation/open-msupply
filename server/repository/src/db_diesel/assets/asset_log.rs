@@ -24,7 +24,7 @@ pub enum AssetLogSortField {
 
 pub type AssetLogSort = Sort<AssetLogSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AssetLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub asset_id: Option<EqualFilter<String>>,
@@ -35,13 +35,7 @@ pub struct AssetLogFilter {
 
 impl AssetLogFilter {
     pub fn new() -> AssetLogFilter {
-        AssetLogFilter {
-            id: None,
-            asset_id: None,
-            status: None,
-            log_datetime: None,
-            user: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -183,7 +177,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
 
 type BoxedLatestAssetLogQuery = IntoBoxed<'static, latest_asset_log::table, DBType>;
 
-fn create_latest_filtered_query<'a>(filter: Option<AssetLogFilter>) -> BoxedLatestAssetLogQuery {
+fn create_latest_filtered_query(filter: Option<AssetLogFilter>) -> BoxedLatestAssetLogQuery {
     let mut query = latest_asset_log_dsl::latest_asset_log.into_boxed();
 
     if let Some(f) = filter {

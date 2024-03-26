@@ -3,7 +3,7 @@ pub struct CannotChangeStatusOfInvoiceOnHold;
 
 #[Object]
 impl CannotChangeStatusOfInvoiceOnHold {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Invoice is on hold, status cannot be changed."
     }
 }
@@ -12,7 +12,7 @@ pub struct CanOnlyEditInvoicesInLoggedInStoreError;
 
 #[Object]
 impl CanOnlyEditInvoicesInLoggedInStoreError {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Once finalised, an invoice cannot be edited."
     }
 }
@@ -21,7 +21,7 @@ pub struct InvoiceIsNotEditable;
 
 #[Object]
 impl InvoiceIsNotEditable {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Once finalised, an invoice cannot be edited."
     }
 }
@@ -42,7 +42,7 @@ pub struct OtherPartyCannotBeThisStoreError;
 
 #[Object]
 impl OtherPartyCannotBeThisStoreError {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Other party must be another store."
     }
 }
@@ -50,7 +50,7 @@ pub struct NotAnOutboundShipmentError;
 
 #[Object]
 impl NotAnOutboundShipmentError {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Not a outbound shipment."
     }
 }
@@ -71,7 +71,7 @@ pub struct LineDoesNotReferenceStockLine;
 
 #[Object]
 impl LineDoesNotReferenceStockLine {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Line does not reference any stock line"
     }
 }
@@ -80,7 +80,7 @@ pub struct CannotIssueInForeignCurrency;
 
 #[Object]
 impl CannotIssueInForeignCurrency {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Cannot issue invoice in foreign currency"
     }
 }

@@ -1,4 +1,8 @@
-use super::{query::get_asset, validate::check_asset_exists};
+use super::{
+    location::set_asset_location,
+    query::get_asset,
+    validate::{check_asset_exists, check_locations_are_assigned},
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
@@ -11,7 +15,6 @@ use repository::{
     },
     ActivityLogType, EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
-use serde_json;
 
 #[derive(PartialEq, Debug)]
 pub enum UpdateAssetError {
@@ -20,18 +23,20 @@ pub enum UpdateAssetError {
     SerialNumberAlreadyExists,
     UpdatedRecordNotFound,
     DatabaseError(RepositoryError),
+    LocationsAlreadyAssigned,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct UpdateAsset {
     pub id: String,
-    pub store_id: Option<String>,
+    pub store_id: Option<NullableUpdate<String>>,
     pub notes: Option<String>,
-    pub code: Option<String>,
+    pub asset_number: Option<String>,
     pub serial_number: Option<NullableUpdate<String>>,
     pub catalogue_item_id: Option<NullableUpdate<String>>,
     pub installation_date: Option<NullableUpdate<NaiveDate>>,
     pub replacement_date: Option<NullableUpdate<NaiveDate>>,
+    pub location_ids: Option<Vec<String>>,
 }
 
 pub fn update_asset(
@@ -42,16 +47,21 @@ pub fn update_asset(
         .connection
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
-            let updated_asset_row = generate(&ctx.store_id, input, asset_row.clone());
+            let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
             AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::AssetUpdated,
                 Some(updated_asset_row.id.clone()),
                 Some(serde_json::to_string(&asset_row).unwrap_or_default()),
                 Some(serde_json::to_string(&updated_asset_row).unwrap_or_default()),
             )?;
+
+            if input.location_ids.clone().is_some() {
+                set_asset_location(connection, &asset_row.id, input.location_ids.unwrap())
+                    .map_err(|error| UpdateAssetError::DatabaseError(error))?;
+            }
 
             get_asset(ctx, updated_asset_row.id).map_err(UpdateAssetError::from)
         })
@@ -84,6 +94,23 @@ pub fn validate(
         }
     }
 
+    // Check locations aren't assigned to other assets already
+    match &input.location_ids {
+        Some(location_ids) => {
+            match check_locations_are_assigned(location_ids.to_vec(), &input.id, connection) {
+                Ok(locations) => {
+                    if locations.len() > 0 {
+                        return Err(UpdateAssetError::LocationsAlreadyAssigned);
+                    };
+                }
+                Err(repository_error) => {
+                    return Err(UpdateAssetError::DatabaseError(repository_error))
+                }
+            }
+        }
+        None => (),
+    };
+
     Ok(asset_row)
 }
 
@@ -93,17 +120,21 @@ pub fn generate(
         id: _,
         store_id,
         notes,
-        code,
+        asset_number,
         serial_number,
         catalogue_item_id,
         installation_date,
         replacement_date,
+        location_ids: _,
     }: UpdateAsset,
     mut asset_row: AssetRow,
 ) -> AssetRow {
-    asset_row.store_id = store_id;
     asset_row.notes = notes;
-    asset_row.code = code.unwrap_or(asset_row.code);
+    asset_row.asset_number = asset_number.unwrap_or(asset_row.asset_number);
+
+    if let Some(store_id) = store_id {
+        asset_row.store_id = store_id.value;
+    }
 
     if let Some(serial_number) = serial_number {
         asset_row.serial_number = serial_number.value;

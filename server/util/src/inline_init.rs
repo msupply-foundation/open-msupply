@@ -20,7 +20,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 pub fn inline_init<T, F>(f: F) -> T
 where
     T: Default,
-    F: FnOnce(&mut T) -> (),
+    F: FnOnce(&mut T),
 {
     let mut t = T::default();
     f(&mut t);

@@ -219,6 +219,7 @@ pub struct MockDataInserts {
     pub periods: bool,
     pub stores: bool,
     pub units: bool,
+    pub currencies: bool,
     pub items: bool,
     pub locations: bool,
     pub sensors: bool,
@@ -255,7 +256,6 @@ pub struct MockDataInserts {
     pub contexts: bool,
     pub pack_variants: bool,
     pub plugin_data: bool,
-    pub currencies: bool,
     pub assets: bool,
     pub asset_logs: bool,
 }
@@ -273,6 +273,7 @@ impl MockDataInserts {
             periods: true,
             stores: true,
             units: true,
+            currencies: true,
             items: true,
             locations: true,
             sensors: true,
@@ -309,7 +310,6 @@ impl MockDataInserts {
             contexts: true,
             pack_variants: true,
             plugin_data: true,
-            currencies: true,
             assets: true,
             asset_logs: true,
         }
@@ -372,6 +372,11 @@ impl MockDataInserts {
 
     pub fn units(mut self) -> Self {
         self.units = true;
+        self
+    }
+
+    pub fn currencies(mut self) -> Self {
+        self.currencies = true;
         self
     }
 
@@ -527,11 +532,6 @@ impl MockDataInserts {
 
     pub fn plugin_data(mut self) -> Self {
         self.plugin_data = true;
-        self
-    }
-
-    pub fn currencies(mut self) -> Self {
-        self.currencies = true;
         self
     }
 
@@ -706,70 +706,70 @@ pub fn insert_mock_data(
         if inserts.name_tags {
             let repo = NameTagRowRepository::new(connection);
             for row in &mock_data.name_tags {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.period_schedules {
             let repo = PeriodScheduleRowRepository::new(connection);
             for row in &mock_data.period_schedules {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.periods {
             let repo = PeriodRowRepository::new(connection);
             for row in &mock_data.periods {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.stores {
             let repo = StoreRowRepository::new(connection);
             for row in &mock_data.stores {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.user_accounts {
             let repo = UserAccountRowRepository::new(connection);
             for row in &mock_data.user_accounts {
-                repo.insert_one(&row).unwrap();
+                repo.insert_one(row).unwrap();
             }
         }
 
         if inserts.user_store_joins {
             let repo = UserStoreJoinRowRepository::new(connection);
             for row in &mock_data.user_store_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.contexts {
             let repo = ContextRowRepository::new(connection);
             for row in &mock_data.contexts {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.user_permissions {
             let repo = UserPermissionRowRepository::new(connection);
             for row in &mock_data.user_permissions {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.units {
             let repo = UnitRowRepository::new(connection);
             for row in &mock_data.units {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.currencies {
             let repo = crate::CurrencyRowRepository::new(connection);
             for row in &mock_data.currencies {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -778,9 +778,9 @@ pub fn insert_mock_data(
             let item_link_repo = ItemLinkRowRepository::new(connection);
 
             for row in &mock_data.items {
-                item_repo.upsert_one(&row).unwrap();
+                item_repo.upsert_one(row).unwrap();
                 item_link_repo
-                    .upsert_one(&mock_item_link_from_item(&row))
+                    .upsert_one(&mock_item_link_from_item(row))
                     .unwrap();
             }
         }
@@ -788,48 +788,48 @@ pub fn insert_mock_data(
         if inserts.locations {
             let repo = LocationRowRepository::new(connection);
             for row in &mock_data.locations {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.sensors {
             let repo = SensorRowRepository::new(connection);
             for row in &mock_data.sensors {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.temperature_breaches {
             let repo = TemperatureBreachRowRepository::new(connection);
             for row in &mock_data.temperature_breaches {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.temperature_breach_configs {
             let repo = TemperatureBreachConfigRowRepository::new(connection);
             for row in &mock_data.temperature_breach_configs {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.temperature_logs {
             let repo = TemperatureLogRowRepository::new(connection);
             for row in &mock_data.temperature_logs {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.name_store_joins {
             let repo = NameStoreJoinRepository::new(connection);
             for row in &mock_data.name_store_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.full_requisitions {
             for row in mock_data.full_requisitions.iter() {
-                insert_full_mock_requisition(&row, connection)
+                insert_full_mock_requisition(row, connection)
             }
         }
 
@@ -850,21 +850,21 @@ pub fn insert_mock_data(
         if inserts.invoices {
             let repo = InvoiceRowRepository::new(connection);
             for row in &mock_data.invoices {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.stock_lines {
             let repo = StockLineRowRepository::new(connection);
             for row in &mock_data.stock_lines {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.invoice_lines {
             let repo = InvoiceLineRowRepository::new(connection);
             for row in &mock_data.invoice_lines {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -882,18 +882,18 @@ pub fn insert_mock_data(
 
         for row in &mock_data.master_lists {
             let repo = MasterListRowRepository::new(connection);
-            repo.upsert_one(&row).unwrap();
+            repo.upsert_one(row).unwrap();
         }
 
         for row in &mock_data.master_list_name_joins {
             let repo = MasterListNameJoinRepository::new(connection);
-            repo.upsert_one(&row).unwrap();
+            repo.upsert_one(row).unwrap();
         }
 
         if inserts.numbers {
             let repo = NumberRowRepository::new(connection);
             for row in &mock_data.numbers {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -921,7 +921,7 @@ pub fn insert_mock_data(
         if inserts.key_value_store_rows {
             let repo = KeyValueStoreRepository::new(connection);
             for row in &mock_data.key_value_store_rows {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -998,49 +998,49 @@ pub fn insert_mock_data(
         if inserts.name_tag_joins {
             let repo = NameTagJoinRepository::new(connection);
             for row in &mock_data.name_tag_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.clinicians {
             let repo = ClinicianRowRepository::new(connection);
             for row in &mock_data.clinicians {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.clinician_store_joins {
             let repo = ClinicianStoreJoinRowRepository::new(connection);
             for row in &mock_data.clinician_store_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.pack_variants {
             let repo = PackVariantRowRepository::new(connection);
             for row in &mock_data.pack_variants {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.plugin_data {
             let repo = PluginDataRowRepository::new(connection);
             for row in &mock_data.plugin_data {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.assets {
             for row in &mock_data.assets {
                 let repo = AssetRowRepository::new(connection);
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.asset_logs {
             let repo = AssetLogRowRepository::new(connection);
             for row in &mock_data.asset_logs {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
     }

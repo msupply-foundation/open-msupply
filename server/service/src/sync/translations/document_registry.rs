@@ -42,11 +42,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct DocumentRegistryTranslation;
 impl SyncTranslation for DocumentRegistryTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "om_document_registry"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             FormSchemaTranslation.table_name(),
             // The program context is synced via the program master list

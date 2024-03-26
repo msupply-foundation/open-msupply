@@ -1,11 +1,12 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
+    simple_generic_errors::{
+        CannotEditRequisition, MasterListNotFoundForThisStore, RecordNotFound,
+    },
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_general::MasterListNotFoundForThisStore;
 use graphql_types::types::RequisitionLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},

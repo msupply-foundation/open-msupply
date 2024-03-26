@@ -41,7 +41,7 @@ pub fn generate(
         requisition_id: Some(requisition_row.id),
 
         // Default
-        currency_id: Some(currency.currency_row.id),
+        currency_id: currency.currency_row.id,
         currency_rate: 1.0,
         on_hold: false,
         comment: None,

@@ -1,10 +1,19 @@
 fragment Asset on AssetNode {
   __typename
   catalogueItemId
-  code
+  assetNumber
   createdDatetime
   id
   installationDate
+  locations {
+    nodes {
+      id
+      code
+      name
+      onHold
+    }
+    totalCount
+  }
   modifiedDatetime
   notes
   replacementDate
@@ -15,18 +24,23 @@ fragment Asset on AssetNode {
     status
   }
   storeId
+  store {
+    id
+    code
+    storeName
+  }
   catalogueItem {
     manufacturer
     model
-    assetType {
-      name
-    }
-    assetClass {
-      name
-    }
-    assetCategory {
-      name
-    }
+  }
+  assetType {
+    name
+  }
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
   }
 }
 
@@ -41,6 +55,7 @@ fragment AssetLog on AssetLogNode {
     firstName
     lastName
     username
+    jobTitle
   }
 }
 
@@ -80,10 +95,15 @@ query assetById($storeId: String!, $assetId: String!) {
   }
 }
 
-query assetLogs($filter: AssetLogFilterInput!, $storeId: String!) {
-  assetLogs(filter: $filter, storeId: $storeId) {
+query assetLogs(
+  $filter: AssetLogFilterInput!
+  $sort: AssetLogSortInput
+  $storeId: String!
+) {
+  assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on AssetLogConnector {
       __typename
+      totalCount
       nodes {
         __typename
         ...AssetLog
