@@ -81,7 +81,7 @@ impl FileSyncDriver {
                             },
                         }
                     },
-                    // OR wait for SyncSettings.interval_seconds
+                    // OR wait between downloading chunks/files
                     _ = async {
                         if files_to_upload == 0 {
                             tokio::time::sleep(FILE_SYNC_NO_FILES_DELAY).await;
