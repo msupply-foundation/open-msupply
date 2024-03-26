@@ -32,11 +32,11 @@ pub struct LegacyOptionsRow {
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(InventoryAdjustmentReasonTranslation)
+    Box::new(ReasonTranslation)
 }
 
-pub(super) struct InventoryAdjustmentReasonTranslation;
-impl SyncTranslation for InventoryAdjustmentReasonTranslation {
+pub(super) struct ReasonTranslation;
+impl SyncTranslation for ReasonTranslation {
     fn table_name(&self) -> &'static str {
         "options"
     }
@@ -97,15 +97,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_inventory_adjustment_reason_translation() {
-        use crate::sync::test::test_data::inventory_adjustment_reason as test_data;
-        let translator = InventoryAdjustmentReasonTranslation;
+    async fn test_reason_translation() {
+        use crate::sync::test::test_data::reason as test_data;
+        let translator = ReasonTranslation;
 
-        let (_, connection, _, _) = setup_all(
-            "test_inventory_adjustment_reason_translation",
-            MockDataInserts::none(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_reason_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
             assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
