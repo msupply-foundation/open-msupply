@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    NameStoreJoinRow, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -50,7 +50,7 @@ impl SyncTranslation for NameMergeTranslation {
                 data.merge_id_to_keep
             ))?;
 
-        let upserts = name_links
+        let mut upserts: Vec<PullUpsertRecord> = name_links
             .into_iter()
             .map(|NameLinkRow { id, .. }| {
                 PullUpsertRecord::NameLink(NameLinkRow {
@@ -78,15 +78,35 @@ impl SyncTranslation for NameMergeTranslation {
         // storeA joined to nameK
         // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
         // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
+        //
+        // We must also consider nsj.name_is_customer and nsj.name_is_supplier.
+        // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
+        // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
         name_store_joins_for_delete.iter().for_each(|nsj_delete| {
-            if name_store_joins_for_keep.iter().any(|nsj_keep| {
+            if let Some(nsj_keep) = name_store_joins_for_keep.iter().find(|nsj_keep| {
                 nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
             }) {
                 deletes.push(PullDeleteRecord {
                     id: nsj_delete.name_store_join.id.clone(),
                     table: PullDeleteRecordTable::NameStoreJoin,
                 });
-            }
+
+                if (!nsj_keep.name_store_join.name_is_customer
+                    && nsj_keep.name_store_join.name_is_customer)
+                    || (!nsj_keep.name_store_join.name_is_supplier
+                        && nsj_keep.name_store_join.name_is_supplier)
+                {
+                    upserts.push(PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+                        id: nsj_keep.name_store_join.id.clone(),
+                        name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
+                        store_id: nsj_keep.name_store_join.store_id.clone(),
+                        name_is_customer: nsj_keep.name_store_join.name_is_customer
+                            || nsj_delete.name_store_join.name_is_customer,
+                        name_is_supplier: nsj_keep.name_store_join.name_is_supplier
+                            || nsj_delete.name_store_join.name_is_supplier,
+                    }));
+                }
+            };
         });
 
         // Situation B:
