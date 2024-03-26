@@ -6,5 +6,5 @@ pub fn uuid() -> String {
 }
 
 pub fn small_uuid() -> String {
-    uuid().split("-").next().unwrap().to_string()
+    uuid().split('-').next().unwrap().to_string()
 }

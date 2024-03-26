@@ -255,7 +255,8 @@ export const canDeleteInvoice = (
   invoice: OutboundRowFragment | OutboundReturnRowFragment
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
-  invoice.status === InvoiceNodeStatus.Allocated;
+  invoice.status === InvoiceNodeStatus.Allocated ||
+  invoice.status === InvoiceNodeStatus.Picked;
 
 export const canDeleteOutboundReturn = (
   outboundReturn: OutboundReturnRowFragment

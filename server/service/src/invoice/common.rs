@@ -41,7 +41,7 @@ pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64
 pub fn calculate_foreign_currency_total(
     connection: &StorageConnection,
     total: f64,
-    currency_id: Option<String>,
+    currency_id: &str,
     currency_rate: &f64,
 ) -> Result<Option<f64>, RepositoryError> {
     let currency = CurrencyRepository::new(connection)
@@ -49,7 +49,7 @@ pub fn calculate_foreign_currency_total(
         .pop()
         .ok_or(RepositoryError::NotFound)?;
 
-    if currency_id.is_none() || currency.currency_row.id == currency_id.unwrap_or_default() {
+    if currency.currency_row.id == currency_id {
         Ok(None)
     } else {
         Ok(Some(total / currency_rate))

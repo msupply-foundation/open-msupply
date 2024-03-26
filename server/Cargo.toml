@@ -4,7 +4,7 @@ strip = true
 [workspace.dependencies]
 # dependencies used in graphql crates:
 actix-web = { version = "4.0.1", default-features = false, features = [
-  "macros",
+  "macros","rustls"
 ] }
 anymap = "0.12"
 async-graphql = { version = "3.0.35", features = ["dataloader", "chrono"] }

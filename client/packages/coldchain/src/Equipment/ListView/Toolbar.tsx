@@ -66,6 +66,11 @@ export const Toolbar = () => {
         <FilterMenu
           filters={[
             {
+              type: 'boolean',
+              name: t('label.non-catalogue'),
+              urlParameter: 'isNonCatalogue',
+            },
+            {
               type: 'enum',
               name: t('label.category'),
               urlParameter: 'categoryId',

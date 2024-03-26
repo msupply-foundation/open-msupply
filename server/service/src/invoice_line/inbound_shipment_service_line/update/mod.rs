@@ -26,19 +26,19 @@ pub fn update_inbound_shipment_service_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (existing_line, invoice_row, item) = validate(&input, &ctx.store_id, &connection)?;
+            let (existing_line, invoice_row, item) = validate(&input, &ctx.store_id, connection)?;
             let updated_line = generate(
-                &connection,
+                connection,
                 input,
                 existing_line,
                 item,
-                invoice_row.currency_id,
+                &invoice_row.currency_id,
                 &invoice_row.currency_rate,
             )?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

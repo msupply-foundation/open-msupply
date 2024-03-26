@@ -742,7 +742,7 @@ mod test {
         //   17/6---------->16/09          // end datetime = 18/09 (previously set to 13/12)
         //   17/6------------|----->13/12  // end datetime = 18/09
 
-        let later_stack_datetime = datetime_from_date(2023, 09, 18);
+        let later_stack_datetime = datetime_from_date(2023, 9, 18);
         service
             .upsert_events(
                 &ctx.connection,
@@ -751,13 +751,13 @@ mod test {
                 &mock_program_a().context_id,
                 vec![
                     event(datetime_from_date(2023, 12, 16), "G2_1"),
-                    event(datetime_from_date(2024, 01, 13), "G2_2"),
-                    event(datetime_from_date(2024, 03, 15), "G2_3"),
+                    event(datetime_from_date(2024, 1, 13), "G2_2"),
+                    event(datetime_from_date(2024, 3, 15), "G2_3"),
                 ],
             )
             .unwrap();
 
-        let earlier_stack_datetime = datetime_from_date(2023, 06, 17);
+        let earlier_stack_datetime = datetime_from_date(2023, 6, 17);
         service
             .upsert_events(
                 &ctx.connection,
@@ -765,8 +765,8 @@ mod test {
                 earlier_stack_datetime,
                 &mock_program_a().context_id,
                 vec![
-                    event(datetime_from_date(2023, 09, 14), "G1_1"),
-                    event(datetime_from_date(2023, 09, 16), "G1_2"),
+                    event(datetime_from_date(2023, 9, 14), "G1_1"),
+                    event(datetime_from_date(2023, 9, 16), "G1_2"),
                     event(datetime_from_date(2023, 12, 13), "G1_3"),
                 ],
             )
@@ -807,7 +807,7 @@ mod test {
         assert_eq!(
             event_end_datetimes,
             vec![
-                datetime_from_date(2023, 09, 16),
+                datetime_from_date(2023, 9, 16),
                 later_stack_datetime,
                 later_stack_datetime
             ]
@@ -883,7 +883,7 @@ mod test {
 
         let service = service_provider.program_event_service;
 
-        let stack_3_datetime = datetime_from_date(2012, 05, 01);
+        let stack_3_datetime = datetime_from_date(2012, 5, 1);
         service
             .upsert_events(
                 &ctx.connection,
@@ -894,14 +894,14 @@ mod test {
             )
             .unwrap();
 
-        let stack_2_datetime = datetime_from_date(2012, 04, 03);
+        let stack_2_datetime = datetime_from_date(2012, 4, 3);
         service
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
                 stack_2_datetime,
                 &mock_program_a().context_id,
-                vec![event(datetime_from_date(2012, 05, 10), "G2_1")],
+                vec![event(datetime_from_date(2012, 5, 10), "G2_1")],
             )
             .unwrap();
 
@@ -914,7 +914,7 @@ mod test {
                 &mock_program_a().context_id,
                 vec![
                     event(datetime_from_date(2011, 12, 31), "G1_1"),
-                    event(datetime_from_date(2012, 01, 28), "G1_2"),
+                    event(datetime_from_date(2012, 1, 28), "G1_2"),
                 ],
             )
             .unwrap();
@@ -952,12 +952,12 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                datetime_from_date(2023, 10, 04),
+                datetime_from_date(2023, 10, 4),
                 &mock_program_a().context_id,
                 vec![
-                    event(datetime_from_date(2023, 10, 04), "G1_1"),
-                    event(datetime_from_date(2023, 11, 01), "G1_2"),
-                    event(datetime_from_date(2024, 01, 02), "G1_3"),
+                    event(datetime_from_date(2023, 10, 4), "G1_1"),
+                    event(datetime_from_date(2023, 11, 1), "G1_2"),
+                    event(datetime_from_date(2024, 1, 2), "G1_3"),
                 ],
             )
             .unwrap();
@@ -972,7 +972,7 @@ mod test {
                 vec![
                     event(datetime_from_date(2023, 10, 16), "G2_1"),
                     event(datetime_from_date(2023, 11, 13), "G2_2"),
-                    event(datetime_from_date(2024, 01, 14), "G2_3"),
+                    event(datetime_from_date(2024, 1, 14), "G2_3"),
                 ],
             )
             .unwrap();
@@ -982,12 +982,12 @@ mod test {
             .upsert_events(
                 &ctx.connection,
                 "patient2".to_string(),
-                datetime_from_date(2023, 11, 02),
+                datetime_from_date(2023, 11, 2),
                 &mock_program_a().context_id,
                 vec![
                     event(datetime_from_date(2023, 12, 12), "G3_1"),
-                    event(datetime_from_date(2024, 01, 09), "G3_2"),
-                    event(datetime_from_date(2024, 03, 11), "G3_3"),
+                    event(datetime_from_date(2024, 1, 9), "G3_2"),
+                    event(datetime_from_date(2024, 3, 11), "G3_3"),
                 ],
             )
             .unwrap();
@@ -1002,7 +1002,7 @@ mod test {
                 vec![
                     event(datetime_from_date(2023, 10, 16), "G2_1"),
                     event(datetime_from_date(2023, 11, 13), "G2_2"),
-                    event(datetime_from_date(2024, 01, 14), "G2_3"),
+                    event(datetime_from_date(2024, 1, 14), "G2_3"),
                 ],
             )
             .unwrap();

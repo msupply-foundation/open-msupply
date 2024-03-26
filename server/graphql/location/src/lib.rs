@@ -40,7 +40,7 @@ impl LocationQueries {
         // always filter by store_id
         let filter = filter
             .map(LocationFilter::from)
-            .unwrap_or(LocationFilter::new())
+            .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
 
         let locations = service_provider

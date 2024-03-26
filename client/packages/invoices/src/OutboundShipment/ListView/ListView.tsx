@@ -25,7 +25,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   useEffect(() => {
     const disabledRows = rows?.filter(isOutboundDisabled).map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
+  }, [rows, setDisabledRows]);
 };
 
 const OutboundShipmentListViewComponent: FC = () => {

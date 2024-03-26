@@ -17,7 +17,7 @@ use service::{
 };
 use util::prepare_file_dir;
 
-const TEMP_FRIDGETAG_FILE_DIR: &'static str = "fridge_tag";
+const TEMP_FRIDGETAG_FILE_DIR: &str = "fridge_tag";
 
 pub fn config_upload_fridge_tag(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);
@@ -90,7 +90,7 @@ fn upload_fridge_tag(
 
     ctx.connection
         .transaction_sync(|con| {
-            read_sensor(&con, &url_params.store_id, new_file_path)
+            read_sensor(con, &url_params.store_id, new_file_path)
                 .context("Error while integrating sensor data")
         })
         .map_err(|error| error.to_inner_error())

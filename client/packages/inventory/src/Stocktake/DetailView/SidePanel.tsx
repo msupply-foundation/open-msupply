@@ -15,6 +15,7 @@ import {
   InfoTooltipIcon,
   DeleteIcon,
   useDeleteConfirmation,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
@@ -22,12 +23,11 @@ import { canDeleteStocktake } from '../../utils';
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation();
 
-  const { comment, user, update } = useStocktake.document.fields([
-    'comment',
-    'user',
-  ]);
+  const { comment, user, createdDatetime, update } =
+    useStocktake.document.fields(['comment', 'user', 'createdDatetime']);
   const [bufferedComment, setBufferedComment] = useBufferState(comment ?? '');
   const isDisabled = useStocktake.utils.isDisabled();
+  const { localisedDate } = useFormatDateTime();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -36,6 +36,10 @@ const AdditionalInfoSection: FC = () => {
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user.email} /> : null}
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>

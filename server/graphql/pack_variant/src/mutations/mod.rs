@@ -13,7 +13,7 @@ pub struct VariantWithPackSizeAlreadyExists;
 
 #[Object]
 impl VariantWithPackSizeAlreadyExists {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Variant with the same pack size exists for this item"
     }
 }
@@ -22,7 +22,7 @@ pub struct CannotAddPackSizeOfZero;
 
 #[Object]
 impl CannotAddPackSizeOfZero {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Cannot add a variant with a pack size of zero"
     }
 }
@@ -31,7 +31,7 @@ pub struct CannotAddWithNoAbbreviationAndName;
 
 #[Object]
 impl CannotAddWithNoAbbreviationAndName {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Cannot add a variant with no abbreviation and name"
     }
 }

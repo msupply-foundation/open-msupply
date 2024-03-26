@@ -35,8 +35,8 @@ pub(crate) fn update_encounter_row_and_events(
 
     update_encounter_row(
         con,
-        &patient_id,
-        &document,
+        patient_id,
+        document,
         validated_encounter,
         clinician_id,
         program_row,

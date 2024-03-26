@@ -10,7 +10,6 @@ import {
   RouteBuilder,
   useColumns,
   ColumnAlign,
-  Column,
   SortBy,
   ColumnDescription,
 } from '@openmsupply-client/common';
@@ -22,7 +21,7 @@ import { useFormatDateTime } from '@common/intl';
 import { AppRoute } from '@openmsupply-client/config';
 
 interface ContactTraceListColumnsProps {
-  onChangeSortBy: (column: Column<ContactTraceRowFragment>) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
   sortBy: SortBy<ContactTraceRowFragment>;
 }
 
