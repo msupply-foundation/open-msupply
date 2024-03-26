@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    Pagination, StorageConnection, StoreRepository, SyncBufferRow,
+    StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
 };
 
 use serde::Deserialize;
@@ -95,21 +95,20 @@ impl SyncTranslation for NameMergeTranslation {
         // nameD merged into nameK
         // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
         let store_repo = StoreRepository::new(connection);
+        let store_filter =
+            StoreFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep));
+        let store = store_repo.query_one(store_filter)?;
 
-        let stores = store_repo.query(Pagination::new(), None, None)?; // If there were thousands of stores this would probably be bad, at a certain scale theres probably a smarter DB query we could be making.
-        name_store_joins_for_delete
-            .into_iter()
-            .for_each(|nsj_delete| {
-                if stores
-                    .iter()
-                    .any(|store| store.store_row.id == nsj_delete.name_store_join.store_id)
-                {
+        if let Some(store) = store {
+            name_store_joins_for_delete.iter().for_each(|nsj_delete| {
+                if nsj_delete.name_store_join.store_id == store.store_row.id {
                     deletes.push(PullDeleteRecord {
-                        id: nsj_delete.name_store_join.id,
+                        id: nsj_delete.name_store_join.id.clone(),
                         table: PullDeleteRecordTable::NameStoreJoin,
                     });
                 }
             });
+        }
 
         Ok(Some(IntegrationRecords { upserts, deletes }))
     }
@@ -230,35 +229,53 @@ mod tests {
         .await;
         let mut logger = SyncLogger::start(&connection).unwrap();
         let name_store_join_repo = NameStoreJoinRepository::new(&connection);
-        let name_store_joins = name_store_join_repo
-            .query(Some(
-                NameStoreJoinFilter::new()
-                    .name_id(EqualFilter::equal_to(&"name_store_a".to_string())),
-            ))
-            .unwrap();
-        assert_eq!(name_store_joins.len(), 1); // Ensure the test data expected is correct
 
-        // panic!("Stop here so i can inspect the sql DB state");
+        let count_name_store_join = |id: &str| -> usize {
+            name_store_join_repo
+                .query(Some(
+                    NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&id.to_string())),
+                ))
+                .unwrap()
+                .len()
+        };
+
+        // Ensure the test data is what was expected as when written
+        assert_eq!(count_name_store_join(&"name_a"), 3);
+        assert_eq!(count_name_store_join(&"name2"), 1);
+        assert_eq!(count_name_store_join(&"name3"), 2);
+        assert_eq!(count_name_store_join(&"name_store_a"), 1);
 
         let sync_records = vec![
             SyncBufferRow {
-                record_id: "name_store_b_merge".to_string(),
+                record_id: "name3_merge".to_string(),
                 table_name: LegacyTableName::NAME.to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
-                        "mergeIdToKeep": "name_store_b",
-                        "mergeIdToDelete": "name_store_a"
+                        "mergeIdToKeep": "name2",
+                        "mergeIdToDelete": "name3"
                     }"#
                 .to_string(),
                 ..SyncBufferRow::default()
             },
             SyncBufferRow {
-                record_id: "name_store_c_merge".to_string(),
+                record_id: "name2_merge".to_string(),
                 table_name: LegacyTableName::NAME.to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
-                      "mergeIdToKeep": "name_store_c",
-                      "mergeIdToDelete": "name_store_b"
+                      "mergeIdToKeep": "name_a",
+                      "mergeIdToDelete": "name2"
+                    }"#
+                .to_string(),
+                ..SyncBufferRow::default()
+            },
+            SyncBufferRow {
+                // name_a is visible to name_store_a. This merge is test if the name_store_join is deleted, rather than letting the store have it's own name visible
+                record_id: "name_a_merge".to_string(),
+                table_name: LegacyTableName::NAME.to_string(),
+                action: SyncBufferAction::Merge,
+                data: r#"{
+                      "mergeIdToKeep": "name_store_a",
+                      "mergeIdToDelete": "name_a"
                     }"#
                 .to_string(),
                 ..SyncBufferRow::default()
@@ -271,28 +288,9 @@ mod tests {
             .await
             .unwrap();
 
-        let name_store_joins = name_store_join_repo
-            .query(Some(
-                NameStoreJoinFilter::new()
-                    .name_id(EqualFilter::equal_to(&"name_store_a".to_string())),
-            ))
-            .unwrap();
-        assert_eq!(name_store_joins.len(), 0);
-
-        let name_store_joins = name_store_join_repo
-            .query(Some(
-                NameStoreJoinFilter::new()
-                    .name_id(EqualFilter::equal_to(&"name_store_b".to_string())),
-            ))
-            .unwrap();
-        assert_eq!(name_store_joins.len(), 0);
-
-        let name_store_joins = name_store_join_repo
-            .query(Some(
-                NameStoreJoinFilter::new()
-                    .name_id(EqualFilter::equal_to(&"name_store_c".to_string())),
-            ))
-            .unwrap();
-        assert_eq!(name_store_joins.len(), 1);
+        assert_eq!(count_name_store_join(&"name_a"), 0);
+        assert_eq!(count_name_store_join(&"name2"), 0);
+        assert_eq!(count_name_store_join(&"name3"), 0);
+        assert_eq!(count_name_store_join(&"name_store_a"), 3);
     }
 }
