@@ -6,7 +6,6 @@ use super::asset_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    assets::asset_catalogue_item_row::asset_catalogue_item::dsl as asset_catalogue_item_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -38,6 +37,7 @@ pub struct AssetFilter {
     pub catalogue_item_id: Option<EqualFilter<String>>,
     pub installation_date: Option<DateFilter>,
     pub replacement_date: Option<DateFilter>,
+    pub is_non_catalogue: Option<bool>,
 }
 
 impl AssetFilter {
@@ -92,6 +92,11 @@ impl AssetFilter {
 
     pub fn replacement_date(mut self, filter: DateFilter) -> Self {
         self.replacement_date = Some(filter);
+        self
+    }
+
+    pub fn is_non_catalogue(mut self, filter: bool) -> Self {
+        self.is_non_catalogue = Some(filter);
         self
     }
 }
@@ -154,10 +159,10 @@ impl<'a> AssetRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        // println!(
-        //    "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
+        println!(
+           "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
 
         let result = final_query.load::<Asset>(&self.connection.connection)?;
 
@@ -186,6 +191,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             catalogue_item_id,
             installation_date,
             replacement_date,
+            is_non_catalogue,
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
@@ -197,40 +203,16 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         apply_date_filter!(query, installation_date, asset_dsl::installation_date);
         apply_date_filter!(query, replacement_date, asset_dsl::replacement_date);
 
-        if let Some(category_id) = category_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(category_id),
-                asset_catalogue_item_dsl::asset_category_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
+        apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
+        apply_equal_filter!(query, class_id, asset_dsl::asset_class_id);
+        apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
 
-        if let Some(class_id) = class_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
+        if let Some(value) = is_non_catalogue {
             apply_equal_filter!(
-                sub_query,
-                Some(class_id),
-                asset_catalogue_item_dsl::asset_class_id
+                query,
+                Some(EqualFilter::is_null(value)),
+                asset_dsl::asset_catalogue_item_id
             );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
-
-        if let Some(type_id) = type_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(type_id),
-                asset_catalogue_item_dsl::asset_type_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
         }
     }
     query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
@@ -272,7 +254,7 @@ mod tests {
             ..Default::default()
         };
 
-        asset_row_repository.insert_one(&asset).unwrap();
+        let _result = asset_row_repository.upsert_one(&asset).unwrap();
 
         // Query by id
         let result = asset_repository
