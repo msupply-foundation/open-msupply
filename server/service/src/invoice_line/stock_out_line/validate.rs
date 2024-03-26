@@ -16,7 +16,7 @@ pub fn check_batch_exists(
         .pop())
 }
 
-pub fn check_unique_stock_line(
+pub fn check_existing_stock_line(
     invoice_line_id: &str,
     invoice_id: &str,
     batch_id_option: Option<String>,

@@ -3,8 +3,8 @@ use repository::{InvoiceRow, InvoiceRowStatus, ItemRow, StockLine, StorageConnec
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
-        check_unique_stock_line,
+        check_batch_exists, check_batch_on_hold, check_existing_stock_line,
+        check_item_matches_batch, check_location_on_hold,
         validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
         LocationIsOnHoldError,
     },
@@ -42,17 +42,17 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    let unique_stock = check_unique_stock_line(
+    let existing_stock = check_existing_stock_line(
         &input.id,
         &invoice.id,
         Some(input.stock_line_id.to_string()),
         connection,
     )?;
-    if let Some(unique_stock) = unique_stock {
-        return Err(StockLineAlreadyExistsInInvoice(unique_stock.id));
+    if let Some(existing_stock) = existing_stock {
+        return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
-    if let Some(unique_stock) = unique_stock {
-        return Err(StockLineAlreadyExistsInInvoice(unique_stock.id));
+    if let Some(existing_stock) = existing_stock {
+        return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
     if let Some(r#type) = &input.r#type {
