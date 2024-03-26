@@ -59,11 +59,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct ProgramRequisitionSettingsTranslation;
 impl SyncTranslation for ProgramRequisitionSettingsTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         MasterListTranslation.table_name()
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTagTranslation.table_name(),
             PeriodScheduleTranslation.table_name(),
@@ -77,7 +77,7 @@ impl SyncTranslation for ProgramRequisitionSettingsTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        if data.is_program == false {
+        if !data.is_program {
             return Ok(PullTranslateResult::NotMatched);
         }
 

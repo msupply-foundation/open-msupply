@@ -31,7 +31,7 @@ pub struct UpdateDocumentInput {
 pub struct MergeRequiredError(Option<RawDocument>);
 #[Object]
 impl MergeRequiredError {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Merge required"
     }
 

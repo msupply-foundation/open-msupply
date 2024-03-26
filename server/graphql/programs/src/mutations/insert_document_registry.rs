@@ -44,7 +44,7 @@ pub fn insert_document_registry(
     let response = match service_provider.document_registry_service.insert(
         &context,
         to_domain(input),
-        &allowed_ctx,
+        allowed_ctx,
     ) {
         Ok(document_registry) => InsertDocumentResponse::Response(DocumentRegistryNode {
             allowed_ctx: allowed_ctx.clone(),

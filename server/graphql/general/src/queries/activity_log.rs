@@ -105,7 +105,7 @@ impl ActivityLogFilterInput {
 }
 
 impl ActivityLogSortInput {
-    pub fn to_domain(self) -> ActivityLogSort {
+    pub fn to_domain(&self) -> ActivityLogSort {
         use ActivityLogSortField as to;
         use ActivityLogSortFieldInput as from;
         let key = match self.key {

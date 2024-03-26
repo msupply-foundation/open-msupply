@@ -16,7 +16,7 @@ pub fn get_asset_types(
     sort: Option<AssetTypeSort>,
 ) -> Result<ListResult<AssetTypeRow>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = AssetTypeRepository::new(&connection);
+    let repository = AssetTypeRepository::new(connection);
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
         count: i64_to_u32(repository.count(filter)?),
@@ -27,7 +27,7 @@ pub fn get_asset_type(
     connection: &StorageConnection,
     id: String,
 ) -> Result<Option<AssetTypeRow>, RepositoryError> {
-    let repository = AssetTypeRepository::new(&connection);
+    let repository = AssetTypeRepository::new(connection);
     let mut result =
         repository.query_by_filter(AssetTypeFilter::new().id(EqualFilter::equal_to(&id)))?;
     Ok(result.pop())

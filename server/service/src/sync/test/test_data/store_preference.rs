@@ -1,9 +1,9 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::{StorePreferenceRow, StorePreferenceType};
 
-const TABLE_NAME: &'static str = "pref";
+const TABLE_NAME: &str = "pref";
 
-const STORE_PREFERENCE_1: (&'static str, &'static str) = (
+const STORE_PREFERENCE_1: (&str, &str) = (
     "store_preference",
     r#"{
     "ID": "store_preference",
@@ -69,7 +69,7 @@ const STORE_PREFERENCE_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const STORE_PREFERENCE_2: (&'static str, &'static str) = (
+const STORE_PREFERENCE_2: (&str, &str) = (
     "store_preference_2",
     r#"{
     "ID": "store_preference_2",

@@ -22,7 +22,7 @@ pub struct Barcode {
     pub manufacturer_name_row: Option<NameRow>,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct BarcodeFilter {
     pub id: Option<EqualFilter<String>>,
     pub gtin: Option<EqualFilter<String>>,
@@ -113,12 +113,7 @@ fn to_domain((barcode_row, name_link): BarcodeJoin) -> Barcode {
 
 impl BarcodeFilter {
     pub fn new() -> BarcodeFilter {
-        BarcodeFilter {
-            id: None,
-            gtin: None,
-            item_id: None,
-            pack_size: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

@@ -9,9 +9,10 @@ use crate::{
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, StorageConnection, StoreRow,
+    CurrencyRow, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, LocationRowRepository, NameRow, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    StoreRow,
 };
 
 #[actix_rt::test]
@@ -27,7 +28,7 @@ async fn test_changelog() {
     repo.delete(0).unwrap();
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
-    let mut result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -42,7 +43,7 @@ async fn test_changelog() {
 
     // querying from the first entry should give the same result:
     assert_eq!(
-        repo.changelogs(starting_cursor + 0, 10, None).unwrap(),
+        repo.changelogs(starting_cursor, 10, None).unwrap(),
         repo.changelogs(starting_cursor + 1, 10, None).unwrap()
     );
 
@@ -70,7 +71,7 @@ async fn test_changelog() {
 
     // query the full list from cursor=0
     // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
-    let mut result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -85,7 +86,7 @@ async fn test_changelog() {
 
     // add another entry
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
-    let result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(2, result.len());
     assert_eq!(
         result,
@@ -107,7 +108,7 @@ async fn test_changelog() {
 
     // delete an entry
     location_repo.delete(&mock_location_on_hold().id).unwrap();
-    let result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(2, result.len());
     assert_eq!(
         result,
@@ -159,7 +160,7 @@ async fn test_changelog_iteration() {
         .unwrap();
 
     // test iterating through the change log
-    let changelogs = repo.changelogs(starting_cursor + 0, 3, None).unwrap();
+    let changelogs = repo.changelogs(starting_cursor, 3, None).unwrap();
     let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
     assert_eq!(
         changelogs
@@ -240,7 +241,7 @@ async fn test_changelog_filter() {
         is_sync_update: false,
     };
 
-    for log in vec![&log1, &log2, &log3, &log4] {
+    for log in [&log1, &log2, &log3, &log4] {
         diesel::insert_into(changelog_dsl::changelog)
             .values(log)
             .execute(&connection.connection)
@@ -351,11 +352,20 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         })
     }
 
+    fn currency() -> CurrencyRow {
+        inline_init(|r: &mut CurrencyRow| {
+            r.id = "currency".to_string();
+            r.is_home_currency = true;
+            r.code = "NZD".to_string();
+        })
+    }
+
     fn invoice() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice".to_string();
             r.name_link_id = name().id;
             r.store_id = store().id;
+            r.currency_id = currency().id;
         })
     }
 
@@ -389,6 +399,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         inline_init(|r: &mut MockData| {
             r.names = vec![name()];
             r.stores = vec![store()];
+            r.currencies = vec![currency()];
             r.invoices = vec![invoice()];
             r.invoice_lines = vec![invoice_line()];
             r.requisitions = vec![requisition()];

@@ -88,15 +88,15 @@ impl PatientApiV4 {
             .basic_auth(&self.username, Some(&self.password_sha256))
             .send()
             .await
-            .map_err(|e| PatientV4Error::ConnectionError(e))?;
+            .map_err(PatientV4Error::ConnectionError)?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(PatientV4Error::AuthenticationFailed);
         }
-        Ok(response
+        response
             .json()
             .await
-            .map_err(|e| PatientV4Error::ConnectionError(e))?)
+            .map_err(PatientV4Error::ConnectionError)
     }
 
     pub async fn patient(&self, params: PatientParamsV4) -> Result<Vec<PatientV4>, PatientV4Error> {
@@ -107,15 +107,15 @@ impl PatientApiV4 {
             .query(&params)
             .send()
             .await
-            .map_err(|e| PatientV4Error::ConnectionError(e))?;
+            .map_err(PatientV4Error::ConnectionError)?;
 
         if response.status() == StatusCode::UNAUTHORIZED {
             return Err(PatientV4Error::AuthenticationFailed);
         }
-        Ok(response
+        response
             .json()
             .await
-            .map_err(|e| PatientV4Error::ConnectionError(e))?)
+            .map_err(PatientV4Error::ConnectionError)
     }
 }
 

@@ -6,9 +6,9 @@ use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &'static str = "temperature_log";
+const TABLE_NAME: &str = "temperature_log";
 
-const TEMPERATURE_LOG_1: (&'static str, &'static str) = (
+const TEMPERATURE_LOG_1: (&str, &str) = (
     "995812e0c33911eb9757779d39ae2dbd",
     r#"{
         "ID": "995812e0c33911eb9757779d39ae2dbd",

@@ -21,7 +21,7 @@ pub const PUBLIC_CERT_FILE: &str = "cert.pem";
 
 pub fn find_certs(server_settings: &ServerSettings) -> Option<CertFiles> {
     let cert_dir = PathBuf::new()
-        .join(&server_settings.base_dir.clone().unwrap_or(".".to_string()))
+        .join(server_settings.base_dir.clone().unwrap_or(".".to_string()))
         .join(CERTS_PATH);
 
     let key_file = PathBuf::new().join(&cert_dir).join(PRIVATE_CERT_FILE);
