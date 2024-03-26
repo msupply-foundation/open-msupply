@@ -427,7 +427,7 @@ export type AssetNode = {
   __typename: 'AssetNode';
   assetCategory?: Maybe<AssetCategoryNode>;
   assetClass?: Maybe<AssetClassNode>;
-  assetNumber: Scalars['String']['output'];
+  assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
@@ -1800,7 +1800,7 @@ export type InsertAssetErrorInterface = {
 };
 
 export type InsertAssetInput = {
-  assetNumber: Scalars['String']['input'];
+  assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['String']['input']>;
   classId?: InputMaybe<Scalars['String']['input']>;

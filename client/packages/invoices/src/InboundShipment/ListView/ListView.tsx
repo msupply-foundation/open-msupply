@@ -26,6 +26,7 @@ const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
       ?.filter(isInboundListItemDisabled)
       .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 };
 

@@ -46,7 +46,7 @@ pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub asset_number: String,
+    pub asset_number: Option<String>,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
     pub category_id: Option<String>,
@@ -198,7 +198,7 @@ mod test {
             Ok(Asset {
                 id: "id".to_owned(),
                 notes: Some("notes".to_owned()),
-                asset_number: "asset_number".to_owned(),
+                asset_number: Some("asset_number".to_owned()),
                 ..Default::default()
             })
         }));

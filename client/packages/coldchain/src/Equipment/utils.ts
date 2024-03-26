@@ -1,7 +1,12 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetFragment } from './api';
 import { Formatter } from '@common/utils';
-import { AssetLogStatusInput, ReasonType, StatusType } from '@common/types';
+import {
+  AssetLogStatusInput,
+  InsertAssetInput,
+  ReasonType,
+  StatusType,
+} from '@common/types';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
@@ -132,4 +137,25 @@ export const translateReason = (
   const parsed = parseLogReason(reason);
 
   return parsed === undefined ? defaultValue : t(parsed.key);
+};
+
+export const importEquipmentToCsv = (
+  assets: Partial<InsertAssetInput>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+    t('label.asset-notes'),
+  ];
+
+  const data = assets.map(node => [
+    node.id,
+    node.assetNumber,
+    node.catalogueItemId,
+    node.notes,
+  ]);
+
+  return Formatter.csv({ fields, data });
 };
