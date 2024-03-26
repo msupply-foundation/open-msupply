@@ -109,7 +109,7 @@ pub fn master_lists(
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let service_context = service_provider.context(store_id, user.user_id)?;
 
     let mut query_filter = MasterListFilter::new();
     if let Some(filter_input) = filter {
@@ -120,7 +120,6 @@ pub fn master_lists(
         .master_list_service
         .get_master_lists(
             &service_context,
-            &store_id,
             page.map(PaginationOption::from),
             Some(query_filter),
             // Currently only one sort option is supported, use the first from the list.
