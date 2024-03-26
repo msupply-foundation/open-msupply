@@ -42,6 +42,9 @@ export type ImportRow = {
   isUpdate: boolean;
 };
 
+export type LineNumber = {
+  lineNumber: number;
+};
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
@@ -56,6 +59,17 @@ export const toInsertEquipmentInput = (
     .pop(),
   id: row.id,
   notes: row.notes,
+});
+
+export const toExportEquipment = (
+  row: ImportRow,
+  index: number
+): Partial<ImportRow> & LineNumber => ({
+  assetNumber: row.assetNumber,
+  catalogueItemCode: row.catalogueItemCode,
+  id: row.id,
+  notes: row.notes,
+  lineNumber: index + 2,
 });
 
 export const toUpdateEquipmentInput = (
@@ -106,8 +120,8 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   const csvExport = async () => {
     const csv = importEquipmentToCsv(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bufferedEquipment.map((row: ImportRow) =>
-        toInsertEquipmentInput(row, catalogueItemData?.nodes)
+      bufferedEquipment.map((row: ImportRow, index: number) =>
+        toExportEquipment(row, index)
       ),
       t
     );

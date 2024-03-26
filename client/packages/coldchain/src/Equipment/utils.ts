@@ -7,6 +7,7 @@ import {
   ReasonType,
   StatusType,
 } from '@common/types';
+import { LineNumber } from './ImportAsset';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
@@ -140,7 +141,7 @@ export const translateReason = (
 };
 
 export const importEquipmentToCsv = (
-  assets: Partial<InsertAssetInput>[],
+  assets: Partial<InsertAssetInput & LineNumber>[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
@@ -148,6 +149,7 @@ export const importEquipmentToCsv = (
     t('label.asset-number'),
     t('label.catalogue-item-code'),
     t('label.asset-notes'),
+    t('label.line-number'),
   ];
 
   const data = assets.map(node => [
@@ -155,6 +157,7 @@ export const importEquipmentToCsv = (
     node.assetNumber,
     node.catalogueItemId,
     node.notes,
+    node.lineNumber,
   ]);
 
   return Formatter.csv({ fields, data });
