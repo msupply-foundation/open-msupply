@@ -66,25 +66,26 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset)
             .values(asset_row)
             .on_conflict(id)
             .do_update()
             .set(asset_row)
             .execute(&self.connection.connection)?;
-        self.insert_changelog(
-            asset_row.id.to_owned(),
-            ChangelogAction::Upsert,
-            Some(asset_row.clone()),
-        )
+        Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset)
             .values(asset_row)
             .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(asset_row)?;
         self.insert_changelog(
             asset_row.id.to_owned(),
             ChangelogAction::Upsert,
@@ -139,23 +140,6 @@ impl Upsert for AssetRow {
     }
 
     fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
-        // If the store has changed for this asset, we need to add an extra changelog row with the old store_id
-        // as well as the one with the new store_id, so that sync will send the new record to the old site.
-
-        // Get the existing asset
-        let existing_asset = AssetRowRepository::new(con).find_one_by_id(&self.id)?;
-        if let Some(existing_asset) = existing_asset {
-            if existing_asset.store_id != self.store_id {
-                // The store has changed
-                let _change_log_id = AssetRowRepository::new(con).insert_changelog(
-                    self.id.to_owned(),
-                    ChangelogAction::Upsert,
-                    Some(existing_asset.clone()),
-                )?;
-            }
-        }
-
-        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
         let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
