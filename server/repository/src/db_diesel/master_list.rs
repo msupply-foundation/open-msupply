@@ -25,7 +25,7 @@ pub struct MasterListRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct MasterListFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
