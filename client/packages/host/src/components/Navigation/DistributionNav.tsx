@@ -45,6 +45,13 @@ export const DistributionNav: FC = () => {
           <AppNavLink
             end
             to={RouteBuilder.create(AppRoute.Distribution)
+              .addPart(AppRoute.InboundReturn)
+              .build()}
+            text={t('inbound-return')}
+          />
+          <AppNavLink
+            end
+            to={RouteBuilder.create(AppRoute.Distribution)
               .addPart(AppRoute.Customer)
               .build()}
             text={t('customers')}

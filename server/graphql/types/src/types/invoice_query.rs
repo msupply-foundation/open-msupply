@@ -30,6 +30,8 @@ pub enum InvoiceNodeType {
     Prescription,
     InventoryAddition,
     InventoryReduction,
+    OutboundReturn,
+    InboundReturn,
     Repack,
 }
 
@@ -431,6 +433,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
+            OutboundReturn => InvoiceRowType::OutboundReturn,
+            InboundReturn => InvoiceRowType::InboundReturn,
         }
     }
 
@@ -443,6 +447,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
+            InboundReturn => InvoiceNodeType::InboundReturn,
+            OutboundReturn => InvoiceNodeType::OutboundReturn,
         }
     }
 }

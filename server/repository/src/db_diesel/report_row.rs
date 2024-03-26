@@ -28,6 +28,8 @@ pub enum ReportContext {
     Patient,
     Dispensary,
     Repack,
+    OutboundReturn,
+    InboundReturn,
 }
 
 table! {

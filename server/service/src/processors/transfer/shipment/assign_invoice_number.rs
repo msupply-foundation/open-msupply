@@ -20,7 +20,7 @@ impl ShipmentTransferProcessor for AssignInvoiceNumberProcessor {
     /// Inbound shipment will be created when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source invoice is either Outbound Shipment or Outbound Return
     /// 3. Source outbound shipment is either Shipped or Picked
     ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
@@ -45,7 +45,10 @@ impl ShipmentTransferProcessor for AssignInvoiceNumberProcessor {
                 _ => return Ok(None),
             };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if !matches!(
+            outbound_shipment.invoice_row.r#type,
+            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+        ) {
             return Ok(None);
         }
         // 3.

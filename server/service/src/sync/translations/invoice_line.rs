@@ -228,6 +228,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             number_of_packs,
             note,
             inventory_adjustment_reason_id,
+            return_reason_id: None, // TODO
             foreign_currency_price_before_tax,
         };
 
@@ -278,6 +279,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     number_of_packs,
                     note,
                     inventory_adjustment_reason_id,
+                    return_reason_id: _, // TODO
                     foreign_currency_price_before_tax,
                 },
             item_row,

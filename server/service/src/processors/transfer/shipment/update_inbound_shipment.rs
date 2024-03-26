@@ -26,7 +26,7 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
     /// Inbound shipment will be updated when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source shipment is Outbound shipment or Outbound Return
     /// 3. Linked shipment exists (the inbound shipment)
     /// 4. Linked inbound shipment is Picked (Inbound shipment can only be deleted before it turns to Shipped status)
     /// 5. Source outbound shipment is Shipped
@@ -48,7 +48,10 @@ impl ShipmentTransferProcessor for UpdateInboundShipmentProcessor {
             _ => return Ok(None),
         };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if !matches!(
+            outbound_shipment.invoice_row.r#type,
+            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+        ) {
             return Ok(None);
         }
         // 3.

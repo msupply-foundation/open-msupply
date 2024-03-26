@@ -1,0 +1,21 @@
+fragment ReturnReason on ReturnReasonNode {
+  __typename
+  id
+  reason
+}
+
+query returnReasons(
+  $sort: [ReturnReasonSortInput!]
+  $filter: ReturnReasonFilterInput
+) {
+  returnReasons(sort: $sort, filter: $filter) {
+    __typename
+    ... on ReturnReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ReturnReason
+      }
+    }
+  }
+}
