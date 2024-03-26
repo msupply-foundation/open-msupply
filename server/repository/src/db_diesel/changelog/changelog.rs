@@ -91,6 +91,7 @@ pub enum ChangelogTableName {
     #[default]
     SyncFileReference,
     Asset,
+    AssetLog,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -136,6 +137,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
+            ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
         }
     }
 }
@@ -329,9 +331,9 @@ impl<'a> ChangelogRepository<'a> {
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
         // Using a returning clause makes this thread safe
-        let cursor_id = diesel::insert_into(changelog_insert::table)
+        let cursor_id = diesel::insert_into(changelog::table)
             .values(row)
-            .returning(changelog_insert::cursor)
+            .returning(changelog::cursor)
             .get_results(&self.connection.connection)?
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?

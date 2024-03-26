@@ -664,7 +664,7 @@ async fn test_changelog_outgoing_sync_records() {
     let cursor_id = row.upsert(&connection).unwrap().unwrap();
 
     // Set the source_site_id (usually this happens during integration step in sync)
-    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id.clone()))
+    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
         .unwrap();
 
     // Now we should have two records to send to site 1 the remote site on initialisation
