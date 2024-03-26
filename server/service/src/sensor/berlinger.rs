@@ -747,7 +747,7 @@ mod test {
             })
             .collect::<VecShape>();
 
-        pretty_assertions::assert_eq!(
+        assert_eq!(
             logs,
             // Map to (datetime, temperature, breach_id)
             log_data
