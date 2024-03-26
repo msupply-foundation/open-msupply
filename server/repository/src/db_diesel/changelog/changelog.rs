@@ -58,7 +58,6 @@ pub enum ChangelogAction {
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,
