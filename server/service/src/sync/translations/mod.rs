@@ -1,4 +1,8 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset_catalogue_item;
+pub(crate) mod asset_category;
+pub(crate) mod asset_class;
+pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -95,11 +99,15 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::name_merge::boxed(),
         special::item_merge::boxed(),
         special::clinician_merge::boxed(),
+        asset_class::boxed(),
+        asset_category::boxed(),
+        asset_type::boxed(),
+        asset_catalogue_item::boxed(),
     ]
 }
 
 /// Calculates the integration order based on the PullDependencies in the SyncTranslators
-pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'static str> {
+pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str> {
     // fill output so that tables with the least dependencies come first
     let mut output = vec![];
 
@@ -107,7 +115,7 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
     for translator in translators {
         let pull_deps = translator.pull_dependencies();
         let table = translator.table_name();
-        if pull_deps.len() == 0 {
+        if pull_deps.is_empty() {
             ts.insert(table);
             continue;
         }
@@ -118,8 +126,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
 
     loop {
         let mut next = ts.pop_all();
-        if next.len() == 0 {
-            if ts.len() != 0 {
+        if next.is_empty() {
+            if !ts.is_empty() {
                 panic!("Circular dependencies");
             }
             break;
@@ -275,8 +283,8 @@ pub(crate) enum ToSyncRecordTranslationType {
 pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
-    fn pull_dependencies(&self) -> Vec<&'static str>;
-    fn table_name(&self) -> &'static str;
+    fn pull_dependencies(&self) -> Vec<&str>;
+    fn table_name(&self) -> &str;
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
@@ -380,16 +388,16 @@ fn translate_changelog(
     let mut translation_results = Vec::new();
 
     for translator in translators.iter() {
-        if !translator.should_translate_to_sync_record(&changelog, r#type) {
+        if !translator.should_translate_to_sync_record(changelog, r#type) {
             continue;
         }
 
         let translation_result = match changelog.row_action {
             ChangelogAction::Upsert => {
-                translator.try_translate_to_upsert_sync_record(connection, &changelog)?
+                translator.try_translate_to_upsert_sync_record(connection, changelog)?
             }
             ChangelogAction::Delete => {
-                translator.try_translate_to_delete_sync_record(connection, &changelog)?
+                translator.try_translate_to_delete_sync_record(connection, changelog)?
             }
         };
 

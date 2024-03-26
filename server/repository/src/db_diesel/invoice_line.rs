@@ -323,10 +323,14 @@ impl InvoiceLine {
             invoice_id: row.invoice_id.clone(),
             total_before_tax: row.total_before_tax,
             total_after_tax: row.total_after_tax,
-            stock_total_before_tax: is_stock.then(|| row.total_before_tax).unwrap_or(0.0),
-            stock_total_after_tax: is_stock.then(|| row.total_after_tax).unwrap_or(0.0),
-            service_total_before_tax: is_service.then(|| row.total_before_tax).unwrap_or(0.0),
-            service_total_after_tax: is_service.then(|| row.total_after_tax).unwrap_or(0.0),
+            stock_total_before_tax: if is_stock { row.total_before_tax } else { 0.0 },
+            stock_total_after_tax: if is_stock { row.total_after_tax } else { 0.0 },
+            service_total_before_tax: if is_service {
+                row.total_before_tax
+            } else {
+                0.0
+            },
+            service_total_after_tax: if is_service { row.total_after_tax } else { 0.0 },
             tax_percentage: row.tax,
             foreign_currency_total_after_tax: row.foreign_currency_price_before_tax.map(|price| {
                 row.tax

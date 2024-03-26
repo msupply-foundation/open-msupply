@@ -7,8 +7,7 @@ use crate::{activity_log::system_activity_log_entry, invoice::common::get_lines_
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str =
-    "Delete inbound shipment when source outbound shipment is deleted";
+const DESCRIPTION: &str = "Delete inbound shipment when source outbound shipment is deleted";
 
 pub(crate) struct DeleteInboundShipmentProcessor;
 

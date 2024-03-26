@@ -2,7 +2,7 @@ use async_graphql::*;
 use chrono::{NaiveDate, NaiveDateTime};
 use service::report::definition::PrintReportSort;
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 pub struct TaxInput {
     /// Set or unset the tax value (in percentage)
     pub percentage: Option<f64>,
@@ -17,7 +17,7 @@ pub struct TaxInput {
 /// 2) if `mutableValue` object is set:
 ///   a) if `NullableUpdate.value` is `undefined | null`, the `mutableValue` is set to `null`
 ///   b) if `NullableUpdate.value` is set, the `mutableValue` is set to the provided `NullableUpdate.value`
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 #[graphql(concrete(name = "NullableStringUpdate", params(String)))]
 #[graphql(concrete(name = "NullableDateUpdate", params(NaiveDate)))]
 #[graphql(concrete(name = "NullableDatetimeUpdate", params(NaiveDateTime)))]

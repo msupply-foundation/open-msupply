@@ -3,11 +3,14 @@ use std::future::{ready, Ready};
 use actix_web::{
     body::{BoxBody, EitherBody},
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::StatusCode,
+    http::{
+        header::{self, HeaderValue},
+        StatusCode,
+    },
     Error, HttpResponse,
 };
 use futures_util::future::LocalBoxFuture;
-use reqwest::header::{self, HeaderValue};
+
 use util::is_central_server;
 
 #[derive(Debug, Default)]

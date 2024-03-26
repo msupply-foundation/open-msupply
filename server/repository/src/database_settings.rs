@@ -76,14 +76,13 @@ impl DatabaseSettings {
     }
 
     pub fn database_path(&self) -> String {
-        let result = match &self.database_path {
+        match &self.database_path {
             Some(path) => {
                 std::fs::create_dir_all(path).expect("failed to create database dir");
                 format!("{}/{}", path, self.connection_string())
             }
             None => self.connection_string(),
-        };
-        return result;
+        }
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
@@ -180,7 +179,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     info!("Connecting to database '{}'", settings.database_path());
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&settings.database_path());
+        ConnectionManager::<DBBackendConnection>::new(settings.database_path());
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),

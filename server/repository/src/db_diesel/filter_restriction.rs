@@ -7,7 +7,7 @@ impl EqualFilter<String> {
                 equal_any
                     .iter()
                     .filter(|p| allowed.contains(p))
-                    .map(|p| p.clone())
+                    .cloned()
                     .collect(),
             )
         } else {
@@ -23,7 +23,7 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_name_a, MockData, MockDataInserts},
+        mock::{currency_a, mock_name_a, MockData, MockDataInserts},
         test_db, EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceRow,
     };
 
@@ -33,6 +33,7 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("A".to_string());
+            r.currency_id = currency_a().id;
         })
     }
 
@@ -42,6 +43,7 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("B".to_string());
+            r.currency_id = currency_a().id;
         })
     }
 
@@ -51,6 +53,7 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("Excluded".to_string());
+            r.currency_id = currency_a().id;
         })
     }
 
@@ -60,6 +63,7 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = None;
+            r.currency_id = currency_a().id;
         })
     }
 
@@ -68,7 +72,11 @@ mod tests {
         // Prepare
         let (_, storage_connection, _, _) = test_db::setup_all_with_data(
             "test_string_filter_restrict_results",
-            MockDataInserts::none().names().stores().locations(),
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .locations()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![
                     mock_invoice_a(),
@@ -117,8 +125,7 @@ mod tests {
         // equal_to: allow query allowed id
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new()
-                    .user_id(EqualFilter::equal_to(&"A".to_string()).restrict_results(&allowed)),
+                InvoiceFilter::new().user_id(EqualFilter::equal_to("A").restrict_results(&allowed)),
             )
             .unwrap()
             .into_iter()
@@ -203,7 +210,7 @@ mod tests {
         // return empty list when allowed is empty
         let result = repository
             .query_by_filter(
-                InvoiceFilter::new().user_id(EqualFilter::default().restrict_results(&vec![])),
+                InvoiceFilter::new().user_id(EqualFilter::default().restrict_results(&[])),
             )
             .unwrap();
         assert!(result.is_empty());

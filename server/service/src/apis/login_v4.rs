@@ -151,7 +151,7 @@ impl LoginApiV4 {
             .json(&input)
             .send()
             .await
-            .map_err(|e| LoginV4Error::ConnectionError(e))?;
+            .map_err(LoginV4Error::ConnectionError)?;
 
         let status = response.status();
 
@@ -177,7 +177,7 @@ impl LoginApiV4 {
                 }
 
                 let response = serde_json::from_value::<LoginResponseV4>(body)
-                    .map_err(|e| LoginV4Error::ParseError(e))?;
+                    .map_err(LoginV4Error::ParseError)?;
 
                 Ok(response)
             }

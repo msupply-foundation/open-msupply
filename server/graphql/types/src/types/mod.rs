@@ -1,5 +1,3 @@
-// M1 speced API is moved to their own files
-// Types defined here are prototype types and should be removed before M1 release to avoid confusion (for consumers and devs)
 pub mod name;
 pub use self::name::*;
 
@@ -21,30 +19,6 @@ pub use self::stock_line::*;
 pub mod location;
 pub use self::location::*;
 
-pub mod sensor;
-pub use self::sensor::*;
-
-pub mod asset_catalogue_item;
-pub use self::asset_catalogue_item::*;
-
-pub mod asset_category;
-pub use self::asset_category::*;
-
-pub mod asset_class;
-pub use self::asset_class::*;
-
-pub mod asset_type;
-pub use self::asset_type::*;
-
-pub mod temperature_breach;
-pub use self::temperature_breach::*;
-
-pub mod temperature_log;
-pub use self::temperature_log::*;
-
-pub mod temperature_notification;
-pub use self::temperature_notification::*;
-
 pub mod master_list;
 pub use self::master_list::*;
 
@@ -53,9 +27,6 @@ pub use self::invoice_query::*;
 
 pub mod invoice_line;
 pub use self::invoice_line::*;
-
-pub mod item_chart;
-pub use self::item_chart::*;
 
 pub mod store;
 pub use self::store::*;
@@ -104,11 +75,6 @@ pub use self::program::*;
 
 pub mod pack_variant;
 pub use self::pack_variant::*;
-pub mod plugin_data;
-pub use self::plugin_data::*;
-
-pub mod program_node;
-pub use self::program_node::*;
 
 pub mod outbound_return_line;
 pub use self::outbound_return_line::*;

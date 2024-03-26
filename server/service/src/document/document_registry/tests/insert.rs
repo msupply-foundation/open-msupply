@@ -38,7 +38,7 @@ mod tests {
                     name: None,
                     form_schema_id: "invalid".to_string(),
                 },
-                &vec!["WrongType".to_string()]
+                &["WrongType".to_string()]
             ),
             Err(InsertDocRegistryError::NotAllowedToMutateDocument)
         );
@@ -55,7 +55,7 @@ mod tests {
                     name: None,
                     form_schema_id: "invalid".to_string(),
                 },
-                &vec![context_id.clone()]
+                &[context_id.clone()]
             ),
             Err(InsertDocRegistryError::DataSchemaDoesNotExist)
         );
@@ -80,7 +80,7 @@ mod tests {
                     name: Some("name".to_string()),
                     form_schema_id: "schema1".to_string(),
                 },
-                &vec![context_id.clone()]
+                &[context_id.clone()]
             ),
             Ok(DocumentRegistry {
                 id: "program1".to_string(),
@@ -108,7 +108,7 @@ mod tests {
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },
-                &vec![context_id.clone()]
+                &[context_id.clone()]
             ),
             Ok(DocumentRegistry {
                 id: "encounter1".to_string(),
@@ -136,7 +136,7 @@ mod tests {
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },
-                &vec![PATIENT_CONTEXT_ID.to_string()],
+                &[PATIENT_CONTEXT_ID.to_string()],
             )
             .unwrap();
         assert_eq!(
@@ -150,7 +150,7 @@ mod tests {
                     name: None,
                     form_schema_id: "schema1".to_string(),
                 },
-                &vec![PATIENT_CONTEXT_ID.to_string()]
+                &[PATIENT_CONTEXT_ID.to_string()]
             ),
             Err(InsertDocRegistryError::OnlyOnePatientEntryAllowed)
         );

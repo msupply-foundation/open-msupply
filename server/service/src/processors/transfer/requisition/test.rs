@@ -217,7 +217,7 @@ impl RequisitionTransferTester {
             r.store_id = request_store.id.clone();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
@@ -238,7 +238,7 @@ impl RequisitionTransferTester {
             r.available_stock_on_hand = 1;
             r.average_monthly_consumption = 1;
             r.snapshot_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 01)
+                NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
                     .and_hms_opt(1, 0, 0)
                     .unwrap(),
@@ -254,7 +254,7 @@ impl RequisitionTransferTester {
             r.available_stock_on_hand = 30;
             r.average_monthly_consumption = 10;
             r.snapshot_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 01)
+                NaiveDate::from_ymd_opt(2021, 1, 1)
                     .unwrap()
                     .and_hms_opt(2, 0, 0)
                     .unwrap(),
