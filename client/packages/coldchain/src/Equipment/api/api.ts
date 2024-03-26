@@ -56,6 +56,7 @@ const assetParsers = {
     replacementDate: setNullableInput('replacementDate', input),
     serialNumber: setNullableInput('serialNumber', input),
     storeId: setNullableInput('id', input.store),
+    locationIds: input.locationIds,
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',

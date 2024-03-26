@@ -55,6 +55,7 @@ pub struct UpdateAssetInput {
     pub catalogue_item_id: Option<NullableUpdateInput<String>>,
     pub installation_date: Option<NullableUpdateInput<NaiveDate>>,
     pub replacement_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub location_ids: Option<Vec<String>>,
 }
 
 impl From<UpdateAssetInput> for UpdateAsset {
@@ -68,6 +69,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
             catalogue_item_id,
             installation_date,
             replacement_date,
+            location_ids,
         }: UpdateAssetInput,
     ) -> Self {
         UpdateAsset {
@@ -89,6 +91,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
             replacement_date: replacement_date.map(|replacement_date| NullableUpdate {
                 value: replacement_date.value,
             }),
+            location_ids,
         }
     }
 }
@@ -125,6 +128,7 @@ fn map_error(error: ServiceError) -> Result<UpdateAssetErrorInterface> {
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::LocationsAlreadyAssigned => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

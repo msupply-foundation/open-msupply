@@ -20,6 +20,7 @@ pub enum InsertAssetError {
     SerialNumberAlreadyExists,
 }
 
+#[derive(PartialEq, Debug, Clone)]
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
