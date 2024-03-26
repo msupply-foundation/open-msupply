@@ -1740,6 +1740,7 @@ export type FullSyncStatusNode = {
   pullRemote?: Maybe<SyncStatusWithProgressNode>;
   pullV6?: Maybe<SyncStatusWithProgressNode>;
   push?: Maybe<SyncStatusWithProgressNode>;
+  pushV6?: Maybe<SyncStatusWithProgressNode>;
   summary: SyncStatusNode;
 };
 
