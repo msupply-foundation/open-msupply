@@ -5,6 +5,7 @@ pub mod asset_category;
 pub mod asset_category_row;
 pub mod asset_class;
 pub mod asset_class_row;
+pub mod asset_internal_location;
 pub mod asset_internal_location_row;
 pub mod asset_log;
 pub mod asset_log_row;

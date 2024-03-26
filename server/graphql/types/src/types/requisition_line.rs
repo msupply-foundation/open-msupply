@@ -96,7 +96,7 @@ impl RequisitionLineNode {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
         let result_option = loader
             .load_one(RequisitionAndItemId::new(
-                &requisition_id,
+                requisition_id,
                 &self.item_row().id,
             ))
             .await?;
@@ -122,7 +122,7 @@ impl RequisitionLineNode {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
         let result_option = loader
             .load_one(RequisitionAndItemId::new(
-                &requisition_id,
+                requisition_id,
                 &self.item_row().id,
             ))
             .await?;
@@ -217,7 +217,7 @@ impl RequisitionLineNode {
         let loader = ctx.get_loader::<DataLoader<LinkedRequisitionLineLoader>>();
         let result_option = loader
             .load_one(RequisitionAndItemId::new(
-                &linked_requisition_id,
+                linked_requisition_id,
                 &self.item_row().id,
             ))
             .await?;

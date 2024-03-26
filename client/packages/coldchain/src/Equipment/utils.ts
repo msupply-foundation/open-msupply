@@ -12,7 +12,7 @@ export const assetsToCsv = (
 ) => {
   const fields: string[] = [
     'id',
-    t('label.code'),
+    t('label.asset-number'),
     t('label.created-datetime'),
     t('label.modified-datetime'),
     t('label.installation-date'),
@@ -23,7 +23,7 @@ export const assetsToCsv = (
 
   const data = items.map(node => [
     node.id,
-    node.code,
+    node.assetNumber,
     Formatter.csvDateTimeString(node.createdDatetime),
     Formatter.csvDateTimeString(node.modifiedDatetime),
     Formatter.csvDateString(node.installationDate),
@@ -122,12 +122,12 @@ export const reasonsByStatus = {
   [AssetLogStatusInput.Decomissioned]: [],
 };
 
-export const getReasonString = (
+export const translateReason = (
   reason: ReasonType | null | undefined,
   t: TypedTFunction<LocaleKey>
 ) => {
   const defaultValue = '-';
-  if (!reason) return defaultValue;
+  if (reason === null || reason === undefined) return defaultValue;
 
   const parsed = parseLogReason(reason);
 

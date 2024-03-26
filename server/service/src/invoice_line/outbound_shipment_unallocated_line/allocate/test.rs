@@ -4,8 +4,9 @@ mod test {
     use chrono::{Duration, NaiveDate};
     use repository::{
         mock::{
-            mock_item_a, mock_item_b, mock_name_a, mock_outbound_shipment_a_invoice_lines,
-            mock_store_a, mock_store_b, MockData, MockDataInserts,
+            currency_a, mock_item_a, mock_item_b, mock_name_a,
+            mock_outbound_shipment_a_invoice_lines, mock_store_a, mock_store_b, MockData,
+            MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowType,
@@ -56,6 +57,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
+                r.currency_id = currency_a().id;
             })
         }
 
@@ -161,6 +163,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
+                r.currency_id = currency_a().id;
             })
         }
 
@@ -301,6 +304,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
+                r.currency_id = currency_a().id;
             })
         }
 
@@ -454,6 +458,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
+                r.currency_id = currency_a().id;
             })
         }
 
@@ -591,6 +596,7 @@ mod test {
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
+                r.currency_id = currency_a().id;
             })
         }
 

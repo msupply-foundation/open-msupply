@@ -78,6 +78,7 @@ pub enum Resource {
     MutatePrescription,
     // reporting
     Report,
+    ReportDev,
     QueryLog,
     // view/edit server setting
     ServerAdmin,
@@ -108,11 +109,8 @@ pub enum Resource {
     ColdChainApi,
     // assets
     MutateAsset,
-    MutateAssetClassCategoryType,
     MutateAssetCatalogueItem,
-    MutateAssetLog,
     QueryAsset,
-    QueryAssetCatalogueItem,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -355,6 +353,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::Report),
         ]),
     );
+    // report development
+    map.insert(
+        Resource::ReportDev,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            // SQL reports can do raw queries, i.e. you need to be server admin
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
+        ]),
+    );
 
     map.insert(
         Resource::QueryLog,
@@ -472,33 +479,19 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryStorePreferences,
         PermissionDSL::HasStoreAccess,
     );
-    // the following are placeholders
-    // TODO update with permissions once the central server is in place
+
     map.insert(
         Resource::MutateAsset,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
-    );
-    map.insert(
-        Resource::MutateAssetClassCategoryType,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
+        PermissionDSL::HasPermission(Permission::AssetMutate),
     );
     map.insert(
         Resource::MutateAssetCatalogueItem,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
-    );
-    map.insert(
-        Resource::MutateAssetLog,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
+        PermissionDSL::HasPermission(Permission::AssetCatalogueItemMutate),
     );
     map.insert(
         Resource::QueryAsset,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
+        PermissionDSL::HasPermission(Permission::AssetQuery),
     );
-    map.insert(
-        Resource::QueryAssetCatalogueItem,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
-    );
-    // TODO end
 
     map
 }
@@ -584,7 +577,7 @@ pub fn validate_auth(
         }
     };
     let user_id = claims.sub.to_owned();
-    return Ok(ValidatedUserAuth { user_id, claims });
+    Ok(ValidatedUserAuth { user_id, claims })
 }
 
 pub struct ValidatedUser {
@@ -626,24 +619,21 @@ fn validate_resource_permissions(
 
     Ok(match required_permissions {
         PermissionDSL::HasPermission(permission) => {
-            if user_permissions
-                .into_iter()
-                .any(|p| &p.permission == permission)
-            {
+            if user_permissions.iter().any(|p| &p.permission == permission) {
                 return Ok(());
             }
             return Err(format!("Missing permission: {:?}", permission));
         }
         PermissionDSL::HasDynamicPermission(permission) => {
             let user_permissions = user_permissions
-                .into_iter()
+                .iter()
                 .filter(|p| &p.permission == permission)
                 .collect::<Vec<_>>();
             if user_permissions.is_empty() {
                 return Err(format!("Missing permission: {:?}", permission));
             }
             let mut contexts = user_permissions
-                .into_iter()
+                .iter()
                 .filter_map(|p| p.context_id.clone())
                 .collect::<Vec<_>>();
 
@@ -665,7 +655,7 @@ fn validate_resource_permissions(
                 None => return Err("Store id not specified in request".to_string()),
             };
             if user_permissions
-                .into_iter()
+                .iter()
                 .any(|p| p.permission == Permission::StoreAccess)
             {
                 return Ok(());
@@ -747,7 +737,7 @@ impl AuthServiceTrait for AuthService {
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
-        let mut user_permissions = UserPermissionRepository::new(&connection).query(
+        let mut user_permissions = UserPermissionRepository::new(connection).query(
             Pagination::all(),
             Some(permission_filter),
             None,
@@ -797,7 +787,7 @@ impl AuthServiceTrait for AuthService {
         match validate_resource_permissions(
             &validated_auth.user_id,
             &user_permissions,
-            &resource_request,
+            resource_request,
             required_permissions,
             &mut dynamic_permissions,
         ) {

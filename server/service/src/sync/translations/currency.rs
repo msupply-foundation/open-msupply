@@ -28,11 +28,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(crate) struct CurrencyTranslation;
 impl SyncTranslation for CurrencyTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "currency"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         Vec::new()
     }
 

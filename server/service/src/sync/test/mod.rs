@@ -85,7 +85,7 @@ pub(crate) fn extract_sync_buffer_rows(
     records: &Vec<TestSyncIncomingRecord>,
 ) -> Vec<SyncBufferRow> {
     records
-        .into_iter()
+        .iter()
         .map(|test_record| test_record.sync_buffer_row.clone())
         .collect()
 }

@@ -11,7 +11,7 @@ const ASSET1: (&'static str, &'static str) = (
     r#"{
         "id":  "3de161ed-93ef-4210-aa31-3ae9e53748e8",
         "notes": "Asset 1",
-        "code": "AT1",
+        "asset_number": "AT1",
         "store_id": "store_a",
         "created_datetime": "2020-01-22T15:16:00",
         "modified_datetime": "2020-01-22T15:16:00"   
@@ -21,11 +21,14 @@ const ASSET1: (&'static str, &'static str) = (
 fn asset1() -> AssetRow {
     AssetRow {
         id: ASSET1.0.to_string(),
-        code: "AT1".to_string(),
+        asset_number: "AT1".to_string(),
         store_id: Some("store_a".to_string()), // We need a store to sync some where?
         notes: Some("Asset 1".to_string()),
         serial_number: None,
         catalogue_item_id: None,
+        asset_type_id: None,
+        asset_category_id: None,
+        asset_class_id: None,
         installation_date: None,
         replacement_date: None,
         created_datetime: Defaults::naive_date_time(),

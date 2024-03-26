@@ -16,21 +16,12 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
 #[table_name = "asset_class"]
 pub struct AssetClassRow {
     pub id: String,
     pub name: String,
-}
-
-impl Default for AssetClassRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            name: Default::default(),
-        }
-    }
 }
 
 pub struct AssetClassRowRepository<'a> {

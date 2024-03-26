@@ -41,7 +41,7 @@ pub fn generate(
         input,
         current_line.invoice_line_row,
         new_item_option,
-        existing_invoice_row.currency_id.clone(),
+        &existing_invoice_row.currency_id,
         &existing_invoice_row.currency_rate,
     )?;
 
@@ -103,7 +103,7 @@ fn generate_line(
     }: UpdateInboundShipmentLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
-    currency_id: Option<String>,
+    currency_id: &str,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
@@ -134,7 +134,7 @@ fn generate_line(
     update_line.total_before_tax = if let Some(total_before_tax) = total_before_tax {
         total_before_tax
     } else if number_of_packs.is_some() || cost_price_per_pack.is_some() {
-        update_line.cost_price_per_pack * update_line.number_of_packs as f64
+        update_line.cost_price_per_pack * update_line.number_of_packs
     } else {
         update_line.total_before_tax
     };

@@ -3,7 +3,7 @@ use crate::{migrations::sql, StorageConnection};
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // POSTGRES
     #[cfg(feature = "postgres")]
-    const APPROVAL_STATUS_TYPE: &'static str = "approval_status_type";
+    const APPROVAL_STATUS_TYPE: &str = "approval_status_type";
     #[cfg(feature = "postgres")]
     sql!(
         connection,
@@ -21,7 +21,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     )?;
     // SQLITE
     #[cfg(not(feature = "postgres"))]
-    const APPROVAL_STATUS_TYPE: &'static str = "TEXT";
+    const APPROVAL_STATUS_TYPE: &str = "TEXT";
 
     // Authorisation related fields
     sql!(

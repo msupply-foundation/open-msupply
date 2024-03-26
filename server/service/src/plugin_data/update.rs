@@ -127,7 +127,7 @@ mod test {
     use crate::{plugin_data::UpdatePluginData, service_provider::ServiceProvider};
 
     #[actix_rt::test]
-    async fn update_inbound_shipment_success() {
+    async fn update_plugin_success() {
         fn plugin_data_donor() -> PluginDataRow {
             PluginDataRow {
                 id: "plugin_data".to_string(),

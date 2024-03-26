@@ -285,7 +285,7 @@ impl InvoiceNode {
         Ok(loader
             .load_one(ClinicianLoaderInput::new(
                 &self.row().store_id,
-                &clinician_id,
+                clinician_id,
             ))
             .await?
             .map(ClinicianNode::from_domain))
@@ -316,27 +316,21 @@ impl InvoiceNode {
         Ok(Some(result))
     }
 
-    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<CurrencyNode> {
         let service_provider = ctx.service_provider();
         let currency_provider = &service_provider.currency_service;
         let service_context = &service_provider.basic_context()?;
 
-        let currency_id = if let Some(currency_id) = &self.row().currency_id {
-            currency_id
-        } else {
-            return Ok(None);
-        };
-
         let currency = currency_provider
-            .get_currency(service_context, &currency_id)
+            .get_currency(service_context, &self.row().currency_id)
             .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
             .ok_or(StandardGraphqlError::InternalError(format!(
                 "Cannot find currency ({}) linked to invoice ({})",
-                &currency_id,
+                &self.row().currency_id,
                 &self.row().id
             )))?;
 
-        Ok(Some(CurrencyNode::from_domain(currency)))
+        Ok(CurrencyNode::from_domain(currency))
     }
 
     pub async fn currency_rate(&self) -> &f64 {
@@ -487,7 +481,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
         Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
@@ -507,6 +501,7 @@ mod test {
                 r.id = "test_invoice_pricing".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
+                r.currency_id = currency_a().id;
             })
         }
         fn line1() -> InvoiceLineRow {

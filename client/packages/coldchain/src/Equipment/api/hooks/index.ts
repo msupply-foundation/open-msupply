@@ -5,6 +5,7 @@ export const useAssets = {
   utils: {},
 
   document: {
+    fetch: Document.useFetchAssetById,
     get: Document.useAsset,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,
@@ -17,5 +18,5 @@ export const useAssets = {
     update: Document.useAssetUpdate,
   },
 
-  log: { insert: Log.useAssetLogInsert },
+  log: { insert: Log.useAssetLogInsert, list: Log.useAssetLogs },
 };

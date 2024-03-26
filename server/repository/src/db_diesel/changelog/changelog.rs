@@ -6,6 +6,7 @@ use diesel::{
     helper_types::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use strum::EnumIter;
 use strum::IntoEnumIterator;
@@ -68,7 +69,7 @@ pub enum ChangelogAction {
     Delete,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, EnumIter)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
     Number,
@@ -99,6 +100,8 @@ pub enum ChangelogTableName {
     AssetCategory,
     AssetType,
     AssetCatalogueItem,
+    #[default]
+    SyncFileReference,
     Asset,
     AssetLog,
 }
@@ -145,6 +148,7 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueItem => ChangeLogSyncStyle::Central,
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::Remote,
         }
     }
 }

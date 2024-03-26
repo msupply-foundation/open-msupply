@@ -20,7 +20,7 @@ use crate::{
     RepositoryError, Sort, StringFilter,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StocktakeLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub stocktake_id: Option<EqualFilter<String>>,
@@ -30,12 +30,7 @@ pub struct StocktakeLineFilter {
 
 impl StocktakeLineFilter {
     pub fn new() -> StocktakeLineFilter {
-        StocktakeLineFilter {
-            id: None,
-            stocktake_id: None,
-            location_id: None,
-            item_code_or_name: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -99,12 +94,7 @@ impl<'a> StocktakeLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -126,12 +116,7 @@ impl<'a> StocktakeLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<Vec<StocktakeLine>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         if let Some(sort) = sort {
             match sort.key {
@@ -217,7 +202,7 @@ fn apply_item_filter(
             item_filter.is_visible = Some(true);
             let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))
-                .unwrap_or(Vec::new()); // if there is a database issue, allow the filter to fail silently
+                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
             return query.filter(item_dsl::id.eq_any(item_ids));

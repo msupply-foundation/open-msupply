@@ -3,15 +3,18 @@ import { useAuthContext } from '../../authentication';
 import { useIntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
-  const trimmed = Number(`.${centsString}`);
+  const number = Number(`.${centsString}`);
 
   // If the result is an empty string, return .00
-  if (!trimmed) {
+  if (!number) {
     return '00';
   }
 
+  const trimmed = new Intl.NumberFormat('en', {
+    maximumFractionDigits: 21,
+  }).format(number);
   // Trimmed is some number with just one decimal place.
-  if (String(trimmed).length < 4) {
+  if (trimmed.length < 4) {
     return `${String(trimmed)[2]}0`;
   }
 
@@ -203,9 +206,12 @@ export const useCurrency = (code?: Currencies) => {
   const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
 
   const options = currencyOptions(language, currencyCode);
-  const precision = options.precision;
   return {
-    c: (value: currency.Any) => currency(value, { ...options, precision }),
+    c: (value: currency.Any, precision?: number) =>
+      currency(value, {
+        ...options,
+        precision: precision ?? options.precision,
+      }),
     options,
     currencyCode,
   };

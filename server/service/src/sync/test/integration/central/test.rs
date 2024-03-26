@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::sync::test::integration::central::{
-        document_registry::DocumentRegistryTester, form_schema::FormSchemaTester,
+        currency::CurrencyTester, document_registry::DocumentRegistryTester,
+        form_schema::FormSchemaTester,
         inventory_adjustment_reason::InventoryAdjustmentReasonTester,
         master_list::MasterListTester,
         name_and_store_and_name_store_join::NameAndStoreAndNameStoreJoinTester,
@@ -57,5 +58,10 @@ mod tests {
     #[actix_rt::test]
     async fn integration_sync_central_document_registry() {
         test_central_sync_record("document_registry", &DocumentRegistryTester).await;
+    }
+
+    #[actix_rt::test]
+    async fn integration_sync_central_currency() {
+        test_central_sync_record("currency", &CurrencyTester).await;
     }
 }

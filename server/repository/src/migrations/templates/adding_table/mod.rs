@@ -40,9 +40,9 @@ impl Migration for V1_00_05 {
 
         // Showing enum type in postgres and TEXT in sqlite
         #[cfg(not(feature = "postgres"))]
-        const TEST_ENUM_TYPE: &'static str = "TEXT";
+        const TEST_ENUM_TYPE: &str = "TEXT";
         #[cfg(feature = "postgres")]
-        const TEST_ENUM_TYPE: &'static str = "test_enum_type";
+        const TEST_ENUM_TYPE: &str = "test_enum_type";
         #[cfg(feature = "postgres")]
         sql!(
             connection,

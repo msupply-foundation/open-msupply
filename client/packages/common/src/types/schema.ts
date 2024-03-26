@@ -85,6 +85,10 @@ export type ActivityLogNode = {
 };
 
 export enum ActivityLogNodeType {
+  AssetCreated = 'ASSET_CREATED',
+  AssetDeleted = 'ASSET_DELETED',
+  AssetLogCreated = 'ASSET_LOG_CREATED',
+  AssetUpdated = 'ASSET_UPDATED',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
@@ -341,12 +345,13 @@ export type AssetConnector = {
 };
 
 export type AssetFilterInput = {
+  assetNumber?: InputMaybe<StringFilterInput>;
   catalogueItemId?: InputMaybe<EqualFilterStringInput>;
   categoryId?: InputMaybe<EqualFilterStringInput>;
   classId?: InputMaybe<EqualFilterStringInput>;
-  code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   installationDate?: InputMaybe<DateFilterInput>;
+  isNonCatalogue?: InputMaybe<Scalars['Boolean']['input']>;
   notes?: InputMaybe<StringFilterInput>;
   replacementDate?: InputMaybe<DateFilterInput>;
   serialNumber?: InputMaybe<StringFilterInput>;
@@ -420,12 +425,16 @@ export type AssetLogsResponse = AssetLogConnector;
 
 export type AssetNode = {
   __typename: 'AssetNode';
+  assetCategory?: Maybe<AssetCategoryNode>;
+  assetClass?: Maybe<AssetClassNode>;
+  assetNumber: Scalars['String']['output'];
+  assetType?: Maybe<AssetTypeNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
-  code: Scalars['String']['output'];
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -1791,14 +1800,17 @@ export type InsertAssetErrorInterface = {
 };
 
 export type InsertAssetInput = {
+  assetNumber: Scalars['String']['input'];
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
-  code: Scalars['String']['input'];
+  categoryId?: InputMaybe<Scalars['String']['input']>;
+  classId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<Scalars['NaiveDate']['input']>;
   serialNumber?: InputMaybe<Scalars['String']['input']>;
   storeId?: InputMaybe<Scalars['String']['input']>;
+  typeId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertAssetLogError = {
@@ -2537,7 +2549,7 @@ export type InvoiceNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
-  currency?: Maybe<CurrencyNode>;
+  currency: CurrencyNode;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -4305,6 +4317,10 @@ export type Queries = {
    * The printed report can be retrieved from the `/files` endpoint using the returned file id.
    */
   printReport: PrintReportResponse;
+  /**
+   * Can be used when developing reports, e.g. to print a report that is not already in the
+   * system.
+   */
   printReportDefinition: PrintReportResponse;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -5893,14 +5909,15 @@ export type UpdateAssetErrorInterface = {
 };
 
 export type UpdateAssetInput = {
+  assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
-  code?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
+  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;
-  storeId?: InputMaybe<Scalars['String']['input']>;
+  storeId?: InputMaybe<NullableStringUpdate>;
 };
 
 export type UpdateAssetResponse = AssetNode | UpdateAssetError;
@@ -6600,7 +6617,9 @@ export type UserNodePermissionsArgs = {
 };
 
 export enum UserPermission {
+  AssetCatalogueItemMutate = 'ASSET_CATALOGUE_ITEM_MUTATE',
   AssetMutate = 'ASSET_MUTATE',
+  AssetQuery = 'ASSET_QUERY',
   ColdChainApi = 'COLD_CHAIN_API',
   CreateRepack = 'CREATE_REPACK',
   DocumentMutate = 'DOCUMENT_MUTATE',
