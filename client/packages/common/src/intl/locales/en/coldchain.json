@@ -99,7 +99,6 @@
   "messages.import-error-on-upload": "Import error on upload. Please fix errors and re upload",
   "messages.error-no-file-selected": "No file selected",
   "messages.search": "Search",
-  "messages.upload-invite": "Drag and drop a file here or click to upload",
   "messages.unknown-error": "Unknown error",
   "messages.import-generic": "import successful",
   "messages.template-download-text": "Not sure how to start? ",
