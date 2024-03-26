@@ -115,9 +115,8 @@ impl SyncTranslation for NameMergeTranslation {
         // nameD merged into nameK
         // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
         let store_repo = StoreRepository::new(connection);
-        let store_filter =
-            StoreFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep));
-        let store = store_repo.query_one(store_filter)?;
+        let store = store_repo
+            .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)))?;
 
         if let Some(store) = store {
             name_store_joins_for_delete.iter().for_each(|nsj_delete| {
