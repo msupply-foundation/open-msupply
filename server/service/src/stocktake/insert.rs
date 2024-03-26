@@ -501,7 +501,7 @@ mod test {
             setup_all("insert_stocktake_with_master_list", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let mut context = service_provider
+        let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.stocktake_service;
@@ -517,7 +517,7 @@ mod test {
                 stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
                 is_locked: Some(true),
                 location: None,
-                master_list_id: Some("item_query_test1".to_string()),
+                master_list_id: Some("invalid".to_string()),
                 items_have_stock: None,
             },
         );
@@ -532,7 +532,6 @@ mod test {
             })
         });
 
-        context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
                 &context,
@@ -564,17 +563,16 @@ mod test {
         let stock_line_row = stocktake_rows
             .iter()
             .find(|r| r.line.stock_line_id == Some("item_query_test1".to_string()));
-        assert_eq!(stock_line_row.is_some(), true);
+        assert!(stock_line_row.is_some());
         assert_eq!(
             stock_line_row.unwrap().line.stock_line_id,
             Some("item_query_test1".to_string())
         );
 
-        // and the stock line for store_b?
         let stock_line_row = stocktake_rows
             .iter()
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
-        assert_eq!(stock_line_row.is_some(), false);
+        assert!(stock_line_row.is_none());
 
         // add another item to the master list and check that it is added to the stocktake
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
@@ -625,13 +623,12 @@ mod test {
             setup_all("insert_stocktake_with_location", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let mut context = service_provider
+        let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.stocktake_service;
         let location_id = mock_location_1().id;
 
-        context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
                 &context,
@@ -702,7 +699,7 @@ mod test {
         let stock_line_row = stocktake_rows
             .iter()
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
-        assert_eq!(stock_line_row.is_some(), true);
+        assert!(stock_line_row.is_some());
         assert_eq!(
             stock_line_row.unwrap().line.stock_line_id,
             Some("stock_line_row_1".to_string())
