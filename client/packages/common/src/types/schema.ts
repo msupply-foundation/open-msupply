@@ -434,6 +434,7 @@ export type AssetNode = {
   createdDatetime: Scalars['NaiveDateTime']['output'];
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
+  locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
@@ -5912,6 +5913,7 @@ export type UpdateAssetInput = {
   catalogueItemId?: InputMaybe<NullableStringUpdate>;
   id: Scalars['String']['input'];
   installationDate?: InputMaybe<NullableDateUpdate>;
+  locationIds?: InputMaybe<Array<Scalars['String']['input']>>;
   notes?: InputMaybe<Scalars['String']['input']>;
   replacementDate?: InputMaybe<NullableDateUpdate>;
   serialNumber?: InputMaybe<NullableStringUpdate>;

@@ -7,16 +7,18 @@ use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
+use graphql_core::loader::AssetStatusLogLoader;
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetStatusLogLoader,
+    AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
     AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{StoreNode, UserNode};
+use graphql_types::types::{LocationConnector, StoreNode, UserNode};
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
+
 use repository::{
     assets::asset::{Asset, AssetFilter, AssetSort},
     EqualFilter,
@@ -158,6 +160,16 @@ impl AssetNode {
             .load_one(catalogue_item_id.clone())
             .await?
             .map(AssetCatalogueItemNode::from_domain))
+    }
+
+    pub async fn locations(&self, ctx: &Context<'_>) -> Result<LocationConnector> {
+        let asset_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<AssetLocationLoader>>();
+        let result_option = loader.load_one(asset_id.to_string()).await?;
+
+        let locations = LocationConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(locations)
     }
 
     pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
