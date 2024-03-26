@@ -2,7 +2,7 @@ import { useTranslation } from '@common/intl';
 import { VariantFragment } from '../../operations.generated';
 import { usePackVariantDelete } from './usePackVariantDelete';
 import { useDeleteConfirmation, useNotification } from '@common/hooks';
-import { useTableStore } from 'packages/common/src';
+import { useTableStore } from '@openmsupply-client/common';
 
 export const usePackVariantDeleteSelected = (variants: VariantFragment[]) => {
   const t = useTranslation('catalogue');

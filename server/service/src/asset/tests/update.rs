@@ -45,6 +45,9 @@ mod query {
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
                     replacement_date: None,
+                    category_id: None,
+                    class_id: None,
+                    type_id: None,
                 },
             )
             .unwrap();
