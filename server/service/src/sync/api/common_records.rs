@@ -66,7 +66,10 @@ pub(crate) struct ParsingSyncRecordError {
 }
 
 impl CommonSyncRecord {
-    pub(crate) fn to_buffer_row(self) -> Result<SyncBufferRow, ParsingSyncRecordError> {
+    pub(crate) fn to_buffer_row(
+        self,
+        source_site_id: Option<i32>,
+    ) -> Result<SyncBufferRow, ParsingSyncRecordError> {
         let CommonSyncRecord {
             table_name,
             record_id,
@@ -84,6 +87,7 @@ impl CommonSyncRecord {
             received_datetime: Utc::now().naive_utc(),
             integration_datetime: None,
             integration_error: None,
+            source_site_id,
         })
     }
 }
@@ -96,7 +100,7 @@ impl RemoteSyncBatchV5 {
     pub(crate) fn to_sync_buffer_rows(self) -> Result<Vec<SyncBufferRow>, ParsingSyncRecordError> {
         self.data
             .into_iter()
-            .map(|r| Ok(r.record.to_buffer_row()?))
+            .map(|r| Ok(r.record.to_buffer_row(None)?))
             .collect()
     }
 }

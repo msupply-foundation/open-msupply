@@ -10,12 +10,19 @@ import {
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
+import { LocationIds } from '../DetailView';
 
 export type ListParams<T> = {
   first: number;
   offset: number;
   sortBy: SortBy<T>;
   filterBy?: FilterByWithBoolean | null;
+};
+
+export type InsertAsset = Partial<AssetFragment> & {
+  categoryId?: string;
+  typeId?: string;
+  classId?: string;
 };
 
 const assetParsers = {
@@ -28,7 +35,20 @@ const assetParsers = {
 
     return fields[sortBy.key] ?? AssetSortFieldInput.InstallationDate;
   },
-  toUpdate: (input: AssetFragment): UpdateAssetInput => ({
+  toInsert: (input: InsertAsset): InsertAssetInput => ({
+    id: input.id ?? '',
+    assetNumber: input.assetNumber ?? '',
+    catalogueItemId: input.catalogueItemId,
+    categoryId: input.categoryId,
+    classId: input.classId,
+    installationDate: input.installationDate,
+    notes: input.notes,
+    replacementDate: input.replacementDate,
+    serialNumber: input.serialNumber,
+    storeId: input.store?.id,
+    typeId: input.typeId,
+  }),
+  toUpdate: (input: AssetFragment & LocationIds): UpdateAssetInput => ({
     id: input.id,
     catalogueItemId: setNullableInput('catalogueItemId', input),
     assetNumber: input.assetNumber,
@@ -36,7 +56,8 @@ const assetParsers = {
     notes: input.notes,
     replacementDate: setNullableInput('replacementDate', input),
     serialNumber: setNullableInput('serialNumber', input),
-    storeId: input.storeId,
+    storeId: setNullableInput('id', input.store),
+    locationIds: input.locationIds,
   }),
   toLogInsert: (input: Partial<InsertAssetLogInput>): InsertAssetLogInput => ({
     id: input.id ?? '',
@@ -109,9 +130,9 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       return result.labelPrinterSettings;
     },
   },
-  insert: async (input: InsertAssetInput): Promise<string> => {
+  insert: async (input: Partial<AssetFragment>): Promise<string> => {
     const result = await sdk.insertAsset({
-      input: { ...input, storeId },
+      input: assetParsers.toInsert(input),
       storeId,
     });
     const { insertAsset } = result;
@@ -122,7 +143,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert asset');
   },
-  update: async (input: AssetFragment): Promise<string> => {
+  update: async (input: AssetFragment & LocationIds): Promise<string> => {
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,

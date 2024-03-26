@@ -13,6 +13,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             asset_number TEXT NOT NULL,
             serial_number TEXT, 
             asset_catalogue_item_id TEXT REFERENCES asset_catalogue_item (id),
+            asset_category_id TEXT REFERENCES asset_category (id),
+            asset_class_id TEXT REFERENCES asset_class (id),
+            asset_type_id TEXT REFERENCES asset_type (id),
             installation_date {DATE},
             replacement_date {DATE},
             deleted_datetime {DATETIME},
@@ -33,8 +36,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             id TEXT NOT NULL PRIMARY KEY,
             asset_id TEXT NOT NULL REFERENCES asset (id),
             location_id TEXT NOT NULL REFERENCES location (id),
-            created_datetime {DATETIME} NOT NULL,
-            modified_datetime {DATETIME} NOT NULL, 
             UNIQUE (location_id) -- Locations can only be assigned to be inside a single asset, this isn't tracking where the asset is, just what locations exist within it
         );
         CREATE INDEX asset_internal_location_asset_id ON asset_internal_location (asset_id);
@@ -50,6 +51,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TYPE permission_type ADD VALUE 'ASSET_CATALOGUE_ITEM_MUTATE';
             ALTER TYPE permission_type ADD VALUE 'ASSET_QUERY';
             "#,
+        )?;
+    }
+
+    if cfg!(feature = "postgres") {
+        sql!(
+            connection,
+            r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'asset';
+            "#
         )?;
     }
 
