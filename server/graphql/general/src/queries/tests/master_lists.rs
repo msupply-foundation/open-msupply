@@ -31,7 +31,6 @@ mod graphql {
         fn get_master_lists(
             &self,
             _: &ServiceContext,
-            _: &str,
             pagination: Option<PaginationOption>,
             filter: Option<MasterListFilter>,
             sort: Option<MasterListSort>,
