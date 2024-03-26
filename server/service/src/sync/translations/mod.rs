@@ -6,7 +6,6 @@ pub(crate) mod currency;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
-pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -23,6 +22,7 @@ pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
+pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -62,7 +62,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         period::boxed(),
         program_requisition_settings::boxed(),
         report::boxed(),
-        inventory_adjustment_reason::boxed(),
+        reason::boxed(),
         store_preference::boxed(),
         form_schema::boxed(),
         document_registry::boxed(),

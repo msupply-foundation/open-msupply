@@ -1,10 +1,8 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
-        currency::CurrencyTranslation,
-        inventory_adjustment_reason::InventoryAdjustmentReasonTranslation,
-        invoice::InvoiceTranslation, item::ItemTranslation, location::LocationTranslation,
-        stock_line::StockLineTranslation,
+        currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
+        location::LocationTranslation, reason::ReasonTranslation, stock_line::StockLineTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -101,7 +99,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             ItemTranslation.table_name(),
             StockLineTranslation.table_name(),
             LocationTranslation.table_name(),
-            InventoryAdjustmentReasonTranslation.table_name(),
+            ReasonTranslation.table_name(),
             CurrencyTranslation.table_name(),
         ]
     }
