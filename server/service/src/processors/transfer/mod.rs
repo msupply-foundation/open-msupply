@@ -70,6 +70,8 @@ pub(crate) fn get_linked_original_shipment(
         .ok_or_else(|| Error::ShipmentNotFound(original_shipment_id.to_string()))?;
 
     let linked_original_shipment = match &original_shipment.invoice_row.linked_invoice_id {
+        // most of the time, original shipment will have a linked_invoice_id, which we can use to retrieve
+        // the linked shipment
         Some(id) => {
             let linked_shipment = repo
                 .query_one(InvoiceFilter::by_id(id))
@@ -77,6 +79,9 @@ pub(crate) fn get_linked_original_shipment(
                 .ok_or_else(|| Error::LinkedShipmentNotFound(original_shipment.clone()))?;
             Some(linked_shipment)
         }
+        // It's possible that shipments have been linked, but the linked_invoice_id hasn't propagated back
+        // to our original shipment yet. So we check if there is any shipment that has a linked_invoice_id 
+        // which matches our original shipment
         None => repo
             .query_one(InvoiceFilter::new_match_linked_invoice_id(
                 &original_shipment.invoice_row.id,
