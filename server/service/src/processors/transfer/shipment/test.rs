@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    mock::{insert_extra_mock_data, MockData, MockDataInserts},
+    mock::{currency_a, insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRepository, InvoiceRow,
     InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRow, KeyValueStoreRow,
@@ -365,6 +365,7 @@ impl ShipmentTransferTester {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
+            r.currency_id = currency_a().id;
         });
 
         let location = inline_init(|r: &mut LocationRow| {

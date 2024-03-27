@@ -19,7 +19,7 @@ use diesel::{
     prelude::*,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ProgramEventFilter {
     pub datetime: Option<DatetimeFilter>,
     pub active_start_datetime: Option<DatetimeFilter>,
@@ -34,17 +34,7 @@ pub struct ProgramEventFilter {
 
 impl ProgramEventFilter {
     pub fn new() -> Self {
-        ProgramEventFilter {
-            datetime: None,
-            active_start_datetime: None,
-            active_end_datetime: None,
-            patient_id: None,
-            document_type: None,
-            context_id: None,
-            document_name: None,
-            r#type: None,
-            data: None,
-        }
+        Self::default()
     }
 
     pub fn datetime(mut self, filter: DatetimeFilter) -> Self {

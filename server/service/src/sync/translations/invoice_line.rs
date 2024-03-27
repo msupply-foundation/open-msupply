@@ -1,10 +1,8 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
-        currency::CurrencyTranslation,
-        inventory_adjustment_reason::InventoryAdjustmentReasonTranslation,
-        invoice::InvoiceTranslation, item::ItemTranslation, location::LocationTranslation,
-        stock_line::StockLineTranslation,
+        currency::CurrencyTranslation, invoice::InvoiceTranslation, item::ItemTranslation,
+        location::LocationTranslation, reason::ReasonTranslation, stock_line::StockLineTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -91,17 +89,17 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct InvoiceLineTranslation;
 impl SyncTranslation for InvoiceLineTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "trans_line"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             InvoiceTranslation.table_name(),
             ItemTranslation.table_name(),
             StockLineTranslation.table_name(),
             LocationTranslation.table_name(),
-            InventoryAdjustmentReasonTranslation.table_name(),
+            ReasonTranslation.table_name(),
             CurrencyTranslation.table_name(),
         ]
     }
@@ -169,13 +167,13 @@ impl SyncTranslation for InvoiceLineTranslation {
                     _ => 0.0,
                 };
 
-                let total = total_multiplier * number_of_packs as f64;
+                let total = total_multiplier * number_of_packs;
                 (item.code, None, total, total)
             }
         };
 
         let is_record_active_on_site = is_active_record_on_site(
-            &connection,
+            connection,
             ActiveRecordCheck::InvoiceLine {
                 invoice_id: invoice_id.clone(),
             },
@@ -186,7 +184,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         // Currently a uuid is assigned by central for the stock_line id which causes a foreign key constraint violation
         let is_stock_line_valid = match stock_line_id {
             Some(ref stock_line_id) => StockLineRowRepository::new(connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id(stock_line_id)
                 .is_ok(),
             None => true,
         };
@@ -311,7 +309,7 @@ impl SyncTranslation for InvoiceLineTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 
@@ -372,7 +370,8 @@ mod tests {
                 .names()
                 .stores()
                 .locations()
-                .stock_lines(),
+                .stock_lines()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![mock_outbound_shipment_a()];
                 r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {

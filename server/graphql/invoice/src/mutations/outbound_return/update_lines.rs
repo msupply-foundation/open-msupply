@@ -33,8 +33,7 @@ pub fn update_lines(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateOutboundReturn, // TODO
-            resource: Resource::MutateInboundShipment,
+            resource: Resource::MutateOutboundReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;

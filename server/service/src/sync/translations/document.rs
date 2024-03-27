@@ -57,11 +57,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct DocumentTranslation;
 impl SyncTranslation for DocumentTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "om_document"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             NameTranslation.table_name(),
             FormSchemaTranslation.table_name(),
@@ -155,7 +155,7 @@ impl SyncTranslation for DocumentTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 }

@@ -6,7 +6,7 @@ use crate::{
     StockLineRow,
 };
 
-use super::{mock_name_a, mock_store_a, mock_store_b, MockData};
+use super::{currency_a, mock_name_a, mock_store_a, mock_store_b, MockData};
 
 const ITEM1_INDEX: usize = 0;
 const ITEM2_INDEX: usize = 1;
@@ -19,6 +19,7 @@ fn consumption_points() -> MockData {
             r.store_id = mock_store_a().id;
             r.name_link_id = mock_name_a().id;
             r.r#type = InvoiceRowType::OutboundShipment;
+            r.currency_id = currency_a().id;
         })];
         r.invoice_lines = vec![
             inline_init(|r: &mut InvoiceLineRow| {
@@ -148,7 +149,7 @@ pub fn stock_line3() -> StockLineRow {
 }
 
 pub fn item_1_soh() -> u32 {
-    10 + 20 * 10 + 10 * 1
+    10 + 20 * 10 + 10
 }
 
 pub fn stock_line_1_store_b() -> StockLineRow {
@@ -165,7 +166,7 @@ pub fn stock_line_1_store_b() -> StockLineRow {
 }
 
 pub fn item_1_store_b_soh() -> u32 {
-    1 * 10
+    10
 }
 
 pub fn item2() -> ItemRow {

@@ -7,7 +7,7 @@ use crate::{activity_log::system_activity_log_entry, number::next_number};
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str =
+const DESCRIPTION: &str =
     "Allocate an invoice_number to an inbound shipments if they have an invoice_number of -1";
 
 pub(crate) struct AssignInvoiceNumberProcessor;

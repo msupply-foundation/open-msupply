@@ -6,9 +6,9 @@ use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &'static str = "sensor";
+const TABLE_NAME: &str = "sensor";
 
-const SENSOR_1: (&'static str, &'static str) = (
+const SENSOR_1: (&str, &str) = (
     "cf5812e0c33911eb9757779d39ae2dbd",
     r#"{
         "ID": "cf5812e0c33911eb9757779d39ae2dbd",

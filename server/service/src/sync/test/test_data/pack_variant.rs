@@ -3,9 +3,9 @@ use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &'static str = "pack_variant";
+const TABLE_NAME: &str = "pack_variant";
 
-const PACK_VARIANT1: (&'static str, &'static str) = (
+const PACK_VARIANT1: (&str, &str) = (
     "6f075ab5-4aa0-46b9-9184-159d62126f86",
     r#"{
         "id": "6f075ab5-4aa0-46b9-9184-159d62126f86",
@@ -36,7 +36,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     )]
 }
 
-pub(crate) fn test_omsupply_central_push_records() -> Vec<TestSyncOutgoingRecord> {
+pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: PACK_VARIANT1.0.to_string(),

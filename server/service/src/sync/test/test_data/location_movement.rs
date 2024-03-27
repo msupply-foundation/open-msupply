@@ -6,9 +6,9 @@ use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &'static str = "location_movement";
+const TABLE_NAME: &str = "location_movement";
 
-const LOCATION_MOVEMENT_1: (&'static str, &'static str) = (
+const LOCATION_MOVEMENT_1: (&str, &str) = (
     "77829028-8456-4adb-b428-243f67c6cc4f",
     r#"{
       "ID": "77829028-8456-4adb-b428-243f67c6cc4f",

@@ -84,7 +84,7 @@ impl From<RepositoryError> for DeleteOutboundReturnError {
 mod test {
     use repository::{
         mock::{
-            mock_name_store_a, mock_name_store_b, mock_outbound_return_a,
+            currency_a, mock_name_store_a, mock_name_store_b, mock_outbound_return_a,
             mock_outbound_return_a_invoice_line_a, mock_outbound_shipment_a, mock_store_a,
             mock_store_b, MockData, MockDataInserts,
         },
@@ -105,6 +105,7 @@ mod test {
                 store_id: mock_store_a().id,
                 r#type: InvoiceRowType::OutboundReturn,
                 name_link_id: mock_name_store_a().id,
+                currency_id: currency_a().id,
                 ..Default::default()
             }
         }
@@ -114,6 +115,7 @@ mod test {
                 store_id: mock_store_b().id,
                 r#type: InvoiceRowType::OutboundReturn,
                 name_link_id: mock_name_store_b().id,
+                currency_id: currency_a().id,
                 status: InvoiceRowStatus::Verified,
                 ..Default::default()
             }

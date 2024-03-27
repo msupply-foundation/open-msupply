@@ -135,11 +135,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct NameTranslation;
 impl SyncTranslation for NameTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "name"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -291,7 +291,7 @@ impl SyncTranslation for NameTranslation {
             NameType::Patient => LegacyNameType::Patient,
             _ => {
                 return Ok(PushTranslateResult::Ignored(
-                    "Only push name records that belong to patiens".to_string(),
+                    "Only push name records that belong to patients".to_string(),
                 ))
             }
         };
@@ -331,7 +331,7 @@ impl SyncTranslation for NameTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

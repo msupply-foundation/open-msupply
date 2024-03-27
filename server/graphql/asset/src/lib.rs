@@ -194,7 +194,7 @@ mod test {
                 nodes {
                   id
                   notes
-                  code
+                  assetNumber
                 }
                 totalCount
               }
@@ -208,7 +208,7 @@ mod test {
                 rows: vec![Asset {
                     id: "test_id".to_owned(),
                     notes: Some("test_note".to_owned()),
-                    code: "test_code".to_owned(),
+                    asset_number: "test_asset_number".to_owned(),
                     ..Default::default()
                 }],
                 count: 1,
@@ -221,7 +221,7 @@ mod test {
                       {
                           "id": "test_id",
                           "notes": "test_note",
-                          "code": "test_code",
+                          "assetNumber": "test_asset_number",
                       },
                   ],
                   "totalCount": 1

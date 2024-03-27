@@ -27,7 +27,7 @@ async fn check_change_log_update() {
 
     // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {
-        db_name: &format!("check_change_log_update"),
+        db_name: "check_change_log_update",
         ..Default::default()
     })
     .await;

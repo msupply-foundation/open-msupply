@@ -9,7 +9,7 @@ pub fn merge_all_name_links(
     connection: &StorageConnection,
     mock_data: &MockDataCollection,
 ) -> Result<(), RepositoryError> {
-    let name_link_repo = NameLinkRowRepository::new(&connection);
+    let name_link_repo = NameLinkRowRepository::new(connection);
 
     let names: Vec<NameRow> = mock_data
         .data
@@ -35,7 +35,7 @@ pub fn merge_all_item_links(
     connection: &StorageConnection,
     mock_data: &MockDataCollection,
 ) -> Result<(), RepositoryError> {
-    let item_link_repo = ItemLinkRowRepository::new(&connection);
+    let item_link_repo = ItemLinkRowRepository::new(connection);
 
     let items: Vec<ItemRow> = mock_data
         .data

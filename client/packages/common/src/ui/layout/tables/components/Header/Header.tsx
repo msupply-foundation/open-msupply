@@ -44,21 +44,39 @@ export const HeaderCell = <T extends RecordWithId>({
   const t = useTranslation();
   const isSorted = key === currentSortKey;
 
+  // Changes sort key or, if the sort key is already selected, toggles the sort direction.
   const onSort = useDebounceCallback(
-    () => onChangeSortBy && sortable && onChangeSortBy(column),
-    [column],
+    () => {
+      if (!onChangeSortBy || !sortable) return;
+
+      if (key !== currentSortKey) {
+        // change sort key
+        onChangeSortBy(key as string, 'asc');
+      } else {
+        // toggle sort direction
+        const dir = direction === 'desc' ? 'asc' : 'desc';
+        onChangeSortBy(key as string, dir);
+      }
+    },
+    [sortable, key, currentSortKey, direction, onChangeSortBy],
     150
   );
 
-  const showTooltip = !!description || sortable;
-  const tooltip = showTooltip ? (
+  const columnLabel = column.label === '' ? '' : t(column.label);
+  const tooltip = (
     <>
       {!!description && <div>{t(description)}</div>}
-      {sortable && <div>{t('label.click-to-sort')}</div>}
+      {sortable ? (
+        <div>
+          {t('label.click-to-sort')}
+          {` ${columnLabel}`}
+        </div>
+      ) : (
+        columnLabel
+      )}
     </>
-  ) : (
-    ''
   );
+
   const infoIcon = !!description ? (
     <InfoOutlineIcon
       sx={{
@@ -72,9 +90,10 @@ export const HeaderCell = <T extends RecordWithId>({
   const child = (
     <div
       style={{
-        display: 'inline-flex',
         flexWrap: 'nowrap',
         alignItems: 'center',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
     >
       <Header column={column} />
@@ -88,6 +107,7 @@ export const HeaderCell = <T extends RecordWithId>({
       active={isSorted}
       direction={direction}
       IconComponent={SortDescIcon}
+      sx={{ maxWidth: maxWidth }}
     >
       {child}
     </TableSortLabel>
