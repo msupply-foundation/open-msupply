@@ -342,9 +342,7 @@ impl InvoiceNode {
     /// Inbound Shipment that is the origin of this Outbound Return
     /// OR Outbound Shipment that is the origin of this Inbound Return
     pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
-        let original_shipment_id = if let Some(id) = &self.row().original_shipment_id {
-            id
-        } else {
+        let Some(original_shipment_id) = &self.row().original_shipment_id else {
             return Ok(None);
         };
 
