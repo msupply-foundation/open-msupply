@@ -7,3 +7,4 @@ export * from './AppDrawer';
 export * from './Login';
 export * from './Initialise';
 export * from './AppVersion';
+export * from './EasterEggModal';

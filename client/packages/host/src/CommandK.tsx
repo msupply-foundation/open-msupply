@@ -20,6 +20,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
+import { useEasterEggModal } from './components/EasterEggModal';
 
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   width: 500,
@@ -85,6 +86,7 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
   const drawer = useDrawer();
   const t = useTranslation('app');
   const { store, logout, userHasPermission } = useAuthContext();
+  const showEasterEgg = useEasterEggModal();
 
   const actions = [
     {
@@ -242,6 +244,13 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         logout();
         navigate(RouteBuilder.create(AppRoute.Login).build());
       },
+    },
+    {
+      id: 'action:easter-egg',
+      name: `${t('easter-egg')}`,
+      shortcut: ['e', 'e'],
+      keywords: 'easter egg game',
+      perform: showEasterEgg,
     },
   ];
 
