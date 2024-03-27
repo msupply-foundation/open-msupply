@@ -20,6 +20,7 @@ import { OutboundReturnLineFragment, useReturns } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
 import { OutboundReturnEditModal } from '../modals';
 import { OutboundReturnItem } from '../../types';
+import { getNextItemId } from '../../utils';
 
 export const OutboundReturnsDetailView: FC = () => {
   const {
@@ -51,6 +52,8 @@ export const OutboundReturnsDetailView: FC = () => {
     },
   ];
 
+  const nextItemId = getNextItemId(data?.lines?.nodes ?? [], itemId);
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -74,6 +77,16 @@ export const OutboundReturnsDetailView: FC = () => {
               returnId={data.id}
               initialItemId={itemId}
               modalMode={mode}
+              loadNextItem={() => {
+                if (nextItemId) onOpen(nextItemId);
+                else {
+                  // Closing and re-opening forces the modal to launch with the
+                  // item selector in focus
+                  onClose();
+                  setTimeout(() => onOpen(), 50);
+                }
+              }}
+              hasNextItem={!!nextItemId}
             />
           )}
 
