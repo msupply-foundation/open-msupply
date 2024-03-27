@@ -57,7 +57,9 @@ enum Operation {
         /// `shipment.requisition_id -> requisition.id -> linked_requisition.linked_requisition_id`
         linked_shipment_requisition: Option<Requisition>,
         /// Original shipment for linked return, required for linking inbound return to outbound shipment
-        /// could be Some() even if linked_shipment is None
+        /// Could be Some() even if linked_shipment (which is actually linked_return in this case...) is None
+        /// because in/outbound return may not be linked to another return, but can be linked/connected to its
+        /// original in/outbound shipment
         ///
         /// Deduced through:
         /// `return.original_shipment_id -> original_shipment.linked_invoice_id = linked_invoice.id`
