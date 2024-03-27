@@ -5,7 +5,7 @@ pub fn date_now_with_offset(off_set: Duration) -> NaiveDate {
 }
 
 pub fn date_with_offset(date: &NaiveDate, off_set: Duration) -> NaiveDate {
-    date.checked_add_signed(off_set).unwrap_or(date.clone())
+    date.checked_add_signed(off_set).unwrap_or(*date)
 }
 
 pub fn date_with_days_offset(date: &NaiveDate, days_offset: i32) -> NaiveDate {
@@ -18,7 +18,7 @@ pub fn date_now() -> NaiveDate {
 }
 
 pub fn datetime_with_offset(date: &NaiveDateTime, off_set: Duration) -> NaiveDateTime {
-    date.checked_add_signed(off_set).unwrap_or(date.clone())
+    date.checked_add_signed(off_set).unwrap_or(*date)
 }
 
 pub fn datetime_with_days_offset(date: &NaiveDateTime, days_offset: i32) -> NaiveDateTime {

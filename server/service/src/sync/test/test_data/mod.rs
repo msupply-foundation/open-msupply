@@ -3,6 +3,12 @@ use self::special::name_to_name_store_join;
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
 pub(crate) mod activity_log;
+pub(crate) mod asset;
+pub(crate) mod asset_catalogue_item;
+pub(crate) mod asset_category;
+pub(crate) mod asset_class;
+pub(crate) mod asset_log;
+pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod currency;
 pub(crate) mod invoice;
@@ -57,7 +63,14 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut name_store_join::test_pull_upsert_records());
     test_records.append(&mut special::name_to_name_store_join::test_pull_upsert_records());
     test_records.append(&mut barcode::test_pull_upsert_records());
+    // Open mSupply Central
     test_records.append(&mut pack_variant::test_pull_upsert_records());
+    test_records.append(&mut asset_class::test_pull_upsert_records());
+    test_records.append(&mut asset_category::test_pull_upsert_records());
+    test_records.append(&mut asset_type::test_pull_upsert_records());
+    test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
+    test_records.append(&mut asset::test_pull_upsert_records());
+    test_records.append(&mut asset_log::test_pull_upsert_records());
     test_records
 }
 
@@ -132,9 +145,15 @@ pub(crate) fn get_all_push_test_records() -> Vec<TestSyncOutgoingRecord> {
     test_records
 }
 
-pub(crate) fn get_all_omsupply_central_push_records() -> Vec<TestSyncOutgoingRecord> {
+pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     let mut test_records = Vec::new();
-    test_records.append(&mut pack_variant::test_omsupply_central_push_records());
+    test_records.append(&mut pack_variant::test_v6_central_push_records());
+    test_records.append(&mut asset_class::test_v6_central_push_records());
+    test_records.append(&mut asset_category::test_v6_central_push_records());
+    test_records.append(&mut asset_type::test_v6_central_push_records());
+    test_records.append(&mut asset_catalogue_item::test_v6_central_push_records());
+    test_records.append(&mut asset::test_v6_records());
+    test_records.append(&mut asset_log::test_v6_records());
 
     test_records
 }

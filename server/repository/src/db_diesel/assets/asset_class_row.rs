@@ -2,8 +2,11 @@ use super::asset_class_row::asset_class::dsl::*;
 
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
 use diesel::prelude::*;
+use serde::Deserialize;
+use serde::Serialize;
 
 table! {
     asset_class (id) {
@@ -12,20 +15,13 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
+)]
 #[table_name = "asset_class"]
 pub struct AssetClassRow {
     pub id: String,
     pub name: String,
-}
-
-impl Default for AssetClassRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            name: Default::default(),
-        }
-    }
 }
 
 pub struct AssetClassRowRepository<'a> {
@@ -84,5 +80,19 @@ impl<'a> AssetClassRowRepository<'a> {
             .filter(id.eq(asset_class_id))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for AssetClassRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        AssetClassRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetClassRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

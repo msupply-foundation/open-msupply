@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use repository::Name;
+use repository::{CurrencyFilter, CurrencyRepository, Name};
 use repository::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
@@ -27,6 +27,10 @@ pub fn generate(
     RepositoryError,
 > {
     let current_datetime = Utc::now().naive_utc();
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
 
     let outbound_return = InvoiceRow {
         id: input.id,
@@ -39,6 +43,8 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         // Default
+        currency_id: currency.currency_row.id,
+        currency_rate: 1.0,
         on_hold: false,
         colour: None,
         comment: None,
@@ -53,8 +59,6 @@ pub fn generate(
         linked_invoice_id: None,
         requisition_id: None,
         clinician_link_id: None,
-        currency_id: None,
-        currency_rate: 0.0,
     };
 
     let lines_with_packs: Vec<&OutboundReturnLineInput> = input

@@ -6,7 +6,6 @@ use super::asset_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
-    assets::asset_catalogue_item_row::asset_catalogue_item::dsl as asset_catalogue_item_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -26,11 +25,11 @@ pub enum AssetSortField {
 
 pub type AssetSort = Sort<AssetSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AssetFilter {
     pub id: Option<EqualFilter<String>>,
     pub notes: Option<StringFilter>,
-    pub code: Option<StringFilter>,
+    pub asset_number: Option<StringFilter>,
     pub serial_number: Option<StringFilter>,
     pub class_id: Option<EqualFilter<String>>,
     pub category_id: Option<EqualFilter<String>>,
@@ -38,22 +37,12 @@ pub struct AssetFilter {
     pub catalogue_item_id: Option<EqualFilter<String>>,
     pub installation_date: Option<DateFilter>,
     pub replacement_date: Option<DateFilter>,
+    pub is_non_catalogue: Option<bool>,
 }
 
 impl AssetFilter {
     pub fn new() -> AssetFilter {
-        AssetFilter {
-            id: None,
-            notes: None,
-            code: None,
-            serial_number: None,
-            class_id: None,
-            category_id: None,
-            type_id: None,
-            catalogue_item_id: None,
-            installation_date: None,
-            replacement_date: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -66,8 +55,8 @@ impl AssetFilter {
         self
     }
 
-    pub fn code(mut self, filter: StringFilter) -> Self {
-        self.code = Some(filter);
+    pub fn asset_number(mut self, filter: StringFilter) -> Self {
+        self.asset_number = Some(filter);
         self
     }
 
@@ -103,6 +92,11 @@ impl AssetFilter {
 
     pub fn replacement_date(mut self, filter: DateFilter) -> Self {
         self.replacement_date = Some(filter);
+        self
+    }
+
+    pub fn is_non_catalogue(mut self, filter: bool) -> Self {
+        self.is_non_catalogue = Some(filter);
         self
     }
 }
@@ -165,10 +159,10 @@ impl<'a> AssetRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        // println!(
-        //    "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
+        println!(
+           "{}",
+            diesel::debug_query::<DBType, _>(&final_query).to_string()
+        );
 
         let result = final_query.load::<Asset>(&self.connection.connection)?;
 
@@ -189,7 +183,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
         let AssetFilter {
             id,
             notes,
-            code,
+            asset_number,
             serial_number,
             class_id,
             category_id,
@@ -197,51 +191,28 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             catalogue_item_id,
             installation_date,
             replacement_date,
+            is_non_catalogue,
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
         apply_string_filter!(query, notes, asset_dsl::notes);
-        apply_string_filter!(query, code, asset_dsl::code);
+        apply_string_filter!(query, asset_number, asset_dsl::asset_number);
         apply_string_filter!(query, serial_number, asset_dsl::serial_number);
 
         apply_equal_filter!(query, catalogue_item_id, asset_dsl::asset_catalogue_item_id);
         apply_date_filter!(query, installation_date, asset_dsl::installation_date);
         apply_date_filter!(query, replacement_date, asset_dsl::replacement_date);
 
-        if let Some(category_id) = category_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(category_id),
-                asset_catalogue_item_dsl::asset_category_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
+        apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
+        apply_equal_filter!(query, class_id, asset_dsl::asset_class_id);
+        apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
 
-        if let Some(class_id) = class_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
+        if let Some(value) = is_non_catalogue {
             apply_equal_filter!(
-                sub_query,
-                Some(class_id),
-                asset_catalogue_item_dsl::asset_class_id
+                query,
+                Some(EqualFilter::is_null(value)),
+                asset_dsl::asset_catalogue_item_id
             );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
-        }
-
-        if let Some(type_id) = type_id {
-            let mut sub_query = asset_catalogue_item_dsl::asset_catalogue_item
-                .select(asset_catalogue_item_dsl::id.nullable())
-                .into_boxed();
-            apply_equal_filter!(
-                sub_query,
-                Some(type_id),
-                asset_catalogue_item_dsl::asset_type_id
-            );
-            query = query.filter(asset_dsl::asset_catalogue_item_id.eq_any(sub_query));
         }
     }
     query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items
@@ -283,7 +254,7 @@ mod tests {
             ..Default::default()
         };
 
-        let _result = asset_row_repository.insert_one(&asset).unwrap();
+        let _result = asset_row_repository.upsert_one(&asset).unwrap();
 
         // Query by id
         let result = asset_repository

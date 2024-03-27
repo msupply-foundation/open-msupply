@@ -114,14 +114,14 @@ pub struct NextNumber {
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-const NUMBER_INSERT_QUERY: &'static str =
+const NUMBER_INSERT_QUERY: &str =
     "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) RETURNING value;";
 
 // feature postgres
 // We need to use the ON CONFLICT DO NOTHING Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
 // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
 #[cfg(feature = "postgres")]
-const NUMBER_INSERT_QUERY: &'static str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
+const NUMBER_INSERT_QUERY: &str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
 
 impl<'a> NumberRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {

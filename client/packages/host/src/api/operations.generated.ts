@@ -4,6 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
+export type DatabaseSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type DatabaseSettingsQuery = { __typename: 'Queries', databaseSettings: { __typename: 'DatabaseSettingsNode', databaseType: Types.DatabaseType } };
+
 export type DisplaySettingsQueryVariables = Types.Exact<{
   input: Types.DisplaySettingsHash;
 }>;
@@ -16,6 +21,11 @@ export type PluginsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 export type PluginsQuery = { __typename: 'Queries', plugins: Array<{ __typename: 'PluginNode', config: string, name: string, path: string }> };
 
+export type LabelPrinterSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type LabelPrinterSettingsQuery = { __typename: 'Queries', labelPrinterSettings?: { __typename: 'LabelPrinterSettingNode', address: string, labelHeight: number, labelWidth: number, port: number } | null };
+
 export type UpdateDisplaySettingsMutationVariables = Types.Exact<{
   displaySettings: Types.DisplaySettingsInput;
 }>;
@@ -23,12 +33,23 @@ export type UpdateDisplaySettingsMutationVariables = Types.Exact<{
 
 export type UpdateDisplaySettingsMutation = { __typename: 'Mutations', updateDisplaySettings: { __typename: 'UpdateDisplaySettingsError', error: string } | { __typename: 'UpdateResult', theme?: string | null, logo?: string | null } };
 
-export type DatabaseSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
+export type UpdateLabelPrinterSettingsMutationVariables = Types.Exact<{
+  labelPrinterSettings: Types.LabelPrinterSettingsInput;
+}>;
 
 
-export type DatabaseSettingsQuery = { __typename: 'Queries', databaseSettings: { __typename: 'DatabaseSettingsNode', databaseType: Types.DatabaseType } };
+export type UpdateLabelPrinterSettingsMutation = { __typename: 'Mutations', updateLabelPrinterSettings: { __typename: 'LabelPrinterUpdateResult', success: boolean } | { __typename: 'UpdateLabelPrinterSettingsError' } };
 
 
+export const DatabaseSettingsDocument = gql`
+    query databaseSettings {
+  databaseSettings {
+    ... on DatabaseSettingsNode {
+      databaseType
+    }
+  }
+}
+    `;
 export const DisplaySettingsDocument = gql`
     query displaySettings($input: DisplaySettingsHash!) {
   displaySettings(input: $input) {
@@ -52,6 +73,17 @@ export const PluginsDocument = gql`
   }
 }
     `;
+export const LabelPrinterSettingsDocument = gql`
+    query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+    `;
 export const UpdateDisplaySettingsDocument = gql`
     mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
   updateDisplaySettings(input: $displaySettings) {
@@ -68,11 +100,12 @@ export const UpdateDisplaySettingsDocument = gql`
   }
 }
     `;
-export const DatabaseSettingsDocument = gql`
-    query databaseSettings {
-  databaseSettings {
-    ... on DatabaseSettingsNode {
-      databaseType
+export const UpdateLabelPrinterSettingsDocument = gql`
+    mutation updateLabelPrinterSettings($labelPrinterSettings: LabelPrinterSettingsInput!) {
+  updateLabelPrinterSettings(input: $labelPrinterSettings) {
+    ... on LabelPrinterUpdateResult {
+      __typename
+      success
     }
   }
 }
@@ -85,21 +118,43 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
+    databaseSettings(variables?: DatabaseSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DatabaseSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DatabaseSettingsQuery>(DatabaseSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'databaseSettings', 'query');
+    },
     displaySettings(variables: DisplaySettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DisplaySettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<DisplaySettingsQuery>(DisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'displaySettings', 'query');
     },
     plugins(variables?: PluginsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<PluginsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<PluginsQuery>(PluginsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'plugins', 'query');
     },
+    labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query');
+    },
     updateDisplaySettings(variables: UpdateDisplaySettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateDisplaySettingsMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<UpdateDisplaySettingsMutation>(UpdateDisplaySettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateDisplaySettings', 'mutation');
     },
-    databaseSettings(variables?: DatabaseSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DatabaseSettingsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<DatabaseSettingsQuery>(DatabaseSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'databaseSettings', 'query');
+    updateLabelPrinterSettings(variables: UpdateLabelPrinterSettingsMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateLabelPrinterSettingsMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateLabelPrinterSettingsMutation>(UpdateLabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateLabelPrinterSettings', 'mutation');
     }
   };
 }
 export type Sdk = ReturnType<typeof getSdk>;
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDatabaseSettingsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ databaseSettings })
+ *   )
+ * })
+ */
+export const mockDatabaseSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DatabaseSettingsQueryVariables>, GraphQLContext<DatabaseSettingsQuery>, any>) =>
+  graphql.query<DatabaseSettingsQuery, DatabaseSettingsQueryVariables>(
+    'databaseSettings',
+    resolver
+  )
 
 /**
  * @param resolver a function that accepts a captured request and may return a mocked response.
@@ -138,6 +193,22 @@ export const mockPluginsQuery = (resolver: ResponseResolver<GraphQLRequest<Plugi
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockLabelPrinterSettingsQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ labelPrinterSettings })
+ *   )
+ * })
+ */
+export const mockLabelPrinterSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<LabelPrinterSettingsQueryVariables>, GraphQLContext<LabelPrinterSettingsQuery>, any>) =>
+  graphql.query<LabelPrinterSettingsQuery, LabelPrinterSettingsQueryVariables>(
+    'labelPrinterSettings',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockUpdateDisplaySettingsMutation((req, res, ctx) => {
  *   const { displaySettings } = req.variables;
  *   return res(
@@ -155,14 +226,15 @@ export const mockUpdateDisplaySettingsMutation = (resolver: ResponseResolver<Gra
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockDatabaseSettingsQuery((req, res, ctx) => {
+ * mockUpdateLabelPrinterSettingsMutation((req, res, ctx) => {
+ *   const { labelPrinterSettings } = req.variables;
  *   return res(
- *     ctx.data({ databaseSettings })
+ *     ctx.data({ updateLabelPrinterSettings })
  *   )
  * })
  */
-export const mockDatabaseSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<DatabaseSettingsQueryVariables>, GraphQLContext<DatabaseSettingsQuery>, any>) =>
-  graphql.query<DatabaseSettingsQuery, DatabaseSettingsQueryVariables>(
-    'databaseSettings',
+export const mockUpdateLabelPrinterSettingsMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateLabelPrinterSettingsMutationVariables>, GraphQLContext<UpdateLabelPrinterSettingsMutation>, any>) =>
+  graphql.mutation<UpdateLabelPrinterSettingsMutation, UpdateLabelPrinterSettingsMutationVariables>(
+    'updateLabelPrinterSettings',
     resolver
   )

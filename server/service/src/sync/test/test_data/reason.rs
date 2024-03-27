@@ -1,7 +1,7 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::{InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType, ReturnReasonRow};
 
-const INVENTORY_ADJUSTMENT_REASON_1: (&'static str, &'static str) = (
+const INVENTORY_ADJUSTMENT_REASON_1: (&str, &str) = (
     "positive_adjustment",
     r#"{
     "ID": "positive_adjustment",
@@ -10,7 +10,7 @@ const INVENTORY_ADJUSTMENT_REASON_1: (&'static str, &'static str) = (
     "title": "Found"
     }"#,
 );
-const RETURN_REASON_1: (&'static str, &'static str) = (
+const RETURN_REASON_1: (&str, &str) = (
     "return_reason",
     r#"{
     "ID": "return_reason",

@@ -15,7 +15,7 @@ use service::{
 pub struct MasterListNotFoundForThisName;
 #[Object]
 impl MasterListNotFoundForThisName {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Master list not found (might not be visible to this name)"
     }
 }

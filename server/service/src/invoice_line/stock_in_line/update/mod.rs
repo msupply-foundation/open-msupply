@@ -112,7 +112,7 @@ where
 mod test {
     use repository::{
         mock::{
-            mock_inbound_return_a_invoice_line_a, mock_inbound_return_a_invoice_line_b,
+            currency_a, mock_inbound_return_a_invoice_line_a, mock_inbound_return_a_invoice_line_b,
             mock_item_a, mock_item_b, mock_name_store_b, mock_outbound_return_a_invoice_line_a,
             mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
@@ -137,6 +137,7 @@ mod test {
                 id: "verified_return".to_string(),
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
+                currency_id: currency_a().id,
                 r#type: InvoiceRowType::InboundReturn,
                 status: InvoiceRowStatus::Verified,
                 ..Default::default()

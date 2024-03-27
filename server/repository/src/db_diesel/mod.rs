@@ -22,6 +22,8 @@ mod document_registry_config;
 mod document_registry_row;
 pub mod encounter;
 mod name_link_row;
+pub mod sync_file_reference_row;
+mod report_query;
 
 mod clinician_link_row;
 pub mod encounter_row;
@@ -161,6 +163,7 @@ pub use program_event::*;
 pub use program_event_row::*;
 pub use program_requisition::*;
 pub use report::*;
+pub use report_query::*;
 pub use report_row::*;
 pub use requisition::*;
 pub use requisition_line::*;

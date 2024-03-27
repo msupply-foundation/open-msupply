@@ -1,18 +1,17 @@
 mod mutations;
 mod queries;
 mod sync_api_error;
+pub mod types;
 
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
 use util::is_central_server;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, StorePreferenceNode,
-    TemperatureLogFilterInput,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -21,6 +20,10 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    label_printer_settings::{
+        update_label_printer_settings, LabelPrinterSettingsInput,
+        UpdateLabelPrinterSettingsResponse,
+    },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
@@ -299,25 +302,6 @@ impl GeneralQueries {
         get_plugins(ctx)
     }
 
-    pub async fn temperature_chart(
-        &self,
-        ctx: &Context<'_>,
-        store_id: String,
-        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
-        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
-        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
-        filter: Option<TemperatureLogFilterInput>,
-    ) -> Result<TemperatureChartResponse> {
-        temperature_chart(
-            ctx,
-            store_id,
-            from_datetime,
-            to_datetime,
-            number_of_data_points,
-            filter,
-        )
-    }
-
     pub async fn currencies(
         &self,
         ctx: &Context<'_>,
@@ -365,6 +349,13 @@ impl GeneralQueries {
         input: GenerateInboundReturnLinesInput,
     ) -> Result<GenerateInboundReturnLinesResponse> {
         generate_inbound_return_lines(&ctx, store_id, input)
+    }
+
+    pub async fn label_printer_settings(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LabelPrinterSettingNode>> {
+        label_printer_settings(ctx)
     }
 }
 
@@ -423,6 +414,14 @@ impl GeneralMutations {
     pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
         update_user::update_user(ctx).await
     }
+
+    pub async fn update_label_printer_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: LabelPrinterSettingsInput,
+    ) -> Result<UpdateLabelPrinterSettingsResponse> {
+        update_label_printer_settings(ctx, input)
+    }
 }
 
 /// Auth is not checked during initialisation stage
@@ -465,14 +464,6 @@ impl InitialisationMutations {
 
     pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
         manual_sync(ctx, false)
-    }
-}
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list not found (might not be visible to this store)"
     }
 }
 

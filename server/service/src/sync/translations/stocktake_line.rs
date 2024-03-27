@@ -53,11 +53,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct StocktakeLineTranslation;
 impl SyncTranslation for StocktakeLineTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "Stock_take_lines"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             StocktakeTranslation.table_name(),
             StockLineTranslation.table_name(),
@@ -167,7 +167,7 @@ impl SyncTranslation for StocktakeLineTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

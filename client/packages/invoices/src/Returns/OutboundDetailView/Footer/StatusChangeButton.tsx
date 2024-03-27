@@ -7,7 +7,6 @@ import {
   SplitButton,
   SplitButtonOption,
   useConfirmationModal,
-  UpdateOutboundReturnStatusInput,
 } from '@openmsupply-client/common';
 import {
   getNextOutboundReturnStatus,
@@ -76,19 +75,6 @@ const getNextStatusOption = (
   return nextStatusOption || null;
 };
 
-const getStatusUpdateInput = (
-  status: InvoiceNodeStatus | undefined
-): UpdateOutboundReturnStatusInput | undefined => {
-  switch (status) {
-    case InvoiceNodeStatus.Picked:
-      return UpdateOutboundReturnStatusInput.Picked;
-    case InvoiceNodeStatus.Shipped:
-      return UpdateOutboundReturnStatusInput.Shipped;
-    default:
-      throw new Error('Invalid status');
-  }
-};
-
 const getButtonLabel =
   (t: ReturnType<typeof useTranslation>) =>
   (invoiceStatus: InvoiceNodeStatus): string => {
@@ -124,15 +110,9 @@ const useStatusChangeButton = () => {
   const onConfirmStatusChange = async () => {
     if (!selectedOption || !data) return null;
     try {
-      const status = getStatusUpdateInput(selectedOption.value);
+      await mutateAsync({ id: data?.id, status: selectedOption.value });
 
-      if (status) {
-        await mutateAsync({
-          outboundReturnId: data?.id,
-          status,
-        });
-        success(t('messages.return-saved'))();
-      }
+      success(t('messages.return-saved'))();
     } catch (e) {
       console.error(e);
       error(t('messages.error-saving-return'))();

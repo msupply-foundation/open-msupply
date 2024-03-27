@@ -215,13 +215,13 @@ mod test {
         let query = TemperatureChart {
             intervals: vec![
                 super::Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 59, 50).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 2, 00, 00, 5).unwrap(),
                     interval_id: "Interval1".to_string(),
                 },
                 super::Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 05).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 2, 00, 00, 5).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 2, 00, 00, 20).unwrap(),
                     interval_id: "Interval2".to_string(),
                 },
             ],
@@ -259,14 +259,8 @@ mod test {
         pretty_assertions::assert_eq!(
             diesel::debug_query::<DBType, _>(&query)
                 .to_string()
-                .replace("\t", "")
-                .replace("\n", "")
-                .replace(" ", ""),
-            result
-                .to_string()
-                .replace("\t", "")
-                .replace("\n", "")
-                .replace(" ", ""),
+                .replace(['\t', '\n', ' '], ""),
+            result.to_string().replace(['\t', '\n', ' '], ""),
         );
     }
 
@@ -290,8 +284,8 @@ mod test {
         assert_eq!(
             vec![Res { result: true }],
             sql_query(query)
-                .bind::<Timestamp, _>(util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap())
-                .bind::<Timestamp, _>(util::create_datetime(2021, 01, 01, 23, 59, 49).unwrap())
+                .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 50).unwrap())
+                .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 49).unwrap())
                 .load::<Res>(&connection.connection)
                 .unwrap()
         );
@@ -299,9 +293,9 @@ mod test {
         assert_eq!(
             vec![Res { result: true }],
             sql_query(query)
-                .bind::<Timestamp, _>(util::create_datetime(2021, 01, 01, 23, 59, 50).unwrap())
+                .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 50).unwrap())
                 .bind::<Timestamp, _>(
-                    util::create_datetime(2021, 01, 01, 23, 59, 49)
+                    util::create_datetime(2021, 1, 1, 23, 59, 49)
                         .unwrap()
                         .checked_add_signed(Duration::milliseconds(500))
                         .unwrap()

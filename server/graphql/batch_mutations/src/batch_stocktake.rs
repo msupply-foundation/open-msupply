@@ -91,7 +91,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         .stocktake_service
         .batch_stocktake(&service_context, input.to_domain())?;
 
-    Ok(BatchResponse::from_domain(response)?)
+    BatchResponse::from_domain(response)
 }
 
 impl BatchInput {

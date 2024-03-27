@@ -33,11 +33,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct NameStoreJoinTranslation;
 impl SyncTranslation for NameStoreJoinTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "name_store_join"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![NameTranslation.table_name(), StoreTranslation.table_name()]
     }
 
@@ -134,7 +134,7 @@ impl SyncTranslation for NameStoreJoinTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 
