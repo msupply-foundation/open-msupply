@@ -2,17 +2,7 @@ use crate::NameStoreJoinRow;
 
 use super::{mock_name_a, mock_name_store_a, mock_name_store_b, program_master_list_store};
 
-pub fn mock_name_store_join_a() -> NameStoreJoinRow {
-    NameStoreJoinRow {
-        id: String::from("name_store_join_a"),
-        name_link_id: String::from("name_store_a"),
-        store_id: String::from("store_a"),
-        name_is_customer: true,
-        name_is_supplier: false,
-    }
-}
-
-pub fn mock_name_store_join_b() -> NameStoreJoinRow {
+pub fn store_a_join_name_b() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("name_store_join_b"),
         name_link_id: String::from("name_store_b"),
@@ -22,7 +12,7 @@ pub fn mock_name_store_join_b() -> NameStoreJoinRow {
     }
 }
 
-pub fn mock_name_store_join_c() -> NameStoreJoinRow {
+pub fn store_a_join_name_c() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("name_store_join_c"),
         name_link_id: String::from("name_store_c"),
@@ -32,17 +22,17 @@ pub fn mock_name_store_join_c() -> NameStoreJoinRow {
     }
 }
 
-pub fn mock_name_store_join_d() -> NameStoreJoinRow {
+pub fn store_a_join_name_d() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_name_store_join_d"),
-        name_link_id: String::from("name_a"),
+        name_link_id: String::from("name_a"), // Note store_a.name_ID == "name_store_a", so this isn't a self relation.
         store_id: String::from("store_a"),
         name_is_customer: false,
         name_is_supplier: true,
     }
 }
 
-pub fn mock_name_store_join_e() -> NameStoreJoinRow {
+pub fn store_a_join_name_e() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_name_store_join_e"),
         name_link_id: String::from("name_a"),
@@ -52,7 +42,7 @@ pub fn mock_name_store_join_e() -> NameStoreJoinRow {
     }
 }
 
-pub fn mock_patient_store_join() -> NameStoreJoinRow {
+pub fn store_a_join_test_id() -> NameStoreJoinRow {
     NameStoreJoinRow {
         id: String::from("mock_patient_store_join"),
         name_link_id: String::from("testId"),
@@ -104,12 +94,11 @@ pub fn name_store_join_program_a_name_a() -> NameStoreJoinRow {
 
 pub fn mock_name_store_joins() -> Vec<NameStoreJoinRow> {
     vec![
-        mock_name_store_join_a(),
-        mock_name_store_join_b(),
-        mock_name_store_join_c(),
-        mock_name_store_join_d(),
-        mock_name_store_join_e(),
-        mock_patient_store_join(),
+        store_a_join_name_b(),
+        store_a_join_name_c(),
+        store_a_join_name_d(),
+        store_a_join_name_e(),
+        store_a_join_test_id(),
         mock_patient_store_join_b(),
         name_store_join_program_a(),
         name_store_join_program_b(),
