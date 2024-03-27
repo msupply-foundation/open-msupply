@@ -5,8 +5,8 @@ use repository::{
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_item_matches_batch, check_location_on_hold,
-        check_unique_stock_line,
+        check_batch_exists, check_batch_on_hold, check_existing_stock_line,
+        check_item_matches_batch, check_location_on_hold,
         stock_out_line::BatchPair,
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
@@ -32,14 +32,14 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    let unique_stock = check_unique_stock_line(
+    let existing_stock = check_existing_stock_line(
         &line_row.id.clone(),
         &invoice.id,
         input.stock_line_id.clone(),
         connection,
     )?;
-    if unique_stock.is_some() {
-        return Err(StockLineAlreadyExistsInInvoice(unique_stock.unwrap().id));
+    if let Some(existing_stock) = existing_stock {
+        return Err(StockLineAlreadyExistsInInvoice(existing_stock.id));
     }
 
     if let Some(r#type) = &input.r#type {
@@ -55,13 +55,11 @@ pub fn validate(
     if !check_line_belongs_to_invoice(line_row, &invoice) {
         return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
     }
-    if invoice.status != InvoiceRowStatus::New
-        && !check_number_of_packs(input.number_of_packs.clone())
-    {
+    if invoice.status != InvoiceRowStatus::New && !check_number_of_packs(input.number_of_packs) {
         return Err(NumberOfPacksBelowZero);
     }
 
-    let batch_pair = check_batch_exists_option(store_id, &input, line_row, connection)?;
+    let batch_pair = check_batch_exists_option(store_id, input, line_row, connection)?;
     let item = check_item_option(input.item_id.clone(), &line, connection)?;
 
     if !check_item_matches_batch(&batch_pair.main_batch, &item) {
@@ -73,7 +71,7 @@ pub fn validate(
     check_location_on_hold(&batch_pair.main_batch).map_err(|e| match e {
         LocationIsOnHoldError::LocationIsOnHold => LocationIsOnHold,
     })?;
-    check_reduction_below_zero(&input, line_row, &batch_pair)?;
+    check_reduction_below_zero(input, line_row, &batch_pair)?;
 
     Ok((line.invoice_line_row, item, batch_pair, invoice))
 }
@@ -127,7 +125,7 @@ fn check_batch_exists_option(
     use UpdateStockOutLineError::*;
 
     let previous_batch = if let Some(batch_id) = &existing_line.stock_line_id {
-        // Should always be found due to contraints on database
+        // Should always be found due to constraints on database
         check_batch_exists(store_id, batch_id, connection)?.ok_or(StockLineNotFound)?
     } else {
         // This should never happen, but still need to cover

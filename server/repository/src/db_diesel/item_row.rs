@@ -76,8 +76,8 @@ pub struct ItemRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-fn insert_or_ignore_item_link<'a>(
-    connection: &'a StorageConnection,
+fn insert_or_ignore_item_link(
+    connection: &StorageConnection,
     item_row: &ItemRow,
 ) -> Result<(), RepositoryError> {
     let item_link_row = ItemLinkRow {

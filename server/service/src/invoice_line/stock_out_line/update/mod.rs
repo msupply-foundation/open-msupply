@@ -62,19 +62,19 @@ pub fn update_stock_out_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, batch_pair, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (line, item, batch_pair, invoice) = validate(&input, &ctx.store_id, connection)?;
 
             let (update_line, batch_pair) = generate(input, line, item, batch_pair, invoice)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&update_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&update_line)?;
 
-            let stock_line_repo = StockLineRowRepository::new(&connection);
+            let stock_line_repo = StockLineRowRepository::new(connection);
             stock_line_repo.upsert_one(&batch_pair.main_batch.stock_line_row)?;
             if let Some(previous_batch) = batch_pair.previous_batch_option {
                 stock_line_repo.upsert_one(&previous_batch.stock_line_row)?;
             }
 
             get_invoice_line(ctx, &update_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -352,7 +352,7 @@ mod test {
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
             let stock_line_id = invoice_line.stock_line_id.as_ref().unwrap();
             StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id(stock_line_id)
                 .unwrap()
         };
 
