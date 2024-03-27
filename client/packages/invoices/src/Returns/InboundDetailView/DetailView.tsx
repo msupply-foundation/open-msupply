@@ -21,6 +21,7 @@ import { ActivityLogList } from '@openmsupply-client/system';
 import { Footer } from './Footer';
 import { InboundReturnItem } from '../../types';
 import { InboundReturnEditModal } from '../modals';
+import { getNextItemId } from '../../utils';
 
 export const InboundReturnDetailView: FC = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
@@ -51,6 +52,8 @@ export const InboundReturnDetailView: FC = () => {
     },
   ];
 
+  const nextItemId = getNextItemId(data?.lines?.nodes ?? [], itemId);
+
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
@@ -74,9 +77,18 @@ export const InboundReturnDetailView: FC = () => {
               returnId={data.id}
               initialItemId={itemId}
               modalMode={mode}
+              loadNextItem={() => {
+                if (nextItemId) onOpen(nextItemId);
+                else {
+                  // Closing and re-opening forces the modal to launch with the
+                  // item selector in focus
+                  onClose();
+                  setTimeout(() => onOpen(), 50);
+                }
+              }}
+              hasNextItem={!!nextItemId}
             />
           )}
-
           <Toolbar />
           <DetailTabs tabs={tabs} />
           <SidePanel />
