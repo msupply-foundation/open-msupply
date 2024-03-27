@@ -635,7 +635,7 @@ fn generate(
         status: InvoiceRowStatus::Verified,
         verified_datetime: Some(now),
         // Default
-        currency_id: Some(currency.currency_row.id),
+        currency_id: currency.currency_row.id,
         currency_rate: 1.0,
         name_store_id: None,
         transport_reference: None,

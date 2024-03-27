@@ -20,11 +20,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct UnitTranslation;
 impl SyncTranslation for UnitTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "unit"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -42,7 +42,7 @@ impl SyncTranslation for UnitTranslation {
             is_active: true,
         };
 
-        if data.comment != "" {
+        if !data.comment.is_empty() {
             result.description = Some(data.comment);
         }
 

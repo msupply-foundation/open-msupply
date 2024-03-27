@@ -66,7 +66,7 @@ impl AppDataServiceTrait for AppDataService {
     }
 
     fn get_hardware_id(&self) -> Result<String, Error> {
-        let app_data = AppDataService::load_from_file(&self)?;
+        let app_data = AppDataService::load_from_file(self)?;
 
         Ok(app_data.site_hardware_id)
     }
@@ -74,7 +74,7 @@ impl AppDataServiceTrait for AppDataService {
     fn set_hardware_id(&self, hardware_id: String) -> Result<(), Error> {
         let file_path = self.get_app_data_file()?;
 
-        let mut app_data = AppDataService::load_from_file(&self)?;
+        let mut app_data = AppDataService::load_from_file(self)?;
         app_data.site_hardware_id = hardware_id;
         let mut file = File::create(file_path)?;
         file.write_all(serde_yaml::to_string(&app_data).unwrap().as_bytes())?;

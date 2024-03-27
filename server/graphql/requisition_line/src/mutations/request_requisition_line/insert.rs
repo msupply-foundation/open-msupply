@@ -134,7 +134,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 pub struct RequisitionLineWithItemIdExists;
 #[Object]
 impl RequisitionLineWithItemIdExists {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Requisition line already exists for this item"
     }
 }

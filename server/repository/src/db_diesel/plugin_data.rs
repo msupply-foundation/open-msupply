@@ -15,7 +15,7 @@ pub struct PluginData {
     pub plugin_data: PluginDataRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct PluginDataFilter {
     pub id: Option<EqualFilter<String>>,
     pub plugin_name: Option<EqualFilter<String>>,
@@ -123,13 +123,7 @@ fn to_domain(plugin_data_row: PluginDataRow) -> PluginData {
 
 impl PluginDataFilter {
     pub fn new() -> Self {
-        PluginDataFilter {
-            id: None,
-            plugin_name: None,
-            related_record_id: None,
-            related_record_type: None,
-            store_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

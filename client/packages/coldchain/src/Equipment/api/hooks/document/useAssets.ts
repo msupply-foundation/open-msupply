@@ -12,6 +12,7 @@ export const useAssets = () => {
       { key: 'serialNumber' },
       { key: 'categoryId', condition: 'equalTo' },
       { key: 'typeId', condition: 'equalTo' },
+      { key: 'isNonCatalogue', condition: '=' },
     ],
   });
   const api = useAssetApi();

@@ -85,7 +85,7 @@ pub(crate) fn extract_sync_buffer_rows(
     records: &Vec<TestSyncIncomingRecord>,
 ) -> Vec<SyncBufferRow> {
     records
-        .into_iter()
+        .iter()
         .map(|test_record| test_record.sync_buffer_row.clone())
         .collect()
 }
@@ -119,7 +119,7 @@ pub(crate) fn check_integrated(
 ) {
     for record in integration_records {
         match record {
-            IntegrationOperation::Upsert(upsert) => upsert.assert_upserted(con),
+            IntegrationOperation::Upsert(upsert, _) => upsert.assert_upserted(con),
             IntegrationOperation::Delete(delete) => delete.assert_deleted(con),
         }
     }

@@ -45,7 +45,7 @@ pub trait ContextExt {
 
 impl<'a> ContextExt for Context<'a> {
     fn get_connection_manager(&self) -> &StorageConnectionManager {
-        &self.data_unchecked::<Data<StorageConnectionManager>>()
+        self.data_unchecked::<Data<StorageConnectionManager>>()
     }
 
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T {
@@ -107,7 +107,7 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
             .to_str()
             .ok()
             .and_then(|header| {
-                let cookies = header.split(" ").collect::<Vec<&str>>();
+                let cookies = header.split(' ').collect::<Vec<&str>>();
                 cookies
                     .into_iter()
                     .map(|raw_cookie| Cookie::parse(raw_cookie).ok())

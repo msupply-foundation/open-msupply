@@ -195,10 +195,8 @@ fn validate(
         None => return Err(UpdateProgramPatientError::PatientDocumentRegistryDoesNotExit),
     };
 
-    if input.parent.is_none() {
-        if !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
-            return Err(UpdateProgramPatientError::PatientExists);
-        }
+    if input.parent.is_none() && !validate_patient_not_exists(ctx, service_provider, &patient.id)? {
+        return Err(UpdateProgramPatientError::PatientExists);
     }
 
     Ok((patient, document_registry))
