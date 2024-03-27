@@ -28,6 +28,8 @@ import { EditIcon } from './Edit';
 import { ExternalLinkIcon } from './ExternalLink';
 import { EyeIcon } from './Eye';
 import { EyeOffIcon } from './EyeOff';
+import { FileUploadIcon } from './FileUpload';
+import { FileIcon } from './File';
 import { FilterIcon } from './Filter';
 import { HelpIcon } from './Help';
 import { HomeIcon } from './Home';
@@ -123,6 +125,8 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <ExternalLinkIcon {...args} />, name: 'External Link' },
     { icon: <EyeIcon {...args} />, name: 'Eye' },
     { icon: <EyeOffIcon {...args} />, name: 'EyeOff' },
+    { icon: <FileUploadIcon {...args} />, name: 'File Upload' },
+    { icon: <FileIcon {...args} />, name: 'File' },
     { icon: <FilterIcon {...args} />, name: 'Filter' },
     { icon: <HelpIcon {...args} />, name: 'Help' },
     { icon: <HomeIcon {...args} />, name: 'Home' },
