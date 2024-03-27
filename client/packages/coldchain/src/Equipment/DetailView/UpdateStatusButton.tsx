@@ -54,6 +54,9 @@ export const UpdateStatusButtonComponent = ({
   const onOk = async () => {
     await insert(draft)
       .then(id => {
+        if (!draft.files?.length)
+          return new Promise(resolve => resolve('no files'));
+
         const url = `${Environment.SYNC_FILES_URL}/asset_log/${id}`;
         const formData = new FormData();
         draft.files?.forEach(file => {
@@ -68,8 +71,7 @@ export const UpdateStatusButtonComponent = ({
           body: formData,
         });
       })
-      .then(response => response.json())
-      .then(_json => {
+      .then(() => {
         success(t('messages.log-saved-successfully'))();
         hideDialog();
         onClose();
