@@ -2,6 +2,28 @@ use crate::migrations::DATETIME;
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    // asset status (configurable)
+    sql!(
+        connection,
+        r#"
+        CREATE TABLE asset_log_status (
+            id TEXT NOT NULL PRIMARY KEY,
+            status TEXT NOT NULL,
+          );
+        "#,
+    )?;
+    // asset reason (configurable)
+    sql!(
+        connection,
+        r#"
+        CREATE TABLE asset_log_reason (
+            id TEXT NOT NULL PRIMARY KEY,
+            status_id TEXT NOT NULL REFERENCES asset_log_status(id)
+            reason TEXT NOT NULL,
+          );
+        "#,
+    )?;
+
     sql!(
         connection,
         r#"
