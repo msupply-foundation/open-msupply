@@ -67,7 +67,6 @@ impl SyncTranslation for NameMergeTranslation {
         let name_store_joins_for_keep = name_store_join_repo.query_by_filter(
             NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)),
         )?;
-        let mut deletes: Vec<PullDeleteRecord> = vec![];
 
         // We need to delete the name_store_joins that are no longer needed after the merge
         // Situation A: ("Joined to" meaning store->nsj->name_link->name)
@@ -82,52 +81,66 @@ impl SyncTranslation for NameMergeTranslation {
         // We must also consider nsj.name_is_customer and nsj.name_is_supplier.
         // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
         // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
-        name_store_joins_for_delete.iter().for_each(|nsj_delete| {
-            if let Some(nsj_keep) = name_store_joins_for_keep.iter().find(|nsj_keep| {
-                nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
-            }) {
-                deletes.push(PullDeleteRecord {
-                    id: nsj_delete.name_store_join.id.clone(),
-                    table: PullDeleteRecordTable::NameStoreJoin,
-                });
-
-                if (!nsj_keep.name_store_join.name_is_customer
-                    && nsj_keep.name_store_join.name_is_customer)
-                    || (!nsj_keep.name_store_join.name_is_supplier
-                        && nsj_keep.name_store_join.name_is_supplier)
-                {
-                    upserts.push(PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
-                        id: nsj_keep.name_store_join.id.clone(),
-                        name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
-                        store_id: nsj_keep.name_store_join.store_id.clone(),
-                        name_is_customer: nsj_keep.name_store_join.name_is_customer
-                            || nsj_delete.name_store_join.name_is_customer,
-                        name_is_supplier: nsj_keep.name_store_join.name_is_supplier
-                            || nsj_delete.name_store_join.name_is_supplier,
-                    }));
-                }
-            };
-        });
-
-        // Situation B:
-        // storeK.name_id == nameK.id
-        // storeK joined to nameD
-        // nameD merged into nameK
-        // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
         let store_repo = StoreRepository::new(connection);
         let store = store_repo
             .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)))?;
+        let deletes = name_store_joins_for_delete
+            .iter()
+            .filter_map(|nsj_delete| {
+                // delete nsj_delete if it points to the store that belongs to the "keep" name. Avoids:
+                // storeK.name_id == nameK.id
+                // storeK joined to nameD
+                // nameD merged into nameK
+                // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
+                if let Some(store) = &store {
+                    if nsj_delete.name_store_join.store_id == store.store_row.id {
+                        return Some(PullDeleteRecord {
+                            id: nsj_delete.name_store_join.id.clone(),
+                            table: PullDeleteRecordTable::NameStoreJoin,
+                        });
+                    }
+                }
 
-        if let Some(store) = store {
-            name_store_joins_for_delete.iter().for_each(|nsj_delete| {
-                if nsj_delete.name_store_join.store_id == store.store_row.id {
-                    deletes.push(PullDeleteRecord {
+                // Delete duplicate name_store_joins. Avoids:
+                // ("joined to" meaning store->nsj->name_link->name)
+                // storeA joined to nameK
+                // storeA joined to nameD
+                // storeB joined to nameD
+                // nameD merged into nameK
+                // storeA joined to nameK
+                // storeA joined to nameK (delete this join to avoid showing twice in lists seemingly as a duplicate)
+                // storeB joined to nameK (make sure we don't accidentally delete this one, or visibility of nameK will be lost for storeB)
+                if let Some(nsj_keep) = name_store_joins_for_keep.iter().find(|nsj_keep| {
+                    nsj_keep.name_store_join.store_id == nsj_delete.name_store_join.store_id
+                }) {
+                    // We must also consider nsj_delete.name_is_customer and nsj_delete.name_is_supplier.
+                    // The remaining NSJ that we keep must logically OR each of these fields with the corresponding field in the deleted NSJs.
+                    // We prefer making the name visible to stores rather than losing visibility as it allows users to still make invoices and orders
+                    if (!nsj_keep.name_store_join.name_is_customer
+                        && nsj_keep.name_store_join.name_is_customer)
+                        || (!nsj_keep.name_store_join.name_is_supplier
+                            && nsj_keep.name_store_join.name_is_supplier)
+                    {
+                        upserts.push(PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+                            id: nsj_keep.name_store_join.id.clone(),
+                            name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
+                            store_id: nsj_keep.name_store_join.store_id.clone(),
+                            name_is_customer: nsj_keep.name_store_join.name_is_customer
+                                || nsj_delete.name_store_join.name_is_customer,
+                            name_is_supplier: nsj_keep.name_store_join.name_is_supplier
+                                || nsj_delete.name_store_join.name_is_supplier,
+                        }));
+                    }
+
+                    return Some(PullDeleteRecord {
                         id: nsj_delete.name_store_join.id.clone(),
                         table: PullDeleteRecordTable::NameStoreJoin,
                     });
                 }
-            });
-        }
+
+                None
+            })
+            .collect::<Vec<_>>();
 
         Ok(Some(IntegrationRecords { upserts, deletes }))
     }
