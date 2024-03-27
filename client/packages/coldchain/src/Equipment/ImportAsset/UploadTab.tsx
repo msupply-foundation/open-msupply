@@ -142,7 +142,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           t('error.code-no-match', { field: t('label.catalogue-item-code') })
         );
       } else {
-        importRow.catalogueItemCode = row[t('label.catalogue-item-code')];
+        importRow.catalogueItemCode = code;
       }
       // notes aren't essential for bulk upload
       if (getCell(row, AssetColumn.NOTES) !== undefined) {
