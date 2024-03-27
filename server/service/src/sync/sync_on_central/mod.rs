@@ -58,7 +58,7 @@ pub async fn pull(
         .map(|log| log.cursor as u64)
         .unwrap_or(max_cursor);
 
-    let records = translate_changelogs_to_sync_records(
+    let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
         &ctx.connection,
         changelogs,
         ToSyncRecordTranslationType::PullFromOmSupplyCentral,
@@ -68,6 +68,11 @@ pub async fn pull(
     .map(SyncRecordV6::from)
     .collect();
 
+    log::info!(
+        "Sending {} records to site {}",
+        records.len(),
+        response.site_id
+    );
     log::debug!("Sending records as central server: {:#?}", records);
 
     Ok(SyncBatchV6 {
@@ -97,6 +102,12 @@ pub async fn push(
         .await
         .map_err(Error::from)?;
 
+    log::info!(
+        "Receiving {}/{} records from site {}",
+        batch.records.len(),
+        batch.total_records,
+        response.site_id
+    );
     log::debug!("Receiving records as central server: {:#?}", batch);
 
     let SyncBatchV6 {
