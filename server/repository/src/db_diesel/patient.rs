@@ -39,12 +39,11 @@ pub struct PatientFilter {
     /// Filter for any identifier associated with a name entry.
     /// Currently:
     /// - name::code
+    /// - name::name
     /// - name::national_health_number
     /// - program_enrolment::program_enrolment_id
     pub identifier: Option<StringFilter>,
     pub program_enrolment_name: Option<StringFilter>,
-    // Filter for name and code
-    pub name_or_code: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -183,7 +182,6 @@ impl<'a> PatientRepository<'a> {
                 country,
                 email,
                 identifier,
-                name_or_code,
                 program_enrolment_name,
             } = f;
 
@@ -195,6 +193,7 @@ impl<'a> PatientRepository<'a> {
                     identifier.clone(),
                     name_dsl::national_health_number
                 );
+                apply_string_or_filter!(query, identifier.clone(), name_dsl::name_);
 
                 let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
                     ProgramEnrolmentFilter {
@@ -207,11 +206,6 @@ impl<'a> PatientRepository<'a> {
                 .select(name_dsl::id);
 
                 query = query.or_filter(name_dsl::id.eq_any(sub_query))
-            }
-
-            if name_or_code.is_some() {
-                apply_string_filter!(query, name_or_code.clone(), name_dsl::name_);
-                apply_string_or_filter!(query, name_or_code.clone(), name_dsl::code);
             }
 
             if program_enrolment_name.is_some() {
@@ -345,11 +339,6 @@ impl PatientFilter {
         self
     }
 
-    pub fn name_or_code(mut self, filter: StringFilter) -> Self {
-        self.name_or_code = Some(filter);
-        self
-    }
-
     pub fn program_enrolment_name(mut self, filter: StringFilter) -> Self {
         self.program_enrolment_name = Some(filter);
         self
@@ -382,7 +371,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0), None);
+        assert_eq!(result.first(), None);
 
         let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
@@ -399,7 +388,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        result.get(0).unwrap();
+        result.first().unwrap();
     }
 
     #[actix_rt::test]
@@ -423,11 +412,40 @@ mod tests {
         let name_row_repo = NameRowRepository::new(&connection);
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
+            row.name = "test_name".to_string();
             row.r#type = NameType::Patient;
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
+
+        // test identifier OR
+        let patient_row_a = inline_init(|row: &mut NameRow| {
+            row.id = "patient_a".to_string();
+            row.name = "patient_a_name".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "example111".to_string();
+            row.national_health_number = Some("patient_a_nhn".to_string());
+        });
+
+        let patient_row_b = inline_init(|row: &mut NameRow| {
+            row.id = "patient_b".to_string();
+            row.name = "patient_b_name".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "patient_b_code".to_string();
+            row.national_health_number = Some("example222".to_string());
+        });
+
+        let patient_row_c = inline_init(|row: &mut NameRow| {
+            row.id = "patient_c".to_string();
+            row.name = "example_name".to_string();
+            row.r#type = NameType::Patient;
+            row.code = "code333".to_string();
+            row.national_health_number = Some("patient_c_nhn".to_string());
+        });
+        name_row_repo.upsert_one(&patient_row_a).unwrap();
+        name_row_repo.upsert_one(&patient_row_b).unwrap();
+        name_row_repo.upsert_one(&patient_row_c).unwrap();
 
         // Test identifier search
         ProgramEnrolmentRowRepository::new(&connection)
@@ -448,21 +466,21 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("nhnPatient")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         let result = repo
             .query_by_filter(
                 PatientFilter::new()
@@ -471,7 +489,7 @@ mod tests {
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
         // no result when having an `AND code is "does not exist"` clause
         let result = repo
             .query_by_filter(
@@ -490,16 +508,22 @@ mod tests {
             )
             .unwrap();
         assert_eq!(result.len(), 0);
-        // test filter for name_or_code and identifier
         let result = repo
             .query_by_filter(
-                PatientFilter::new()
-                    .name_or_code(StringFilter::equal_to("codePatient"))
-                    .identifier(StringFilter::like("nhn")),
+                PatientFilter::new().identifier(StringFilter::like("test_name")),
                 None,
             )
             .unwrap();
-        assert_eq!(result.get(0).unwrap().id, patient_row.id);
+        assert_eq!(result.first().unwrap().id, patient_row.id);
+
+        // Test identifier OR
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::like("example")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 3);
     }
 
     #[actix_rt::test]
@@ -575,7 +599,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
                 )),
                 None,
             )
@@ -586,14 +610,14 @@ mod tests {
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
-            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 09, 20).unwrap())
+            row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
         });
         name_row_repo.upsert_one(&patient_row).unwrap();
         // Query if patient is not alive after date_of_death
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 09, 22).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 9, 22).unwrap(),
                 )),
                 None,
             )
@@ -603,7 +627,7 @@ mod tests {
         let result = repo
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
-                    NaiveDate::from_ymd_opt(2023, 05, 20).unwrap(),
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
                 )),
                 None,
             )

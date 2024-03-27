@@ -2,8 +2,8 @@ use super::asset_internal_location_row::asset_internal_location::dsl::*;
 
 use crate::RepositoryError;
 use crate::StorageConnection;
+use crate::Upsert;
 
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
 
 table! {
@@ -11,8 +11,6 @@ table! {
         id -> Text,
         asset_id -> Text,
         location_id -> Text,
-        created_datetime -> Timestamp,
-        modified_datetime -> Timestamp,
     }
 }
 
@@ -22,17 +20,15 @@ pub struct AssetInternalLocationRow {
     pub id: String,
     pub asset_id: String,
     pub location_id: String,
-    pub created_datetime: NaiveDateTime,
-    pub modified_datetime: NaiveDateTime,
 }
 
-pub struct AssetLocationRowRepository<'a> {
+pub struct AssetInternalLocationRowRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> AssetLocationRowRepository<'a> {
+impl<'a> AssetInternalLocationRowRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        AssetLocationRowRepository { connection }
+        AssetInternalLocationRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
@@ -106,5 +102,30 @@ impl<'a> AssetLocationRowRepository<'a> {
             .filter(id.eq(asset_internal_location_id))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+
+    pub fn delete_all_for_asset_id(
+        &self,
+        asset_id_to_delete_locations: &str,
+    ) -> Result<(), RepositoryError> {
+        diesel::delete(asset_internal_location)
+            .filter(asset_id.eq(asset_id_to_delete_locations))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+}
+
+impl Upsert for AssetInternalLocationRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        let _change_log_id = AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

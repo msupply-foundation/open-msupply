@@ -4,7 +4,7 @@ use repository::{
     StorageConnection,
 };
 
-const DESCRIPTION: &'static str = "Link request requisition to response requisition";
+const DESCRIPTION: &str = "Link request requisition to response requisition";
 
 pub struct LinkRequestRequisitionProcessor;
 

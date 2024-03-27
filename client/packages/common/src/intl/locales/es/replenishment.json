@@ -1,6 +1,5 @@
 {
   "label.finalised": "Finalizado",
-  "label.location": "Ubicación",
   "label.new": "Nuevo",
   "messages.confirm-status-as": "¿Confirmar estado como $t({{status}})?",
   "messages.saved": "Guardado",

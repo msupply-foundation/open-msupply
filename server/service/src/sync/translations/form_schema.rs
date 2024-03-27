@@ -22,11 +22,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct FormSchemaTranslation;
 impl SyncTranslation for FormSchemaTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "form_schema"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 

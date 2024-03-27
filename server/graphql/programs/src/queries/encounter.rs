@@ -7,7 +7,7 @@ use graphql_core::{
 use graphql_types::types::encounter::{
     EncounterConnector, EncounterFilterInput, EncounterNode, EncounterSortInput,
 };
-use repository::{EncounterFilter, EqualFilter, PaginationOption};
+use repository::{EncounterFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Union)]
@@ -45,10 +45,8 @@ pub fn encounters(
         .and_then(|f| f.include_deleted)
         .unwrap_or(false)
     {
-        let mut filter = filter
-            .map(EncounterFilter::from)
-            .unwrap_or(EncounterFilter::new());
-        let mut status_filter = filter.status.unwrap_or(EqualFilter::default());
+        let mut filter = filter.map(EncounterFilter::from).unwrap_or_default();
+        let mut status_filter = filter.status.unwrap_or_default();
         status_filter.not_equal_to = Some(repository::EncounterStatus::Deleted);
         filter.status = Some(status_filter);
         Some(filter)

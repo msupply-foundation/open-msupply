@@ -34,6 +34,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
+        DROP TRIGGER name_store_join_insert_trigger;
+        DROP TRIGGER name_store_join_update_trigger;
         DROP TRIGGER invoice_insert_trigger;
         DROP TRIGGER invoice_update_trigger;
         DROP TRIGGER invoice_delete_trigger;
@@ -46,7 +48,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         DROP TRIGGER requisition_line_insert_trigger;
         DROP TRIGGER requisition_line_update_trigger;
         DROP TRIGGER requisition_line_delete_trigger;
-
+        
         -- Adding changelog.name_link_id
 
         CREATE TABLE tmp_changelog AS SELECT * FROM changelog;

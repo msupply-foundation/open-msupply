@@ -46,9 +46,12 @@ pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub code: String,
+    pub asset_number: String,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
+    pub category_id: Option<String>,
+    pub class_id: Option<String>,
+    pub type_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
 }
@@ -59,22 +62,28 @@ impl From<InsertAssetInput> for InsertAsset {
             id,
             store_id,
             notes,
-            code,
+            asset_number,
             serial_number,
             catalogue_item_id,
             installation_date,
             replacement_date,
+            category_id,
+            class_id,
+            type_id,
         }: InsertAssetInput,
     ) -> Self {
         InsertAsset {
             id,
             store_id,
             notes,
-            code,
+            asset_number,
             serial_number,
             catalogue_item_id,
             installation_date,
             replacement_date,
+            category_id,
+            class_id,
+            type_id,
         }
     }
 }
@@ -170,7 +179,7 @@ mod test {
               ... on AssetNode {
                 id
                 notes
-                code
+                assetNumber
               }
             }
           }
@@ -180,7 +189,7 @@ mod test {
           "input": {
             "id": "n/a",
             "notes": "notes",
-            "code": "code",
+            "assetNumber": "asset_number",
           }
         }));
 
@@ -189,7 +198,7 @@ mod test {
             Ok(Asset {
                 id: "id".to_owned(),
                 notes: Some("notes".to_owned()),
-                code: "code".to_owned(),
+                asset_number: "asset_number".to_owned(),
                 ..Default::default()
             })
         }));
@@ -198,7 +207,7 @@ mod test {
             "insertAsset": {
                 "id": "id",
                 "notes": "notes",
-                "code": "code",
+                "assetNumber": "asset_number",
             }
           }
         );

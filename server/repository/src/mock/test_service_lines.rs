@@ -2,7 +2,7 @@ use util::inline_init;
 
 use crate::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
-use super::{mock_default_service_item, mock_name_a, MockData};
+use super::{currency_a, mock_default_service_item, mock_name_a, MockData};
 
 pub fn mock_test_service_item() -> MockData {
     let mut result = MockData::default();
@@ -30,6 +30,7 @@ pub fn mock_draft_outbound_with_service_lines() -> InvoiceRow {
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
+        r.currency_id = currency_a().id;
     })
 }
 
@@ -48,6 +49,7 @@ pub fn mock_draft_outbound_shipped_with_service_lines() -> InvoiceRow {
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::Shipped;
+        r.currency_id = currency_a().id;
     })
 }
 
@@ -68,6 +70,7 @@ pub fn mock_draft_inbound_shipment_with_service_lines() -> InvoiceRow {
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::New;
+        r.currency_id = currency_a().id;
     })
 }
 
@@ -86,6 +89,7 @@ pub fn mock_draft_inbound_shipment_no_lines() -> InvoiceRow {
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::New;
+        r.currency_id = currency_a().id;
     })
 }
 
@@ -96,6 +100,7 @@ pub fn mock_draft_inbound_verified_with_service_lines() -> InvoiceRow {
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::Verified;
+        r.currency_id = currency_a().id;
     })
 }
 

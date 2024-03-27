@@ -17,7 +17,7 @@ pub struct PatientSearchInput {
     last_name: Option<String>,
     date_of_birth: Option<NaiveDate>,
     gender: Option<GenderInput>,
-    name_or_code: Option<String>,
+    identifier: Option<String>,
 }
 
 pub struct PatientSearchNode {
@@ -69,7 +69,7 @@ pub fn patient_search(
         &context,
         service_provider,
         input.to_domain(),
-        Some(&allowed_ctx),
+        Some(allowed_ctx),
     )?;
     let nodes = result
         .rows
@@ -99,7 +99,7 @@ impl PatientSearchInput {
             last_name: self.last_name,
             date_of_birth: self.date_of_birth,
             gender: self.gender.map(|g| g.to_domain()),
-            name_or_code: self.name_or_code,
+            identifier: self.identifier,
         }
     }
 }

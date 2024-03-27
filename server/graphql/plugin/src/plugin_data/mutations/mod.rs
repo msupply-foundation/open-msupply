@@ -1,4 +1,4 @@
-use graphql_types::types::RelatedRecordNodeType;
+use crate::types::RelatedRecordNodeType;
 use service::auth::Resource;
 
 pub mod insert;

@@ -89,12 +89,12 @@ fn generate_line(
         ..
     }: InvoiceRow,
 ) -> Result<InvoiceLineRow, RepositoryError> {
-    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
+    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         total_before_tax,
-        currency_id,
+        &currency_id,
         &currency_rate,
     )?;
 

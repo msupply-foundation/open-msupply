@@ -206,14 +206,15 @@ async fn migration_1_00_08() {
     // Simplified sync_buffer.data
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
+        sql_query(
             r#"
             INSERT INTO sync_buffer 
             (record_id, received_datetime, table_name, action, data) 
             VALUES 
-            ('store3_id', $1, 'store', 'UPSERT', '{{"disabled": true}}');
+            ('store3_id', $1, 'store', 'UPSERT', '{"disabled": true}');
         "#
-        ))
+            .to_string(),
+        )
         .bind::<Timestamp, _>(Defaults::naive_date_time()),
     )
     .unwrap();

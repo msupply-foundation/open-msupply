@@ -16,9 +16,7 @@ import { OutboundReturnItem } from '../../types';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<OutboundReturnLineFragment | OutboundReturnItem>;
-  onChangeSortBy: (
-    column: Column<OutboundReturnLineFragment | OutboundReturnItem>
-  ) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
 const expansionColumn = getRowExpandColumn<

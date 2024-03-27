@@ -24,7 +24,7 @@ pub fn mock_invoice_loader_requisition1() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -46,6 +46,7 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
+        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -62,5 +63,6 @@ pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.linked_invoice_id = Some(mock_invoice_loader_invoice1().id);
+        r.currency_id = "currency_a".to_string();
     })
 }

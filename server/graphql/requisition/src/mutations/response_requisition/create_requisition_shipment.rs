@@ -116,7 +116,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 pub struct NothingRemainingToSupply;
 #[Object]
 impl NothingRemainingToSupply {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Requisition is fulfilled, check associated invoices and supply quantity"
     }
 }
