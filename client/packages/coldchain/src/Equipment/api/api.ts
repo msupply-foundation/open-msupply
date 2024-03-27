@@ -10,7 +10,7 @@ import {
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
-import { LocationIds } from '../DetailView';
+import { DraftAsset } from '../types';
 
 export type ListParams<T> = {
   first: number;
@@ -19,7 +19,7 @@ export type ListParams<T> = {
   filterBy?: FilterByWithBoolean | null;
 };
 
-export type InsertAsset = Partial<AssetFragment & LocationIds> & {
+export type InsertAsset = Partial<DraftAsset> & {
   categoryId?: string;
   typeId?: string;
   classId?: string;
@@ -48,9 +48,7 @@ const assetParsers = {
     storeId: input.store?.id,
     typeId: input.typeId,
   }),
-  toUpdate: (
-    input: Partial<AssetFragment & LocationIds>
-  ): UpdateAssetInput => ({
+  toUpdate: (input: Partial<DraftAsset>): UpdateAssetInput => ({
     id: input.id ?? '',
     catalogueItemId: setNullableInput('catalogueItemId', input),
     assetNumber: input.assetNumber,
@@ -128,9 +126,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       return items;
     },
   },
-  insert: async (
-    input: Partial<AssetFragment & LocationIds>
-  ): Promise<string> => {
+  insert: async (input: Partial<DraftAsset>): Promise<string> => {
     const result = await sdk.insertAsset({
       input: assetParsers.toInsert(input),
       storeId,
@@ -143,9 +139,7 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert asset');
   },
-  update: async (
-    input: Partial<AssetFragment & LocationIds>
-  ): Promise<string> => {
+  update: async (input: Partial<DraftAsset>): Promise<string> => {
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,
