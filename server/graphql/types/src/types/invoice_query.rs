@@ -338,6 +338,20 @@ impl InvoiceNode {
     pub async fn currency_rate(&self) -> &f64 {
         &self.row().currency_rate
     }
+
+    /// Inbound Shipment that is the origin of this Outbound Return
+    /// OR Outbound Shipment that is the origin of this Inbound Return
+    pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let Some(original_shipment_id) = &self.row().original_shipment_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        Ok(loader
+            .load_one(original_shipment_id.to_string())
+            .await?
+            .map(InvoiceNode::from_domain))
+    }
 }
 
 impl InvoiceNode {

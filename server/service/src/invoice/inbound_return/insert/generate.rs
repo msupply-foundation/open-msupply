@@ -16,7 +16,12 @@ pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
     user_id: &str,
-    input: InsertInboundReturn,
+    InsertInboundReturn {
+        id: invoice_id,
+        other_party_id,
+        outbound_shipment_id,
+        inbound_return_lines,
+    }: InsertInboundReturn,
     other_party: Name,
 ) -> Result<
     (
@@ -27,7 +32,6 @@ pub fn generate(
     RepositoryError,
 > {
     let current_datetime = Utc::now().naive_utc();
-    let invoice_id = input.id.clone();
     let currency = CurrencyRepository::new(connection)
         .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
         .pop()
@@ -36,13 +40,14 @@ pub fn generate(
     let inbound_return = InvoiceRow {
         id: invoice_id.clone(),
         user_id: Some(user_id.to_string()),
-        name_link_id: input.other_party_id,
+        name_link_id: other_party_id,
         r#type: InvoiceRowType::InboundReturn,
         invoice_number: next_number(connection, &NumberRowType::InboundReturn, store_id)?,
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
+        original_shipment_id: outbound_shipment_id,
         // Default
         currency_id: currency.currency_row.id,
         currency_rate: 1.0,
@@ -62,8 +67,7 @@ pub fn generate(
         clinician_link_id: None,
     };
 
-    let lines_with_packs: Vec<InboundReturnLineInput> = input
-        .inbound_return_lines
+    let lines_with_packs: Vec<InboundReturnLineInput> = inbound_return_lines
         .into_iter()
         .filter(|line| line.number_of_packs > 0.0)
         .collect();

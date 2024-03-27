@@ -23,6 +23,7 @@ interface InboundReturnEditModalProps {
   onClose: () => void;
   modalMode: ModalMode | null;
   returnId?: string;
+  outboundShipmentId?: string;
   initialItemId?: string | null;
   loadNextItem?: () => void;
   hasNextItem?: boolean;
@@ -37,6 +38,7 @@ export const InboundReturnEditModal = ({
   modalMode,
   returnId,
   initialItemId,
+  outboundShipmentId,
   loadNextItem,
   hasNextItem = false,
   isNewReturn = false,
@@ -66,6 +68,7 @@ export const InboundReturnEditModal = ({
     customerId,
     returnId,
     itemId,
+    outboundShipmentId,
   });
 
   useEffect(() => {

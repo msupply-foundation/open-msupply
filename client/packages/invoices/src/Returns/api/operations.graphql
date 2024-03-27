@@ -57,6 +57,14 @@ fragment OutboundReturn on InvoiceNode {
 
   theirReference
   transportReference
+
+  originalShipment {
+    invoiceNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
 }
 
 fragment InboundReturn on InvoiceNode {
@@ -92,6 +100,15 @@ fragment InboundReturn on InvoiceNode {
   }
   theirReference
   transportReference
+
+  originalShipment {
+    __typename
+    invoiceNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
 }
 
 fragment OutboundReturnLine on InvoiceLineNode {

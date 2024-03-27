@@ -56,6 +56,7 @@ pub fn generate(
         linked_invoice_id: None,
         tax: None,
         clinician_link_id: None,
+        original_shipment_id: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;

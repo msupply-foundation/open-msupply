@@ -7,6 +7,7 @@ mod add_source_site_id;
 mod assets;
 mod central_omsupply;
 mod invoice_required_currency_id;
+mod linked_shipment;
 mod pack_variant;
 mod returns;
 mod store_add_created_date;
@@ -27,6 +28,7 @@ impl Migration for V1_08_00 {
         pack_variant::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
+        linked_shipment::migrate(connection)?;
         invoice_required_currency_id::migrate(connection)?;
         sync_file_reference::migrate(connection)?;
         Ok(())

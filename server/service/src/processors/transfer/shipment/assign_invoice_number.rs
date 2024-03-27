@@ -35,15 +35,14 @@ impl ShipmentTransferProcessor for AssignInvoiceNumberProcessor {
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_shipment, linked_shipment, _request_requisition) =
-            match &record_for_processing.operation {
-                Operation::Upsert {
-                    shipment: outbound_shipment,
-                    linked_shipment,
-                    linked_shipment_requisition: request_requisition,
-                } => (outbound_shipment, linked_shipment, request_requisition),
-                _ => return Ok(None),
-            };
+        let (outbound_shipment, linked_shipment) = match &record_for_processing.operation {
+            Operation::Upsert {
+                shipment: outbound_shipment,
+                linked_shipment,
+                ..
+            } => (outbound_shipment, linked_shipment),
+            _ => return Ok(None),
+        };
         // 2.
         if !matches!(
             outbound_shipment.invoice_row.r#type,
