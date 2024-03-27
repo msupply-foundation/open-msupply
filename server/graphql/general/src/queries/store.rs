@@ -138,6 +138,7 @@ impl StoreFilterInput {
         StoreFilter {
             id: id.map(EqualFilter::from),
             code: code.map(StringFilter::from),
+            name_id: None,
             name: name.map(StringFilter::from),
             name_code: name_code.map(StringFilter::from),
             site_id: site_id.map(EqualFilter::from),
