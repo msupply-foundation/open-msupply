@@ -24,11 +24,26 @@ interface EquipmentUploadTabProps {
   catalogueItemData?: AssetCatalogueItemFragment[];
 }
 
-// introduce new interface to accomomdate dynamic keys of parsed result
+// introduce new interface to accommodate dynamic keys of parsed result
 interface ParsedAsset {
   id: string;
   [key: string]: string | undefined;
 }
+
+enum AssetColumn {
+  ID = 0,
+  ASSET_NUMBER = 1,
+  CATALOGUE_ITEM_CODE = 2,
+  NOTES = 3,
+}
+
+// the row object indexes are returned in column order
+// which allows us to index the keys
+const getCell = (row: ParsedAsset, index: AssetColumn) => {
+  const rowKeys = Object.keys(row);
+  const key = rowKeys[index] ?? '';
+  return row[key] ?? '';
+};
 
 export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   tab,
@@ -103,20 +118,16 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         importRow.id = FnUtils.generateUUID();
         importRow.isUpdate = false;
       }
-      if (
-        row[t('label.asset-number')] &&
-        row[t('label.asset-number')]?.trim() != ''
-      ) {
-        importRow.assetNumber = row[t('label.asset-number')] ?? '';
+      const assetNumber = getCell(row, AssetColumn.ASSET_NUMBER);
+      if (assetNumber && assetNumber.trim() != '') {
+        importRow.assetNumber = assetNumber;
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: t('label.asset-number') })
         );
       }
-      if (
-        row[t('label.catalogue-item-code')] === undefined ||
-        row[t('label.catalogue-item-code')]?.trim() === ''
-      ) {
+      const code = getCell(row, AssetColumn.CATALOGUE_ITEM_CODE);
+      if (code === undefined || code.trim() === '') {
         rowErrors.push(
           t('error.field-must-be-specified', {
             field: t('label.catalogue-item-code'),
@@ -124,8 +135,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         );
       } else if (
         catalogueItemData?.filter(
-          (item: { code: string | null | undefined }) =>
-            item.code == row[t('label.catalogue-item-code')]
+          (item: { code: string | null | undefined }) => item.code == code
         ).length === 0
       ) {
         rowErrors.push(
@@ -135,8 +145,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         importRow.catalogueItemCode = row[t('label.catalogue-item-code')];
       }
       // notes aren't essential for bulk upload
-      if (row[t('label.asset-notes')] !== undefined) {
-        importRow.notes = row[t('label.asset-notes')] ?? '';
+      if (getCell(row, AssetColumn.NOTES) !== undefined) {
+        importRow.notes = getCell(row, AssetColumn.NOTES);
       }
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
