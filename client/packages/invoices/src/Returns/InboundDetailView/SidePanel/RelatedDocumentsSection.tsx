@@ -6,7 +6,6 @@ import {
   PanelLabel,
   PanelRow,
   useTranslation,
-  Tooltip,
   Link,
   useFormatDateTime,
   RouteBuilder,
@@ -20,18 +19,15 @@ export const RelatedDocumentsSectionComponent = () => {
   const { data } = useReturns.document.inboundReturn();
   const { originalShipment } = data ?? {};
 
-  let tooltip = '';
-  if (originalShipment) {
-    const { user, createdDatetime } = originalShipment;
-    tooltip = t('messages.outbound-shipment-created-on', {
+  const getLabel = (createdDatetime: string, username?: string) => {
+    const label = t('messages.outbound-shipment-created-on', {
       date: d(new Date(createdDatetime)),
     });
-    if (user?.username && user.username !== 'unknown') {
-      tooltip += ` ${t('messages.by-user', {
-        username: user?.username,
-      })}`;
-    }
-  }
+
+    return username && username !== 'unknown'
+      ? `${label} ${t('messages.by-user', { username })}`
+      : label;
+  };
 
   return (
     <DetailPanelSection title={t('heading.related-documents')}>
@@ -39,21 +35,24 @@ export const RelatedDocumentsSectionComponent = () => {
         {!originalShipment ? (
           <PanelLabel>{t('messages.no-related-documents')}</PanelLabel>
         ) : (
-          <Tooltip title={tooltip}>
-            <Grid item>
-              <PanelRow>
-                <PanelLabel>{t('label.outbound-shipment')}</PanelLabel>
-                <PanelField>
-                  <Link
-                    to={RouteBuilder.create(AppRoute.Distribution)
-                      .addPart(AppRoute.OutboundShipment)
-                      .addPart(String(originalShipment?.invoiceNumber))
-                      .build()}
-                  >{`#${originalShipment?.invoiceNumber}`}</Link>
-                </PanelField>
-              </PanelRow>
-            </Grid>
-          </Tooltip>
+          <Grid item>
+            <PanelRow>
+              <PanelLabel>
+                {getLabel(
+                  originalShipment.createdDatetime,
+                  originalShipment.user?.username
+                )}
+              </PanelLabel>
+              <PanelField>
+                <Link
+                  to={RouteBuilder.create(AppRoute.Distribution)
+                    .addPart(AppRoute.OutboundShipment)
+                    .addPart(String(originalShipment.invoiceNumber))
+                    .build()}
+                >{`#${originalShipment.invoiceNumber}`}</Link>
+              </PanelField>
+            </PanelRow>
+          </Grid>
         )}
       </Grid>
     </DetailPanelSection>
