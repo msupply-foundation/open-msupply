@@ -22,11 +22,7 @@ import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
 import { ActivityLogList, useLocation } from '@openmsupply-client/system';
-import { AssetFragment } from '../api/operations.generated';
-
-export interface LocationIds {
-  locationIds: string[];
-}
+import { DraftAsset } from '../types';
 
 export const EquipmentDetailView = () => {
   const { data, isLoading } = useAssets.document.get();
@@ -43,7 +39,7 @@ export const EquipmentDetailView = () => {
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
-  const [draft, setDraft] = useState<AssetFragment & LocationIds>();
+  const [draft, setDraft] = useState<DraftAsset>();
   const [isDirty, setIsDirty] = useState(false);
   const { error, success } = useNotification();
 
@@ -65,7 +61,7 @@ export const EquipmentDetailView = () => {
     title: t('heading.are-you-sure'),
   });
 
-  const onChange = (patch: Partial<AssetFragment & LocationIds>) => {
+  const onChange = (patch: Partial<DraftAsset>) => {
     if (!draft) return;
     setIsDirty(true);
     setDraft({ ...draft, ...patch });
@@ -106,7 +102,7 @@ export const EquipmentDetailView = () => {
       value: 'StatusLogs',
     },
     {
-      Component: <Documents />,
+      Component: draft === undefined ? null : <Documents assetId={draft.id} />,
       value: 'Documents',
     },
     {

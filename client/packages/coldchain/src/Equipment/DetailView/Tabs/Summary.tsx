@@ -12,14 +12,13 @@ import {
   Formatter,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
 import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
-import { LocationIds } from '../DetailView';
+import { DraftAsset } from '../../types';
 interface SummaryProps {
-  draft?: AssetFragment & LocationIds;
-  onChange: (patch: Partial<AssetFragment & LocationIds>) => void;
+  draft?: DraftAsset;
+  onChange: (patch: Partial<DraftAsset>) => void;
   locations: {
     label: string;
     value: string;

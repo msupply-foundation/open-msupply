@@ -14,13 +14,13 @@ import {
   FileUtils,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { importEquipmentToCsv } from '../utils';
 import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
-import { LocationIds } from '../DetailView';
+import { DraftAsset } from '../types';
 
 interface EquipmentImportModalProps {
   isOpen: boolean;
@@ -45,7 +45,7 @@ export type ImportRow = {
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<AssetFragment & LocationIds> => ({
+): Partial<DraftAsset> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
@@ -61,7 +61,7 @@ export const toInsertEquipmentInput = (
 export const toUpdateEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<AssetFragment & LocationIds> => ({
+): Partial<DraftAsset> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
