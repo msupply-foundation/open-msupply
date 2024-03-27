@@ -84,7 +84,7 @@ pub fn update_prescription(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&update_invoice.status, true),
                     Some(update_invoice.id.to_owned()),
                     None,
@@ -93,7 +93,7 @@ pub fn update_prescription(
             }
 
             get_invoice(ctx, None, &update_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -112,19 +112,13 @@ impl UpdatePrescriptionStatus {
     pub fn full_status_option(
         status: &Option<UpdatePrescriptionStatus>,
     ) -> Option<InvoiceRowStatus> {
-        match status {
-            Some(status) => Some(status.full_status()),
-            None => None,
-        }
+        status.as_ref().map(|status| status.full_status())
     }
 }
 
 impl UpdatePrescription {
     pub fn full_status(&self) -> Option<InvoiceRowStatus> {
-        match &self.status {
-            Some(status) => Some(status.full_status()),
-            None => None,
-        }
+        self.status.as_ref().map(|status| status.full_status())
     }
 }
 

@@ -119,7 +119,7 @@ impl LoginService {
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
                 username = user_info.user.name.clone();
                 LoginService::update_user(&service_ctx, &input.password, user_info)
-                    .map_err(|e| LoginError::UpdateUserError(e))?;
+                    .map_err(LoginError::UpdateUserError)?;
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => {
@@ -264,7 +264,7 @@ impl LoginService {
         let user = UserAccountRow {
             id: user_info.user.id,
             username: user_info.user.name.to_string(),
-            hashed_password: UserAccountService::hash_password(&password)
+            hashed_password: UserAccountService::hash_password(password)
                 .map_err(UpdateUserError::PasswordHashError)?,
             email: user_info.user.e_mail,
             language: match user_info.user.language {
@@ -320,7 +320,7 @@ impl LoginService {
         let service = UserAccountService::new(&service_ctx.connection);
         service
             .upsert_user(user.clone(), stores_permissions)
-            .map_err(|e| UpdateUserError::DatabaseError(e))?;
+            .map_err(UpdateUserError::DatabaseError)?;
         Ok(())
     }
 }
@@ -535,7 +535,7 @@ mod test {
                         .user_id(EqualFilter::equal_to(&expected_user_info.user.id)),
                 )
                 .unwrap();
-            assert!(permissions.len() > 0);
+            assert!(!permissions.is_empty());
         }
         // If server password has changed, and trying to login with other then old password, return LoginFailure
         {
