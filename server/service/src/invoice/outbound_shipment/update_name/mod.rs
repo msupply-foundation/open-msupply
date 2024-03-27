@@ -67,7 +67,7 @@ pub fn update_outbound_shipment_name(
             }
 
             get_invoice(ctx, None, &new_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

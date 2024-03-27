@@ -1,8 +1,11 @@
 import { Document } from './document';
 import { Log } from './log';
+import { Utils } from './utils';
 
 export const useAssets = {
-  utils: {},
+  utils: {
+    labelPrinterSettings: Utils.useLabelPrinterSettings,
+  },
 
   document: {
     fetch: Document.useFetchAssetById,

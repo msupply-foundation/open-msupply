@@ -233,7 +233,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            &format!("{}", serde_json::to_string(&result).unwrap()),
+            &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"code\",\"id\":\"store_a\",\"logo\":null}]"
         );
 
@@ -242,7 +242,7 @@ mod tests {
             &connection,
             &settings,
             "SELECT id, code FROM store WHERE id=$store LIMIT $limit", // test without trailing ";"
-            &json!({
+            json!({
                 "store": "store_a",
                 "limit": 2,
             })
@@ -252,7 +252,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            &format!("{}", serde_json::to_string(&result).unwrap()),
+            &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"code\",\"id\":\"store_a\"}]"
         );
 
@@ -261,7 +261,7 @@ mod tests {
             &connection,
             &settings,
             "SELECT id, code FROM store WHERE id LIKE $b || '%' AND code LIKE $b || '%' LIMIT $a",
-            &json!({
+            json!({
                 "a": 5,
                 "b": "name",
             })
@@ -271,7 +271,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            &format!("{}", serde_json::to_string(&result).unwrap()),
+            &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"name_store_code\",\"id\":\"name_store_id\"},{\"code\":\"name_store_code_a\",\"id\":\"name_store_a_id\"}]"
         );
     }
