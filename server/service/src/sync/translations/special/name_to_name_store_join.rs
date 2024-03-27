@@ -28,7 +28,7 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 // NOTE Translator should be removed when central server configures these properties on name_store_join
 pub(super) struct NameToNameStoreJoinTranslation;
 impl SyncTranslation for NameToNameStoreJoinTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         NameTranslation.table_name()
     }
 
@@ -36,7 +36,7 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
     // this translator is special translator to update existing names_store_joins when
     // name.is_customer or name.is_supplier are toggled
     // Btw, when name_store_joins are upserted, we check name for is_customer,is_supplier
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 
@@ -50,7 +50,7 @@ impl SyncTranslation for NameToNameStoreJoinTranslation {
         let name_store_joins = NameStoreJoinRepository::new(connection)
             .query_by_filter(NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(&data.ID)))?;
 
-        if name_store_joins.len() == 0 {
+        if name_store_joins.is_empty() {
             return Ok(PullTranslateResult::Ignored(
                 "Name store joins now found for name".to_string(),
             ));

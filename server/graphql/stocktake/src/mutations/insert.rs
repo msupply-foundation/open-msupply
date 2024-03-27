@@ -183,7 +183,7 @@ mod test {
                     id: "id1".to_string(),
                     comment: Some("comment".to_string()),
                     description: Some("description".to_string()),
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                     is_locked: Some(true),
                     location: None,
                     master_list_id: None,

@@ -48,33 +48,37 @@ pub fn update_asset(
 #[derive(InputObject)]
 pub struct UpdateAssetInput {
     pub id: String,
-    pub code: Option<String>,
+    pub asset_number: Option<String>,
     pub notes: Option<String>,
-    pub store_id: Option<String>,
+    pub store_id: Option<NullableUpdateInput<String>>,
     pub serial_number: Option<NullableUpdateInput<String>>,
     pub catalogue_item_id: Option<NullableUpdateInput<String>>,
     pub installation_date: Option<NullableUpdateInput<NaiveDate>>,
     pub replacement_date: Option<NullableUpdateInput<NaiveDate>>,
+    pub location_ids: Option<Vec<String>>,
 }
 
 impl From<UpdateAssetInput> for UpdateAsset {
     fn from(
         UpdateAssetInput {
             id,
-            code,
+            asset_number,
             notes,
             store_id,
             serial_number,
             catalogue_item_id,
             installation_date,
             replacement_date,
+            location_ids,
         }: UpdateAssetInput,
     ) -> Self {
         UpdateAsset {
             id,
-            code,
+            asset_number,
             notes,
-            store_id,
+            store_id: store_id.map(|store_id| NullableUpdate {
+                value: store_id.value,
+            }),
             serial_number: serial_number.map(|serial_number| NullableUpdate {
                 value: serial_number.value,
             }),
@@ -87,6 +91,7 @@ impl From<UpdateAssetInput> for UpdateAsset {
             replacement_date: replacement_date.map(|replacement_date| NullableUpdate {
                 value: replacement_date.value,
             }),
+            location_ids,
         }
     }
 }
@@ -123,6 +128,7 @@ fn map_error(error: ServiceError) -> Result<UpdateAssetErrorInterface> {
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::LocationsAlreadyAssigned => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

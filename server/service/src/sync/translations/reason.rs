@@ -37,11 +37,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct ReasonTranslation;
 impl SyncTranslation for ReasonTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "options"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![]
     }
 

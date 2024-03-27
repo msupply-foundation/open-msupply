@@ -5,6 +5,7 @@ use crate::{
     barcode::{BarcodeService, BarcodeServiceTrait},
     catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
+    cold_chain::{ColdChainService, ColdChainServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -21,6 +22,7 @@ use crate::{
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
+    label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
@@ -52,10 +54,8 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
-    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
     temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
-    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
 use repository::{
@@ -71,9 +71,8 @@ pub struct ServiceProvider {
 
     // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
-    pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
-    pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
+    pub cold_chain_service: Box<dyn ColdChainServiceTrait>,
     pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
 
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
@@ -133,6 +132,8 @@ pub struct ServiceProvider {
     pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
     // Assets
     pub asset_service: Box<dyn AssetServiceTrait>,
+    // Label Printer
+    pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -168,8 +169,7 @@ impl ServiceProvider {
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
             sensor_service: Box::new(SensorService {}),
-            temperature_breach_service: Box::new(TemperatureBreachService {}),
-            temperature_log_service: Box::new(TemperatureLogService {}),
+            cold_chain_service: Box::new(ColdChainService {}),
             temperature_chart_service: Box::new(TemperatureChartService),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
@@ -212,6 +212,9 @@ impl ServiceProvider {
             currency_service: Box::new(CurrencyService {}),
             catalogue_service: Box::new(CatalogueService {}),
             asset_service: Box::new(crate::asset::AssetService {}),
+            label_printer_settings_service: Box::new(
+                crate::label_printer_settings_service::LabelPrinterSettingsService {},
+            ),
         }
     }
 

@@ -54,6 +54,9 @@ pub enum Permission {
     // outbound return
     OutboundReturnQuery,
     OutboundReturnMutate,
+    // inbound return
+    InboundReturnQuery,
+    InboundReturnMutate,
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,
@@ -71,7 +74,9 @@ pub enum Permission {
     DocumentMutate,
     // Cold chain
     ColdChainApi,
+    AssetQuery,
     AssetMutate,
+    AssetCatalogueItemMutate,
 }
 
 #[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]

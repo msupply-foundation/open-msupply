@@ -3,15 +3,18 @@ use diesel::prelude::*;
 use util::{inline_edit, inline_init};
 
 use crate::{
+    asset_class_row::AssetClassRow,
+    asset_row::AssetRow,
     mock::{
         mock_item_a, mock_location_1, mock_location_2, mock_location_in_another_store,
-        mock_location_on_hold, MockData, MockDataInserts,
+        mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
-    RequisitionRow, RequisitionRowRepository, StorageConnection, StoreRow,
+    CurrencyRow, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, LocationRowRepository, NameRow, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
+    StoreRow, Upsert,
 };
 
 #[actix_rt::test]
@@ -27,7 +30,7 @@ async fn test_changelog() {
     repo.delete(0).unwrap();
     // single entry:
     location_repo.upsert_one(&mock_location_1()).unwrap();
-    let mut result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -42,7 +45,7 @@ async fn test_changelog() {
 
     // querying from the first entry should give the same result:
     assert_eq!(
-        repo.changelogs(starting_cursor + 0, 10, None).unwrap(),
+        repo.changelogs(starting_cursor, 10, None).unwrap(),
         repo.changelogs(starting_cursor + 1, 10, None).unwrap()
     );
 
@@ -70,7 +73,7 @@ async fn test_changelog() {
 
     // query the full list from cursor=0
     // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
-    let mut result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -85,7 +88,7 @@ async fn test_changelog() {
 
     // add another entry
     location_repo.upsert_one(&mock_location_on_hold()).unwrap();
-    let result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(2, result.len());
     assert_eq!(
         result,
@@ -107,7 +110,7 @@ async fn test_changelog() {
 
     // delete an entry
     location_repo.delete(&mock_location_on_hold().id).unwrap();
-    let result = repo.changelogs(starting_cursor + 0, 10, None).unwrap();
+    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
     assert_eq!(2, result.len());
     assert_eq!(
         result,
@@ -159,7 +162,7 @@ async fn test_changelog_iteration() {
         .unwrap();
 
     // test iterating through the change log
-    let changelogs = repo.changelogs(starting_cursor + 0, 3, None).unwrap();
+    let changelogs = repo.changelogs(starting_cursor, 3, None).unwrap();
     let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
     assert_eq!(
         changelogs
@@ -208,6 +211,7 @@ async fn test_changelog_filter() {
         name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
         is_sync_update: false,
+        source_site_id: None,
     };
 
     let log2 = ChangelogRow {
@@ -218,6 +222,7 @@ async fn test_changelog_filter() {
         name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
         is_sync_update: false,
+        source_site_id: None,
     };
 
     let log3 = ChangelogRow {
@@ -228,6 +233,7 @@ async fn test_changelog_filter() {
         name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
         is_sync_update: false,
+        source_site_id: None,
     };
 
     let log4 = ChangelogRow {
@@ -238,9 +244,10 @@ async fn test_changelog_filter() {
         name_id: None,
         store_id: None,
         is_sync_update: false,
+        source_site_id: None,
     };
 
-    for log in vec![&log1, &log2, &log3, &log4] {
+    for log in [&log1, &log2, &log3, &log4] {
         diesel::insert_into(changelog_dsl::changelog)
             .values(log)
             .execute(&connection.connection)
@@ -351,11 +358,20 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         })
     }
 
+    fn currency() -> CurrencyRow {
+        inline_init(|r: &mut CurrencyRow| {
+            r.id = "currency".to_string();
+            r.is_home_currency = true;
+            r.code = "NZD".to_string();
+        })
+    }
+
     fn invoice() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice".to_string();
             r.name_link_id = name().id;
             r.store_id = store().id;
+            r.currency_id = currency().id;
         })
     }
 
@@ -389,6 +405,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         inline_init(|r: &mut MockData| {
             r.names = vec![name()];
             r.stores = vec![store()];
+            r.currencies = vec![currency()];
             r.invoices = vec![invoice()];
             r.invoice_lines = vec![invoice_line()];
             r.requisitions = vec![requisition()];
@@ -596,4 +613,81 @@ async fn test_changelog_name_and_store_id_in_trigger() {
                 .unwrap()
         },
     );
+}
+
+#[actix_rt::test]
+async fn test_changelog_outgoing_sync_records() {
+    let (_, connection, _, _) = test_db::setup_all(
+        "test_changelog_outgoing_sync_records",
+        MockDataInserts::none().names().stores(),
+    )
+    .await;
+
+    let repo = ChangelogRepository::new(&connection);
+
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 10, 1, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
+
+    let site1_id = mock_store_a().site_id; // Site 1 is used in mock_store_a
+    let site1_store_id = mock_store_a().id;
+
+    let site2_id = mock_store_b().site_id; // Site 2 is used in mock_store_b
+
+    assert_ne!(site1_id, site2_id);
+
+    // Insert an asset_class variant (which should trigger a changelog record for Central Sync)
+    let asset_class_id = "asset_class_id".to_string();
+    let row = AssetClassRow {
+        id: asset_class_id.clone(),
+        ..Default::default()
+    };
+    let _result = row.upsert(&connection).unwrap();
+
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, 1, true)
+        .unwrap();
+    // outgoing_results should contain the changelog record for the asset class
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // Insert an asset for the site `1``
+
+    let asset_id = "asset_id".to_string();
+    let row = AssetRow {
+        id: asset_id.clone(),
+        store_id: Some(site1_store_id.clone()),
+        ..Default::default()
+    };
+
+    let cursor_id = row.upsert(&connection).unwrap().unwrap();
+
+    // Set the source_site_id (usually this happens during integration step in sync)
+    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
+        .unwrap();
+
+    // Now we should have two records to send to site 1 the remote site on initialisation
+    // The asset class and the asset
+
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site1_id, false)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 2);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+    assert_eq!(outgoing_results[1].record_id, asset_id);
+
+    // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site1_id, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
+
+    // Site 2 should only get the asset_class
+    let outgoing_results = repo
+        .outgoing_sync_records_from_central(0, 1000, site2_id, true)
+        .unwrap();
+    assert_eq!(outgoing_results.len(), 1);
+    assert_eq!(outgoing_results[0].record_id, asset_class_id);
 }

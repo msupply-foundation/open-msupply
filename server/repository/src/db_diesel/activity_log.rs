@@ -17,7 +17,7 @@ pub struct ActivityLog {
     pub activity_log_row: ActivityLogRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct ActivityLogFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<ActivityLogType>>,
@@ -114,13 +114,7 @@ fn to_domain(activity_log_row: ActivityLogRow) -> ActivityLog {
 
 impl ActivityLogFilter {
     pub fn new() -> ActivityLogFilter {
-        ActivityLogFilter {
-            id: None,
-            r#type: None,
-            user_id: None,
-            store_id: None,
-            record_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

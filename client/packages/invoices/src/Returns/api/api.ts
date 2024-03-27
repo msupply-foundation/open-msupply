@@ -10,6 +10,7 @@ import {
   UpdateInboundReturnStatusInput,
   UpdateOutboundReturnInput,
   UpdateOutboundReturnLinesInput,
+  UpdateOutboundReturnStatusInput,
 } from '@common/types';
 import {
   InboundReturnRowFragment,
@@ -46,6 +47,21 @@ const outboundParsers = {
       default: {
         return InvoiceSortFieldInput.Status;
       }
+    }
+  },
+
+  toUpdateStatusInput: (
+    status: InvoiceNodeStatus | undefined
+  ): UpdateOutboundReturnStatusInput | undefined => {
+    switch (status) {
+      case undefined:
+        return;
+      case InvoiceNodeStatus.Picked:
+        return UpdateOutboundReturnStatusInput.Picked;
+      case InvoiceNodeStatus.Shipped:
+        return UpdateOutboundReturnStatusInput.Shipped;
+      default:
+        throw new Error('Invalid status');
     }
   },
 };
@@ -239,9 +255,16 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert outbound return');
   },
-  updateOutboundReturn: async (input: UpdateOutboundReturnInput) => {
+  updateOutboundReturn: async (
+    input: Omit<UpdateOutboundReturnInput, 'status'> & {
+      status?: InvoiceNodeStatus;
+    }
+  ) => {
     const result = await sdk.updateOutboundReturn({
-      input,
+      input: {
+        ...input,
+        status: outboundParsers.toUpdateStatusInput(input.status),
+      },
       storeId,
     });
 
@@ -304,14 +327,10 @@ export const getReturnsQueries = (sdk: Sdk, storeId: string) => ({
       status?: InvoiceNodeStatus;
     }
   ) => {
-    const { id, comment, onHold, colour, status } = input;
     const result = await sdk.updateInboundReturn({
       input: {
-        id,
-        comment,
-        onHold,
-        colour,
-        status: inboundParsers.toUpdateStatusInput(status),
+        ...input,
+        status: inboundParsers.toUpdateStatusInput(input.status),
       },
       storeId,
     });

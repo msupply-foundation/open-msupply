@@ -596,29 +596,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "asset_catalogue"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
 name = "astro-dnssd"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1348,7 +1325,6 @@ dependencies = [
  "graphql",
  "log",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "server",
@@ -2001,6 +1977,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fallible-iterator"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
+
+[[package]]
+name = "fallible-streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
+
+[[package]]
 name = "fancy-regex"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2273,16 +2261,16 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
- "asset_catalogue",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_asset",
+ "graphql_asset_catalogue",
  "graphql_batch_mutations",
  "graphql_clinician",
+ "graphql_cold_chain",
  "graphql_core",
  "graphql_form_schema",
  "graphql_general",
@@ -2296,20 +2284,14 @@ dependencies = [
  "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
- "graphql_sensor",
  "graphql_stock_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
- "graphql_temperature_breach",
- "graphql_temperature_log",
- "graphql_temperature_notification",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "tokio",
  "util",
 ]
@@ -2320,20 +2302,37 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_asset_catalogue",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_asset_catalogue"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2343,7 +2342,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2358,11 +2356,9 @@ dependencies = [
  "graphql_stocktake_line",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2372,7 +2368,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2381,11 +2376,26 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
+ "serde 1.0.197",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_cold_chain"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "assert-json-diff",
+ "async-graphql",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "regex",
+ "repository",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2405,7 +2415,7 @@ dependencies = [
  "serde 1.0.197",
  "serde_json",
  "service",
- "strum 0.25.0",
+ "strum",
  "thiserror",
  "tokio",
  "util",
@@ -2418,7 +2428,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2427,11 +2436,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2441,7 +2448,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2454,7 +2460,6 @@ dependencies = [
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2464,21 +2469,17 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2488,7 +2489,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2498,12 +2498,10 @@ dependencies = [
  "graphql_invoice",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "strum 0.25.0",
- "thiserror",
+ "strum",
  "util",
 ]
 
@@ -2513,7 +2511,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2522,11 +2519,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2536,20 +2531,16 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
- "chrono",
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2559,7 +2550,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2567,14 +2557,10 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
- "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
 ]
 
 [[package]]
@@ -2591,14 +2577,11 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2609,7 +2592,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2618,11 +2600,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2633,7 +2613,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2642,11 +2621,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2656,21 +2633,17 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2680,7 +2653,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2689,34 +2661,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_sensor"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
  "util",
 ]
 
@@ -2726,7 +2673,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2735,11 +2681,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2749,7 +2693,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2758,11 +2701,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2772,7 +2713,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2781,81 +2721,10 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "strum 0.25.0",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_breach"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_log"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_notification"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
+ "strum",
  "util",
 ]
 
@@ -2864,21 +2733,15 @@ name = "graphql_types"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
- "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
- "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "regex",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2903,6 +2766,15 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
+dependencies = [
+ "ahash 0.7.8",
+]
+
+[[package]]
+name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
@@ -2915,6 +2787,15 @@ name = "hashbrown"
 version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
+
+[[package]]
+name = "hashlink"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7249a3129cbc1ffccd74857f81464a323a152173cdb134e0fd81bc803b29facf"
+dependencies = [
+ "hashbrown 0.11.2",
+]
 
 [[package]]
 name = "headless_chrome"
@@ -4514,10 +4395,12 @@ dependencies = [
  "log",
  "pretty_assertions",
  "rand",
+ "regex",
+ "rusqlite",
  "rust-embed",
  "serde 1.0.197",
  "serde_json",
- "strum 0.24.1",
+ "strum",
  "thiserror",
  "tokio",
  "util",
@@ -4627,6 +4510,21 @@ dependencies = [
  "spki",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rusqlite"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c4b1eaf239b47034fb450ee9cdedd7d0226571689d8823030c4b6c2cb407152"
+dependencies = [
+ "bitflags 1.3.2",
+ "fallible-iterator",
+ "fallible-streaming-iterator",
+ "hashlink",
+ "libsqlite3-sys",
+ "memchr",
+ "smallvec",
 ]
 
 [[package]]
@@ -4813,6 +4711,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "sanitize-filename"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08c502bdb638f1396509467cb0580ef3b29aa2a45c5d43e5d84928241280296c"
+dependencies = [
+ "lazy_static",
+ "regex",
 ]
 
 [[package]]
@@ -5030,7 +4938,6 @@ dependencies = [
  "futures-util",
  "graphql",
  "graphql_core",
- "graphql_types",
  "httpmock",
  "log",
  "machine-uid",
@@ -5038,15 +4945,14 @@ dependencies = [
  "rcgen",
  "regex",
  "repository",
- "reqwest",
  "rust-embed",
  "rustls 0.20.9",
  "rustls-pemfile",
+ "sanitize-filename",
  "serde 1.0.197",
  "serde_json",
  "service",
  "simple-log",
- "thiserror",
  "tokio",
  "util",
  "winres",
@@ -5059,7 +4965,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-trait",
  "bcrypt",
@@ -5084,6 +4989,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "simple-log",
+ "telnet",
  "temperature-sensor",
  "tera",
  "thiserror",
@@ -5296,40 +5202,18 @@ checksum = "5ee073c9e4cd00e28217186dbe12796d692868f432bf2e97ee73bed0c56dfa01"
 
 [[package]]
 name = "strum"
-version = "0.24.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+checksum = "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
 dependencies = [
- "strum_macros 0.24.3",
-]
-
-[[package]]
-name = "strum"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
-dependencies = [
- "strum_macros 0.25.3",
+ "strum_macros",
 ]
 
 [[package]]
 name = "strum_macros"
-version = "0.24.3"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "rustversion",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "strum_macros"
-version = "0.25.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23dc1fa9ac9c169a78ba62f0b841814b7abae11bdd047b9c58f893439e309ea0"
+checksum = "c6cf59daf282c0a494ba14fd21610a0325f9f90ec9d1231dea26bcb1d696c946"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -5404,6 +5288,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "telnet"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99f2cc260bea5219955ab4832c9600a41b87101d280939edae6dd10b3c68a4f3"
 
 [[package]]
 name = "temperature-sensor"
