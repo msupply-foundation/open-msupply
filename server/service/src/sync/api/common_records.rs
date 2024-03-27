@@ -76,10 +76,19 @@ impl CommonSyncRecord {
             action,
             record_data: data,
         } = self;
+
+        let action = action.to_row_action();
+        // Hot fix, issue number here for full fix
+        let record_id = if action == SyncBufferAction::Merge {
+            format!("{record_id}_merge")
+        } else {
+            record_id
+        };
+        
         Ok(SyncBufferRow {
             table_name,
             record_id,
-            action: action.to_row_action(),
+            action,,
             data: serde_json::to_string(&data).map_err(|e| ParsingSyncRecordError {
                 source: e,
                 record: data.clone(),
