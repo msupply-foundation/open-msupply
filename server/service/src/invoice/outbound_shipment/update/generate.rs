@@ -61,7 +61,7 @@ pub(crate) fn generate(
     update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
 
     if let Some(status) = input_status.clone() {
-        update_invoice.status = status.full_status().into()
+        update_invoice.status = status.full_status()
     }
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
@@ -167,7 +167,7 @@ fn lines_to_trim(
     lines.append(&mut empty_lines);
 
     let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
-    return Ok(Some(invoice_line_rows));
+    Ok(Some(invoice_line_rows))
 }
 
 fn set_new_status_datetime(
@@ -192,12 +192,12 @@ fn set_new_status_datetime(
         (InvoiceRowStatus::Shipped, _) => {}
         // From New to Shipped, Picked, Allocated
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Shipped) => {
-            invoice.allocated_datetime = Some(current_datetime.clone());
-            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.allocated_datetime = Some(current_datetime);
+            invoice.picked_datetime = Some(current_datetime);
             invoice.shipped_datetime = Some(current_datetime)
         }
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Picked) => {
-            invoice.allocated_datetime = Some(current_datetime.clone());
+            invoice.allocated_datetime = Some(current_datetime);
             invoice.picked_datetime = Some(current_datetime);
         }
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Allocated) => {
@@ -205,7 +205,7 @@ fn set_new_status_datetime(
         }
         // From Allocated to Shipped or Picked
         (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Shipped) => {
-            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.picked_datetime = Some(current_datetime);
             invoice.shipped_datetime = Some(current_datetime)
         }
         (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Picked) => {
@@ -245,7 +245,7 @@ fn generate_update_for_lines(
         invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
             connection,
             invoice_line_row.total_before_tax,
-            &currency_id,
+            currency_id,
             currency_rate,
         )?;
 
@@ -282,8 +282,8 @@ pub fn generate_location_movements(
                 .map(|l| l.location_movement_row)
                 .min_by_key(|l| l.enter_datetime);
 
-            if filter.is_some() {
-                movements_filter.push(filter.unwrap());
+            if let Some(filter) = filter {
+                movements_filter.push(filter);
             }
         }
     }

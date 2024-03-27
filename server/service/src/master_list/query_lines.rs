@@ -19,7 +19,7 @@ pub fn get_master_list_lines(
     let repository = MasterListLineRepository::new(&ctx.connection);
 
     let filter = filter
-        .unwrap_or(MasterListLineFilter::new())
+        .unwrap_or_default()
         .master_list_id(EqualFilter::equal_to(master_list_id));
 
     Ok(ListResult {
@@ -32,7 +32,7 @@ pub fn get_master_list_lines_count(
     connection: &StorageConnection,
     master_list_id: &str,
 ) -> Result<u32, RepositoryError> {
-    let repository = MasterListLineRepository::new(&connection);
+    let repository = MasterListLineRepository::new(connection);
     let filter = MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(master_list_id));
 
     Ok(i64_to_u32(repository.count(Some(filter))?))
