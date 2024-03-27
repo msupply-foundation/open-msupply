@@ -14,24 +14,37 @@ pub struct GenerateResult {
 
 pub fn generate(
     connection: &StorageConnection,
-    input: UpdateOutboundReturn,
+    UpdateOutboundReturn {
+        outbound_return_id,
+        comment,
+        status,
+        on_hold,
+        their_reference,
+        colour,
+        transport_reference,
+    }: UpdateOutboundReturn,
     existing_return: InvoiceRow,
 ) -> Result<GenerateResult, UpdateOutboundReturnError> {
     let mut updated_return = existing_return.clone();
 
-    updated_return.comment = input.comment.or(existing_return.comment);
+    updated_return.comment = comment.or(existing_return.comment);
+    updated_return.their_reference = their_reference.or(existing_return.their_reference);
+    updated_return.on_hold = on_hold.unwrap_or(existing_return.on_hold);
+    updated_return.colour = colour.or(existing_return.colour);
+    updated_return.transport_reference =
+        transport_reference.or(existing_return.transport_reference);
 
-    set_new_status_datetime(&mut updated_return, &input.status);
-    if let Some(status) = input.status.clone() {
+    set_new_status_datetime(&mut updated_return, &status);
+    if let Some(status) = status.clone() {
         updated_return.status = status.as_invoice_row_status()
     }
 
     let should_update_total_number_of_packs =
-        should_update_stock_lines_total_number_of_packs(&existing_return.status, &input.status);
+        should_update_stock_lines_total_number_of_packs(&existing_return.status, &status);
 
     let stock_lines_to_update = if should_update_total_number_of_packs {
         Some(
-            generate_batches_total_number_of_packs_update(&input.outbound_return_id, connection)
+            generate_batches_total_number_of_packs_update(&outbound_return_id, connection)
                 .map_err(|e| match e {
                     InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(line) => {
                         UpdateOutboundReturnError::InvoiceLineHasNoStockLine(line)

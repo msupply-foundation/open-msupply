@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockRequisition},
-    mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
+    currency_a, mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_queries() -> MockData {
@@ -64,23 +64,23 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
             r.sent_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 02)
+                NaiveDate::from_ymd_opt(2021, 1, 2)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
             r.finalised_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 03)
+                NaiveDate::from_ymd_opt(2021, 1, 3)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
-            r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 01, 04).unwrap());
+            r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 4).unwrap());
             r.colour = Some("colour".to_owned());
             r.comment = Some("comment".to_owned());
             r.their_reference = Some("their_reference".to_owned());
@@ -121,18 +121,18 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
             r.sent_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 02)
+                NaiveDate::from_ymd_opt(2021, 1, 2)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             );
             r.finalised_datetime = Some(
-                NaiveDate::from_ymd_opt(2021, 01, 03)
+                NaiveDate::from_ymd_opt(2021, 1, 3)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -174,6 +174,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
             r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
+            r.currency_id = currency_a().id;
         }),
         lines: vec![
             FullMockInvoiceLine {
@@ -281,6 +282,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
             r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
+            r.currency_id = currency_a().id;
         }),
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {
@@ -344,6 +346,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
             r.requisition_id = Some(mock_response_draft_requisition_all_fields().requisition.id);
+            r.currency_id = currency_a().id;
         }),
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {

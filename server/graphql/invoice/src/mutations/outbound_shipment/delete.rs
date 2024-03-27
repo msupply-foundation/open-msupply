@@ -134,6 +134,7 @@ mod graphql {
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
                 );
+                r.currency_id = "currency_a".to_string();
             })
         }
 
@@ -155,6 +156,7 @@ mod graphql {
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
                 );
+                r.currency_id = "currency_a".to_string();
             })
         }
 

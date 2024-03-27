@@ -142,6 +142,7 @@ export const DetailView: FC = () => {
               supplierId={data.otherParty.id}
               modalMode={returnModalMode}
               inboundShipmentId={data.id}
+              isNewReturn
             />
           )}
         </TableProvider>

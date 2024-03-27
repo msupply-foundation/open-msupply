@@ -1,28 +1,61 @@
 fragment Asset on AssetNode {
   __typename
   catalogueItemId
-  code
+  assetNumber
   createdDatetime
   id
   installationDate
+  locations {
+    nodes {
+      id
+      code
+      name
+      onHold
+    }
+    totalCount
+  }
   modifiedDatetime
   notes
   replacementDate
   serialNumber
-  status
+  statusLog {
+    logDatetime
+    reason
+    status
+  }
   storeId
+  store {
+    id
+    code
+    storeName
+  }
   catalogueItem {
     manufacturer
     model
-    assetType {
-      name
-    }
-    assetClass {
-      name
-    }
-    assetCategory {
-      name
-    }
+  }
+  assetType {
+    name
+  }
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
+  }
+}
+
+fragment AssetLog on AssetLogNode {
+  comment
+  id
+  logDatetime
+  reason
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+    jobTitle
   }
 }
 
@@ -59,6 +92,33 @@ query assetById($storeId: String!, $assetId: String!) {
       }
       totalCount
     }
+  }
+}
+
+query assetLogs(
+  $filter: AssetLogFilterInput!
+  $sort: AssetLogSortInput
+  $storeId: String!
+) {
+  assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLog
+      }
+    }
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
   }
 }
 
@@ -103,6 +163,22 @@ mutation updateAsset($input: UpdateAssetInput!, $storeId: String!) {
     ... on AssetNode {
       __typename
       id
+    }
+  }
+}
+
+mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
+  insertAssetLog(input: $input, storeId: $storeId) {
+    ... on AssetLogNode {
+      __typename
+      id
+      assetId
+    }
+    ... on InsertAssetLogError {
+      __typename
+      error {
+        description
+      }
     }
   }
 }

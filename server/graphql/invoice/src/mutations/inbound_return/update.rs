@@ -22,6 +22,7 @@ pub struct UpdateInput {
     on_hold: Option<bool>,
     comment: Option<String>,
     colour: Option<String>,
+    their_reference: Option<String>,
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
@@ -40,8 +41,7 @@ pub fn update(ctx: &Context<'_>, store_id: &str, input: UpdateInput) -> Result<U
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateInboundReturn, // TODO
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutateInboundReturn,
             store_id: Some(store_id.to_string()),
         },
     )?;
@@ -90,6 +90,7 @@ impl UpdateInput {
             status,
             on_hold,
             colour,
+            their_reference,
         }: UpdateInput = self;
 
         ServiceInput {
@@ -98,6 +99,7 @@ impl UpdateInput {
             comment,
             on_hold,
             colour,
+            their_reference,
         }
     }
 }

@@ -255,7 +255,8 @@ export const canDeleteInvoice = (
   invoice: OutboundRowFragment | OutboundReturnRowFragment
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
-  invoice.status === InvoiceNodeStatus.Allocated;
+  invoice.status === InvoiceNodeStatus.Allocated ||
+  invoice.status === InvoiceNodeStatus.Picked;
 
 export const canDeleteOutboundReturn = (
   outboundReturn: OutboundReturnRowFragment
@@ -422,3 +423,21 @@ export const prescriptionToCsv = (
 
 export const getPackQuantityCellId = (batch?: string | null) =>
   `pack_quantity_${batch}`;
+
+// Returns the ID of the next *distinct* item from a collection of lines -- i.e.
+// the next line that is for a different item
+export const getNextItemId = (
+  lines: { itemId: string }[],
+  currentItemId: string | null
+) => {
+  if (!lines || !currentItemId) return undefined;
+  const currentItemIndex = lines.findIndex(
+    line => line.itemId === currentItemId
+  );
+  if (currentItemIndex === -1) return;
+
+  const nextItemIndex = lines.findIndex(
+    (line, index) => index > currentItemIndex && line.itemId !== currentItemId
+  );
+  return nextItemIndex === -1 ? undefined : lines[nextItemIndex]?.itemId;
+};

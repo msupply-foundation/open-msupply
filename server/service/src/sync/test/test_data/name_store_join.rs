@@ -5,9 +5,9 @@ use crate::sync::{
 use repository::{NameStoreJoinRow, NameStoreJoinRowDelete};
 use serde_json::json;
 
-const TABLE_NAME: &'static str = "name_store_join";
+const TABLE_NAME: &str = "name_store_join";
 
-const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
+const NAME_STORE_JOIN_1: (&str, &str) = (
     "66607B6E7F2A47E782B8AC6743F71A8A",
     r#"{
       "ID": "66607B6E7F2A47E782B8AC6743F71A8A",
@@ -34,7 +34,7 @@ fn name_store_join_1_pull_record() -> TestSyncIncomingRecord {
     )
 }
 
-const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
+const NAME_STORE_JOIN_2: (&str, &str) = (
     "BE65A4A05E4D47E88303D6105A7872CC",
     r#"{
       "ID": "BE65A4A05E4D47E88303D6105A7872CC",
@@ -46,7 +46,7 @@ const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
       "store_ID": "store_b"
   }"#,
 );
-const NAME_STORE_JOIN_INACTIVE_2: (&'static str, &'static str) = (
+const NAME_STORE_JOIN_INACTIVE_2: (&str, &str) = (
     "BE65A4A05E4D47E88303D6105A7872CC",
     r#"{
       "ID": "BE65A4A05E4D47E88303D6105A7872CC",
@@ -87,7 +87,7 @@ fn name_store_join_2_inactive_pull_record() -> TestSyncIncomingRecord {
 
 // same as NAME_STORE_JOIN_2 but with new om fields
 // See TODO in name_store_join translator
-// const NAME_STORE_JOIN_3: (&'static str, &'static str) = (
+// const NAME_STORE_JOIN_3: (&str, &str) = (
 //     "BE65A4A05E4D47E88303D6105A7872C2",
 //     r#"{
 //       "ID": "BE65A4A05E4D47E88303D6105A7872C2",

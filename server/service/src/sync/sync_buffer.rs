@@ -46,7 +46,7 @@ impl<'a> SyncBuffer<'a> {
         action: SyncBufferAction,
         ordered_table_names: &[&str],
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        let ordered_table_names = ordered_table_names.into_iter().map(|r| *r);
+        let ordered_table_names = ordered_table_names.iter().map(|r| *r);
         // Get ordered table names, for  upsert we sort in referential constraint order
         // and for delete in reverse of referential constraint order
         let order: Vec<&str> = match action {

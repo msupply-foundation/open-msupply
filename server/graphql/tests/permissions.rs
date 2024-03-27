@@ -3,6 +3,7 @@ mod permission_tests {
     use std::sync::{Arc, Mutex};
 
     use async_graphql::MergedObject;
+    use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
     use graphql_core::test_helpers::setup_graphql_test;
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use service::{
@@ -20,11 +21,8 @@ mod permission_tests {
     use graphql_reports::ReportQueries;
     use graphql_requisition::{RequisitionMutations, RequisitionQueries};
     use graphql_requisition_line::RequisitionLineMutations;
-    use graphql_sensor::{SensorMutations, SensorQueries};
     use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
     use graphql_stocktake_line::StocktakeLineMutations;
-    //use graphql_temperature_breach::TemperatureBreachQueries;
-    //use graphql_temperature_log::TemperatureLogQueries;
 
     // TODO for some reason Rust complained when using the Full{Query|Mutation} definition from
     // lib.rs. As a workaround these defs are copied here. Hopefully this should be possible but I
@@ -33,10 +31,7 @@ mod permission_tests {
     pub struct FullQuery(
         pub InvoiceQueries,
         pub LocationQueries,
-        pub SensorQueries,
-        //pub TemperatureBreachQueries,
-        //pub TemperatureBreachConfigQueries,
-        //pub TemperatureLogQueries,
+        pub ColdChainQueries,
         pub StocktakeQueries,
         pub GeneralQueries,
         pub RequisitionQueries,
@@ -49,8 +44,7 @@ mod permission_tests {
         pub InvoiceMutations,
         pub InvoiceLineMutations,
         pub LocationMutations,
-        pub SensorMutations,
-        //pub TemperatureBreachConfigMutations,
+        pub ColdChainMutations,
         pub StocktakeMutations,
         pub StocktakeLineMutations,
         pub BatchMutations,
@@ -63,10 +57,7 @@ mod permission_tests {
         FullQuery(
             InvoiceQueries,
             LocationQueries,
-            SensorQueries,
-            //TemperatureBreachQueries,
-            //TemperatureBreachConfigQueries,
-            //TemperatureLogQueries,
+            ColdChainQueries,
             StocktakeQueries,
             GeneralQueries,
             RequisitionQueries,
@@ -80,8 +71,7 @@ mod permission_tests {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            SensorMutations,
-            //TemperatureBreachConfigMutations,
+            ColdChainMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
@@ -1178,9 +1168,9 @@ mod permission_tests {
             let mut actual = self.actual.lock().unwrap();
             *actual = Some(resource_request.clone());
             // we collected the info we needed just abort the request:
-            return Err(AuthError::InternalError(
+            Err(AuthError::InternalError(
                 "Just abort the request".to_string(),
-            ));
+            ))
         }
     }
 
@@ -1212,7 +1202,7 @@ mod permission_tests {
             let _ = graphql_core::test_helpers::run_test_gql_query(
                 &settings,
                 // escape query quotes
-                &data.query.replace("\"", "\\\""),
+                &data.query.replace('\"', "\\\""),
                 &None,
                 Some(service_provider(&test_service, &connection_manager)),
             )

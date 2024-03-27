@@ -147,7 +147,7 @@ export const PricingSectionComponent = () => {
             <CurrencyModal
               onChange={value => {
                 update({
-                  currency: value,
+                  currency: value ?? undefined,
                   currencyRate: value?.rate,
                 });
               }}

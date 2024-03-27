@@ -37,7 +37,7 @@ export const useDraftInboundReturnLines = ({
   const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   useEffect(() => {
-    if (!draftLines.length) getLines();
+    getLines();
 
     async function getLines() {
       const { data } = await refetch();

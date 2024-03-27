@@ -10,7 +10,7 @@ import { useInboundSelector } from './useInboundLines';
 
 export const useInboundItems = () => {
   const { sort } = useQueryParamsStore();
-  const { sortBy, onChangeSortBy } = sort;
+  const { sortBy } = sort;
   const selectItems = (invoice: InboundFragment) =>
     inboundLinesToSummaryItems(
       invoice.lines.nodes.filter(line => isA.stockInLine(line))
@@ -28,5 +28,5 @@ export const useInboundItems = () => {
       );
   const { data } = useInboundSelector(selectItems);
 
-  return { data, sortBy, onSort: onChangeSortBy };
+  return { data, sortBy };
 };

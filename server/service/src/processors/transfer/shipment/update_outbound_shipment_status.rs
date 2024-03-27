@@ -10,7 +10,7 @@ use crate::{
 
 use super::{ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str = "Update outbound shipment status from inbound shipment";
+const DESCRIPTION: &str = "Update outbound shipment status from inbound shipment";
 
 pub(crate) struct UpdateOutboundShipmentStatusProcessor;
 

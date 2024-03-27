@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use repository::Name;
+use repository::{CurrencyFilter, CurrencyRepository, Name};
 use repository::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
@@ -17,7 +17,7 @@ pub fn generate(
     store_id: &str,
     user_id: &str,
     InsertInboundReturn {
-        id,
+        id: invoice_id,
         other_party_id,
         outbound_shipment_id,
         inbound_return_lines,
@@ -32,7 +32,10 @@ pub fn generate(
     RepositoryError,
 > {
     let current_datetime = Utc::now().naive_utc();
-    let invoice_id = id.clone();
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
 
     let inbound_return = InvoiceRow {
         id: invoice_id.clone(),
@@ -46,6 +49,8 @@ pub fn generate(
         status: InvoiceRowStatus::New,
         original_shipment_id: outbound_shipment_id,
         // Default
+        currency_id: currency.currency_row.id,
+        currency_rate: 1.0,
         on_hold: false,
         colour: None,
         comment: None,
@@ -60,8 +65,6 @@ pub fn generate(
         linked_invoice_id: None,
         requisition_id: None,
         clinician_link_id: None,
-        currency_id: None,
-        currency_rate: 0.0,
     };
 
     let lines_with_packs: Vec<InboundReturnLineInput> = inbound_return_lines

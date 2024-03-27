@@ -1,3 +1,4 @@
+use crate::types::{PluginDataNode, RelatedRecordNodeType};
 use async_graphql::*;
 use graphql_core::{
     generic_filters::EqualFilterStringInput,
@@ -6,7 +7,6 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::{PluginDataNode, RelatedRecordNodeType};
 use repository::{EqualFilter, PluginDataFilter, PluginDataSort, PluginDataSortField};
 use service::auth::{Resource, ResourceAccessRequest};
 
