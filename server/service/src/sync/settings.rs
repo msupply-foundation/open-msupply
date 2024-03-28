@@ -1,4 +1,7 @@
 use serde::Deserialize;
+use url::Url;
+
+use crate::sync::api_v6::get_omsupply_central_url;
 
 // See README.md for description of when this API version needs to be updated
 pub(crate) static SYNC_VERSION: u32 = 3;
@@ -41,5 +44,12 @@ impl SyncSettings {
             && self.url == other.url
             && self.password_sha256 == other.password_sha256;
         !equal
+    }
+
+    pub fn file_upload_base_url(&self) -> String {
+        let omsupply_central_url = get_omsupply_central_url(&self.url)
+            .unwrap_or(Url::parse("http://localhost:8000").unwrap()); // This is hacky but I think ok for now?
+
+        format!("{}api/sync_files/", omsupply_central_url)
     }
 }

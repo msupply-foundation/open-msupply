@@ -50,6 +50,7 @@ pub struct UploadedFile {
     mime_type: Option<String>,
     #[serde(skip_serializing)]
     path: String,
+    bytes: i32,
 }
 
 async fn files(
@@ -110,7 +111,7 @@ async fn handle_file_upload(
 
     while let Some(mut field) = payload.try_next().await? {
         // A multipart/form-data stream has to contain `content_disposition`
-        let content_disposition = field.content_disposition();
+        let content_disposition = field.content_disposition().to_owned();
         log::info!(
             "Uploading File: {}",
             content_disposition.get_filename().unwrap_or_default()
@@ -124,15 +125,8 @@ async fn handle_file_upload(
             .reserve_file(&sanitized_filename, &file_category)
             .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
-        files.push(UploadedFile {
-            id: static_file.id.clone(),
-            filename: content_disposition
-                .get_filename()
-                .unwrap_or_default()
-                .to_string(),
-            mime_type: field.content_type().map(|mime| mime.to_string()),
-            path: static_file.path.clone(),
-        });
+        let file_path = static_file.path.clone();
+        let id = static_file.id.clone();
 
         // File::create is blocking operation, use threadpool
         let mut f = web::block(|| std::fs::File::create(static_file.path)).await??;
@@ -142,6 +136,20 @@ async fn handle_file_upload(
             // filesystem operations are blocking, we have to use threadpool
             f = web::block(move || f.write_all(&chunk).map(|_| f)).await??;
         }
+
+        log::debug!("File uploaded to: {:?}", file_path);
+        let file_size = f.metadata()?.len() as i32;
+
+        files.push(UploadedFile {
+            id,
+            filename: content_disposition
+                .get_filename()
+                .unwrap_or_default()
+                .to_string(),
+            mime_type: field.content_type().map(|mime| mime.to_string()),
+            path: file_path.to_string(),
+            bytes: file_size,
+        });
     }
     Ok(files)
 }
@@ -172,6 +180,8 @@ async fn upload_sync_file(
             file_name: file.filename,
             table_name: table_name.clone(),
             mime_type: file.mime_type,
+            uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
+            total_bytes: file.bytes,
             created_datetime: chrono::Utc::now().naive_utc(),
             deleted_datetime: None,
             record_id: record_id.clone(),

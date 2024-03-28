@@ -10,7 +10,10 @@ use repository::{
 use crate::{
     processors::Processors,
     service_provider::{ServiceContext, ServiceProvider},
-    sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+    sync::{
+        file_sync_driver::FileSyncDriver,
+        synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+    },
 };
 
 pub(crate) struct ServiceTestContext {
@@ -34,7 +37,8 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
 
     let (processors_trigger, processors) = Processors::init();
-    let (sync_trigger, _) = SynchroniserDriver::init();
+    let (file_sync_trigger, _) = FileSyncDriver::init();
+    let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
 
     let service_provider = Arc::new(ServiceProvider::new_with_triggers(
