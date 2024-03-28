@@ -10,6 +10,7 @@ mod invoice_required_currency_id;
 mod pack_variant;
 mod store_add_created_date;
 mod sync_file_reference;
+mod user_change_last_synced_to_optional;
 
 pub(crate) struct V1_08_00;
 
@@ -27,6 +28,7 @@ impl Migration for V1_08_00 {
         activity_log_add_zero_line::migrate(connection)?;
         invoice_required_currency_id::migrate(connection)?;
         sync_file_reference::migrate(connection)?;
+        user_change_last_synced_to_optional::migrate(connection)?;
         Ok(())
     }
 }

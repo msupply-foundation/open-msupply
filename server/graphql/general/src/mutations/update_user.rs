@@ -12,13 +12,14 @@ use service::{
 };
 
 pub struct UpdateUserNode {
-    pub last_successful_sync: NaiveDateTime,
+    pub last_successful_sync: Option<NaiveDateTime>,
 }
 
 #[Object]
 impl UpdateUserNode {
-    pub async fn last_successful_sync(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.last_successful_sync, Utc)
+    pub async fn last_successful_sync(&self) -> Option<DateTime<Utc>> {
+        self.last_successful_sync
+            .map(|time| DateTime::<Utc>::from_naive_utc_and_offset(time, Utc))
     }
 }
 
