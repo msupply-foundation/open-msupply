@@ -75,13 +75,12 @@ export const SidePanel = () => {
 
   const deleteAction = async () => {
     if (!stocktake) return;
-    await mutateAsync([stocktake]).then(() => {
-      navigate(
-        RouteBuilder.create(AppRoute.Inventory)
-          .addPart(AppRoute.Stocktakes)
-          .build()
-      );
-    })
+    await mutateAsync([stocktake]);
+    navigate(
+      RouteBuilder.create(AppRoute.Inventory)
+        .addPart(AppRoute.Stocktakes)
+        .build()
+    );
   };
 
   const onDelete = useDeleteConfirmation({
