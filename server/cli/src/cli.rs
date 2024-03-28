@@ -114,6 +114,7 @@ async fn initialise_from_central(
 
     let connection_manager = get_storage_connection_manager(&settings.database);
     let app_data_folder = settings
+        .clone()
         .server
         .base_dir
         .ok_or(anyhow!("based dir not set in yaml configurations"))?;
@@ -123,6 +124,7 @@ async fn initialise_from_central(
     ));
 
     let sync_settings = settings
+        .clone()
         .sync
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
@@ -145,7 +147,7 @@ async fn initialise_from_central(
         .update_sync_settings(&service_context, &sync_settings)?;
 
     // Not used here yet, but easier than making file sync trigger optional
-    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init();
+    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
     let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
     sync_driver.sync(service_provider.clone()).await;
 

@@ -10,6 +10,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 record_id TEXT NOT NULL, -- Associated record id
                 file_name TEXT NOT NULL,
                 mime_type TEXT,
+                uploaded_bytes INTEGER NOT NULL DEFAULT 0,
+                total_bytes INTEGER NOT NULL DEFAULT 0,
                 created_datetime TIMESTAMP NOT NULL, -- No modified datetime, as we don't allow updates it would break sync
                 deleted_datetime TIMESTAMP
             );

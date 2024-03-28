@@ -16,6 +16,8 @@ table! {
         record_id -> Text,
         file_name -> Text,
         mime_type -> Nullable<Text>,
+        uploaded_bytes -> Integer,
+        total_bytes -> Integer,
         created_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -31,6 +33,9 @@ pub struct SyncFileReferenceRow {
     pub record_id: String,
     pub file_name: String,
     pub mime_type: Option<String>,
+    #[serde(skip_serializing)]
+    pub uploaded_bytes: i32,
+    pub total_bytes: i32,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
@@ -69,7 +74,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, sync_file_reference_row: &SyncFileReferenceRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(
+        &self,
+        sync_file_reference_row: &SyncFileReferenceRow,
+    ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
         self.insert_changelog(
             sync_file_reference_row.id.to_owned(),
@@ -108,10 +116,26 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
-        self.insert_changelog(
-            sync_file_reference_id.to_owned(),
-            ChangelogAction::Delete,
-        )?;
+        self.insert_changelog(sync_file_reference_id.to_owned(), ChangelogAction::Delete)?;
+        Ok(())
+    }
+
+    pub fn find_all_to_upload(&self) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+        let result = sync_file_reference
+            .filter(deleted_datetime.is_null())
+            .filter(uploaded_bytes.lt(total_bytes))
+            .load(&self.connection.connection)?;
+        Ok(result)
+    }
+
+    pub fn update_chunk_uploaded(
+        &self,
+        sync_file_reference_id: &str,
+        bytes_uploaded: i32,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
+            .set(uploaded_bytes.eq(uploaded_bytes + bytes_uploaded))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 }

@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::service_provider::ServiceProvider;
+use crate::{
+    service_provider::ServiceProvider, settings::Settings, static_files::StaticFileService,
+    sync::file_synchroniser::FileSynchroniser,
+};
 
 use super::settings::SyncSettings;
 use tokio::{
@@ -21,6 +24,7 @@ pub enum FileSyncMessage {
 
 pub struct FileSyncDriver {
     receiver: Receiver<FileSyncMessage>,
+    static_file_service: Arc<StaticFileService>,
 }
 
 #[derive(Clone)]
@@ -32,11 +36,22 @@ pub struct FileSyncTrigger {
 /// * Expose channel for manually triggering sync
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl FileSyncDriver {
-    pub fn init() -> (FileSyncTrigger, FileSyncDriver) {
+    pub fn init(settings: &Settings) -> (FileSyncTrigger, FileSyncDriver) {
         // We use a single-element channel so that we can only have one trigger message processed at a time (no need to queue them up?)
         let (sender, receiver) = mpsc::channel(1);
 
-        (FileSyncTrigger { sender }, FileSyncDriver { receiver })
+        let static_file_service = Arc::new(
+            StaticFileService::new(&settings.server.base_dir)
+                .expect("Failed to create static file service"),
+        );
+
+        (
+            FileSyncTrigger { sender },
+            FileSyncDriver {
+                receiver,
+                static_file_service,
+            },
+        )
     }
 
     /// FileSyncDriver entry point, this method is meant to be run within main `select!` macro
@@ -112,20 +127,25 @@ impl FileSyncDriver {
     }
 
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) -> usize {
-        // TODO:
-        // ...Try to process a download chunk
-        // Find any files that need to be uploaded
-        // Pick a file to upload
-        // Upload a chunk of the file
-        // Update the file record with the new chunk progress (if finished)
-        // Yield to the runtime to check if we've received a stop signal
+        // ...Try to process a upload chunk
 
-        log::error!("File Sync Not implemented yet!");
-        // let _ = Synchroniser::new(get_sync_settings(&service_provider), service_provider)
-        //     .unwrap()
-        //     .sync()
-        //     .await;
-        let files_to_upload = 0;
+        let result = FileSynchroniser::new(
+            get_sync_settings(&service_provider),
+            service_provider,
+            self.static_file_service.clone(),
+        )
+        .sync()
+        .await;
+
+        let files_to_upload = match result {
+            Ok(num_of_files) => num_of_files,
+            Err(error) => {
+                log::error!("Problem syncing files {:#?}", error);
+                0
+            }
+        };
+        log::error!("Found {} files to upload", files_to_upload);
+
         files_to_upload
     }
 }

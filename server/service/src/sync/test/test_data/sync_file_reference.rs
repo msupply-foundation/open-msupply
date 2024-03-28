@@ -25,6 +25,8 @@ fn sync_file_reference1() -> SyncFileReferenceRow {
         record_id: "3de161ed-93ef-4210-aa31-3ae9e53748e8".to_string(),
         file_name: "asset1.jpg".to_string(),
         mime_type: Some("image/jpeg".to_string()),
+        uploaded_bytes: 0,
+        total_bytes: 0,
         created_datetime: Defaults::naive_date_time(),
         deleted_datetime: None,
     }
