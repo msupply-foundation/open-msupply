@@ -36,6 +36,10 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
                     .wrap(limit_content_length()),
             ),
     );
+    cfg.service(
+        web::resource("/sync_files/{table_name}/{record_id}/{file_id}")
+            .route(web::post().to(upload_sync_file_via_sync)),
+    );
 }
 
 #[derive(Debug, Deserialize)]
@@ -103,6 +107,7 @@ async fn handle_file_upload(
     mut payload: Multipart,
     settings: Data<Settings>,
     file_category: StaticFileCategory,
+    file_id: Option<String>,
 ) -> Result<Vec<UploadedFile>, Error> {
     let service = StaticFileService::new(&settings.server.base_dir)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
@@ -122,7 +127,7 @@ async fn handle_file_upload(
         let sanitized_filename =
             sanitize_filename::sanitize(content_disposition.get_filename().unwrap_or_default());
         let static_file = service
-            .reserve_file(&sanitized_filename, &file_category)
+            .reserve_file(&sanitized_filename, &file_category, file_id.clone())
             .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
         let file_path = static_file.path.clone();
@@ -170,6 +175,71 @@ async fn upload_sync_file(
         payload,
         settings,
         StaticFileCategory::SyncFile(table_name.clone(), record_id.clone()),
+        None,
+    )
+    .await?;
+
+    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+    for file in files.clone() {
+        let result = repo.upsert_one(&SyncFileReferenceRow {
+            id: file.id,
+            file_name: file.filename,
+            table_name: table_name.clone(),
+            mime_type: file.mime_type,
+            uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
+            total_bytes: file.bytes,
+            created_datetime: chrono::Utc::now().naive_utc(),
+            deleted_datetime: None,
+            record_id: record_id.clone(),
+        });
+        match result {
+            Ok(_) => {}
+            Err(err) => {
+                log::error!(
+                    "Error saving file reference: {} - DELETING UPLOADED FILES",
+                    err
+                );
+                // delete any files that were uploaded...
+                for file in files {
+                    // File::create is blocking operation, use threadpool
+                    web::block(|| std::fs::remove_file(file.path)).await??;
+                }
+
+                return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
+            }
+        }
+    }
+
+    Ok(HttpResponse::Ok().json(files))
+}
+
+async fn upload_sync_file_via_sync(
+    payload: Multipart,
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+    path: web::Path<(String, String, String)>,
+) -> Result<HttpResponse, Error> {
+    let db_connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let (table_name, record_id, file_id) = path.into_inner();
+
+    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+
+    let _existing_file = repo
+        .find_one_by_id(&file_id)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        .ok_or(InternalError::new(
+            "Sync File Not found, can't upload until this is synced yet",
+            StatusCode::NOT_FOUND,
+        ))?;
+
+    let files = handle_file_upload(
+        payload,
+        settings,
+        StaticFileCategory::SyncFile(table_name.clone(), record_id.clone()),
+        Some(file_id),
     )
     .await?;
 

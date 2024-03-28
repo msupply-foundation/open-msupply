@@ -20,6 +20,7 @@ pub(crate) enum FileSyncError {
     CantFindFile(String),
     StdIoError(std::io::Error),
     ReqwestError(reqwest::Error),
+    UploadError(String), //TODO improve error handling (e.g. if it needs to wait to sync etc, maybe handle permanent vs temporary errors?)
 }
 
 impl From<RepositoryError> for FileSyncError {
@@ -134,7 +135,7 @@ impl FileSynchroniser {
             sync_file_reference_row.record_id,
             sync_file_reference_row.id
         );
-        log::info!("I would now try uploading the file to: {}", url);
+        log::info!("Uploading {} to {}", sync_file_reference_row.file_name, url);
 
         // Upload file
         // TODO: Authentication...
@@ -145,10 +146,14 @@ impl FileSynchroniser {
                     log::info!("File {} uploaded successfully", sync_file_reference_row.id);
                 } else {
                     log::error!(
-                        "Error uploading file {} - {:#?}",
+                        "Error uploading file {} - {} : {:#?}",
                         sync_file_reference_row.id,
-                        response
+                        response.status(),
+                        response.text().await.unwrap_or_default()
                     );
+                    return Err(FileSyncError::UploadError(
+                        "Error uploading file".to_string(),
+                    ));
                 }
             }
             Err(err) => {
