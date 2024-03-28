@@ -35,14 +35,12 @@ export const SidePanel: FC = () => {
 
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]).then
-    (() => {
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InboundShipment)
-          .build()
-      );
-    });
+    await mutateAsync([data]);
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InboundShipment)
+        .build()
+    );
   };
 
   const onDelete = useDeleteConfirmation({
@@ -83,4 +81,3 @@ export const SidePanel: FC = () => {
     </DetailPanelPortal>
   );
 };
-

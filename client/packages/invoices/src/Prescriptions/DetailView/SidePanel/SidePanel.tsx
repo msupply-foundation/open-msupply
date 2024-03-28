@@ -26,13 +26,12 @@ export const SidePanelComponent = () => {
 
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]).then(() => {
-      navigate(
-        RouteBuilder.create(AppRoute.Dispensary)
-          .addPart(AppRoute.Prescription)
-          .build()
-      );
-    })
+    await mutateAsync([data]);
+    navigate(
+      RouteBuilder.create(AppRoute.Dispensary)
+        .addPart(AppRoute.Prescription)
+        .build()
+    );
   };
 
   const copyToClipboard = () => {

@@ -28,13 +28,12 @@ export const SidePanelComponent = () => {
 
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]).then(()=> {
-      navigate(
-        RouteBuilder.create(AppRoute.Distribution)
-          .addPart(AppRoute.OutboundShipment)
-          .build()
-      );
-    })
+    await mutateAsync([data]);
+    navigate(
+      RouteBuilder.create(AppRoute.Distribution)
+        .addPart(AppRoute.OutboundShipment)
+        .build()
+    );
   };
 
   const onDelete = useDeleteConfirmation({
