@@ -282,7 +282,7 @@ impl LoginService {
             last_name: user_info.user.last_name,
             phone_number: user_info.user.phone1,
             job_title: user_info.user.job_title,
-            last_successful_sync: Utc::now().naive_utc(),
+            last_successful_sync: Some(Utc::now().naive_utc()),
         };
         let stores_permissions: Vec<StorePermissions> = user_info
             .user_stores

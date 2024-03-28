@@ -42,10 +42,12 @@ pub(crate) mod sync_file_reference;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
+pub(crate) mod user;
 pub(crate) mod user_permission;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
     test_records.append(&mut master_list_line::test_pull_upsert_records());

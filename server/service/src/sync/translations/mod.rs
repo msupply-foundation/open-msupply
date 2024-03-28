@@ -43,6 +43,7 @@ pub(crate) mod sync_file_reference;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
+pub(crate) mod user;
 pub(crate) mod user_permission;
 
 use repository::*;
@@ -56,6 +57,7 @@ pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
+        user::boxed(),
         name::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
