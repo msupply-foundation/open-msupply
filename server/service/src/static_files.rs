@@ -72,8 +72,12 @@ impl StaticFileService {
         &self,
         file_name: &str,
         category: &StaticFileCategory,
+        file_id: Option<String>,
     ) -> anyhow::Result<StaticFile> {
-        let id = uuid();
+        let id = match file_id {
+            Some(file_id) => file_id,
+            None => uuid(),
+        };
 
         let dir = self.dir.join(category.to_path_buf());
 
