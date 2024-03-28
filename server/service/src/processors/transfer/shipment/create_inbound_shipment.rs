@@ -152,6 +152,13 @@ fn generate_inbound_shipment(
         None => format!("Stock transfer"),
     };
 
+    // If outbound shipment has tax, then we will also have tax in inbound shipment
+    // but greater than 0.0
+    let tax = match outbound_shipment_row.tax {
+        Some(tax) if tax > 0.0 => Some(tax),
+        _ => None,
+    };
+
     let result = InvoiceRow {
         id: uuid(),
         invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
@@ -169,7 +176,7 @@ fn generate_inbound_shipment(
         shipped_datetime: outbound_shipment_row.shipped_datetime,
         transport_reference: outbound_shipment_row.transport_reference.clone(),
         comment: Some(formatted_comment),
-        tax: outbound_shipment_row.tax,
+        tax,
         currency_id: outbound_shipment_row.currency_id.clone(),
         currency_rate: outbound_shipment_row.currency_rate,
         // Default
