@@ -147,13 +147,12 @@ export const SidePanel: FC = () => {
 
   const deleteAction = async () => {
     if (!data) return;
-    await mutateAsync([data]).then(() => {
-      navigate(
-        RouteBuilder.create(AppRoute.Replenishment)
-          .addPart(AppRoute.InternalOrder)
-          .build()
-      );
-    })
+    await mutateAsync([data]);
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InternalOrder)
+        .build()
+    );
   };
 
   const copyToClipboard = () => {
