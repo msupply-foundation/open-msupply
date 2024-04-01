@@ -129,9 +129,9 @@ impl SyncErrorNode {
 #[cfg(test)]
 mod test {
     use super::*;
-    use actix_web::http::StatusCode;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
+    use reqwest::StatusCode;
     use reqwest::{Client, Url};
     use serde_json::json;
     use service::sync::api::ParsedError;

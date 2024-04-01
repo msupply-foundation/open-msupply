@@ -10,6 +10,7 @@ use repository::{
 use crate::{
     processors::Processors,
     service_provider::{ServiceContext, ServiceProvider},
+    settings::{ServerSettings, Settings},
     sync::{
         file_sync_driver::FileSyncDriver,
         synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
@@ -33,11 +34,23 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
     inserts: MockDataInserts,
     extra_mock_data: MockData,
 ) -> ServiceTestContext {
-    let (_, connection, connection_manager, _) =
+    let (_, connection, connection_manager, db_settings) =
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
 
     let (processors_trigger, processors) = Processors::init();
-    let (file_sync_trigger, _) = FileSyncDriver::init();
+    let (file_sync_trigger, _) = FileSyncDriver::init(&Settings {
+        server: ServerSettings {
+            port: 0,
+            danger_allow_http: false,
+            debug_no_access_control: false,
+            cors_origins: vec![],
+            base_dir: None,
+            machine_uid: None,
+        },
+        database: db_settings,
+        sync: None,
+        logging: None,
+    });
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);
     let (site_is_initialise_trigger, _) = SiteIsInitialisedCallback::init();
 

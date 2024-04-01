@@ -34,7 +34,9 @@ pub struct SyncFileReferenceRow {
     pub file_name: String,
     pub mime_type: Option<String>,
     #[serde(skip_serializing)]
+    #[serde(default)]
     pub uploaded_bytes: i32,
+    #[serde(default)]
     pub total_bytes: i32,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,

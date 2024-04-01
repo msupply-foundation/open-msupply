@@ -71,7 +71,7 @@ impl FileSynchroniser {
             Some(file) => {
                 let bytes_uploaded = self.try_uploading_file(file).await?;
                 // Update database to record the chunk has been uploaded
-                let result = sync_file_repo.update_chunk_uploaded(&file.id, bytes_uploaded)?;
+                sync_file_repo.update_chunk_uploaded(&file.id, bytes_uploaded)?;
             }
             None => {
                 // No files to upload
