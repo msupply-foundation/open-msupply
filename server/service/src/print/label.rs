@@ -12,7 +12,7 @@ pub fn print_qr_code(
     message: Option<String>,
 ) -> Result<String> {
     let qr_height = 133; // approx height in dots for the magnification factor of 4 when printing a uuid
-    let vertical_offset = ((settings.label_height - qr_height) / 2);
+    let vertical_offset = (settings.label_height - qr_height) / 2;
     let formatted_message = match message {
         Some(msg) => {
             // adding max to ensure that the y is not negative

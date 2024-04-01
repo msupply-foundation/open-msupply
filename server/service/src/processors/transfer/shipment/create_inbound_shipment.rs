@@ -86,14 +86,14 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         // Execute
         let new_inbound_shipment = generate_inbound_shipment(
             connection,
-            &outbound_shipment,
+            outbound_shipment,
             record_for_processing,
             request_requisition,
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &new_inbound_shipment.id,
-            &outbound_shipment,
+            outbound_shipment,
         )?;
         let store_preferences = get_store_preferences(connection, &new_inbound_shipment.store_id)?;
 
@@ -165,7 +165,7 @@ fn generate_inbound_shipment(
 
     let formatted_comment = match &outbound_shipment_row.comment {
         Some(comment) => format!("Stock transfer ({})", comment),
-        None => format!("Stock transfer"),
+        None => "Stock transfer".to_string(),
     };
 
     let result = InvoiceRow {

@@ -150,7 +150,7 @@ trait RequisitionTransferProcessor {
         record: &RequisitionTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
         let result = connection
-            .transaction_sync(|connection| self.try_process_record(connection, &record))
+            .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
         if let Some(result) = &result {
