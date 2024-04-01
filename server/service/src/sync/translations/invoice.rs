@@ -286,7 +286,7 @@ impl SyncTranslation for InvoiceTranslation {
             their_reference: data.their_ref,
             tax: data.tax,
             currency_id,
-            currency_rate: data.currency_rate.unwrap_or(1.0),
+            currency_rate: data.currency_rate,
             clinician_link_id: data.clinician_id,
 
             // new om field mappings
@@ -412,8 +412,8 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            currency_id: Some(currency_id),
-            currency_rate: Some(currency_rate),
+            currency_id,
+            currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
         };
 
