@@ -16,7 +16,7 @@ pub enum AssetInternalLocationSortField {
 
 pub type AssetInternalLocationSort = Sort<AssetInternalLocationSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AssetInternalLocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub asset_id: Option<EqualFilter<String>>,
@@ -25,11 +25,7 @@ pub struct AssetInternalLocationFilter {
 
 impl AssetInternalLocationFilter {
     pub fn new() -> AssetInternalLocationFilter {
-        AssetInternalLocationFilter {
-            id: None,
-            asset_id: None,
-            location_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -174,7 +170,7 @@ mod tests {
             location_id: mock_location_1().id,
         };
 
-        let _result = asset_internal_location_row_repository
+        asset_internal_location_row_repository
             .insert_one(&asset_location)
             .unwrap();
 

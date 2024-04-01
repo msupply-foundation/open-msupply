@@ -48,7 +48,7 @@ pub fn update_asset(
         .transaction_sync(|connection| {
             let asset_row = validate(connection, &input)?;
             let updated_asset_row = generate(&ctx.store_id, input.clone(), asset_row.clone());
-            AssetRowRepository::new(&connection).upsert_one(&updated_asset_row)?;
+            AssetRowRepository::new(connection).upsert_one(&updated_asset_row)?;
 
             activity_log_entry(
                 ctx,
@@ -60,7 +60,7 @@ pub fn update_asset(
 
             if input.location_ids.clone().is_some() {
                 set_asset_location(connection, &asset_row.id, input.location_ids.unwrap())
-                    .map_err(|error| UpdateAssetError::DatabaseError(error))?;
+                    .map_err(UpdateAssetError::DatabaseError)?;
             }
 
             get_asset(ctx, updated_asset_row.id).map_err(UpdateAssetError::from)
@@ -99,7 +99,7 @@ pub fn validate(
         Some(location_ids) => {
             match check_locations_are_assigned(location_ids.to_vec(), &input.id, connection) {
                 Ok(locations) => {
-                    if locations.len() > 0 {
+                    if !locations.is_empty() {
                         return Err(UpdateAssetError::LocationsAlreadyAssigned);
                     };
                 }

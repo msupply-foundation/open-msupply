@@ -143,7 +143,6 @@ impl<'a> AssetLogRowRepository<'a> {
         Ok(())
     }
 
-
     pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_row)?;
         // Return the changelog id
@@ -175,7 +174,7 @@ impl<'a> AssetLogRowRepository<'a> {
             table_name: ChangelogTableName::AssetLog,
             record_id: asset_log_id,
             row_action: action,
-            store_id: store_id,
+            store_id,
             name_link_id: None,
         };
 
