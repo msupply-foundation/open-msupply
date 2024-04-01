@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   FnUtils,
   DownloadIcon,
@@ -13,6 +14,8 @@ import {
   ToggleState,
   Platform,
   EnvUtils,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useInbound } from '../api';
@@ -21,9 +24,10 @@ import { inboundsToCsv } from '../../utils';
 export const AppBarButtons: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const { mutate: onCreate } = useInbound.document.insert();
-  const { success, error } = useNotification();
   const t = useTranslation('replenishment');
+  const navigate = useNavigate();
+  const { mutateAsync: onCreate } = useInbound.document.insert();
+  const { success, error } = useNotification();
   const { isLoading, fetchAsync } = useInbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',
@@ -65,7 +69,18 @@ export const AppBarButtons: FC<{
         onClose={modalController.toggleOff}
         onChange={async name => {
           modalController.toggleOff();
-          onCreate({ id: FnUtils.generateUUID(), otherPartyId: name?.id });
+          await onCreate({
+            id: FnUtils.generateUUID(),
+            otherPartyId: name?.id,
+          }).then(invoiceNumber => {
+            navigate(
+              RouteBuilder.create(AppRoute.Replenishment)
+                .addPart(AppRoute.InboundShipment)
+                .addPart(String(invoiceNumber))
+                .build(),
+              { replace: true }
+            );
+          });
         }}
       />
     </AppBarButtonsPortal>

@@ -72,7 +72,7 @@ impl SyncUser {
     pub fn get_latest_successful_user_sync(
         service_provider: &ServiceProvider,
         user_id: &str,
-    ) -> Result<NaiveDateTime, RepositoryError> {
+    ) -> Result<Option<NaiveDateTime>, RepositoryError> {
         let ctx: crate::service_provider::ServiceContext = service_provider.basic_context()?;
 
         let user = UserAccountRowRepository::new(&ctx.connection)

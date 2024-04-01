@@ -79,7 +79,7 @@ pub fn get_consumption_rows(
         date: Some(DateFilter::after_or_equal_to(start_date)),
     };
 
-    ConsumptionRepository::new(&connection).query(Some(filter))
+    ConsumptionRepository::new(connection).query(Some(filter))
 }
 
 pub fn get_stock_on_hand_rows(
@@ -92,7 +92,7 @@ pub fn get_stock_on_hand_rows(
         store_id: Some(EqualFilter::equal_to(store_id)),
     };
 
-    StockOnHandRepository::new(&connection).query(Some(filter))
+    StockOnHandRepository::new(connection).query(Some(filter))
 }
 
 impl ItemStats {

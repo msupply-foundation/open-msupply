@@ -76,14 +76,10 @@ fn extract_sql_entry(
                 },
             )))
         }
-        (None, Some(_)) => {
-            return Err(anyhow::Error::msg("Sqlite query must be specified as well"))
-        }
-        (Some(_), None) => {
-            return Err(anyhow::Error::msg(
-                "Postgres query must be specified as well",
-            ))
-        }
+        (None, Some(_)) => Err(anyhow::Error::msg("Sqlite query must be specified as well")),
+        (Some(_), None) => Err(anyhow::Error::msg(
+            "Postgres query must be specified as well",
+        )),
     }
 }
 
@@ -159,7 +155,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 variables: None,
             }),
         );
-    } else if let Some((query, sql_query)) = extract_sql_entry(&args, &mut files)? {
+    } else if let Some((query, sql_query)) = extract_sql_entry(args, &mut files)? {
         index.query = Some(query.clone());
         entries.insert(query, ReportDefinitionEntry::SQLQuery(sql_query));
     } else if let Some(query_default) = &args.query_default {

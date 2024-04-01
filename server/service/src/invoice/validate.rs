@@ -7,14 +7,14 @@ pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceRowType) -> bool 
     if invoice.r#type == r#type {
         return true;
     }
-    return false;
+    false
 }
 
 pub fn check_store(invoice: &InvoiceRow, store_id: &str) -> bool {
     if invoice.store_id == store_id {
         return true;
     }
-    return false;
+    false
 }
 
 pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRowStatus>) -> bool {
@@ -23,11 +23,11 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRo
             return true;
         }
     }
-    return false;
+    false
 }
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
-    let status = InvoiceRowStatus::from(invoice.status.clone());
+    let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {
         InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match status {
             InvoiceRowStatus::New => true,
@@ -61,7 +61,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     if is_editable {
         return true;
     }
-    return false;
+    false
 }
 
 pub enum InvoiceRowStatusError {
@@ -75,7 +75,7 @@ pub fn check_invoice_status(
     on_hold_option: &Option<bool>,
 ) -> Result<(), InvoiceRowStatusError> {
     if let Some(new_status) = status_option {
-        let existing_status: InvoiceRowStatus = invoice.status.clone().into();
+        let existing_status: InvoiceRowStatus = invoice.status.clone();
         // When we update invoice, error will trigger if
         // * invoice is currently on hold and is not being change to be not on hold
         let is_not_on_hold = !invoice.on_hold || !on_hold_option.unwrap_or(true);
@@ -117,7 +117,7 @@ pub fn check_invoice_does_not_exists(
     if let Err(RepositoryError::NotFound) = &result {
         Ok(())
     } else if let Err(err) = result {
-        Err(InvoiceAlreadyExistsError::RepositoryError(err.into()))
+        Err(InvoiceAlreadyExistsError::RepositoryError(err))
     } else {
         Err(InvoiceAlreadyExistsError::InvoiceAlreadyExists)
     }

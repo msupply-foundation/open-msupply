@@ -70,16 +70,14 @@ pub fn check_reason_is_valid(
             )?;
             return Ok(reason.len() == 1);
         }
-    } else {
-        if let Some(reason_id) = &inventory_adjustment_reason_id {
-            let reason = InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
-                InventoryAdjustmentReasonFilter::new()
-                    .r#type(InventoryAdjustmentReasonType::Negative.equal_to())
-                    .is_active(true)
-                    .id(EqualFilter::equal_to(&reason_id)),
-            )?;
-            return Ok(reason.len() == 1);
-        }
+    } else if let Some(reason_id) = &inventory_adjustment_reason_id {
+        let reason = InventoryAdjustmentReasonRepository::new(&connection).query_by_filter(
+            InventoryAdjustmentReasonFilter::new()
+                .r#type(InventoryAdjustmentReasonType::Negative.equal_to())
+                .is_active(true)
+                .id(EqualFilter::equal_to(&reason_id)),
+        )?;
+        return Ok(reason.len() == 1);
     }
     Ok(false)
 }
@@ -90,7 +88,7 @@ pub fn check_stock_line_reduced_below_zero(
 ) -> bool {
     let adjustment = stock_line.total_number_of_packs - counted_number_of_packs;
 
-    return adjustment > 0.0
+    adjustment > 0.0
         && (stock_line.total_number_of_packs - adjustment < 0.0
-            || stock_line.available_number_of_packs - adjustment < 0.0);
+            || stock_line.available_number_of_packs - adjustment < 0.0)
 }

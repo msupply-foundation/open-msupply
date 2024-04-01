@@ -34,10 +34,10 @@ pub fn update_outbound_shipment_unallocated_line(
         .transaction_sync(|connection| {
             let line_row = validate(connection, &ctx.store_id, &input)?;
             let updated_line = generate(input, line_row)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -163,7 +163,7 @@ mod test_update {
         let service = service_provider.invoice_line_service;
 
         let mut line_to_update = mock_unallocated_line();
-        // Succesfull update
+        // Successful update
         let result = service
             .update_outbound_shipment_unallocated_line(
                 &context,

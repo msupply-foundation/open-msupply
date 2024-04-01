@@ -18,7 +18,7 @@ use graphql_core::{
 };
 use repository::{ClinicianRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, PricingRow};
 
-use repository::{unknown_user, Invoice};
+use repository::Invoice;
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -122,9 +122,9 @@ impl InvoiceNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
