@@ -97,8 +97,7 @@ pub struct LegacyTransactRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
-    pub currency_rate: Option<f64>,
-
+    pub currency_rate: f64,
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -261,14 +260,15 @@ impl SyncTranslation for InvoiceTranslation {
         let mapping = map_legacy(&invoice_type, &data);
 
         let currency_id = match data.currency_id {
-            Some(currency_id) => currency_id,
+            Some(currency_id) => Some(currency_id),
             None => {
-                CurrencyRepository::new(connection)
+                let currency_id = CurrencyRepository::new(connection)
                     .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
                     .pop()
-                    .ok_or(anyhow::Error::msg("Default currency not found"))?
+                    .ok_or(anyhow::Error::msg("Home currency not found"))?
                     .currency_row
-                    .id
+                    .id;
+                Some(currency_id)
             }
         };
 
