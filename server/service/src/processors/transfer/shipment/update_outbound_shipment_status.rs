@@ -67,8 +67,8 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
         let updated_outbound_shipment = InvoiceRow {
             // 6.
             status: inbound_shipment.invoice_row.status.clone(),
-            delivered_datetime: inbound_shipment.invoice_row.delivered_datetime.clone(),
-            verified_datetime: inbound_shipment.invoice_row.verified_datetime.clone(),
+            delivered_datetime: inbound_shipment.invoice_row.delivered_datetime,
+            verified_datetime: inbound_shipment.invoice_row.verified_datetime,
             ..outbound_shipment.invoice_row.clone()
         };
 
