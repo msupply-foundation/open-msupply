@@ -16,7 +16,7 @@ pub fn set_asset_location(
             // delete previous locations
             match repo.delete_all_for_asset_id(asset_id) {
                 Ok(r) => r,
-                Err(e) => return Err(RepositoryError::from(e)),
+                Err(e) => return Err(e),
             };
 
             // re insert asset locations

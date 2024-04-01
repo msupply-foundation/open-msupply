@@ -117,7 +117,7 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
 
 impl Upsert for AssetInternalLocationRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        let _change_log_id = AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
+        AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 

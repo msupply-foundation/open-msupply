@@ -60,10 +60,8 @@ pub async fn test_printer(service_provider: Data<ServiceProvider>) -> HttpRespon
             serde_json::to_string(&HostResponse::parse(&status))
                 .unwrap_or("Failed to parse response".to_string()),
         ),
-        Err(error) => {
-            return HttpResponse::InternalServerError()
-                .body(format!("Error getting printer status: {}", error));
-        }
+        Err(error) => HttpResponse::InternalServerError()
+            .body(format!("Error getting printer status: {}", error)),
     }
 }
 
@@ -147,7 +145,7 @@ impl HostResponse {
             return invalid_response;
         }
         let line1_parts: Vec<&str> = lines[0].split(',').collect();
-        // not testing for endswith \x03 to allow for line split of \r\n on windows
+        // not testing for ends with \x03 to allow for line split of \r\n on windows
         if line1_parts.len() != 12 || !line1_parts[0].starts_with('\x02') {
             return invalid_response;
         }
@@ -174,21 +172,21 @@ mod tests {
 001,0,0,0,1,2,4,0,00000000,1,000
 1234,0"#;
         let parsed_valid_response = HostResponse::parse(valid_response);
-        assert_eq!(parsed_valid_response.is_valid, true);
-        assert_eq!(parsed_valid_response.paper_out, false);
-        assert_eq!(parsed_valid_response.pause, false);
-        assert_eq!(parsed_valid_response.over_temperature, false);
-        assert_eq!(parsed_valid_response.under_temperature, false);
+        assert!(parsed_valid_response.is_valid);
+        assert!(!parsed_valid_response.paper_out);
+        assert!(!parsed_valid_response.pause);
+        assert!(!parsed_valid_response.over_temperature);
+        assert!(!parsed_valid_response.under_temperature);
         assert_eq!(parsed_valid_response.label_length, 290);
 
         // Test invalid response with incorrect number of lines
         let invalid_response1 = "030,0,0,0290,000,0,0,0,000,0,0,0\n";
         let parsed_invalid_response1 = HostResponse::parse(invalid_response1);
-        assert_eq!(parsed_invalid_response1.is_valid, false);
+        assert!(!parsed_invalid_response1.is_valid);
 
         // Test invalid response with incorrect line format
         let invalid_response2 = "030,0,0,0290,000,0,0,0,000,0,0,0\n";
         let parsed_invalid_response2 = HostResponse::parse(invalid_response2);
-        assert_eq!(parsed_invalid_response2.is_valid, false);
+        assert!(!parsed_invalid_response2.is_valid);
     }
 }
