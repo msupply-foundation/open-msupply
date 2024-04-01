@@ -25,7 +25,7 @@ const defaultRenderOption = (option: Option) => (
 
 export const Select: FC<SelectProps> = React.forwardRef(
   (
-    { options, renderOption, sx, InputProps, clearable = true, ...props },
+    { options, renderOption, sx, InputProps, clearable = false, ...props },
     ref
   ) => {
     const t = useTranslation();

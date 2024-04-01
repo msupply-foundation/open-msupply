@@ -39,19 +39,16 @@ pub fn generate(
 
     let new_invoice_lines = old_invoice_lines
         .iter()
-        .map(|line| {
-            let new_line = InvoiceLine {
-                invoice_line_row: InvoiceLineRow {
-                    id: uuid(),
-                    invoice_id: new_invoice.id.clone(),
-                    ..line.invoice_line_row.clone()
-                },
-                invoice_row: new_invoice.clone(),
-                item_row: line.item_row.clone(),
-                location_row_option: line.location_row_option.clone(),
-                stock_line_option: line.stock_line_option.clone(),
-            };
-            new_line
+        .map(|line| InvoiceLine {
+            invoice_line_row: InvoiceLineRow {
+                id: uuid(),
+                invoice_id: new_invoice.id.clone(),
+                ..line.invoice_line_row.clone()
+            },
+            invoice_row: new_invoice.clone(),
+            item_row: line.item_row.clone(),
+            location_row_option: line.location_row_option.clone(),
+            stock_line_option: line.stock_line_option.clone(),
         })
         .collect();
 

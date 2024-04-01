@@ -40,7 +40,7 @@ pub fn add_from_master_list(
             let invoice_row = validate(connection, &ctx.store_id, &input)?;
             let new_invoice_line_rows = generate(ctx, invoice_row, &input)?;
 
-            let invoice_line_row_repository = InvoiceLineRowRepository::new(&connection);
+            let invoice_line_row_repository = InvoiceLineRowRepository::new(connection);
 
             for invoice_line_row in new_invoice_line_rows {
                 invoice_line_row_repository.upsert_one(&invoice_line_row)?;
@@ -114,11 +114,7 @@ fn generate(
         .map(|master_list_line| master_list_line.item_id)
         .collect();
 
-    Ok(generate_unallocated_invoice_lines(
-        ctx,
-        &invoice_row,
-        items_ids_not_in_invoice,
-    )?)
+    generate_unallocated_invoice_lines(ctx, &invoice_row, items_ids_not_in_invoice)
 }
 
 #[cfg(test)]
@@ -296,7 +292,7 @@ mod test {
             .into_iter()
             .map(|invoice_line| invoice_line.item_link_id)
             .collect();
-        item_ids.sort_by(|a, b| a.cmp(&b));
+        item_ids.sort();
 
         let mut test_item_ids = vec![
             mock_item_a().id,
@@ -304,7 +300,7 @@ mod test {
             mock_item_c().id,
             mock_item_d().id,
         ];
-        test_item_ids.sort_by(|a, b| a.cmp(&b));
+        test_item_ids.sort();
 
         assert_eq!(item_ids, test_item_ids);
         let line = result

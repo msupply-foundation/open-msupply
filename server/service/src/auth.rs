@@ -702,13 +702,15 @@ fn validate_resource_permissions(
         PermissionDSL::Any(children) => {
             let mut found_any = false;
             for child in children {
-                if let Ok(_) = validate_resource_permissions(
+                if validate_resource_permissions(
                     user_id,
                     user_permissions,
                     resource_request,
                     child,
                     dynamic_permissions,
-                ) {
+                )
+                .is_ok()
+                {
                     found_any = true;
                     // We could stop iterating children here but we want to collect all
                     // HasDynamicPermission instances that are valid in this Any list.
@@ -770,8 +772,7 @@ impl AuthServiceTrait for AuthService {
         // permissions.
         if user_permissions
             .iter()
-            .find(|item| item.permission == Permission::PatientQuery)
-            .is_some()
+            .any(|item| item.permission == Permission::PatientQuery)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
@@ -783,8 +784,7 @@ impl AuthServiceTrait for AuthService {
         }
         if user_permissions
             .iter()
-            .find(|item| item.permission == Permission::PatientMutate)
-            .is_some()
+            .any(|item| item.permission == Permission::PatientMutate)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),

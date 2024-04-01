@@ -159,7 +159,7 @@ impl<'a> BatchMutationsProcessor<'a> {
         let mut has_errors = false;
         let mut result = vec![];
 
-        for input in inputs.unwrap_or(vec![]) {
+        for input in inputs.unwrap_or_default() {
             let mutation_result = mutation(self.ctx, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {
@@ -183,7 +183,7 @@ impl<'a> BatchMutationsProcessor<'a> {
         let mut has_errors = false;
         let mut result = vec![];
 
-        for input in inputs.unwrap_or(vec![]) {
+        for input in inputs.unwrap_or_default() {
             let mutation_result = mutation(self.ctx, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {

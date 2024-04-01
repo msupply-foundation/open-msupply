@@ -132,6 +132,12 @@ impl CentralDataSynchroniserV6 {
             };
 
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
+            log::info!(
+                "Pushing {}/{} records to v6 central server",
+                changelogs.len(),
+                change_logs_total
+            );
+            log::debug!("Records: {:#?}", changelogs);
 
             let records = translate_changelogs_to_sync_records(
                 connection,
