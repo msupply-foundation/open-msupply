@@ -172,9 +172,8 @@ mod test {
     use crate::service_provider::ServiceProvider;
     use repository::{
         mock::{
-            currency_a, mock_item_a, mock_name_a,
-            mock_new_response_requisition_for_update_test_line, mock_store_a, mock_store_b,
-            MockData, MockDataInserts,
+            mock_item_a, mock_name_a, mock_new_response_requisition_for_update_test_line,
+            mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow, RequisitionRow,
@@ -283,7 +282,6 @@ mod test {
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
-                    r.currency_id = currency_a().id;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
@@ -530,7 +528,6 @@ mod test {
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
-                    r.currency_id = currency_a().id;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);

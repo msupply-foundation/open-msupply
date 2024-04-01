@@ -1347,7 +1347,7 @@ export type DocumentNode = {
   schema?: Maybe<JsonschemaNode>;
   timestamp: Scalars['DateTime']['output'];
   type: Scalars['String']['output'];
-  user: UserNode;
+  user?: Maybe<UserNode>;
   userId: Scalars['String']['output'];
 };
 
@@ -2550,7 +2550,7 @@ export type InvoiceNode = {
   colour?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
-  currency: CurrencyNode;
+  currency?: Maybe<CurrencyNode>;
   currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
@@ -5566,8 +5566,7 @@ export type StocktakeNode = {
   stocktakeDate?: Maybe<Scalars['NaiveDate']['output']>;
   stocktakeNumber: Scalars['Int']['output'];
   storeId: Scalars['String']['output'];
-  /** User that created stocktake, if user is not found in system default unknown user is returned */
-  user: UserNode;
+  user?: Maybe<UserNode>;
 };
 
 export enum StocktakeNodeStatus {
@@ -6600,7 +6599,7 @@ export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
 
 export type UpdateUserNode = {
   __typename: 'UpdateUserNode';
-  lastSuccessfulSync: Scalars['DateTime']['output'];
+  lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
 };
 
 export type UpdateUserResponse = ConnectionError | UpdateUserNode;

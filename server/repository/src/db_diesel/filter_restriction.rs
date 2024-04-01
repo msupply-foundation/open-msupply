@@ -23,7 +23,7 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{currency_a, mock_name_a, MockData, MockDataInserts},
+        mock::{mock_name_a, MockData, MockDataInserts},
         test_db, EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceRow,
     };
 
@@ -33,7 +33,6 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("A".to_string());
-            r.currency_id = currency_a().id;
         })
     }
 
@@ -43,7 +42,6 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("B".to_string());
-            r.currency_id = currency_a().id;
         })
     }
 
@@ -53,7 +51,6 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("Excluded".to_string());
-            r.currency_id = currency_a().id;
         })
     }
 
@@ -63,7 +60,6 @@ mod tests {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = None;
-            r.currency_id = currency_a().id;
         })
     }
 

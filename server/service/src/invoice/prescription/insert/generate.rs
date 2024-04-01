@@ -32,7 +32,7 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         // Default
-        currency_id: currency.currency_row.id,
+        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         colour: None,
         tax: None,
