@@ -151,7 +151,7 @@ mod test {
             InvoiceRow {
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
-                currency_id: currency_a().id,
+                currency_id: Some(currency_a().id),
                 r#type: InvoiceRowType::OutboundReturn,
                 status: InvoiceRowStatus::New,
                 ..Default::default()
