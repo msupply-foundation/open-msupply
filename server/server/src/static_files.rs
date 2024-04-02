@@ -288,9 +288,30 @@ async fn sync_files(
     let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
 
     let file = service
-        .find_file(&query.id, static_file_category)
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
-        .ok_or_else(|| std::io::Error::new(ErrorKind::NotFound, "Static file not found"))?;
+        .find_file(&query.id, static_file_category.clone())
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let file = match file {
+        None => {
+            log::info!(
+                "Sync File not found locally, let's try to get it from the central server: {}",
+                query.id
+            );
+
+            service
+                .download_file_from_central(&query.id, static_file_category, &settings.into_inner())
+                .await
+                .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        }
+        Some(file) => {
+            log::debug!("Sync File found: {}", query.id);
+            Some(file)
+        }
+    };
+    let file = match file {
+        Some(file) => file,
+        None => return Err(InternalError::new("No file found", StatusCode::NOT_FOUND).into()),
+    };
 
     let response = fs::NamedFile::open(file.path)?
         .set_content_disposition(ContentDisposition {
