@@ -297,7 +297,7 @@ pub async fn start_server(
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(closure_settings.clone()))
-            .wrap(logger_middleware())
+            // .wrap(logger_middleware())
             .wrap(cors_policy(&closure_settings))
             .wrap(compress_middleware())
             // needed for static files service

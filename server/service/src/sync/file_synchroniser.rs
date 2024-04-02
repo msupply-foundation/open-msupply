@@ -1,3 +1,4 @@
+use rand::prelude::SliceRandom;
 use reqwest::multipart;
 use std::io::Read;
 use std::sync::Arc;
@@ -64,9 +65,9 @@ impl FileSynchroniser {
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
         let files = sync_file_repo.find_all_to_upload()?;
 
-        // TODO, pick a file and upload a chunk...
-
-        let file = files.first();
+        // pick a random file and upload it
+        // A random file is chosen in case one particular file is having problems, others should be able to continue
+        let file = files.choose(&mut rand::thread_rng());
         match file {
             Some(file) => {
                 let bytes_uploaded = self.try_uploading_file(file).await?;
@@ -129,7 +130,7 @@ impl FileSynchroniser {
 
         // Calculate url for upload
         let url = format!(
-            "{}/sync_files/{}/{}/{}",
+            "{}/{}/{}/{}",
             self.settings.file_upload_base_url(),
             sync_file_reference_row.table_name,
             sync_file_reference_row.record_id,
