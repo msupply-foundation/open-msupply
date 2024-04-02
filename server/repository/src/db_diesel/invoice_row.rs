@@ -42,6 +42,7 @@ table! {
         currency_id -> Text,
         currency_rate -> Double,
         clinician_link_id -> Nullable<Text>,
+        original_shipment_id -> Nullable<Text>,
     }
 }
 
@@ -66,6 +67,8 @@ pub enum InvoiceRowType {
     InventoryAddition,
     InventoryReduction,
     Repack,
+    InboundReturn,
+    OutboundReturn,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -110,6 +113,7 @@ pub struct InvoiceRow {
     pub currency_id: String,
     pub currency_rate: f64,
     pub clinician_link_id: Option<String>,
+    pub original_shipment_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -141,6 +145,7 @@ impl Default for InvoiceRow {
             currency_id: Default::default(),
             currency_rate: Default::default(),
             clinician_link_id: Default::default(),
+            original_shipment_id: Default::default(),
         }
     }
 }

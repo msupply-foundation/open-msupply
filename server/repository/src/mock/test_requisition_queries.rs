@@ -198,6 +198,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     number_of_packs: 10.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
                     foreign_currency_price_before_tax: None,
                 },
                 stock_line: StockLineRow {
@@ -239,6 +240,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     number_of_packs: 10.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
                     foreign_currency_price_before_tax: None,
                 },
                 stock_line: StockLineRow {
@@ -303,6 +305,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 number_of_packs: 10.0,
                 note: None,
                 inventory_adjustment_reason_id: None,
+                return_reason_id: None,
                 foreign_currency_price_before_tax: None,
             },
             stock_line: StockLineRow {
@@ -366,6 +369,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 number_of_packs: 10.0,
                 note: None,
                 inventory_adjustment_reason_id: None,
+                return_reason_id: None,
                 foreign_currency_price_before_tax: None,
             },
             stock_line: StockLineRow {

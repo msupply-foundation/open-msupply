@@ -19,6 +19,11 @@ const fullOutboundShipmentPath = RouteBuilder.create(AppRoute.Distribution)
   .addWildCard()
   .build();
 
+const fullInboundReturnPath = RouteBuilder.create(AppRoute.Distribution)
+  .addPart(AppRoute.InboundReturn)
+  .addWildCard()
+  .build();
+
 const fullCustomerRequisitionPath = RouteBuilder.create(AppRoute.Distribution)
   .addPart(AppRoute.CustomerRequisition)
   .addWildCard()
@@ -33,8 +38,9 @@ export const DistributionRouter: FC = () => {
   const gotoOutboundShipment = useMatch(fullOutboundShipmentPath);
   const gotoCustomerRequisition = useMatch(fullCustomerRequisitionPath);
   const gotoCustomers = useMatch(fullCustomersPath);
+  const goToInboundReturn = useMatch(fullInboundReturnPath);
 
-  if (gotoOutboundShipment) {
+  if (gotoOutboundShipment || goToInboundReturn) {
     return <InvoiceService />;
   }
   if (gotoCustomerRequisition) {

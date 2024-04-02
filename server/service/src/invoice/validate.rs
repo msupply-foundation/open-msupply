@@ -29,7 +29,7 @@ pub fn check_status_change(invoice: &InvoiceRow, status_option: Option<InvoiceRo
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {
-        InvoiceRowType::OutboundShipment => match status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match status {
             InvoiceRowStatus::New => true,
             InvoiceRowStatus::Allocated => true,
             InvoiceRowStatus::Picked => true,
@@ -37,7 +37,7 @@ pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
             InvoiceRowStatus::Delivered => false,
             InvoiceRowStatus::Verified => false,
         },
-        InvoiceRowType::InboundShipment => match status {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => match status {
             InvoiceRowStatus::New => true,
             InvoiceRowStatus::Shipped => true,
             InvoiceRowStatus::Delivered => true,

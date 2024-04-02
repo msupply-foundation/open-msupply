@@ -42,6 +42,8 @@ pub enum ReportContext {
     Patient,
     Dispensary,
     Repack,
+    OutboundReturn,
+    InboundReturn,
 }
 
 #[derive(InputObject, Clone)]
@@ -175,6 +177,8 @@ impl ReportContext {
             ReportContext::Patient => ReportContextDomain::Patient,
             ReportContext::Dispensary => ReportContextDomain::Dispensary,
             ReportContext::Repack => ReportContextDomain::Repack,
+            ReportContext::OutboundReturn => ReportContextDomain::OutboundReturn,
+            ReportContext::InboundReturn => ReportContextDomain::InboundReturn,
         }
     }
 
@@ -189,6 +193,8 @@ impl ReportContext {
             ReportContextDomain::Patient => ReportContext::Patient,
             ReportContextDomain::Dispensary => ReportContext::Dispensary,
             ReportContextDomain::Repack => ReportContext::Repack,
+            ReportContextDomain::OutboundReturn => ReportContext::OutboundReturn,
+            ReportContextDomain::InboundReturn => ReportContext::InboundReturn,
         }
     }
 }
