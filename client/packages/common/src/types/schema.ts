@@ -385,9 +385,9 @@ export type AssetLogNode = {
 };
 
 export enum AssetLogReasonInput {
-  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingDecommissioning = 'AWAITING_DECOMMISSIONING',
   AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   LackOfPower = 'LACK_OF_POWER',
   MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
@@ -414,7 +414,7 @@ export type AssetLogSortInput = {
 };
 
 export enum AssetLogStatusInput {
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
@@ -5152,9 +5152,9 @@ export type RawDocumentNode = {
 };
 
 export enum ReasonType {
-  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingDecommissioning = 'AWAITING_DECOMMISSIONING',
   AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   LackOfPower = 'LACK_OF_POWER',
   MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
@@ -5624,7 +5624,7 @@ export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & 
 };
 
 export enum StatusType {
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
