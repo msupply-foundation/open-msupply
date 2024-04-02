@@ -128,8 +128,8 @@ impl From<TransactionError<OutError>> for OutError {
 mod test {
     use repository::{
         mock::{
-            mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a, mock_item_b,
-            mock_name_customer_a, mock_outbound_return_a, mock_outbound_shipment_a,
+            currency_a, mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
+            mock_item_b, mock_name_customer_a, mock_outbound_return_a, mock_outbound_shipment_a,
             mock_outbound_shipment_e, mock_store_a, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -346,6 +346,7 @@ mod test {
         fn returnable_outbound_shipment() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "returnable_outbound_shipment".to_string();
+                r.currency_id = currency_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Verified;
                 r.store_id = mock_store_a().id;
