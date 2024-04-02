@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Create a report for a bug or to help us improve
-title: A brief clear title explaining the bug
+title: A brief clear title describing the bug from a user's perspective
 labels: bug, needs triage
 assignees: ''
 
@@ -23,8 +23,8 @@ Steps to reproduce the behaviour:
 
 ## Your environment 🌱
 <!-- e.g. 1.2.3 -->
-- Open mSupply Version: 
-- Legacy mSupply Central Server Version: 
+- Open mSupply Version:
+- Legacy mSupply Central Server Version:
 <!-- e.g. android, browser (extra points if you tell us which one), desktop (windows), desktop (macOS), server (windows) -->
 - Platform:
 <!-- PostgreSQL or SQLite3 -->
