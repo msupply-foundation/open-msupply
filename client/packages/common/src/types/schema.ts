@@ -4049,6 +4049,7 @@ export type OutboundReturnLineNode = {
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
   itemCode: Scalars['String']['output'];
+  itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksToReturn: Scalars['Float']['output'];

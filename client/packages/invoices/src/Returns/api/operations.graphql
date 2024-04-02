@@ -196,6 +196,7 @@ query generateOutboundReturnLines(
         batch
         expiryDate
         id
+        itemId
         itemCode
         itemName
         numberOfPacksToReturn
