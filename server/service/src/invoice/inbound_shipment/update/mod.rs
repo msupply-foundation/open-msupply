@@ -52,7 +52,8 @@ pub fn update_inbound_shipment(
                 update_invoice,
                 empty_lines_to_trim,
                 location_movements,
-                update_lines,
+                update_tax_for_lines,
+                update_currency_for_lines,
             } = generate(
                 connection,
                 &ctx.store_id,
@@ -89,9 +90,16 @@ pub fn update_inbound_shipment(
                 }
             }
 
-            if let Some(update_lines) = update_lines {
-                for line in update_lines {
-                    invoice_line_repository.upsert_one(&line)?;
+            if let Some(update_tax) = update_tax_for_lines {
+                for line in update_tax {
+                    invoice_line_repository.update_tax(&line.id, line.tax, line.total_after_tax)?;
+                }
+            }
+
+            if let Some(update_currency) = update_currency_for_lines {
+                for line in update_currency {
+                    invoice_line_repository
+                        .update_currency(&line.id, line.foreign_currency_price_before_tax)?;
                 }
             }
 
