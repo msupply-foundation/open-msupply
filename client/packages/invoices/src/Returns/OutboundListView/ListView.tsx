@@ -12,6 +12,7 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDataSetter,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { getStatusTranslator } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -73,6 +74,13 @@ const OutboundReturnListViewComponent: FC = () => {
         { description: 'description.invoice-number', maxWidth: 110 },
       ],
       'createdDatetime',
+      ['comment', { width: 125, Cell: TooltipTextCell }],
+      [
+        'theirReference',
+        {
+          Cell: TooltipTextCell,
+        },
+      ],
       'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },
