@@ -1,4 +1,10 @@
 pub(crate) mod activity_log;
+pub(crate) mod asset;
+pub(crate) mod asset_catalogue_item;
+pub(crate) mod asset_category;
+pub(crate) mod asset_class;
+pub(crate) mod asset_log;
+pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
@@ -6,7 +12,6 @@ pub(crate) mod currency;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
-pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -23,6 +28,7 @@ pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
+pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -33,9 +39,11 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod sync_file_reference;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
+pub(crate) mod user;
 pub(crate) mod user_permission;
 
 use repository::*;
@@ -49,6 +57,7 @@ pub(crate) type SyncTranslators = Vec<Box<dyn SyncTranslation>>;
 pub(crate) fn all_translators() -> SyncTranslators {
     vec![
         // Central
+        user::boxed(),
         name::boxed(),
         name_tag::boxed(),
         name_tag_join::boxed(),
@@ -62,7 +71,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         period::boxed(),
         program_requisition_settings::boxed(),
         report::boxed(),
-        inventory_adjustment_reason::boxed(),
+        reason::boxed(),
         store_preference::boxed(),
         form_schema::boxed(),
         document_registry::boxed(),
@@ -95,11 +104,20 @@ pub(crate) fn all_translators() -> SyncTranslators {
         special::name_merge::boxed(),
         special::item_merge::boxed(),
         special::clinician_merge::boxed(),
+        // Assets
+        asset::boxed(),
+        asset_class::boxed(),
+        asset_category::boxed(),
+        asset_type::boxed(),
+        asset_catalogue_item::boxed(),
+        asset_log::boxed(),
+        //Sync file reference
+        sync_file_reference::boxed(),
     ]
 }
 
 /// Calculates the integration order based on the PullDependencies in the SyncTranslators
-pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'static str> {
+pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&str> {
     // fill output so that tables with the least dependencies come first
     let mut output = vec![];
 
@@ -107,7 +125,7 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
     for translator in translators {
         let pull_deps = translator.pull_dependencies();
         let table = translator.table_name();
-        if pull_deps.len() == 0 {
+        if pull_deps.is_empty() {
             ts.insert(table);
             continue;
         }
@@ -118,8 +136,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
 
     loop {
         let mut next = ts.pop_all();
-        if next.len() == 0 {
-            if ts.len() != 0 {
+        if next.is_empty() {
+            if !ts.is_empty() {
                 panic!("Circular dependencies");
             }
             break;
@@ -132,8 +150,8 @@ pub(crate) fn pull_integration_order(translators: &SyncTranslators) -> Vec<&'sta
 
 #[derive(Debug)]
 pub(crate) enum IntegrationOperation {
-    Upsert(Box<dyn Upsert>),
-    Delete(Box<dyn Delete>),
+    Upsert(Box<dyn Upsert>, Option<i32>), // Upsert record, and source_site_id
+    Delete(Box<dyn Delete>),              // Todo: add source site id?
 }
 
 impl IntegrationOperation {
@@ -141,7 +159,7 @@ impl IntegrationOperation {
     where
         U: Upsert + 'static,
     {
-        Self::Upsert(Box::new(upsert))
+        Self::Upsert(Box::new(upsert), None) // TODO?
     }
 
     pub(crate) fn delete<U>(delete: U) -> Self
@@ -183,9 +201,22 @@ impl PullTranslateResult {
         Self::IntegrationOperations(
             upsert
                 .into_iter()
-                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert)))
+                .map(|upsert| IntegrationOperation::Upsert(Box::new(upsert), None)) // Source site is added later using add_source_site_id
                 .collect(),
         )
+    }
+
+    pub(crate) fn add_source_site_id(&mut self, source_site_id: i32) {
+        match self {
+            Self::IntegrationOperations(operations) => {
+                for operation in operations {
+                    if let IntegrationOperation::Upsert(_, ref mut site_id) = operation {
+                        *site_id = Some(source_site_id);
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 
     pub(crate) fn delete<U>(upsert: U) -> Self
@@ -258,7 +289,6 @@ pub(crate) enum ToSyncRecordTranslationType {
     /// When omSupply remote is pushing to og mSupply central
     PushToLegacyCentral,
     /// When omSupply remote is pushing to omSupply central
-    #[allow(dead_code)]
     PushToOmSupplyCentral,
     // When omSupply remote is pulling from omSupply central
     PullFromOmSupplyCentral,
@@ -269,14 +299,14 @@ pub(crate) enum ToSyncRecordTranslationType {
 ///  * pulled from legacy and omSupply central servers
 ///  * pushed to legacy and omSupply central servers
 /// also used on central site when responding to pull requests
-/// from remote sites, to trasnalte to sync record sent in response
+/// from remote sites, to translate to sync record sent in response
 ///
 /// "sync_record" in this context refers to transport layer records (json representation of database record alongside metadata like table_name)
 pub(crate) trait SyncTranslation {
     /// Returns information about which legacy tables need to be integrated first before this
     /// translation can run.
-    fn pull_dependencies(&self) -> Vec<&'static str>;
-    fn table_name(&self) -> &'static str;
+    fn pull_dependencies(&self) -> Vec<&str>;
+    fn table_name(&self) -> &str;
     /// By default matching by table name
     /// used to determine if translation applies when remote site pulls sync records from central
     fn should_translate_from_sync_record(&self, row: &SyncBufferRow) -> bool {
@@ -327,7 +357,7 @@ pub(crate) trait SyncTranslation {
             // Have to manually specify in the translation
             ToSyncRecordTranslationType::PullFromOmSupplyCentral => false,
             // Have to manually specify in the translation
-            ToSyncRecordTranslationType::PushToOmSupplyCentral => unimplemented!(),
+            ToSyncRecordTranslationType::PushToOmSupplyCentral => false,
         }
     }
 
@@ -380,16 +410,16 @@ fn translate_changelog(
     let mut translation_results = Vec::new();
 
     for translator in translators.iter() {
-        if !translator.should_translate_to_sync_record(&changelog, r#type) {
+        if !translator.should_translate_to_sync_record(changelog, r#type) {
             continue;
         }
 
         let translation_result = match changelog.row_action {
             ChangelogAction::Upsert => {
-                translator.try_translate_to_upsert_sync_record(connection, &changelog)?
+                translator.try_translate_to_upsert_sync_record(connection, changelog)?
             }
             ChangelogAction::Delete => {
-                translator.try_translate_to_delete_sync_record(connection, &changelog)?
+                translator.try_translate_to_delete_sync_record(connection, changelog)?
             }
         };
 

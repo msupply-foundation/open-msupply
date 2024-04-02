@@ -99,9 +99,7 @@ impl Loader<String> for InvoiceByRequisitionIdLoader {
         let mut result: HashMap<String, Vec<Invoice>> = HashMap::new();
         for invoice in invoices.rows {
             if let Some(requisition_id) = &invoice.invoice_row.requisition_id {
-                let list = result
-                    .entry(requisition_id.clone())
-                    .or_insert_with(|| Vec::<Invoice>::new());
+                let list = result.entry(requisition_id.clone()).or_default();
                 list.push(invoice);
             }
         }

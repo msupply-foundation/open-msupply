@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   Grid,
   CopyIcon,
@@ -15,6 +16,9 @@ import {
   InfoTooltipIcon,
   DeleteIcon,
   useDeleteConfirmation,
+  useFormatDateTime,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
@@ -22,12 +26,11 @@ import { canDeleteStocktake } from '../../utils';
 const AdditionalInfoSection: FC = () => {
   const t = useTranslation();
 
-  const { comment, user, update } = useStocktake.document.fields([
-    'comment',
-    'user',
-  ]);
+  const { comment, user, createdDatetime, update } =
+    useStocktake.document.fields(['comment', 'user', 'createdDatetime']);
   const [bufferedComment, setBufferedComment] = useBufferState(comment ?? '');
   const isDisabled = useStocktake.utils.isDisabled();
+  const { localisedDate } = useFormatDateTime();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -36,6 +39,10 @@ const AdditionalInfoSection: FC = () => {
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user.email} /> : null}
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
@@ -53,8 +60,9 @@ const AdditionalInfoSection: FC = () => {
 };
 
 export const SidePanel = () => {
-  const { success } = useNotification();
   const t = useTranslation('inventory');
+  const { success } = useNotification();
+  const navigate = useNavigate();
   const { mutateAsync } = useStocktake.document.delete();
   const { data: stocktake } = useStocktake.document.get();
   const canDelete = stocktake ? canDeleteStocktake(stocktake) : false;
@@ -68,6 +76,11 @@ export const SidePanel = () => {
   const deleteAction = async () => {
     if (!stocktake) return;
     await mutateAsync([stocktake]);
+    navigate(
+      RouteBuilder.create(AppRoute.Inventory)
+        .addPart(AppRoute.Stocktakes)
+        .build()
+    );
   };
 
   const onDelete = useDeleteConfirmation({

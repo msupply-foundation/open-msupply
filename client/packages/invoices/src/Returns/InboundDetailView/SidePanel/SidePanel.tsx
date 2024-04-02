@@ -11,6 +11,8 @@ import {
 } from '@openmsupply-client/common';
 import { useReturns } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
+import { RelatedDocumentsSection } from './RelatedDocumentsSection';
+import { TransportSection } from './TransportSection';
 
 export const SidePanelComponent = () => {
   const { success } = useNotification();
@@ -18,7 +20,7 @@ export const SidePanelComponent = () => {
   const { data } = useReturns.document.inboundReturn();
   const { mutateAsync } = useReturns.document.deleteInbound();
 
-  // const isTransfer = !!data?.linkedShipment?.id;
+  const isTransfer = !!data?.linkedShipment?.id;
 
   const canDelete = data?.status === InvoiceNodeStatus.New;
   const deleteAction = async () => {
@@ -64,9 +66,9 @@ export const SidePanelComponent = () => {
       }
     >
       <AdditionalInfoSection />
-      {/* <RelatedDocumentsSection /> */}
+      <RelatedDocumentsSection />
       {/* <PricingSection /> */}
-      {/* {isTransfer && <TransportSection />} */}
+      {isTransfer && <TransportSection />}
     </DetailPanelPortal>
   );
 };

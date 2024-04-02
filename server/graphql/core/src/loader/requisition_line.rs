@@ -39,7 +39,7 @@ impl Loader<String> for RequisitionLinesByRequisitionIdLoader {
         for requisition_line in requisition_lines.rows {
             let list = result
                 .entry(requisition_line.requisition_line_row.requisition_id.clone())
-                .or_insert_with(|| Vec::<RequisitionLine>::new());
+                .or_default();
             list.push(requisition_line);
         }
         Ok(result)

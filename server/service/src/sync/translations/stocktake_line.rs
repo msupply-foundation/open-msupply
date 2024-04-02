@@ -1,9 +1,8 @@
 use crate::sync::{
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
     translations::{
-        inventory_adjustment_reason::InventoryAdjustmentReasonTranslation, item::ItemTranslation,
-        location::LocationTranslation, stock_line::StockLineTranslation,
-        stocktake::StocktakeTranslation,
+        item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
     },
 };
 use chrono::NaiveDate;
@@ -54,17 +53,17 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct StocktakeLineTranslation;
 impl SyncTranslation for StocktakeLineTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "Stock_take_lines"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             StocktakeTranslation.table_name(),
             StockLineTranslation.table_name(),
             ItemTranslation.table_name(),
             LocationTranslation.table_name(),
-            InventoryAdjustmentReasonTranslation.table_name(),
+            ReasonTranslation.table_name(),
         ]
     }
 
@@ -168,7 +167,7 @@ impl SyncTranslation for StocktakeLineTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 

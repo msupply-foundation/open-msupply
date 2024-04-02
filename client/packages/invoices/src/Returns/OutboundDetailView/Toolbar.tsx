@@ -12,19 +12,28 @@ import {
   useIsGrouped,
   Switch,
 } from '@openmsupply-client/common';
-import { useReturns } from '../api';
+import { OutboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('replenishment');
-  const { data } = useReturns.document.outboundReturn();
-  const { otherPartyName, id: returnId = '' } = data ?? {};
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundReturn');
-  const onDelete = useReturns.lines.deleteSelectedOutboundLines({ returnId });
-  //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
-  //     useBufferState(theirReference);
-  //   const { mutateAsync: updateName } = useOutbound.document.updateName();
+  const { debouncedMutateAsync } = useReturns.document.updateOutboundReturn();
 
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const { bufferedState, setBufferedState } =
+    useReturns.document.outboundReturn();
+  const { otherPartyName, theirReference, id } = bufferedState ?? { id: '' };
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('outboundReturn');
+
+  const onDelete = useReturns.lines.deleteSelectedOutboundLines({
+    returnId: id,
+  });
+
+  const update = (data: Partial<OutboundReturnFragment>) => {
+    if (!id) return;
+    setBufferedState({ ...data });
+    debouncedMutateAsync({ id, ...data });
+  };
+
+  const isDisabled = useReturns.utils.outboundIsDisabled();
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -43,21 +52,20 @@ export const Toolbar: FC = () => {
                 Input={<BasicTextInput value={otherPartyName} disabled />}
               />
             )}
-            {/* <InputWithLabelRow
-              label={t('label.customer-ref')}
+            <InputWithLabelRow
+              label={t('label.supplier-ref')}
               Input={
                 <BasicTextInput
                   disabled={isDisabled}
                   size="small"
                   sx={{ width: 250 }}
-                  value={theirReferenceBuffer ?? ''}
+                  value={theirReference}
                   onChange={event => {
-                    setTheirReferenceBuffer(event.target.value);
                     update({ theirReference: event.target.value });
                   }}
                 />
               }
-            /> */}
+            />
           </Box>
         </Grid>
         <Grid

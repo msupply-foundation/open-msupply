@@ -9,9 +9,11 @@ import React from 'react';
 export const QuantityToReturnTableComponent = ({
   lines,
   updateLine,
+  isDisabled,
 }: {
   lines: OutboundReturnLineNode[];
   updateLine: (line: Partial<OutboundReturnLineNode> & { id: string }) => void;
+  isDisabled: boolean;
 }) => {
   const columns = useColumns<OutboundReturnLineNode>(
     [
@@ -27,6 +29,7 @@ export const QuantityToReturnTableComponent = ({
         {
           width: 100,
           setter: updateLine,
+          getIsDisabled: () => isDisabled,
           Cell: props => (
             <NumberInputCell
               {...props}

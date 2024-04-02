@@ -66,6 +66,8 @@ impl ReportQueries {
         .await
     }
 
+    /// Can be used when developing reports, e.g. to print a report that is not already in the
+    /// system.
     pub async fn print_report_definition(
         &self,
         ctx: &Context<'_>,

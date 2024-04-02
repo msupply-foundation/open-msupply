@@ -3,7 +3,7 @@ use super::{
     master_list_row::master_list, name_link_row::name_link, StorageConnection,
 };
 use crate::repository_error::RepositoryError;
-use crate::Upsert;
+use crate::{Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -94,6 +94,21 @@ impl Upsert for MasterListLineRow {
         assert_eq!(
             MasterListLineRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MasterListLineRowDelete(pub String);
+impl Delete for MasterListLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        MasterListLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            MasterListLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
         )
     }
 }

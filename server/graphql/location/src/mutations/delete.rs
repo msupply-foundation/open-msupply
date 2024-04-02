@@ -100,7 +100,7 @@ pub struct LocationInUse {
 
 #[Object]
 impl LocationInUse {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Location in use"
     }
 

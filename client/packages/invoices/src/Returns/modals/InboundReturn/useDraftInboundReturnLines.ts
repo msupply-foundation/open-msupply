@@ -13,11 +13,13 @@ export const useDraftInboundReturnLines = ({
   outboundShipmentLineIds,
   itemId,
   returnId,
+  outboundShipmentId,
 }: {
   outboundShipmentLineIds: string[];
   customerId: string;
   itemId?: string;
   returnId?: string;
+  outboundShipmentId?: string;
 }) => {
   const [draftLines, setDraftLines] = React.useState<
     GeneratedInboundReturnLineNode[]
@@ -35,7 +37,7 @@ export const useDraftInboundReturnLines = ({
   const { mutateAsync: updateLines } = useReturns.lines.updateInboundLines();
 
   useEffect(() => {
-    if (!draftLines.length) getLines();
+    getLines();
 
     async function getLines() {
       const { data } = await refetch();
@@ -115,6 +117,7 @@ export const useDraftInboundReturnLines = ({
       await insert({
         id: FnUtils.generateUUID(),
         customerId,
+        outboundShipmentId,
         inboundReturnLines,
       });
     } else {

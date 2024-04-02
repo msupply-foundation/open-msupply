@@ -2,13 +2,13 @@ use crate::{
     requisition::common::{check_requisition_row_exists, get_lines_for_requisition},
     service_provider::ServiceContext,
 };
-use repository::EqualFilter;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
     MasterList, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
     MasterListRepository, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, StorageConnection,
 };
+use repository::{EqualFilter, ItemRowType};
 
 use super::generate_requisition_lines;
 
@@ -102,7 +102,8 @@ fn generate(
         .query_by_filter(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
-                .item_id(EqualFilter::not_equal_all(item_ids_in_requisition)),
+                .item_id(EqualFilter::not_equal_all(item_ids_in_requisition))
+                .item_type(ItemRowType::Stock.equal_to()),
         )?;
 
     let items_ids_not_in_requisition: Vec<String> = master_list_lines_not_in_requisition

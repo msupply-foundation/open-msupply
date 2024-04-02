@@ -50,7 +50,7 @@ impl PluginFileService {
     ) -> anyhow::Result<Vec<PluginFile>> {
         let mut files = Vec::new();
         let plugin_base_dir = get_plugin_dir(base_dir)?;
-        let paths = fs::read_dir(&plugin_base_dir)?;
+        let paths = fs::read_dir(plugin_base_dir)?;
 
         for plugin_dir in paths {
             let plugin_dir = plugin_dir?.path();
@@ -86,7 +86,7 @@ impl PluginFileService {
 
 fn get_plugin_dir(base_dir: &Option<String>) -> Result<PathBuf, anyhow::Error> {
     Ok(match base_dir {
-        Some(file_dir) => PathBuf::from_str(&file_dir)?.join(PLUGIN_FILE_DIR),
+        Some(file_dir) => PathBuf::from_str(file_dir)?.join(PLUGIN_FILE_DIR),
         None => PathBuf::from_str(PLUGIN_FILE_DIR)?,
     })
 }
@@ -98,7 +98,7 @@ fn read_plugin_file(
     file_path: &PathBuf,
 ) -> anyhow::Result<Option<String>> {
     let mut validated_plugins = plugin_bucket.lock().unwrap();
-    let validated_plugin = match validated_plugins.validate_plugin(&plugin_dir) {
+    let validated_plugin = match validated_plugins.validate_plugin(plugin_dir) {
         Ok(validated_plugin) => validated_plugin,
         Err(err) => {
             log::warn!("{}", err);
@@ -110,7 +110,7 @@ fn read_plugin_file(
         }
     };
     let plugin_manifest = validated_plugin.manifest;
-    let Some(content) = plugin_manifest.read_and_validate_file(&filename, &file_path)? else {
+    let Some(content) = plugin_manifest.read_and_validate_file(filename, file_path)? else {
         log::warn!("Plugin file not in manifest: {}", filename);
         return Ok(None);
     };

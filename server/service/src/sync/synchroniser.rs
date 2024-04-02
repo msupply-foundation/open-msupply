@@ -14,7 +14,9 @@ use super::{
     api::SyncApiV5,
     api_v6::SyncApiV6,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    central_data_synchroniser_v6::{CentralDataSynchroniserV6, CentralPullErrorV6},
+    central_data_synchroniser_v6::{
+        CentralDataSynchroniserV6, CentralPullErrorV6, RemotePushErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -53,6 +55,8 @@ pub(crate) enum SyncError {
     CentralPullError(#[from] CentralPullError),
     #[error("Error while pulling central v6 records")]
     CentralPullErrorV6(#[from] CentralPullErrorV6),
+    #[error("Error while pushing remote v6 records")]
+    RemotePushErrorV6(#[from] RemotePushErrorV6),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
@@ -165,6 +169,18 @@ impl Synchroniser {
         // First push before pulling, this avoids records being pulled from central server
         // and overwriting existing records waiting to be pulled
 
+        // We'll push records to open-mSupply first, then push to Legacy mSupply
+
+        // PUSH V6
+        logger.start_step(SyncStep::PushCentralV6)?;
+        if is_initialised && !is_central_server() {
+            self.central_v6
+                .push(&ctx.connection, batch_size.remote_push, logger)
+                .await?;
+            // TODO: Wait for OMS Central integration?
+        }
+        logger.done_step(SyncStep::PushCentralV6)?;
+
         // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
         logger.start_step(SyncStep::Push)?;
@@ -199,8 +215,13 @@ impl Synchroniser {
         // PULL V6
         if !is_central_server() {
             logger.start_step(SyncStep::PullCentralV6)?;
-            if let Err(error) = self.central_v6.pull(&ctx.connection, 20, logger).await {
+            if let Err(error) = self
+                .central_v6
+                .pull(&ctx.connection, 20, is_initialised, logger)
+                .await
+            {
                 // Log but ignore error for now, to allow omSupply to run without omSupply server
+                // TODO : Fix at some point!
                 // let _ = logger.error(&error.into());
                 log::info!("{}", format_error(&error));
             }

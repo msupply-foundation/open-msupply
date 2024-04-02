@@ -38,8 +38,7 @@ pub fn generate_inbound_return_lines(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // resource: Resource::MutateInboundReturn, // TODO: later...
-            resource: Resource::MutateOutboundShipment,
+            resource: Resource::MutateInboundReturn,
             store_id: Some(store_id.clone()),
         },
     )?;

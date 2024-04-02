@@ -35,6 +35,8 @@ pub enum UserPermission {
     InboundShipmentMutate,
     OutboundReturnQuery,
     OutboundReturnMutate,
+    InboundReturnQuery,
+    InboundReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
     Report,
@@ -48,6 +50,8 @@ pub enum UserPermission {
     DocumentMutate,
     ColdChainApi,
     AssetMutate,
+    AssetQuery,
+    AssetCatalogueItemMutate,
 }
 
 #[Object]
@@ -110,6 +114,8 @@ impl UserPermission {
             Permission::InboundShipmentMutate => UserPermission::InboundShipmentMutate,
             Permission::OutboundReturnQuery => UserPermission::OutboundReturnQuery,
             Permission::OutboundReturnMutate => UserPermission::OutboundReturnMutate,
+            Permission::InboundReturnQuery => UserPermission::InboundReturnQuery,
+            Permission::InboundReturnMutate => UserPermission::InboundReturnMutate,
             Permission::PrescriptionQuery => UserPermission::PrescriptionQuery,
             Permission::PrescriptionMutate => UserPermission::PrescriptionMutate,
             Permission::Report => UserPermission::Report,
@@ -126,6 +132,8 @@ impl UserPermission {
 
             Permission::ColdChainApi => UserPermission::ColdChainApi,
             Permission::AssetMutate => UserPermission::AssetMutate,
+            Permission::AssetQuery => UserPermission::AssetQuery,
+            Permission::AssetCatalogueItemMutate => UserPermission::AssetCatalogueItemMutate,
         }
     }
 
@@ -151,6 +159,8 @@ impl UserPermission {
             UserPermission::InboundShipmentMutate => Permission::InboundShipmentMutate,
             UserPermission::OutboundReturnQuery => Permission::OutboundReturnQuery,
             UserPermission::OutboundReturnMutate => Permission::OutboundReturnMutate,
+            UserPermission::InboundReturnQuery => Permission::InboundReturnQuery,
+            UserPermission::InboundReturnMutate => Permission::InboundReturnMutate,
             UserPermission::PrescriptionQuery => Permission::PrescriptionQuery,
             UserPermission::PrescriptionMutate => Permission::PrescriptionMutate,
             UserPermission::Report => Permission::Report,
@@ -164,9 +174,10 @@ impl UserPermission {
             UserPermission::ItemNamesCodesAndUnitsMutate => {
                 Permission::ItemNamesCodesAndUnitsMutate
             }
-
             UserPermission::ColdChainApi => Permission::ColdChainApi,
             UserPermission::AssetMutate => Permission::AssetMutate,
+            UserPermission::AssetQuery => Permission::AssetQuery,
+            UserPermission::AssetCatalogueItemMutate => Permission::AssetCatalogueItemMutate,
         }
     }
 }
@@ -180,7 +191,7 @@ impl UserStorePermissionConnector {
             nodes: permissions
                 .rows
                 .into_iter()
-                .map(|row| UserStorePermissionNode::from_domain(row))
+                .map(UserStorePermissionNode::from_domain)
                 .collect(),
         }
     }
@@ -190,7 +201,7 @@ impl UserStorePermissionConnector {
             total_count: usize_to_u32(permissions.len()),
             nodes: permissions
                 .into_iter()
-                .map(|row| UserStorePermissionNode::from_domain(row))
+                .map(UserStorePermissionNode::from_domain)
                 .collect(),
         }
     }

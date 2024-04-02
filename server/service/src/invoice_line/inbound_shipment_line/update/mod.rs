@@ -40,7 +40,7 @@ pub fn update_inbound_shipment_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
                 generate(
@@ -52,20 +52,20 @@ pub fn update_inbound_shipment_line(
                     invoice.clone(),
                 )?;
 
-            let stock_line_repository = StockLineRowRepository::new(&connection);
+            let stock_line_repository = StockLineRowRepository::new(connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
                 stock_line_repository.upsert_one(&upsert_batch)?;
             }
 
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
             if let Some(id) = delete_batch_id_option {
                 stock_line_repository.delete(&id)?;
             }
 
             if let Some(invoice_row) = invoice_row_option {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             if let Some(number_of_packs) = input.number_of_packs {
@@ -81,7 +81,7 @@ pub fn update_inbound_shipment_line(
             }
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

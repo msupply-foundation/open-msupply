@@ -47,7 +47,7 @@ pub async fn patient_search_central(
         last_name,
         date_of_birth,
         gender: _,
-        name_or_code: _,
+        identifier: _,
     } = params;
     let patients = api
         .patient(PatientParamsV4 {

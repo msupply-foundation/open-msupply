@@ -1,9 +1,14 @@
 import { Document } from './document';
+import { Log } from './log';
+import { Utils } from './utils';
 
 export const useAssets = {
-  utils: {},
+  utils: {
+    labelPrinterSettings: Utils.useLabelPrinterSettings,
+  },
 
   document: {
+    fetch: Document.useFetchAssetById,
     get: Document.useAsset,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,
@@ -16,5 +21,5 @@ export const useAssets = {
     update: Document.useAssetUpdate,
   },
 
-  line: {},
+  log: { insert: Log.useAssetLogInsert, list: Log.useAssetLogs },
 };

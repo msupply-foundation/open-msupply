@@ -89,8 +89,8 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 }
 
 impl DeleteInput {
-    pub fn to_domain(self) -> String {
-        self.id
+    pub fn to_domain(&self) -> String {
+        self.id.clone()
     }
 }
 

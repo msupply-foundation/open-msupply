@@ -24,6 +24,14 @@ impl SyncRecordTester for InvoiceRecordTester {
             on_hold: false,
             store_id: store_id.to_string(),
         };
+        // create test home currency
+        let currency_row = CurrencyRow {
+            id: uuid(),
+            rate: 1.0,
+            code: "NZD".to_string(),
+            is_home_currency: true,
+            date_updated: None,
+        };
         // test option (inventory adjustment reason)
         let inventory_adjustment_reason_id = uuid();
         let base_invoice_row = InvoiceRow {
@@ -52,6 +60,8 @@ impl SyncRecordTester for InvoiceRecordTester {
             requisition_id: None,
             linked_invoice_id: None,
             clinician_link_id: None,
+            currency_id: currency_row.id.clone(),
+            currency_rate: 1.0,
             // Tax on invoice/transact is not nullable in mSupply
             tax: Some(0.0),
         };
@@ -75,6 +85,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             number_of_packs: 10.129,
             note: None,
             inventory_adjustment_reason_id: Some(inventory_adjustment_reason_id.clone()),
+            foreign_currency_price_before_tax: Some(0.0),
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();
@@ -159,7 +170,14 @@ impl SyncRecordTester for InvoiceRecordTester {
                     "isActive": true,
                     "title": "POS 1",
                     "type": "positiveInventoryAdjustment"
-                }]
+                }],
+                "currency": [{
+                    "ID": currency_row.id,
+                    "rate": 1,
+                    "code": "NZD",
+                    "isHomeCurrency": true,
+                    "dateUpdated": null
+                }],
             }),
             integration_records: vec![
                 IntegrationOperation::upsert(location_row),

@@ -19,7 +19,7 @@ pub struct PackVariantRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct PackVariantFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
@@ -97,12 +97,7 @@ impl<'a> PackVariantRepository<'a> {
 
 impl PackVariantFilter {
     pub fn new() -> PackVariantFilter {
-        PackVariantFilter {
-            id: None,
-            item_id: None,
-            pack_size: None,
-            is_active: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

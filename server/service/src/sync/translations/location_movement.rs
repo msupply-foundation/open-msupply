@@ -48,11 +48,11 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
 
 pub(super) struct LocationMovementTranslation;
 impl SyncTranslation for LocationMovementTranslation {
-    fn table_name(&self) -> &'static str {
+    fn table_name(&self) -> &str {
         "location_movement"
     }
 
-    fn pull_dependencies(&self) -> Vec<&'static str> {
+    fn pull_dependencies(&self) -> Vec<&str> {
         vec![
             StoreTranslation.table_name(),
             LocationTranslation.table_name(),
@@ -113,7 +113,7 @@ impl SyncTranslation for LocationMovementTranslation {
 
         let legacy_row = LegacyLocationMovementRow {
             id: id.clone(),
-            store_id: store_id,
+            store_id,
             stock_line_id,
             location_id,
             enter_date: enter_datetime.map(|datetime| datetime.date()),
@@ -129,7 +129,7 @@ impl SyncTranslation for LocationMovementTranslation {
         Ok(PushTranslateResult::upsert(
             changelog,
             self.table_name(),
-            serde_json::to_value(&legacy_row)?,
+            serde_json::to_value(legacy_row)?,
         ))
     }
 }

@@ -20,11 +20,13 @@ import React from 'react';
 export const QuantityReturnedTableComponent = ({
   lines,
   updateLine,
+  isDisabled,
 }: {
   lines: GeneratedInboundReturnLineNode[];
   updateLine: (
     line: Partial<GeneratedInboundReturnLineNode> & { id: string }
   ) => void;
+  isDisabled: boolean;
 }) => {
   const columns = useColumns<GeneratedInboundReturnLineNode>(
     [
@@ -39,12 +41,14 @@ export const QuantityReturnedTableComponent = ({
           accessor: ({ rowData }) => rowData.batch ?? '',
           setter: updateLine,
           Cell: TextInputCell,
+          getIsDisabled: () => isDisabled,
         },
       ],
       [
         expiryInputColumn,
         {
           width: 150,
+          getIsDisabled: () => isDisabled,
           setter: l =>
             updateLine({
               ...l,
@@ -57,6 +61,7 @@ export const QuantityReturnedTableComponent = ({
       getColumnLookupWithOverrides('packSize', {
         Cell: PackUnitEntryCell,
         setter: updateLine,
+        getIsDisabled: () => isDisabled,
         label: 'label.unit-variant-and-pack-size',
         minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
       }),
@@ -69,6 +74,7 @@ export const QuantityReturnedTableComponent = ({
                 width: 110,
                 accessor: ({ rowData }) => rowData.numberOfPacksIssued ?? '--',
                 Cell: BasicCell,
+                getIsDisabled: () => isDisabled,
               },
             ],
           ] as ColumnDescription<GeneratedInboundReturnLineNode>[])
@@ -79,6 +85,7 @@ export const QuantityReturnedTableComponent = ({
           description: 'description.pack-quantity',
           width: 100,
           setter: updateLine,
+          getIsDisabled: () => isDisabled,
           Cell: NumberOfPacksReturnedInputCell,
         },
       ],

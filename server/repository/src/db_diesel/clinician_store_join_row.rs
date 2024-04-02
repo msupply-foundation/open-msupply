@@ -81,7 +81,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             .filter(clinician_store_join::dsl::id.eq(row_id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {

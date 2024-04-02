@@ -280,7 +280,7 @@ mod repository_test {
 
     use crate::{
         mock::{
-            mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
+            currency_a, mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
             mock_inbound_shipment_number_store_a, mock_item_link_from_item,
             mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
             mock_request_draft_requisition, mock_request_draft_requisition2,
@@ -289,10 +289,10 @@ mod repository_test {
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionRowStatus,
-        test_db, ActivityLogRowRepository, InvoiceFilter, InvoiceLineRepository,
-        InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository, InvoiceRowType,
-        ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository, KeyValueType,
-        MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
+        InvoiceRowType, ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository,
+        KeyValueType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
         MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
         RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
@@ -340,13 +340,13 @@ mod repository_test {
         assert_eq!(store_1, loaded_item);
     }
 
-    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) -> () {
-        let item_repo = ItemRowRepository::new(&connection);
-        item_repo.insert_one(&item).await.unwrap();
+    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) {
+        let item_repo = ItemRowRepository::new(connection);
+        item_repo.insert_one(item).await.unwrap();
 
-        let item_link_repo = ItemLinkRowRepository::new(&connection);
+        let item_link_repo = ItemLinkRowRepository::new(connection);
         item_link_repo
-            .insert_one_or_ignore(&mock_item_link_from_item(&item))
+            .insert_one_or_ignore(&mock_item_link_from_item(item))
             .unwrap();
     }
 
@@ -602,11 +602,14 @@ mod repository_test {
 
         // setup
         NameRowRepository::new(&connection)
-            .insert_one(&&data::name_1())
+            .insert_one(&data::name_1())
             .await
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
 
         let repo = InvoiceRowRepository::new(&connection);
         let invoice_repo = InvoiceRepository::new(&connection);
@@ -649,13 +652,17 @@ mod repository_test {
         insert_item_and_link(&data::item_2(), &connection).await;
 
         NameRowRepository::new(&connection)
-            .insert_one(&&data::name_1())
+            .insert_one(&data::name_1())
             .await
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
+
         let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
@@ -693,13 +700,16 @@ mod repository_test {
         insert_item_and_link(&data::item_service_1(), &connection).await;
 
         NameRowRepository::new(&connection)
-            .insert_one(&&data::name_1())
+            .insert_one(&data::name_1())
             .await
             .unwrap();
         let store_repo = StoreRowRepository::new(&connection);
         store_repo.insert_one(&data::store_1()).await.unwrap();
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&data::stock_line_1()).unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
         let invoice_repo = InvoiceRowRepository::new(&connection);
         invoice_repo.upsert_one(&data::invoice_1()).unwrap();
         invoice_repo.upsert_one(&data::invoice_2()).unwrap();
@@ -716,7 +726,7 @@ mod repository_test {
         // line stats
         let repo = InvoiceLineRepository::new(&connection);
         let invoice_1_id = data::invoice_1().id;
-        let result = repo.stats(&vec![invoice_1_id.clone()]).unwrap();
+        let result = repo.stats(&[invoice_1_id.clone()]).unwrap();
         let stats_invoice_1 = result
             .into_iter()
             .find(|row| row.invoice_id == invoice_1_id)
@@ -840,7 +850,7 @@ mod repository_test {
             )
             .unwrap();
 
-        let raw_result = sql_query(&format!(
+        let raw_result = sql_query(format!(
             r#"select id from requisition where id = '{}'"#,
             mock_request_draft_requisition2().id
         ))
@@ -873,7 +883,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() > 0); // Sanity check
+        assert!(!raw_result.is_empty()); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -899,7 +909,7 @@ mod repository_test {
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() > 0); // Sanity check
+        assert!(!raw_result.is_empty()); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -936,14 +946,14 @@ mod repository_test {
             )))
             .unwrap();
 
-        let raw_result = sql_query(&format!(
+        let raw_result = sql_query(format!(
             r#"SELECT id from requisition_line where id = '{}'"#,
             mock_draft_request_requisition_line2().id
         ))
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() == 0); // Record was deleted
+        assert!(raw_result.is_empty()); // Record was deleted
         assert_eq!(
             raw_result,
             result
@@ -965,14 +975,14 @@ mod repository_test {
             )
             .unwrap();
 
-        let raw_result = sql_query(&format!(
+        let raw_result = sql_query(format!(
             r#"SELECT id from requisition_line where requisition_id = '{}' and requested_quantity = 99"#,
             mock_draft_request_requisition_line().requisition_id
         ))
         .load::<Id>(&connection.connection)
         .unwrap();
 
-        assert!(raw_result.len() > 0); // Sanity check
+        assert!(!raw_result.is_empty()); // Sanity check
         assert_eq!(
             raw_result,
             result
@@ -1128,7 +1138,7 @@ mod repository_test {
                         .expect("Time went backwards");
                     println!("A: Slept for {:?}", sleep_duration);
                     println!("A: writing");
-                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id2".to_string();
                         i.name = "name_a".to_string();
                     }))?;
@@ -1146,16 +1156,16 @@ mod repository_test {
             let result: Result<(), TransactionError<RepositoryError>> = connection
                 .transaction_sync(|con| {
                     println!("B: transaction started");
-                    let repo = ItemRowRepository::new(&con);
+                    let repo = ItemRowRepository::new(con);
                     let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("B: read");
-                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b".to_string();
                     }))?;
                     println!("B: write 1");
 
-                    let _ = repo.upsert_one(&inline_init(|i: &mut ItemRow| {
+                    repo.upsert_one(&inline_init(|i: &mut ItemRow| {
                         i.id = "tx_deadlock_id".to_string();
                         i.name = "name_b_2".to_string();
                     }))?;
