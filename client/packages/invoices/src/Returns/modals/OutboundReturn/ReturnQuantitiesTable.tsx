@@ -3,6 +3,7 @@ import {
   NumberInputCell,
   OutboundReturnLineNode,
   useColumns,
+  CellProps,
 } from '@openmsupply-client/common';
 import React from 'react';
 
@@ -30,14 +31,7 @@ export const QuantityToReturnTableComponent = ({
           width: 100,
           setter: updateLine,
           getIsDisabled: () => isDisabled,
-          Cell: props => (
-            <NumberInputCell
-              {...props}
-              isRequired
-              max={props.rowData.availableNumberOfPacks}
-              min={0}
-            />
-          ),
+          Cell: NumberOfPacksToReturnReturnInputCell,
         },
       ],
     ],
@@ -54,5 +48,17 @@ export const QuantityToReturnTableComponent = ({
     />
   );
 };
+
+// Input cells can't be defined inline, otherwise they lose focus on re-render
+const NumberOfPacksToReturnReturnInputCell: React.FC<
+  CellProps<OutboundReturnLineNode>
+> = props => (
+  <NumberInputCell
+    {...props}
+    isRequired
+    max={props.rowData.availableNumberOfPacks}
+    min={0}
+  />
+);
 
 export const QuantityToReturnTable = React.memo(QuantityToReturnTableComponent);
