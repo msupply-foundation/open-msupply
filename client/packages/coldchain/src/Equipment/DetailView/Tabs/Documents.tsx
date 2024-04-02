@@ -77,7 +77,7 @@ export const Documents = ({ assetId }: { assetId: string }) => {
       ></Box>
       <Container>
         <Heading text={t('heading.upload-cce-documents')} />
-        <Upload onUpload={onUpload} />
+        <Upload onUpload={onUpload} color="gray" />
         <Box marginY={4} />
         <Heading text={t('heading.download-cce-documents')} />
         <FileList

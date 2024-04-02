@@ -10,28 +10,34 @@ import {
 } from '@openmsupply-client/common';
 
 export interface UploadProps {
-  onUpload: <T extends File>(files: T[]) => void;
   accept?: Accept;
+  color?: 'primary' | 'secondary' | 'gray';
   maxSize?: number;
+  onUpload: <T extends File>(files: T[]) => void;
 }
 
-export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
+export const Upload: FC<UploadProps> = ({
+  accept,
+  color = 'secondary',
+  onUpload,
+}) => {
   const t = useTranslation();
+
   return (
     <Paper
       sx={{
         borderRadius: '16px',
         marginTop: '20px 0',
-        backgroundColor: theme => alpha(theme.palette.secondary.main, 0.1),
+        backgroundColor: theme => alpha(theme.palette[color].main, 0.1),
         padding: '24px',
         width: '100%',
         alignContent: 'center',
         textAlign: 'center',
         borderStyle: 'dashed',
         borderWidth: '2px',
-        borderColor: 'secondary.main',
+        borderColor: `${color}.main`,
         ':hover': {
-          borderColor: 'secondary.dark',
+          borderColor: theme => theme.palette[color].dark,
           cursor: 'pointer',
         },
       }}
@@ -46,13 +52,13 @@ export const Upload: FC<UploadProps> = ({ onUpload, accept }) => {
             <FileUploadIcon
               sx={{
                 fontSize: 36,
-                stroke: theme => theme.palette.secondary.main,
+                stroke: theme => theme.palette[color].main,
               }}
             />
-            <Typography sx={{ fontWeight: 'bold' }} color="secondary">
+            <Typography sx={{ fontWeight: 'bold', color: `${color}.main` }}>
               {t('messages.upload-invite')}
             </Typography>
-            <Typography color="secondary">{t('messages.upload-or')}</Typography>
+            <Typography color={color}>{t('messages.upload-or')}</Typography>
             <BaseButton color="secondary" variant="outlined">
               {t('button.browse-files')}
             </BaseButton>
