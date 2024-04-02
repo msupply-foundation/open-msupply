@@ -7,7 +7,10 @@ import {
   useNotification,
   useDeleteConfirmation,
   useTranslation,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { useReturns } from '../../api';
 import { AdditionalInfoSection } from './AdditionalInfoSection';
 // import { PricingSection } from './PricingSection';
@@ -19,16 +22,23 @@ export const SidePanelComponent = () => {
   const { success } = useNotification();
   const t = useTranslation('replenishment');
   const { data } = useReturns.document.outboundReturn();
-  //   const { mutateAsync } = useOutbound.document.delete();
+  const { mutateAsync } = useReturns.document.deleteOutbound();
+  const navigate = useNavigate();
+
   const canDelete = data ? canDeleteInvoice(data) : false;
-  //   const deleteAction = async () => {
-  //     if (!data) return;
-  //     await mutateAsync([data]);
-  //   };
+  const deleteAction = async () => {
+    if (!data) return;
+    await mutateAsync(data.id);
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.OutboundReturn)
+        .build()
+    );
+  };
 
   const onDelete = useDeleteConfirmation({
     selectedRows: [data],
-    deleteAction: async () => {},
+    deleteAction,
     messages: {
       confirmMessage: t('messages.confirm-delete-return', {
         number: data?.invoiceNumber,
