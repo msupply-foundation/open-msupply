@@ -7,6 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { FileList } from '../../Components';
+import { DraftAsset } from '../../types';
 
 const Container = ({ children }: { children: React.ReactNode }) => (
   <Box
@@ -27,7 +28,7 @@ const Heading = ({ text }: { text: string }) => (
   </Typography>
 );
 
-export const Documents = ({ assetId }: { assetId: string }) => {
+export const Documents = ({ draft }: { draft: DraftAsset }) => {
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
   const removeFile = () => {
@@ -35,7 +36,7 @@ export const Documents = ({ assetId }: { assetId: string }) => {
   };
 
   const onUpload = (files: File[]) => {
-    const url = `${Environment.SYNC_FILES_URL}/asset/${assetId}`;
+    const url = `${Environment.SYNC_FILES_URL}/asset/${draft.id}`;
     const formData = new FormData();
     files?.forEach(file => {
       formData.append('files', file);
@@ -60,6 +61,7 @@ export const Documents = ({ assetId }: { assetId: string }) => {
       <Container>
         <Heading text={t('heading.download-catalogue-documents')} />
         <FileList
+          assetId={draft.id}
           files={[]}
           removeFile={() => {}}
           noFilesMessage={t('messages.no-documents-uploaded')}
@@ -81,7 +83,11 @@ export const Documents = ({ assetId }: { assetId: string }) => {
         <Box marginY={4} />
         <Heading text={t('heading.download-cce-documents')} />
         <FileList
-          files={[]}
+          assetId={draft.id}
+          files={draft.documents.nodes.map(document => ({
+            id: document.id,
+            name: document.fileName,
+          }))}
           removeFile={removeFile}
           noFilesMessage={t('messages.no-documents-uploaded')}
         />

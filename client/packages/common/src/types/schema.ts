@@ -432,6 +432,7 @@ export type AssetNode = {
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
+  documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
@@ -5699,6 +5700,22 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN'
 }
+
+export type SyncFileReferenceConnector = {
+  __typename: 'SyncFileReferenceConnector';
+  nodes: Array<SyncFileReferenceNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncFileReferenceNode = {
+  __typename: 'SyncFileReferenceNode';
+  createdDatetime: Scalars['NaiveDateTime']['output'];
+  fileName: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  mimeType?: Maybe<Scalars['String']['output']>;
+  recordId: Scalars['String']['output'];
+  tableName: Scalars['String']['output'];
+};
 
 export type SyncSettingsInput = {
   /** Sync interval */

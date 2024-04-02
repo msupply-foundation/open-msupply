@@ -245,7 +245,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput
-              value={draft.notes}
+              value={draft.notes ?? ''}
               onChange={e => onChange({ notes: e.target.value })}
               fullWidth
               multiline
