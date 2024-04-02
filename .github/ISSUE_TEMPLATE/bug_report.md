@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a report for a bug or to help us improve
 title: A brief clear title explaining the bug
-labels: 'bug, needs triage'
+labels: bug, needs triage
 assignees: ''
 
 ---
@@ -23,9 +23,9 @@ Steps to reproduce the behaviour:
 
 ## Your environment 🌱
 <!-- e.g. 1.2.3 -->
-- Version: 
-- mSupply version: 
+- Open mSupply Version: 
+- Legacy mSupply Central Server Version: 
 <!-- e.g. android, browser (extra points if you tell us which one), desktop (windows), desktop (macOS), server (windows) -->
 - Platform:
 <!-- PostgreSQL or SQLite3 -->
-- Database type: 
+- Database type:
