@@ -7,15 +7,16 @@ use std::{collections::HashMap, time::SystemTime};
 use util::uuid::uuid;
 
 use crate::{
-    get_default_pagination, service_provider::ServiceContext, static_files::StaticFileService,
+    get_default_pagination,
+    service_provider::ServiceContext,
+    static_files::{StaticFileCategory, StaticFileService},
     ListError,
 };
 
 use super::{
     default_queries::get_default_gql_query,
     definition::{
-        DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef,
-        TeraTemplate,
+        GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportRef, SQLQuery, TeraTemplate,
     },
     html_printing::html_to_pdf,
 };
@@ -37,11 +38,11 @@ pub enum ReportError {
     HTMLToPDFError(String),
 }
 
+#[derive(Debug, Clone)]
 pub enum ResolvedReportQuery {
+    SQLQuery(SQLQuery),
     /// Custom http query
     GraphQlQuery(GraphQlQuery),
-    // Use default predefined query
-    Default(DefaultQuery),
 }
 
 /// Resolved and validated report definition, i.e. its guaranteed that there is a main template and
@@ -56,7 +57,7 @@ pub struct ResolvedReportDefinition {
     pub footer: Option<String>,
     /// Map of all found Tera templates in the report definition
     pub templates: HashMap<String, TeraTemplate>,
-    pub query: GraphQlQuery,
+    pub query: ResolvedReportQuery,
     pub resources: HashMap<String, serde_json::Value>,
 }
 
@@ -135,6 +136,7 @@ fn print_html_report_to_pdf(
     let file = file_service
         .store_file(
             &format!("{}_{}.pdf", now.format("%Y%m%d_%H%M%S"), report_name),
+            StaticFileCategory::Temporary,
             &pdf,
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
@@ -153,6 +155,7 @@ fn print_html_report_to_html(
     let file = file_service
         .store_file(
             &format!("{}_{}.html", now.format("%Y%m%d_%H%M%S"), report_name),
+            StaticFileCategory::Temporary,
             format_html_document(document).as_bytes(),
         )
         .map_err(|err| ReportError::DocGenerationError(format!("{}", err)))?;
@@ -284,10 +287,6 @@ fn resolve_report_definition(
 
     // resolve the query entry
     let query = query_from_resolved_template(query_entry).ok_or(ReportError::QueryNotSpecified)?;
-    let query = match query {
-        ResolvedReportQuery::GraphQlQuery(query) => query,
-        ResolvedReportQuery::Default(query) => get_default_gql_query(query),
-    };
 
     let resources = resources_from_resolved_template(&fully_loaded_report);
 
@@ -388,7 +387,10 @@ fn query_from_resolved_template(
         ReportDefinitionEntry::GraphGLQuery(query) => {
             ResolvedReportQuery::GraphQlQuery(query.clone())
         }
-        ReportDefinitionEntry::DefaultQuery(query) => ResolvedReportQuery::Default(query.clone()),
+        ReportDefinitionEntry::SQLQuery(query) => ResolvedReportQuery::SQLQuery(query.clone()),
+        ReportDefinitionEntry::DefaultQuery(query) => {
+            ResolvedReportQuery::GraphQlQuery(get_default_gql_query(query.clone()))
+        }
         _ => return None,
     };
     Some(query)

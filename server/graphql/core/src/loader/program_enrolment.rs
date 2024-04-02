@@ -40,7 +40,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
         // allowed_ctx -> Vec<(patient_id, program)>
         let mut map = HashMap::<Vec<String>, Vec<(String, String)>>::new();
         for item in inputs {
-            let entry = map.entry(item.payload.clone()).or_insert(vec![]);
+            let entry = map.entry(item.payload.clone()).or_default();
             entry.push((item.primary_id.clone(), item.secondary_id.clone()))
         }
         let mut out = HashMap::<ProgramEnrolmentLoaderInput, Self::Value>::new();
@@ -49,7 +49,7 @@ impl Loader<ProgramEnrolmentLoaderInput> for ProgramEnrolmentLoader {
             let program_to_patients_map = patient_program_list.into_iter().fold(
                 HashMap::<String, Vec<String>>::new(),
                 |mut prev, (patient_id, program)| {
-                    let entry = prev.entry(program).or_insert(vec![]);
+                    let entry = prev.entry(program).or_default();
                     entry.push(patient_id);
                     prev
                 },

@@ -8,7 +8,7 @@ pub struct AdjustmentReasonNotProvided;
 
 #[Object]
 impl AdjustmentReasonNotProvided {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Stocktake line has no adjustment reason"
     }
 }
@@ -16,7 +16,7 @@ pub struct AdjustmentReasonNotValid;
 
 #[Object]
 impl AdjustmentReasonNotValid {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Adjustment reason is not valid for adjustment direction"
     }
 }

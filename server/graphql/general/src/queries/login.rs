@@ -26,7 +26,7 @@ impl AuthToken {
 pub struct InvalidCredentials;
 #[Object]
 impl InvalidCredentials {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Invalid credentials"
     }
 }
@@ -41,7 +41,7 @@ impl AccountBlocked {
         self.timeout_remaining
     }
 
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Account is blocked until the lockout period has expired"
     }
 }
@@ -125,7 +125,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
 
     let now = Utc::now().timestamp() as usize;
     set_refresh_token_cookie(
-        &ctx,
+        ctx,
         &pair.refresh,
         pair.refresh_expiry_date - now,
         auth_data.no_ssl,

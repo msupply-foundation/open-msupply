@@ -47,13 +47,19 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_shipment, linked_shipment, request_requisition) =
+        let (outbound_shipment, linked_shipment, request_requisition, original_shipment) =
             match &record_for_processing.operation {
                 Operation::Upsert {
                     shipment: outbound_shipment,
                     linked_shipment,
                     linked_shipment_requisition: request_requisition,
-                } => (outbound_shipment, linked_shipment, request_requisition),
+                    linked_original_shipment: original_shipment,
+                } => (
+                    outbound_shipment,
+                    linked_shipment,
+                    request_requisition,
+                    original_shipment,
+                ),
                 _ => return Ok(None),
             };
         // 2.
@@ -97,6 +103,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
             &outbound_shipment,
             record_for_processing,
             request_requisition,
+            original_shipment,
             new_invoice_type,
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
@@ -145,6 +152,7 @@ fn generate_inbound_shipment(
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
     request_requisition: &Option<Requisition>,
+    original_shipment: &Option<Invoice>,
     r#type: InboundInvoiceType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
@@ -161,6 +169,8 @@ fn generate_inbound_shipment(
     let request_requisition_id = request_requisition
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
+
+    let original_shipment_id = original_shipment.as_ref().map(|s| s.invoice_row.id.clone());
 
     let formatted_ref = match &outbound_shipment_row.their_reference {
         Some(reference) => format!(
@@ -214,6 +224,7 @@ fn generate_inbound_shipment(
         tax: outbound_shipment_row.tax,
         currency_id: outbound_shipment_row.currency_id.clone(),
         currency_rate: outbound_shipment_row.currency_rate,
+        original_shipment_id,
         // Default
         colour: None,
         user_id: None,

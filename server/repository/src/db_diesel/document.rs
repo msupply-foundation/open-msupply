@@ -67,18 +67,12 @@ joinable!(latest_document -> name_link (owner_name_link_id));
 allow_tables_to_appear_in_same_query!(latest_document, name);
 allow_tables_to_appear_in_same_query!(latest_document, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum DocumentStatus {
+    #[default]
     Active,
     Deleted,
-}
-
-#[cfg(test)]
-impl Default for DocumentStatus {
-    fn default() -> Self {
-        DocumentStatus::Active
-    }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
@@ -145,15 +139,7 @@ pub struct DocumentFilter {
 
 impl DocumentFilter {
     pub fn new() -> Self {
-        DocumentFilter {
-            id: None,
-            name: None,
-            r#type: None,
-            datetime: None,
-            data: None,
-            owner: None,
-            context_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, value: EqualFilter<String>) -> Self {
@@ -210,7 +196,7 @@ type BoxedDocumentQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_latest_filtered_query<'a>(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
+fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocumentQuery {
     let mut query = latest_document::dsl::latest_document
         .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .into_boxed();

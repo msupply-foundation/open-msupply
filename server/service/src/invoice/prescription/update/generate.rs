@@ -41,7 +41,7 @@ pub(crate) fn generate(
     update_invoice.colour = input_colour.or(update_invoice.colour);
 
     if let Some(status) = input_status.clone() {
-        update_invoice.status = status.full_status().into()
+        update_invoice.status = status.full_status()
     }
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
@@ -100,7 +100,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, status: &Option<UpdatePresc
     match (&invoice.status, new_status) {
         (InvoiceRowStatus::Verified, _) => {}
         (InvoiceRowStatus::New, UpdatePrescriptionStatus::Verified) => {
-            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.picked_datetime = Some(current_datetime);
             invoice.verified_datetime = Some(current_datetime)
         }
         (InvoiceRowStatus::New, UpdatePrescriptionStatus::Picked) => {
@@ -149,5 +149,5 @@ fn lines_to_trim(
         .into_iter()
         .map(|l| l.invoice_line_row)
         .collect();
-    return Ok(Some(invoice_line_rows));
+    Ok(Some(invoice_line_rows))
 }

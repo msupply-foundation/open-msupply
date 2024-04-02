@@ -111,9 +111,9 @@ pub struct DateFilterInput {
 impl From<DateFilterInput> for DateFilter {
     fn from(f: DateFilterInput) -> Self {
         DateFilter {
-            equal_to: f.equal_to.map(|t| t.clone()),
-            before_or_equal_to: f.before_or_equal_to.map(|t| t.clone()),
-            after_or_equal_to: f.after_or_equal_to.map(|t| t.clone()),
+            equal_to: f.equal_to,
+            before_or_equal_to: f.before_or_equal_to,
+            after_or_equal_to: f.after_or_equal_to,
         }
     }
 }

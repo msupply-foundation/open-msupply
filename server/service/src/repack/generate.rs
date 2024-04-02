@@ -1,8 +1,9 @@
 use chrono::Utc;
 use repository::{
-    ActivityLogRow, ActivityLogType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowStatus, InvoiceRowType, ItemRowRepository, LocationMovementRow, NameRowRepository,
-    NumberRowType, RepositoryError, StockLine, StockLineRow,
+    ActivityLogRow, ActivityLogType, CurrencyFilter, CurrencyRepository, InvoiceLineRow,
+    InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, ItemRowRepository,
+    LocationMovementRow, NameRowRepository, NumberRowType, RepositoryError, StockLine,
+    StockLineRow,
 };
 use util::{constants::REPACK_NAME_CODE, uuid::uuid};
 
@@ -75,6 +76,11 @@ fn generate_invoice_and_lines(
         .find_one_by_code(REPACK_NAME_CODE)?
         .ok_or(RepositoryError::NotFound)?;
 
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
+
     let invoice = InvoiceRow {
         id: uuid(),
         name_link_id: repack_name.id,
@@ -86,6 +92,8 @@ fn generate_invoice_and_lines(
         on_hold: false,
         created_datetime: Utc::now().naive_utc(),
         verified_datetime: Some(Utc::now().naive_utc()),
+        currency_id: Some(currency.currency_row.id),
+        currency_rate: 1.0,
         ..Default::default()
     };
 

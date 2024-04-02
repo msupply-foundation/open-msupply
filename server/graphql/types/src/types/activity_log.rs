@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
 };
-use repository::{activity_log::ActivityLog, unknown_user, ActivityLogRow, ActivityLogType};
+use repository::{activity_log::ActivityLog, ActivityLogRow, ActivityLogType};
 use service::ListResult;
 
 use super::{StoreNode, UserNode};
@@ -53,6 +53,10 @@ pub enum ActivityLogNodeType {
     PrescriptionStatusPicked,
     PrescriptionStatusVerified,
     SensorLocationChanged,
+    AssetCreated,
+    AssetUpdated,
+    AssetDeleted,
+    AssetLogCreated,
     QuantityForLineHasBeenSetToZero,
 }
 
@@ -75,7 +79,7 @@ impl ActivityLogNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime.clone(), Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime, Utc)
     }
 
     pub async fn to(&self) -> &Option<String> {
@@ -97,9 +101,9 @@ impl ActivityLogNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {
@@ -162,6 +166,10 @@ impl ActivityLogNodeType {
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
             from::SensorLocationChanged => to::SensorLocationChanged,
+            from::AssetCreated => to::AssetCreated,
+            from::AssetUpdated => to::AssetUpdated,
+            from::AssetDeleted => to::AssetDeleted,
+            from::AssetLogCreated => to::AssetLogCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
         }
     }
@@ -201,6 +209,10 @@ impl ActivityLogNodeType {
             from::PrescriptionStatusPicked => to::PrescriptionStatusPicked,
             from::PrescriptionStatusVerified => to::PrescriptionStatusVerified,
             from::SensorLocationChanged => to::SensorLocationChanged,
+            from::AssetCreated => to::AssetCreated,
+            from::AssetUpdated => to::AssetUpdated,
+            from::AssetDeleted => to::AssetDeleted,
+            from::AssetLogCreated => to::AssetLogCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
         }
     }
@@ -213,7 +225,7 @@ impl ActivityLogConnector {
             nodes: activity_logs
                 .rows
                 .into_iter()
-                .map(|activity_log| ActivityLogNode::from_domain(activity_log))
+                .map(ActivityLogNode::from_domain)
                 .collect(),
         }
     }

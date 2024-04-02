@@ -1,3 +1,4 @@
+mod currency;
 mod document_registry;
 mod form_schema;
 mod inventory_adjustment_reason;

@@ -119,6 +119,8 @@ export const DetailView: FC = () => {
               outboundShipmentLineIds={outboundShipmentLineIds || []}
               customerId={data.otherPartyId}
               modalMode={returnModalMode}
+              outboundShipmentId={data.id}
+              isNewReturn
             />
           )}
 

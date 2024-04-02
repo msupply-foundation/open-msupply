@@ -13,7 +13,7 @@ pub fn next_number(
 ) -> Result<i64, RepositoryError> {
     // Should be done in transaction
     let next_number = connection.transaction_sync(|connection_tx| {
-        let repo = NumberRowRepository::new(&connection_tx);
+        let repo = NumberRowRepository::new(connection_tx);
         let number_exists = repo.find_one_by_type_and_store(r#type, store_id)?.is_some();
 
         if number_exists {
@@ -22,24 +22,24 @@ pub fn next_number(
         };
 
         let max_number = match r#type {
-            NumberRowType::InboundShipment => InvoiceRowRepository::new(&connection_tx)
+            NumberRowType::InboundShipment => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InboundShipment, store_id)?,
-            NumberRowType::OutboundShipment => InvoiceRowRepository::new(&connection_tx)
+            NumberRowType::OutboundShipment => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceRowType::OutboundShipment, store_id)?,
-            NumberRowType::InventoryAddition => InvoiceRowRepository::new(&connection_tx)
+            NumberRowType::InventoryAddition => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InventoryAddition, store_id)?,
-            NumberRowType::Repack => InvoiceRowRepository::new(&connection_tx)
+            NumberRowType::Repack => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceRowType::Repack, store_id)?,
-            NumberRowType::InventoryReduction => InvoiceRowRepository::new(&connection_tx)
+            NumberRowType::InventoryReduction => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InventoryReduction, store_id)?,
-            NumberRowType::Prescription => InvoiceRowRepository::new(&connection_tx)
+            NumberRowType::Prescription => InvoiceRowRepository::new(connection_tx)
                 .find_max_invoice_number(InvoiceRowType::Prescription, store_id)?,
-            NumberRowType::RequestRequisition => RequisitionRowRepository::new(&connection_tx)
+            NumberRowType::RequestRequisition => RequisitionRowRepository::new(connection_tx)
                 .find_max_requisition_number(RequisitionRowType::Request, store_id)?,
-            NumberRowType::ResponseRequisition => RequisitionRowRepository::new(&connection_tx)
+            NumberRowType::ResponseRequisition => RequisitionRowRepository::new(connection_tx)
                 .find_max_requisition_number(RequisitionRowType::Response, store_id)?,
             NumberRowType::Stocktake => {
-                StocktakeRowRepository::new(&connection_tx).find_max_stocktake_number(store_id)?
+                StocktakeRowRepository::new(connection_tx).find_max_stocktake_number(store_id)?
             }
             NumberRowType::InboundReturn => InvoiceRowRepository::new(&connection_tx)
                 .find_max_invoice_number(InvoiceRowType::InboundReturn, store_id)?,
@@ -94,7 +94,11 @@ mod test {
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_number_service",
-            MockDataInserts::none().stores().names().numbers(),
+            MockDataInserts::none()
+                .stores()
+                .names()
+                .numbers()
+                .currencies(),
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![invoice1()];
             }),

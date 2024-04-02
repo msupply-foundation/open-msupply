@@ -45,14 +45,14 @@ pub fn delete_inbound_shipment(
             }
             // End TODO
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceDeleted,
                 Some(input.id.to_owned()),
                 None,
                 None,
             )?;
 
-            match InvoiceRowRepository::new(&connection).delete(&input.id.clone()) {
+            match InvoiceRowRepository::new(connection).delete(&input.id.clone()) {
                 Ok(_) => Ok(input.id.clone()),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }

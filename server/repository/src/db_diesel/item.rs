@@ -13,6 +13,7 @@ use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use util::inline_init;
 
 use crate::{
     diesel_macros::{
@@ -37,7 +38,7 @@ pub enum ItemSortField {
 
 pub type ItemSort = Sort<ItemSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -51,15 +52,7 @@ pub struct ItemFilter {
 
 impl ItemFilter {
     pub fn new() -> ItemFilter {
-        ItemFilter {
-            id: None,
-            name: None,
-            code: None,
-            r#type: None,
-            is_visible: None,
-            code_or_name: None,
-            is_active: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -247,6 +240,16 @@ impl Item {
         self.unit_row
             .as_ref()
             .map(|unit_row| unit_row.name.as_str())
+    }
+}
+
+impl ItemRowType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
     }
 }
 
@@ -555,13 +558,13 @@ mod tests {
 
         for row in item_rows.iter() {
             ItemRowRepository::new(&storage_connection)
-                .upsert_one(&row)
+                .upsert_one(row)
                 .unwrap();
         }
 
         for row in item_link_rows.iter() {
             ItemLinkRowRepository::new(&storage_connection)
-                .upsert_one(&row)
+                .upsert_one(row)
                 .unwrap();
         }
 

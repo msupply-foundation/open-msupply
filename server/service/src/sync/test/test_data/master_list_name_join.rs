@@ -1,9 +1,9 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use repository::{MasterListNameJoinRow, MasterListNameJoinRowDelete};
 
-const TABLE_NAME: &'static str = "list_master_name_join";
+const TABLE_NAME: &str = "list_master_name_join";
 
-const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
+const LIST_MASTER_NAME_JOIN_1: (&str, &str) = (
     "A7A06D78361041448B836857ED4330C4",
     r#"{
     "ID": "A7A06D78361041448B836857ED4330C4",

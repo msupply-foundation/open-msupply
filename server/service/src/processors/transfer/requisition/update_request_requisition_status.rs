@@ -7,7 +7,7 @@ use crate::activity_log::system_activity_log_entry;
 
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 
-const DESCRIPTION: &'static str = "Update request requisition status to finalised";
+const DESCRIPTION: &str = "Update request requisition status to finalised";
 
 pub struct UpdateRequestRequisitionStatusProcessor;
 

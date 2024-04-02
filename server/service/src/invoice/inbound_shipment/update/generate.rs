@@ -51,7 +51,7 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.tax);
 
     if let Some(status) = patch.status.clone() {
-        update_invoice.status = status.full_status().into()
+        update_invoice.status = status.full_status()
     }
 
     if let Some(other_party) = other_party_option {
@@ -79,9 +79,12 @@ pub(crate) fn generate(
     let location_movements = if let Some(batches) = &batches_to_update {
         let generate_movement = batches
             .iter()
-            .filter_map(|batch| match batch.line.location_id {
-                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
-                None => None,
+            .filter_map(|batch| {
+                batch
+                    .line
+                    .location_id
+                    .clone()
+                    .map(|_| generate_location_movements(store_id.to_owned(), batch))
             })
             .collect();
 
@@ -189,13 +192,13 @@ fn empty_lines_to_trim(
     }
 
     let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
-    return Ok(Some(invoice_line_rows));
+    Ok(Some(invoice_line_rows))
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipment) {
     if let Some(new_invoice_status) = patch.full_status() {
         let current_datetime = Utc::now().naive_utc();
-        let invoice_status_index = InvoiceRowStatus::from(invoice.status.clone()).index();
+        let invoice_status_index = invoice.status.clone().index();
         let new_invoice_status_index = new_invoice_status.index();
 
         let is_status_update = |status: InvoiceRowStatus| {
@@ -204,7 +207,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
         };
 
         if is_status_update(InvoiceRowStatus::Delivered) {
-            invoice.delivered_datetime = Some(current_datetime.clone());
+            invoice.delivered_datetime = Some(current_datetime);
         }
 
         if is_status_update(InvoiceRowStatus::Verified) {

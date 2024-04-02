@@ -28,7 +28,7 @@ export const PackVariantEntryCell =
     getUnitName: (row: T) => string | null;
     getIsDisabled?: (row: T) => boolean;
   }) =>
-  ({ rowData, column }: CellProps<T>): ReactElement => {
+  ({ rowData, column, isDisabled }: CellProps<T>): ReactElement => {
     const { variantsControl } = usePackVariant(
       getItemId(rowData),
       getUnitName(rowData)
@@ -50,7 +50,7 @@ export const PackVariantEntryCell =
     }, []);
 
     const updater = useDebounceCallback(column.setter, [column.setter], 250);
-    const disabled = getIsDisabled?.(rowData) || false;
+    const disabled = isDisabled || getIsDisabled?.(rowData) || false;
 
     // Make sure manual pack size is auto selected on load if packSize does not
     // match variant

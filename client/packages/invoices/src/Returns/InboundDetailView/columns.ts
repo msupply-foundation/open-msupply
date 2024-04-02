@@ -15,9 +15,7 @@ import { InboundReturnItem } from '../../types';
 
 interface UseInboundReturnColumnOptions {
   sortBy: SortBy<InboundReturnLineFragment | InboundReturnItem>;
-  onChangeSortBy: (
-    column: Column<InboundReturnLineFragment | InboundReturnItem>
-  ) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
 const expansionColumn = getRowExpandColumn<

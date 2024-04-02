@@ -12,7 +12,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-const DESCRIPTION: &'static str = "Create response requisition from request requisition";
+const DESCRIPTION: &str = "Create response requisition from request requisition";
 
 pub struct CreateResponseRequisitionProcessor;
 impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {

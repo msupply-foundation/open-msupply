@@ -84,7 +84,7 @@ pub fn update_inbound_shipment(
             if update_invoice.status == InvoiceRowStatus::Verified {
                 if let Some(movements) = location_movements {
                     for movement in movements {
-                        LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                        LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                     }
                 }
             }
@@ -97,7 +97,7 @@ pub fn update_inbound_shipment(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_owned()),
                     None,
@@ -106,7 +106,7 @@ pub fn update_inbound_shipment(
             }
 
             get_invoice(ctx, None, &update_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -164,10 +164,7 @@ impl UpdateInboundShipmentStatus {
 
 impl UpdateInboundShipment {
     pub fn full_status(&self) -> Option<InvoiceRowStatus> {
-        match &self.status {
-            Some(status) => Some(status.full_status()),
-            None => None,
-        }
+        self.status.as_ref().map(|status| status.full_status())
     }
 }
 

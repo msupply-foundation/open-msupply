@@ -18,15 +18,24 @@ import { InboundReturnFragment, useReturns } from '../api';
 
 export const Toolbar: FC = () => {
   const t = useTranslation('distribution');
-  const { data } = useReturns.document.inboundReturn();
-  const { otherPartyName, id: returnId = '' } = data ?? {};
-  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
-  const onDelete = useReturns.lines.deleteSelectedInboundLines({ returnId });
-  //   const [theirReferenceBuffer, setTheirReferenceBuffer] =
-  //     useBufferState(theirReference);
-  //   const { mutateAsync: updateName } = useOutbound.document.updateName();
+  const isDisabled = useReturns.utils.inboundIsDisabled();
 
-  //   const isDisabled = useOutbound.utils.isDisabled();
+  const { bufferedState, setBufferedState } =
+    useReturns.document.inboundReturn();
+  const { otherPartyName, theirReference, id = '' } = bufferedState ?? {};
+
+  const onDelete = useReturns.lines.deleteSelectedInboundLines({
+    returnId: id,
+  });
+  const { debouncedMutateAsync } = useReturns.document.updateInboundReturn();
+
+  const { isGrouped, toggleIsGrouped } = useIsGrouped('inboundReturn');
+
+  const update = (data: Partial<InboundReturnFragment>) => {
+    if (!id) return;
+    setBufferedState({ ...data });
+    debouncedMutateAsync({ id, ...data });
+  };
 
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
@@ -49,21 +58,17 @@ export const Toolbar: FC = () => {
               label={t('label.customer-ref')}
               Input={
                 <BasicTextInput
-                  disabled={true}
                   size="small"
                   sx={{ width: 250 }}
-                  value={data?.theirReference ?? ''}
-                  // TODO: once updating theirReference supported by API
-                  // disabled={isDisabled}
-                  // value={theirReferenceBuffer ?? ''}
-                  // onChange={event => {
-                  //   setTheirReferenceBuffer(event.target.value);
-                  //   update({ theirReference: event.target.value });
-                  // }}
+                  disabled={isDisabled}
+                  value={theirReference}
+                  onChange={event => {
+                    update({ theirReference: event.target.value });
+                  }}
                 />
               }
             />
-            <InfoAlert inboundReturn={data} />
+            <InfoAlert inboundReturn={bufferedState} />
           </Box>
         </Grid>
         <Grid

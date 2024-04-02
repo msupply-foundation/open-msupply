@@ -27,6 +27,7 @@ pub struct UpdateInboundReturn {
     pub on_hold: Option<bool>,
     pub comment: Option<String>,
     pub colour: Option<String>,
+    pub their_reference: Option<String>,
     // pub other_party_id: Option<String>,
 }
 
@@ -132,9 +133,9 @@ impl UpdateInboundReturn {
 mod test {
     use repository::{
         mock::{
-            mock_inbound_return_a, mock_inbound_return_b, mock_inbound_return_b_invoice_line_a,
-            mock_name_store_a, mock_outbound_shipment_e, mock_store_a, mock_store_b,
-            mock_user_account_a, MockData, MockDataInserts,
+            currency_a, mock_inbound_return_a, mock_inbound_return_b,
+            mock_inbound_return_b_invoice_line_a, mock_name_store_a, mock_outbound_shipment_e,
+            mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter,
@@ -180,6 +181,7 @@ mod test {
                 id: "verified_return".to_string(),
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
+                currency_id: Some(currency_a().id),
                 r#type: InvoiceRowType::InboundReturn,
                 status: InvoiceRowStatus::Verified,
                 ..Default::default()
@@ -190,6 +192,7 @@ mod test {
                 id: "on_hold_return".to_string(),
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
+                currency_id: Some(currency_a().id),
                 r#type: InvoiceRowType::InboundReturn,
                 status: InvoiceRowStatus::New,
                 on_hold: true,

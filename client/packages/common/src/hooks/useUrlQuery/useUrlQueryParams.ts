@@ -1,16 +1,11 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   NESTED_SPLIT_CHAR,
   RANGE_SPLIT_CHAR,
   UrlQueryValue,
   useUrlQuery,
 } from './useUrlQuery';
-import {
-  Column,
-  Formatter,
-  RecordWithId,
-  useLocalStorage,
-} from '@openmsupply-client/common';
+import { Formatter, useLocalStorage } from '@openmsupply-client/common';
 import {
   FilterBy,
   FilterByWithBoolean,
@@ -70,18 +65,14 @@ export const useUrlQueryParams = ({
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort]);
+  }, [initialSort, updateQuery, urlQuery]);
 
-  const updateSortQuery = <T extends RecordWithId>(column: Column<T>) => {
-    const currentSort = urlQuery['sort'];
-    const sort = column.key as string;
-    if (sort !== currentSort) {
-      updateQuery({ sort, dir: '', page: '' });
-    } else {
-      const dir = column.sortBy?.direction === 'desc' ? '' : 'desc';
-      updateQuery({ dir });
-    }
-  };
+  const updateSortQuery = useCallback(
+    (sort: string, dir: 'desc' | 'asc') => {
+      updateQuery({ sort, dir: dir === 'asc' ? '' : 'desc' });
+    },
+    [updateQuery]
+  );
 
   const updatePaginationQuery = (page: number) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
@@ -144,8 +135,8 @@ export const useUrlQueryParams = ({
     first: rowsPerPage,
     sortBy: {
       key: urlQuery['sort'] ?? initialSort?.key ?? '',
-      direction: urlQuery['dir'] ?? initialSort?.dir ?? 'asc',
-      isDesc: (urlQuery['dir'] ?? initialSort?.dir) === 'desc',
+      direction: urlQuery['dir'] ?? 'asc',
+      isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,
     filterBy: filter.filterBy,
   };

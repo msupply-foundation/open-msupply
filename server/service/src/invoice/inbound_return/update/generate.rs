@@ -30,6 +30,10 @@ pub(crate) fn generate(
     updated_return.comment = patch.comment.clone().or(updated_return.comment);
     updated_return.on_hold = patch.on_hold.unwrap_or(updated_return.on_hold);
     updated_return.colour = patch.colour.clone().or(updated_return.colour);
+    updated_return.their_reference = patch
+        .their_reference
+        .clone()
+        .or(updated_return.their_reference);
 
     set_new_status_datetime(&mut updated_return, &patch);
 
