@@ -34,5 +34,6 @@ export const useInbound = {
     api: Utils.useInboundApi,
     isDisabled: Utils.useIsInboundDisabled,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,
+    selectedLines: Utils.useSelectedLines,
   },
 };
