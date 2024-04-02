@@ -38,10 +38,10 @@ export const parseLogStatus = (
   status: StatusType
 ): { key: LocaleKey; colour: string } | undefined => {
   switch (status) {
-    case StatusType.Decomissioned:
+    case StatusType.Decommissioned:
       return {
-        key: 'status.decomissioned',
-        colour: 'cceStatus.decomissioned',
+        key: 'status.decommissioned',
+        colour: 'cceStatus.decommissioned',
       };
     case StatusType.Functioning:
       return {
@@ -72,12 +72,12 @@ export const parseLogReason = (
   reason: ReasonType
 ): { key: LocaleKey } | undefined => {
   switch (reason) {
-    case ReasonType.AwaitingDecomissioning:
-      return { key: 'reason.awaiting-decomissioning' };
+    case ReasonType.AwaitingDecommissioning:
+      return { key: 'reason.awaiting-decommissioning' };
     case ReasonType.AwaitingInstallation:
       return { key: 'reason.awaiting-installation' };
-    case ReasonType.Decomissioned:
-      return { key: 'reason.decomissioned' };
+    case ReasonType.Decommissioned:
+      return { key: 'reason.decommissioned' };
     case ReasonType.Functioning:
       return { key: 'reason.functioning' };
     case ReasonType.LackOfPower:
@@ -107,7 +107,7 @@ export const reasonsByStatus = {
     ReasonType.AwaitingInstallation,
     ReasonType.Stored,
     ReasonType.OffsiteForRepairs,
-    ReasonType.AwaitingDecomissioning,
+    ReasonType.AwaitingDecommissioning,
   ],
   [AssetLogStatusInput.Functioning]: [],
   [AssetLogStatusInput.FunctioningButNeedsAttention]: [
@@ -119,7 +119,7 @@ export const reasonsByStatus = {
     ReasonType.LackOfPower,
     ReasonType.Unknown,
   ],
-  [AssetLogStatusInput.Decomissioned]: [],
+  [AssetLogStatusInput.Decommissioned]: [],
 };
 
 export const translateReason = (
