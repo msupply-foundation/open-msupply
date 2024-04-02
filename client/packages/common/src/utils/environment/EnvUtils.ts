@@ -35,9 +35,15 @@ const mapRoute = (route: string): RouteMapping => {
         docs: '/replenishment/inbound-shipments/',
       };
     case inRoute('outbound-return'):
-      return { title: 'outbound-return', docs: '/introduction/' };
+      return {
+        title: 'outbound-return',
+        docs: '/replenishment/outbound-returns/',
+      };
     case inRoute('inbound-return'):
-      return { title: 'inbound-return', docs: '/introduction/' };
+      return {
+        title: 'inbound-return',
+        docs: '/distribution/inbound-returns/',
+      };
     case inRoute('internal-order'):
       return {
         title: 'internal-order',
