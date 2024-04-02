@@ -40,13 +40,17 @@ export type InboundReturnsQueryVariables = Types.Exact<{
 
 export type InboundReturnsQuery = { __typename: 'Queries', invoices: { __typename: 'InvoiceConnector', totalCount: number, nodes: Array<{ __typename: 'InvoiceNode', id: string, otherPartyName: string, status: Types.InvoiceNodeStatus, invoiceNumber: number, colour?: string | null, createdDatetime: string, deliveredDatetime?: string | null, comment?: string | null, theirReference?: string | null, linkedShipment?: { __typename: 'InvoiceNode', id: string } | null }> } };
 
+export type GenerateOutboundReturnLineFragment = { __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null } };
+
 export type GenerateOutboundReturnLinesQueryVariables = Types.Exact<{
   input: Types.GenerateOutboundReturnLinesInput;
   storeId: Types.Scalars['String']['input'];
 }>;
 
 
-export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, itemId: string, itemCode: string, itemName: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, note?: string | null, reasonId?: string | null }> } };
+export type GenerateOutboundReturnLinesQuery = { __typename: 'Queries', generateOutboundReturnLines: { __typename: 'OutboundReturnLineConnector', nodes: Array<{ __typename: 'OutboundReturnLineNode', availableNumberOfPacks: number, batch?: string | null, expiryDate?: string | null, id: string, numberOfPacksToReturn: number, packSize: number, stockLineId: string, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null } }> } };
+
+export type GenerateInboundReturnLineFragment = { __typename: 'InboundReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null, code: string, name: string } };
 
 export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
   input: Types.GenerateInboundReturnLinesInput;
@@ -54,7 +58,7 @@ export type GenerateInboundReturnLinesQueryVariables = Types.Exact<{
 }>;
 
 
-export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: { __typename: 'GeneratedInboundReturnLineConnector', nodes: Array<{ __typename: 'GeneratedInboundReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, itemId: string, itemCode: string, itemName: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null }> } };
+export type GenerateInboundReturnLinesQuery = { __typename: 'Queries', generateInboundReturnLines: { __typename: 'GeneratedInboundReturnLineConnector', nodes: Array<{ __typename: 'InboundReturnLineNode', batch?: string | null, expiryDate?: string | null, id: string, packSize: number, stockLineId?: string | null, numberOfPacksReturned: number, numberOfPacksIssued?: number | null, note?: string | null, reasonId?: string | null, itemName: string, itemCode: string, item: { __typename: 'ItemNode', id: string, unitName?: string | null, code: string, name: string } }> } };
 
 export type OutboundReturnByNumberQueryVariables = Types.Exact<{
   invoiceNumber: Types.Scalars['Int']['input'];
@@ -272,6 +276,46 @@ export const InboundReturnLineFragmentDoc = gql`
   packSize
 }
     `;
+export const GenerateOutboundReturnLineFragmentDoc = gql`
+    fragment GenerateOutboundReturnLine on OutboundReturnLineNode {
+  availableNumberOfPacks
+  batch
+  expiryDate
+  id
+  numberOfPacksToReturn
+  packSize
+  stockLineId
+  note
+  reasonId
+  itemName
+  itemCode
+  item {
+    id
+    unitName
+  }
+}
+    `;
+export const GenerateInboundReturnLineFragmentDoc = gql`
+    fragment GenerateInboundReturnLine on InboundReturnLineNode {
+  batch
+  expiryDate
+  id
+  packSize
+  stockLineId
+  numberOfPacksReturned
+  numberOfPacksIssued
+  note
+  reasonId
+  itemName
+  itemCode
+  item {
+    id
+    unitName
+    code
+    name
+  }
+}
+    `;
 export const OutboundReturnsDocument = gql`
     query outboundReturns($first: Int, $offset: Int, $key: InvoiceSortFieldInput!, $desc: Boolean, $filter: InvoiceFilterInput, $storeId: String!) {
   invoices(
@@ -313,45 +357,23 @@ export const GenerateOutboundReturnLinesDocument = gql`
   generateOutboundReturnLines(input: $input, storeId: $storeId) {
     ... on OutboundReturnLineConnector {
       nodes {
-        availableNumberOfPacks
-        batch
-        expiryDate
-        id
-        itemId
-        itemCode
-        itemName
-        numberOfPacksToReturn
-        packSize
-        stockLineId
-        note
-        reasonId
+        ...GenerateOutboundReturnLine
       }
     }
   }
 }
-    `;
+    ${GenerateOutboundReturnLineFragmentDoc}`;
 export const GenerateInboundReturnLinesDocument = gql`
     query generateInboundReturnLines($input: GenerateInboundReturnLinesInput!, $storeId: String!) {
   generateInboundReturnLines(input: $input, storeId: $storeId) {
     ... on GeneratedInboundReturnLineConnector {
       nodes {
-        batch
-        expiryDate
-        id
-        itemId
-        itemCode
-        itemName
-        packSize
-        stockLineId
-        numberOfPacksReturned
-        numberOfPacksIssued
-        note
-        reasonId
+        ...GenerateInboundReturnLine
       }
     }
   }
 }
-    `;
+    ${GenerateInboundReturnLineFragmentDoc}`;
 export const OutboundReturnByNumberDocument = gql`
     query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
   invoiceByNumber(

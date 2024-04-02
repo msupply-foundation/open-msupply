@@ -1,9 +1,12 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
+use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::{ItemRow, StockLineRow};
 use service::{
     invoice::outbound_return::generate_outbound_return_lines::OutboundReturnLine, ListResult,
 };
+
+use super::ItemNode;
 
 #[derive(SimpleObject)]
 pub struct OutboundReturnLineConnector {
@@ -62,16 +65,29 @@ impl OutboundReturnLineNode {
         &self.return_line.number_of_packs
     }
 
-    pub async fn item_id(&self) -> &str {
-        &self.item_row().id
-    }
-
+    // TODO should ideally come from invoice line
     pub async fn item_code(&self) -> &str {
         &self.item_row().code
     }
-
+    // TODO should ideally come from invoice line
     pub async fn item_name(&self) -> &str {
         &self.item_row().name
+    }
+
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let item_option = loader.load_one(self.item_row().id.clone()).await?;
+
+        let item = item_option.ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find item {} for invoice line {}",
+                self.item_row().id,
+                self.return_line.id
+            ))
+            .extend(),
+        )?;
+
+        Ok(ItemNode::from_domain(item))
     }
 
     pub async fn stock_line_id(&self) -> &str {

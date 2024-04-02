@@ -1820,24 +1820,8 @@ export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
 
 export type GeneratedInboundReturnLineConnector = {
   __typename: 'GeneratedInboundReturnLineConnector';
-  nodes: Array<GeneratedInboundReturnLineNode>;
+  nodes: Array<InboundReturnLineNode>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type GeneratedInboundReturnLineNode = {
-  __typename: 'GeneratedInboundReturnLineNode';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemId: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
 export type InboundInvoiceCounts = {
@@ -1862,6 +1846,22 @@ export type InboundReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InboundReturnLineNode = {
+  __typename: 'InboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
 export type InitialisationStatusNode = {
@@ -4048,8 +4048,8 @@ export type OutboundReturnLineNode = {
   batch?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  item: ItemNode;
   itemCode: Scalars['String']['output'];
-  itemId: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
   numberOfPacksToReturn: Scalars['Float']['output'];
