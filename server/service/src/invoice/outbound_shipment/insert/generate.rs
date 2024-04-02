@@ -49,6 +49,7 @@ pub fn generate(
         linked_invoice_id: None,
         requisition_id: None,
         clinician_link_id: None,
+        original_shipment_id: None,
     };
 
     Ok(result)

@@ -161,6 +161,9 @@ impl InvoiceLineNode {
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
     }
+    pub async fn return_reason_id(&self) -> &Option<String> {
+        &self.row().return_reason_id
+    }
 }
 
 #[derive(Union)]

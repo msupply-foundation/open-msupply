@@ -56,6 +56,7 @@ pub fn generate(
         linked_invoice_id: None,
         tax: None,
         clinician_link_id: None,
+        original_shipment_id: None,
     };
 
     let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
@@ -96,6 +97,7 @@ pub fn generate_invoice_lines(
             cost_price_per_pack: 0.0,
             stock_line_id: None,
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
             foreign_currency_price_before_tax: None,
         });
     }
