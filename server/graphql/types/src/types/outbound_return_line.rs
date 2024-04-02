@@ -62,6 +62,10 @@ impl OutboundReturnLineNode {
         &self.return_line.number_of_packs
     }
 
+    pub async fn item_id(&self) -> &str {
+        &self.item_row().id
+    }
+
     pub async fn item_code(&self) -> &str {
         &self.item_row().code
     }

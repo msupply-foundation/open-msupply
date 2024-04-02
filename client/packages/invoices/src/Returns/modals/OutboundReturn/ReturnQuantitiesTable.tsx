@@ -5,6 +5,7 @@ import {
   useColumns,
   CellProps,
 } from '@openmsupply-client/common';
+import { PackVariantCell } from '@openmsupply-client/system';
 import React from 'react';
 
 export const QuantityToReturnTableComponent = ({
@@ -24,10 +25,27 @@ export const QuantityToReturnTableComponent = ({
       // 'location',
       'batch',
       'expiryDate',
-      'availableNumberOfPacks',
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        // eslint-disable-next-line new-cap
+        Cell: PackVariantCell({
+          getItemId: row => row?.itemId,
+          getPackSizes: row => [row.packSize ?? 1],
+          getUnitName: () => null,
+        }),
+      },
+      [
+        'availableNumberOfPacks',
+        {
+          description: 'description.pack-quantity',
+        },
+      ],
       [
         'numberOfPacksToReturn',
         {
+          description: 'description.pack-quantity',
           width: 100,
           setter: updateLine,
           getIsDisabled: () => isDisabled,

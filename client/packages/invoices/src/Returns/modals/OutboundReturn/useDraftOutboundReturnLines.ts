@@ -32,9 +32,7 @@ export const useDraftOutboundReturnLines = ({
   const lines = data?.nodes;
 
   useEffect(() => {
-    const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
-
-    setDraftLines(newDraftLines);
+    setDraftLines(lines ?? []);
   }, [lines]);
 
   const update = (patch: RecordPatch<OutboundReturnLineNode>) => {
