@@ -3,6 +3,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
+use tokio::io;
+use util::is_central_server;
 use util::uuid::uuid;
 
 #[derive(Debug, PartialEq)]
@@ -14,6 +16,7 @@ pub struct StaticFile {
 
 const STATIC_FILE_DIR: &str = "static_files";
 
+#[derive(Clone)]
 pub enum StaticFileCategory {
     Temporary,
     SyncFile(String, String), // Files to be synced (Table Name, Record Id)
@@ -118,6 +121,7 @@ impl StaticFileService {
     ) -> anyhow::Result<Option<StaticFile>> {
         let dir = self.dir.join(category.to_path_buf());
         std::fs::create_dir_all(&dir)?;
+
         // clean up the static file directory
         match category {
             StaticFileCategory::Temporary => {
@@ -137,6 +141,66 @@ impl StaticFileService {
             id: id.to_string(),
             name: original_file_name,
             path: file_path.to_string_lossy().to_string(),
+        }))
+    }
+
+    pub async fn download_file_from_central(
+        &self,
+        id: &str,
+        category: StaticFileCategory,
+        settings: &crate::settings::Settings,
+    ) -> anyhow::Result<Option<StaticFile>> {
+        if is_central_server() {
+            return Err(anyhow::Error::msg(
+                "Can't download file from central server, as I am the central server!",
+            ));
+        }
+
+        let (table_name, record_id) = match category.clone() {
+            StaticFileCategory::SyncFile(table_name, record_id) => (table_name, record_id),
+            _ => {
+                return Err(anyhow::Error::msg(
+                    "Can't download file from central server, as it's not a sync file!",
+                ))
+            }
+        };
+
+        let base_url = match settings.sync.as_ref() {
+            Some(settings) => settings.file_upload_base_url(),
+            None => {
+                return Err(anyhow::Error::msg(
+                    "Can't download file as sync is not configured",
+                ))
+            }
+        };
+
+        let file_name = "TODO".to_string(); // TODO get proper file name?
+        let download_url = format!(
+            "{}/static_files/{}/{}?id={}",
+            base_url, table_name, record_id, id
+        );
+        log::info!("Downloading sync file {}", download_url);
+
+        let file = self.reserve_file(&file_name, &category, Some(id.to_owned()))?;
+
+        let mut download_response = reqwest::get(&download_url).await?;
+
+        loop {
+            match download_response.chunk().await {
+                Ok(Some(bytes)) => std::fs::write(&file.path, bytes)?,
+                Ok(None) => break, // Finished the download
+                Err(e) => {
+                    return Err(
+                        anyhow::Error::new(e).context("Downloading file from central server")
+                    );
+                }
+            }
+        }
+
+        Ok(Some(StaticFile {
+            id: id.to_string(),
+            name: file_name,
+            path: file.path.to_string(),
         }))
     }
 }
