@@ -3,6 +3,7 @@ use repository::{SyncBufferAction, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
+use util::uuid::uuid;
 
 fn empty_object() -> serde_json::Value {
     json!({})
@@ -75,6 +76,15 @@ impl CommonSyncRecordV5 {
             action,
             data,
         } = self;
+
+        let record_id = if action == SyncActionV5::Merge {
+            // This is (likely) a temporary fix to avoid merge sync records overriding upserts on target table
+            // causing errors as the merge is applied to record that never got upserted first.
+            uuid()
+        } else {
+            record_id
+        };
+
         Ok(SyncBufferRow {
             table_name,
             record_id,
