@@ -35,8 +35,11 @@ pub enum LegacyTransactType {
     /// Repack
     #[serde(rename = "sr")]
     Sr,
+    // Customer Credit
+    #[serde(rename = "cc")]
+    Cc,
     /// Bucket to catch all other variants
-    /// E.g. "cc" (customer credit), "bu" (build),
+    /// E.g. "bu" (build),
     /// "rc" (cash receipt), "ps" (cash payment)
     #[serde(other)]
     Others,
@@ -173,6 +176,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "om_original_shipment_id")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub original_shipment_id: Option<String>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -301,6 +309,7 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
+            original_shipment_id: data.original_shipment_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -361,6 +370,7 @@ impl SyncTranslation for InvoiceTranslation {
                     clinician_link_id: _,
                     currency_id,
                     currency_rate,
+                    original_shipment_id,
                 },
             name_row,
             clinician_row,
@@ -415,6 +425,7 @@ impl SyncTranslation for InvoiceTranslation {
             currency_id: Some(currency_id),
             currency_rate: Some(currency_rate),
             clinician_id: clinician_row.map(|row| row.id),
+            original_shipment_id,
         };
 
         let json_record = serde_json::to_value(legacy_row)?;
@@ -459,6 +470,8 @@ fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceRowTy
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
         LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
+        LegacyTransactType::Cc => Some(InvoiceRowType::InboundReturn),
+        LegacyTransactType::Sc => Some(InvoiceRowType::OutboundReturn),
         _ => None,
     }
 }
@@ -504,7 +517,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
     match invoice_type {
-        InvoiceRowType::OutboundShipment => match data.status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match data.status {
             LegacyTransactStatus::Cn => {
                 mapping.allocated_datetime = confirm_datetime;
                 mapping.picked_datetime = confirm_datetime;
@@ -516,7 +529,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
             }
             _ => {}
         },
-        InvoiceRowType::InboundShipment => {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => {
             mapping.delivered_datetime = confirm_datetime;
 
             match data.status {
@@ -579,6 +592,9 @@ fn to_legacy_confirm_time(
         InvoiceRowType::InventoryAddition
         | InvoiceRowType::InventoryReduction
         | InvoiceRowType::Repack => verified_datetime,
+        // TODO confirm
+        InvoiceRowType::InboundReturn => delivered_datetime,
+        InvoiceRowType::OutboundReturn => picked_datetime,
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -602,7 +618,7 @@ fn invoice_status(
             _ => return None,
         },
         // outbound
-        InvoiceRowType::OutboundShipment => match data.status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match data.status {
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
@@ -610,7 +626,7 @@ fn invoice_status(
             _ => return None,
         },
         // inbound
-        InvoiceRowType::InboundShipment => match data.status {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => match data.status {
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
@@ -640,6 +656,8 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
         InvoiceRowType::InventoryAddition => LegacyTransactType::Si,
         InvoiceRowType::InventoryReduction => LegacyTransactType::Sc,
         InvoiceRowType::Repack => LegacyTransactType::Sr,
+        InvoiceRowType::InboundReturn => LegacyTransactType::Cc,
+        InvoiceRowType::OutboundReturn => LegacyTransactType::Sc,
     };
     Some(t)
 }
@@ -649,7 +667,7 @@ fn legacy_invoice_status(
     status: &InvoiceRowStatus,
 ) -> Option<LegacyTransactStatus> {
     let status = match t {
-        InvoiceRowType::OutboundShipment => match status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Sg,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Sg,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Cn,
@@ -657,7 +675,7 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
-        InvoiceRowType::InboundShipment => match status {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
