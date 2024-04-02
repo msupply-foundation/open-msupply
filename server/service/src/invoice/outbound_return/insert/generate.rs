@@ -49,7 +49,7 @@ pub fn generate(
         status: InvoiceRowStatus::New,
         original_shipment_id: inbound_shipment_id,
         // Default
-        currency_id: currency.currency_row.id,
+        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         on_hold: false,
         colour: None,

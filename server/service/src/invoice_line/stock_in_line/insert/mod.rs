@@ -101,7 +101,9 @@ where
 mod test {
     use repository::{
         mock::{
-            currency_a, mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a, mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b, mock_user_account_a, MockData, MockDataInserts
+            mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
+            mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
+            mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StorePreferenceRow,
@@ -127,7 +129,6 @@ mod test {
                 status: InvoiceRowStatus::Verified,
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_b().id,
-                currency_id: currency_a().id,
                 r#type: InvoiceRowType::InboundReturn,
                 ..Default::default()
             }

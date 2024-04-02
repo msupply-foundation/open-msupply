@@ -441,7 +441,6 @@ pub fn mock_outbound_return_a() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -458,7 +457,6 @@ pub fn mock_outbound_return_b() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -475,7 +473,6 @@ pub fn mock_inbound_return_a() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.delivered_datetime = Some(Utc::now().naive_utc());
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -491,7 +488,6 @@ pub fn mock_inbound_return_b() -> InvoiceRow {
             .unwrap()
             .and_hms_opt(12, 30, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 

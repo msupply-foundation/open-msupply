@@ -181,7 +181,7 @@ mod test {
                 id: "verified_return".to_string(),
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
-                currency_id: currency_a().id,
+                currency_id: Some(currency_a().id),
                 r#type: InvoiceRowType::InboundReturn,
                 status: InvoiceRowStatus::Verified,
                 ..Default::default()
@@ -192,7 +192,7 @@ mod test {
                 id: "on_hold_return".to_string(),
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
-                currency_id: currency_a().id,
+                currency_id: Some(currency_a().id),
                 r#type: InvoiceRowType::InboundReturn,
                 status: InvoiceRowStatus::New,
                 on_hold: true,

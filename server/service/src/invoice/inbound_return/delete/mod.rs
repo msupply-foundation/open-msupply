@@ -99,7 +99,7 @@ mod test {
                 store_id: mock_store_a().id,
                 r#type: InvoiceRowType::InboundReturn,
                 name_link_id: mock_name_store_a().id,
-                currency_id: currency_a().id,
+                currency_id: Some(currency_a().id),
                 ..Default::default()
             }
         }
@@ -110,7 +110,7 @@ mod test {
                 r#type: InvoiceRowType::InboundReturn,
                 name_link_id: mock_name_store_b().id,
                 status: InvoiceRowStatus::Verified,
-                currency_id: currency_a().id,
+                currency_id: Some(currency_a().id),
                 ..Default::default()
             }
         }
@@ -163,7 +163,7 @@ mod test {
                 id: "return_to_delete".to_string(),
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
-                currency_id: currency_a().id,
+                currency_id: Some(currency_a().id),
                 r#type: InvoiceRowType::InboundReturn,
                 status: InvoiceRowStatus::New,
                 ..Default::default()
