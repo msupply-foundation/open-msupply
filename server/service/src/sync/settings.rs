@@ -50,6 +50,6 @@ impl SyncSettings {
         let omsupply_central_url = get_omsupply_central_url(&self.url)
             .unwrap_or(Url::parse("http://localhost:8000").unwrap()); // This is hacky but I think ok for now?
 
-        format!("{}api/sync_files/", omsupply_central_url)
+        format!("{}sync_files", omsupply_central_url)
     }
 }

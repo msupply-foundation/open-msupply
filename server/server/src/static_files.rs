@@ -8,7 +8,7 @@ use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{get, guard, web, Error, HttpRequest, HttpResponse};
+use actix_web::{get, guard, post, put, web, Error, HttpRequest, HttpResponse};
 use futures_util::TryStreamExt;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use serde::{Deserialize, Serialize};
@@ -28,17 +28,11 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/files").guard(guard::Get()).to(files));
     cfg.service(plugins);
     cfg.service(
-        web::resource("/sync_files/{table_name}/{record_id}")
-            .route(web::get().to(sync_files))
-            .route(
-                web::post()
-                    .to(upload_sync_file)
-                    .wrap(limit_content_length()),
-            ),
-    );
-    cfg.service(
-        web::resource("/sync_files/{table_name}/{record_id}/{file_id}")
-            .route(web::post().to(upload_sync_file_via_sync)),
+        web::scope("/sync_files")
+            .service(sync_files)
+            .service(upload_sync_file)
+            .service(upload_sync_file_via_sync)
+            .wrap(limit_content_length()),
     );
 }
 
@@ -159,6 +153,7 @@ async fn handle_file_upload(
     Ok(files)
 }
 
+#[post("/{table_name}/{record_id}")]
 async fn upload_sync_file(
     payload: Multipart,
     settings: Data<Settings>,
@@ -213,6 +208,7 @@ async fn upload_sync_file(
     Ok(HttpResponse::Ok().json(files))
 }
 
+#[put("/{table_name}/{record_id}/{file_id}")]
 async fn upload_sync_file_via_sync(
     payload: Multipart,
     settings: Data<Settings>,
@@ -226,14 +222,20 @@ async fn upload_sync_file_via_sync(
     let (table_name, record_id, file_id) = path.into_inner();
 
     let repo = SyncFileReferenceRowRepository::new(&db_connection);
-
-    let _existing_file = repo
+    log::info!("Receiving a file via sync : {}", file_id);
+    let mut sync_file_reference = repo
         .find_one_by_id(&file_id)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
-        .ok_or(InternalError::new(
-            "Sync File Not found, can't upload until this is synced yet",
-            StatusCode::NOT_FOUND,
-        ))?;
+        .ok_or({
+            log::error!(
+                "Sync File Reference not found, can't upload until this is synced: {}",
+                file_id
+            );
+            InternalError::new(
+                "Sync File Reference not found, can't upload until this is synced",
+                StatusCode::NOT_FOUND,
+            )
+        })?;
 
     let files = handle_file_upload(
         payload,
@@ -244,39 +246,34 @@ async fn upload_sync_file_via_sync(
     .await?;
 
     let repo = SyncFileReferenceRowRepository::new(&db_connection);
+    if files.len() != 1 {
+        log::error!(
+            "Incorrect sync file upload received: Expected to see 1 file uploaded, but got {}",
+            files.len()
+        );
+    }
+
     for file in files.clone() {
-        let result = repo.upsert_one(&SyncFileReferenceRow {
-            id: file.id,
-            file_name: file.filename,
-            table_name: table_name.clone(),
-            mime_type: file.mime_type,
-            uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
-            total_bytes: file.bytes,
-            created_datetime: chrono::Utc::now().naive_utc(),
-            deleted_datetime: None,
-            record_id: record_id.clone(),
-        });
+        sync_file_reference.uploaded_bytes += file.bytes;
+        let result = repo.upsert_one(&sync_file_reference);
         match result {
             Ok(_) => {}
             Err(err) => {
                 log::error!(
-                    "Error saving file reference: {} - DELETING UPLOADED FILES",
+                    "Error saving sync file reference after sync upload: {}",
                     err
                 );
-                // delete any files that were uploaded...
-                for file in files {
-                    // File::create is blocking operation, use threadpool
-                    web::block(|| std::fs::remove_file(file.path)).await??;
-                }
 
                 return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
             }
         }
+        break; // Only handle the first file
     }
 
     Ok(HttpResponse::Ok().json(files))
 }
 
+#[get("/{table_name}/{record_id}")]
 async fn sync_files(
     req: HttpRequest,
     query: web::Query<FileRequestQuery>,
