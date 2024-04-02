@@ -41,19 +41,22 @@ pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64
 pub fn calculate_foreign_currency_total(
     connection: &StorageConnection,
     total: f64,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<Option<f64>, RepositoryError> {
+    let Some(currency_id) = currency_id else {
+        return Ok(None);
+    };
+
     let currency = CurrencyRepository::new(connection)
         .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
         .pop()
         .ok_or(RepositoryError::NotFound)?;
-
-    if currency.currency_row.id == currency_id {
-        Ok(None)
-    } else {
-        Ok(Some(total / currency_rate))
+    if currency_id == currency.currency_row.id {
+        return Ok(None);
     }
+
+    Ok(Some(total / currency_rate))
 }
 
 #[derive(Debug, PartialEq)]

@@ -37,7 +37,7 @@ pub fn generate(
         on_hold: input.on_hold.unwrap_or(false),
         colour: input.colour,
         // Default
-        currency_id: currency.currency_row.id,
+        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         tax: None,
         transport_reference: None,

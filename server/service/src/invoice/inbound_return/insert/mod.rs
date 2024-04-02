@@ -346,7 +346,7 @@ mod test {
         fn returnable_outbound_shipment() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "returnable_outbound_shipment".to_string();
-                r.currency_id = currency_a().id;
+                r.currency_id = Some(currency_a().id);
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Verified;
                 r.store_id = mock_store_a().id;

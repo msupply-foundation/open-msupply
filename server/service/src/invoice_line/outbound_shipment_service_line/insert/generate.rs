@@ -16,7 +16,7 @@ pub fn generate(
         note,
     }: InsertOutboundShipmentServiceLine,
     item: ItemRow,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, InsertOutboundShipmentServiceLineError> {
     Ok(InvoiceLineRow {

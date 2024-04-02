@@ -100,8 +100,7 @@ pub struct LegacyTransactRow {
     #[serde(rename = "currency_ID")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
-    pub currency_rate: Option<f64>,
-
+    pub currency_rate: f64,
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -269,14 +268,15 @@ impl SyncTranslation for InvoiceTranslation {
         let mapping = map_legacy(&invoice_type, &data);
 
         let currency_id = match data.currency_id {
-            Some(currency_id) => currency_id,
+            Some(currency_id) => Some(currency_id),
             None => {
-                CurrencyRepository::new(connection)
+                let currency_id = CurrencyRepository::new(connection)
                     .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
                     .pop()
-                    .ok_or(anyhow::Error::msg("Default currency not found"))?
+                    .ok_or(anyhow::Error::msg("Home currency not found"))?
                     .currency_row
-                    .id
+                    .id;
+                Some(currency_id)
             }
         };
 
@@ -294,7 +294,7 @@ impl SyncTranslation for InvoiceTranslation {
             their_reference: data.their_ref,
             tax: data.tax,
             currency_id,
-            currency_rate: data.currency_rate.unwrap_or(1.0),
+            currency_rate: data.currency_rate,
             clinician_link_id: data.clinician_id,
 
             // new om field mappings
@@ -422,8 +422,8 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            currency_id: Some(currency_id),
-            currency_rate: Some(currency_rate),
+            currency_id,
+            currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
             original_shipment_id,
         };

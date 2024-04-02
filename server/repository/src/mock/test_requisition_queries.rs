@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     common::{FullMockInvoice, FullMockInvoiceLine, FullMockRequisition},
-    currency_a, mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
+    mock_item_a, mock_item_b, mock_name_a, mock_name_b, mock_store_a, MockData,
 };
 
 pub fn mock_test_requisition_queries() -> MockData {
@@ -174,7 +174,6 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
             r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
-            r.currency_id = currency_a().id;
         }),
         lines: vec![
             FullMockInvoiceLine {
@@ -282,7 +281,6 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
             r.requisition_id = Some(mock_request_draft_requisition_all_fields().requisition.id);
-            r.currency_id = currency_a().id;
         }),
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {
@@ -346,7 +344,6 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
             r.requisition_id = Some(mock_response_draft_requisition_all_fields().requisition.id);
-            r.currency_id = currency_a().id;
         }),
         lines: vec![FullMockInvoiceLine {
             line: InvoiceLineRow {

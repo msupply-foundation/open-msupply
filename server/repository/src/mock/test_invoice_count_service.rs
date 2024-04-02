@@ -19,7 +19,6 @@ pub fn mock_inbound_shipment_invoice_count_service_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(13, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -37,7 +36,6 @@ pub fn mock_inbound_shipment_invoice_count_service_b() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(8, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 

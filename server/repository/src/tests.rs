@@ -4,7 +4,7 @@ mod repository_test {
         use chrono::{NaiveDate, NaiveDateTime};
         use util::inline_init;
 
-        use crate::{db_diesel::*, mock::currency_a};
+        use crate::db_diesel::*;
 
         pub fn name_1() -> NameRow {
             inline_init(|r: &mut NameRow| {
@@ -125,7 +125,6 @@ mod repository_test {
                 r.their_reference = Some("".to_string());
                 // Note: keep nsecs small enough for Postgres which has limited precision;
                 r.created_datetime = NaiveDateTime::from_timestamp_opt(1000, 0).unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -140,7 +139,6 @@ mod repository_test {
                 r.comment = Some("".to_string());
                 r.their_reference = Some("".to_string());
                 r.created_datetime = NaiveDateTime::from_timestamp_opt(2000, 0).unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 

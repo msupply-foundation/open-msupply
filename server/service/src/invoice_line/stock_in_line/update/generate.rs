@@ -41,7 +41,7 @@ pub fn generate(
         input,
         current_line.invoice_line_row,
         new_item_option,
-        &existing_invoice_row.currency_id,
+        existing_invoice_row.currency_id.clone(),
         &existing_invoice_row.currency_rate,
     )?;
 
@@ -105,7 +105,7 @@ fn generate_line(
     }: UpdateStockInLine,
     current_line: InvoiceLineRow,
     new_item_option: Option<ItemRow>,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let mut update_line = current_line;
