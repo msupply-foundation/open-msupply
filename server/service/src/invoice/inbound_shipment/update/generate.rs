@@ -128,7 +128,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
         let new_invoice_status_index = new_invoice_status.index();
 
         new_invoice_status_index >= InvoiceRowStatus::Delivered.index()
-            && invoice_status_index < new_invoice_status_index
+            && invoice_status_index < InvoiceRowStatus::Delivered.index()
     } else {
         false
     }
