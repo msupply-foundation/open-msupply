@@ -6,7 +6,9 @@ mod activity_log_add_zero_line;
 mod add_source_site_id;
 mod assets;
 mod central_omsupply;
+mod linked_shipment;
 mod pack_variant;
+mod returns;
 mod store_add_created_date;
 mod sync_file_reference;
 mod user_change_last_synced_to_optional;
@@ -22,9 +24,11 @@ impl Migration for V1_08_00 {
         add_source_site_id::migrate(connection)?;
         central_omsupply::migrate(connection)?;
         assets::migrate_assets(connection)?;
+        returns::migrate_returns(connection)?;
         pack_variant::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
+        linked_shipment::migrate(connection)?;
         sync_file_reference::migrate(connection)?;
         user_change_last_synced_to_optional::migrate(connection)?;
         Ok(())

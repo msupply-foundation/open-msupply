@@ -41,6 +41,10 @@ pub fn next_number(
             NumberRowType::Stocktake => {
                 StocktakeRowRepository::new(connection_tx).find_max_stocktake_number(store_id)?
             }
+            NumberRowType::InboundReturn => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InboundReturn, store_id)?,
+            NumberRowType::OutboundReturn => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::OutboundReturn, store_id)?,
             NumberRowType::Program(_) => {
                 let next_number =
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;

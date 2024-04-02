@@ -1,6 +1,8 @@
 use service::invoice::common::AddToShipmentFromMasterListInput as ServiceInput;
 
+pub mod inbound_return;
 pub mod inbound_shipment;
+pub mod outbound_return;
 pub mod outbound_shipment;
 pub mod prescription;
 

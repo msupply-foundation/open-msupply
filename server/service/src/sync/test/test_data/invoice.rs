@@ -136,6 +136,7 @@ fn transact_1_pull_record() -> TestSyncIncomingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.32,
             clinician_link_id: None,
+            original_shipment_id: None,
         },
     )
 }
@@ -186,6 +187,7 @@ fn transact_1_push_record() -> TestSyncOutgoingRecord {
             om_colour: None,
             tax: Some(0.0),
             clinician_id: None,
+            original_shipment_id: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.32
         }),
@@ -303,6 +305,7 @@ fn transact_2_pull_record() -> TestSyncIncomingRecord {
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
             clinician_link_id: None,
+            original_shipment_id: None,
         },
     )
 }
@@ -348,6 +351,7 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             om_colour: None,
             tax: Some(0.0),
             clinician_id: None,
+            original_shipment_id: None,
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
         }),
@@ -499,6 +503,7 @@ fn transact_om_fields_pull_record() -> TestSyncIncomingRecord {
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
             clinician_link_id: None,
+            original_shipment_id: None,
         },
     )
 }
@@ -569,6 +574,7 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             om_colour: Some("SomeColour".to_string()),
             tax: Some(0.0),
             clinician_id: None,
+            original_shipment_id: None,
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
         }),
@@ -702,6 +708,7 @@ fn inventory_addition_pull_record() -> TestSyncIncomingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
             clinician_link_id: None,
+            original_shipment_id: None,
         },
     )
 }
@@ -753,6 +760,7 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             requisition_ID: None,
             linked_transaction_id: None,
             clinician_id: None,
+            original_shipment_id: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0
         }),
@@ -886,6 +894,7 @@ fn inventory_reduction_pull_record() -> TestSyncIncomingRecord {
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
             clinician_link_id: None,
+            original_shipment_id: None,
         },
     )
 }
@@ -937,6 +946,7 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             requisition_ID: None,
             linked_transaction_id: None,
             clinician_id: None,
+            original_shipment_id: None,
             currency_id: Some("NEW_ZEALAND_DOLLARS".to_string()),
             currency_rate: 1.0,
         }),
@@ -1066,6 +1076,7 @@ fn prescription_1_pull_record() -> TestSyncIncomingRecord {
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
             clinician_link_id: None,
+            original_shipment_id: None,
         },
     )
 }
@@ -1116,6 +1127,7 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             om_colour: None,
             tax: Some(0.0),
             clinician_id: None,
+            original_shipment_id: None,
             currency_id: Some("AUSTRALIAN_DOLLARS".to_string()),
             currency_rate: 1.0,
         }),
