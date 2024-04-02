@@ -1,16 +1,29 @@
 import React from 'react';
 import { useTranslation } from '@common/intl';
-import { Box, IconButton, Stack, Typography } from '@openmsupply-client/common';
+import {
+  Box,
+  IconButton,
+  Link,
+  Stack,
+  Typography,
+} from '@openmsupply-client/common';
 import { FileIcon, XCircleIcon } from '@common/icons';
+import { Environment } from 'packages/config/src';
+
+type SyncFile = Pick<File, 'name'> & { id?: string };
 
 export const FileList = ({
+  assetId,
   files,
   noFilesMessage,
+  padding = 0,
   removeFile,
 }: {
-  files?: File[];
+  assetId: string;
+  files?: SyncFile[];
   noFilesMessage?: string;
-  removeFile: (filename: string) => void;
+  padding?: number;
+  removeFile: (filename: string, id?: string) => void;
 }) => {
   const t = useTranslation();
   if (files === undefined || files.length === 0) {
@@ -26,18 +39,32 @@ export const FileList = ({
       justifyContent="center"
       flexWrap="wrap"
       alignContent="center"
-      paddingTop={2}
+      paddingTop={4 * padding}
     >
       {files?.map(file => (
-        <Box key={file.name} display="flex" padding={2}>
+        <Box
+          key={file.name}
+          display="flex"
+          padding={padding}
+          sx={{ width: '100%' }}
+        >
           <FileIcon sx={{ stroke: theme => theme.palette.gray.main }} />
           <Typography
-            sx={{ width: '300px', color: 'gray.main', paddingLeft: 1 }}
+            sx={{ width: '100%', color: 'gray.main', paddingLeft: 1 }}
           >
-            {file.name}
+            {file.id ? (
+              <Link
+                to={`${Environment.SYNC_FILES_URL}/asset/${assetId}?id=${file.id}`}
+                target="_blank"
+              >
+                {file.name}
+              </Link>
+            ) : (
+              file.name
+            )}
           </Typography>
           <IconButton
-            onClick={() => removeFile(file.name)}
+            onClick={() => removeFile(file.name, file.id)}
             icon={
               <XCircleIcon sx={{ fill: theme => theme.palette.gray.main }} />
             }

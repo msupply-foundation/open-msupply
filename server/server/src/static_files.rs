@@ -30,6 +30,7 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::resource("/sync_files/{table_name}/{record_id}")
             .route(web::get().to(sync_files))
+            .route(web::delete().to(delete_sync_file))
             .route(
                 web::post()
                     .to(upload_sync_file)
@@ -144,6 +145,43 @@ async fn handle_file_upload(
         }
     }
     Ok(files)
+}
+
+async fn delete_sync_file(
+    query: web::Query<FileRequestQuery>,
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+    path: web::Path<(String, String)>,
+) -> Result<HttpResponse, Error> {
+    let (table_name, record_id) = path.into_inner();
+    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
+
+    // delete local file, if it exists
+    let service = StaticFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    match service.find_file(&query.id, static_file_category) {
+        Ok(Some(file)) => {
+            std::fs::remove_file(file.path)?;
+        }
+        Ok(None) => {}
+        Err(_) => {}
+    };
+
+    // mark file reference as deleted
+    let db_connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+
+    match repo.delete(&query.id) {
+        Ok(_) => Ok(HttpResponse::Ok().body("file deleted")),
+        Err(err) => {
+            log::error!("Error deleting file reference: {}", err);
+            return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
+        }
+    }
 }
 
 async fn upload_sync_file(

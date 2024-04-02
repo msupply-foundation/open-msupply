@@ -1,5 +1,5 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
-import { AssetFragment } from './api';
+import { AssetRowFragment } from './api';
 import { Formatter } from '@common/utils';
 import {
   AssetLogStatusInput,
@@ -12,7 +12,7 @@ import {
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
 export const assetsToCsv = (
-  items: AssetFragment[],
+  items: AssetRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
