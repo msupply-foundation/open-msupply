@@ -1,6 +1,6 @@
 import currency from 'currency.js';
 import { useAuthContext } from '../../authentication';
-import { useIntlUtils } from '../utils';
+import { MAX_FRACTION_DIGITS, useIntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
   const number = Number(`.${centsString}`);
@@ -11,7 +11,7 @@ const trimCents = (centsString: string) => {
   }
 
   const trimmed = new Intl.NumberFormat('en', {
-    maximumFractionDigits: 21,
+    maximumFractionDigits: MAX_FRACTION_DIGITS,
   }).format(number);
   // Trimmed is some number with just one decimal place.
   if (trimmed.length < 4) {
