@@ -4,7 +4,6 @@ import {
   ColumnDescription,
   DataTable,
   Formatter,
-  GeneratedInboundReturnLineNode,
   NumberInputCell,
   TextInputCell,
   getColumnLookupWithOverrides,
@@ -16,19 +15,20 @@ import {
   PackVariantEntryCell,
 } from '@openmsupply-client/system';
 import React from 'react';
+import { GenerateInboundReturnLineFragment } from '../../api';
 
 export const QuantityReturnedTableComponent = ({
   lines,
   updateLine,
   isDisabled,
 }: {
-  lines: GeneratedInboundReturnLineNode[];
+  lines: GenerateInboundReturnLineFragment[];
   updateLine: (
-    line: Partial<GeneratedInboundReturnLineNode> & { id: string }
+    line: Partial<GenerateInboundReturnLineFragment> & { id: string }
   ) => void;
   isDisabled: boolean;
 }) => {
-  const columns = useColumns<GeneratedInboundReturnLineNode>(
+  const columns = useColumns<GenerateInboundReturnLineFragment>(
     [
       'itemCode',
       'itemName',
@@ -77,7 +77,7 @@ export const QuantityReturnedTableComponent = ({
                 getIsDisabled: () => isDisabled,
               },
             ],
-          ] as ColumnDescription<GeneratedInboundReturnLineNode>[])
+          ] as ColumnDescription<GenerateInboundReturnLineFragment>[])
         : []),
       [
         'numberOfPacksReturned',
@@ -108,14 +108,14 @@ export const QuantityReturnedTable = React.memo(QuantityReturnedTableComponent);
 
 // Input cells can't be defined inline, otherwise they lose focus on re-render
 // eslint-disable-next-line new-cap
-const PackUnitEntryCell = PackVariantEntryCell<GeneratedInboundReturnLineNode>({
-  getItemId: r => r.itemId,
-  // getUnitName: r => r.item.unitName || null,
-  getUnitName: () => null,
-});
+const PackUnitEntryCell =
+  PackVariantEntryCell<GenerateInboundReturnLineFragment>({
+    getItemId: r => r.item.id,
+    getUnitName: r => r.item.unitName || null,
+  });
 
 const NumberOfPacksReturnedInputCell: React.FC<
-  CellProps<GeneratedInboundReturnLineNode>
+  CellProps<GenerateInboundReturnLineFragment>
 > = props => (
   <NumberInputCell
     {...props}
@@ -125,4 +125,4 @@ const NumberOfPacksReturnedInputCell: React.FC<
   />
 );
 const expiryInputColumn =
-  getExpiryDateInputColumn<GeneratedInboundReturnLineNode>();
+  getExpiryDateInputColumn<GenerateInboundReturnLineFragment>();
