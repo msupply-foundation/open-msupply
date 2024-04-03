@@ -278,6 +278,7 @@ async fn sync_files(
     req: HttpRequest,
     query: web::Query<FileRequestQuery>,
     settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String)>,
 ) -> Result<HttpResponse, Error> {
     let service = StaticFileService::new(&settings.server.base_dir)
@@ -294,12 +295,12 @@ async fn sync_files(
     let file = match file {
         None => {
             log::info!(
-                "Sync File not found locally, let's try to get it from the central server: {}",
+                "Sync File not found locally, will attempt to download it from the central server: {}",
                 query.id
             );
 
             service
-                .download_file_from_central(&query.id, static_file_category, &settings.into_inner())
+                .download_file_from_central(&query.id, static_file_category, &service_provider)
                 .await
                 .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
         }
