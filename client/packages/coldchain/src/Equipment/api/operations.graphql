@@ -94,6 +94,13 @@ fragment AssetLog on AssetLogNode {
     username
     jobTitle
   }
+  documents {
+    nodes {
+      fileName
+      id
+      mimeType
+    }
+  }
 }
 
 query assets(

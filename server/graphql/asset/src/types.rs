@@ -508,6 +508,16 @@ impl AssetLogNode {
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
         &self.row().log_datetime
     }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let asset_log_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(asset_log_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
+    }
 }
 
 #[derive(Union)]

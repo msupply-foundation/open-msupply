@@ -18,12 +18,14 @@ export const FileList = ({
   noFilesMessage,
   padding = 0,
   removeFile,
+  tableName = 'asset',
 }: {
   assetId: string;
   files?: SyncFile[];
   noFilesMessage?: string;
   padding?: number;
-  removeFile: (filename: string, id?: string) => void;
+  tableName?: string;
+  removeFile?: (filename: string, id?: string) => void;
 }) => {
   const t = useTranslation();
   if (files === undefined || files.length === 0) {
@@ -54,7 +56,7 @@ export const FileList = ({
           >
             {file.id ? (
               <Link
-                to={`${Environment.SYNC_FILES_URL}/asset/${assetId}?id=${file.id}`}
+                to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}?id=${file.id}`}
                 target="_blank"
               >
                 {file.name}
@@ -63,13 +65,15 @@ export const FileList = ({
               file.name
             )}
           </Typography>
-          <IconButton
-            onClick={() => removeFile(file.name, file.id)}
-            icon={
-              <XCircleIcon sx={{ fill: theme => theme.palette.gray.main }} />
-            }
-            label={t('button.remove-file')}
-          />
+          {!!removeFile && (
+            <IconButton
+              onClick={() => removeFile(file.name, file.id)}
+              icon={
+                <XCircleIcon sx={{ fill: theme => theme.palette.gray.main }} />
+              }
+              label={t('button.remove-file')}
+            />
+          )}
         </Box>
       ))}
     </Stack>
