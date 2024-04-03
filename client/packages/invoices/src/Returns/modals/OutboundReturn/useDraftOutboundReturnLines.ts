@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import {
   FnUtils,
-  OutboundReturnLineNode,
   OutboundReturnLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
-import { useReturns } from '../../api';
+import { GenerateOutboundReturnLineFragment, useReturns } from '../../api';
 
 export const useDraftOutboundReturnLines = ({
   stockLineIds,
@@ -20,9 +19,9 @@ export const useDraftOutboundReturnLines = ({
   returnId?: string;
   inboundShipmentId?: string;
 }) => {
-  const [draftLines, setDraftLines] = React.useState<OutboundReturnLineNode[]>(
-    []
-  );
+  const [draftLines, setDraftLines] = React.useState<
+    GenerateOutboundReturnLineFragment[]
+  >([]);
 
   const data = useReturns.lines.outboundReturnLines(
     stockLineIds,
@@ -32,12 +31,10 @@ export const useDraftOutboundReturnLines = ({
   const lines = data?.nodes;
 
   useEffect(() => {
-    const newDraftLines = (lines ?? []).map(seed => ({ ...seed }));
-
-    setDraftLines(newDraftLines);
+    setDraftLines(lines ?? []);
   }, [lines]);
 
-  const update = (patch: RecordPatch<OutboundReturnLineNode>) => {
+  const update = (patch: RecordPatch<GenerateOutboundReturnLineFragment>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {

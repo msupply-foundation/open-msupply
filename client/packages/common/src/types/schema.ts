@@ -385,9 +385,9 @@ export type AssetLogNode = {
 };
 
 export enum AssetLogReasonInput {
-  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingDecommissioning = 'AWAITING_DECOMMISSIONING',
   AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   LackOfPower = 'LACK_OF_POWER',
   MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
@@ -414,7 +414,7 @@ export type AssetLogSortInput = {
 };
 
 export enum AssetLogStatusInput {
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',
@@ -1820,24 +1820,8 @@ export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
 
 export type GeneratedInboundReturnLineConnector = {
   __typename: 'GeneratedInboundReturnLineConnector';
-  nodes: Array<GeneratedInboundReturnLineNode>;
+  nodes: Array<InboundReturnLineNode>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type GeneratedInboundReturnLineNode = {
-  __typename: 'GeneratedInboundReturnLineNode';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemId: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
 export type InboundInvoiceCounts = {
@@ -1862,6 +1846,22 @@ export type InboundReturnLineInput = {
   numberOfPacksReturned: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   reasonId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InboundReturnLineNode = {
+  __typename: 'InboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
 export type InitialisationStatusNode = {
@@ -4048,6 +4048,7 @@ export type OutboundReturnLineNode = {
   batch?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  item: ItemNode;
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
@@ -5152,9 +5153,9 @@ export type RawDocumentNode = {
 };
 
 export enum ReasonType {
-  AwaitingDecomissioning = 'AWAITING_DECOMISSIONING',
+  AwaitingDecommissioning = 'AWAITING_DECOMMISSIONING',
   AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   LackOfPower = 'LACK_OF_POWER',
   MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
@@ -5624,7 +5625,7 @@ export type SnapshotCountCurrentCountMismatch = UpdateStocktakeErrorInterface & 
 };
 
 export enum StatusType {
-  Decomissioned = 'DECOMISSIONED',
+  Decommissioned = 'DECOMMISSIONED',
   Functioning = 'FUNCTIONING',
   FunctioningButNeedsAttention = 'FUNCTIONING_BUT_NEEDS_ATTENTION',
   NotFunctioning = 'NOT_FUNCTIONING',

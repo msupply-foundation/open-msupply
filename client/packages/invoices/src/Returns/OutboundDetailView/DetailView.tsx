@@ -11,6 +11,7 @@ import {
   useEditModal,
   DetailTabs,
 } from '@openmsupply-client/common';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
@@ -47,7 +48,7 @@ export const OutboundReturnsDetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <p>To-do</p>,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];

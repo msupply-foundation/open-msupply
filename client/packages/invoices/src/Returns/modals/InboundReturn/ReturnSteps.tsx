@@ -7,12 +7,11 @@ import {
   AlertColor,
   Alert,
   RecordPatch,
-  GeneratedInboundReturnLineNode,
 } from '@openmsupply-client/common';
 import { QuantityReturnedTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
 import { AddBatchButton, useAddBatchKeyBinding } from './AddBatch';
-import { useReturns } from '../../api';
+import { GenerateInboundReturnLineFragment, useReturns } from '../../api';
 
 export enum Tabs {
   Quantity = 'Quantity',
@@ -21,8 +20,8 @@ export enum Tabs {
 
 interface ReturnStepsProps {
   currentTab: string;
-  lines: GeneratedInboundReturnLineNode[];
-  update: (patch: RecordPatch<GeneratedInboundReturnLineNode>) => void;
+  lines: GenerateInboundReturnLineFragment[];
+  update: (patch: RecordPatch<GenerateInboundReturnLineFragment>) => void;
   addDraftLine?: () => void;
   zeroQuantityAlert: AlertColor | undefined;
   setZeroQuantityAlert: React.Dispatch<

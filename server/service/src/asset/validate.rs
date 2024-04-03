@@ -39,10 +39,10 @@ pub fn check_reason_matches_status(
 
     match status {
         AssetLogStatus::NotInUse => {
-            reason == AssetLogReason::AwaitingDecomissioning
+            reason == AssetLogReason::AwaitingDecommissioning
                 || reason == AssetLogReason::Stored
                 || reason == AssetLogReason::OffsiteForRepairs
-                || reason == AssetLogReason::AwaitingDecomissioning
+                || reason == AssetLogReason::AwaitingDecommissioning
         }
         AssetLogStatus::FunctioningButNeedsAttention => {
             reason == AssetLogReason::NeedsServicing
