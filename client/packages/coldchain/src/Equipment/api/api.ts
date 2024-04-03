@@ -161,7 +161,9 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not delete asset');
   },
-  insertLog: async (input: Partial<InsertAssetLogInput>): Promise<string> => {
+  insertLog: async (
+    input: Partial<InsertAssetLogInput>
+  ): Promise<{ id: string; assetId: string }> => {
     const result = await sdk.insertAssetLog({
       input: assetParsers.toLogInsert(input),
       storeId,
@@ -169,7 +171,8 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
     const { insertAssetLog } = result;
 
     if (insertAssetLog?.__typename === 'AssetLogNode') {
-      return insertAssetLog.assetId;
+      const { id, assetId } = insertAssetLog;
+      return { id, assetId };
     }
 
     throw new Error('Could not insert asset log');

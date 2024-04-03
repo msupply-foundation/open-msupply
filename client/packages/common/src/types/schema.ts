@@ -376,6 +376,7 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<ReasonType>;
