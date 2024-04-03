@@ -1,11 +1,15 @@
 use std::io::Error;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
-use tokio::io;
+use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
+use util::constants::SYSTEM_USER_ID;
 use util::is_central_server;
 use util::uuid::uuid;
+
+use crate::service_provider::ServiceProvider;
 
 #[derive(Debug, PartialEq)]
 pub struct StaticFile {
@@ -148,8 +152,9 @@ impl StaticFileService {
         &self,
         id: &str,
         category: StaticFileCategory,
-        settings: &crate::settings::Settings,
+        service_provider: &ServiceProvider,
     ) -> anyhow::Result<Option<StaticFile>> {
+        log::info!("Downloading file from central server");
         if is_central_server() {
             return Err(anyhow::Error::msg(
                 "Can't download file from central server, as I am the central server!",
@@ -165,7 +170,15 @@ impl StaticFileService {
             }
         };
 
-        let base_url = match settings.sync.as_ref() {
+        let ctx = service_provider
+            .context("NoStore".to_string(), SYSTEM_USER_ID.to_string())
+            .map_err(|_| anyhow::Error::msg("Can't create context"))?;
+        let settings = service_provider
+            .settings
+            .sync_settings(&ctx)
+            .map_err(|_| anyhow::Error::msg("Can't access sync settings"))?;
+
+        let base_url = match settings {
             Some(settings) => settings.file_upload_base_url(),
             None => {
                 return Err(anyhow::Error::msg(
@@ -174,20 +187,49 @@ impl StaticFileService {
             }
         };
 
-        let file_name = "TODO".to_string(); // TODO get proper file name?
-        let download_url = format!(
-            "{}/static_files/{}/{}?id={}",
-            base_url, table_name, record_id, id
-        );
-        log::info!("Downloading sync file {}", download_url);
+        let sync_file_ref =
+            SyncFileReferenceRowRepository::new(&ctx.connection).find_one_by_id(&id)?;
+
+        let sync_file_ref = match sync_file_ref {
+            Some(sync_file_ref) => sync_file_ref,
+            None => {
+                return Err(anyhow::Error::msg(format!(
+                    "Can't find sync file reference with id: {}",
+                    id
+                )))
+            }
+        };
+
+        let file_name = sync_file_ref.file_name;
+        let download_url = format!("{}/{}/{}?id={}", base_url, table_name, record_id, id);
+        log::info!("Downloading sync file from {}", download_url);
 
         let file = self.reserve_file(&file_name, &category, Some(id.to_owned()))?;
 
         let mut download_response = reqwest::get(&download_url).await?;
 
+        if !download_response.status().is_success() {
+            let status = download_response.status();
+            let text = download_response.text().await?;
+            log::error!(
+                "Failed to download file from central server: {} -{}",
+                status,
+                text
+            );
+            return Err(anyhow::Error::msg(format!(
+                "Failed to download file from central server: {} -{}",
+                status, text
+            )));
+        }
+
+        let mut file_handle = tokio::fs::File::create(file.path.clone()).await?;
+
         loop {
+            log::info!("Downloading chunk");
             match download_response.chunk().await {
-                Ok(Some(bytes)) => std::fs::write(&file.path, bytes)?,
+                Ok(Some(bytes)) => {
+                    tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
+                }
                 Ok(None) => break, // Finished the download
                 Err(e) => {
                     return Err(
@@ -196,6 +238,8 @@ impl StaticFileService {
                 }
             }
         }
+
+        log::info!("Download completed");
 
         Ok(Some(StaticFile {
             id: id.to_string(),
