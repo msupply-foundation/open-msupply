@@ -69,7 +69,10 @@ export const InventoryAdjustmentReasonSearchInput: FC<
             autoFocus={autoFocus}
             InputProps={{
               disableUnderline: false,
-              style: props.disabled ? { paddingLeft: 0 } : {},
+              style: {
+                width,
+                ...(props.disabled ? { paddingLeft: 0 } : {}),
+              },
               ...props.InputProps,
             }}
             sx={{ width }}
