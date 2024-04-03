@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import {
   FnUtils,
-  GeneratedInboundReturnLineNode,
   InboundReturnLineInput,
   RecordPatch,
 } from '@openmsupply-client/common';
-import { useReturns } from '../../api';
+import { GenerateInboundReturnLineFragment, useReturns } from '../../api';
 import { useItemById } from '@openmsupply-client/system';
 
 export const useDraftInboundReturnLines = ({
@@ -22,7 +21,7 @@ export const useDraftInboundReturnLines = ({
   outboundShipmentId?: string;
 }) => {
   const [draftLines, setDraftLines] = React.useState<
-    GeneratedInboundReturnLineNode[]
+    GenerateInboundReturnLineFragment[]
   >([]);
 
   const { data: item } = useItemById(itemId);
@@ -58,9 +57,9 @@ export const useDraftInboundReturnLines = ({
       return [
         ...currLines,
         {
-          __typename: 'GeneratedInboundReturnLineNode' as const,
+          __typename: 'InboundReturnLineNode' as const,
           id: FnUtils.generateUUID(),
-          itemId: item.id,
+          item,
           itemCode: item.code,
           itemName: item.name,
           packSize: item.defaultPackSize,
@@ -74,7 +73,7 @@ export const useDraftInboundReturnLines = ({
     });
   };
 
-  const update = (patch: RecordPatch<GeneratedInboundReturnLineNode>) => {
+  const update = (patch: RecordPatch<GenerateInboundReturnLineFragment>) => {
     setDraftLines(currLines => {
       const newLines = currLines.map(line => {
         if (line.id !== patch.id) {
@@ -91,7 +90,7 @@ export const useDraftInboundReturnLines = ({
       ({
         id,
         reasonId,
-        itemId,
+        item: { id: itemId },
         numberOfPacksReturned,
         note,
         packSize,

@@ -1,12 +1,15 @@
-use async_graphql::*;
+use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
+use graphql_core::{loader::ItemLoader, standard_graphql_error::StandardGraphqlError, ContextExt};
 use repository::ItemRow;
 use service::{invoice::inbound_return::generate_lines::InboundReturnLine, ListResult};
+
+use super::ItemNode;
 
 #[derive(SimpleObject)]
 pub struct GeneratedInboundReturnLineConnector {
     total_count: u32,
-    nodes: Vec<GeneratedInboundReturnLineNode>,
+    nodes: Vec<InboundReturnLineNode>,
 }
 
 impl GeneratedInboundReturnLineConnector {
@@ -18,19 +21,19 @@ impl GeneratedInboundReturnLineConnector {
             nodes: return_lines
                 .rows
                 .into_iter()
-                .map(GeneratedInboundReturnLineNode::from_domain)
+                .map(InboundReturnLineNode::from_domain)
                 .collect(),
         }
     }
 }
 
-pub struct GeneratedInboundReturnLineNode {
+pub struct InboundReturnLineNode {
     pub return_line: InboundReturnLine,
 }
 
-impl GeneratedInboundReturnLineNode {
-    pub fn from_domain(return_line: InboundReturnLine) -> GeneratedInboundReturnLineNode {
-        GeneratedInboundReturnLineNode { return_line }
+impl InboundReturnLineNode {
+    pub fn from_domain(return_line: InboundReturnLine) -> InboundReturnLineNode {
+        InboundReturnLineNode { return_line }
     }
 
     pub fn item_row(&self) -> &ItemRow {
@@ -39,7 +42,7 @@ impl GeneratedInboundReturnLineNode {
 }
 
 #[Object]
-impl GeneratedInboundReturnLineNode {
+impl InboundReturnLineNode {
     pub async fn id(&self) -> &str {
         &self.return_line.id
     }
@@ -75,16 +78,28 @@ impl GeneratedInboundReturnLineNode {
     pub async fn pack_size(&self) -> &i32 {
         &self.return_line.pack_size
     }
-
-    pub async fn item_id(&self) -> &str {
-        &self.item_row().id
-    }
-
+    // TODO should ideally come from invoice line
     pub async fn item_code(&self) -> &str {
         &self.item_row().code
     }
-
+    // TODO should ideally come from invoice line
     pub async fn item_name(&self) -> &str {
         &self.item_row().name
+    }
+
+    pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
+        let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
+        let item_option = loader.load_one(self.item_row().id.clone()).await?;
+
+        let item = item_option.ok_or(
+            StandardGraphqlError::InternalError(format!(
+                "Cannot find item {} for invoice line {}",
+                self.item_row().id,
+                self.return_line.id
+            ))
+            .extend(),
+        )?;
+
+        Ok(ItemNode::from_domain(item))
     }
 }
