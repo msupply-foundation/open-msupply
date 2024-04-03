@@ -4,9 +4,7 @@ import {
   InputWithLabelRow,
   InputWithLabelRowProps,
   useTranslation,
-  // useDebounceCallback,
   Box,
-  BasicTextInput,
   Autocomplete,
   NumericTextInput,
 } from '@openmsupply-client/common';
@@ -28,6 +26,7 @@ const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {
         maxWidth: '160px',
+        width: '160px',
       },
     }}
   />
@@ -64,12 +63,6 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
     { label: t('label.reduction'), value: Adjustment.Reduction },
   ];
 
-  // const debouncedUpdate = useDebounceCallback(
-  //   (patch: Partial<StockLineRowFragment>) => onUpdate(patch),
-  //   [onUpdate],
-  //   500
-  // );
-
   return (
     <Box display="flex">
       <Box display="flex" flexDirection="column" padding={2} gap={1} flex={1}>
@@ -81,36 +74,29 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
         <StyledInputRow
           label={t('label.direction')}
           Input={
-            <Box display="flex" style={{ width: 160 }}>
-              <Autocomplete
-                options={options}
-                clearable={false}
-                renderInput={p => (
-                  <BasicTextInput
-                    {...p}
-                    InputProps={{
-                      style: { width: 160 },
-                      ...p.InputProps,
-                    }}
-                  />
-                )}
-                value={
-                  options.find(option => option.value === direction) ?? null
+            <Autocomplete
+              options={options}
+              clearable={false}
+              value={options.find(option => option.value === direction) ?? null}
+              onChange={(_, direction) => {
+                if (direction) {
+                  setDirection(direction.value);
+                  setState(state => ({
+                    ...state,
+                    reason: null,
+                    newNumPacks: draft.totalNumberOfPacks,
+                    adjustBy: 0,
+                  }));
                 }
-                // TODO: on change, update new num packs, adjust by to max
-                onChange={(_, direction) =>
-                  direction && setDirection(direction.value)
-                }
-              />
-            </Box>
+              }}
+            />
           }
         />
         <StyledInputRow
           label={t('label.reason')}
           Input={
-            <Box display="flex" style={{ width: 160 }}>
+            <Box display="flex" width={160}>
               <InventoryAdjustmentReasonSearchInput
-                width={160}
                 onChange={reason => setState(state => ({ ...state, reason }))}
                 value={state.reason}
                 adjustment={direction}
@@ -160,26 +146,27 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
         <StyledInputRow
           label={t('label.new-num-packs')}
           Input={
-            // TODO max based on direction!
             <NumericTextInput
               disabled={direction === Adjustment.None}
               width={160}
               value={state.newNumPacks}
-              // TODO: is this weird UX? instead have it change the direction??
-              // LOL NOT THIS - maybe error state! (disable ok? or show error message)
-              // reset to max on lose focus?
               max={
                 direction === Adjustment.Reduction
                   ? draft.totalNumberOfPacks
                   : undefined
               }
-              min={
-                direction === Adjustment.Addition
-                  ? draft.totalNumberOfPacks
-                  : undefined
-              }
+              // // TODO: minimum new # packs when in addition mode
+              // // `min` field doesn't really work... e.g. if current/min is 5,
+              // // user wants to type 20, so starts by typing 2, it will be reset to 5!
+              // // I want a debounced min field or something lol
+              // // maybe error state? (disable ok? or show error message)
+              // // reset to min on lose focus?
+              // min={
+              //   direction === Adjustment.Addition
+              //     ? draft.totalNumberOfPacks
+              //     : undefined
+              // }
               onChange={newNumPacks =>
-                // tODO: onchange, udpate adjustby
                 setState(state => ({
                   ...state,
                   newNumPacks: newNumPacks ?? 0,
