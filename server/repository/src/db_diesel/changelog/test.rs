@@ -371,7 +371,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             r.id = "invoice".to_string();
             r.name_link_id = name().id;
             r.store_id = store().id;
-            r.currency_id = currency().id;
+            r.currency_id = Some(currency().id);
         })
     }
 

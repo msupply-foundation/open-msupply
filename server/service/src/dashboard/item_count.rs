@@ -412,7 +412,7 @@ mod item_count_service_test {
                     store_id: mock_store_b().id,
                     picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
                     r#type: InvoiceRowType::OutboundShipment,
-                    currency_id: currency_a().id,
+                    currency_id: Some(currency_a().id),
                     ..InvoiceRow::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
@@ -447,7 +447,6 @@ mod item_count_service_test {
                 r.store_id = "store_b".to_string();
                 r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             }))
             .unwrap();
 

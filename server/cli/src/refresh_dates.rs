@@ -47,7 +47,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_log", "datetime"),
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
-        ("asset_log", "log_datetime"),
         ("sync_file_reference", "created_datetime"),
     ]
     .iter()
@@ -377,7 +376,6 @@ mod tests {
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
                     .unwrap();
-                r.currency_id = "currency_a".to_string();
             })
         }
 
@@ -396,7 +394,6 @@ mod tests {
                         .and_hms_opt(00, 00, 00)
                         .unwrap(),
                 );
-                r.currency_id = "currency_a".to_string();
             })
         }
 

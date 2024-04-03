@@ -43,7 +43,7 @@ pub fn insert_prescription(
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::PrescriptionCreated,
                 Some(new_invoice.id.to_owned()),
                 None,
@@ -51,7 +51,7 @@ pub fn insert_prescription(
             )?;
 
             get_invoice(ctx, None, &new_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
