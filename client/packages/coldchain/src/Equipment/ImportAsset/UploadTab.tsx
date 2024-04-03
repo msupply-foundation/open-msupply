@@ -57,28 +57,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
 
-  const checkDuplicateAssetNumbers = (rows: ImportRow[]) => {
-    let sortedRows: EquipmentImportModal.ImportRow[] = rows.sort(
-      function (row, row2) {
-        const number1 = row.assetNumber;
-        const number2 = row2.assetNumber;
-        return number1 < number2 ? -1 : number1 > number2 ? 1 : 0;
-      }
-    );
-    let hasDuplicateNumberErrors = false;
-    sortedRows = sortedRows.map((row, index) => {
-      if (row.assetNumber == sortedRows[index - 1]?.assetNumber) {
-        row.errorMessage = row.errorMessage
-          ? row.errorMessage.concat(',', t('error.duplicate-asset-number'))
-          : t('error.duplicate-asset-number');
-        hasDuplicateNumberErrors =
-          hasDuplicateNumberErrors || row.errorMessage.length > 0;
-      }
-      return row;
-    });
-    return { sortedRows, hasDuplicateNumberErrors };
-  };
-
   const csvExample = async () => {
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
@@ -130,7 +108,13 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 
     const rows: EquipmentImportModal.ImportRow[] = [];
     let hasErrors = false;
-    for (const row of data.data) {
+    data.data.sort(function (row, row2) {
+      const number1 = getCell(row, AssetColumn.ASSET_NUMBER);
+      const number2 = getCell(row2, AssetColumn.ASSET_NUMBER);
+      return number1 < number2 ? -1 : number1 > number2 ? 1 : 0;
+    });
+
+    data.data.map((row, index) => {
       const importRow = {} as EquipmentImportModal.ImportRow;
       const rowErrors: string[] = [];
       if (row.id && row.id.trim() != '') {
@@ -143,6 +127,10 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       const assetNumber = getCell(row, AssetColumn.ASSET_NUMBER);
       if (assetNumber && assetNumber.trim() != '') {
         importRow.assetNumber = assetNumber;
+        // check if more than one of this asset number exists if is asset number
+        if (assetNumber == rows[index - 1]?.assetNumber) {
+          rowErrors.push(t('error.duplicate-asset-number'));
+        }
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: t('label.asset-number') })
@@ -173,9 +161,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
-    }
-    const sortedRows = checkDuplicateAssetNumbers(rows);
-    if (hasErrors || sortedRows.hasDuplicateNumberErrors) {
+    });
+
+    if (hasErrors) {
       setErrorMessage(t('messages.import-error-on-upload'));
     }
     EquipmentBuffer.push(...rows);
