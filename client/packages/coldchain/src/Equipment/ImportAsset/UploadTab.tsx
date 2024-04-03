@@ -31,10 +31,9 @@ interface ParsedAsset {
 }
 
 enum AssetColumn {
-  ID = 0,
-  ASSET_NUMBER = 1,
-  CATALOGUE_ITEM_CODE = 2,
-  NOTES = 3,
+  ASSET_NUMBER = 0,
+  CATALOGUE_ITEM_CODE = 1,
+  NOTES = 2,
 }
 
 // the row object indexes are returned in column order

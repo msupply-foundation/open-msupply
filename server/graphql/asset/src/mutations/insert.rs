@@ -11,6 +11,7 @@ use service::{
     asset::insert::{InsertAsset, InsertAssetError as ServiceError},
     auth::{Resource, ResourceAccessRequest},
 };
+use util::is_central_server;
 
 use crate::types::AssetNode;
 
@@ -26,13 +27,26 @@ pub fn insert_asset(
             store_id: Some(store_id.to_string()),
         },
     )?;
+    // add store_id if not inserting from central server
+    let asset_input;
+    if !is_central_server() {
+        asset_input = match input.clone().store_id {
+            Some(_store_id) => input,
+            None => InsertAssetInput {
+                store_id: Some(store_id.to_owned()),
+                ..input
+            },
+        }
+    } else {
+        asset_input = input
+    }
 
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     match service_provider
         .asset_service
-        .insert_asset(&service_context, input.into())
+        .insert_asset(&service_context, asset_input.into())
     {
         Ok(asset) => Ok(InsertAssetResponse::Response(AssetNode::from_domain(asset))),
         Err(error) => Ok(InsertAssetResponse::Error(InsertAssetError {
@@ -41,7 +55,7 @@ pub fn insert_asset(
     }
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
