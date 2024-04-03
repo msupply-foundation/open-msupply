@@ -174,10 +174,17 @@ impl Synchroniser {
         // PUSH V6
         logger.start_step(SyncStep::PushCentralV6)?;
         if is_initialised && !is_central_server() {
-            self.central_v6
+            let result = self
+                .central_v6
                 .push(&ctx.connection, batch_size.remote_push, logger)
-                .await?;
-            // TODO: Wait for OMS Central integration?
+                .await;
+
+            if let Err(error) = result {
+                // Log but ignore error for now, to allow omSupply to run without omSupply server
+                // TODO : Fix at some point!
+                log::info!("{}", format_error(&error));
+                let _ = logger.error(&error.into());
+            };
         }
         logger.done_step(SyncStep::PushCentralV6)?;
 
@@ -222,8 +229,8 @@ impl Synchroniser {
             {
                 // Log but ignore error for now, to allow omSupply to run without omSupply server
                 // TODO : Fix at some point!
-                // let _ = logger.error(&error.into());
                 log::info!("{}", format_error(&error));
+                let _ = logger.error(&error.into());
             }
             logger.done_step(SyncStep::PullCentralV6)?;
         }

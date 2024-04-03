@@ -50,14 +50,14 @@ pub enum AssetLogReason {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
-    AwaitingDecomissioning,
+    AwaitingDecommissioning,
     NeedsServicing,
     MultipleTemperatureBreaches,
     Unknown,
     NeedsSpareParts,
     LackOfPower,
     Functioning,
-    Decomissioned,
+    Decommissioned,
 }
 
 impl AssetLogReason {
@@ -82,7 +82,7 @@ pub enum AssetLogStatus {
     Functioning,
     FunctioningButNeedsAttention,
     NotFunctioning,
-    Decomissioned,
+    Decommissioned,
 }
 
 impl AssetLogStatus {
@@ -142,7 +142,6 @@ impl<'a> AssetLogRowRepository<'a> {
             .execute(&self.connection.connection)?;
         Ok(())
     }
-
 
     pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_row)?;
