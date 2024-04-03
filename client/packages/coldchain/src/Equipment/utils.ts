@@ -3,7 +3,6 @@ import { AssetRowFragment } from './api';
 import { Formatter } from '@common/utils';
 import { AssetLogStatusInput, ReasonType, StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
-import { LocationIds } from './DetailView';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
@@ -162,7 +161,7 @@ export const importEquipmentToCsvWithErrors = (
 };
 
 export const importEquipmentToCsv = (
-  assets: Partial<ImportRow & LocationIds>[],
+  assets: Partial<ImportRow>[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
