@@ -64,7 +64,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         (_row: ImportRow): Partial<ImportRow & LocationIds> => ({
           assetNumber: undefined,
           catalogueItemCode: undefined,
-          id: undefined,
           notes: undefined,
         })
       ),
