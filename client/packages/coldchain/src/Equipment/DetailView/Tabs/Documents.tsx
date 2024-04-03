@@ -47,16 +47,19 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
     });
   };
 
+  const onSuccess = () => {
+    success(t('success'))();
+    const cacheKey = api.keys.detail(draft.id);
+    queryClient.invalidateQueries(cacheKey);
+  };
+
   const deleteFile = (id: string) => {
     fetch(`${Environment.SYNC_FILES_URL}/asset/${draft.id}?id=${id}`, {
       method: 'DELETE',
     })
       .then(response => {
         if (response.ok) {
-          success(t('success'))();
-
-          const cacheKey = api.keys.detail(draft.id);
-          queryClient.invalidateQueries(cacheKey);
+          onSuccess();
         } else {
           error(
             t('error.an-error-occurred', { message: response.statusText })
@@ -82,7 +85,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
       },
       body: formData,
     })
-      .then(() => success(t('success'))())
+      .then(onSuccess)
       .catch(e => {
         console.error(e);
         error(t('error.an-error-occurred', { message: e.message }))();
