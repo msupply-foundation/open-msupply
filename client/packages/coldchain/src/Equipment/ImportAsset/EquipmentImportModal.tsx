@@ -39,7 +39,6 @@ export type ImportRow = {
   id: string;
   notes: string;
   errorMessage: string;
-  isUpdate: boolean;
 };
 
 export type LineNumber = {
@@ -73,21 +72,6 @@ export const toExportEquipment = (
   errorMessage: row.errorMessage,
 });
 
-export const toUpdateEquipmentInput = (
-  row: ImportRow,
-  catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<AssetFragment & LocationIds> => ({
-  assetNumber: row.assetNumber,
-  catalogueItemId: catalogueItemData
-    ?.filter(
-      (item: { code: string | null | undefined }) =>
-        item.code == row.catalogueItemCode
-    )
-    ?.map((item: { id: string }) => item.id)
-    .pop(),
-  id: row.id,
-});
-
 export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   isOpen,
   onClose,
@@ -108,7 +92,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   } = useAssetData.document.listAll();
 
   const { mutateAsync: insertAssets } = useAssets.document.insert();
-  const { mutateAsync: updateAssets } = useAssets.document.update();
 
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
@@ -140,31 +123,17 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 100).map(async asset => {
-            if (asset.isUpdate) {
-              await updateAssets(
-                toUpdateEquipmentInput(asset, catalogueItemData?.nodes)
-              ).catch(err => {
-                if (!err) {
-                  err = { message: t('messages.unknown-error') };
-                }
-                importErrorRows.push({
-                  ...asset,
-                  errorMessage: err.message,
-                });
+            await insertAssets(
+              toInsertEquipmentInput(asset, catalogueItemData?.nodes)
+            ).catch(err => {
+              if (!err) {
+                err = { message: t('messages.unknown-error') };
+              }
+              importErrorRows.push({
+                ...asset,
+                errorMessage: err.message,
               });
-            } else {
-              await insertAssets(
-                toInsertEquipmentInput(asset, catalogueItemData?.nodes)
-              ).catch(err => {
-                if (!err) {
-                  err = { message: t('messages.unknown-error') };
-                }
-                importErrorRows.push({
-                  ...asset,
-                  errorMessage: err.message,
-                });
-              });
-            }
+            });
           })
         ).then(() => {
           // Update Progress Bar

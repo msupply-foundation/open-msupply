@@ -116,13 +116,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     data.data.map((row, index) => {
       const importRow = {} as EquipmentImportModal.ImportRow;
       const rowErrors: string[] = [];
-      if (row.id && row.id.trim() != '') {
-        importRow.id = row.id;
-        importRow.isUpdate = true;
-      } else {
-        importRow.id = FnUtils.generateUUID();
-        importRow.isUpdate = false;
-      }
+      importRow.id = FnUtils.generateUUID();
       const assetNumber = getCell(row, AssetColumn.ASSET_NUMBER);
       if (assetNumber && assetNumber.trim() != '') {
         importRow.assetNumber = assetNumber;
