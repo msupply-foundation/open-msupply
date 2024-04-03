@@ -4,14 +4,13 @@ import {
   WizardStepper,
   TabPanel,
   TabContext,
-  OutboundReturnLineNode,
   RecordPatch,
   Alert,
   AlertColor,
 } from '@openmsupply-client/common';
 import { QuantityToReturnTable } from './ReturnQuantitiesTable';
 import { ReturnReasonsTable } from '../ReturnReasonsTable';
-import { useReturns } from '../../api';
+import { GenerateOutboundReturnLineFragment, useReturns } from '../../api';
 
 export enum Tabs {
   Quantity = 'Quantity',
@@ -20,8 +19,8 @@ export enum Tabs {
 
 interface ReturnStepsProps {
   currentTab: string;
-  lines: OutboundReturnLineNode[];
-  update: (patch: RecordPatch<OutboundReturnLineNode>) => void;
+  lines: GenerateOutboundReturnLineFragment[];
+  update: (patch: RecordPatch<GenerateOutboundReturnLineFragment>) => void;
   zeroQuantityAlert: AlertColor | undefined;
   setZeroQuantityAlert: React.Dispatch<
     React.SetStateAction<AlertColor | undefined>
