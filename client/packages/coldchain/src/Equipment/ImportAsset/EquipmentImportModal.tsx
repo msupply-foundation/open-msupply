@@ -15,7 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
-import { importEquipmentToCsv } from '../utils';
+import { importEquipmentToCsvWithErrors } from '../utils';
 import {
   AssetCatalogueItemFragment,
   useAssetData,
@@ -42,6 +42,9 @@ export type ImportRow = {
   isUpdate: boolean;
 };
 
+export type LineNumber = {
+  lineNumber: number;
+};
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
@@ -56,6 +59,18 @@ export const toInsertEquipmentInput = (
     .pop(),
   id: row.id,
   notes: row.notes,
+});
+
+export const toExportEquipment = (
+  row: ImportRow,
+  index: number
+): Partial<ImportRow & LineNumber> => ({
+  assetNumber: row.assetNumber,
+  catalogueItemCode: row.catalogueItemCode,
+  id: row.id,
+  notes: row.notes,
+  lineNumber: index + 2,
+  errorMessage: row.errorMessage,
 });
 
 export const toUpdateEquipmentInput = (
@@ -104,10 +119,10 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   }, [fetchAsync]);
 
   const csvExport = async () => {
-    const csv = importEquipmentToCsv(
+    const csv = importEquipmentToCsvWithErrors(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      bufferedEquipment.map((row: ImportRow) =>
-        toInsertEquipmentInput(row, catalogueItemData?.nodes)
+      bufferedEquipment.map((row: ImportRow, index: number) =>
+        toExportEquipment(row, index)
       ),
       t
     );
