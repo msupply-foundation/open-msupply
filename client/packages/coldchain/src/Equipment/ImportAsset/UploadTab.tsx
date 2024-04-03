@@ -57,6 +57,28 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
 
+  const checkDuplicateAssetNumbers = (rows: ImportRow[]) => {
+    let sortedRows: EquipmentImportModal.ImportRow[] = rows.sort(
+      function (row, row2) {
+        const number1 = row.assetNumber;
+        const number2 = row2.assetNumber;
+        return number1 < number2 ? -1 : number1 > number2 ? 1 : 0;
+      }
+    );
+    let hasDuplicateNumberErrors = false;
+    sortedRows = sortedRows.map((row, index) => {
+      if (row.assetNumber == sortedRows[index - 1]?.assetNumber) {
+        row.errorMessage = row.errorMessage
+          ? row.errorMessage.concat(',', t('error.duplicate-asset-number'))
+          : t('error.duplicate-asset-number');
+        hasDuplicateNumberErrors =
+          hasDuplicateNumberErrors || row.errorMessage.length > 0;
+      }
+      return row;
+    });
+    return { sortedRows, hasDuplicateNumberErrors };
+  };
+
   const csvExample = async () => {
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
@@ -152,7 +174,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
     }
-    if (hasErrors) {
+    const sortedRows = checkDuplicateAssetNumbers(rows);
+    if (hasErrors || sortedRows.hasDuplicateNumberErrors) {
       setErrorMessage(t('messages.import-error-on-upload'));
     }
     EquipmentBuffer.push(...rows);
