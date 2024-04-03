@@ -136,6 +136,14 @@ fragment InboundReturnLine on InvoiceLineNode {
   expiryDate
   numberOfPacks
   packSize
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    defaultPackSize
+  }
 }
 
 query outboundReturns(
