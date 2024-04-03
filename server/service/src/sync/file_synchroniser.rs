@@ -79,7 +79,6 @@ impl FileSynchroniser {
                 // update the database to say we're uploading the file
                 sync_file_repo.update_status(&SyncFileReferenceRow {
                     status: SyncFileStatus::Uploading,
-                    retries: file.retries + 1,
                     ..file.clone()
                 })?;
 
@@ -94,27 +93,26 @@ impl FileSynchroniser {
                         if file.retries >= MAX_UPLOAD_ATTEMPTS {
                             sync_file_repo.update_status(&SyncFileReferenceRow {
                                 status: SyncFileStatus::PermanentFailure,
+                                error: Some(format!("{:?}", err)),
+                                ..file.clone()
+                            })?;
+                        } else {
+                            // Calculate the next retry time
+                            let retry_at = Utc::now().naive_utc()
+                                + Duration::minutes(cmp::min(
+                                    RETRY_DELAY_MINUTES * i64::pow(2, file.retries as u32),
+                                    MAX_RETRY_DELAY_MINUTES,
+                                ));
+
+                            // Update database to record the chunk has failed to upload
+                            sync_file_repo.update_status(&SyncFileReferenceRow {
+                                status: SyncFileStatus::UploadError,
                                 retries: file.retries + 1,
+                                retry_at: Some(retry_at),
                                 error: Some(format!("{:?}", err)),
                                 ..file.clone()
                             })?;
                         }
-
-                        // Calculate the next retry time
-                        let retry_at = Utc::now().naive_utc()
-                            + Duration::minutes(cmp::min(
-                                RETRY_DELAY_MINUTES * i64::pow(2, file.retries as u32 - 1),
-                                MAX_RETRY_DELAY_MINUTES,
-                            ));
-
-                        // Update database to record the chunk has failed to upload
-                        sync_file_repo.update_status(&SyncFileReferenceRow {
-                            status: SyncFileStatus::UploadError,
-                            retries: file.retries + 1,
-                            retry_at: Some(retry_at),
-                            error: Some(format!("{:?}", err)),
-                            ..file.clone()
-                        })?;
 
                         return Err(err);
                     }
