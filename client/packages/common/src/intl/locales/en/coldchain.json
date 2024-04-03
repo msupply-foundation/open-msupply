@@ -22,6 +22,7 @@
   "error.field-must-be-specified": "{{field}} must be specified",
   "error.code-no-match": "{{field}} not found in catalogue",
   "error.unable-to-scan": "Unable to scan QR code",
+  "error.duplicate-asset-number": "duplicate asset number in csv",
   "format.comment": "Acknowledged by {{name}} on {{date}}: {{comment}}.",
   "heading.acknowledgeBreach": "Acknowledge Breach",
   "heading.add-cold-chain-equipment": "Add new CCE",
