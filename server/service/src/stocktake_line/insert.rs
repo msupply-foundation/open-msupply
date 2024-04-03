@@ -196,14 +196,14 @@ fn validate(
         return Err(AdjustmentReasonNotProvided);
     }
 
-    if input.inventory_adjustment_reason_id.is_some() {
-        if !check_reason_is_valid(
+    if input.inventory_adjustment_reason_id.is_some()
+        && !check_reason_is_valid(
             connection,
             input.inventory_adjustment_reason_id.clone(),
             stocktake_reduction_amount,
-        )? {
-            return Err(AdjustmentReasonNotValid);
-        }
+        )?
+    {
+        return Err(AdjustmentReasonNotValid);
     }
 
     if let (Some(counted_number_of_packs), Some(stock_line)) =
@@ -292,7 +292,7 @@ mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            currency_a, mock_item_a, mock_item_a_lines, mock_locked_stocktake,
+            mock_item_a, mock_item_a_lines, mock_locked_stocktake,
             mock_new_stock_line_for_stocktake_a, mock_stock_line_b, mock_stock_line_si_d,
             mock_stocktake_a, mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             MockData, MockDataInserts,
@@ -370,7 +370,6 @@ mod stocktake_line_test {
                     .unwrap()
                     .and_hms_milli_opt(20, 30, 0, 0)
                     .unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 

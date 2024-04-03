@@ -141,7 +141,7 @@ mod test {
             verified_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0),
-            currency_id: currency_a().id,
+            currency_id: Some(currency_a().id),
             ..Default::default()
         };
 

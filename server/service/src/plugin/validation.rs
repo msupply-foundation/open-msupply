@@ -152,7 +152,7 @@ pub fn sign_plugin(
     )?;
     // Write manifest
     let out_path = PathBuf::from(plugin_path).join(MANIFEST_FILE);
-    let mut out_file = File::create(&out_path)?;
+    let mut out_file = File::create(out_path)?;
     out_file.write_all(manifest.as_bytes())?;
 
     // Sign
@@ -163,12 +163,12 @@ pub fn sign_plugin(
     // Write signature
     let signature_pem = pem::encode(&Pem::new(SIGNATURE_TAG, signature.to_bytes()));
     let out_path = PathBuf::from(plugin_path).join(MANIFEST_SIGNATURE_FILE);
-    let mut out_file = File::create(&out_path)?;
+    let mut out_file = File::create(out_path)?;
     out_file.write_all(signature_pem.as_bytes())?;
 
     // Double check that we can verify the plugin (not strictly needed)
     let trusted_certs =
-        load_trusted_certs_from_dir(&PathBuf::from(public_cert_path).parent().unwrap())?;
+        load_trusted_certs_from_dir(PathBuf::from(public_cert_path).parent().unwrap())?;
     verify_plugin_manifest(plugin_path, &trusted_certs)?;
     Ok(())
 }
