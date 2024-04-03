@@ -1,1 +1,3 @@
-export const Utils = {};
+import { useAssetApi } from './useAssetApi';
+
+export const Utils = { useAssetApi };

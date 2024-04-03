@@ -41,9 +41,9 @@ export const FileList = ({
       alignContent="center"
       paddingTop={4 * padding}
     >
-      {files?.map(file => (
+      {files?.map((file, idx) => (
         <Box
-          key={file.name}
+          key={`${idx}_${file.name}`}
           display="flex"
           padding={padding}
           sx={{ width: '100%' }}

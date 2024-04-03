@@ -1,8 +1,9 @@
 import { Document } from './document';
 import { Log } from './log';
+import { Utils } from './utils';
 
 export const useAssets = {
-  utils: {},
+  utils: { api: Utils.useAssetApi },
 
   document: {
     fetch: Document.useFetchAssetById,

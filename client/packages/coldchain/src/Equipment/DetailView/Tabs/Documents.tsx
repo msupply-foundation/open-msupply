@@ -1,13 +1,15 @@
 import React from 'react';
-import { Typography, Upload } from '@common/components';
+import { Typography, Upload, useConfirmationModal } from '@common/components';
 import {
   Box,
   useNotification,
+  useQueryClient,
   useTranslation,
 } from '@openmsupply-client/common';
 import { Environment } from '@openmsupply-client/config';
 import { FileList } from '../../Components';
 import { DraftAsset } from '../../types';
+import { useAssets } from '../../api';
 
 const Container = ({ children }: { children: React.ReactNode }) => (
   <Box
@@ -31,8 +33,39 @@ const Heading = ({ text }: { text: string }) => (
 export const Documents = ({ draft }: { draft: DraftAsset }) => {
   const t = useTranslation('coldchain');
   const { error, success } = useNotification();
-  const removeFile = () => {
-    // onChange({ files: draft.files?.filter(file => file.name !== name) });
+  const api = useAssets.utils.api();
+  const queryClient = useQueryClient();
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-delete-document'),
+  });
+
+  const removeFile = (_name: string, id?: string) => {
+    getConfirmation({
+      onConfirm: () => deleteFile(id ?? ''),
+    });
+  };
+
+  const deleteFile = (id: string) => {
+    fetch(`${Environment.SYNC_FILES_URL}/asset/${draft.id}?id=${id}`, {
+      method: 'DELETE',
+    })
+      .then(response => {
+        if (response.ok) {
+          success(t('success'))();
+
+          const cacheKey = api.keys.detail(draft.id);
+          queryClient.invalidateQueries(cacheKey);
+        } else {
+          error(
+            t('error.an-error-occurred', { message: response.statusText })
+          )();
+        }
+      })
+      .catch(e => {
+        error(t('error.an-error-occurred', { message: e.message }))();
+      });
   };
 
   const onUpload = (files: File[]) => {
