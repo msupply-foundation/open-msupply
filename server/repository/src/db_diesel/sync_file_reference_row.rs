@@ -175,15 +175,11 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     // Note this deliberately doesn't create change log records to avoid triggering sync updates to central server for local only information
-    // TODO: Allow setting status etc via this or similar method
-    pub fn update_chunk_uploaded(
+    pub fn update_status(
         &self,
-        sync_file_reference_id: &str,
-        bytes_uploaded: i32,
+        sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {
-        diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
-            .set(uploaded_bytes.eq(uploaded_bytes + bytes_uploaded))
-            .execute(&self.connection.connection)?;
+        self._upsert_one(sync_file_reference_row)?;
         Ok(())
     }
 }

@@ -12,8 +12,8 @@ use tokio::{
 };
 use util::is_central_server;
 
-const FILE_SYNC_UPLOAD_DELAY: Duration = Duration::from_millis(10); // This just gives time for a STOP message to be received between upload chunks
-const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_secs(10); // If there's nothing to upload, wait a longer before checking again
+const FILE_SYNC_UPLOAD_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between uploading files
+const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to upload or there was an error, wait a longer before checking again
 
 pub enum FileSyncMessage {
     Start,   // Start sync (could be manual trigger, or automatic on server startup)
@@ -141,10 +141,12 @@ impl FileSyncDriver {
             Ok(num_of_files) => num_of_files,
             Err(error) => {
                 log::error!("Problem syncing files {:#?}", error);
-                0
+                0 // Assume there's no files to upload...
             }
         };
-        log::error!("Found {} files to upload", files_to_upload);
+        if files_to_upload > 0 {
+            log::info!("Found {} files to upload", files_to_upload);
+        }
 
         files_to_upload
     }
