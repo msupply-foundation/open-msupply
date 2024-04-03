@@ -12,6 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { InboundReturnLineFragment } from '../api';
 import { InboundReturnItem } from '../../types';
+import { PackVariantCell } from 'packages/system/src';
 
 interface UseInboundReturnColumnOptions {
   sortBy: SortBy<InboundReturnLineFragment | InboundReturnItem>;
@@ -151,6 +152,26 @@ export const useInboundReturnColumns = ({
       //         ]),
       //     },
       //   ],
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: PackVariantCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row?.packSize ?? 1];
+          },
+          getUnitName: row => {
+            if ('lines' in row) return null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+        width: 130,
+      },
       [
         'numberOfPacks',
         {
@@ -171,21 +192,6 @@ export const useInboundReturnColumns = ({
               return rowData.numberOfPacks;
             }
           },
-        },
-      ],
-      [
-        'packSize',
-        {
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'packSize'], default: '' },
-              { path: ['packSize'], default: '' },
-            ]),
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'packSize'], default: '' },
-              { path: ['packSize'], default: '' },
-            ]),
         },
       ],
       [
