@@ -5,9 +5,25 @@ use crate::StorageConnection;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::{ChangeLogInsertRow, ChangelogAction, ChangelogRepository, ChangelogTableName, Upsert};
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SyncFileStatus {
+    #[default]
+    AvailableToDownload, // This is the default because when received via sync this is the expected status
+    ReadyToUpload,
+    Uploading,
+    Uploaded,
+    Downloading,
+    Downloaded,
+    UploadError,      // Errored will be re-tried
+    DownloadError,    // Errored will be re-tried
+    PermanentFailure, // Failed will not be re-tried
+}
 
 table! {
     sync_file_reference (id) {
@@ -17,7 +33,12 @@ table! {
         file_name -> Text,
         mime_type -> Nullable<Text>,
         uploaded_bytes -> Integer,
+        downloaded_bytes -> Integer,
         total_bytes -> Integer,
+        retries -> Integer,
+        retry_at -> Nullable<Timestamp>,
+        status -> crate::db_diesel::sync_file_reference_row::SyncFileStatusMapping,
+        error -> Nullable<Text>,
         created_datetime -> Timestamp,
         deleted_datetime -> Nullable<Timestamp>,
     }
@@ -36,8 +57,23 @@ pub struct SyncFileReferenceRow {
     #[serde(skip_serializing)]
     #[serde(default)]
     pub uploaded_bytes: i32,
+    #[serde(skip_serializing)]
+    #[serde(default)]
+    pub downloaded_bytes: i32,
     #[serde(default)]
     pub total_bytes: i32,
+    #[serde(skip_serializing)]
+    #[serde(default)]
+    pub retries: i32,
+    #[serde(skip_serializing)]
+    #[serde(default)]
+    pub retry_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
+    #[serde(default)]
+    pub status: SyncFileStatus,
+    #[serde(skip_serializing)]
+    #[serde(default)]
+    pub error: Option<String>,
     pub created_datetime: NaiveDateTime,
     pub deleted_datetime: Option<NaiveDateTime>,
 }
@@ -126,10 +162,20 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         let result = sync_file_reference
             .filter(deleted_datetime.is_null())
             .filter(uploaded_bytes.lt(total_bytes))
+            .filter(
+                status
+                    .eq(SyncFileStatus::ReadyToUpload)
+                    .or(status.eq(SyncFileStatus::Uploading))
+                    .or(status
+                        .eq(SyncFileStatus::UploadError)
+                        .and(retry_at.lt(diesel::dsl::now))),
+            )
             .load(&self.connection.connection)?;
         Ok(result)
     }
 
+    // Note this deliberately doesn't create change log records to avoid triggering sync updates to central server for local only information
+    // TODO: Allow setting status etc via this or similar method
     pub fn update_chunk_uploaded(
         &self,
         sync_file_reference_id: &str,
