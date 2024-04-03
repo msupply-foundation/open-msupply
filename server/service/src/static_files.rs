@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 
-use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
+use repository::sync_file_reference_row::{
+    SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
+};
 use util::constants::SYSTEM_USER_ID;
 use util::is_central_server;
 use util::uuid::uuid;
@@ -187,8 +189,9 @@ impl StaticFileService {
             }
         };
 
-        let sync_file_ref =
-            SyncFileReferenceRowRepository::new(&ctx.connection).find_one_by_id(&id)?;
+        let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+
+        let sync_file_ref = sync_file_repo.find_one_by_id(&id)?;
 
         let sync_file_ref = match sync_file_ref {
             Some(sync_file_ref) => sync_file_ref,
@@ -200,7 +203,7 @@ impl StaticFileService {
             }
         };
 
-        let file_name = sync_file_ref.file_name;
+        let file_name = sync_file_ref.file_name.clone();
         let download_url = format!("{}/{}/{}?id={}", base_url, table_name, record_id, id);
         log::info!("Downloading sync file from {}", download_url);
 
@@ -232,6 +235,14 @@ impl StaticFileService {
                 }
                 Ok(None) => break, // Finished the download
                 Err(e) => {
+                    // Update the sync file reference to indicate an error
+                    let _result = SyncFileReferenceRowRepository::new(&ctx.connection)
+                        .update_status(&SyncFileReferenceRow {
+                            status: SyncFileStatus::DownloadError,
+                            error: Some(format!("{:?}", e)),
+                            ..sync_file_ref.clone()
+                        });
+
                     return Err(
                         anyhow::Error::new(e).context("Downloading file from central server")
                     );
@@ -240,6 +251,13 @@ impl StaticFileService {
         }
 
         log::info!("Download completed");
+
+        // Update the sync file reference
+        sync_file_repo.update_status(&SyncFileReferenceRow {
+            downloaded_bytes: sync_file_ref.total_bytes,
+            status: SyncFileStatus::Downloaded,
+            ..sync_file_ref.clone()
+        })?;
 
         Ok(Some(StaticFile {
             id: id.to_string(),
