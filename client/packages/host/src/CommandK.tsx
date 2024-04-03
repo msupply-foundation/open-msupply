@@ -86,7 +86,6 @@ const Actions = () => {
   const drawer = useDrawer();
   const t = useTranslation('app');
   const { store, logout, user, userHasPermission } = useAuthContext();
-  console.info(`store: ${store?.code}`);
 
   const actions = [
     {
