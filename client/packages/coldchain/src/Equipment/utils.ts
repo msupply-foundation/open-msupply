@@ -166,14 +166,12 @@ export const importEquipmentToCsv = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.asset-number'),
     t('label.catalogue-item-code'),
     t('label.asset-notes'),
   ];
 
   const data = assets.map(node => [
-    node.id,
     node.assetNumber,
     node.catalogueItemCode,
     node.notes,
