@@ -29,6 +29,7 @@ fn sync_file_reference1() -> SyncFileReferenceRow {
         total_bytes: 0,
         created_datetime: Defaults::naive_date_time(),
         deleted_datetime: None,
+        ..Default::default()
     }
 }
 
