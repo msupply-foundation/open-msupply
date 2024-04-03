@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -12,8 +12,9 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDataSetter,
+  useTableStore,
 } from '@openmsupply-client/common';
-import { getStatusTranslator } from '../../utils';
+import { getStatusTranslator, isInboundListItemDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { InboundReturnRowFragment, useReturns } from '../api';
@@ -32,6 +33,7 @@ const InboundReturnListViewComponent: FC = () => {
       { key: 'status', condition: 'equalTo' },
     ],
   });
+  const { setDisabledRows } = useTableStore();
   const navigate = useNavigate();
   const modalController = useToggle();
   const pagination = { page, first, offset };
@@ -48,7 +50,13 @@ const InboundReturnListViewComponent: FC = () => {
 
   const { data, isError, isLoading } =
     useReturns.document.listInbound(queryParams);
-  // useDisableInboundRows(data?.nodes); // see inbound shipment for implementation reference
+
+  useEffect(() => {
+    const disabledRows = data?.nodes
+      .filter(isInboundListItemDisabled)
+      .map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [data?.nodes, setDisabledRows]);
 
   const columns = useColumns<InboundReturnRowFragment>(
     [
