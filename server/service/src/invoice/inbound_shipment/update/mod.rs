@@ -84,7 +84,7 @@ pub fn update_inbound_shipment(
             if update_invoice.status == InvoiceRowStatus::Verified {
                 if let Some(movements) = location_movements {
                     for movement in movements {
-                        LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                        LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                     }
                 }
             }
@@ -97,7 +97,7 @@ pub fn update_inbound_shipment(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_owned()),
                     None,
@@ -106,7 +106,7 @@ pub fn update_inbound_shipment(
             }
 
             get_invoice(ctx, None, &update_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -164,10 +164,7 @@ impl UpdateInboundShipmentStatus {
 
 impl UpdateInboundShipment {
     pub fn full_status(&self) -> Option<InvoiceRowStatus> {
-        match &self.status {
-            Some(status) => Some(status.full_status()),
-            None => None,
-        }
+        self.status.as_ref().map(|status| status.full_status())
     }
 }
 
@@ -176,7 +173,7 @@ mod test {
     use chrono::{Duration, NaiveDate, Utc};
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
+            mock_inbound_shipment_a, mock_inbound_shipment_a_invoice_lines,
             mock_inbound_shipment_b, mock_inbound_shipment_c, mock_inbound_shipment_e, mock_name_a,
             mock_name_linked_to_store_join, mock_name_not_linked_to_store_join,
             mock_outbound_shipment_e, mock_stock_line_a, mock_store_a, mock_store_b,
@@ -358,7 +355,6 @@ mod test {
                     .unwrap()
                     .and_hms_milli_opt(20, 30, 0, 0)
                     .unwrap();
-                r.currency_id = currency_a().id;
             })
         }
 

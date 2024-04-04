@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -13,6 +14,8 @@ import {
   ToggleState,
   EnvUtils,
   Platform,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { PatientSearchModal } from '@openmsupply-client/system';
 import { usePrescription } from '../api';
@@ -21,9 +24,10 @@ import { prescriptionToCsv } from '../../utils';
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const { success, error } = useNotification();
-  const { mutate: onCreate } = usePrescription.document.insert();
   const t = useTranslation('dispensary');
+  const navigate = useNavigate();
+  const { success, error } = useNotification();
+  const { mutateAsync: onCreate } = usePrescription.document.insert();
   const { data, isLoading } = usePrescription.document.list();
 
   const csvExport = async () => {
@@ -54,6 +58,14 @@ export const AppBarButtonsComponent: FC<{
               onCreate({
                 id: FnUtils.generateUUID(),
                 patientId: name?.id,
+              }).then(invoiceNumber => {
+                navigate(
+                  RouteBuilder.create(AppRoute.Dispensary)
+                    .addPart(AppRoute.Prescription)
+                    .addPart(String(invoiceNumber))
+                    .build(),
+                  { replace: true }
+                );
               });
             } catch (e) {
               const errorSnack = error(

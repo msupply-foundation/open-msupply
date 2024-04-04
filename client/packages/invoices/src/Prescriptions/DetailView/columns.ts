@@ -160,6 +160,7 @@ export const usePrescriptionColumn = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
+        // eslint-disable-next-line new-cap
         Cell: PackVariantCell({
           getItemId: row => {
             if ('lines' in row) return '';

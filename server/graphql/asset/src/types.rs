@@ -291,7 +291,7 @@ pub enum AssetLogStatusInput {
     Functioning,
     FunctioningButNeedsAttention,
     NotFunctioning,
-    Decomissioned,
+    Decommissioned,
 }
 
 impl AssetLogStatusInput {
@@ -303,7 +303,7 @@ impl AssetLogStatusInput {
                 AssetLogStatus::FunctioningButNeedsAttention
             }
             AssetLogStatusInput::NotFunctioning => AssetLogStatus::NotFunctioning,
-            AssetLogStatusInput::Decomissioned => AssetLogStatus::Decomissioned,
+            AssetLogStatusInput::Decommissioned => AssetLogStatus::Decommissioned,
         }
     }
 }
@@ -354,14 +354,14 @@ pub enum AssetLogReasonInput {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
-    AwaitingDecomissioning,
+    AwaitingDecommissioning,
     NeedsServicing,
     MultipleTemperatureBreaches,
     Unknown,
     NeedsSpareParts,
     LackOfPower,
     Functioning,
-    Decomissioned,
+    Decommissioned,
 }
 
 impl AssetLogReasonInput {
@@ -370,7 +370,7 @@ impl AssetLogReasonInput {
             AssetLogReasonInput::AwaitingInstallation => AssetLogReason::AwaitingInstallation,
             AssetLogReasonInput::Stored => AssetLogReason::Stored,
             AssetLogReasonInput::OffsiteForRepairs => AssetLogReason::OffsiteForRepairs,
-            AssetLogReasonInput::AwaitingDecomissioning => AssetLogReason::AwaitingDecomissioning,
+            AssetLogReasonInput::AwaitingDecommissioning => AssetLogReason::AwaitingDecommissioning,
             AssetLogReasonInput::NeedsServicing => AssetLogReason::NeedsServicing,
             AssetLogReasonInput::MultipleTemperatureBreaches => {
                 AssetLogReason::MultipleTemperatureBreaches
@@ -379,7 +379,7 @@ impl AssetLogReasonInput {
             AssetLogReasonInput::NeedsSpareParts => AssetLogReason::NeedsSpareParts,
             AssetLogReasonInput::LackOfPower => AssetLogReason::LackOfPower,
             AssetLogReasonInput::Functioning => AssetLogReason::Functioning,
-            AssetLogReasonInput::Decomissioned => AssetLogReason::Decomissioned,
+            AssetLogReasonInput::Decommissioned => AssetLogReason::Decommissioned,
         }
     }
 }
@@ -398,14 +398,14 @@ pub enum ReasonType {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
-    AwaitingDecomissioning,
+    AwaitingDecommissioning,
     NeedsServicing,
     MultipleTemperatureBreaches,
     Unknown,
     NeedsSpareParts,
     LackOfPower,
     Functioning,
-    Decomissioned,
+    Decommissioned,
 }
 impl ReasonType {
     pub fn from_domain(reason: &AssetLogReason) -> Self {
@@ -413,14 +413,14 @@ impl ReasonType {
             AssetLogReason::AwaitingInstallation => ReasonType::AwaitingInstallation,
             AssetLogReason::Stored => ReasonType::Stored,
             AssetLogReason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
-            AssetLogReason::AwaitingDecomissioning => ReasonType::AwaitingDecomissioning,
+            AssetLogReason::AwaitingDecommissioning => ReasonType::AwaitingDecommissioning,
             AssetLogReason::NeedsServicing => ReasonType::NeedsServicing,
             AssetLogReason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
             AssetLogReason::Unknown => ReasonType::Unknown,
             AssetLogReason::NeedsSpareParts => ReasonType::NeedsSpareParts,
             AssetLogReason::LackOfPower => ReasonType::LackOfPower,
             AssetLogReason::Functioning => ReasonType::Functioning,
-            AssetLogReason::Decomissioned => ReasonType::Decomissioned,
+            AssetLogReason::Decommissioned => ReasonType::Decommissioned,
         }
     }
 }
@@ -433,7 +433,7 @@ pub enum StatusType {
     Functioning,
     FunctioningButNeedsAttention,
     NotFunctioning,
-    Decomissioned,
+    Decommissioned,
 }
 impl StatusType {
     pub fn from_domain(status: &AssetLogStatus) -> Self {
@@ -444,7 +444,7 @@ impl StatusType {
                 StatusType::FunctioningButNeedsAttention
             }
             AssetLogStatus::NotFunctioning => StatusType::NotFunctioning,
-            AssetLogStatus::Decomissioned => StatusType::Decomissioned,
+            AssetLogStatus::Decommissioned => StatusType::Decommissioned,
         }
     }
 }

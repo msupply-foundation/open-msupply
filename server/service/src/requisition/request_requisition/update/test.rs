@@ -183,7 +183,7 @@ mod test_update {
                     max_months_of_stock: None,
                     min_months_of_stock: None,
                     other_party_id: Some(mock_name_store_c().id),
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                 },
             )
             .unwrap();
@@ -203,7 +203,7 @@ mod test_update {
                 u.their_reference = Some("new their_reference".to_owned());
                 u.comment = Some("new comment".to_owned());
                 u.name_link_id = mock_name_store_c().id;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap());
+                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
                 u
             })
         );
