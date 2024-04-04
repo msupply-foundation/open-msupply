@@ -9,7 +9,7 @@ import React from 'react';
 
 // Shows '[multiple]' if there is more then one pack size
 // otherwise shows pack size or unit variant short name
-export const PackVariantCell =
+export const getPackVariantCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,
