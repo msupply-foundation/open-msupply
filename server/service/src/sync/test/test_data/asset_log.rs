@@ -29,7 +29,7 @@ fn asset_log1() -> AssetLogRow {
         user_id: "user_account_a".to_string(), // Mock user account
         status: Some(AssetLogStatus::Functioning),
         comment: Some("test_comment".to_string()),
-        reason: Some(AssetLogReason::AwaitingInstallation),
+        reason_id: None,
         log_datetime: Defaults::naive_date_time(),
         r#type: None,
     }

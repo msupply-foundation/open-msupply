@@ -9,6 +9,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             id TEXT NOT NULL PRIMARY KEY,
             asset_id TEXT NOT NULL REFERENCES asset(id),
             user_id TEXT NOT NULL REFERENCES user_account(id),
+            status TEXT,
+            reason_id TEXT REFERENCES asset_log_reasons(id),
             comment TEXT,
             type TEXT,
             log_datetime {DATETIME} NOT NULL

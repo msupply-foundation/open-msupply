@@ -1,4 +1,4 @@
-use crate::types::{AssetLogReasonInput, AssetLogStatusInput};
+use crate::types::AssetLogStatusInput;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
@@ -49,7 +49,7 @@ pub struct InsertAssetLogInput {
     pub id: String,
     pub asset_id: String,
     pub status: Option<AssetLogStatusInput>,
-    pub reason: Option<AssetLogReasonInput>,
+    pub reason_id: Option<String>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
 }
@@ -60,7 +60,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             id,
             asset_id,
             status,
-            reason,
+            reason_id,
             comment,
             r#type,
         }: InsertAssetLogInput,
@@ -69,7 +69,7 @@ impl From<InsertAssetLogInput> for InsertAssetLog {
             id,
             asset_id,
             status: status.map(|s| s.to_domain()),
-            reason: reason.map(|r| r.to_domain()),
+            reason_id,
             comment,
             r#type,
         }
