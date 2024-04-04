@@ -147,19 +147,5 @@ mutation createInventoryAdjustment(
       __typename
       ...InvoiceRow
     }
-    # ... on InsertRepackError {
-    #   __typename
-    #   error {
-    #     description
-    #     ... on StockLineReducedBelowZero {
-    #       __typename
-    #       description
-    #     }
-    #     ... on CannotHaveFractionalPack {
-    #       __typename
-    #       description
-    #     }
-    #   }
-    # }
   }
 }
