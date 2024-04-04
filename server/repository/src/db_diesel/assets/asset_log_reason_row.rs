@@ -1,6 +1,10 @@
-use super::asset_log_row::asset_log::dsl::*;
+use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
-use diesel_derive_enum::DbEnum;
+use crate::RepositoryError;
+use crate::StorageConnection;
+
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 table! {
@@ -13,11 +17,9 @@ table! {
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
+    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset_log_reason"]
-
 pub struct AssetLogReasonRow {
     pub id: String,
     pub asset_log_status: String,
@@ -60,22 +62,22 @@ impl<'a> AssetLogReasonRowRepository<'a> {
         &self,
         asset_log_reason_row: &AssetLogReasonRow,
     ) -> Result<(), RepositoryError> {
-        diesel::insert_into(aasset_log_reason)
+        diesel::insert_into(asset_log_reason)
             .values(asset_log_reason_row)
             .execute(&self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_all(&self) -> Result<Vec<AssetLogRow>, RepositoryError> {
-        let result = asset_log.load(&self.connection.connection);
+    pub fn find_all(&self) -> Result<Vec<AssetLogReasonRow>, RepositoryError> {
+        let result = asset_log_reason.load(&self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_one_by_id(
         &self,
         asset_log_id: &str,
-    ) -> Result<Option<AssetLogRow>, RepositoryError> {
-        let result = asset_log
+    ) -> Result<Option<AssetLogReasonRow>, RepositoryError> {
+        let result = asset_log_reason
             .filter(id.eq(asset_log_id))
             .first(&self.connection.connection)
             .optional()?;
