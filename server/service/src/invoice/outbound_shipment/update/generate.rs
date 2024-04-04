@@ -146,7 +146,7 @@ fn lines_to_trim(
     }
 
     // If new invoice status is not new and previous invoice status is new
-    // add all unallocated lines to be deleted
+    // add all unallocated lines or empty lines to be deleted
 
     let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -157,7 +157,8 @@ fn lines_to_trim(
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
+            .number_of_packs(EqualFilter::equal_to_f64(0.0))
+            .r#type(InvoiceLineRowType::StockOut.equal_to()),
     )?;
 
     if lines.is_empty() && empty_lines.is_empty() {
