@@ -166,7 +166,7 @@ type BoxedEncounterQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query<'a>(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
+fn create_filtered_query(filter: Option<EncounterFilter>) -> BoxedEncounterQuery {
     let mut query = encounter::table
         .inner_join(program::table)
         .inner_join(name_link::table.inner_join(name::table))

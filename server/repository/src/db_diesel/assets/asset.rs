@@ -159,10 +159,7 @@ impl<'a> AssetRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        println!(
-           "{}",
-            diesel::debug_query::<DBType, _>(&final_query).to_string()
-        );
+        println!("{}", diesel::debug_query::<DBType, _>(&final_query));
 
         let result = final_query.load::<Asset>(&self.connection.connection)?;
 
@@ -254,7 +251,7 @@ mod tests {
             ..Default::default()
         };
 
-        asset_row_repository.insert_one(&asset).unwrap();
+        let _result = asset_row_repository.upsert_one(&asset).unwrap();
 
         // Query by id
         let result = asset_repository

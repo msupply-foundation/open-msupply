@@ -30,7 +30,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     )]
 }
 
-pub(crate) fn test_omsupply_central_push_records() -> Vec<TestSyncOutgoingRecord> {
+pub(crate) fn test_v6_central_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![TestSyncOutgoingRecord {
         table_name: TABLE_NAME.to_string(),
         record_id: ASSET_CATEGORY1.0.to_string(),

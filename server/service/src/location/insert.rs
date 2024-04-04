@@ -30,7 +30,7 @@ pub fn insert_location(
         .transaction_sync(|connection| {
             validate(&input, connection)?;
             let new_location = generate(&ctx.store_id, input);
-            LocationRowRepository::new(&connection).upsert_one(&new_location)?;
+            LocationRowRepository::new(connection).upsert_one(&new_location)?;
 
             get_location(ctx, new_location.id).map_err(InsertLocationError::from)
         })
@@ -77,7 +77,7 @@ pub fn check_location_does_not_exist(
     let locations = LocationRepository::new(connection)
         .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(id)))?;
 
-    Ok(locations.len() == 0)
+    Ok(locations.is_empty())
 }
 
 impl From<RepositoryError> for InsertLocationError {

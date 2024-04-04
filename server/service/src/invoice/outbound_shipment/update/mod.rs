@@ -90,7 +90,7 @@ pub fn update_outbound_shipment(
 
             if let Some(movements) = location_movements {
                 for movement in movements {
-                    LocationMovementRowRepository::new(&connection).upsert_one(&movement)?;
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
                 }
             }
 
@@ -102,7 +102,7 @@ pub fn update_outbound_shipment(
 
             if status_changed {
                 activity_log_entry(
-                    &ctx,
+                    ctx,
                     log_type_from_invoice_status(&update_invoice.status, false),
                     Some(update_invoice.id.to_owned()),
                     None,
@@ -111,7 +111,7 @@ pub fn update_outbound_shipment(
             }
 
             get_invoice(ctx, None, &update_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -154,19 +154,13 @@ impl UpdateOutboundShipmentStatus {
     pub fn full_status_option(
         status: &Option<UpdateOutboundShipmentStatus>,
     ) -> Option<InvoiceRowStatus> {
-        match status {
-            Some(status) => Some(status.full_status()),
-            None => None,
-        }
+        status.as_ref().map(|status| status.full_status())
     }
 }
 
 impl UpdateOutboundShipment {
     pub fn full_status(&self) -> Option<InvoiceRowStatus> {
-        match &self.status {
-            Some(status) => Some(status.full_status()),
-            None => None,
-        }
+        self.status.as_ref().map(|status| status.full_status())
     }
 }
 
@@ -175,8 +169,8 @@ mod test {
     use chrono::NaiveDate;
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_a, mock_item_a, mock_name_a,
-            mock_outbound_shipment_b, mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
+            mock_inbound_shipment_a, mock_item_a, mock_name_a, mock_outbound_shipment_b,
+            mock_outbound_shipment_c, mock_outbound_shipment_on_hold,
             mock_outbound_shipment_picked, mock_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
@@ -217,7 +211,6 @@ mod test {
                         .and_hms_milli_opt(15, 30, 0, 0)
                         .unwrap(),
                 );
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -338,7 +331,6 @@ mod test {
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -380,7 +372,7 @@ mod test {
         });
         let result = service.update_outbound_shipment(&context, update);
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         assert_eq!(
             InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
@@ -396,7 +388,6 @@ mod test {
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -555,7 +546,6 @@ mod test {
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
-                r.currency_id = currency_a().id;
             })
         }
 
@@ -612,7 +602,7 @@ mod test {
             }),
         );
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         let stock_line_repo = StockLineRowRepository::new(&connection);
 
@@ -635,7 +625,7 @@ mod test {
             }),
         );
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         let stock_line_repo = StockLineRowRepository::new(&connection);
 
@@ -654,7 +644,7 @@ mod test {
             }),
         );
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         let stock_line_repo = StockLineRowRepository::new(&connection);
         // Stock line should not have changed
@@ -696,7 +686,7 @@ mod test {
             }),
         );
 
-        assert!(matches!(result, Ok(_)), "Not Ok(_) {:#?}", result);
+        assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         let stock_line_repo = StockLineRowRepository::new(&connection);
 

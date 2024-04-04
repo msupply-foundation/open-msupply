@@ -24,6 +24,7 @@ pub(crate) enum SyncStep {
     PullRemote,
     PullCentralV6,
     Integrate,
+    PushCentralV6,
 }
 
 #[derive(Clone)]
@@ -32,6 +33,7 @@ pub(crate) enum SyncStepProgress {
     PullRemote,
     PullCentralV6,
     Push,
+    PushCentralV6,
     Integrate,
 }
 
@@ -102,6 +104,10 @@ impl<'a> SyncLogger<'a> {
                 pull_v6_started_datetime: Some(chrono::Utc::now().naive_utc()),
                 ..self.row.clone()
             },
+            SyncStep::PushCentralV6 => SyncLogRow {
+                push_v6_started_datetime: Some(chrono::Utc::now().naive_utc()),
+                ..self.row.clone()
+            },
         };
 
         self.sync_log_repo.upsert_one(&self.row)?;
@@ -155,6 +161,16 @@ impl<'a> SyncLogger<'a> {
                 );
                 SyncLogRow {
                     pull_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
+                    ..self.row.clone()
+                }
+            }
+            SyncStep::PushCentralV6 => {
+                info!(
+                    "Pushed ({}) central v6 records",
+                    self.row.push_v6_progress_done.as_ref().unwrap_or(&0)
+                );
+                SyncLogRow {
+                    push_v6_finished_datetime: Some(chrono::Utc::now().naive_utc()),
                     ..self.row.clone()
                 }
             }
@@ -249,6 +265,14 @@ impl<'a> SyncLogger<'a> {
                 SyncLogRow {
                     pull_v6_progress_total: total,
                     pull_v6_progress_done: done,
+                    ..self.row.clone()
+                }
+            }
+            SyncStepProgress::PushCentralV6 => {
+                let (total, done) = get_progress(remaining, self.row.push_v6_progress_total);
+                SyncLogRow {
+                    push_v6_progress_total: total,
+                    push_v6_progress_done: done,
                     ..self.row.clone()
                 }
             }

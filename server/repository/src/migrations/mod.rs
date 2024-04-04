@@ -159,7 +159,7 @@ fn get_database_version(connection: &StorageConnection) -> Version {
         Ok(Some(version_str)) => Version::from_str(&version_str),
         // Rust migrations start at "1.0.3"
         // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
-        // is in 1.1.0 (there is intential gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
+        // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
         _ => Version::from_str("1.0.3"),
     }
 }
@@ -192,7 +192,7 @@ where
 
 /// Will try and execute batch sql statements, return SQL error which contains sql being run
 /// differs to execute_sql_with_error, accepts string query rather then diesel query and
-/// allows for multiple statments to be executed
+/// allows for multiple statements to be executed
 pub(crate) fn batch_execute_sql_with_error(
     connection: &StorageConnection,
     query: &str,

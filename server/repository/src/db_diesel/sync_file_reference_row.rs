@@ -7,6 +7,8 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::{ChangeLogInsertRow, ChangelogAction, ChangelogRepository, ChangelogTableName, Upsert};
+
 table! {
     sync_file_reference (id) {
         id -> Text,
@@ -43,7 +45,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(
+    fn _upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {
@@ -57,7 +59,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
+    fn _upsert_one(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {
@@ -65,6 +67,30 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             .values(sync_file_reference_row)
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+
+    pub fn upsert_one(&self, sync_file_reference_row: &SyncFileReferenceRow) -> Result<i64, RepositoryError> {
+        self._upsert_one(sync_file_reference_row)?;
+        self.insert_changelog(
+            sync_file_reference_row.id.to_owned(),
+            ChangelogAction::Upsert,
+        )
+    }
+
+    fn insert_changelog(
+        &self,
+        sync_file_reference_id: String,
+        action: ChangelogAction,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::SyncFileReference,
+            record_id: sync_file_reference_id,
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
@@ -82,6 +108,31 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
+        self.insert_changelog(
+            sync_file_reference_id.to_owned(),
+            ChangelogAction::Delete,
+        )?;
         Ok(())
+    }
+}
+
+impl Upsert for SyncFileReferenceRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        let _change_log_id = SyncFileReferenceRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
+        let cursor_id = SyncFileReferenceRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(cursor_id))
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            SyncFileReferenceRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
