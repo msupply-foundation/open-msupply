@@ -163,6 +163,20 @@ export const CreateAssetModal = ({
               label={t('label.use-catalogue')}
             />
           </Box>
+          {isCentralServer && (
+            <InputRow
+              label={t('label.store')}
+              Input={
+                <StoreSearchInput
+                  clearable
+                  fullWidth
+                  value={draft.store ?? undefined}
+                  onChange={onStoreChange}
+                  onInputChange={onStoreInputChange}
+                />
+              }
+            />
+          )}
           <InputRow
             label={t('label.category')}
             Input={
@@ -233,20 +247,6 @@ export const CreateAssetModal = ({
               />
             }
           />
-          {isCentralServer && (
-            <InputRow
-              label={t('label.store')}
-              Input={
-                <StoreSearchInput
-                  clearable
-                  fullWidth
-                  value={draft.store ?? undefined}
-                  onChange={onStoreChange}
-                  onInputChange={onStoreInputChange}
-                />
-              }
-            />
-          )}
           <InputRow
             label={t('label.notes')}
             Input={
