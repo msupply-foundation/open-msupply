@@ -173,7 +173,7 @@ export const useStocktakeColumns = ({
         Cell: NumberCell,
         getIsError: row =>
           getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+            r => getError(r)?.__typename === 'StockLineReducedBelowZero'
           ),
         sortable: false,
         accessor: ({ rowData }) => {
