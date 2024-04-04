@@ -141,19 +141,21 @@ export const importEquipmentToCsvWithErrors = (
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
-    'id',
     t('label.asset-number'),
     t('label.catalogue-item-code'),
     t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
     t('label.line-number'),
     t('label.error-message'),
   ];
 
   const data = assets.map(node => [
-    node.id,
     node.assetNumber,
     node.catalogueItemCode,
     node.notes,
+    node.serialNumber,
+    node.installationDate,
     node.lineNumber,
     node.errorMessage,
   ]);
@@ -169,12 +171,16 @@ export const importEquipmentToCsv = (
     t('label.asset-number'),
     t('label.catalogue-item-code'),
     t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
   ];
 
   const data = assets.map(node => [
     node.assetNumber,
     node.catalogueItemCode,
     node.notes,
+    node.serialNumber,
+    node.installationDate,
   ]);
 
   return Formatter.csv({ fields, data });

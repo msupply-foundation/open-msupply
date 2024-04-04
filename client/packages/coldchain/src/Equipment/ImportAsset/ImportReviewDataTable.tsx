@@ -28,15 +28,29 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     [
       {
         key: 'assetNumber',
-        width: 60,
+        width: 70,
         sortable: false,
         label: 'label.asset-number',
       },
       {
         key: 'catalogueItemCode',
-        width: 70,
+        width: 50,
         sortable: false,
         label: 'label.catalogue-item-code',
+      },
+      {
+        key: 'serialNumber',
+        width: 100,
+        sortable: false,
+        label: 'label.serial',
+        Cell: TooltipTextCell,
+      },
+      {
+        key: 'installationDate',
+        width: 100,
+        sortable: false,
+        label: 'label.installation-date',
+        Cell: TooltipTextCell,
       },
       {
         key: 'notes',

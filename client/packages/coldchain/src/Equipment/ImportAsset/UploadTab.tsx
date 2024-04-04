@@ -34,6 +34,8 @@ enum AssetColumn {
   ASSET_NUMBER = 0,
   CATALOGUE_ITEM_CODE = 1,
   NOTES = 2,
+  SERIAL_NUMBER = 3,
+  INSTALLATION_DATE = 4,
 }
 
 // the row object indexes are returned in column order
@@ -64,6 +66,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
           assetNumber: undefined,
           catalogueItemCode: undefined,
           notes: undefined,
+          serialNumber: undefined,
+          installationDate: undefined,
         })
       ),
       t
@@ -146,9 +150,19 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       } else {
         importRow.catalogueItemCode = code;
       }
-      // notes aren't essential for bulk upload
+      // notes, serialNumner, and installationDate aren't essential for bulk upload
       if (getCell(row, AssetColumn.NOTES) !== undefined) {
         importRow.notes = getCell(row, AssetColumn.NOTES);
+      }
+      if (getCell(row, AssetColumn.SERIAL_NUMBER) !== undefined) {
+        importRow.serialNumber = getCell(row, AssetColumn.SERIAL_NUMBER);
+      }
+      // TODO parse date correctly for back end
+      if (getCell(row, AssetColumn.INSTALLATION_DATE) !== undefined) {
+        importRow.installationDate = getCell(
+          row,
+          AssetColumn.INSTALLATION_DATE
+        );
       }
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
