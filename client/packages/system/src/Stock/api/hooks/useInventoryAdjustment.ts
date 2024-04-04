@@ -22,13 +22,12 @@ type DraftInventoryAdjustment = {
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   // would usually query data here
 
-  // manage state (buffered) - can expose debounced update from here
-  // is it easier to have a targetted hook or all options exp
+  // can then manage state (buffered too?) - can expose debounced update from here
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
     direction: null,
     reason: null,
     adjustBy: 0,
-    newNumberOfPacks: 0, // populated once direction is selected (thoughts?)
+    newNumberOfPacks: 0,
   });
 
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
@@ -63,7 +62,7 @@ const useCreate = (stockLineId: string) => {
       newNumberOfPacks,
       reason,
     }: DraftInventoryAdjustment) => {
-      if (!direction) return; // todo: error here?
+      if (!direction) return;
       return sdk.createInventoryAdjustment({
         storeId,
         input: {
