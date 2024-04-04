@@ -84,6 +84,7 @@
   "messages.error-deleting-locations_many": "{{count}} locations could not be deleted",
   "messages.error-deleting-locations_other": "{{count}} locations could not be deleted",
   "messages.finalised-stock-take": "This stocktake is finalised and cannot be edited",
+  "messages.inventory-adjustment-saved": "Inventory adjustment saved 🥳",
   "messages.no-locations": "No locations available",
   "messages.no-master-lists": "No master lists available",
   "messages.no-items-with-stock": "No items with stock available",

@@ -702,7 +702,7 @@ export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktak
   description: Scalars['String']['output'];
 };
 
-export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
+export type CannotHaveFractionalPack = CreateInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & {
   __typename: 'CannotHaveFractionalPack';
   description: Scalars['String']['output'];
 };
@@ -910,6 +910,24 @@ export type ContactTraceSortInput = {
   /** Sort query result by `key` */
   key: ContactTraceSortFieldInput;
 };
+
+export type CreateInventoryAdjustmentError = {
+  __typename: 'CreateInventoryAdjustmentError';
+  error: CreateInventoryAdjustmentErrorInterface;
+};
+
+export type CreateInventoryAdjustmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type CreateInventoryAdjustmentInput = {
+  direction: Scalars['String']['input'];
+  newNumberOfPacks: Scalars['Float']['input'];
+  reasonId: Scalars['String']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type CreateInventoryAdjustmentResponse = CreateInventoryAdjustmentError | InvoiceNode;
 
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
@@ -3124,6 +3142,7 @@ export type Mutations = {
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
+  createInventoryAdjustment: CreateInventoryAdjustmentResponse;
   /**
    * Create shipment for response requisition
    * Will create Outbound Shipment with placeholder lines for each requisition line
@@ -3296,6 +3315,12 @@ export type MutationsBatchRequestRequisitionArgs = {
 
 export type MutationsBatchStocktakeArgs = {
   input: BatchStocktakeInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsCreateInventoryAdjustmentArgs = {
+  input: CreateInventoryAdjustmentInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5711,7 +5736,7 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float']['output'];
 };
 
-export type StockLineReducedBelowZero = InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type StockLineReducedBelowZero = CreateInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String']['output'];
   stockLine: StockLineNode;

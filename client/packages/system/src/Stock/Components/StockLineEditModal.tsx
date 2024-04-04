@@ -15,7 +15,7 @@ import {
 import { StockLineRowFragment, useStock } from '../api';
 import { ActivityLogList } from '../../ActivityLog';
 import { StockLineForm } from './StockLineForm';
-import { InventoryAdjustmentForm } from './InventoryAdjustmentForm';
+import { InventoryAdjustmentForm } from './InventoryAdjustment';
 
 interface StockLineEditModalProps {
   isOpen: boolean;
@@ -82,7 +82,9 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       value: 'label.details',
     },
     {
-      Component: <InventoryAdjustmentForm draft={draft} onUpdate={onUpdate} />,
+      Component: (
+        <InventoryAdjustmentForm stockLine={draft} onUpdate={onUpdate} />
+      ),
       value: 'label.adjust',
     },
     {
