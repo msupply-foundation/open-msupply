@@ -16,7 +16,7 @@ use crate::{
 pub type AssetLogReason = AssetLogReasonRow;
 
 pub enum AssetLogReasonSortField {
-    Status,
+    AssetLogStatus,
     Reason,
     DeletedDatetime,
 }
@@ -27,7 +27,7 @@ pub type AssetLogReasonSort = Sort<AssetLogReasonSortField>;
 
 pub struct AssetLogReasonFilter {
     pub id: Option<EqualFilter<String>>,
-    pub status: Option<EqualFilter<AssetLogStatus>>,
+    pub asset_log_status: Option<EqualFilter<AssetLogStatus>>,
     pub reason: Option<StringFilter>,
     pub deleted_datetime: Option<DatetimeFilter>,
 }
@@ -40,8 +40,8 @@ impl AssetLogReasonFilter {
         self.id = Some(filter);
         self
     }
-    pub fn status(mut self, filter: EqualFilter<AssetLogStatus>) -> Self {
-        self.status = Some(filter);
+    pub fn asset_log_status(mut self, filter: EqualFilter<AssetLogStatus>) -> Self {
+        self.asset_log_status = Some(filter);
         self
     }
     pub fn reason(mut self, filter: StringFilter) -> Self {
@@ -129,13 +129,17 @@ fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetClas
     if let Some(f) = filter {
         let AssetLogReasonFilter {
             id,
-            status,
+            asset_log_status,
             reason,
             deleted_datetime,
         } = f;
 
         apply_equal_filter!(query, id, asset_log_reason_dsl::id);
-        apply_equal_filter!(query, status, asset_log_reason_dsl::status);
+        apply_equal_filter!(
+            query,
+            asset_log_status,
+            asset_log_reason_dsl::asset_log_status
+        );
         apply_string_filter!(query, reason, asset_log_reason_dsl::reason);
         apply_date_filter!(
             query,
