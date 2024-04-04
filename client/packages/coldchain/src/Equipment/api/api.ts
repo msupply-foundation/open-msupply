@@ -19,7 +19,7 @@ export type ListParams<T> = {
   filterBy?: FilterByWithBoolean | null;
 };
 
-export type InsertAsset = Partial<AssetFragment> & {
+export type InsertAsset = Partial<AssetFragment & LocationIds> & {
   categoryId?: string;
   typeId?: string;
   classId?: string;
@@ -48,8 +48,10 @@ const assetParsers = {
     storeId: input.store?.id,
     typeId: input.typeId,
   }),
-  toUpdate: (input: AssetFragment & LocationIds): UpdateAssetInput => ({
-    id: input.id,
+  toUpdate: (
+    input: Partial<AssetFragment & LocationIds>
+  ): UpdateAssetInput => ({
+    id: input.id ?? '',
     catalogueItemId: setNullableInput('catalogueItemId', input),
     assetNumber: input.assetNumber,
     installationDate: setNullableInput('installationDate', input),
@@ -130,7 +132,9 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       return result.labelPrinterSettings;
     },
   },
-  insert: async (input: Partial<AssetFragment>): Promise<string> => {
+  insert: async (
+    input: Partial<AssetFragment & LocationIds>
+  ): Promise<string> => {
     const result = await sdk.insertAsset({
       input: assetParsers.toInsert(input),
       storeId,
@@ -143,7 +147,9 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
 
     throw new Error('Could not insert asset');
   },
-  update: async (input: AssetFragment & LocationIds): Promise<string> => {
+  update: async (
+    input: Partial<AssetFragment & LocationIds>
+  ): Promise<string> => {
     const result = await sdk.updateAsset({
       input: assetParsers.toUpdate(input),
       storeId,
