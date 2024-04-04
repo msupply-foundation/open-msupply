@@ -12,7 +12,7 @@ import {
 } from '@openmsupply-client/common';
 import { InboundReturnLineFragment } from '../api';
 import { InboundReturnItem } from '../../types';
-import { PackVariantCell } from 'packages/system/src';
+import { PackVariantCell } from 'packages/system';
 
 interface UseInboundReturnColumnOptions {
   sortBy: SortBy<InboundReturnLineFragment | InboundReturnItem>;
