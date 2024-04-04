@@ -41,6 +41,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
+        -- This view contains the latest document versions
         CREATE VIEW report_document AS
         SELECT
             d.name,
