@@ -27,6 +27,7 @@ const AssetListComponent: FC = () => {
       { key: 'category' },
       { key: 'class' },
       { key: 'type' },
+      { key: 'catalogue' },
     ],
   });
   const { data, isError, isLoading } = useAssetData.document.list();

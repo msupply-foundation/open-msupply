@@ -491,6 +491,7 @@
   "placeholder.search-by-name": "Search by name",
   "placeholder.search-by-name-or-code": "Search by name or code",
   "placeholder.search-by-notes": "Search by notes",
+  "placeholder.search-by": "Search by {{field}}",
   "success": "Success!",
   "success.data-deleted": "Deleted successfully",
   "success.data-saved": "Saved successfully",
