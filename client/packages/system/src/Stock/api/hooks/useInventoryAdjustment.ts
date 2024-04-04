@@ -1,42 +1,48 @@
 import { useCallback, useState } from 'react';
 import {
+  AdjustmentDirectionInput,
   useAuthContext,
   useGql,
   useMutation,
   useQueryClient,
 } from '@openmsupply-client/common';
 import {
-  Adjustment,
   InventoryAdjustmentReasonRowFragment,
   StockLineRowFragment,
 } from '../../..';
 import { getSdk } from '..';
 
 type DraftInventoryAdjustment = {
-  direction: Adjustment;
+  direction: AdjustmentDirectionInput | null;
   reason: InventoryAdjustmentReasonRowFragment | null;
   adjustBy: number;
   newNumberOfPacks: number;
 };
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
+  // would usually query data here
+
+  // manage state (buffered) - can expose debounced update from here
+  // is it easier to have a targetted hook or all options exp
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
-    direction: Adjustment.None,
+    direction: null,
     reason: null,
     adjustBy: 0,
     newNumberOfPacks: 0, // populated once direction is selected (thoughts?)
   });
 
-  const { mutateAsync } = useCreate(stockLine.id);
+  const { mutateAsync: createMutation } = useCreate(stockLine.id);
+  // could then also have update mutation here
+
   const create = useCallback(async () => {
-    await mutateAsync(draft);
+    await createMutation(draft);
     setDraft({
-      direction: Adjustment.None,
+      direction: null,
       reason: null,
       adjustBy: 0,
       newNumberOfPacks: 0,
     });
-  }, [draft, mutateAsync]);
+  }, [draft, createMutation]);
 
   return {
     draft,
@@ -52,20 +58,29 @@ const useCreate = (stockLineId: string) => {
   const { storeId } = useAuthContext();
 
   return useMutation(
-    ({ direction, newNumberOfPacks, reason }: DraftInventoryAdjustment) =>
-      sdk.createInventoryAdjustment({
+    async ({
+      direction,
+      newNumberOfPacks,
+      reason,
+    }: DraftInventoryAdjustment) => {
+      if (!direction) return; // todo: error here?
+      return sdk.createInventoryAdjustment({
         storeId,
         input: {
-          direction: direction.toString(), // todo
+          direction,
           newNumberOfPacks,
-          reasonId: reason?.id ?? '', // todo
           stockLineId,
+          inventoryAdjustmentReasonId: reason?.id,
         },
-      }),
+      });
+    },
     {
       onSuccess: () =>
-        // Stock line needs to be re-fetched to load quantity
-        queryClient.invalidateQueries(['stock', storeId, stockLineId]), // TODO
+        // Stock line needs to be re-fetched to refresh quantity
+
+        // TODO, where to store query keys?
+        // these are same as in useStockApi
+        queryClient.invalidateQueries(['stock', storeId, stockLineId]),
     }
   );
 };

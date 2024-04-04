@@ -7,13 +7,19 @@ use graphql_types::{generic_errors::StockLineReducedBelowZero, types::InvoiceNod
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+pub enum AdjustmentDirectionInput {
+    Addition,
+    Reduction,
+}
+
 #[derive(InputObject)]
 #[graphql(name = "CreateInventoryAdjustmentInput")]
 pub struct CreateInventoryAdjustmentInput {
     pub stock_line_id: String,
     pub new_number_of_packs: f64,
-    pub reason_id: String,
-    pub direction: String, // TODO ENUM (refactor to use in stocktake too...)
+    pub direction: AdjustmentDirectionInput,
+    pub inventory_adjustment_reason_id: Option<String>,
 }
 
 #[derive(Interface)]
@@ -34,7 +40,7 @@ pub struct InsertError {
 #[graphql(name = "CreateInventoryAdjustmentResponse")]
 pub enum InsertResponse {
     Error(InsertError),
-    Response(InvoiceNode), // todo ?
+    Response(InvoiceNode),
 }
 
 pub fn create_inventory_adjustment(
@@ -59,66 +65,4 @@ pub fn create_inventory_adjustment(
             ..Default::default()
         },
     )))
-
-    // map_response(
-    //     service_provider
-    //         .repack_service
-    //         .insert_repack(&service_context, input.to_domain()),
-    // )
 }
-
-// pub fn map_response(from: Result<Invoice, ServiceError>) -> Result<InsertResponse> {
-//     let result = match from {
-//         Ok(invoice) => InsertResponse::Response(InvoiceNode::from_domain(invoice)),
-//         Err(error) => InsertResponse::Error(InsertError {
-//             error: map_error(error)?,
-//         }),
-//     };
-
-//     Ok(result)
-// }
-
-// impl CreateInventoryAdjustmentInput {
-//     pub fn to_domain(self) -> ServiceInput {
-//         let CreateInventoryAdjustmentInput {
-//             stock_line_id,
-//             number_of_packs,
-//             new_pack_size,
-//             new_location_id,
-//         } = self;
-
-//         ServiceInput {
-//             stock_line_id,
-//             number_of_packs,
-//             new_pack_size,
-//             new_location_id,
-//         }
-//     }
-// }
-
-// fn map_error(error: ServiceError) -> Result<CreateErrorInterface> {
-//     use StandardGraphqlError::*;
-//     let formatted_error = format!("{:#?}", error);
-
-//     let graphql_error = match error {
-//         // Structured Errors
-//         ServiceError::StockLineReducedBelowZero(line) => {
-//             return Ok(CreateErrorInterface::StockLineReducedBelowZero(
-//                 StockLineReducedBelowZero::from_domain(line),
-//             ))
-//         }
-//         ServiceError::CannotHaveFractionalPack => {
-//             return Ok(CreateErrorInterface::CannotHaveFractionalPack(
-//                 CannotHaveFractionalPack {},
-//             ))
-//         }
-//         // Standard Graphql Errors
-//         ServiceError::StockLineDoesNotExist => BadUserInput(formatted_error),
-//         ServiceError::NotThisStoreStockLine => BadUserInput(formatted_error),
-//         ServiceError::NewlyCreatedInvoiceDoesNotExist => BadUserInput(formatted_error),
-//         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-//         ServiceError::InternalError(err) => InternalError(err),
-//     };
-
-//     Err(graphql_error.extend())
-// }

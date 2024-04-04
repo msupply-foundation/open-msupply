@@ -8,6 +8,7 @@ import {
   NumericTextInput,
   DialogButton,
   useNotification,
+  AdjustmentDirectionInput,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import {
@@ -16,6 +17,18 @@ import {
   usePackVariant,
 } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
+
+// TODO... use direction input in stocktake?
+const tempAsAdjustment = (direction: AdjustmentDirectionInput | null) => {
+  switch (direction) {
+    case AdjustmentDirectionInput.Addition:
+      return Adjustment.Addition;
+    case AdjustmentDirectionInput.Reduction:
+      return Adjustment.Reduction;
+    default:
+      return Adjustment.None;
+  }
+};
 
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;
@@ -35,12 +48,10 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
   );
   const packUnit = asPackVariant(stockLine.packSize);
 
-  const canSave =
-    draft.direction !== Adjustment.None &&
-    draft.reason !== null &&
-    draft.adjustBy > 0;
+  const saveDisabled = !draft.direction || draft.adjustBy === 0;
 
   const save = async () => {
+    // TODO: handle error if no reason selected when reasons required
     await create();
     const successSnack = success(t('messages.inventory-adjustment-saved'));
     successSnack();
@@ -81,7 +92,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
               <InventoryAdjustmentReasonSearchInput
                 onChange={reason => setDraft(state => ({ ...state, reason }))}
                 value={draft.reason}
-                adjustment={draft.direction}
+                adjustment={tempAsAdjustment(draft.direction)}
               />
             </Box>
           }
@@ -104,10 +115,10 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.adjust-by')}
           Input={
             <NumericTextInput
-              disabled={draft.direction === Adjustment.None}
+              disabled={!draft.direction}
               width={160}
               max={
-                draft.direction === Adjustment.Reduction
+                draft.direction === AdjustmentDirectionInput.Reduction
                   ? stockLine.totalNumberOfPacks
                   : undefined
               }
@@ -117,7 +128,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
                   ...state,
                   adjustBy: adjustBy ?? 0,
                   newNumberOfPacks:
-                    state.direction === Adjustment.Addition
+                    state.direction === AdjustmentDirectionInput.Addition
                       ? stockLine.totalNumberOfPacks + (adjustBy ?? 0)
                       : stockLine.totalNumberOfPacks - (adjustBy ?? 0),
                 }))
@@ -129,11 +140,11 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.new-num-packs')}
           Input={
             <NumericTextInput
-              disabled={draft.direction === Adjustment.None}
+              disabled={!draft.direction}
               width={160}
               value={draft.newNumberOfPacks}
               max={
-                draft.direction === Adjustment.Reduction
+                draft.direction === AdjustmentDirectionInput.Reduction
                   ? stockLine.totalNumberOfPacks
                   : undefined
               }
@@ -164,7 +175,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           <DialogButton
             variant="save"
             color="primary"
-            disabled={!canSave}
+            disabled={saveDisabled}
             onClick={save}
           />
         </Box>
