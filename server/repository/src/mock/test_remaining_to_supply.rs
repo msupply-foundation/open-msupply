@@ -5,8 +5,7 @@ use crate::{
 use util::inline_init;
 
 use super::{
-    currency_a, mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_store_a,
-    MockData,
+    mock_item_a, mock_item_b, mock_item_c, mock_item_d, mock_name_a, mock_store_a, MockData,
 };
 
 pub fn requisition() -> RequisitionRow {
@@ -24,7 +23,6 @@ pub fn linked_invoice_1() -> InvoiceRow {
         r.requisition_id = Some(requisition().id);
         r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
-        r.currency_id = currency_a().id;
     })
 }
 pub fn linked_invoice_2() -> InvoiceRow {
@@ -35,7 +33,6 @@ pub fn linked_invoice_2() -> InvoiceRow {
         r.requisition_id = Some(requisition().id);
         r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
-        r.currency_id = currency_a().id;
     })
 }
 // No invoice lines linked

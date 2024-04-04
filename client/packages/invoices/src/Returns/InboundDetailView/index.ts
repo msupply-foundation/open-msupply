@@ -1,0 +1,1 @@
+export { InboundReturnDetailView } from './DetailView';

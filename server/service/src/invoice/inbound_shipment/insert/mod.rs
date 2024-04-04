@@ -243,7 +243,7 @@ mod test {
             inline_edit(&invoice, |mut u| {
                 u.name_link_id = supplier().id;
                 u.user_id = Some(mock_user_account_a().id);
-                u.currency_id = currency_a().id;
+                u.currency_id = Some(currency_a().id);
                 u
             })
         );

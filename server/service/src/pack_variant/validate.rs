@@ -15,7 +15,7 @@ pub fn check_pack_size_is_unique(
             .is_active(true),
     )?;
 
-    Ok(pack_variants.len() == 0)
+    Ok(pack_variants.is_empty())
 }
 
 pub fn check_pack_variant_exists(

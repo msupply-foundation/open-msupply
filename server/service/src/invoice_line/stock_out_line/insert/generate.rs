@@ -49,7 +49,6 @@ fn generate_line(
         id,
         r#type: _,
         invoice_id,
-        item_id,
         stock_line_id,
         number_of_packs,
         total_before_tax,
@@ -57,6 +56,7 @@ fn generate_line(
         note,
     }: InsertStockOutLine,
     ItemRow {
+        id: item_id,
         name: item_name,
         code: item_code,
         ..
@@ -87,7 +87,7 @@ fn generate_line(
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         total_before_tax,
-        &currency_id,
+        currency_id,
         &currency_rate,
     )?;
 
@@ -111,6 +111,7 @@ fn generate_line(
         tax,
         note,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
         foreign_currency_price_before_tax,
     })
 }

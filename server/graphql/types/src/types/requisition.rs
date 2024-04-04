@@ -12,7 +12,7 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    unknown_user, NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
+    NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
 };
 use service::ListResult;
 
@@ -106,9 +106,9 @@ impl RequisitionNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     /// Applicable to request requisition only
@@ -344,7 +344,7 @@ mod test {
     };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        unknown_user, Requisition, RequisitionRow,
+        Requisition, RequisitionRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -397,11 +397,6 @@ mod test {
             "testQueryUserExists": {
                 "user": {
                     "userId": mock_user_account_a().id
-                }
-            },
-            "testQueryUserDoesNotExist": {
-                "user": {
-                    "userId": unknown_user().user_row.id
                 }
             },
             "testQueryUserNotAssociated": {

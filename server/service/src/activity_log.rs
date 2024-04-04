@@ -108,7 +108,7 @@ mod test {
         test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext},
     };
     use repository::{
-        mock::{currency_a, mock_name_a, mock_store_a, MockData, MockDataInserts},
+        mock::{mock_name_a, mock_store_a, MockData, MockDataInserts},
         ActivityLogType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
     };
     use util::inline_init;
@@ -131,7 +131,6 @@ mod test {
                     r.store_id = mock_store_a().id;
                     r.r#type = InvoiceRowType::OutboundShipment;
                     r.status = InvoiceRowStatus::Allocated;
-                    r.currency_id = currency_a().id;
                 })]
             }),
         )

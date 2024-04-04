@@ -19,7 +19,7 @@ pub fn get_invoices(
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let repository = InvoiceRepository::new(&ctx.connection);
 
-    let mut filter = filter.unwrap_or(InvoiceFilter::new());
+    let mut filter = filter.unwrap_or_default();
     filter.store_id = store_id_option.map(EqualFilter::equal_to);
 
     Ok(ListResult {
