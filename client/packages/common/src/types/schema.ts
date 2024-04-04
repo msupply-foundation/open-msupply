@@ -242,6 +242,7 @@ export type AssetCatalogueItemFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   manufacturer?: InputMaybe<StringFilterInput>;
   model?: InputMaybe<StringFilterInput>;
+  subCatalogue?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;
 };
@@ -258,6 +259,7 @@ export type AssetCatalogueItemNode = {
   id: Scalars['String']['output'];
   manufacturer?: Maybe<Scalars['String']['output']>;
   model: Scalars['String']['output'];
+  subCatalogue: Scalars['String']['output'];
 };
 
 export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
