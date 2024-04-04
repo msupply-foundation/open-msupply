@@ -36,6 +36,8 @@ enum Tabs {
 export type ImportRow = {
   assetNumber: string;
   catalogueItemCode: string | null | undefined;
+  serialNumber: string | null | undefined;
+  installationDate: string | null | undefined;
   id: string;
   notes: string;
   errorMessage: string;
@@ -56,6 +58,8 @@ export const toInsertEquipmentInput = (
     )
     ?.map((item: { id: string }) => item.id)
     .pop(),
+  serialNumber: row.serialNumber,
+  installationDate: row.installationDate,
   id: row.id,
   notes: row.notes,
 });
@@ -66,6 +70,8 @@ export const toExportEquipment = (
 ): Partial<ImportRow & LineNumber> => ({
   assetNumber: row.assetNumber,
   catalogueItemCode: row.catalogueItemCode,
+  serialNumber: row.serialNumber,
+  installationDate: row.installationDate,
   id: row.id,
   notes: row.notes,
   lineNumber: index + 2,
