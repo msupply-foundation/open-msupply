@@ -11,10 +11,13 @@ export const getHostQueries = (sdk: Sdk) => ({
       const result = await sdk.displaySettings({ input });
       return result.displaySettings;
     },
+    databaseSettings: async () => {
+      const result = await sdk.databaseSettings();
+      return result.databaseSettings;
+    },
     plugins: async () => {
       const result = await sdk.plugins();
-      if (Array.isArray(result?.plugins))
-        return result?.plugins;
+      if (Array.isArray(result?.plugins)) return result?.plugins;
 
       throw new Error('Unable to fetch plugins');
     },

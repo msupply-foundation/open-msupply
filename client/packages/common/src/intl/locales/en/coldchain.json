@@ -28,7 +28,6 @@
   "label.last-record": "Last recording date / time",
   "label.last-recording-value": "Last temperature recording value",
   "label.rtmd": "mSupply RTMD",
-  "label.temperature-unit": "°C",
   "label.unacknowledged": "Unacknowledged",
   "message.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "message.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",

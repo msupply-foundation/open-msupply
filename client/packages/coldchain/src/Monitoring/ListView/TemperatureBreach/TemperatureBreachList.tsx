@@ -18,6 +18,7 @@ import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
 import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
 import { DurationCell, IconCell } from './TempereatureBreachCells';
+import { useFormatTemperature } from '../../../common/utils';
 
 const ListView: FC = () => {
   const {
@@ -33,7 +34,7 @@ const ListView: FC = () => {
         key: 'sensor.name',
       },
       {
-        key: 'location.name',
+        key: 'location.code',
       },
       {
         key: 'type',
@@ -58,6 +59,7 @@ const ListView: FC = () => {
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
+  const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<TemperatureBreachFragment>(
     [
@@ -131,7 +133,7 @@ const ListView: FC = () => {
         width: 125,
         accessor: ({ rowData }) => {
           return !!rowData.maxOrMinTemperature
-            ? `${rowData.maxOrMinTemperature} ${t('label.temperature-unit')}`
+            ? `${formatTemperature(rowData.maxOrMinTemperature)}`
             : null;
         },
         sortable: false,

@@ -8,14 +8,13 @@ import {
   CurrencyInputCell,
   useTranslation,
   getExpiryDateInputColumn,
-  PositiveNumberInputCell,
-  NonNegativeDecimalCell,
   EnabledCheckboxCell,
   ColumnDescription,
   Theme,
   useTheme,
   useTableStore,
   CellProps,
+  NumberInputCell,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
@@ -175,7 +174,7 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       label: 'label.pack-size',
       width: 100,
       getIsDisabled: rowData => !!rowData.stockLine,
-      Cell: PositiveNumberInputCell,
+      Cell: NumberInputCell,
       setter: patch => update({ ...patch, countThisLine: true }),
     },
     {
@@ -185,11 +184,11 @@ export const BatchTable: FC<StocktakeLineEditTableProps> = ({
       getIsError: rowData =>
         errorsContext.getError(rowData)?.__typename ===
         'StockLineReducedBelowZero',
-      Cell: NonNegativeDecimalCell,
+      Cell: props => <NumberInputCell {...props} decimalLimit={2} min={0} />,
       setter: patch => {
-        // If counted number of packs was changed to result in no adjustment
-        // we should remove inventoryAdjustmentReason, otherwise could have a reason
-        // on a line with no adjustments
+        // If counted number of packs was changed to result in no adjustment we
+        // should remove inventoryAdjustmentReason, otherwise could have a
+        // reason on a line with no adjustments
         const inventoryAdjustmentReason =
           !patch.countedNumberOfPacks ||
           patch.snapshotNumberOfPacks == patch.countedNumberOfPacks

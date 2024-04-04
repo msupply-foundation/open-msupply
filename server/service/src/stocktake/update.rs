@@ -1,9 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
-    ActivityLogType, DatetimeFilter, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository,
-    InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    ItemRowRepository, LocationMovementRow, LocationMovementRowRepository, NameRowRepository,
+    ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
+    InvoiceRowStatus, InvoiceRowType, ItemLinkRowRepository, ItemRowRepository,
+    LocationMovementRow, LocationMovementRowRepository, NameLinkRowRepository, NameRowRepository,
     NumberRowType, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
     StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
@@ -215,9 +216,31 @@ fn generate_stock_line_update(
         .counted_number_of_packs
         .unwrap_or(stocktake_line.line.snapshot_number_of_packs);
     let delta = counted_number_of_packs - stocktake_line.line.snapshot_number_of_packs;
+
+    let stock_line_item_id = ItemLinkRowRepository::new(connection)
+        .find_one_by_id(&stock_line.item_link_id)?
+        .ok_or(UpdateStocktakeError::InternalError(format!(
+            "Item link ({}) not found",
+            stock_line.item_link_id
+        )))?
+        .item_id;
+    let stock_line_supplier_id = if let Some(supplier_link_id) = &stock_line.supplier_link_id {
+        Some(
+            NameLinkRowRepository::new(connection)
+                .find_one_by_id(supplier_link_id)?
+                .ok_or(UpdateStocktakeError::InternalError(format!(
+                    "Name link ({}) not found",
+                    supplier_link_id
+                )))?
+                .name_id,
+        )
+    } else {
+        None
+    };
+
     let updated_line = StockLineRow {
         id: stock_line.id.clone(),
-        item_id: stock_line.item_id.clone(),
+        item_link_id: stock_line_item_id.clone(),
         store_id: stock_line.store_id.clone(),
         location_id: stocktake_line.line.location_id.clone(),
         batch: stocktake_line.line.batch.clone(),
@@ -239,19 +262,20 @@ fn generate_stock_line_update(
         expiry_date: stocktake_line.line.expiry_date.or(stock_line.expiry_date),
         on_hold: stock_line.on_hold,
         note: stock_line.note.clone(),
-        supplier_id: stock_line.supplier_id.clone(),
+        supplier_link_id: stock_line_supplier_id,
         barcode_id: stock_line.barcode_id.clone(),
     };
 
-    let item = match ItemRowRepository::new(connection).find_one_by_id(&stock_line.item_id)? {
-        Some(item) => item,
-        None => {
-            return Err(UpdateStocktakeError::InternalError(format!(
-                "Can't find item {} for existing stocktake line {}!",
-                &stock_line.item_id, stocktake_line.line.id
-            )))
-        }
-    };
+    let stock_line_item =
+        match ItemRowRepository::new(connection).find_one_by_id(&stock_line_item_id)? {
+            Some(item) => item,
+            None => {
+                return Err(UpdateStocktakeError::InternalError(format!(
+                    "Can't find item {} for existing stocktake line {}!",
+                    &stock_line_item_id, stocktake_line.line.id
+                )))
+            }
+        };
 
     let quantity_change = f64::abs(delta);
     let shipment_line = if quantity_change > 0.0 {
@@ -270,9 +294,9 @@ fn generate_stock_line_update(
             id: uuid(),
             r#type,
             invoice_id,
-            item_id: stock_line.item_id.clone(),
-            item_name: item.name,
-            item_code: item.code,
+            item_link_id: stock_line_item_id,
+            item_name: stock_line_item.name,
+            item_code: stock_line_item.code,
             stock_line_id: Some(stock_line.id.clone()),
             location_id: stock_line.location_id.clone(),
             batch: stock_line.batch.clone(),
@@ -289,6 +313,7 @@ fn generate_stock_line_update(
                 .line
                 .inventory_adjustment_reason_id
                 .clone(),
+            foreign_currency_price_before_tax: None,
         })
     } else {
         None
@@ -328,16 +353,28 @@ fn generate_new_stock_line(
         l
     });
 
-    let supplier_id = if let Some(stock_line) = stocktake_line.stock_line {
-        stock_line.supplier_id
+    let supplier_id = if let Some(supplier_link_id) = stocktake_line
+        .stock_line
+        .as_ref()
+        .and_then(|it| it.supplier_link_id.clone())
+    {
+        Some(
+            NameLinkRowRepository::new(connection)
+                .find_one_by_id(&supplier_link_id)?
+                .ok_or(UpdateStocktakeError::InternalError(format!(
+                    "Name link ({}) not found",
+                    supplier_link_id
+                )))?
+                .name_id,
+        )
     } else {
         None
     };
 
-    let item_id = row.item_id;
+    let item_id = stocktake_line.item.id;
     let new_line = StockLineRow {
         id: stock_line_id,
-        item_id: item_id.clone(),
+        item_link_id: item_id.clone(),
         store_id: store_id.to_string(),
         location_id: row.location_id.clone(),
         batch: row.batch.clone(),
@@ -349,7 +386,7 @@ fn generate_new_stock_line(
         expiry_date: row.expiry_date,
         on_hold: false,
         note: row.note.clone(),
-        supplier_id,
+        supplier_link_id: supplier_id,
         barcode_id: None,
     };
 
@@ -367,7 +404,7 @@ fn generate_new_stock_line(
             id: uuid(),
             r#type: InvoiceLineRowType::StockIn,
             invoice_id: inventory_addition_id.to_string(),
-            item_id,
+            item_link_id: item.id,
             item_name: item.name,
             item_code: item.code,
             stock_line_id: Some(new_line.id.clone()),
@@ -383,6 +420,7 @@ fn generate_new_stock_line(
             number_of_packs: counted_number_of_packs,
             note: row.note,
             inventory_adjustment_reason_id: row.inventory_adjustment_reason_id,
+            foreign_currency_price_before_tax: None,
         })
     } else {
         None
@@ -500,6 +538,12 @@ fn generate(
         user_id,
         ..
     } = ctx;
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(UpdateStocktakeError::DatabaseError(
+            RepositoryError::NotFound,
+        ))?;
 
     let stocktake = inline_edit(&existing, |mut u: StocktakeRow| {
         u.description = input_description.or(u.description);
@@ -584,11 +628,13 @@ fn generate(
         r#type: InvoiceRowType::InventoryAddition,
         // Same for addition and reduction
         user_id: Some(user_id.to_string()),
-        name_id: inventory_adjustment_name.id,
+        name_link_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
         status: InvoiceRowStatus::Verified,
         verified_datetime: Some(now),
         // Default
+        currency_id: Some(currency.currency_row.id),
+        currency_rate: 1.0,
         name_store_id: None,
         transport_reference: None,
         on_hold: false,
@@ -603,7 +649,7 @@ fn generate(
         requisition_id: None,
         linked_invoice_id: None,
         tax: None,
-        clinician_id: None,
+        clinician_link_id: None,
     };
 
     let inventory_addition = if !inventory_addition_lines.is_empty() {
@@ -776,7 +822,7 @@ mod test {
                 r.stock_line_id = Some(mock_existing_stock_line().id);
                 r.counted_number_of_packs = Some(20.0);
                 r.snapshot_number_of_packs = 20.0;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.cost_price_per_pack = Some(1.0);
                 r.sell_price_per_pack = Some(2.0);
             })
@@ -785,7 +831,7 @@ mod test {
         fn mock_existing_stock_line() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "existing_stock_a".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
                 r.pack_size = 1;
@@ -793,7 +839,7 @@ mod test {
                 r.sell_price_per_pack = 0.0;
                 r.total_number_of_packs = 20.0;
                 r.on_hold = false;
-                r.supplier_id = Some("name_store_b".to_string());
+                r.supplier_link_id = Some("name_store_b".to_string());
             })
         }
 
@@ -887,7 +933,7 @@ mod test {
                 line: mock_stocktake_line_a(),
                 stock_line: Some(stock_line),
                 location: None,
-                item: Some(mock_item_a()),
+                item: mock_item_a(),
             }])
         );
 
@@ -1047,7 +1093,7 @@ mod test {
                     comment: Some("comment_1".to_string()),
                     description: Some("description_1".to_string()),
                     status: None,
-                    stocktake_date: Some(NaiveDate::from_ymd_opt(2019, 03, 20).unwrap()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap()),
                     is_locked: Some(false),
                 },
             )
@@ -1058,7 +1104,7 @@ mod test {
             inline_edit(&stocktake, |mut i: StocktakeRow| {
                 i.comment = Some("comment_1".to_string());
                 i.description = Some("description_1".to_string());
-                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 03, 20).unwrap());
+                i.stocktake_date = Some(NaiveDate::from_ymd_opt(2019, 3, 20).unwrap());
                 i.is_locked = false;
                 i
             }),
@@ -1096,7 +1142,7 @@ mod test {
             stocktake_line.sell_price_per_pack.unwrap()
         );
         assert_eq!(stock_line.note, stocktake_line.note);
-        assert_eq!(stock_line.supplier_id, None);
+        assert_eq!(stock_line.supplier_link_id, None);
 
         // assert stocktake_line has been updated
         let updated_stocktake_line = StocktakeLineRowRepository::new(&context.connection)
@@ -1122,6 +1168,9 @@ mod test {
             )
             .unwrap();
         let stock_line = stocktake_line[0].stock_line.clone().unwrap();
-        assert_eq!(stock_line.supplier_id, mock_stock_line_b().supplier_id);
+        assert_eq!(
+            stock_line.supplier_link_id,
+            mock_stock_line_b().supplier_link_id
+        );
     }
 }

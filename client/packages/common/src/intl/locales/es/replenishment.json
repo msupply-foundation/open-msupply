@@ -1,6 +1,5 @@
 {
   "label.finalised": "Finalizado",
-  "label.location": "Ubicación",
   "label.new": "Nuevo",
   "messages.confirm-status-as": "¿Confirmar estado como $t({{status}})?",
   "messages.saved": "Guardado",
@@ -75,7 +74,8 @@
   "info.automatic-shipment": "Este envío fue creado automáticamente como resultado de una salida en otro almacén.",
   "label.suggested-order-quantity": "Cantidad de pedido sugerida",
   "messages.internal-order-created-on": "Orden Interna creada el {{date}}",
-  "messages.confirm-inbound-status-as": "¿Confirmar estado como $t({{status}})??\nNota: cambiar desde 'Nuevo' eliminará cualquier línea con cantidad cero.",
+  "messages.confirm-changing-from-new": "Nota: cambiar desde 'Nuevo' eliminará cualquier línea con cantidad cero.",
+  "messages.confirm-inbound-status-as": "¿Confirmar estado como $t({{status}})??",
   "messages.confirm-delete-invoice-lines_one": "Esto eliminará permanentemente 1 línea de esta factura",
   "messages.confirm-delete-requisitions_other": "Esto eliminará permanentemente {{count}} órdenes internas",
   "button.add-from-master-list": "Agregar desde la lista maestra",

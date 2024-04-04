@@ -11,11 +11,15 @@ import {
   alpha,
   QueryParamsProvider,
   createQueryParamsStore,
-  NonNegativeIntegerCell,
   CellProps,
+  ColumnAlign,
+  NumberInputCell,
+  Currencies,
+  useCurrencyCell,
 } from '@openmsupply-client/common';
 import { DraftInboundLine } from '../../../../types';
 import {
+  CurrencyRowFragment,
   getLocationInputColumn,
   LocationRowFragment,
 } from '@openmsupply-client/system';
@@ -24,6 +28,8 @@ interface TableProps {
   lines: DraftInboundLine[];
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
   isDisabled?: boolean;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier?: boolean;
 }
 
 const expiryInputColumn = getExpiryDateInputColumn<DraftInboundLine>();
@@ -61,7 +67,7 @@ const NumberOfPacksCell: React.FC<CellProps<DraftInboundLine>> = ({
   rowData,
   ...props
 }) => (
-  <NonNegativeIntegerCell
+  <NumberInputCell
     {...props}
     isRequired={rowData.numberOfPacks === 0}
     rowData={rowData}
@@ -87,7 +93,13 @@ export const QuantityTableComponent: FC<TableProps> = ({
           setter: updateDraftLine,
         },
       ],
-      ['packSize', { Cell: NonNegativeIntegerCell, setter: updateDraftLine }],
+      [
+        'packSize',
+        {
+          Cell: NumberInputCell,
+          setter: updateDraftLine,
+        },
+      ],
       [
         'unitQuantity',
         {
@@ -117,37 +129,111 @@ export const PricingTableComponent: FC<TableProps> = ({
   lines,
   updateDraftLine,
   isDisabled = false,
+  currency,
+  isExternalSupplier,
 }) => {
-  const theme = useTheme();
-  const columns = useColumns<DraftInboundLine>(
-    [
-      getBatchColumn(updateDraftLine, theme),
-      getExpiryColumn(updateDraftLine, theme),
-      [
-        'sellPricePerPack',
-        { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
-      ],
-      [
-        'costPricePerPack',
-        { Cell: CurrencyInputCell, width: 100, setter: updateDraftLine },
-      ],
-      [
-        'unitQuantity',
-        {
-          accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-        },
-      ],
-      [
-        'lineTotal',
-        {
-          accessor: ({ rowData }) =>
-            rowData.numberOfPacks * rowData.costPricePerPack,
-        },
-      ],
-    ],
-    {},
-    [updateDraftLine, lines]
+  const CurrencyCell = useCurrencyCell<DraftInboundLine>(
+    currency?.code as Currencies
   );
+
+  const columnDefinitions: ColumnDescription<DraftInboundLine>[] = [
+    [
+      'batch',
+      {
+        accessor: ({ rowData }) => {
+          return rowData.batch || '';
+        },
+      },
+    ],
+    [
+      'sellPricePerPack',
+      {
+        Cell: CurrencyInputCell,
+        width: 100,
+        setter: updateDraftLine,
+      },
+    ],
+  ];
+
+  if (isExternalSupplier) {
+    columnDefinitions.push({
+      key: 'foreignCurrencySellPricePerPack',
+      label: 'label.fc-sell-price',
+      description: 'description.fc-sell-price',
+      width: 100,
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return rowData.sellPricePerPack / currency.rate;
+        }
+      },
+    });
+  }
+
+  columnDefinitions.push([
+    'costPricePerPack',
+    {
+      Cell: CurrencyInputCell,
+      width: 100,
+      setter: updateDraftLine,
+    },
+  ]);
+
+  if (isExternalSupplier) {
+    columnDefinitions.push({
+      key: 'foreignCurrencyCostPricePerPack',
+      label: 'label.fc-cost-price',
+      description: 'description.fc-cost-price',
+      width: 100,
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return rowData.costPricePerPack / currency.rate;
+        }
+      },
+    });
+  }
+
+  columnDefinitions.push(
+    [
+      'unitQuantity',
+      {
+        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
+      },
+    ],
+    [
+      'lineTotal',
+      {
+        accessor: ({ rowData }) =>
+          rowData.numberOfPacks * rowData.costPricePerPack,
+      },
+    ]
+  );
+
+  if (isExternalSupplier) {
+    columnDefinitions.push({
+      key: 'foreignCurrencyLineTotal',
+      label: 'label.fc-line-total',
+      description: 'description.fc-line-total',
+      width: 100,
+      Cell: CurrencyCell,
+      align: ColumnAlign.Right,
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return (
+            (rowData.numberOfPacks * rowData.costPricePerPack) / currency.rate
+          );
+        }
+      },
+    });
+  }
+
+  const columns = useColumns<DraftInboundLine>(columnDefinitions, {}, [
+    updateDraftLine,
+    lines,
+  ]);
 
   return (
     <DataTable
@@ -168,12 +254,17 @@ export const LocationTableComponent: FC<TableProps> = ({
   updateDraftLine,
   isDisabled,
 }) => {
-  const theme = useTheme();
   const columns = useColumns<DraftInboundLine>(
     [
-      getBatchColumn(updateDraftLine, theme),
-      getExpiryColumn(updateDraftLine, theme),
-      [getLocationInputColumn(), { setter: updateDraftLine }],
+      [
+        'batch',
+        {
+          accessor: ({ rowData }) => {
+            return rowData.batch || '';
+          },
+        },
+      ],
+      [getLocationInputColumn(), { setter: updateDraftLine, width: 800 }],
     ],
     {},
     [updateDraftLine, lines]

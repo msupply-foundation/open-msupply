@@ -7,18 +7,18 @@ import {
   SortBy,
   Column,
   ArrayUtils,
-  useCurrency,
   InvoiceLineNodeType,
-  PositiveNumberCell,
   TooltipTextCell,
   useColumnUtils,
+  NumberCell,
+  CurrencyCell,
 } from '@openmsupply-client/common';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<StockOutLineFragment | StockOutItem>;
-  onChangeSortBy: (column: Column<StockOutLineFragment | StockOutItem>) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
 const expansionColumn = getRowExpandColumn<
@@ -44,7 +44,6 @@ export const useOutboundColumns = ({
   sortBy,
   onChangeSortBy,
 }: UseOutboundColumnOptions): Column<StockOutLineFragment | StockOutItem>[] => {
-  const { c } = useCurrency();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
   return useColumns(
@@ -164,7 +163,7 @@ export const useOutboundColumns = ({
       [
         'numberOfPacks',
         {
-          Cell: PositiveNumberCell,
+          Cell: NumberCell,
           getSortValue: row => {
             if ('lines' in row) {
               const { lines } = row;
@@ -233,6 +232,7 @@ export const useOutboundColumns = ({
       [
         'unitQuantity',
         {
+          Cell: NumberCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
@@ -255,35 +255,28 @@ export const useOutboundColumns = ({
         label: 'label.unit-price',
         key: 'sellPricePerUnit',
         align: ColumnAlign.Right,
+        Cell: CurrencyCell,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            return c(
-              Object.values(rowData.lines).reduce(
-                (sum, batch) =>
-                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-                0
-              )
-            ).format();
+            return Object.values(rowData.lines).reduce(
+              (sum, batch) =>
+                sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+              0
+            );
           } else {
-            if (isDefaultPlaceholderRow(rowData)) return '';
-            return c(
-              (rowData.sellPricePerPack ?? 0) / rowData.packSize
-            ).format();
+            if (isDefaultPlaceholderRow(rowData)) return undefined;
+            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
           }
         },
         getSortValue: rowData => {
           if ('lines' in rowData) {
-            return c(
-              Object.values(rowData.lines).reduce(
-                (sum, batch) =>
-                  sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
-                0
-              )
-            ).format();
+            return Object.values(rowData.lines).reduce(
+              (sum, batch) =>
+                sum + (batch.sellPricePerPack ?? 0) / batch.packSize,
+              0
+            );
           } else {
-            return c(
-              (rowData.sellPricePerPack ?? 0) / rowData.packSize
-            ).format();
+            return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
           }
         },
       },
@@ -291,35 +284,30 @@ export const useOutboundColumns = ({
         label: 'label.line-total',
         key: 'lineTotal',
         align: ColumnAlign.Right,
+        Cell: CurrencyCell,
         accessor: ({ rowData }) => {
           if ('lines' in rowData) {
-            return c(
-              Object.values(rowData.lines).reduce(
-                (sum, batch) =>
-                  sum + batch.sellPricePerPack * batch.numberOfPacks,
-                0
-              )
-            ).format();
+            return Object.values(rowData.lines).reduce(
+              (sum, batch) =>
+                sum + batch.sellPricePerPack * batch.numberOfPacks,
+              0
+            );
           } else {
             if (isDefaultPlaceholderRow(rowData)) return '';
 
-            const x = c(
-              rowData.sellPricePerPack * rowData.numberOfPacks
-            ).format();
+            const x = rowData.sellPricePerPack * rowData.numberOfPacks;
             return x;
           }
         },
         getSortValue: row => {
           if ('lines' in row) {
-            return c(
-              Object.values(row.lines).reduce(
-                (sum, batch) =>
-                  sum + batch.sellPricePerPack * batch.numberOfPacks,
-                0
-              )
-            ).format();
+            return Object.values(row.lines).reduce(
+              (sum, batch) =>
+                sum + batch.sellPricePerPack * batch.numberOfPacks,
+              0
+            );
           } else {
-            const x = c(row.sellPricePerPack * row.numberOfPacks).format();
+            const x = row.sellPricePerPack * row.numberOfPacks;
             return x;
           }
         },

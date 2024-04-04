@@ -19,11 +19,12 @@ pub struct SyncStatusNode {
 #[Object]
 impl SyncStatusNode {
     async fn started(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.started, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
     }
 
     async fn finished(&self) -> Option<DateTime<Utc>> {
-        self.finished.map(|v| DateTime::<Utc>::from_utc(v, Utc))
+        self.finished
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 }
 
@@ -37,11 +38,12 @@ pub struct SyncStatusWithProgressNode {
 #[Object]
 impl SyncStatusWithProgressNode {
     async fn started(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.started, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.started, Utc)
     }
 
     async fn finished(&self) -> Option<DateTime<Utc>> {
-        self.finished.map(|v| DateTime::<Utc>::from_utc(v, Utc))
+        self.finished
+            .map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     async fn total(&self) -> &Option<u32> {
@@ -59,7 +61,7 @@ pub struct FullSyncStatusNode {
     error: Option<SyncErrorNode>,
     summary: SyncStatusNode,
     prepare_initial: Option<SyncStatusNode>,
-    integration: Option<SyncStatusNode>,
+    integration: Option<SyncStatusWithProgressNode>,
     pull_central: Option<SyncStatusWithProgressNode>,
     pull_remote: Option<SyncStatusWithProgressNode>,
     push: Option<SyncStatusWithProgressNode>,
@@ -110,9 +112,11 @@ pub fn latest_sync_status(
             started: status.started,
             finished: status.finished,
         }),
-        integration: integration.map(|status| SyncStatusNode {
+        integration: integration.map(|status| SyncStatusWithProgressNode {
             started: status.started,
             finished: status.finished,
+            total: status.total,
+            done: status.done,
         }),
         pull_central: pull_central.map(|status| SyncStatusWithProgressNode {
             started: status.started,

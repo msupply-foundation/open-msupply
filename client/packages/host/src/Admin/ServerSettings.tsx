@@ -12,18 +12,27 @@ import {
   removePreference,
   useNavigate,
   useTranslation,
+  DownloadIcon,
+  useNativeClient,
+  LoadingButton,
+  DatabaseType,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { Capacitor } from '@capacitor/core';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 
 import { Setting } from './Setting';
 import { AndroidLogFileModal } from './AndroidLogFileModal';
 import { WebAppLogFileModal } from './WebAppLogFileModal';
+import { useDatabaseSettings } from '../api/hooks/settings/useDatabaseSettings';
 
 export const ServerSettings = () => {
   const [nativeMode, setNativeMode] = useState(NativeMode.None);
   const navigate = useNavigate();
-  const t = useTranslation('common');
+  const { saveDatabase } = useNativeClient();
+  const { data: databaseSettings } = useDatabaseSettings();
+  const [isDownloading, setIsDownloading] = useState(false);
+  const t = useTranslation();
   const {
     isOn: isLogShown,
     toggleOn: showLog,
@@ -39,6 +48,7 @@ export const ServerSettings = () => {
       navigate(RouteBuilder.create(AppRoute.Android).build());
     })();
   };
+
   useEffect(() => {
     getPreference('mode', 'none').then(setNativeMode);
   }, []);
@@ -79,6 +89,47 @@ export const ServerSettings = () => {
           </>
         }
       />
+
+      <Setting
+        title={t('label.download-database')}
+        component={
+          <Tooltip
+            title={
+              databaseSettings?.databaseType !== DatabaseType.SqLite
+                ? t('message.database-not-sqlite')
+                : nativeMode !== NativeMode.Server
+                ? t('message.database-not-local')
+                : t('label.download-database')
+            }
+          >
+            <span>
+              <LoadingButton
+                disabled={
+                  databaseSettings?.databaseType !== DatabaseType.SqLite ||
+                  nativeMode !== NativeMode.Server
+                }
+                isLoading={isDownloading}
+                startIcon={<DownloadIcon />}
+                onClick={async () => {
+                  setIsDownloading(true);
+                  const vacuum = await fetch(
+                    `${Environment.API_HOST}/support/vacuum`,
+                    {
+                      method: 'POST',
+                    }
+                  );
+                  if (vacuum.ok) {
+                    await saveDatabase();
+                  }
+                  setIsDownloading(false);
+                }}
+              >
+                {t('button.download')}
+              </LoadingButton>
+            </span>
+          </Tooltip>
+        }
+      />
     </>
   ) : (
     <>
@@ -92,6 +143,32 @@ export const ServerSettings = () => {
             <WebAppLogFileModal onClose={hideLog} isOpen={isLogShown} />
             <BaseButton onClick={showLog}>{t('button.view')}</BaseButton>
           </>
+        }
+      />
+      <Setting
+        title={t('label.download-database')}
+        component={
+          <Tooltip
+            title={
+              databaseSettings?.databaseType !== DatabaseType.SqLite
+                ? t('message.database-not-sqlite')
+                : t('label.download-database')
+            }
+          >
+            <span>
+              <BaseButton
+                disabled={
+                  databaseSettings?.databaseType !== DatabaseType.SqLite
+                }
+                startIcon={<DownloadIcon />}
+                onClick={() => {
+                  open(`${Environment.API_HOST}/support/database`, '_blank');
+                }}
+              >
+                {t('button.download')}
+              </BaseButton>
+            </span>
+          </Tooltip>
         }
       />
     </>

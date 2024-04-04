@@ -22,6 +22,7 @@ export const DateTimePickerInput: FC<
     onChange: (value: Date | null) => void;
     onError?: (validationError: string, date?: Date | null) => void;
     textFieldProps?: TextFieldProps;
+    showTime?: boolean;
   }
 > = ({
   error,
@@ -30,17 +31,18 @@ export const DateTimePickerInput: FC<
   width,
   label,
   textFieldProps,
-  format = 'P p',
   minDate,
   maxDate,
+  showTime,
   ...props
 }) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { getLocale } = useIntlUtils();
   const dateParseOptions = { locale: getLocale() };
+  const format = props.format ?? showTime ? 'P p' : 'P';
 
   // Max/Min should be restricted by the UI, but it's not restricting TIME input
   // (only Date component). So this function will enforce the max/min after
@@ -127,6 +129,11 @@ export const DateTimePickerInput: FC<
           },
         },
       }}
+      views={
+        showTime
+          ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+          : ['year', 'month', 'day']
+      }
       minDate={minDate}
       maxDate={maxDate}
       {...props}

@@ -4,9 +4,9 @@ use repository::{
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRepository, InvoiceRow,
     InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRow, KeyValueStoreRow,
-    KeyValueType, LocationRow, NameRow, RequisitionFilter, RequisitionRepository, RequisitionRow,
-    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, StockLineRow,
-    StorageConnection, StoreRow,
+    KeyValueType, LocationRow, NameLinkRow, NameRow, RequisitionFilter, RequisitionRepository,
+    RequisitionRow, RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType,
+    StockLineRow, StorageConnection, StoreRow,
 };
 use util::{inline_edit, inline_init, uuid::uuid};
 
@@ -69,7 +69,12 @@ async fn invoice_transfers() {
         ..
     } = setup_all_with_data_and_service_provider(
         "invoice_transfers",
-        MockDataInserts::none().stores().names().items().units(),
+        MockDataInserts::none()
+            .stores()
+            .names()
+            .items()
+            .units()
+            .currencies(),
         inline_init(|r: &mut MockData| {
             r.names = vec![inbound_store_name.clone(), outbound_store_name.clone()];
             r.stores = vec![inbound_store.clone(), outbound_store.clone()];
@@ -82,6 +87,7 @@ async fn invoice_transfers() {
     let test_input = (
         service_provider,
         inbound_store,
+        inbound_store_name,
         outbound_store,
         item1,
         item2,
@@ -93,13 +99,19 @@ async fn invoice_transfers() {
         test_input,
         number_of_instances,
         |_, test_input| async move {
-            let (service_provider, inbound_store, outbound_store, item1, item2) = test_input;
+            let (service_provider, inbound_store, inbound_store_name, outbound_store, item1, item2) =
+                test_input;
 
             let ctx = service_provider.basic_context().unwrap();
 
             // Without delete
-            let mut tester =
-                ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+            let mut tester = ShipmentTransferTester::new(
+                &outbound_store,
+                &inbound_store,
+                Some(&inbound_store_name),
+                &item1,
+                &item2,
+            );
 
             tester.insert_request_requisition(&service_provider).await;
             ctx.processors_trigger.await_events_processed().await;
@@ -129,8 +141,13 @@ async fn invoice_transfers() {
             tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
 
             // With delete
-            let mut tester =
-                ShipmentTransferTester::new(&inbound_store, &outbound_store, &item1, &item2);
+            let mut tester = ShipmentTransferTester::new(
+                &outbound_store,
+                &inbound_store,
+                Some(&inbound_store_name),
+                &item1,
+                &item2,
+            );
 
             tester.insert_request_requisition(&service_provider).await;
             ctx.processors_trigger.await_events_processed().await;
@@ -150,6 +167,161 @@ async fn invoice_transfers() {
         _ = test_handle => (),
     };
 }
+
+/// Checking behavior when a request requisition name_id is that of a merged name. Response requisition for the merged name store should be generated regardless.
+#[tokio::test(flavor = "multi_thread", worker_threads = 3)]
+async fn invoice_transfers_with_merged_name() {
+    let site_id = 25;
+
+    let outbound_store_name = inline_init(|r: &mut NameRow| {
+        r.id = uuid();
+        r.name = uuid();
+    });
+
+    let outbound_store = inline_init(|r: &mut StoreRow| {
+        r.id = uuid();
+        r.name_id = outbound_store_name.id.clone();
+        r.site_id = site_id;
+    });
+
+    let inbound_store_name = inline_init(|r: &mut NameRow| {
+        r.id = uuid();
+        r.name = uuid();
+    });
+
+    let inbound_store = inline_init(|r: &mut StoreRow| {
+        r.id = uuid();
+        r.name_id = inbound_store_name.id.clone();
+        r.site_id = site_id;
+    });
+
+    let merge_name = inline_init(|r: &mut NameRow| {
+        r.id = uuid();
+        r.name = uuid();
+    });
+
+    let merge_name_link = inline_init(|r: &mut NameLinkRow| {
+        r.id = merge_name.id.clone();
+        r.name_id = inbound_store_name.id.clone();
+    });
+
+    let item1 = inline_init(|r: &mut ItemRow| {
+        r.id = uuid();
+    });
+
+    let item2 = inline_init(|r: &mut ItemRow| {
+        r.id = uuid();
+    });
+
+    let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
+        r.id = KeyValueType::SettingsSyncSiteId;
+        r.value_int = Some(site_id);
+    });
+
+    let ServiceTestContext {
+        service_provider,
+        processors_task,
+        ..
+    } = setup_all_with_data_and_service_provider(
+        "invoice_transfers_with_merged_name",
+        MockDataInserts::none()
+            .stores()
+            .names()
+            .items()
+            .units()
+            .currencies(),
+        inline_init(|r: &mut MockData| {
+            r.names = vec![
+                inbound_store_name.clone(),
+                outbound_store_name.clone(),
+                merge_name.clone(),
+            ];
+            r.stores = vec![inbound_store.clone(), outbound_store.clone()];
+            r.items = vec![item1.clone(), item2.clone()];
+            r.key_value_store_rows = vec![site_id_settings];
+            r.name_links = vec![merge_name_link.clone()] // name_link is processed after the names. Updates the existing name link created for the name, effectively merging it.
+        }),
+    )
+    .await;
+
+    let test_input = (
+        service_provider,
+        inbound_store,
+        merge_name,
+        outbound_store,
+        item1,
+        item2,
+    );
+    let number_of_instances = 6;
+
+    let test_handle = exec_concurrent(
+        test_input,
+        number_of_instances,
+        |_, test_input| async move {
+            let (service_provider, inbound_store, merge_name, outbound_store, item1, item2) =
+                test_input;
+
+            let ctx = service_provider.basic_context().unwrap();
+
+            // Without delete
+            let mut tester = ShipmentTransferTester::new(
+                &outbound_store,
+                &inbound_store,
+                Some(&merge_name),
+                &item1,
+                &item2,
+            );
+
+            tester.insert_outbound_shipment(&ctx.connection);
+            // manually trigger because inserting the shipment didn't trigger the processor
+            ctx.processors_trigger
+                .shipment_transfer
+                .try_send(())
+                .unwrap();
+            ctx.processors_trigger.await_events_processed().await;
+
+            tester.check_inbound_shipment_not_created(&ctx.connection);
+            tester.update_outbound_shipment_to_picked(&service_provider);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_inbound_shipment_created(&ctx.connection);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_outbound_shipment_was_linked(&ctx.connection);
+            tester.update_outbound_shipment_lines(&service_provider);
+            tester.update_outbound_shipment_to_shipped(&service_provider);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_inbound_shipment_was_updated(&ctx.connection);
+            tester.update_inbound_shipment_to_delivered(&service_provider);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+            tester.update_inbound_shipment_to_verified(&service_provider);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_outbound_shipment_status_matches_inbound_shipment(&ctx.connection);
+
+            // With delete
+            let mut tester = ShipmentTransferTester::new(
+                &outbound_store,
+                &inbound_store,
+                Some(&merge_name),
+                &item1,
+                &item2,
+            );
+
+            tester.insert_outbound_shipment(&ctx.connection);
+            tester.update_outbound_shipment_to_picked(&service_provider);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_inbound_shipment_created(&ctx.connection);
+            tester.delete_outbound_shipment(&service_provider);
+            ctx.processors_trigger.await_events_processed().await;
+            tester.check_inbound_shipment_deleted(&ctx.connection);
+        },
+    );
+
+    tokio::select! {
+         Err(err) = processors_task => unreachable!("{}", err),
+        _ = test_handle => (),
+    };
+}
+
 pub(crate) struct ShipmentTransferTester {
     // TODO linked requisitions ?
     outbound_store: StoreRow,
@@ -168,12 +340,13 @@ impl ShipmentTransferTester {
     pub(crate) fn new(
         outbound_store: &StoreRow,
         inbound_store: &StoreRow,
+        inbound_name: Option<&NameRow>,
         item1: &ItemRow,
         item2: &ItemRow,
     ) -> ShipmentTransferTester {
         let request_requisition = inline_init(|r: &mut RequisitionRow| {
             r.id = uuid();
-            r.name_id = outbound_store.name_id.clone();
+            r.name_link_id = outbound_store.name_id.clone();
             r.store_id = inbound_store.id.clone();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
@@ -181,7 +354,7 @@ impl ShipmentTransferTester {
 
         let outbound_shipment = inline_init(|r: &mut InvoiceRow| {
             r.id = uuid();
-            r.name_id = inbound_store.name_id.clone();
+            r.name_link_id = inbound_name.map_or(inbound_store.name_id.clone(), |n| n.id.clone());
             r.store_id = outbound_store.id.clone();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::OutboundShipment;
@@ -201,9 +374,8 @@ impl ShipmentTransferTester {
 
         let stock_line1 = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
-            r.item_id = uuid();
             r.store_id = outbound_store.id.clone();
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.batch = Some(uuid());
             r.expiry_date = Some(NaiveDate::from_ymd_opt(2025, 3, 1).unwrap());
             r.pack_size = 10;
@@ -217,7 +389,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line1.pack_size;
             r.number_of_packs = 2.0;
-            r.item_id = item1.id.clone();
+            r.item_link_id = item1.id.clone();
             r.item_name = item1.name.clone();
             r.item_code = item1.code.clone();
             r.cost_price_per_pack = 20.0;
@@ -230,9 +402,8 @@ impl ShipmentTransferTester {
 
         let stock_line2 = inline_init(|r: &mut StockLineRow| {
             r.id = uuid();
-            r.item_id = uuid();
             r.store_id = outbound_store.id.clone();
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.batch = Some(uuid());
             r.pack_size = 10;
             r.total_number_of_packs = 200.0;
@@ -246,7 +417,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::StockOut;
             r.pack_size = stock_line2.pack_size;
             r.number_of_packs = 6.0;
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
             r.cost_price_per_pack = 15.0;
@@ -263,7 +434,7 @@ impl ShipmentTransferTester {
             r.r#type = InvoiceLineRowType::UnallocatedStock;
             r.pack_size = 1;
             r.number_of_packs = 10.0;
-            r.item_id = item2.id.clone();
+            r.item_link_id = item2.id.clone();
             r.item_name = item2.name.clone();
             r.item_code = item2.code.clone();
         });
@@ -322,13 +493,12 @@ impl ShipmentTransferTester {
     }
 
     pub(crate) fn insert_outbound_shipment(&self, connection: &StorageConnection) {
-        assert!(self.response_requisition.is_some());
-        let response_requisition_id = self.response_requisition.clone().unwrap().id;
+        let response_requisition_id = self.response_requisition.clone().map(|r| r.id);
         insert_extra_mock_data(
             &connection,
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_edit(&self.outbound_shipment, |mut r| {
-                    r.requisition_id = Some(response_requisition_id);
+                    r.requisition_id = response_requisition_id;
                     r
                 })];
                 r.invoice_lines = vec![
@@ -388,7 +558,7 @@ impl ShipmentTransferTester {
 
         assert_eq!(inbound_shipment.r#type, InvoiceRowType::InboundShipment);
         assert_eq!(inbound_shipment.store_id, self.inbound_store.id);
-        assert_eq!(inbound_shipment.name_id, self.outbound_store.name_id);
+        assert_eq!(inbound_shipment.name_link_id, self.outbound_store.name_id);
         assert_eq!(
             inbound_shipment.name_store_id,
             Some(self.outbound_store.id.clone())
@@ -410,10 +580,12 @@ impl ShipmentTransferTester {
         assert_eq!(inbound_shipment.on_hold, false);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
-        assert_eq!(
-            inbound_shipment.requisition_id,
-            Some(self.request_requisition.id.clone())
-        );
+        if self.response_requisition.is_some() {
+            assert_eq!(
+                inbound_shipment.requisition_id,
+                Some(self.request_requisition.id.clone())
+            );
+        };
 
         check_shipment_status(&inbound_shipment, &self.outbound_shipment);
 
@@ -639,7 +811,7 @@ fn check_line(
         .query_one(
             InvoiceLineFilter::new()
                 .invoice_id(EqualFilter::equal_to(inbound_shipment_id))
-                .item_id(EqualFilter::equal_to(&outbound_line.item_id)),
+                .item_id(EqualFilter::equal_to(&outbound_line.item_link_id)),
         )
         .unwrap();
 

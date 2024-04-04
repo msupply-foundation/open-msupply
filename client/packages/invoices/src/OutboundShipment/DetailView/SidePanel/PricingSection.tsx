@@ -14,14 +14,26 @@ import {
   PricingUtils,
   MenuDotsIcon,
   InfoTooltipIcon,
+  useAuthContext,
+  useCurrency,
+  Currencies,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
 import { TaxEdit } from '../modals';
+import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
 type PricingGroupProps = {
   pricing: PricingNode;
   isDisabled?: boolean;
+};
+
+type CurrencyPricingProps = {
+  pricing: PricingNode;
+  currency?: CurrencyRowFragment | null;
+  otherPartyIsInternal: boolean;
+  currencyRate?: number | null;
+  onChange: (value: CurrencyRowFragment | null) => void;
 };
 
 const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
@@ -125,17 +137,59 @@ const ItemPrices = ({ pricing, isDisabled }: PricingGroupProps) => {
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{`${t('heading.tax')} ${Formatter.tax(tax)}`}</PanelLabel>
         <PanelField>
-          <TaxEdit
-            disabled={disableTax}
-            tax={tax}
-            update={updateInvoiceTax}
-          />
+          <TaxEdit disabled={disableTax} tax={tax} update={updateInvoiceTax} />
         </PanelField>
         <PanelField>{c(totalTax)}</PanelField>
       </PanelRow>
       <PanelRow sx={{ marginLeft: '10px' }}>
         <PanelLabel>{t('heading.total')}</PanelLabel>
         <PanelField>{c(stockTotalAfterTax)}</PanelField>
+      </PanelRow>
+    </>
+  );
+};
+
+export const ForeignCurrencyPrices = ({
+  pricing,
+  currency,
+  otherPartyIsInternal,
+  currencyRate,
+  onChange,
+}: CurrencyPricingProps) => {
+  const t = useTranslation('distribution');
+  const { store } = useAuthContext();
+  const { c: foreignCurrency } = useCurrency(currency?.code as Currencies);
+
+  return (
+    <>
+      <PanelRow style={{ marginTop: 12 }}>
+        <PanelLabel fontWeight="bold">
+          {t('heading.foreign-currency')}
+        </PanelLabel>
+        <PanelField>
+          <CurrencyModal
+            onChange={onChange}
+            isDisabled={
+              otherPartyIsInternal || !store?.preferences.issueInForeignCurrency
+            }
+            currency={currency as CurrencyRowFragment}
+            currencyRate={currencyRate ?? 1}
+          />
+        </PanelField>
+      </PanelRow>
+      <PanelRow>
+        <PanelLabel>{t('label.code')}</PanelLabel>
+        <PanelField>{currency?.code ?? ''}</PanelField>
+      </PanelRow>
+      <PanelRow>
+        <PanelLabel>{t('heading.rate')}</PanelLabel>
+        <PanelField>{currencyRate ?? 1}</PanelField>
+      </PanelRow>
+      <PanelRow>
+        <PanelLabel>{t('heading.total')}</PanelLabel>
+        <PanelField>
+          {foreignCurrency(pricing.foreignCurrencyTotalAfterTax ?? 0).format()}
+        </PanelField>
       </PanelRow>
     </>
   );
@@ -161,7 +215,12 @@ export const PricingSectionComponent = () => {
   const t = useTranslation('distribution');
   const isDisabled = useOutbound.utils.isDisabled();
 
-  const { pricing } = useOutbound.document.fields('pricing');
+  const { pricing, currency, otherParty, update, currencyRate } = useOutbound.document.fields([
+    'otherParty',
+    'currencyRate',
+    'pricing',
+    'currency',
+  ]);
 
   return (
     <DetailPanelSection title={t('heading.invoice-details')}>
@@ -169,6 +228,17 @@ export const PricingSectionComponent = () => {
         <ServiceCharges pricing={pricing} isDisabled={isDisabled} />
         <ItemPrices pricing={pricing} isDisabled={isDisabled} />
         <Totals pricing={pricing} />
+        <ForeignCurrencyPrices
+          pricing={pricing}
+          currency={currency}
+          otherPartyIsInternal={!!otherParty?.store}
+          currencyRate={currencyRate}
+          onChange={value => {
+            update({
+              currency: value,
+            });
+          }}
+        />
       </Grid>
     </DetailPanelSection>
   );

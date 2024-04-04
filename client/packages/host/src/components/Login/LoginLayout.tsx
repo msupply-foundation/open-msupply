@@ -40,6 +40,7 @@ export const LoginLayout = ({
         flex="1 0 50%"
         sx={{
           backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
+          backgroundSize: (theme: Theme) => theme.mixins.gradient.size,
           padding: '0 5% 7%',
         }}
         display="flex"

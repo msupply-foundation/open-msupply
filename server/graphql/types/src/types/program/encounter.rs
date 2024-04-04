@@ -12,10 +12,12 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, Encounter, EncounterFilter, EncounterSort, EncounterSortField, EncounterStatus,
-    EqualFilter, PaginationOption, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
+    DatetimeFilter, Encounter, EncounterFilter, EncounterRow, EncounterSort, EncounterSortField,
+    EncounterStatus, EqualFilter, NameRow, PaginationOption, ProgramEventFilter,
+    ProgramEventSortField, Sort, StringFilter,
 };
 use serde::Serialize;
+use service::programs::encounter::suggested_next_encounter::SuggestedNextEncounter;
 
 use crate::types::ClinicianNode;
 
@@ -32,6 +34,16 @@ pub struct EncounterNode {
     pub store_id: String,
     pub encounter: Encounter,
     pub allowed_ctx: Vec<String>,
+}
+
+impl EncounterNode {
+    fn encounter_row(&self) -> &EncounterRow {
+        &self.encounter.row
+    }
+
+    fn patient_row(&self) -> &NameRow {
+        &self.encounter.patient_row
+    }
 }
 
 #[derive(SimpleObject)]
@@ -228,29 +240,44 @@ impl EncounterEventFilterInput {
     }
 }
 
+pub struct SuggestedNextEncounterNode {
+    suggested: SuggestedNextEncounter,
+}
+
+#[Object]
+impl SuggestedNextEncounterNode {
+    async fn start_datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.suggested.start_datetime, Utc)
+    }
+
+    async fn label(&self) -> &Option<String> {
+        &self.suggested.label
+    }
+}
+
 #[Object]
 impl EncounterNode {
     pub async fn id(&self) -> &str {
-        &self.encounter.0.id
+        &self.encounter_row().id
     }
 
     pub async fn context_id(&self) -> &str {
-        &self.encounter.1.context_id
+        &self.encounter.program_row.context_id
     }
 
     pub async fn program_id(&self) -> &str {
-        &self.encounter.0.program_id
+        &self.encounter_row().program_id
     }
 
     pub async fn patient_id(&self) -> &str {
-        &self.encounter.0.patient_id
+        &self.patient_row().id
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(self.encounter.0.patient_id.clone())
+            .load_one(self.patient_row().id.clone())
             .await?
             .map(|patient| PatientNode {
                 store_id: self.store_id.clone(),
@@ -263,7 +290,7 @@ impl EncounterNode {
     }
 
     pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let Some(clinician_id) = self.encounter.0.clinician_id.as_ref() else {
+        let Some(clinician_id) = self.encounter.clinician_row.as_ref().map(|it| &it.id) else {
             return Ok(None);
         };
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
@@ -289,8 +316,8 @@ impl EncounterNode {
 
         let result = loader
             .load_one(ProgramEnrolmentLoaderInput::new(
-                &self.encounter.0.patient_id,
-                &self.encounter.0.program_id,
+                &self.patient_row().id,
+                &self.encounter_row().program_id,
                 self.allowed_ctx.clone(),
             ))
             .await?
@@ -301,41 +328,39 @@ impl EncounterNode {
             })
             .ok_or(Error::new(format!(
                 "Failed to load program enrolment: {}",
-                self.encounter.0.program_id
+                self.encounter_row().program_id
             )))?;
 
         Ok(Some(result))
     }
 
     pub async fn r#type(&self) -> &str {
-        &self.encounter.0.document_type
+        &self.encounter_row().document_type
     }
 
     pub async fn name(&self) -> &str {
-        &self.encounter.0.document_name
+        &self.encounter_row().document_name
     }
 
     pub async fn status(&self) -> Option<EncounterNodeStatus> {
-        self.encounter
-            .0
+        self.encounter_row()
             .status
             .as_ref()
             .map(|status| EncounterNodeStatus::from_domain(status))
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.encounter.0.created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.encounter_row().created_datetime, Utc)
     }
 
     pub async fn start_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.encounter.0.start_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.encounter_row().start_datetime, Utc)
     }
 
     pub async fn end_datetime(&self) -> Option<DateTime<Utc>> {
-        self.encounter
-            .0
+        self.encounter_row()
             .end_datetime
-            .map(|t| DateTime::<Utc>::from_utc(t, Utc))
+            .map(|t| DateTime::<Utc>::from_naive_utc_and_offset(t, Utc))
     }
 
     /// The encounter document
@@ -343,7 +368,7 @@ impl EncounterNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(self.encounter.0.document_name.clone())
+            .load_one(self.encounter_row().document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_ctx: self.allowed_ctx.clone(),
@@ -368,11 +393,11 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.clone().to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
-            .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
+            .patient_id(EqualFilter::equal_to(&self.patient_row().id))
+            .document_type(EqualFilter::equal_to(&self.encounter_row().document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter =
-                program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
+            program_filter = program_filter
+                .document_name(EqualFilter::equal_to(&self.encounter_row().document_name))
         };
         let list_result = ctx
             .service_provider()
@@ -387,6 +412,7 @@ impl EncounterNode {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
                 })),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -395,9 +421,9 @@ impl EncounterNode {
             nodes: list_result
                 .rows
                 .into_iter()
-                .map(|row| ProgramEventNode {
+                .map(|program_event| ProgramEventNode {
                     store_id: self.store_id.clone(),
-                    row,
+                    program_event,
                     allowed_ctx: self.allowed_ctx.clone(),
                 })
                 .collect(),
@@ -416,11 +442,11 @@ impl EncounterNode {
             .as_ref()
             .map(|f| f.clone().to_domain())
             .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.encounter.0.patient_id))
-            .document_type(EqualFilter::equal_to(&self.encounter.0.document_type));
+            .patient_id(EqualFilter::equal_to(&self.patient_row().id))
+            .document_type(EqualFilter::equal_to(&self.encounter_row().document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
-            program_filter =
-                program_filter.document_name(EqualFilter::equal_to(&self.encounter.0.document_name))
+            program_filter = program_filter
+                .document_name(EqualFilter::equal_to(&self.encounter_row().document_name))
         };
         let list_result = ctx
             .service_provider()
@@ -430,6 +456,7 @@ impl EncounterNode {
                 page.map(PaginationOption::from),
                 Some(program_filter),
                 sort.map(ProgramEventSortInput::to_domain),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
 
@@ -438,12 +465,32 @@ impl EncounterNode {
             nodes: list_result
                 .rows
                 .into_iter()
-                .map(|row| ProgramEventNode {
+                .map(|program_event| ProgramEventNode {
                     store_id: self.store_id.clone(),
-                    row,
+                    program_event,
                     allowed_ctx: self.allowed_ctx.clone(),
                 })
                 .collect(),
         }))
+    }
+
+    /// Tries to suggest a date for the next encounter
+    async fn suggested_next_encounter(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<SuggestedNextEncounterNode>> {
+        let service_provider = ctx.service_provider();
+        let context = service_provider.basic_context()?;
+        let suggested = service_provider
+            .encounter_service
+            .suggested_next_encounter(
+                &context,
+                service_provider,
+                &self.patient_row().id,
+                &self.encounter_row().document_type,
+                &self.allowed_ctx,
+            )?;
+
+        Ok(suggested.map(|suggested| SuggestedNextEncounterNode { suggested }))
     }
 }

@@ -42,6 +42,8 @@ table! {
         pull_remote_progress_done -> Nullable<Integer>,
         integration_started_datetime -> Nullable<Timestamp>,
         integration_finished_datetime -> Nullable<Timestamp>,
+        integration_progress_total -> Nullable<Integer>,
+        integration_progress_done -> Nullable<Integer>,
         error_message -> Nullable<Text>,
         error_code -> Nullable<crate::db_diesel::sync_log_row::SyncLogRowErrorCodeMapping>,
     }
@@ -70,6 +72,8 @@ pub struct SyncLogRow {
     pub pull_remote_progress_done: Option<i32>,
     pub integration_started_datetime: Option<NaiveDateTime>,
     pub integration_finished_datetime: Option<NaiveDateTime>,
+    pub integration_progress_total: Option<i32>,
+    pub integration_progress_done: Option<i32>,
     pub error_message: Option<String>,
     pub error_code: Option<SyncLogRowErrorCode>,
 }
@@ -96,6 +100,8 @@ impl Default for SyncLogRow {
             pull_remote_progress_done: Default::default(),
             integration_started_datetime: Default::default(),
             integration_finished_datetime: Default::default(),
+            integration_progress_done: Default::default(),
+            integration_progress_total: Default::default(),
             error_message: Default::default(),
             error_code: Default::default(),
         }

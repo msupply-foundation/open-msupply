@@ -13,7 +13,7 @@ import {
 import { useRequest } from '../api';
 
 export const useRequestColumns = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { maxMonthsOfStock } = useRequest.document.fields('maxMonthsOfStock');
   const {
     updateSortQuery,
@@ -118,7 +118,6 @@ export const useRequestColumns = () => {
       label: 'label.requested-packs',
       description: 'label.requested-number-packs',
       align: ColumnAlign.Right,
-      // width: 150,
       accessor: ({ rowData }) =>
         formatNumber.round(
           rowData.requestedQuantity / rowData.item.defaultPackSize,

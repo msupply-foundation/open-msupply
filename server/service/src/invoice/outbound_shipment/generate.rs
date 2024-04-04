@@ -17,7 +17,7 @@ pub fn generate_unallocated_invoice_lines(
                 result.push(InvoiceLineRow {
                     id: uuid(),
                     invoice_id: invoice_row.id.clone(),
-                    item_id: item.id.clone(),
+                    item_link_id: item.id.clone(),
                     item_name: item.name.clone(),
                     item_code: item.code.clone(),
                     stock_line_id: None,
@@ -34,6 +34,7 @@ pub fn generate_unallocated_invoice_lines(
                     number_of_packs: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    foreign_currency_price_before_tax: None,
                 });
             }
             Ok(None) => {}

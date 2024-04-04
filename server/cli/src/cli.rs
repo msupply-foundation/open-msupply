@@ -284,7 +284,8 @@ async fn main() -> anyhow::Result<()> {
                 .collect();
             buffer_repo.upsert_many(&buffer_rows)?;
 
-            integrate_and_translate_sync_buffer(&ctx.connection, false)?;
+            let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+            integrate_and_translate_sync_buffer(&ctx.connection, false, &mut logger).await?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {

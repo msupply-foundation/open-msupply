@@ -13,6 +13,7 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDescription,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -99,7 +100,7 @@ export const RequestRequisitionListView: FC = () => {
           getRequisitionTranslator(t)(currentStatus as RequisitionNodeStatus),
       },
     ],
-    ['comment', { width: '100%' }],
+    ['comment', { width: '100%', Cell: TooltipTextCell }],
   ];
 
   if (requireSupplierAuthorisation) {

@@ -15,7 +15,7 @@ export const QueryErrorHandler = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const location = useLocation();
   const generalError = t('error.general-query-error');
-  const [authError] = useLocalStorage('/auth/error');
+  const [authError] = useLocalStorage('/error/auth');
 
   useEffect(() => {
     if (!!errorMessage && authError !== AuthError.Unauthenticated) {

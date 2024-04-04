@@ -2,8 +2,10 @@ use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
 mod barcode;
+mod clinician;
 pub mod common;
 mod context;
+mod currency;
 mod document;
 mod document_registry;
 mod form_schema;
@@ -50,8 +52,10 @@ mod unit;
 mod user_account;
 
 pub use barcode::*;
+pub use clinician::*;
 use common::*;
 pub use context::*;
+pub use currency::*;
 pub use document::*;
 pub use document_registry::*;
 pub use form_schema::*;
@@ -97,13 +101,14 @@ pub use user_account::*;
 use crate::{
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
-    DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
+    ContextRowRepository, CurrencyRow, Document, DocumentRegistryRow,
+    DocumentRegistryRowRepository, DocumentRepository, FormSchema, FormSchemaRowRepository,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository,
+    KeyValueStoreRow, LocationRow, LocationRowRepository, MasterListNameJoinRepository,
+    MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameLinkRow,
+    NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
+    NumberRow, NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
     PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
@@ -130,10 +135,12 @@ pub struct MockData {
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
+    pub name_links: Vec<NameLinkRow>,
     pub period_schedules: Vec<PeriodScheduleRow>,
     pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
+    pub currencies: Vec<CurrencyRow>,
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
@@ -233,6 +240,7 @@ pub struct MockDataInserts {
     pub clinician_store_joins: bool,
     pub contexts: bool,
     pub plugin_data: bool,
+    pub currencies: bool,
 }
 
 impl MockDataInserts {
@@ -283,6 +291,7 @@ impl MockDataInserts {
             clinician_store_joins: true,
             contexts: true,
             plugin_data: true,
+            currencies: true,
         }
     }
 
@@ -382,6 +391,11 @@ impl MockDataInserts {
 
     pub fn invoices(mut self) -> Self {
         self.invoices = true;
+        self
+    }
+
+    pub fn requisitions(mut self) -> Self {
+        self.requisitions = true;
         self
     }
 
@@ -489,6 +503,11 @@ impl MockDataInserts {
         self.plugin_data = true;
         self
     }
+
+    pub fn currencies(mut self) -> Self {
+        self.currencies = true;
+        self
+    }
 }
 
 #[derive(Default)]
@@ -530,10 +549,12 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
+            name_links: mock_name_links(),
             name_tags: mock_name_tags(),
             period_schedules: mock_period_schedules(),
             periods: mock_periods(),
             stores: mock_stores(),
+            currencies: mock_currencies(),
             units: mock_units(),
             items: mock_items(),
             locations: mock_locations(),
@@ -559,6 +580,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
+            clinicians: mock_clinicians(),
             ..Default::default()
         },
     );
@@ -625,9 +647,13 @@ pub fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.names {
-            let repo = NameRowRepository::new(connection);
+            let name_repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
-                repo.upsert_one(&row).unwrap();
+                name_repo.upsert_one(row).unwrap();
+            }
+            let name_link_repo = NameLinkRowRepository::new(connection);
+            for row in &mock_data.name_links {
+                name_link_repo.upsert_one(row).unwrap();
             }
         }
 
@@ -694,10 +720,22 @@ pub fn insert_mock_data(
             }
         }
 
-        if inserts.items {
-            let repo = ItemRowRepository::new(connection);
-            for row in &mock_data.items {
+        if inserts.currencies {
+            let repo = crate::CurrencyRowRepository::new(connection);
+            for row in &mock_data.currencies {
                 repo.upsert_one(&row).unwrap();
+            }
+        }
+
+        if inserts.items {
+            let item_repo = ItemRowRepository::new(connection);
+            let item_link_repo = ItemLinkRowRepository::new(connection);
+
+            for row in &mock_data.items {
+                item_repo.upsert_one(&row).unwrap();
+                item_link_repo
+                    .upsert_one(&mock_item_link_from_item(&row))
+                    .unwrap();
             }
         }
 
@@ -947,6 +985,7 @@ impl MockData {
         let MockData {
             mut user_accounts,
             mut names,
+            mut name_links,
             mut name_tags,
             mut period_schedules,
             mut periods,
@@ -991,10 +1030,12 @@ impl MockData {
             mut clinician_store_joins,
             mut contexts,
             plugin_data: _,
+            mut currencies,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
         self.names.append(&mut names);
+        self.name_links.append(&mut name_links);
         self.name_tags.append(&mut name_tags);
         self.period_schedules.append(&mut period_schedules);
         self.periods.append(&mut periods);
@@ -1040,6 +1081,7 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
+        self.currencies.append(&mut currencies);
 
         self
     }

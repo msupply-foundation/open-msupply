@@ -7,9 +7,9 @@ use crate::sync::{
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-    InvoiceRowType, NameRow, NameRowRepository, StorageConnection, StoreRowRepository,
-    SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository,
+    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository, StorageConnection,
+    StoreRowRepository, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
@@ -19,7 +19,7 @@ use super::{
     SyncTranslation,
 };
 
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TRANSACT;
+const LEGACY_TABLE_NAME: &str = LegacyTableName::TRANSACT;
 
 fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
     sync_record.table_name == LEGACY_TABLE_NAME
@@ -28,7 +28,7 @@ fn match_push_table(changelog: &ChangelogRow) -> bool {
     changelog.table_name == ChangelogTableName::Invoice
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyTransactType {
     /// Supplier invoice
     #[serde(rename = "si")]
@@ -100,7 +100,12 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub their_ref: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub prescriber_ID: Option<String>,
+    #[serde(rename = "prescriber_ID")]
+    pub clinician_id: Option<String>,
+    #[serde(rename = "currency_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub currency_id: Option<String>,
+    pub currency_rate: f64,
 
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
@@ -178,12 +183,47 @@ pub struct LegacyTransactRow {
     pub om_colour: Option<String>,
 }
 
+/// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
+/// receiving store.
+/// In the current version of mSupply all om_ fields get copied though.
+/// When receiving the transferred invoice on the omSupply store the "si" get translated to
+/// outbound shipments because the om_type will override to legacy type field.
+/// In other word, the inbound shipment will have an outbound type!
+/// This function detect this case and removes all om_* fields from the incoming record.
+fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
+    let Some(Ok(om_type)) = data
+        .get("om_type")
+        .map(|value| serde_json::from_value::<InvoiceRowType>(value.clone()))
+    else {
+        return data;
+    };
+    let Some(Ok(legacy_type)) = data
+        .get("type")
+        .map(|value| serde_json::from_value::<LegacyTransactType>(value.clone()))
+    else {
+        return data;
+    };
+    if legacy_type == LegacyTransactType::Si && om_type == InvoiceRowType::OutboundShipment {
+        let Some(obj) = data.as_object_mut() else {
+            return data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+
+    data
+}
+
 pub(crate) struct InvoiceTranslation {}
 impl SyncTranslation for InvoiceTranslation {
     fn pull_dependencies(&self) -> PullDependency {
         PullDependency {
             table: LegacyTableName::TRANSACT,
-            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
+            dependencies: vec![
+                LegacyTableName::NAME,
+                LegacyTableName::STORE,
+                LegacyTableName::CLINICIAN,
+                LegacyTableName::CURRENCY,
+            ],
         }
     }
 
@@ -196,7 +236,9 @@ impl SyncTranslation for InvoiceTranslation {
             return Ok(None);
         }
 
-        let data = serde_json::from_str::<LegacyTransactRow>(&sync_record.data)?;
+        let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
+        let data = sanitize_legacy_record(data);
+        let data = serde_json::from_value::<LegacyTransactRow>(data)?;
 
         let name = NameRowRepository::new(connection)
             .find_one_by_id(&data.name_ID)
@@ -224,7 +266,7 @@ impl SyncTranslation for InvoiceTranslation {
             id: data.ID,
             user_id: data.user_id,
             store_id: data.store_ID,
-            name_id: data.name_ID,
+            name_link_id: data.name_ID,
             name_store_id,
             invoice_number: data.invoice_num,
             r#type: data.om_type.unwrap_or(invoice_type),
@@ -233,7 +275,9 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            clinician_id: data.prescriber_ID,
+            currency_id: data.currency_id,
+            currency_rate: data.currency_rate,
+            clinician_link_id: data.clinician_id,
 
             // new om field mappings
             created_datetime: mapping.created_datetime,
@@ -276,38 +320,50 @@ impl SyncTranslation for InvoiceTranslation {
             return Ok(None);
         }
 
-        let invoice_row =
-            InvoiceRowRepository::new(connection).find_one_by_id(&changelog.record_id)?;
+        let Some(invoice) = InvoiceRepository::new(connection)
+            .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
+            .pop()
+        else {
+            return Err(anyhow::anyhow!("Invoice not found"));
+        };
 
         // log::info!("Translating invoice row: {:#?}", invoice_row);
 
-        let confirm_datetime = to_legacy_confirm_time(&invoice_row);
+        let confirm_datetime = to_legacy_confirm_time(&invoice.invoice_row);
 
-        let InvoiceRow {
-            id,
-            user_id,
-            name_id,
-            name_store_id: _,
-            store_id,
-            invoice_number,
-            r#type,
-            status,
-            on_hold,
-            comment,
-            their_reference,
-            created_datetime,
-            allocated_datetime,
-            picked_datetime,
-            shipped_datetime,
-            delivered_datetime,
-            verified_datetime,
-            colour,
-            requisition_id,
-            linked_invoice_id,
-            transport_reference,
-            tax,
-            clinician_id,
-        } = invoice_row;
+        let Invoice {
+            invoice_row:
+                InvoiceRow {
+                    id,
+                    user_id,
+                    name_link_id: _,
+                    name_store_id: _,
+                    store_id,
+                    invoice_number,
+                    r#type,
+                    status,
+                    on_hold,
+                    comment,
+                    their_reference,
+                    created_datetime,
+                    allocated_datetime,
+                    picked_datetime,
+                    shipped_datetime,
+                    delivered_datetime,
+                    verified_datetime,
+                    colour,
+                    requisition_id,
+                    linked_invoice_id,
+                    transport_reference,
+                    tax,
+                    clinician_link_id: _,
+                    currency_id,
+                    currency_rate,
+                },
+            name_row,
+            clinician_row,
+            ..
+        } = invoice;
 
         let _type = legacy_invoice_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Invalid invoice type: {:?}",
@@ -320,7 +376,7 @@ impl SyncTranslation for InvoiceTranslation {
         let legacy_row = LegacyTransactRow {
             ID: id.clone(),
             user_id,
-            name_ID: name_id,
+            name_ID: name_row.id,
             store_ID: store_id,
             invoice_num: invoice_number,
             _type,
@@ -354,7 +410,9 @@ impl SyncTranslation for InvoiceTranslation {
             om_status: Some(status),
             om_type: Some(r#type),
             om_colour: colour,
-            prescriber_ID: clinician_id,
+            currency_id,
+            currency_rate,
+            clinician_id: clinician_row.map(|row| row.id),
         };
 
         let json_record = serde_json::to_value(&legacy_row)?;
@@ -632,8 +690,13 @@ fn legacy_invoice_status(
 
 #[cfg(test)]
 mod tests {
+    use crate::sync::test::merge_helpers::merge_all_name_links;
+
     use super::*;
-    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use repository::{
+        mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
+    };
+    use serde_json::json;
 
     #[actix_rt::test]
     async fn test_invoice_translation() {
@@ -660,6 +723,33 @@ mod tests {
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_push_merged() {
+        let (mock_data, connection, _, _) =
+            setup_all("test_invoice_push_merged", MockDataInserts::all()).await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let repo = ChangelogRepository::new(&connection);
+        let changelogs = repo
+            .changelogs(
+                0,
+                1_000_000,
+                Some(ChangelogFilter::new().table_name(ChangelogTableName::Invoice.equal_to())),
+            )
+            .unwrap();
+
+        let translator = InvoiceTranslation {};
+        for changelog in changelogs {
+            let translated = translator
+                .try_translate_push_upsert(&connection, &changelog)
+                .unwrap()
+                .unwrap();
+
+            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
         }
     }
 }

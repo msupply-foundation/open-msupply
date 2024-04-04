@@ -22,13 +22,14 @@ pub mod store;
 pub use self::store::*;
 pub mod activity_log;
 pub use self::activity_log::*;
-pub mod requisition_line_chart;
-pub mod sync_settings;
-pub mod sync_status;
-pub use self::sync_status::*;
+pub mod database_settings;
+pub use self::database_settings::*;
 pub mod display_settings;
 pub mod initialisation_status;
+pub mod requisition_line_chart;
 pub mod response_requisition_line_stats;
+pub mod sync_settings;
+pub mod sync_status;
 pub use self::response_requisition_line_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
@@ -46,6 +47,7 @@ pub use self::last_successful_user_sync::*;
 pub use self::plugin::*;
 pub mod temperature_chart;
 pub use self::temperature_chart::*;
+pub mod currency;
 
 #[cfg(test)]
 mod tests;

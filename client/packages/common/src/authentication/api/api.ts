@@ -1,9 +1,17 @@
-import { AuthError, LocaleKey, LocalStorage, TypedTFunction } from '../..';
+import {
+  AuthError,
+  LocaleKey,
+  LocalStorage,
+  GraphqlStdError,
+  TypedTFunction,
+} from '../..';
 import { Sdk, AuthTokenQuery, RefreshTokenQuery } from './operations.generated';
 
 export type AuthenticationError = {
   message: string;
   detail?: string;
+  stdError?: string | undefined;
+  timeoutRemaining?: number;
 };
 
 export interface AuthenticationResponse {
@@ -23,15 +31,16 @@ const authTokenGuard = (
   }
 
   if (authTokenQuery?.authToken?.__typename === 'AuthTokenError') {
-    switch (authTokenQuery.authToken.error.__typename) {
-      case 'InvalidCredentials':
-        return {
-          token: '',
-          error: { message: '' },
-        };
-      default:
-        return { token: '', error: { message: '' } };
-    }
+    return {
+      token: '',
+      error: {
+        message: authTokenQuery.authToken.error.__typename,
+        timeoutRemaining:
+          authTokenQuery.authToken.error.__typename === 'AccountBlocked'
+            ? authTokenQuery.authToken.error.timeoutRemaining
+            : undefined,
+      },
+    };
   }
 
   return {
@@ -66,7 +75,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         });
         return authTokenGuard(result, t);
       } catch (e) {
-        const error = e as Error;
+        const error = e as GraphqlStdError;
         if ('message' in error) {
           console.error(error.message);
         }
@@ -75,6 +84,7 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
           error: {
             message: t('error.authentication-error'),
             detail: error.message,
+            stdError: error.stdError,
           },
         };
       }
@@ -94,7 +104,8 @@ export const getAuthQueries = (sdk: Sdk, t: TypedTFunction<LocaleKey>) => ({
         return result.me;
       } catch (e) {
         console.error(e);
-        LocalStorage.setItem('/auth/error', AuthError.ServerError);
+        LocalStorage.setItem('/error/auth', AuthError.ServerError);
+        LocalStorage.setItem('/error/server', (e as Error).message);
       }
     },
     permissions: async ({

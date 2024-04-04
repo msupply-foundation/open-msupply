@@ -189,8 +189,8 @@ impl ContactTraceNode {
 
     pub async fn contact_patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let Some(ref contact_patient_id) = self.trace_row().contact_patient_id else {
-          return Ok(None)
-      };
+            return Ok(None);
+        };
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
@@ -234,7 +234,7 @@ impl ContactTraceNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.trace_row().datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.trace_row().datetime, Utc)
     }
 
     /// The encounter document

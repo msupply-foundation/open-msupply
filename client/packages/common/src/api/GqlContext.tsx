@@ -43,6 +43,14 @@ interface ResponseError {
   extensions?: { details?: string };
 }
 
+export class GraphqlStdError extends Error {
+  public stdError?: string | undefined;
+  constructor(message: string, stdError: string | undefined) {
+    super(message);
+    this.stdError = stdError;
+  }
+}
+
 const hasError = (errors: ResponseError[], error: AuthError) =>
   errors.some(({ message }: { message?: string }) => message === error);
 
@@ -53,7 +61,7 @@ const hasPermissionException = (errors: ResponseError[]) =>
 
 const handleResponseError = (errors: ResponseError[]) => {
   if (hasError(errors, AuthError.Unauthenticated)) {
-    LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
+    LocalStorage.setItem('/error/auth', AuthError.Unauthenticated);
     return;
   }
 
@@ -61,14 +69,17 @@ const handleResponseError = (errors: ResponseError[]) => {
     if (hasPermissionException(errors)) {
       throw errors[0];
     }
-    LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
+    LocalStorage.setItem('/error/auth', AuthError.PermissionDenied);
     return;
   }
 
   const error = errors[0];
   const { extensions } = error || {};
   const { details } = extensions || {};
-  throw new Error(details || error?.message || 'Unknown error');
+  throw new GraphqlStdError(
+    details || error?.message || 'Unknown error',
+    error?.message
+  );
 };
 
 const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {

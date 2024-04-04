@@ -3,7 +3,8 @@ use repository::{MasterListLineRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
+    SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -26,6 +27,21 @@ impl SyncTranslation for MasterListLineTranslation {
         }
     }
 
+    fn try_translate_pull_delete(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        let result = match_pull_table(sync_record).then(|| {
+            IntegrationRecords::from_delete(
+                &sync_record.record_id,
+                PullDeleteRecordTable::MasterListLine,
+            )
+        });
+
+        Ok(result)
+    }
+
     fn try_translate_pull_upsert(
         &self,
         _: &StorageConnection,
@@ -38,7 +54,7 @@ impl SyncTranslation for MasterListLineTranslation {
         let data = serde_json::from_str::<LegacyListMasterLineRow>(&sync_record.data)?;
         let result = MasterListLineRow {
             id: data.ID,
-            item_id: data.item_ID,
+            item_link_id: data.item_ID,
             master_list_id: data.item_master_ID,
         };
 

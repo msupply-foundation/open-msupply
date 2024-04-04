@@ -9,12 +9,12 @@ import { withJsonFormsControlProps } from '@jsonforms/react';
 import {
   BaseDatePickerInput,
   DateUtils,
-  NonNegativeIntegerInput,
   useFormatDateTime,
   useTranslation,
   FormLabel,
   Box,
   DetailInputWithLabelRow,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import {
   FORM_LABEL_COLUMN_WIDTH,
@@ -28,9 +28,9 @@ export const dateOfBirthTester = rankWith(10, uiTypeIs('DateOfBirth'));
 
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path } = props;
-  const [age, setAge] = React.useState<number | string>('');
+  const [age, setAge] = React.useState<number | undefined>();
   const [dob, setDoB] = React.useState<Date | null>(null);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const formatDateTime = useFormatDateTime();
   const { customError, setCustomError } = useJSONFormsCustomError(
     path,
@@ -43,7 +43,7 @@ const UIComponent = (props: ControlProps) => {
     const dateOfBirth = DateUtils.getDateOrNull(dob);
     // if dob is invalid, clear age and don't update all the form data
     if (dateOfBirth === null || !DateUtils.isValid(dateOfBirth)) {
-      setAge('');
+      setAge(undefined);
       handleChange(dobPath, null); // required for validation to fire
       return;
     }
@@ -54,7 +54,7 @@ const UIComponent = (props: ControlProps) => {
     handleChange(estimatedPath, false);
   };
 
-  const onChangeAge = (newAge: number) => {
+  const onChangeAge = (newAge: number = 0) => {
     const dob = DateUtils.startOfYear(DateUtils.addYears(new Date(), -newAge));
     setDoB(dob);
     handleChange(dobPath, formatDateTime.customDate(dob, 'yyyy-MM-dd'));
@@ -68,7 +68,7 @@ const UIComponent = (props: ControlProps) => {
     const dob = DateUtils.getDateOrNull(data.dateOfBirth);
     setDoB(dob);
     if (dob === null) {
-      setAge('');
+      setAge(undefined);
       return;
     }
     setAge(DateUtils.age(dob));
@@ -109,7 +109,7 @@ const UIComponent = (props: ControlProps) => {
             <FormLabel sx={{ fontWeight: 'bold' }}>{t('label.age')}:</FormLabel>
           </Box>
           <Box flex={0}>
-            <NonNegativeIntegerInput
+            <NumericTextInput
               value={age}
               sx={{ width: 65 }}
               onChange={onChangeAge}

@@ -1,4 +1,4 @@
-use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
+use async_graphql::{dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{unknown_user, StocktakeRow, StocktakeStatus};
 use serde::Serialize;
@@ -65,7 +65,7 @@ impl StocktakeNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.stocktake.created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.stocktake.created_datetime, Utc)
     }
 
     pub async fn stocktake_date(&self) -> &Option<NaiveDate> {
@@ -75,7 +75,7 @@ impl StocktakeNode {
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         self.stocktake
             .finalised_datetime
-            .map(|dt| DateTime::<Utc>::from_utc(dt, Utc))
+            .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
 
     pub async fn inventory_addition_id(&self) -> &Option<String> {

@@ -4,11 +4,7 @@ import { styled } from '@mui/material/styles';
 import { Story } from '@storybook/react';
 import { BasicTextInput } from './BasicTextInput';
 import { InputWithLabelRow } from './InputWithLabelRow';
-import {
-  PositiveNumberInput,
-  NumericTextInput,
-  NonNegativeNumberInput,
-} from './numeric';
+import { NumericTextInput } from './';
 
 export default {
   title: 'Inputs/TextInputs',
@@ -17,7 +13,7 @@ export default {
 
 const StyledPaper = styled(Paper)({
   textAlign: 'center',
-  height: 90,
+  minHeight: 90,
   padding: 10,
   width: 300,
 });
@@ -56,8 +52,11 @@ const Template: Story = () => (
 );
 
 const NumericTemplate: Story = () => {
-  const [nonNegative, setNonNegative] = useState(0);
-  const [positive, setPositive] = useState<number | undefined>(1);
+  const [positive, setPositive] = useState<number | undefined>();
+  const [negative, setNegative] = useState<number | undefined>();
+  const [decimal, setDecimal] = useState<number | undefined>();
+  const [rangeVal, setRangeVal] = useState<number | undefined>();
+  const [fixedDecimal, setFixedDecimal] = useState<number | undefined>(1);
 
   return (
     <Grid>
@@ -65,23 +64,54 @@ const NumericTemplate: Story = () => {
         <Grid container spacing={1}>
           <Grid item xs>
             <StyledPaper>
-              <Typography>NumericTextInput</Typography>
-              <NumericTextInput />
+              <Typography>Numeric text input, default options</Typography>
+              <NumericTextInput value={positive} onChange={setPositive} />
             </StyledPaper>
             <StyledPaper>
               <Typography>Disabled</Typography>
               <NumericTextInput value={25} disabled />
             </StyledPaper>
             <StyledPaper>
-              <Typography>Non Negative</Typography>
-              <NonNegativeNumberInput
-                value={nonNegative}
-                onChange={setNonNegative}
+              <Typography>Negative values allowed</Typography>
+              <NumericTextInput
+                value={negative}
+                onChange={setNegative}
+                allowNegative
               />
             </StyledPaper>
             <StyledPaper>
-              <Typography>Positive</Typography>
-              <PositiveNumberInput value={positive} onChange={setPositive} />
+              <Typography>Decimals allowed (3dp), default 5, min 1</Typography>
+              <NumericTextInput
+                value={decimal}
+                defaultValue={5}
+                decimalLimit={3}
+                onChange={setDecimal}
+                min={1}
+              />
+            </StyledPaper>
+            <StyledPaper>
+              <Typography>
+                Range -20 to 20, step increment 2, multiplier 5
+              </Typography>
+              <NumericTextInput
+                value={rangeVal}
+                onChange={setRangeVal}
+                min={-20}
+                max={20}
+                step={2}
+                multiplier={5}
+              />
+            </StyledPaper>
+            <StyledPaper>
+              <Typography>
+                Fixed-length decimal (2), init value 1, positive
+              </Typography>
+              <NumericTextInput
+                value={fixedDecimal}
+                onChange={setFixedDecimal}
+                decimalLimit={2}
+                decimalMin={2}
+              />
             </StyledPaper>
           </Grid>
         </Grid>

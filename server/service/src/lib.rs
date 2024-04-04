@@ -9,11 +9,13 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
 pub mod clinician;
 mod common_stock;
+pub mod currency;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod document;
@@ -252,6 +254,10 @@ pub fn usize_to_u32(num: usize) -> u32 {
 }
 
 pub fn u32_to_i32(num: u32) -> i32 {
+    num.try_into().unwrap_or(0)
+}
+
+pub fn usize_to_u64(num: usize) -> u64 {
     num.try_into().unwrap_or(0)
 }
 

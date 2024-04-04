@@ -22,7 +22,7 @@ pub fn mock_test_unallocated_line() -> MockData {
 pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_new_invoice".to_owned();
-        r.name_id = "name_store_a".to_owned();
+        r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_c".to_owned();
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -38,7 +38,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "unallocated_line_new_invoice_line_1".to_owned(),
         invoice_id: "unallocated_line_new_invoice".to_owned(),
-        item_id: "item_a".to_owned(),
+        item_link_id: "item_a".to_owned(),
         item_name: "Item A".to_owned(),
         item_code: "item_a_code".to_owned(),
         stock_line_id: None,
@@ -55,6 +55,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax: None,
     }
 }
 
@@ -63,7 +64,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
 pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_new_invoice2".to_owned();
-        r.name_id = "name_store_a".to_owned();
+        r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.invoice_number = 2;
         r.r#type = InvoiceRowType::OutboundShipment;
@@ -79,7 +80,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
     InvoiceLineRow {
         id: "unallocated_line_new_invoice2_line_1".to_owned(),
         invoice_id: "unallocated_line_new_invoice2".to_owned(),
-        item_id: "item_b".to_owned(),
+        item_link_id: "item_b".to_owned(),
         item_name: "Item B".to_owned(),
         item_code: "item_b_code".to_owned(),
         stock_line_id: None,
@@ -96,13 +97,14 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax: None,
     }
 }
 
 pub fn mock_allocated_invoice() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "unallocated_line_allocated_invoice".to_owned();
-        r.name_id = "name_store_a".to_owned();
+        r.name_link_id = "name_store_a".to_owned();
         r.store_id = "store_a".to_owned();
         r.invoice_number = 1;
         r.r#type = InvoiceRowType::OutboundShipment;

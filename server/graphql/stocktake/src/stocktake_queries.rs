@@ -10,9 +10,8 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::{list_error_to_gql_err, validate_auth};
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
-use repository::StocktakeFilter;
+use repository::StocktakeSortField;
 use repository::*;
-use repository::{StocktakeSort, StocktakeSortField};
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 

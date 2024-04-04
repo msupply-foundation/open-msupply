@@ -30,7 +30,7 @@ mod tests {
     fn mock_invoice_a() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice1".to_string();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("A".to_string());
         })
@@ -39,7 +39,7 @@ mod tests {
     fn mock_invoice_b() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice2".to_string();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("B".to_string());
         })
@@ -48,7 +48,7 @@ mod tests {
     fn mock_invoice_excluded() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice3".to_string();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = Some("Excluded".to_string());
         })
@@ -57,7 +57,7 @@ mod tests {
     fn mock_invoice_none() -> InvoiceRow {
         inline_init(|r: &mut InvoiceRow| {
             r.id = "invoice4".to_string();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_string();
             r.user_id = None;
         })

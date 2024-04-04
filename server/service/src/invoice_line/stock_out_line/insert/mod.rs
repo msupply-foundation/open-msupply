@@ -70,7 +70,7 @@ pub fn insert_stock_out_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice, batch) = validate(&input, &ctx.store_id, &connection)?;
-            let (new_line, update_batch) = generate(input, item, batch, invoice)?;
+            let (new_line, update_batch) = generate(connection, input, item, batch, invoice)?;
             InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
             StockLineRowRepository::new(&connection).upsert_one(&update_batch)?;
             get_invoice_line(ctx, &new_line.id)
@@ -158,7 +158,7 @@ mod test {
                     r.id = "new outbound shipment line id".to_string();
                     r.r#type = Some(StockOutType::OutboundShipment);
                     r.invoice_id = "new invoice id".to_string();
-                    r.item_id = mock_item_b_lines()[0].item_id.clone();
+                    r.item_id = mock_item_b_lines()[0].item_link_id.clone();
                     r.number_of_packs = 1.0;
                     r.stock_line_id = mock_item_b_lines()[0].id.clone();
                 }),
@@ -211,7 +211,9 @@ mod test {
                         .clone();
                     r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_location_is_on_hold()[0].id.clone();
-                    r.item_id = mock_stock_line_location_is_on_hold()[0].item_id.clone();
+                    r.item_id = mock_stock_line_location_is_on_hold()[0]
+                        .item_link_id
+                        .clone();
                 }),
             ),
             Err(ServiceError::LocationIsOnHold)
@@ -247,7 +249,7 @@ mod test {
                         .clone();
                     r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_on_hold()[0].id.clone();
-                    r.item_id = mock_stock_line_on_hold()[0].item_id.clone();
+                    r.item_id = mock_stock_line_on_hold()[0].item_link_id.clone();
                 }),
             ),
             Err(ServiceError::BatchIsOnHold)
@@ -265,7 +267,7 @@ mod test {
                         .clone();
                     r.number_of_packs = 40.0;
                     r.stock_line_id = mock_stock_line_a().id.clone();
-                    r.item_id = mock_stock_line_a().item_id.clone();
+                    r.item_id = mock_stock_line_a().item_link_id.clone();
                 }),
             ),
             Err(ServiceError::StockLineAlreadyExistsInInvoice(
@@ -285,7 +287,7 @@ mod test {
                         .clone();
                     r.number_of_packs = 8.0;
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
-                    r.item_id = mock_stock_line_a().item_id.clone();
+                    r.item_id = mock_stock_line_a().item_link_id.clone();
                 }),
             ),
             Err(ServiceError::ReductionBelowZero {
@@ -306,7 +308,7 @@ mod test {
                         .clone();
                     r.number_of_packs = 1.0;
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
-                    r.item_id = mock_stock_line_a().item_id.clone();
+                    r.item_id = mock_stock_line_a().item_link_id.clone();
                 }),
             ),
             Err(ServiceError::NotThisStoreInvoice)
@@ -349,7 +351,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.stock_line_id = mock_stock_line_si_d()[0].id.clone();
-                    r.item_id = mock_stock_line_si_d()[0].item_id.clone();
+                    r.item_id = mock_stock_line_si_d()[0].item_link_id.clone();
                     r.number_of_packs = 1.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -365,7 +367,7 @@ mod test {
             new_outbound_line,
             inline_edit(&new_outbound_line, |mut u| {
                 u.id = "new outbound line id".to_string();
-                u.item_id = mock_item_a().id.clone();
+                u.item_link_id = mock_item_a().id.clone();
                 u.pack_size = 1;
                 u.number_of_packs = 1.0;
                 u
@@ -401,7 +403,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.stock_line_id = mock_stock_line_a().id.clone();
-                    r.item_id = mock_stock_line_a().item_id.clone();
+                    r.item_id = mock_stock_line_a().item_link_id.clone();
                     r.number_of_packs = 2.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -442,7 +444,7 @@ mod test {
                         .invoice_id
                         .clone();
                     r.stock_line_id = mock_item_b_lines()[0].id.clone();
-                    r.item_id = mock_item_b_lines()[0].item_id.clone();
+                    r.item_id = mock_item_b_lines()[0].item_link_id.clone();
                     r.number_of_packs = 2.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -480,7 +482,7 @@ mod test {
                     r.r#type = Some(StockOutType::Prescription);
                     r.invoice_id = mock_prescription_a().id;
                     r.stock_line_id = mock_stock_line_a().id.clone();
-                    r.item_id = mock_stock_line_a().item_id.clone();
+                    r.item_id = mock_stock_line_a().item_link_id.clone();
                     r.number_of_packs = 1.0;
                     r.total_before_tax = Some(1.0);
                 }),
@@ -496,7 +498,7 @@ mod test {
             new_prescription_line,
             inline_edit(&new_prescription_line, |mut u| {
                 u.id = "new prescription line id".to_string();
-                u.item_id = mock_item_a().id.clone();
+                u.item_link_id = mock_item_a().id.clone();
                 u.pack_size = 1;
                 u.number_of_packs = 1.0;
                 u

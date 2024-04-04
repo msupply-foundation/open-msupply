@@ -60,7 +60,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.id = requisition_id.clone();
             r.user_id = Some("user_id".to_owned());
             r.requisition_number = 3;
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
@@ -91,7 +91,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line1_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.requested_quantity = 10;
                 r.suggested_quantity = 3;
                 r.available_stock_on_hand = 1;
@@ -100,7 +100,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
                 r.requisition_id = requisition_id.clone();
-                r.item_id = mock_item_b().id;
+                r.item_link_id = mock_item_b().id;
                 r.requested_quantity = 15;
                 r.suggested_quantity = 3;
                 r.available_stock_on_hand = 1;
@@ -117,7 +117,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         requisition: inline_init(|r: &mut RequisitionRow| {
             r.id = requisition_id.clone();
             r.requisition_number = 3;
-            r.name_id = mock_name_b().id;
+            r.name_link_id = mock_name_b().id;
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;
@@ -147,7 +147,7 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
         lines: vec![inline_init(|r: &mut RequisitionLineRow| {
             r.id = line1_id;
             r.requisition_id = requisition_id.clone();
-            r.item_id = mock_item_a().id;
+            r.item_link_id = mock_item_a().id;
             r.requested_quantity = 10;
             r.suggested_quantity = 15;
             r.available_stock_on_hand = 1;
@@ -164,7 +164,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::InboundShipment;
@@ -182,7 +182,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     stock_line_id: Some(line1_id.clone()),
                     invoice_id: invoice_id.clone(),
                     location_id: None,
-                    item_id: mock_item_a().id,
+                    item_link_id: mock_item_a().id,
                     item_name: mock_item_a().name,
                     item_code: mock_item_a().code,
                     batch: None,
@@ -197,10 +197,11 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     number_of_packs: 10.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    foreign_currency_price_before_tax: None,
                 },
                 stock_line: StockLineRow {
                     id: line1_id.clone(),
-                    item_id: mock_item_a().id,
+                    item_link_id: mock_item_a().id,
                     store_id: String::from("store_a"),
                     location_id: None,
                     batch: None,
@@ -212,7 +213,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     expiry_date: None,
                     on_hold: false,
                     note: None,
-                    supplier_id: Some(String::from("name_store_b")),
+                    supplier_link_id: Some(String::from("name_store_b")),
                     barcode_id: None,
                 },
             },
@@ -222,7 +223,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     stock_line_id: Some(line2_id.clone()),
                     invoice_id: invoice_id.clone(),
                     location_id: None,
-                    item_id: mock_item_b().id,
+                    item_link_id: mock_item_b().id,
                     item_name: mock_item_b().name,
                     item_code: mock_item_b().code,
                     batch: None,
@@ -237,10 +238,11 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     number_of_packs: 10.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
+                    foreign_currency_price_before_tax: None,
                 },
                 stock_line: StockLineRow {
                     id: line2_id.clone(),
-                    item_id: mock_item_b().id,
+                    item_link_id: mock_item_b().id,
                     store_id: String::from("store_a"),
                     location_id: None,
                     batch: None,
@@ -252,7 +254,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     expiry_date: None,
                     on_hold: false,
                     note: None,
-                    supplier_id: Some(String::from("name_store_b")),
+                    supplier_link_id: Some(String::from("name_store_b")),
                     barcode_id: None,
                 },
             },
@@ -267,7 +269,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::InboundShipment;
@@ -284,7 +286,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 stock_line_id: Some(line1_id.clone()),
                 invoice_id: invoice_id.clone(),
                 location_id: None,
-                item_id: mock_item_b().id,
+                item_link_id: mock_item_b().id,
                 item_name: mock_item_b().name,
                 item_code: mock_item_b().code,
                 batch: None,
@@ -299,10 +301,11 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 number_of_packs: 10.0,
                 note: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
-                item_id: mock_item_b().id,
+                item_link_id: mock_item_b().id,
                 store_id: String::from("store_a"),
                 location_id: None,
                 batch: None,
@@ -314,7 +317,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_id: Some(String::from("name_store_b")),
+                supplier_link_id: Some(String::from("name_store_b")),
                 barcode_id: None,
             },
         }],
@@ -328,7 +331,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
     FullMockInvoice {
         invoice: inline_init(|r: &mut InvoiceRow| {
             r.id = invoice_id.clone();
-            r.name_id = mock_name_a().id;
+            r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
             r.r#type = InvoiceRowType::OutboundShipment;
@@ -345,7 +348,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 stock_line_id: Some(line1_id.clone()),
                 invoice_id: invoice_id.clone(),
                 location_id: None,
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 item_name: mock_item_a().name,
                 item_code: mock_item_a().code,
                 batch: None,
@@ -360,10 +363,11 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 number_of_packs: 10.0,
                 note: None,
                 inventory_adjustment_reason_id: None,
+                foreign_currency_price_before_tax: None,
             },
             stock_line: StockLineRow {
                 id: line1_id.clone(),
-                item_id: mock_item_a().id,
+                item_link_id: mock_item_a().id,
                 store_id: String::from("store_a"),
                 location_id: None,
                 batch: None,
@@ -375,7 +379,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 expiry_date: None,
                 on_hold: false,
                 note: None,
-                supplier_id: Some(String::from("name_store_b")),
+                supplier_link_id: Some(String::from("name_store_b")),
                 barcode_id: None,
             },
         }],

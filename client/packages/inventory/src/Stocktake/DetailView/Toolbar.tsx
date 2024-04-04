@@ -9,7 +9,7 @@ import {
   BufferedTextInput,
   useBufferState,
   InputWithLabelRow,
-  DatePickerInput,
+  DateTimePickerInput,
   Formatter,
   SearchBar,
   Box,
@@ -75,7 +75,7 @@ export const Toolbar = () => {
           <InputWithLabelRow
             label={t('label.stocktake-date')}
             Input={
-              <DatePickerInput
+              <DateTimePickerInput
                 disabled={true}
                 value={DateUtils.getDateOrNull(stocktakeDate)}
                 onChange={date => {

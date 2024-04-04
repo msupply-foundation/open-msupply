@@ -1,4 +1,5 @@
 use super::{
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
@@ -7,7 +8,7 @@ use super::{
 };
 
 use diesel::{
-    dsl::{IntoBoxed, LeftJoin},
+    dsl::{InnerJoin, IntoBoxed, LeftJoin},
     prelude::*,
 };
 
@@ -15,8 +16,8 @@ use crate::{
     diesel_macros::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
-    DBType, EqualFilter, ItemFilter, ItemRepository, ItemRow, Pagination, RepositoryError, Sort,
-    StringFilter,
+    DBType, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow, Pagination,
+    RepositoryError, Sort, StringFilter,
 };
 
 #[derive(Clone)]
@@ -70,7 +71,7 @@ pub type StocktakeLineSort = Sort<StocktakeLineSortField>;
 
 type StocktakeLineJoin = (
     StocktakeLineRow,
-    Option<ItemRow>,
+    (ItemLinkRow, ItemRow),
     Option<StockLineRow>,
     Option<LocationRow>,
 );
@@ -78,7 +79,7 @@ type StocktakeLineJoin = (
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct StocktakeLine {
     pub line: StocktakeLineRow,
-    pub item: Option<ItemRow>,
+    pub item: ItemRow,
     pub stock_line: Option<StockLineRow>,
     pub location: Option<LocationRow>,
 }
@@ -162,22 +163,17 @@ impl<'a> StocktakeLineRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<StocktakeLineJoin>(&self.connection.connection)?;
 
-        Ok(result
-            .into_iter()
-            .map(|(line, item, stock_line, location)| StocktakeLine {
-                line,
-                item,
-                stock_line,
-                location,
-            })
-            .collect())
+        Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
 type BoxedStocktakeLineQuery = IntoBoxed<
     'static,
     LeftJoin<
-        LeftJoin<LeftJoin<stocktake_line::table, item::table>, stock_line::table>,
+        LeftJoin<
+            InnerJoin<stocktake_line::table, InnerJoin<item_link::table, item::table>>,
+            stock_line::table,
+        >,
         location::table,
     >,
     DBType,
@@ -185,7 +181,7 @@ type BoxedStocktakeLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeLineQuery {
     let mut query = stocktake_line_dsl::stocktake_line
-        .left_join(item_dsl::item)
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .left_join(stock_line_dsl::stock_line)
         .left_join(location_dsl::location)
         .into_boxed();
@@ -197,6 +193,15 @@ fn create_filtered_query(filter: Option<StocktakeLineFilter>) -> BoxedStocktakeL
     }
 
     query
+}
+
+fn to_domain((line, (_, item), stock_line, location): StocktakeLineJoin) -> StocktakeLine {
+    StocktakeLine {
+        line,
+        item,
+        stock_line,
+        location,
+    }
 }
 
 fn apply_item_filter(
@@ -215,7 +220,7 @@ fn apply_item_filter(
                 .unwrap_or(Vec::new()); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(stocktake_line_dsl::item_id.eq_any(item_ids));
+            return query.filter(item_dsl::id.eq_any(item_ids));
         }
     }
     query

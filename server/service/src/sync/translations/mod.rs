@@ -2,6 +2,7 @@ pub(crate) mod activity_log;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
 pub(crate) mod clinician_store_join;
+pub(crate) mod currency;
 pub(crate) mod document;
 pub(crate) mod document_registry;
 pub(crate) mod form_schema;
@@ -81,12 +82,16 @@ pub(crate) fn all_translators() -> SyncTranslators {
         Box::new(temperature_breach::TemperatureBreachTranslation {}),
         Box::new(clinician::ClinicianTranslation {}),
         Box::new(clinician_store_join::ClinicianStoreJoinTranslation {}),
+        Box::new(currency::CurrencyTranslation {}),
         // Remote-Central (site specific)
         Box::new(name_store_join::NameStoreJoinTranslation {}),
         Box::new(user_permission::UserPermissionTranslation {}),
         Box::new(document::DocumentTranslation {}),
         // Special translations
         Box::new(special::NameToNameStoreJoinTranslation {}),
+        Box::new(special::ItemMergeTranslation {}),
+        Box::new(special::NameMergeTranslation {}),
+        Box::new(special::ClinicianMergeTranslation {}),
     ]
 }
 
@@ -153,6 +158,7 @@ pub(crate) mod LegacyTableName {
     pub(crate) const SENSOR: &str = "sensor";
     pub(crate) const TEMPERATURE_LOG: &str = "temperature_log";
     pub(crate) const TEMPERATURE_BREACH: &str = "temperature_breach";
+    pub(crate) const CURRENCY: &str = "currency";
     // Remote-Central (site specific)
     pub(crate) const NAME_STORE_JOIN: &str = "name_store_join";
     pub(crate) const NAME_TAG_JOIN: &str = "name_tag_join";
@@ -204,6 +210,10 @@ pub(crate) enum PullUpsertRecord {
     FormSchema(FormSchemaJson),
     Document(Document),
     DocumentRegistry(DocumentRegistryRow),
+    Currency(CurrencyRow),
+    ItemLink(ItemLinkRow),
+    NameLink(NameLinkRow),
+    ClinicianLink(ClinicianLinkRow),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -221,9 +231,9 @@ pub(crate) enum PullDeleteRecordTable {
     Store,
     ProgramRequisitionSettings,
     ProgramRequisitionOrderType,
+    MasterListLine,
     MasterListNameJoin,
     Report,
-    Name,
     InventoryAdjustmentReason,
     // Remote-Central (site specific)
     NameStoreJoin,
@@ -243,6 +253,8 @@ pub(crate) enum PullDeleteRecordTable {
     StocktakeLine,
     #[cfg(all(test, feature = "integration_test"))]
     ActivityLog,
+    #[cfg(all(test, feature = "integration_test"))]
+    Currency,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -322,11 +334,19 @@ pub(crate) trait SyncTranslation {
         Ok(None)
     }
 
+    fn try_translate_pull_merge(
+        &self,
+        _: &StorageConnection,
+        _: &SyncBufferRow,
+    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+        Ok(None)
+    }
+
     /// Implementation should return three types of results
     /// * Error - Something completely unexpected that is not recoverable
     /// * None - Translator did not match record type
     /// * Some - Translator did match and either translated record/records or
-    ///          empty array if record is deliberatly ignored
+    ///          empty array if record is deliberately ignored
     fn try_translate_push_upsert(
         &self,
         _: &StorageConnection,

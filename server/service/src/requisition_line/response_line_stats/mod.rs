@@ -125,7 +125,7 @@ mod test {
             r.id = "requisition_one".to_string();
             r.requisition_number = 1;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_a".to_string();
+            r.name_link_id = "name_a".to_string();
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
@@ -137,7 +137,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line_one_a".to_string();
             r.requisition_id = "requisition_one".to_string();
-            r.item_id = "item_d".to_string();
+            r.item_link_id = "item_d".to_string();
             r.requested_quantity = 20;
         })
     }
@@ -146,7 +146,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line_one_b".to_string();
             r.requisition_id = "requisition_one".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 15;
             r.available_stock_on_hand = 10;
             r.average_monthly_consumption = 50;
@@ -159,7 +159,7 @@ mod test {
             r.id = "requisition_two".to_string();
             r.requisition_number = 3;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_b".to_string();
+            r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
@@ -171,7 +171,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "requisition_line_two_a".to_string();
             r.requisition_id = "requisition_two".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 20;
         })
     }
@@ -181,7 +181,7 @@ mod test {
             r.id = "request_requisition_a".to_string();
             r.requisition_number = 4;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_b".to_string();
+            r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Sent;
             r.created_datetime = Utc::now().naive_utc();
@@ -193,7 +193,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "request_requisition_a_line_a".to_string();
             r.requisition_id = "request_requisition_a".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 100;
         })
     }
@@ -203,7 +203,7 @@ mod test {
             r.id = "request_requisition_b".to_string();
             r.requisition_number = 4;
             r.store_id = mock_store_a().id;
-            r.name_id = "name_b".to_string();
+            r.name_link_id = "name_b".to_string();
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::New;
             r.created_datetime = Utc::now().naive_utc();
@@ -215,7 +215,7 @@ mod test {
         inline_init(|r: &mut RequisitionLineRow| {
             r.id = "request_requisition_b_line_a".to_string();
             r.requisition_id = "request_requisition_b".to_string();
-            r.item_id = "item_e".to_string();
+            r.item_link_id = "item_e".to_string();
             r.requested_quantity = 100;
         })
     }

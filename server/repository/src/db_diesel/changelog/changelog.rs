@@ -1,7 +1,12 @@
+// use super::super::;
 use crate::{
-    diesel_macros::apply_equal_filter, DBType, EqualFilter, RepositoryError, StorageConnection,
+    diesel_macros::apply_equal_filter, name_link, DBType, EqualFilter, NameLinkRow,
+    RepositoryError, StorageConnection,
 };
-use diesel::{helper_types::IntoBoxed, prelude::*};
+use diesel::{
+    helper_types::{IntoBoxed, LeftJoin},
+    prelude::*,
+};
 use std::convert::TryInto;
 use util::inline_init;
 
@@ -13,7 +18,7 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_id -> Nullable<Text>,
+        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
     }
@@ -25,11 +30,14 @@ table! {
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
         row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
-        name_id -> Nullable<Text>,
+        name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
     }
 }
+
+joinable!(changelog_deduped -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(changelog_deduped, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -63,6 +71,7 @@ pub enum ChangelogTableName {
     TemperatureBreach,
     TemperatureBreachConfig,
     TemperatureLog,
+    Currency,
 }
 
 #[derive(Clone, Queryable, Debug, PartialEq, Insertable)]
@@ -72,6 +81,7 @@ pub struct ChangelogRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
     pub row_action: ChangelogAction,
+    #[column_name = "name_link_id"]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
     pub is_sync_update: bool,
@@ -90,6 +100,8 @@ pub struct ChangelogFilter {
 pub struct ChangelogRepository<'a> {
     connection: &'a StorageConnection,
 }
+
+type ChangelogJoin = (ChangelogRow, Option<NameLinkRow>);
 
 impl<'a> ChangelogRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
@@ -117,8 +129,19 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load(&self.connection.connection)?;
-        Ok(result)
+        let result: Vec<ChangelogJoin> = query.load(&self.connection.connection)?;
+        Ok(result
+            .into_iter()
+            .map(|(change_log_row, name_link_row)| ChangelogRow {
+                cursor: change_log_row.cursor,
+                table_name: change_log_row.table_name,
+                record_id: change_log_row.record_id,
+                row_action: change_log_row.row_action,
+                name_id: name_link_row.map(|r| r.name_id),
+                store_id: change_log_row.store_id,
+                is_sync_update: change_log_row.is_sync_update,
+            })
+            .collect())
     }
 
     pub fn count(
@@ -135,37 +158,38 @@ impl<'a> ChangelogRepository<'a> {
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
     pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
-        let result = changelog::dsl::changelog
-            .select(diesel::dsl::max(changelog::dsl::cursor))
+        let result = changelog::table
+            .select(diesel::dsl::max(changelog::cursor))
             .first::<Option<i64>>(&self.connection.connection)?;
         Ok(result.unwrap_or(0) as u64)
     }
 
-    // Drop all change logs (for tests), can't set test flag as it's used in another crate
-    pub fn drop_all(&self) -> Result<(), RepositoryError> {
-        diesel::delete(changelog::dsl::changelog).execute(&self.connection.connection)?;
+    // Delete all change logs with cursor greater-equal cursor_ge
+    pub fn delete(&self, cursor_ge: i64) -> Result<(), RepositoryError> {
+        diesel::delete(changelog::dsl::changelog)
+            .filter(changelog::dsl::cursor.ge(cursor_ge))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
     pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
-        diesel::update(changelog::dsl::changelog)
-            .set(changelog::dsl::is_sync_update.eq(false))
-            .filter(changelog::dsl::cursor.gt(from_cursor as i64))
+        diesel::update(changelog::table)
+            .set(changelog::is_sync_update.eq(false))
+            .filter(changelog::cursor.gt(from_cursor as i64))
             .execute(&self.connection.connection)?;
         Ok(())
     }
 }
 
-type BoxedChangelogQuery = IntoBoxed<'static, changelog_deduped::table, DBType>;
+type BoxedChangelogQuery =
+    IntoBoxed<'static, LeftJoin<changelog_deduped::table, name_link::table>, DBType>;
 
-fn create_filtered_query<'a>(
-    earliest: u64,
-    filter: Option<ChangelogFilter>,
-) -> BoxedChangelogQuery {
-    let mut query = changelog_deduped::dsl::changelog_deduped
-        .filter(changelog_deduped::dsl::cursor.ge(earliest.try_into().unwrap_or(0)))
+fn create_filtered_query(earliest: u64, filter: Option<ChangelogFilter>) -> BoxedChangelogQuery {
+    let mut query = changelog_deduped::table
+        .left_join(name_link::table)
+        .filter(changelog_deduped::cursor.ge(earliest.try_into().unwrap_or(0)))
         .into_boxed();
 
     if let Some(f) = filter {
@@ -178,16 +202,12 @@ fn create_filtered_query<'a>(
             action,
         } = f;
 
-        apply_equal_filter!(query, table_name, changelog_deduped::dsl::table_name);
-        apply_equal_filter!(query, name_id, changelog_deduped::dsl::name_id);
-        apply_equal_filter!(query, store_id, changelog_deduped::dsl::store_id);
-        apply_equal_filter!(query, record_id, changelog_deduped::dsl::record_id);
-        apply_equal_filter!(
-            query,
-            is_sync_update,
-            changelog_deduped::dsl::is_sync_update
-        );
-        apply_equal_filter!(query, action, changelog_deduped::dsl::row_action);
+        apply_equal_filter!(query, table_name, changelog_deduped::table_name);
+        apply_equal_filter!(query, name_id, name_link::name_id);
+        apply_equal_filter!(query, store_id, changelog_deduped::store_id);
+        apply_equal_filter!(query, record_id, changelog_deduped::record_id);
+        apply_equal_filter!(query, is_sync_update, changelog_deduped::is_sync_update);
+        apply_equal_filter!(query, action, changelog_deduped::row_action);
     }
 
     query

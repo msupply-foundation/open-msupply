@@ -78,13 +78,13 @@ pub fn update_encounter(
             {
                 encounter_updated::update_encounter_row_and_events(
                     &ctx.connection,
-                    &existing_encounter_row.0.patient_id,
+                    &existing_encounter_row.patient_row.id,
                     &document,
                     encounter,
                     clinician_row.map(|c| c.id),
-                    existing_encounter_row.1,
+                    existing_encounter_row.program_row,
                     encounter_start_datetime,
-                    Some(existing_encounter_row.0.start_datetime),
+                    Some(existing_encounter_row.row.start_datetime),
                     Some(&allowed_ctx),
                 )
                 .map_err(|err| match err {
@@ -420,13 +420,16 @@ mod test {
         assert_eq!(found.parent_ids, vec![initial_encounter.id]);
         assert_eq!(found.data, serde_json::to_value(encounter.clone()).unwrap());
         // check that encounter table has been updated
-        let row = EncounterRepository::new(&ctx.connection)
+        let encounter = EncounterRepository::new(&ctx.connection)
             .query_by_filter(
                 EncounterFilter::new().document_name(EqualFilter::equal_to(&found.name)),
             )
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(row.0.status, Some(repository::EncounterStatus::Visited));
+        assert_eq!(
+            encounter.row.status,
+            Some(repository::EncounterStatus::Visited)
+        );
     }
 }

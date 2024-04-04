@@ -107,7 +107,7 @@ fn check_stock_line_xor_item(
 
     // extract item_id
     if let Some(stock_line) = stock_line {
-        return Some(stock_line.stock_line_row.item_id.clone());
+        return Some(stock_line.item_row.id.clone());
     }
     input.item_id.clone()
 }
@@ -250,7 +250,7 @@ fn generate(
         comment,
         snapshot_number_of_packs,
         counted_number_of_packs,
-        item_id: item_id.to_string(),
+        item_link_id: item_id.to_string(),
         batch,
         expiry_date,
         pack_size: pack_size.map(u32_to_i32),
@@ -333,7 +333,7 @@ mod stocktake_line_test {
         fn mock_stock_line_c() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "mock_stock_line_c".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 50.0;
                 r.pack_size = 1;
@@ -347,7 +347,7 @@ mod stocktake_line_test {
         fn mock_stock_line_d() -> StockLineRow {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "mock_stock_line_d".to_string();
-                r.item_id = "item_a".to_string();
+                r.item_link_id = "item_a".to_string();
                 r.store_id = "store_a".to_string();
                 r.available_number_of_packs = 20.0;
                 r.pack_size = 1;
@@ -361,7 +361,7 @@ mod stocktake_line_test {
         fn outbound_shipment() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "reduced_stock_outbound_shipment".to_string();
-                r.name_id = "name_store_b".to_string();
+                r.name_link_id = "name_store_b".to_string();
                 r.store_id = "store_a".to_string();
                 r.invoice_number = 15;
                 r.r#type = InvoiceRowType::OutboundShipment;
@@ -377,7 +377,7 @@ mod stocktake_line_test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "outbound_shipment_line".to_string();
                 r.invoice_id = outbound_shipment().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(mock_stock_line_b().id);
                 r.number_of_packs = 29.0;
             })
@@ -643,7 +643,7 @@ mod stocktake_line_test {
                 r.counted_number_of_packs = Some(50.0);
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
-                r.item_id = stock_line.item_id;
+                r.item_link_id = stock_line.item_link_id;
                 r.inventory_adjustment_reason_id = Some(positive_reason().id);
             }),
         );
@@ -709,7 +709,7 @@ mod stocktake_line_test {
                 r.stocktake_id = stocktake_a.id;
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
-                r.item_id = stock_line.item_id;
+                r.item_link_id = stock_line.item_link_id;
                 r.comment = Some("Some comment".to_string());
             })
         );

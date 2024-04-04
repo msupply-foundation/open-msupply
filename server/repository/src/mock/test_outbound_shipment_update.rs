@@ -12,7 +12,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
     InvoiceLineRow {
         id: String::from("outbound_shipment_line_no_stock_line"),
         invoice_id: String::from("outbound_shipment_invalid_stock_line"),
-        item_id: String::from("item_with_no_stock_line"),
+        item_link_id: String::from("item_with_no_stock_line"),
         location_id: None,
         item_name: String::from("item_b"),
         item_code: String::from("item_b"),
@@ -29,6 +29,7 @@ fn mock_outbound_shipment_line_no_stock_line() -> InvoiceLineRow {
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
+        foreign_currency_price_before_tax: None,
     }
 }
 
@@ -45,7 +46,7 @@ fn mock_item_with_no_stock_line() -> ItemRow {
 fn mock_outbound_shipment_invalid_stock_line() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = String::from("outbound_shipment_invalid_stock_line");
-        r.name_id = String::from("name_store_a");
+        r.name_link_id = String::from("name_store_a");
         r.store_id = String::from("store_c");
         r.invoice_number = 3;
         r.r#type = InvoiceRowType::OutboundShipment;

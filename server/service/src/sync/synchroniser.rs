@@ -2,9 +2,9 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::sync_status::logger::SyncStep,
 };
-use log::{info, warn};
+use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
-use std::sync::Arc;
+use std::{ops::Not, sync::Arc};
 use thiserror::Error;
 use util::format_error;
 
@@ -23,7 +23,7 @@ use super::{
 };
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
-const INTEGRATION_TIMEOUT_SECONDS: u64 = 15;
+const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 
 pub struct Synchroniser {
     settings: SyncSettings,
@@ -183,16 +183,20 @@ impl Synchroniser {
         self.remote
             .pull(&ctx.connection, batch_size.remote_pull, logger)
             .await?;
+
         logger.done_step(SyncStep::PullRemote)?;
 
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
-        //
-        let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised)
+
+        let (upserts, deletes, merges) =
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+                .await
                 .map_err(SyncError::IntegrationError)?;
-        info!("Upsert Integration result: {:?}", upserts);
-        info!("Delete Integration result: {:?}", deletes);
+        warn!("Upsert Integration result: {:?}", upserts);
+        warn!("Delete Integration result: {:?}", deletes);
+        warn!("Merge Integration result: {:?}", merges);
+
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
@@ -210,10 +214,12 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub fn integrate_and_translate_sync_buffer(
+pub async fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
     is_initialised: bool,
+    logger: &mut SyncLogger<'a>,
 ) -> anyhow::Result<(
+    TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
 )> {
@@ -230,6 +236,7 @@ pub fn integrate_and_translate_sync_buffer(
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
+            TranslationAndIntegrationResults,
         ),
         RepositoryError,
     > {
@@ -241,16 +248,40 @@ pub fn integrate_and_translate_sync_buffer(
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
-        let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
-
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
 
-        Ok((upsert_integration_result, delete_integration_result))
+        let upsert_integration_result = translation_and_integration
+            .translate_and_integrate_sync_records(
+                upsert_sync_buffer_records.clone(),
+                &translators,
+                // Only pass Some(logger) during initalisation
+                is_initialised.not().then(|| logger),
+            )?;
+
+        // pass the logger here
+        let delete_integration_result = translation_and_integration
+            .translate_and_integrate_sync_records(
+                delete_sync_buffer_records.clone(),
+                &translators,
+                None,
+            )?;
+
+        let merge_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+        let merge_integration_result: TranslationAndIntegrationResults =
+            translation_and_integration.translate_and_integrate_sync_records(
+                merge_sync_buffer_records,
+                &translators,
+                None,
+            )?;
+
+        Ok((
+            upsert_integration_result,
+            delete_integration_result,
+            merge_integration_result,
+        ))
     };
 
     let result = if is_initialised {

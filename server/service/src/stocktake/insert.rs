@@ -1,9 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
-    MasterListRepository, NumberRowType, RepositoryError, StockLineFilter, StockLineRepository,
-    StockLineRow, Stocktake, StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository,
-    StocktakeRepository, StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    ActivityLogType, EqualFilter, ItemRowType, MasterListFilter, MasterListLineFilter,
+    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError,
+    StockLineFilter, StockLineRepository, StockLineRow, Stocktake, StocktakeFilter,
+    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
+    StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -157,7 +158,9 @@ fn generate_lines_from_master_list(
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let item_ids: Vec<String> = MasterListLineRepository::new(&connection)
         .query_by_filter(
-            MasterListLineFilter::new().master_list_id(EqualFilter::equal_to(&master_list_id)),
+            MasterListLineFilter::new()
+                .master_list_id(EqualFilter::equal_to(&master_list_id))
+                .item_type(ItemRowType::Stock.equal_to()),
         )?
         .into_iter()
         .map(|r| r.item_id)
@@ -181,7 +184,7 @@ fn generate_lines_from_master_list(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: 0.0,
-                item_id: item_id.to_string(),
+                item_link_id: item_id.to_string(),
                 location_id: None,
                 batch: None,
                 expiry_date: None,
@@ -198,7 +201,7 @@ fn generate_lines_from_master_list(
             stock_lines.into_iter().for_each(|line| {
                 let StockLineRow {
                     id: stock_line_id,
-                    item_id,
+                    item_link_id: _,
                     location_id,
                     batch,
                     pack_size,
@@ -207,7 +210,7 @@ fn generate_lines_from_master_list(
                     total_number_of_packs,
                     expiry_date,
                     note,
-                    supplier_id: _,
+                    supplier_link_id: _,
                     store_id: _,
                     on_hold: _,
                     available_number_of_packs: _,
@@ -218,7 +221,7 @@ fn generate_lines_from_master_list(
                     id: uuid(),
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
-                    item_id,
+                    item_link_id: line.item_row.id,
                     location_id,
                     batch,
                     expiry_date,
@@ -257,7 +260,7 @@ fn generate_lines_from_location(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id: _,
                 location_id,
                 batch,
                 pack_size,
@@ -266,7 +269,7 @@ fn generate_lines_from_location(
                 total_number_of_packs,
                 expiry_date,
                 note,
-                supplier_id: _,
+                supplier_link_id: _,
                 store_id: _,
                 on_hold: _,
                 available_number_of_packs: _,
@@ -277,7 +280,7 @@ fn generate_lines_from_location(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id,
+                item_link_id: line.item_row.id,
                 location_id,
                 batch,
                 expiry_date,
@@ -312,7 +315,7 @@ pub fn generate_lines_with_stock(
         .map(|line| {
             let StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id: _,
                 location_id,
                 batch,
                 pack_size,
@@ -321,7 +324,7 @@ pub fn generate_lines_with_stock(
                 total_number_of_packs,
                 expiry_date,
                 note,
-                supplier_id: _,
+                supplier_link_id: _,
                 store_id: _,
                 on_hold: _,
                 available_number_of_packs: _,
@@ -332,7 +335,7 @@ pub fn generate_lines_with_stock(
                 id: uuid(),
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
-                item_id,
+                item_link_id: line.item_row.id,
                 location_id,
                 batch,
                 expiry_date,
@@ -498,7 +501,7 @@ mod test {
             setup_all("insert_stocktake_with_master_list", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let mut context = service_provider
+        let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.stocktake_service;
@@ -514,7 +517,7 @@ mod test {
                 stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 01, 02).unwrap()),
                 is_locked: Some(true),
                 location: None,
-                master_list_id: Some("master_list_filter_test".to_string()),
+                master_list_id: Some("invalid".to_string()),
                 items_have_stock: None,
             },
         );
@@ -525,11 +528,10 @@ mod test {
             &inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line_row_1".to_string();
                 r.store_id = mock_store_b().id;
-                r.item_id = item_query_test1().id;
+                r.item_link_id = item_query_test1().id;
             })
         });
 
-        context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
                 &context,
@@ -561,23 +563,22 @@ mod test {
         let stock_line_row = stocktake_rows
             .iter()
             .find(|r| r.line.stock_line_id == Some("item_query_test1".to_string()));
-        assert_eq!(stock_line_row.is_some(), true);
+        assert!(stock_line_row.is_some());
         assert_eq!(
             stock_line_row.unwrap().line.stock_line_id,
             Some("item_query_test1".to_string())
         );
 
-        // and the stock line for store_b?
         let stock_line_row = stocktake_rows
             .iter()
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
-        assert_eq!(stock_line_row.is_some(), false);
+        assert!(stock_line_row.is_none());
 
         // add another item to the master list and check that it is added to the stocktake
         let _ = MasterListLineRowRepository::new(&connection).upsert_one(&MasterListLineRow {
             id: "master_list_line_b".to_string(),
             master_list_id: master_list_id.clone(),
-            item_id: "item_d".to_string(),
+            item_link_id: "item_d".to_string(),
         });
 
         service
@@ -608,7 +609,7 @@ mod test {
         assert_eq!(
             stocktake_rows
                 .iter()
-                .find(|r| r.line.item_id == "item_d")
+                .find(|r| r.line.item_link_id == "item_d")
                 .unwrap()
                 .line
                 .stock_line_id,
@@ -622,13 +623,12 @@ mod test {
             setup_all("insert_stocktake_with_location", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let mut context = service_provider
+        let context = service_provider
             .context(mock_store_a().id, mock_user_account_a().id)
             .unwrap();
         let service = service_provider.stocktake_service;
         let location_id = mock_location_1().id;
 
-        context.store_id = mock_store_a().id;
         service
             .insert_stocktake(
                 &context,
@@ -663,7 +663,7 @@ mod test {
             &inline_init(|r: &mut StockLineRow| {
                 r.id = "stock_line_row_1".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.location_id = Some(location_id.clone());
                 r.total_number_of_packs = 100.0;
             })
@@ -699,7 +699,7 @@ mod test {
         let stock_line_row = stocktake_rows
             .iter()
             .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
-        assert_eq!(stock_line_row.is_some(), true);
+        assert!(stock_line_row.is_some());
         assert_eq!(
             stock_line_row.unwrap().line.stock_line_id,
             Some("stock_line_row_1".to_string())
@@ -712,7 +712,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_1".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_a().id;
+                s.item_link_id = mock_item_a().id;
                 s.total_number_of_packs = 100.0;
             })
         }
@@ -721,7 +721,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_3".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_b().id;
+                s.item_link_id = mock_item_b().id;
                 s.total_number_of_packs = 10.0;
             })
         }
@@ -730,7 +730,7 @@ mod test {
             inline_init(|s: &mut StockLineRow| {
                 s.id = "stock_line_row_2".to_string();
                 s.store_id = mock_store_a().id;
-                s.item_id = mock_item_b().id;
+                s.item_link_id = mock_item_b().id;
                 s.total_number_of_packs = 0.0;
             })
         }

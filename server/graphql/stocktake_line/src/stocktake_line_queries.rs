@@ -143,13 +143,12 @@ pub fn stocktake_lines(
 
 #[cfg(test)]
 mod test {
-    use async_graphql::EmptyMutation;
     use async_graphql::*;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
     use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
     use graphql_core::test_helpers::setup_graphl_test;
-    use repository::mock::mock_stocktake_line_a;
+    use repository::mock::{mock_item_a, mock_stocktake_line_a};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{
         PaginationOption, StocktakeLine, StocktakeLineFilter, StocktakeLineRow, StocktakeLineSort,
@@ -237,7 +236,7 @@ mod test {
         let (_, _, connection_manager, settings) = setup_graphl_test(
             StocktakeLineQueries,
             EmptyMutation,
-            "omsupply-database-gql-stocktake_lines_query",
+            "test_graphql_stocktake_lines_query",
             MockDataInserts::all(),
         )
         .await;
@@ -268,8 +267,9 @@ mod test {
                         l.batch = Some("batch".to_string());
                         l.expiry_date = Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap());
                         l.stocktake_id = "stocktake_id".to_string();
-                        l.item_id = mock_stocktake_line_a().item_id;
+                        l.item_link_id = mock_stocktake_line_a().item_link_id;
                     });
+                    r.item = mock_item_a()
                 })],
                 count: 1,
             })

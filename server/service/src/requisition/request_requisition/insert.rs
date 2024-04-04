@@ -1,7 +1,7 @@
 use crate::{
     activity_log::activity_log_entry,
     number::next_number,
-    requisition::{common::check_requisition_exists, query::get_requisition},
+    requisition::{common::check_requisition_row_exists, query::get_requisition},
     service_provider::ServiceContext,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
@@ -75,7 +75,7 @@ fn validate(
     store_id: &str,
     input: &InsertRequestRequisition,
 ) -> Result<(), OutError> {
-    if let Some(_) = check_requisition_exists(connection, &input.id)? {
+    if let Some(_) = check_requisition_row_exists(connection, &input.id)? {
         return Err(OutError::RequisitionAlreadyExists);
     }
 
@@ -120,7 +120,7 @@ fn generate(
         id,
         user_id: Some(user_id.to_string()),
         requisition_number: next_number(connection, &NumberRowType::RequestRequisition, &store_id)?,
-        name_id: other_party_id,
+        name_link_id: other_party_id,
         store_id: store_id.to_owned(),
         r#type: RequisitionRowType::Request,
         status: RequisitionRowStatus::Draft,
@@ -294,7 +294,7 @@ mod test_insert {
             inline_edit(&new_row, |mut u| {
                 u.id = "new_request_requisition".to_owned();
                 u.user_id = Some(mock_user_account_a().id);
-                u.name_id = mock_name_store_c().id;
+                u.name_link_id = mock_name_store_c().id;
                 u.colour = Some("new colour".to_owned());
                 u.their_reference = Some("new their_reference".to_owned());
                 u.comment = Some("new comment".to_owned());

@@ -3,7 +3,7 @@ import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
-import { PositiveNumberCell } from '../components';
+import { CurrencyCell, NumberCell, TooltipTextCell } from '../components';
 
 const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
@@ -66,7 +66,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     description: 'description.pack-quantity',
     label: 'label.pack-quantity',
     width: 100,
-    Cell: PositiveNumberCell,
+    Cell: NumberCell,
   },
   expiryDate: {
     key: 'expiryDate',
@@ -153,6 +153,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.total',
     key: 'totalAfterTax',
     width: 100,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
     align: ColumnAlign.Right,
     sortable: false,
@@ -190,12 +191,14 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.batch',
     key: 'batch',
     width: 100,
+    Cell: TooltipTextCell,
   },
   costPricePerPack: {
     label: 'label.cost',
     key: 'costPricePerPack',
     width: 50,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   sellPricePerPack: {
@@ -203,6 +206,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerPack',
     width: 120,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   sellPricePerUnit: {
@@ -210,6 +214,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerUnit',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   location: {
@@ -234,6 +239,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'lineTotal',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   requestedQuantity: {

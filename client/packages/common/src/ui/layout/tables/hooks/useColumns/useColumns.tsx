@@ -7,7 +7,7 @@ import {
   ColumnAlign,
   Column,
 } from '../../columns/types';
-import { useFormatCurrency, useFormatDateTime, DateUtils } from '@common/intl';
+import { useFormatDateTime, DateUtils } from '@common/intl';
 import { BasicCell, BasicHeader } from '../../components';
 import { SortBy } from '@common/hooks';
 import { ColumnDefinitionSetBuilder, ColumnKey } from '../../utils';
@@ -72,9 +72,7 @@ const getDefaultFormatter = <T extends RecordWithId>(
       return (value: unknown) => {
         if (Number.isNaN(Number(value))) return '';
 
-        const formatCurrency = useFormatCurrency();
-
-        return `${formatCurrency(Number(value))}`;
+        return `${Number(value)}`;
       };
     }
     default: {
@@ -110,7 +108,8 @@ const getDefaultColumnAlign = <T extends RecordWithId>(
 };
 
 interface ColumnOptions<T extends RecordWithId> {
-  onChangeSortBy?: (column: Column<T>) => void;
+  /** Changes the sort options as specified */
+  onChangeSortBy?: (sort: string, dir: 'desc' | 'asc') => void;
   sortBy?: SortBy<T>;
 }
 

@@ -12,7 +12,6 @@ assignees: ''
 
 ## Expected behaviour 🤔
 
-
 ## How to Reproduce 🔨
 
 Steps to reproduce the behaviour:
@@ -24,11 +23,9 @@ Steps to reproduce the behaviour:
 
 ## Your environment 🌱
 <!-- e.g. 1.2.3 -->
- - Version: 
- - Platform:
-   - [ ] android (tablet)
-   - [ ] browser (extra points if you tell us which one)
-   - [ ] desktop (windows)
-   - [ ] desktop (macOS)
-   - [ ] server (windows)
- 
+- Version: 
+- mSupply version: 
+<!-- e.g. android, browser (extra points if you tell us which one), desktop (windows), desktop (macOS), server (windows) -->
+- Platform:
+<!-- PostgreSQL or SQLite3 -->
+- Database type: 

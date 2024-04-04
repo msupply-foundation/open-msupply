@@ -2,6 +2,7 @@ use super::{
     invoice_line::invoice_stats::dsl as invoice_stats_dsl,
     invoice_line_row::{invoice_line, invoice_line::dsl as invoice_line_dsl},
     invoice_row::{invoice, invoice::dsl as invoice_dsl},
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
@@ -13,7 +14,8 @@ use crate::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    EqualFilter, InvoiceRowStatus, InvoiceRowType, ItemRow, Pagination, Sort, StockLineRow,
+    EqualFilter, InvoiceRowStatus, InvoiceRowType, ItemLinkRow, ItemRow, Pagination, Sort,
+    StockLineRow,
 };
 
 use diesel::{
@@ -32,6 +34,7 @@ table! {
         service_total_before_tax -> Double,
         service_total_after_tax -> Double,
         tax_percentage -> Nullable<Double>,
+        foreign_currency_total_after_tax -> Nullable<Double>,
     }
 }
 
@@ -46,13 +49,14 @@ pub struct PricingRow {
     pub service_total_before_tax: f64,
     pub service_total_after_tax: f64,
     pub tax_percentage: Option<f64>,
+    pub foreign_currency_total_after_tax: Option<f64>,
 }
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct InvoiceLine {
     pub invoice_line_row: InvoiceLineRow,
     pub invoice_row: InvoiceRow,
-    pub item_row_option: Option<ItemRow>,
+    pub item_row: ItemRow,
     pub location_row_option: Option<LocationRow>,
     pub stock_line_option: Option<StockLineRow>,
 }
@@ -162,8 +166,8 @@ impl InvoiceLineFilter {
 
 type InvoiceLineJoin = (
     InvoiceLineRow,
+    (ItemLinkRow, ItemRow),
     InvoiceRow,
-    Option<ItemRow>,
     Option<LocationRow>,
     Option<StockLineRow>,
 );
@@ -252,7 +256,10 @@ type BoxedInvoiceLineQuery = IntoBoxed<
     'static,
     LeftJoin<
         LeftJoin<
-            LeftJoin<InnerJoin<invoice_line::table, invoice::table>, item::table>,
+            InnerJoin<
+                InnerJoin<invoice_line::table, InnerJoin<item_link::table, item::table>>,
+                invoice::table,
+            >,
             location::table,
         >,
         stock_line::table,
@@ -262,8 +269,8 @@ type BoxedInvoiceLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQuery {
     let mut query = invoice_line_dsl::invoice_line
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .inner_join(invoice_dsl::invoice)
-        .left_join(item_dsl::item)
         .left_join(location_dsl::location)
         .left_join(stock_line_dsl::stock_line)
         .into_boxed();
@@ -288,7 +295,7 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
         apply_equal_filter!(query, requisition_id, invoice_dsl::requisition_id);
         apply_equal_filter!(query, invoice_id, invoice_line_dsl::invoice_id);
         apply_equal_filter!(query, location_id, invoice_line_dsl::location_id);
-        apply_equal_filter!(query, item_id, invoice_line_dsl::item_id);
+        apply_equal_filter!(query, item_id, item_link::item_id);
         apply_equal_filter!(query, r#type, invoice_line_dsl::type_);
         apply_equal_filter!(query, number_of_packs, invoice_line_dsl::number_of_packs);
         apply_equal_filter!(query, invoice_type, invoice_dsl::type_);
@@ -300,12 +307,12 @@ fn create_filtered_query(filter: Option<InvoiceLineFilter>) -> BoxedInvoiceLineQ
 }
 
 fn to_domain(
-    (invoice_line_row, invoice_row, item_row_option, location_row_option, stock_line_option): InvoiceLineJoin,
+    (invoice_line_row, (_, item_row), invoice_row, location_row_option, stock_line_option): InvoiceLineJoin,
 ) -> InvoiceLine {
     InvoiceLine {
         invoice_line_row,
         invoice_row,
-        item_row_option,
+        item_row,
         location_row_option,
         stock_line_option,
     }
@@ -333,6 +340,11 @@ impl InvoiceLine {
             service_total_before_tax: is_service.then(|| row.total_before_tax).unwrap_or(0.0),
             service_total_after_tax: is_service.then(|| row.total_after_tax).unwrap_or(0.0),
             tax_percentage: row.tax,
+            foreign_currency_total_after_tax: row.foreign_currency_price_before_tax.map(|price| {
+                row.tax
+                    .map(|tax| price + (price * tax / 100.0))
+                    .unwrap_or(price)
+            }),
         }
     }
 }

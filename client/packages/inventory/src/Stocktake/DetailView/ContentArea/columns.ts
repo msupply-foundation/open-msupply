@@ -6,13 +6,13 @@ import {
   ArrayUtils,
   Column,
   SortBy,
-  PositiveNumberCell,
   getLinesFromRow,
   TooltipTextCell,
   useTranslation,
   TypedTFunction,
   LocaleKey,
   useColumnUtils,
+  NumberCell,
 } from '@openmsupply-client/common';
 import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
@@ -21,9 +21,7 @@ import { useStocktakeLineErrorContext } from '../../context';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
-  onChangeSortBy: (
-    column: Column<StocktakeLineFragment | StocktakeSummaryItem>
-  ) => void;
+  onChangeSortBy: (sort: string, dir: 'desc' | 'asc') => void;
 }
 
 const expandColumn = getRowExpandColumn<
@@ -152,7 +150,7 @@ export const useStocktakeColumns = ({
         label: 'label.snapshot-num-of-packs',
         description: 'description.snapshot-num-of-packs',
         align: ColumnAlign.Right,
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
@@ -177,7 +175,7 @@ export const useStocktakeColumns = ({
         label: 'label.counted-num-of-packs',
         description: 'description.counted-num-of-packs',
         align: ColumnAlign.Right,
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         getIsError: row =>
           getLinesFromRow(row).some(
             r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'

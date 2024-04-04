@@ -48,6 +48,9 @@ const outboundParsers = {
       case 'invoiceNumber': {
         return InvoiceSortFieldInput.InvoiceNumber;
       }
+      case 'theirReference': {
+        return InvoiceSortFieldInput.TheirReference;
+      }
       case 'status':
       default: {
         return InvoiceSortFieldInput.Status;
@@ -88,6 +91,8 @@ const outboundParsers = {
       'taxPercentage' in patch
         ? { percentage: patch.taxPercentage }
         : undefined,
+    currencyId: 'currency' in patch ? patch.currency?.id : undefined,
+    currencyRate: 'currency' in patch ? patch.currency?.rate : undefined,
   }),
   toUpdateName: (
     patch: RecordPatch<OutboundRowFragment> | RecordPatch<OutboundFragment>

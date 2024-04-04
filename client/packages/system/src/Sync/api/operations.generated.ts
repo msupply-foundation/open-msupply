@@ -31,17 +31,17 @@ export type SyncStatusFragment = { __typename: 'SyncStatusNode', finished?: stri
 
 export type SyncStatusWithProgressFragment = { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null };
 
-export type FullSyncStatusFragment = { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: string | null, started: string }, lastSuccessfulSync?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null };
+export type FullSyncStatusFragment = { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: string | null, started: string }, lastSuccessfulSync?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null };
 
 export type SyncInfoQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncInfoQuery = { __typename: 'Queries', numberOfRecordsInPushQueue: number, syncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: string | null, started: string }, lastSuccessfulSync?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null } | null };
+export type SyncInfoQuery = { __typename: 'Queries', numberOfRecordsInPushQueue: number, syncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: string | null, started: string }, lastSuccessfulSync?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null } | null };
 
 export type SyncStatusQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type SyncStatusQuery = { __typename: 'Queries', syncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: string | null, started: string }, lastSuccessfulSync?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null } | null };
+export type SyncStatusQuery = { __typename: 'Queries', syncStatus?: { __typename: 'FullSyncStatusNode', isSyncing: boolean, error?: { __typename: 'SyncErrorNode', variant: Types.SyncErrorVariant, fullError: string } | null, integration?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, prepareInitial?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null, pullCentral?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, pullRemote?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, push?: { __typename: 'SyncStatusWithProgressNode', finished?: string | null, started: string, done?: number | null, total?: number | null } | null, summary: { __typename: 'SyncStatusNode', finished?: string | null, started: string }, lastSuccessfulSync?: { __typename: 'SyncStatusNode', finished?: string | null, started: string } | null } | null };
 
 export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -75,13 +75,6 @@ export const SyncErrorFragmentDoc = gql`
   fullError
 }
     `;
-export const SyncStatusFragmentDoc = gql`
-    fragment SyncStatus on SyncStatusNode {
-  __typename
-  finished
-  started
-}
-    `;
 export const SyncStatusWithProgressFragmentDoc = gql`
     fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
   __typename
@@ -91,6 +84,13 @@ export const SyncStatusWithProgressFragmentDoc = gql`
   total
 }
     `;
+export const SyncStatusFragmentDoc = gql`
+    fragment SyncStatus on SyncStatusNode {
+  __typename
+  finished
+  started
+}
+    `;
 export const FullSyncStatusFragmentDoc = gql`
     fragment FullSyncStatus on FullSyncStatusNode {
   __typename
@@ -98,7 +98,7 @@ export const FullSyncStatusFragmentDoc = gql`
     ...SyncError
   }
   integration {
-    ...SyncStatus
+    ...SyncStatusWithProgress
   }
   isSyncing
   prepareInitial {
@@ -121,8 +121,8 @@ export const FullSyncStatusFragmentDoc = gql`
   }
 }
     ${SyncErrorFragmentDoc}
-${SyncStatusFragmentDoc}
-${SyncStatusWithProgressFragmentDoc}`;
+${SyncStatusWithProgressFragmentDoc}
+${SyncStatusFragmentDoc}`;
 export const UpdateUserFragmentDoc = gql`
     fragment UpdateUser on UpdateUserNode {
   lastSuccessfulSync

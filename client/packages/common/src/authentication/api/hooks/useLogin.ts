@@ -29,7 +29,7 @@ const skipNoStoreRequests = (documentNode?: DocumentNode) => {
 
   if (documentNode.definitions.some(isAuthRequest)) return false;
 
-  switch (LocalStorage.getItem('/auth/error')) {
+  switch (LocalStorage.getItem('/error/auth')) {
     case AuthError.NoStoreAssigned:
     case AuthError.Unauthenticated:
     case AuthError.Timeout:
@@ -71,7 +71,7 @@ export const useLogin = (
     useLocalStorage('/mru/credentials');
   const getUserPermissions = useGetUserPermissions();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_error, setError, removeError] = useLocalStorage('/auth/error');
+  const [_error, setError, removeError] = useLocalStorage('/error/auth');
   const mostRecentCredentials = getMostRecentCredentials(
     mostRecentlyUsedCredentials
   );
@@ -108,7 +108,7 @@ export const useLogin = (
   };
 
   const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
-    if (LocalStorage.getItem('/auth/error') === AuthError.ServerError) return;
+    if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
 
     switch (true) {
       case isLoggedIn && hasValidStore: {
@@ -159,7 +159,7 @@ export const useLogin = (
     setCookie(authCookie);
     setLoginError(!!token, !!store);
     setSkipRequest(
-      () => LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned
+      () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned
     );
 
     return { token, error };

@@ -81,7 +81,7 @@ mod test {
         fn invoice1() -> InvoiceRow {
             inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice1".to_string();
-                r.name_id = mock_name_c().id;
+                r.name_link_id = mock_name_c().id;
                 r.store_id = mock_store_c().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.invoice_number = 100;
