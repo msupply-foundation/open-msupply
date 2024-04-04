@@ -219,6 +219,14 @@ impl StaticFileService {
                 status,
                 text
             );
+            // Update the sync file reference to indicate an error
+            let _result = SyncFileReferenceRowRepository::new(&ctx.connection).update_status(
+                &SyncFileReferenceRow {
+                    status: SyncFileStatus::DownloadError,
+                    error: Some(format!("{} : {}", status, text)),
+                    ..sync_file_ref.clone()
+                },
+            );
             return Err(anyhow::Error::msg(format!(
                 "Failed to download file from central server: {} -{}",
                 status, text
