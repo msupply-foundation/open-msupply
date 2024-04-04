@@ -36,7 +36,19 @@ const AssetListComponent: FC = () => {
 
   const columns = useColumns<AssetCatalogueItemFragment>(
     [
+      {
+        key: 'subCatalogue',
+        label: 'label.sub-catalogue',
+        sortable: true,
+        width: 165,
+      },
       ['code', { width: 150 }],
+      {
+        key: 'type',
+        label: 'label.type',
+        sortable: false,
+        accessor: ({ rowData }) => rowData.assetType?.name,
+      },
       {
         key: 'manufacturer',
         Cell: TooltipTextCell,
@@ -85,6 +97,7 @@ const AssetListComponent: FC = () => {
         //   navigate(`/catalogue/assets/${row.id}`);
         // }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
+        enableColumnSelection
       />
     </>
   );

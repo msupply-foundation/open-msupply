@@ -6,6 +6,7 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   id
   manufacturer
   model
+  subCatalogue
   assetClass {
     name
   }
