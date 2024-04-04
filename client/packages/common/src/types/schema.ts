@@ -184,6 +184,11 @@ export type AddToShipmentFromMasterListInput = {
   shipmentId: Scalars['String']['input'];
 };
 
+export enum AdjustmentDirectionInput {
+  Addition = 'ADDITION',
+  Reduction = 'REDUCTION'
+}
+
 export type AdjustmentReasonNotProvided = InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'AdjustmentReasonNotProvided';
   description: Scalars['String']['output'];
@@ -921,9 +926,9 @@ export type CreateInventoryAdjustmentErrorInterface = {
 };
 
 export type CreateInventoryAdjustmentInput = {
-  direction: Scalars['String']['input'];
+  direction: AdjustmentDirectionInput;
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   newNumberOfPacks: Scalars['Float']['input'];
-  reasonId: Scalars['String']['input'];
   stockLineId: Scalars['String']['input'];
 };
 
