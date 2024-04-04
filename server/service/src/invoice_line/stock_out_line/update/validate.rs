@@ -1,16 +1,12 @@
-use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StorageConnection,
-};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, StorageConnection};
 
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_existing_stock_line,
-        check_item_matches_batch, check_location_on_hold,
+        check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
         stock_out_line::BatchPair,
         validate::{
-            check_item_exists, check_line_belongs_to_invoice, check_line_exists_option,
-            check_number_of_packs,
+            check_line_belongs_to_invoice, check_line_exists_option, check_number_of_packs,
         },
         LocationIsOnHoldError,
     },
@@ -60,11 +56,9 @@ pub fn validate(
     }
 
     let batch_pair = check_batch_exists_option(store_id, input, line_row, connection)?;
-    let item = check_item_option(input.item_id.clone(), &line, connection)?;
 
-    if !check_item_matches_batch(&batch_pair.main_batch, &item) {
-        return Err(ItemDoesNotMatchStockLine);
-    }
+    let item = line.item_row.clone();
+
     if !check_batch_on_hold(&batch_pair.main_batch) {
         return Err(BatchIsOnHold);
     }
@@ -97,22 +91,6 @@ fn check_reduction_below_zero(
         })
     } else {
         Ok(())
-    }
-}
-
-fn check_item_option(
-    item_id: Option<String>,
-    invoice_line: &InvoiceLine,
-    connection: &StorageConnection,
-) -> Result<ItemRow, UpdateStockOutLineError> {
-    if let Some(item_id) = item_id {
-        Ok(
-            check_item_exists(connection, &item_id)?
-                .ok_or(UpdateStockOutLineError::ItemNotFound)?,
-        )
-    } else {
-        Ok(check_item_exists(connection, &invoice_line.item_row.id)?
-            .ok_or(UpdateStockOutLineError::ItemNotFound)?)
     }
 }
 

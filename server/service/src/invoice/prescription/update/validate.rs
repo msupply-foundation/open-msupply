@@ -35,7 +35,7 @@ pub fn validate(
         check_other_party(
             connection,
             store_id,
-            &patient_id,
+            patient_id,
             CheckOtherPartyType::Patient,
         )
         .map_err(|e| match e {
@@ -56,7 +56,7 @@ fn check_clinician_exists(
     let result = match clinician_id {
         None => true,
         Some(clinician_id) => ClinicianRowRepository::new(connection)
-            .find_one_by_id_option(&clinician_id)?
+            .find_one_by_id_option(clinician_id)?
             .is_some(),
     };
 
