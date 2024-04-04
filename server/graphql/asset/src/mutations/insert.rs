@@ -2,7 +2,8 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
+        DatabaseError, InternalError, NoPermissionForThisStore, RecordAlreadyExist,
+        UniqueValueViolation,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -27,15 +28,27 @@ pub fn insert_asset(
             store_id: Some(store_id.to_string()),
         },
     )?;
+
     // add store_id if not inserting from central server
     let asset_input;
     if !is_central_server() {
-        asset_input = match input.clone().store_id {
-            Some(_store_id) => input,
-            None => InsertAssetInput {
-                store_id: Some(store_id.to_owned()),
-                ..input
-            },
+        match input.clone().store_id {
+            Some(input_store_id) => {
+                if input_store_id != store_id.to_owned() {
+                    return Ok(InsertAssetResponse::Error(InsertAssetError {
+                        error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
+                    }));
+                }
+                asset_input = input;
+            }
+            None => {
+                asset_input = {
+                    InsertAssetInput {
+                        store_id: Some(store_id.to_owned()),
+                        ..input
+                    }
+                }
+            }
         }
     } else {
         asset_input = input
@@ -119,6 +132,7 @@ pub enum InsertAssetErrorInterface {
     UniqueValueViolation(UniqueValueViolation),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
+    PermissionError(NoPermissionForThisStore),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertAssetErrorInterface> {
