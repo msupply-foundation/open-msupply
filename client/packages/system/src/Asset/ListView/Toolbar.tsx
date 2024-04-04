@@ -88,6 +88,14 @@ export const Toolbar = () => {
               placeholder: t('placeholder.search-by-location-name'),
             },
             {
+              type: 'text',
+              name: t('label.sub-catalogue'),
+              urlParameter: 'subCatalogue',
+              placeholder: t('placeholder.search-by', {
+                field: t('label.sub-catalogue'),
+              }),
+            },
+            {
               type: 'enum',
               name: t('label.type'),
               urlParameter: 'typeId',
