@@ -71,7 +71,7 @@ export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError' } | { __typename: 'InvoiceNode', id: string } };
+export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'InvoiceNode', id: string } };
 
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
