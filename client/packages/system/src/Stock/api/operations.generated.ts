@@ -65,6 +65,14 @@ export type InsertRepackMutationVariables = Types.Exact<{
 
 export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
 
+export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
+  input: Types.CreateInventoryAdjustmentInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError' } | { __typename: 'InvoiceNode', id: string } };
+
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
   availableNumberOfPacks
@@ -208,6 +216,16 @@ export const InsertRepackDocument = gql`
   }
 }
     ${InvoiceRowFragmentDoc}`;
+export const CreateInventoryAdjustmentDocument = gql`
+    mutation createInventoryAdjustment($input: CreateInventoryAdjustmentInput!, $storeId: String!) {
+  createInventoryAdjustment(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+  }
+}
+    ${InvoiceRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -233,6 +251,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertRepack(variables: InsertRepackMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRepackMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertRepackMutation>(InsertRepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRepack', 'mutation');
+    },
+    createInventoryAdjustment(variables: CreateInventoryAdjustmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateInventoryAdjustmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateInventoryAdjustmentMutation>(CreateInventoryAdjustmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createInventoryAdjustment', 'mutation');
     }
   };
 }
@@ -337,5 +358,22 @@ export const mockRepacksByStockLineQuery = (resolver: ResponseResolver<GraphQLRe
 export const mockInsertRepackMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRepackMutationVariables>, GraphQLContext<InsertRepackMutation>, any>) =>
   graphql.mutation<InsertRepackMutation, InsertRepackMutationVariables>(
     'insertRepack',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockCreateInventoryAdjustmentMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ createInventoryAdjustment })
+ *   )
+ * })
+ */
+export const mockCreateInventoryAdjustmentMutation = (resolver: ResponseResolver<GraphQLRequest<CreateInventoryAdjustmentMutationVariables>, GraphQLContext<CreateInventoryAdjustmentMutation>, any>) =>
+  graphql.mutation<CreateInventoryAdjustmentMutation, CreateInventoryAdjustmentMutationVariables>(
+    'createInventoryAdjustment',
     resolver
   )
