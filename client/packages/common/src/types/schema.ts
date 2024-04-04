@@ -707,7 +707,7 @@ export type CannotEditStocktake = DeleteStocktakeErrorInterface & DeleteStocktak
   description: Scalars['String']['output'];
 };
 
-export type CannotHaveFractionalPack = CreateInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & {
+export type CannotHaveFractionalPack = InsertRepackErrorInterface & {
   __typename: 'CannotHaveFractionalPack';
   description: Scalars['String']['output'];
 };
@@ -916,15 +916,6 @@ export type ContactTraceSortInput = {
   key: ContactTraceSortFieldInput;
 };
 
-export type CreateInventoryAdjustmentError = {
-  __typename: 'CreateInventoryAdjustmentError';
-  error: CreateInventoryAdjustmentErrorInterface;
-};
-
-export type CreateInventoryAdjustmentErrorInterface = {
-  description: Scalars['String']['output'];
-};
-
 export type CreateInventoryAdjustmentInput = {
   direction: AdjustmentDirectionInput;
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
@@ -932,7 +923,7 @@ export type CreateInventoryAdjustmentInput = {
   stockLineId: Scalars['String']['input'];
 };
 
-export type CreateInventoryAdjustmentResponse = CreateInventoryAdjustmentError | InvoiceNode;
+export type CreateInventoryAdjustmentResponse = InvoiceNode;
 
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
@@ -5741,7 +5732,7 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float']['output'];
 };
 
-export type StockLineReducedBelowZero = CreateInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type StockLineReducedBelowZero = InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String']['output'];
   stockLine: StockLineNode;

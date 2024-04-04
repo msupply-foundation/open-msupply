@@ -1,9 +1,6 @@
 use async_graphql::*;
-use graphql_core::{
-    simple_generic_errors::CannotHaveFractionalPack, standard_graphql_error::validate_auth,
-    ContextExt,
-};
-use graphql_types::{generic_errors::StockLineReducedBelowZero, types::InvoiceNode};
+use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 
@@ -22,24 +19,9 @@ pub struct CreateInventoryAdjustmentInput {
     pub inventory_adjustment_reason_id: Option<String>,
 }
 
-#[derive(Interface)]
-#[graphql(name = "CreateInventoryAdjustmentErrorInterface")]
-#[graphql(field(name = "description", type = "String"))]
-pub enum CreateErrorInterface {
-    StockLineReducedBelowZero(StockLineReducedBelowZero),
-    CannotHaveFractionalPack(CannotHaveFractionalPack),
-}
-
-#[derive(SimpleObject)]
-#[graphql(name = "CreateInventoryAdjustmentError")]
-pub struct InsertError {
-    pub error: CreateErrorInterface,
-}
-
 #[derive(Union)]
 #[graphql(name = "CreateInventoryAdjustmentResponse")]
 pub enum InsertResponse {
-    Error(InsertError),
     Response(InvoiceNode),
 }
 
