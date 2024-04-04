@@ -7,6 +7,7 @@ import {
   CopyIcon,
   SaveIcon,
   XCircleIcon,
+  DownloadIcon,
   ArrowLeftIcon,
 } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
@@ -18,7 +19,8 @@ type DialogButtonVariant =
   | 'ok'
   | 'save'
   | 'copy'
-  | 'delete';
+  | 'delete'
+  | 'export';
 
 interface DialogButtonProps {
   disabled?: boolean;
@@ -82,6 +84,12 @@ const getButtonProps = (
       return {
         icon: <CopyIcon />,
         labelKey: 'link.copy-to-clipboard',
+        variant: 'contained',
+      };
+    case 'export':
+      return {
+        icon: <DownloadIcon />,
+        labelKey: 'button.export',
         variant: 'contained',
       };
   }

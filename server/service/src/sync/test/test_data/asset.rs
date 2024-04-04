@@ -21,12 +21,12 @@ const ASSET1: (&'static str, &'static str) = (
 fn asset1() -> AssetRow {
     AssetRow {
         id: ASSET1.0.to_string(),
-        asset_number: "AT1".to_string(),
+        asset_number: Some("AT1".to_string()),
         store_id: Some("store_a".to_string()),
         notes: Some("Asset 1".to_string()),
         serial_number: None,
         catalogue_item_id: None,
-        asset_category_id:None,
+        asset_category_id: None,
         asset_class_id: None,
         asset_type_id: None,
         installation_date: None,

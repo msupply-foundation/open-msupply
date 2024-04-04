@@ -2,6 +2,8 @@ import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetFragment } from './api';
 import { Formatter } from '@common/utils';
 import { AssetLogStatusInput, ReasonType, StatusType } from '@common/types';
+import { ImportRow, LineNumber } from './ImportAsset';
+import { LocationIds } from './DetailView';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
@@ -132,4 +134,54 @@ export const translateReason = (
   const parsed = parseLogReason(reason);
 
   return parsed === undefined ? defaultValue : t(parsed.key);
+};
+
+export const importEquipmentToCsvWithErrors = (
+  assets: Partial<ImportRow & LineNumber>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+    t('label.line-number'),
+    t('label.error-message'),
+  ];
+
+  const data = assets.map(node => [
+    node.assetNumber,
+    node.catalogueItemCode,
+    node.notes,
+    node.serialNumber,
+    node.installationDate,
+    node.lineNumber,
+    node.errorMessage,
+  ]);
+
+  return Formatter.csv({ fields, data });
+};
+
+export const importEquipmentToCsv = (
+  assets: Partial<ImportRow & LocationIds>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+  ];
+
+  const data = assets.map(node => [
+    node.assetNumber,
+    node.catalogueItemCode,
+    node.notes,
+    node.serialNumber,
+    node.installationDate,
+  ]);
+
+  return Formatter.csv({ fields, data });
 };

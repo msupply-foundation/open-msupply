@@ -208,7 +208,7 @@ mod test {
                 rows: vec![Asset {
                     id: "test_id".to_owned(),
                     notes: Some("test_note".to_owned()),
-                    asset_number: "test_asset_number".to_owned(),
+                    asset_number: Some("test_asset_number".to_owned()),
                     ..Default::default()
                 }],
                 count: 1,

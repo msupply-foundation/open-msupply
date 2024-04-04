@@ -16,11 +16,13 @@ import {
   DotCell,
   RouteBuilder,
 } from '@openmsupply-client/common';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
+import { EquipmentImportModal } from '../ImportAsset';
 import { Status } from '../Components';
+import { AssetFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
 
 const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
@@ -41,6 +43,7 @@ const AssetListComponent: FC = () => {
   const navigate = useNavigate();
   const t = useTranslation('catalogue');
   const modalController = useToggle();
+  const importModalController = useToggle();
   const isCentralServer = useIsCentralServerApi();
   const equipmentRoute = RouteBuilder.create(AppRoute.Coldchain).addPart(
     AppRoute.Equipment
@@ -125,7 +128,14 @@ const AssetListComponent: FC = () => {
         isOpen={modalController.isOn}
         onClose={modalController.toggleOff}
       />
-      <AppBarButtons modalController={modalController} />
+      <EquipmentImportModal
+        isOpen={importModalController.isOn}
+        onClose={importModalController.toggleOff}
+      />
+      <AppBarButtons
+        importModalController={importModalController}
+        modalController={modalController}
+      />
       <Toolbar />
       <DataTable
         id="item-list"
