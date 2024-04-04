@@ -24,7 +24,7 @@ table! {
         status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Nullable<Text>,
-        reason -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogReasonMapping>,
+        reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
     }
 }
@@ -37,7 +37,7 @@ table! {
         status -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping>,
         comment -> Nullable<Text>,
         #[sql_name = "type"] type_ -> Nullable<Text>,
-        reason -> Nullable<crate::db_diesel::assets::asset_log_row::AssetLogReasonMapping>,
+        reason_id -> Nullable<Text>,
         log_datetime -> Timestamp,
     }
 }
@@ -111,7 +111,7 @@ pub struct AssetLogRow {
     pub comment: Option<String>,
     #[column_name = "type_"]
     pub r#type: Option<String>,
-    pub reason: Option<AssetLogReason>,
+    pub reason_id: Option<String>,
     pub log_datetime: NaiveDateTime,
 }
 

@@ -26,7 +26,7 @@ use repository::{
 use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use repository::asset_log_row::{AssetLogReason, AssetLogStatus};
+use repository::asset_log_row::AssetLogStatus;
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -347,82 +347,11 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
     }
 }
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum AssetLogReasonInput {
-    AwaitingInstallation,
-    Stored,
-    OffsiteForRepairs,
-    AwaitingDecommissioning,
-    NeedsServicing,
-    MultipleTemperatureBreaches,
-    Unknown,
-    NeedsSpareParts,
-    LackOfPower,
-    Functioning,
-    Decommissioned,
-}
-
-impl AssetLogReasonInput {
-    pub fn to_domain(self) -> AssetLogReason {
-        match self {
-            AssetLogReasonInput::AwaitingInstallation => AssetLogReason::AwaitingInstallation,
-            AssetLogReasonInput::Stored => AssetLogReason::Stored,
-            AssetLogReasonInput::OffsiteForRepairs => AssetLogReason::OffsiteForRepairs,
-            AssetLogReasonInput::AwaitingDecommissioning => AssetLogReason::AwaitingDecommissioning,
-            AssetLogReasonInput::NeedsServicing => AssetLogReason::NeedsServicing,
-            AssetLogReasonInput::MultipleTemperatureBreaches => {
-                AssetLogReason::MultipleTemperatureBreaches
-            }
-            AssetLogReasonInput::Unknown => AssetLogReason::Unknown,
-            AssetLogReasonInput::NeedsSpareParts => AssetLogReason::NeedsSpareParts,
-            AssetLogReasonInput::LackOfPower => AssetLogReason::LackOfPower,
-            AssetLogReasonInput::Functioning => AssetLogReason::Functioning,
-            AssetLogReasonInput::Decommissioned => AssetLogReason::Decommissioned,
-        }
-    }
-}
-
 #[derive(InputObject, Clone)]
 pub struct EqualFilterStatusInput {
     pub equal_to: Option<AssetLogStatusInput>,
     pub equal_any: Option<Vec<AssetLogStatusInput>>,
     pub not_equal_to: Option<AssetLogStatusInput>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum ReasonType {
-    AwaitingInstallation,
-    Stored,
-    OffsiteForRepairs,
-    AwaitingDecommissioning,
-    NeedsServicing,
-    MultipleTemperatureBreaches,
-    Unknown,
-    NeedsSpareParts,
-    LackOfPower,
-    Functioning,
-    Decommissioned,
-}
-impl ReasonType {
-    pub fn from_domain(reason: &AssetLogReason) -> Self {
-        match reason {
-            AssetLogReason::AwaitingInstallation => ReasonType::AwaitingInstallation,
-            AssetLogReason::Stored => ReasonType::Stored,
-            AssetLogReason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
-            AssetLogReason::AwaitingDecommissioning => ReasonType::AwaitingDecommissioning,
-            AssetLogReason::NeedsServicing => ReasonType::NeedsServicing,
-            AssetLogReason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
-            AssetLogReason::Unknown => ReasonType::Unknown,
-            AssetLogReason::NeedsSpareParts => ReasonType::NeedsSpareParts,
-            AssetLogReason::LackOfPower => ReasonType::LackOfPower,
-            AssetLogReason::Functioning => ReasonType::Functioning,
-            AssetLogReason::Decommissioned => ReasonType::Decommissioned,
-        }
-    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -491,8 +420,8 @@ impl AssetLogNode {
         &self.row().r#type
     }
 
-    pub async fn reason(&self) -> Option<ReasonType> {
-        self.row().reason.as_ref().map(ReasonType::from_domain)
+    pub async fn reason_id(&self) -> &Option<String> {
+        &self.row().reason_id
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {

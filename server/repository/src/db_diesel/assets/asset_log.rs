@@ -110,12 +110,6 @@ impl<'a> AssetLogRepository<'a> {
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
-        // Debug diesel query
-        // println!(
-        //    "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
-
         let result = final_query.load::<AssetLog>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
