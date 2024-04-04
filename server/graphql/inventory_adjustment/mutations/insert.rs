@@ -4,18 +4,11 @@ use graphql_types::types::InvoiceNode;
 use repository::Invoice;
 use service::auth::{Resource, ResourceAccessRequest};
 
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
-pub enum AdjustmentDirectionInput {
-    Addition,
-    Reduction,
-}
-
 #[derive(InputObject)]
 #[graphql(name = "CreateInventoryAdjustmentInput")]
 pub struct CreateInventoryAdjustmentInput {
     pub stock_line_id: String,
     pub new_number_of_packs: f64,
-    pub direction: AdjustmentDirectionInput,
     pub inventory_adjustment_reason_id: Option<String>,
 }
 
@@ -42,6 +35,7 @@ pub fn create_inventory_adjustment(
     let service_provider = ctx.service_provider();
     let _service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
+    // another pattern to discuss - returning data from mutation when we don't use it?
     Ok(InsertResponse::Response(InvoiceNode::from_domain(
         Invoice {
             ..Default::default()

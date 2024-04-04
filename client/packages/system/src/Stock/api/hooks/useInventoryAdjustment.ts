@@ -1,19 +1,19 @@
 import { useCallback, useState } from 'react';
 import {
-  AdjustmentDirectionInput,
   useAuthContext,
   useGql,
   useMutation,
   useQueryClient,
 } from '@openmsupply-client/common';
 import {
+  Adjustment,
   InventoryAdjustmentReasonRowFragment,
   StockLineRowFragment,
 } from '../../..';
 import { getSdk } from '..';
 
 type DraftInventoryAdjustment = {
-  direction: AdjustmentDirectionInput | null;
+  direction: Adjustment;
   reason: InventoryAdjustmentReasonRowFragment | null;
   adjustBy: number;
   newNumberOfPacks: number;
@@ -24,7 +24,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
 
   // can then manage state (buffered too?) - can expose debounced update from here
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
-    direction: null,
+    direction: Adjustment.None,
     reason: null,
     adjustBy: 0,
     newNumberOfPacks: 0,
@@ -36,7 +36,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const create = useCallback(async () => {
     await createMutation(draft);
     setDraft({
-      direction: null,
+      direction: Adjustment.None,
       reason: null,
       adjustBy: 0,
       newNumberOfPacks: 0,
@@ -66,7 +66,6 @@ const useCreate = (stockLineId: string) => {
       return sdk.createInventoryAdjustment({
         storeId,
         input: {
-          direction,
           newNumberOfPacks,
           stockLineId,
           inventoryAdjustmentReasonId: reason?.id,

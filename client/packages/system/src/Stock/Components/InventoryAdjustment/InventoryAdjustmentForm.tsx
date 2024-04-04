@@ -8,7 +8,6 @@ import {
   NumericTextInput,
   DialogButton,
   useNotification,
-  AdjustmentDirectionInput,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
 import {
@@ -17,18 +16,6 @@ import {
   usePackVariant,
 } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
-
-// TODO... use direction input in stocktake?
-const tempAsAdjustment = (direction: AdjustmentDirectionInput | null) => {
-  switch (direction) {
-    case AdjustmentDirectionInput.Addition:
-      return Adjustment.Addition;
-    case AdjustmentDirectionInput.Reduction:
-      return Adjustment.Reduction;
-    default:
-      return Adjustment.None;
-  }
-};
 
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;
@@ -92,7 +79,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
               <InventoryAdjustmentReasonSearchInput
                 onChange={reason => setDraft(state => ({ ...state, reason }))}
                 value={draft.reason}
-                adjustment={tempAsAdjustment(draft.direction)}
+                adjustment={draft.direction}
               />
             </Box>
           }
@@ -118,7 +105,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
               disabled={!draft.direction}
               width={160}
               max={
-                draft.direction === AdjustmentDirectionInput.Reduction
+                draft.direction === Adjustment.Reduction
                   ? stockLine.totalNumberOfPacks
                   : undefined
               }
@@ -128,7 +115,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
                   ...state,
                   adjustBy: adjustBy ?? 0,
                   newNumberOfPacks:
-                    state.direction === AdjustmentDirectionInput.Addition
+                    state.direction === Adjustment.Addition
                       ? stockLine.totalNumberOfPacks + (adjustBy ?? 0)
                       : stockLine.totalNumberOfPacks - (adjustBy ?? 0),
                 }))
@@ -144,7 +131,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
               width={160}
               value={draft.newNumberOfPacks}
               max={
-                draft.direction === AdjustmentDirectionInput.Reduction
+                draft.direction === Adjustment.Reduction
                   ? stockLine.totalNumberOfPacks
                   : undefined
               }

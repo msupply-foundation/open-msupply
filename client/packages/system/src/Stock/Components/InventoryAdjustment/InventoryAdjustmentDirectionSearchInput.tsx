@@ -1,13 +1,10 @@
 import React, { FC } from 'react';
-import {
-  AdjustmentDirectionInput,
-  Autocomplete,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { Autocomplete, useTranslation } from '@openmsupply-client/common';
+import { Adjustment } from '@openmsupply-client/system';
 
 interface InventoryAdjustmentDirectionInputProps {
-  value: AdjustmentDirectionInput | null;
-  onChange: (direction?: AdjustmentDirectionInput) => void;
+  value: Adjustment | null;
+  onChange: (direction?: Adjustment) => void;
 }
 
 export const InventoryAdjustmentDirectionInput: FC<
@@ -16,8 +13,8 @@ export const InventoryAdjustmentDirectionInput: FC<
   const t = useTranslation('inventory');
 
   const options = [
-    { label: t('label.addition'), value: AdjustmentDirectionInput.Addition },
-    { label: t('label.reduction'), value: AdjustmentDirectionInput.Reduction },
+    { label: t('label.addition'), value: Adjustment.Addition },
+    { label: t('label.reduction'), value: Adjustment.Reduction },
   ];
 
   return (
