@@ -42,42 +42,12 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-
-pub enum AssetLogReason {
-    AwaitingInstallation,
-    Stored,
-    OffsiteForRepairs,
-    AwaitingDecommissioning,
-    NeedsServicing,
-    MultipleTemperatureBreaches,
-    Unknown,
-    NeedsSpareParts,
-    LackOfPower,
-    Functioning,
-    Decommissioned,
-}
-
-impl AssetLogReason {
-    pub fn equal_to(&self) -> EqualFilter<AssetLogReason> {
-        EqualFilter {
-            equal_to: Some(self.clone()),
-            not_equal_to: None,
-            equal_any: None,
-            not_equal_all: None,
-            equal_any_or_null: None,
-            is_null: None,
-        }
-    }
-}
-
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 
 pub enum AssetLogStatus {
+    #[default]
     NotInUse,
     Functioning,
     FunctioningButNeedsAttention,

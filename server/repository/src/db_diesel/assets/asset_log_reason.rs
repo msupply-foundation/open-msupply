@@ -6,11 +6,9 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
     asset_log_row::AssetLogStatus,
-    diesel_macros::{
-        apply_date_filter, apply_equal_filter, apply_sort_no_case, apply_string_filter,
-    },
+    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     repository_error::RepositoryError,
-    DBType, DatetimeFilter, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
+    DBType, EqualFilter, Pagination, Sort, StorageConnection, StringFilter,
 };
 
 pub type AssetLogReason = AssetLogReasonRow;
@@ -18,7 +16,6 @@ pub type AssetLogReason = AssetLogReasonRow;
 pub enum AssetLogReasonSortField {
     AssetLogStatus,
     Reason,
-    DeletedDatetime,
 }
 
 pub type AssetLogReasonSort = Sort<AssetLogReasonSortField>;
@@ -29,7 +26,6 @@ pub struct AssetLogReasonFilter {
     pub id: Option<EqualFilter<String>>,
     pub asset_log_status: Option<EqualFilter<AssetLogStatus>>,
     pub reason: Option<StringFilter>,
-    pub deleted_datetime: Option<DatetimeFilter>,
 }
 
 impl AssetLogReasonFilter {
@@ -46,10 +42,6 @@ impl AssetLogReasonFilter {
     }
     pub fn reason(mut self, filter: StringFilter) -> Self {
         self.reason = Some(filter);
-        self
-    }
-    pub fn deleted_datetime(mut self, filter: DatetimeFilter) -> Self {
-        self.deleted_datetime = Some(filter);
         self
     }
 }
@@ -96,6 +88,9 @@ impl<'a> AssetLogReasonRepository<'a> {
                 AssetLogReasonSortField::Reason => {
                     apply_sort_no_case!(query, sort, asset_log_reason_dsl::reason);
                 }
+                AssetLogReasonSortField::AssetLogStatus => {
+                    apply_sort_no_case!(query, sort, asset_log_reason_dsl::asset_log_status);
+                }
             }
         } else {
             query = query.order(asset_log_reason_dsl::id.asc())
@@ -111,19 +106,19 @@ impl<'a> AssetLogReasonRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetLogReasonRow>(&self.connection.connection)?;
+        let result = final_query.load::<AssetLogReason>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain(asset_class_row: AssetLogReasonRow) -> AssetLogReasonRow {
-    asset_class_row
+fn to_domain(asset_log_reason_row: AssetLogReasonRow) -> AssetLogReason {
+    asset_log_reason_row
 }
 
-type BoxedAssetClassQuery = IntoBoxed<'static, asset_log_reason::table, DBType>;
+type BoxedAssetLogReasonQuery = IntoBoxed<'static, asset_log_reason::table, DBType>;
 
-fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetClassQuery {
+fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetLogReasonQuery {
     let mut query = asset_log_reason_dsl::asset_log_reason.into_boxed();
 
     if let Some(f) = filter {
@@ -131,7 +126,6 @@ fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetClas
             id,
             asset_log_status,
             reason,
-            deleted_datetime,
         } = f;
 
         apply_equal_filter!(query, id, asset_log_reason_dsl::id);
@@ -140,12 +134,8 @@ fn create_filtered_query(filter: Option<AssetLogReasonFilter>) -> BoxedAssetClas
             asset_log_status,
             asset_log_reason_dsl::asset_log_status
         );
+
         apply_string_filter!(query, reason, asset_log_reason_dsl::reason);
-        apply_date_filter!(
-            query,
-            deleted_datetime,
-            asset_log_reason_dsl::deleted_datetime
-        );
     }
-    query
+    query.filter(asset_log_reason_dsl::deleted_datetime.is_null())
 }

@@ -1,7 +1,4 @@
-use repository::{
-    asset_log_row::{AssetLogReason, AssetLogStatus},
-    db_diesel::assets::asset_log_row::AssetLogRow,
-};
+use repository::{asset_log_row::AssetLogStatus, db_diesel::assets::asset_log_row::AssetLogRow};
 use serde_json::json;
 use util::Defaults;
 

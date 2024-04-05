@@ -331,6 +331,7 @@ pub struct AssetLogFilterInput {
     pub status: Option<EqualFilterStatusInput>,
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
+    pub reason_id: Option<EqualFilterStringInput>,
 }
 
 impl From<AssetLogFilterInput> for AssetLogFilter {
@@ -343,6 +344,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
                 .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
+            reason_id: f.reason_id.map(EqualFilter::from),
         }
     }
 }

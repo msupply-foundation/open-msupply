@@ -1,5 +1,6 @@
 use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
+use crate::asset_log_row::AssetLogStatus;
 use crate::RepositoryError;
 use crate::StorageConnection;
 
@@ -10,19 +11,19 @@ use serde::{Deserialize, Serialize};
 table! {
     asset_log_reason (id) {
         id -> Text,
-        asset_log_status -> Text,
+        asset_log_status -> crate::db_diesel::assets::asset_log_row::AssetLogStatusMapping,
         reason -> Text,
         deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
 #[derive(
-    Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
+    Clone, Insertable, Queryable, Default, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
 #[table_name = "asset_log_reason"]
 pub struct AssetLogReasonRow {
     pub id: String,
-    pub asset_log_status: String,
+    pub asset_log_status: AssetLogStatus,
     pub reason: String,
     pub deleted_datetime: Option<NaiveDateTime>,
 }

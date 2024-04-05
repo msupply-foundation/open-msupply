@@ -9,7 +9,7 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    asset_log_row::{AssetLogReason, AssetLogStatus},
+    asset_log_row::AssetLogStatus,
     assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
     ActivityLogType, RepositoryError, StorageConnection,
 };
