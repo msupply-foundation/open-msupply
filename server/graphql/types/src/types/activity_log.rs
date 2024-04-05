@@ -58,6 +58,7 @@ pub enum ActivityLogNodeType {
     AssetDeleted,
     AssetLogCreated,
     QuantityForLineHasBeenSetToZero,
+    AssetLogReasonCreated,
 }
 
 #[Object]
@@ -171,6 +172,7 @@ impl ActivityLogNodeType {
             from::AssetDeleted => to::AssetDeleted,
             from::AssetLogCreated => to::AssetLogCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
+            from::AssetLogReasonCreated => to::AssetLogReasonCreated,
         }
     }
 
@@ -214,6 +216,7 @@ impl ActivityLogNodeType {
             from::AssetDeleted => to::AssetDeleted,
             from::AssetLogCreated => to::AssetLogCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
+            from::AssetLogReasonCreated => to::AssetLogReasonCreated,
         }
     }
 }

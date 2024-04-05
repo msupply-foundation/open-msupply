@@ -1,4 +1,7 @@
-use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogRepository, AssetLogSort};
+use repository::asset_log_reason::{
+    AssetLogReason, AssetLogReasonFilter, AssetLogReasonRepository, AssetLogReasonSort,
+};
+
 use repository::{EqualFilter, PaginationOption, StorageConnection};
 
 use crate::{
@@ -16,7 +19,7 @@ pub fn get_asset_log_reasons(
     sort: Option<AssetLogReasonSort>,
 ) -> Result<ListResult<AssetLogReason>, ListError> {
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
-    let repository = AssetLogRepository::new(connection);
+    let repository = AssetLogReasonRepository::new(connection);
 
     Ok(ListResult {
         rows: repository.query(pagination, filter.clone(), sort)?,
@@ -24,11 +27,14 @@ pub fn get_asset_log_reasons(
     })
 }
 
-pub fn get_asset_log(ctx: &ServiceContext, id: String) -> Result<AssetLog, SingleRecordError> {
-    let repository = AssetLogRepository::new(&ctx.connection);
+pub fn get_asset_log_reason(
+    ctx: &ServiceContext,
+    id: String,
+) -> Result<AssetLogReason, SingleRecordError> {
+    let repository = AssetLogReasonRepository::new(&ctx.connection);
 
     let mut result =
-        repository.query_by_filter(AssetLogFilter::new().id(EqualFilter::equal_to(&id)))?;
+        repository.query_by_filter(AssetLogReasonFilter::new().id(EqualFilter::equal_to(&id)))?;
 
     if let Some(record) = result.pop() {
         Ok(record)
