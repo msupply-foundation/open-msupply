@@ -78,7 +78,7 @@ impl CommonSyncRecord {
             record_data: data,
         } = self;
 
-        let record_id = if action == SyncActionV5::Merge {
+        let record_id = if action == SyncAction::Merge {
             // This is (likely) a temporary fix to avoid merge sync records overriding upserts on target table
             // causing errors as the merge is applied to record that never got upserted first.
             uuid()
@@ -132,20 +132,20 @@ impl CommonSyncRecord {
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRowRepository};
 
-    use crate::sync::translations::special::ItemMergeMessage;
+    use crate::sync::translations::special::item_merge::ItemMergeMessage;
 
     use super::*;
 
     #[test]
     fn test_insert_to_upsert_mapping() {
-        let record = CommonSyncRecordV5 {
+        let record = CommonSyncRecord {
             table_name: "test".to_string(),
             record_id: "test".to_string(),
-            action: SyncActionV5::Insert,
-            data: json!({}),
+            action: SyncAction::Insert,
+            record_data: json!({}),
         };
 
-        let row = record.to_buffer_row().unwrap();
+        let row = record.to_buffer_row(None).unwrap();
         assert_eq!(row.table_name, "test");
         assert_eq!(row.record_id, "test");
         assert_eq!(row.action, SyncBufferAction::Upsert);
@@ -159,11 +159,11 @@ mod tests {
             data: vec![
                 RemoteSyncRecordV5 {
                     sync_id: "test1".to_string(),
-                    record: CommonSyncRecordV5 {
+                    record: CommonSyncRecord {
                         table_name: "item".to_string(),
                         record_id: "itemA".to_string(),
-                        action: SyncActionV5::Insert,
-                        data: json!({
+                        action: SyncAction::Insert,
+                        record_data: json!({
                             "ID": "itemA",
                             "item_name": "itemA",
                             "code": "itemA",
@@ -175,11 +175,11 @@ mod tests {
                 },
                 RemoteSyncRecordV5 {
                     sync_id: "test2".to_string(),
-                    record: CommonSyncRecordV5 {
+                    record: CommonSyncRecord {
                         table_name: "item".to_string(),
                         record_id: "itemA".to_string(),
-                        action: SyncActionV5::Update,
-                        data: json!({
+                        action: SyncAction::Update,
+                        record_data: json!({
                             "ID": "itemA",
                             "item_name": "itemA",
                             "code": "itemA",
@@ -191,11 +191,11 @@ mod tests {
                 },
                 RemoteSyncRecordV5 {
                     sync_id: "test3".to_string(),
-                    record: CommonSyncRecordV5 {
+                    record: CommonSyncRecord {
                         table_name: "item".to_string(),
                         record_id: "itemB".to_string(),
-                        action: SyncActionV5::Insert,
-                        data: json!({
+                        action: SyncAction::Insert,
+                        record_data: json!({
                             "ID": "itemB",
                             "item_name": "itemB",
                             "code": "itemB",
@@ -207,11 +207,11 @@ mod tests {
                 },
                 RemoteSyncRecordV5 {
                     sync_id: "test4".to_string(),
-                    record: CommonSyncRecordV5 {
+                    record: CommonSyncRecord {
                         table_name: "item".to_string(),
                         record_id: "itemA".to_string(),
-                        action: SyncActionV5::Merge,
-                        data: json!({
+                        action: SyncAction::Merge,
+                        record_data: json!({
                             "mergeIdToKeep": "itemA", "mergeIdToDelete": "itemB"
                         }),
                     },
