@@ -11,6 +11,7 @@ import {
   StockLineRowFragment,
 } from '../../..';
 import { getSdk } from '..';
+import { STOCK } from './keys';
 
 type DraftInventoryAdjustment = {
   direction: Adjustment;
@@ -20,9 +21,6 @@ type DraftInventoryAdjustment = {
 };
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
-  // would usually query data here
-
-  // can then manage state (buffered too?) - can expose debounced update from here
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
     direction: Adjustment.None,
     reason: null,
@@ -31,7 +29,6 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   });
 
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
-  // could then also have update mutation here
 
   const create = useCallback(async () => {
     await createMutation(draft);
@@ -63,7 +60,8 @@ const useCreate = (stockLineId: string) => {
       reason,
     }: DraftInventoryAdjustment) => {
       if (!direction) return;
-      return sdk.createInventoryAdjustment({
+      // TODO: error helper to handle structured/standard errors
+      return await sdk.createInventoryAdjustment({
         storeId,
         input: {
           newNumberOfPacks,
@@ -75,10 +73,7 @@ const useCreate = (stockLineId: string) => {
     {
       onSuccess: () =>
         // Stock line needs to be re-fetched to refresh quantity
-
-        // TODO, where to store query keys?
-        // these are same as in useStockApi
-        queryClient.invalidateQueries(['stock', storeId, stockLineId]),
+        queryClient.invalidateQueries([STOCK]),
     }
   );
 };
