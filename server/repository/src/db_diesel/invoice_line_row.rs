@@ -121,6 +121,18 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
+    pub fn update_return_reason_id(
+        &self,
+        record_id: &str,
+        reason_id: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(return_reason_id.eq(reason_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
     pub fn update_tax(
         &self,
         record_id: &str,
