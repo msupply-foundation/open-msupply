@@ -26,9 +26,11 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
     /// 3. Linked shipment exists (the outbound shipment)
     /// 4. Linked outbound shipment status is not Verified (this is the last status possible)
     /// 5. Linked outbound shipment status is not source inbound shipment status
+    /// 6. Source shipment is from mSupply thus the status will be `New`. Shouldn't happen for OMS since
+    ///  OMS will follow OMS status sequence
     ///
     /// Can only run two times (one for Delivered and one for Verified status):
-    /// 6. Because linked outbound shipment status will be updated to source inbound shipment status and `5.` will never be true again
+    /// 7. Because linked outbound shipment status will be updated to source inbound shipment status and `5.` will never be true again
     ///    and business rules guarantee that Inbound shipment can only change status to Delivered and Verified
     ///    and status cannot be changed backwards
     fn try_process_record(
@@ -65,10 +67,14 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
         if outbound_shipment.invoice_row.status == inbound_shipment.invoice_row.status {
             return Ok(None);
         }
+        // 6.
+        if inbound_shipment.invoice_row.status == InvoiceRowStatus::New {
+            return Ok(None);
+        }
 
         // Execute
         let updated_outbound_shipment = InvoiceRow {
-            // 6.
+            // 7.
             status: inbound_shipment.invoice_row.status.clone(),
             delivered_datetime: inbound_shipment.invoice_row.delivered_datetime.clone(),
             verified_datetime: inbound_shipment.invoice_row.verified_datetime.clone(),
