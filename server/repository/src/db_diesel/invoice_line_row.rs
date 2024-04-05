@@ -121,14 +121,32 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn update_return_reason_id(
+    pub fn update_tax(
         &self,
         record_id: &str,
-        reason_id: Option<String>,
+        tax_input: Option<f64>,
+        total_after_tax_calculation: f64,
     ) -> Result<(), RepositoryError> {
         diesel::update(invoice_line)
             .filter(id.eq(record_id))
-            .set(return_reason_id.eq(reason_id))
+            .set((
+                tax.eq(tax_input),
+                total_after_tax.eq(total_after_tax_calculation),
+            ))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_currency(
+        &self,
+        record_id: &str,
+        foreign_currency_price_before_tax_calculation: Option<f64>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(
+                foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
+            )
             .execute(&self.connection.connection)?;
         Ok(())
     }
