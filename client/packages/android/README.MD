@@ -111,7 +111,7 @@ When adding plugins - add them to the android package; if they are not here, the
 [info] Found 1 Cordova plugin for android:
        cordova-plugin-printer@0.8.0
 ```
-       
+
 with the new plugin showing up under the Cordova or Capacitor plugins sections.
 Also, add the plugin to `onPageStarted` in `ExtendedWebViewClient` - see the other plugins for details.
 If you require the plugin to be used in other packages, then you can also install in the root, or in individual packages, to make it available for use elsewhere.
@@ -143,9 +143,9 @@ Alternatively when using an emulator, navigate to `data/user/0/org.openmsupply.c
 
 #### Java
 
-If you get Java Compatibility* error in Android studio during gradle sync, you can download a new JDK via settings/preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> (drop down Gradle JDK:), and choose Java version as per [capacitor.build.gradle](https://github.com/openmsupply/open-msupply/blob/7befca66e757570bcec1eacc58099393e8eba8d0/client/packages/android/app/capacitor.build.gradle#L5). Then sync gradle files vai elephant icon on top right or File -> Sync Project with Gradle Files. 
+If you get Java Compatibility\* error in Android studio during gradle sync, you can download a new JDK via settings/preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> (drop down Gradle JDK:), and choose Java version as per [capacitor.build.gradle](https://github.com/openmsupply/open-msupply/blob/7befca66e757570bcec1eacc58099393e8eba8d0/client/packages/android/app/capacitor.build.gradle#L5). Then sync gradle files vai elephant icon on top right or File -> Sync Project with Gradle Files.
 
-#### AGP 
+#### AGP
 
 If you get AGP compatibility error in Android Studio during gradle sync, you will need to update your Android Studio version.
 

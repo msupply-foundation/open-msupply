@@ -1,7 +1,7 @@
 # Android build
 
 - Install Android Studio
-- Install NDK (as per screenshot below) **important to use version 22**
+- Install NDK (26.1.10909125 at the time of writing)
 
 ![omSupply Android NDK](./doc/omSupply_android_ndk.png)
 
@@ -15,17 +15,12 @@ The two main (supported by devices) ABI architectures are:
 
 - Add targets to to rust `rustup target add aarch64-linux-android && rustup target add armv7-linux-androideabi`
 - Tell rust to use pre built linker from NDK. This is defined in .cargo/config.toml, underd [target.*]. We need to add prebuild Android ABI from NDK to PATH so that linkers/ar files can be found.
-  - Find your NDK location, my one is `~/Library/Android/sdk/ndk/22.1.7171670/toolchains/llvm/prebuilt/darwin-x86_64/bin/`
-  - Permanently add NDK_BIN env variable `echo "export NDK_BIN=~/Library/Android/sdk/ndk/22.1.7171670/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc`
+  - Find your NDK location, my one is `~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/`
+  - Permanently add NDK_BIN env variable `echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc`
   - Open new terminal and validate $NDK_BIN is set correctly: `ls $NDK_BIN` (should give a list of files starting with aarch64 and armv7a)
   - Now we can add `$NDK_BIN` to path when buiding: `PATH=$PATH:$NDK_BIN cargo build --release`
 
 `PATH=$PATH:$NDK_BIN cargo build --release` from this directory will build for both ABI mentioned above, it's quicker to build one when doing a debug build `PATH=$PATH:$NDK_BIN cargo build --target aarch64-linux-android --release`
-
-## Build problem: missing `-lunwind` (aarch64 on Linux)
-
-When building the server for `aarch64` there might be an error message regarding a missing `-lunwind` lib.
-This can be fixed by creating an empty `libunwind.a` file in `$NDK_HOME/{version}/toolchains/llvm/prebuilt/linux-x86_64/aarch64-linux-android/libunwind.a`.;
 
 ## How it connects to Mobile ?
 
