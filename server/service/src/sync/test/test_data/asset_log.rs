@@ -14,7 +14,7 @@ const ASSET_LOG1: (&'static str, &'static str) = (
         "user_id": "user_account_a",
         "status": "FUNCTIONING",
         "comment": "test_comment",
-        "reason": "AWAITING_INSTALLATION",
+        "reason_id": null,
         "log_datetime": "2020-01-22T15:16:00"   
     }"#,
 );
