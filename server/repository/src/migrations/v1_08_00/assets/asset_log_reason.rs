@@ -1,8 +1,7 @@
-use crate::{migrations::sql, StorageConnection};
 use crate::migrations::DATETIME;
+use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
-
     sql!(
         connection,
         r#"
@@ -14,6 +13,15 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             );
         "#,
     )?;
+
+    if cfg!(feature = "postgres") {
+        sql!(
+            connection,
+            r#"
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'asset_log_reason';
+            "#
+        )?;
+    }
 
     Ok(())
 }
