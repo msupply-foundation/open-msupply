@@ -92,6 +92,7 @@ pub enum ChangelogTableName {
     SyncFileReference,
     Asset,
     AssetLog,
+    AssetLogReason,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -138,6 +139,7 @@ impl ChangelogTableName {
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
         }
     }
 }
