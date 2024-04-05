@@ -166,7 +166,7 @@ export const useInboundReturnColumns = ({
             else return [row?.packSize ?? 1];
           },
           getUnitName: row => {
-            if ('lines' in row) return null;
+            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
             else return row?.item?.unitName ?? null;
           },
         }),
