@@ -5,7 +5,7 @@ mod query {
         service_provider::ServiceProvider,
     };
     use repository::{
-        asset_log_row::{AssetLogReason, AssetLogStatus},
+        asset_log_row::AssetLogStatus,
         mock::{mock_asset_a, mock_store_a, mock_user_account_a, MockDataInserts},
         test_db::setup_all,
     };

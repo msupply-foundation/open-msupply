@@ -1,7 +1,7 @@
 use repository::{
     asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
     asset_internal_location_row::AssetInternalLocationRow,
-    asset_log_row::{AssetLogReason, AssetLogStatus},
+    asset_log_row::AssetLogStatus,
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
