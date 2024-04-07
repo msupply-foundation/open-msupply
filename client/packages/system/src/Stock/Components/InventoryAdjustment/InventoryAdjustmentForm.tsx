@@ -102,7 +102,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.adjust-by')}
           Input={
             <NumericTextInput
-              disabled={!draft.direction}
+              disabled={draft.direction === Adjustment.None}
               width={160}
               max={
                 draft.direction === Adjustment.Reduction
@@ -127,7 +127,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.new-num-packs')}
           Input={
             <NumericTextInput
-              disabled={!draft.direction}
+              disabled={draft.direction === Adjustment.None}
               width={160}
               value={draft.newNumberOfPacks}
               max={
