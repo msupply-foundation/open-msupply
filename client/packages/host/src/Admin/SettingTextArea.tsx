@@ -32,7 +32,7 @@ export const SettingTextArea: React.FC<SettingTextAreaProps> = ({
   infoText,
   title,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [value, setValue] = React.useState(defaultValue);
 
   const changeText = (event: ChangeEvent<HTMLTextAreaElement>) =>

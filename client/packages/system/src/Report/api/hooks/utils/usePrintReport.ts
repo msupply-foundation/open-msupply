@@ -40,7 +40,7 @@ const printPage = (url: string) => {
       Printer.print({ content: html });
     } else {
       const frame = document.createElement('iframe');
-
+      frame.hidden = true;
       frame.onload = () => {
         if (frame.contentDocument)
           frame.contentDocument.documentElement.innerHTML = html;

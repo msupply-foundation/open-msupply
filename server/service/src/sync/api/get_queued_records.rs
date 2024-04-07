@@ -69,22 +69,22 @@ mod test {
                 data: vec![
                     RemoteSyncRecordV5 {
                         sync_id: "ID1".to_string(),
-                        record: CommonSyncRecordV5 {
+                        record: CommonSyncRecord {
                             table_name: "test_table_1".to_string(),
                             record_id: "ID2".to_string(),
-                            action: SyncActionV5::Update,
-                            data: json!({
+                            action: SyncAction::Update,
+                            record_data: json!({
                                 "test_key": "test_value"
                             })
                         }
                     },
                     RemoteSyncRecordV5 {
                         sync_id: "ID3".to_string(),
-                        record: CommonSyncRecordV5 {
+                        record: CommonSyncRecord {
                             table_name: "test_table_2".to_string(),
                             record_id: "ID4".to_string(),
-                            action: SyncActionV5::Delete,
-                            data: json!({})
+                            action: SyncAction::Delete,
+                            record_data: json!({})
                         }
                     }
                 ]

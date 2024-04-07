@@ -4,7 +4,7 @@ use repository::{RepositoryError, UserAccountRow, UserAccountRowRepository};
 
 use crate::{
     auth_data::AuthData,
-    login::{FetchUserError, LoginError, LoginInput, LoginService},
+    login::{FetchUserError, LoginError, LoginFailure, LoginInput, LoginService},
     service_provider::ServiceProvider,
 };
 
@@ -49,7 +49,14 @@ impl SyncUser {
                     .map_err(|e| LoginError::UpdateUserError(e))?;
             }
             Err(err) => match err {
-                FetchUserError::Unauthenticated => return Err(LoginError::LoginFailure),
+                FetchUserError::Unauthenticated => {
+                    return Err(LoginError::LoginFailure(LoginFailure::InvalidCredentials))
+                }
+                FetchUserError::AccountBlocked(timeout_remaining) => {
+                    return Err(LoginError::LoginFailure(LoginFailure::AccountBlocked(
+                        timeout_remaining,
+                    )))
+                }
                 FetchUserError::ConnectionError(_) => return Err(LoginError::FetchUserError(err)),
                 FetchUserError::InternalError(_) => info!("{:?}", err),
             },
@@ -65,7 +72,7 @@ impl SyncUser {
     pub fn get_latest_successful_user_sync(
         service_provider: &ServiceProvider,
         user_id: &str,
-    ) -> Result<NaiveDateTime, RepositoryError> {
+    ) -> Result<Option<NaiveDateTime>, RepositoryError> {
         let ctx: crate::service_provider::ServiceContext = service_provider.basic_context()?;
 
         let user = UserAccountRowRepository::new(&ctx.connection)

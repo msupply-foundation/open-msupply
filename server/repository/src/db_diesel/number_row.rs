@@ -38,6 +38,8 @@ pub enum NumberRowType {
     Stocktake,
     Repack,
     Prescription,
+    InboundReturn,
+    OutboundReturn,
     Program(String),
 }
 
@@ -53,6 +55,8 @@ impl fmt::Display for NumberRowType {
             NumberRowType::Stocktake => write!(f, "STOCKTAKE"),
             NumberRowType::Repack => write!(f, "REPACK"),
             NumberRowType::Prescription => write!(f, "PRESCRIPTION"),
+            NumberRowType::InboundReturn => write!(f, "INBOUND_RETURN"),
+            NumberRowType::OutboundReturn => write!(f, "OUTBOUND_RETURN"),
             NumberRowType::Program(custom_string) => write!(f, "PROGRAM_{}", custom_string),
         }
     }
@@ -71,6 +75,8 @@ impl TryFrom<String> for NumberRowType {
             "RESPONSE_REQUISITION" => Ok(NumberRowType::ResponseRequisition),
             "STOCKTAKE" => Ok(NumberRowType::Stocktake),
             "REPACK" => Ok(NumberRowType::Repack),
+            "INBOUND_RETURN" => Ok(NumberRowType::InboundReturn),
+            "OUTBOUND_RETURN" => Ok(NumberRowType::OutboundReturn),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => {
                     if prefix == "PROGRAM" {
@@ -109,14 +115,14 @@ pub struct NextNumber {
 
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
-const NUMBER_INSERT_QUERY: &'static str =
+const NUMBER_INSERT_QUERY: &str =
     "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) RETURNING value;";
 
 // feature postgres
 // We need to use the ON CONFLICT DO NOTHING Clause for postgres just in case 2 threads insert at the same time (SQLite <on disk> does not need this as it only allows a single write transaction at a time).
 // Without this postgres will throw a unique constraint violation error and rollback the transaction, which is hard to recover from, instead we just ignore the error and check if it returned a value
 #[cfg(feature = "postgres")]
-const NUMBER_INSERT_QUERY: &'static str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
+const NUMBER_INSERT_QUERY: &str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
 
 impl<'a> NumberRowRepository<'a> {
     pub fn new(connection: &'a mut StorageConnection) -> Self {
@@ -249,68 +255,87 @@ mod number_row_mapping_test {
         // The purpose of this test is primarily to remind you to update both the to_string AND try_from functions if any new mappings are added to NumberRowType
         // the try_from function uses a wild card match so theoretically could be missed if you add a new mapping
 
-        let number_row_type = NumberRowType::Program("EXAMPLE_TEST".to_string());
-        match number_row_type {
-            NumberRowType::InboundShipment => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::InboundShipment.to_string()).unwrap()
-                        == NumberRowType::InboundShipment
-                )
-            }
-            NumberRowType::OutboundShipment => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::OutboundShipment.to_string()).unwrap()
-                        == NumberRowType::OutboundShipment
-                )
-            }
-            NumberRowType::InventoryAddition => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::InventoryAddition.to_string()).unwrap()
-                        == NumberRowType::InventoryAddition
-                )
-            }
-            NumberRowType::InventoryReduction => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::InventoryReduction.to_string()).unwrap()
-                        == NumberRowType::InventoryReduction
-                )
-            }
-            NumberRowType::Prescription => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::Prescription.to_string()).unwrap()
-                        == NumberRowType::Prescription
-                )
-            }
-            NumberRowType::RequestRequisition => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::RequestRequisition.to_string()).unwrap()
-                        == NumberRowType::RequestRequisition
-                )
-            }
-            NumberRowType::ResponseRequisition => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::ResponseRequisition.to_string())
-                        .unwrap()
-                        == NumberRowType::ResponseRequisition
-                )
-            }
-            NumberRowType::Stocktake => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::Stocktake.to_string()).unwrap()
-                        == NumberRowType::Stocktake
-                )
-            }
-            NumberRowType::Program(s) => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::Program(s.clone()).to_string()).unwrap()
-                        == NumberRowType::Program(s)
-                )
-            }
-            NumberRowType::Repack => {
-                assert!(
-                    NumberRowType::try_from(NumberRowType::Repack.to_string()).unwrap()
-                        == NumberRowType::Repack
-                )
+        for number_row_type in vec![
+            NumberRowType::Program("EXAMPLE_TEST".to_string()),
+            NumberRowType::OutboundReturn,
+            NumberRowType::InboundReturn,
+        ] {
+            match number_row_type {
+                NumberRowType::InboundShipment => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::InboundShipment.to_string())
+                            .unwrap()
+                            == NumberRowType::InboundShipment
+                    )
+                }
+                NumberRowType::OutboundShipment => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::OutboundShipment.to_string())
+                            .unwrap()
+                            == NumberRowType::OutboundShipment
+                    )
+                }
+                NumberRowType::InventoryAddition => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::InventoryAddition.to_string())
+                            .unwrap()
+                            == NumberRowType::InventoryAddition
+                    )
+                }
+                NumberRowType::InventoryReduction => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::InventoryReduction.to_string())
+                            .unwrap()
+                            == NumberRowType::InventoryReduction
+                    )
+                }
+                NumberRowType::Prescription => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::Prescription.to_string()).unwrap()
+                            == NumberRowType::Prescription
+                    )
+                }
+                NumberRowType::RequestRequisition => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::RequestRequisition.to_string())
+                            .unwrap()
+                            == NumberRowType::RequestRequisition
+                    )
+                }
+                NumberRowType::ResponseRequisition => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::ResponseRequisition.to_string())
+                            .unwrap()
+                            == NumberRowType::ResponseRequisition
+                    )
+                }
+                NumberRowType::Stocktake => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::Stocktake.to_string()).unwrap()
+                            == NumberRowType::Stocktake
+                    )
+                }
+                NumberRowType::Program(s) => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::Program(s.clone()).to_string())
+                            .unwrap()
+                            == NumberRowType::Program(s)
+                    )
+                }
+                NumberRowType::Repack => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::Repack.to_string()).unwrap()
+                            == NumberRowType::Repack
+                    )
+                }
+                NumberRowType::InboundReturn => assert!(
+                    NumberRowType::try_from(NumberRowType::InboundReturn.to_string()).unwrap()
+                        == NumberRowType::InboundReturn
+                ),
+                NumberRowType::OutboundReturn => assert!(
+                    NumberRowType::try_from(NumberRowType::OutboundReturn.to_string()).unwrap()
+                        == NumberRowType::OutboundReturn
+                ),
             }
         }
     }

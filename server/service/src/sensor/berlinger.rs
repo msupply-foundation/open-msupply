@@ -1,5 +1,5 @@
 use anyhow::Context;
-use chrono::NaiveDateTime;
+use chrono::{Local, LocalResult, NaiveDateTime, TimeZone};
 use repository::{DatetimeFilter, EqualFilter};
 use repository::{
     RepositoryError, Sensor, SensorFilter, SensorRepository, SensorRow, SensorRowRepository,
@@ -121,7 +121,7 @@ fn sensor_add_log_if_new(
             temperature_breach_id: None,
         };
         TemperatureLogRowRepository::new(connection).upsert_one(&new_temperature_log)?;
-        println!("Added sensor log {:?} ", new_temperature_log);
+        log::info!("Added sensor log {:?} ", new_temperature_log);
         Ok(())
     }
 }
@@ -163,9 +163,10 @@ fn sensor_add_breach_if_new(
             threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,
             threshold_minimum: breach_config.minimum_temperature,
             threshold_maximum: breach_config.maximum_temperature,
+            comment: None,
         };
         TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
-        println!("Added sensor breach {:?} ", new_temperature_breach);
+        log::info!("Added sensor breach {:?} ", new_temperature_breach);
         Ok(())
     }
 }
@@ -227,7 +228,7 @@ fn sensor_add_breach_config_if_new(
     };
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
-    println!(
+    log::info!(
         "Added sensor breach config {:?} ",
         new_temperature_breach_config
     );
@@ -238,11 +239,11 @@ fn sensor_add_if_new(
     connection: &StorageConnection,
     store_id: &str,
     temperature_sensor: &temperature_sensor::Sensor,
-) -> Result<(), RepositoryError> {
+) -> Result<Option<String>, RepositoryError> {
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
     if !result.is_empty() {
-        return Ok(());
+        return Ok(None);
     };
 
     let mut interval_seconds = None;
@@ -262,13 +263,14 @@ fn sensor_add_if_new(
         r#type: SensorType::Berlinger,
     };
     SensorRowRepository::new(connection).upsert_one(&new_sensor)?;
-    println!("Added sensor {:?} ", new_sensor);
-    Ok(())
+    log::info!("Added sensor {:?} ", new_sensor);
+    Ok(Some(new_sensor.id))
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReadSensor {
+    new_sensor_id: Option<String>,
     number_of_logs: u32,
     number_of_breaches: u32,
 }
@@ -283,6 +285,98 @@ pub enum ReadSensorError {
     Other(#[from] anyhow::Error),
 }
 
+fn convert_from_localtime(
+    sensor: &temperature_sensor::Sensor,
+) -> Result<temperature_sensor::Sensor, ReadSensorError> {
+    // map logs
+    let logs_mapped: Option<Vec<temperature_sensor::TemperatureLog>> = match sensor.clone().logs {
+        None => None,
+        Some(logs) => Some(
+            logs.into_iter()
+                .map(
+                    |temperature_sensor::TemperatureLog {
+                         timestamp,
+                         temperature,
+                     }| {
+                        let local = match Local.from_local_datetime(&timestamp) {
+                            LocalResult::None => {
+                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                            }
+                            LocalResult::Single(r) => r,
+                            LocalResult::Ambiguous(r, _) => r,
+                        };
+                        Ok(temperature_sensor::TemperatureLog {
+                            temperature,
+                            timestamp: local.naive_utc(),
+                        })
+                    },
+                )
+                .collect::<Result<_, _>>()?,
+        ),
+    };
+    // map temperature breaches
+    let breaches_mapped: Option<Vec<temperature_sensor::TemperatureBreach>> = match sensor
+        .clone()
+        .breaches
+    {
+        None => None,
+        Some(breaches) => Some(
+            breaches
+                .into_iter()
+                .map(
+                    |temperature_sensor::TemperatureBreach {
+                         breach_type,
+                         start_timestamp,
+                         end_timestamp,
+                         duration,
+                         acknowledged,
+                     }| {
+                        let local_start = match Local.from_local_datetime(&start_timestamp) {
+                            LocalResult::None => {
+                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                            }
+                            LocalResult::Single(r) => r,
+                            LocalResult::Ambiguous(r, _) => r,
+                        };
+                        let local_end = match Local.from_local_datetime(&end_timestamp) {
+                            LocalResult::None => {
+                                return Err(anyhow::anyhow!("Cannot convert to local timestamp"))
+                            }
+                            LocalResult::Single(r) => r,
+                            LocalResult::Ambiguous(r, _) => r,
+                        };
+                        Ok(temperature_sensor::TemperatureBreach {
+                            breach_type,
+                            start_timestamp: local_start.naive_utc(),
+                            end_timestamp: local_end.naive_utc(),
+                            duration,
+                            acknowledged,
+                        })
+                    },
+                )
+                .collect::<Result<_, _>>()?,
+        ),
+    };
+    // convert last connected timestamp
+    let last_connected_timestamp_converted = match sensor.clone().last_connected_timestamp {
+        None => None,
+        Some(timestamp) => Some(match Local.from_local_datetime(&timestamp) {
+            LocalResult::None => {
+                return Err(anyhow::anyhow!("Cannot convert to local timestamp").into())
+            }
+            LocalResult::Single(r) => r.naive_utc(),
+            LocalResult::Ambiguous(r, _) => r.naive_utc(),
+        }),
+    };
+
+    let mut sensor_mapped = sensor.clone();
+    sensor_mapped.last_connected_timestamp = last_connected_timestamp_converted;
+    sensor_mapped.breaches = breaches_mapped;
+    sensor_mapped.logs = logs_mapped;
+
+    Ok(sensor_mapped)
+}
+
 pub fn read_sensor(
     connection: &StorageConnection,
     store_id: &str,
@@ -290,10 +384,11 @@ pub fn read_sensor(
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let filename = fridgetag_file.to_string_lossy();
 
-    let mut temperature_sensor = temperature_sensor::read_sensor_file(&filename, true)
-        .map_err(ReadSensorError::StringError)?;
+    let temperature_sensor_unmapped =
+        temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
+    let mut temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
 
-    sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -305,7 +400,7 @@ pub fn read_sensor(
     // Filter sensor data by previous last connected time
     let last_connected = record.sensor_row.last_connection_datetime;
     temperature_sensor =
-        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None, true);
+        temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {
@@ -322,6 +417,7 @@ pub fn read_sensor(
     let result = ReadSensor {
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
+        new_sensor_id,
     };
 
     for temperature_sensor_breach in temperature_sensor_breaches {

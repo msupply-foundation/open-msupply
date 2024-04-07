@@ -1,4 +1,5 @@
 pub mod login;
+mod plugin;
 
 pub use self::login::*;
 pub mod logout;
@@ -10,7 +11,9 @@ pub use self::refresh_token::*;
 pub mod master_list;
 pub use self::master_list::*;
 pub mod invoice_counts;
+pub mod master_list_line;
 pub use self::invoice_counts::*;
+pub use self::master_list_line::*;
 pub mod names;
 pub use self::names::*;
 pub mod item;
@@ -21,13 +24,14 @@ pub mod store;
 pub use self::store::*;
 pub mod activity_log;
 pub use self::activity_log::*;
-pub mod requisition_line_chart;
-pub mod sync_settings;
-pub mod sync_status;
-pub use self::sync_status::*;
+pub mod database_settings;
+pub use self::database_settings::*;
 pub mod display_settings;
 pub mod initialisation_status;
+pub mod requisition_line_chart;
 pub mod response_requisition_line_stats;
+pub mod sync_settings;
+pub mod sync_status;
 pub use self::response_requisition_line_stats::*;
 pub mod inventory_adjustment_reason;
 pub use self::inventory_adjustment_reason::*;
@@ -42,6 +46,17 @@ pub mod log;
 pub use self::log::*;
 pub mod last_successful_user_sync;
 pub use self::last_successful_user_sync::*;
+pub use self::plugin::*;
+pub mod currency;
+pub mod label_printer_settings;
+pub use self::label_printer_settings::*;
+
+pub mod generate_inbound_return_lines;
+pub use self::generate_inbound_return_lines::*;
+pub mod generate_outbound_return_lines;
+pub use self::generate_outbound_return_lines::*;
+pub mod return_reason;
+pub use self::return_reason::*;
 
 #[cfg(test)]
 mod tests;

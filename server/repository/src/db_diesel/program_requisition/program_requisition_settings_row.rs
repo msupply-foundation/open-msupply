@@ -7,7 +7,7 @@ use crate::{
     db_diesel::name_tag_row::name_tag, period_schedule_row::period_schedule,
     repository_error::RepositoryError, StorageConnection,
 };
-
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
@@ -88,5 +88,34 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         )
         .execute(&mut self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ProgramRequisitionSettingsRowDelete(pub String);
+impl Delete for ProgramRequisitionSettingsRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ProgramRequisitionSettingsRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRequisitionSettingsRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for ProgramRequisitionSettingsRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRequisitionSettingsRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

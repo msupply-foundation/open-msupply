@@ -13,8 +13,25 @@ import {
   createTableStore,
   useColumns,
 } from '@openmsupply-client/common';
-import { BreachTypeCell } from '../../../common';
+import { BreachTypeCell, useFormatTemperature } from '../../../common';
 import { Toolbar } from './Toolbar';
+
+const temperatureLogFilterAndSort = {
+  initialSort: { key: 'datetime', dir: 'asc' as 'asc' | 'desc' },
+  filters: [
+    { key: 'datetime', condition: 'between' },
+    {
+      key: 'sensor.name',
+    },
+    {
+      key: 'location.code',
+    },
+    {
+      key: 'temperatureBreach.type',
+      condition: 'equalTo',
+    },
+  ],
+};
 
 const ListView: FC = () => {
   const {
@@ -22,22 +39,7 @@ const ListView: FC = () => {
     updatePaginationQuery,
     filter,
     queryParams: { sortBy, page, first, offset, filterBy },
-  } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'asc' },
-    filters: [
-      { key: 'datetime', condition: 'between' },
-      {
-        key: 'sensor.name',
-      },
-      {
-        key: 'location.name',
-      },
-      {
-        key: 'temperatureBreach.type',
-        condition: 'equalTo',
-      },
-    ],
-  });
+  } = useUrlQueryParams(temperatureLogFilterAndSort);
   const queryParams = {
     filterBy,
     offset,
@@ -49,6 +51,7 @@ const ListView: FC = () => {
     useTemperatureLog.document.list(queryParams);
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
+  const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<TemperatureLogFragment>(
     [
@@ -66,9 +69,9 @@ const ListView: FC = () => {
         sortable: false,
       },
       {
-        key: 'locationName',
+        key: 'location',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
         sortable: false,
       },
       {
@@ -80,7 +83,7 @@ const ListView: FC = () => {
         key: 'temperature',
         label: 'label.temperature',
         accessor: ({ rowData }) => {
-          return `${rowData.temperature}${t('label.temperature-unit')}`;
+          return `${formatTemperature(rowData.temperature)}`;
         },
       },
       {

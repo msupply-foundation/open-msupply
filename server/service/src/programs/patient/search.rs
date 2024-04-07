@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use repository::{
-    DateFilter, EqualFilter, Gender, PatientSort, PatientSortField, RepositoryError, StringFilter,
+    DateFilter, EqualFilter, Gender, PaginationOption, PatientSort, PatientSortField,
+    RepositoryError, StringFilter,
 };
 
 use crate::{
@@ -10,6 +11,8 @@ use crate::{
 
 use super::{Patient, PatientFilter};
 
+const PAGINATION_LIMIT: u32 = 100;
+
 pub struct PatientSearch {
     pub code: Option<String>,
     pub code_2: Option<String>,
@@ -17,7 +20,7 @@ pub struct PatientSearch {
     pub last_name: Option<String>,
     pub date_of_birth: Option<NaiveDate>,
     pub gender: Option<Gender>,
-    pub name_or_code: Option<String>,
+    pub identifier: Option<String>,
 }
 
 pub struct PatientSearchResult {
@@ -40,7 +43,7 @@ pub fn patient_search(
         last_name,
         date_of_birth,
         gender,
-        name_or_code,
+        identifier,
     } = input;
 
     if let Some(code) = code {
@@ -68,13 +71,15 @@ pub fn patient_search(
             is_null: None,
         });
     }
-    if let Some(name_or_code) = name_or_code {
-        filter = filter.name_or_code(StringFilter::like(&name_or_code));
+    if let Some(identifier) = identifier {
+        filter = filter.identifier(StringFilter::like(&identifier));
     }
-
     let results = service_provider.patient_service.get_patients(
         ctx,
-        None,
+        Some(PaginationOption {
+            limit: Some(PAGINATION_LIMIT),
+            offset: Some(0),
+        }),
         Some(filter),
         Some(PatientSort {
             key: PatientSortField::Code,

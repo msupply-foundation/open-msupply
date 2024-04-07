@@ -3,6 +3,7 @@ import {
   ConfirmationModalContext,
   ConfirmationModalState,
   ConfirmationModalControllerState,
+  IconType,
 } from './ConfirmationModalContext';
 import { ConfirmationModal } from './ConfirmationModal';
 import { PropsWithChildrenOnly } from '@common/types';
@@ -14,13 +15,15 @@ export const ConfirmationModalProvider: FC<PropsWithChildrenOnly> = ({
     open: false,
     message: '',
     title: '',
-    iconType: 'info',
+    iconType: 'help',
   });
   const { open, message, title, iconType, onConfirm, onCancel } =
     confirmationModalState;
 
   const confirmationModalController: ConfirmationModalControllerState = useMemo(
     () => ({
+      setIconType: (iconType: IconType) =>
+        setState(state => ({ ...state, iconType })),
       setMessage: (message: string) =>
         setState(state => ({ ...state, message })),
       setTitle: (title: string) => setState(state => ({ ...state, title })),

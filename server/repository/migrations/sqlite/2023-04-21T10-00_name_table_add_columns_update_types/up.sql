@@ -8,7 +8,7 @@ UPDATE name SET gender_new =  gender;
 ALTER TABLE name DROP COLUMN gender;
 ALTER TABLE name RENAME COLUMN gender_new TO gender;
 
-ALTER TABLE name ADD COLUMN is_deceased BOOLEAN;
+ALTER TABLE name ADD COLUMN is_deceased BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE name ADD COLUMN national_health_number TEXT;
 
 -- 2022-03-15T10-00_report_table

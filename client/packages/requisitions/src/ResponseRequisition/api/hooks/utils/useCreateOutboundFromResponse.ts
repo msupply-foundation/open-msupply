@@ -1,7 +1,4 @@
-import { AppRoute } from '@openmsupply-client/config';
 import {
-  RouteBuilder,
-  useOpenInNewTab,
   useQueryClient,
   useMutation,
   useNotification,
@@ -16,18 +13,9 @@ export const useCreateOutboundFromResponse = () => {
   const queryClient = useQueryClient();
   const { error, warning } = useNotification();
   const t = useTranslation('distribution');
-  const openInNewTab = useOpenInNewTab();
   const { id } = useResponseFields('id');
   const api = useResponseApi();
   return useMutation(() => api.createOutboundFromResponse(id), {
-    onSuccess: (invoiceNumber: number) => {
-      openInNewTab(
-        RouteBuilder.create(AppRoute.Distribution)
-          .addPart(AppRoute.OutboundShipment)
-          .addPart(String(invoiceNumber))
-          .build()
-      );
-    },
     onError: e => {
       const errorObj = e as Error;
       if (errorObj.message === 'NothingRemainingToSupply') {

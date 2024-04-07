@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   Grid,
   CopyIcon,
@@ -15,19 +16,21 @@ import {
   InfoTooltipIcon,
   DeleteIcon,
   useDeleteConfirmation,
+  useFormatDateTime,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { canDeleteStocktake } from '../../utils';
 
 const AdditionalInfoSection: FC = () => {
-  const t = useTranslation('common');
+  const t = useTranslation();
 
-  const { comment, user, update } = useStocktake.document.fields([
-    'comment',
-    'user',
-  ]);
+  const { comment, user, createdDatetime, update } =
+    useStocktake.document.fields(['comment', 'user', 'createdDatetime']);
   const [bufferedComment, setBufferedComment] = useBufferState(comment ?? '');
   const isDisabled = useStocktake.utils.isDisabled();
+  const { localisedDate } = useFormatDateTime();
 
   return (
     <DetailPanelSection title={t('heading.additional-info')}>
@@ -36,6 +39,10 @@ const AdditionalInfoSection: FC = () => {
           <PanelLabel>{t('label.entered-by')}</PanelLabel>
           <PanelField>{user?.username}</PanelField>
           {user?.email ? <InfoTooltipIcon title={user.email} /> : null}
+        </PanelRow>
+        <PanelRow>
+          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
 
         <PanelLabel>{t('heading.comment')}</PanelLabel>
@@ -52,30 +59,36 @@ const AdditionalInfoSection: FC = () => {
   );
 };
 
-export const SidePanel: FC = () => {
-  const { success } = useNotification();
+export const SidePanel = () => {
   const t = useTranslation('inventory');
-  const { data } = useStocktake.document.get();
+  const { success } = useNotification();
+  const navigate = useNavigate();
   const { mutateAsync } = useStocktake.document.delete();
-  const canDelete = data ? canDeleteStocktake(data) : false;
+  const { data: stocktake } = useStocktake.document.get();
+  const canDelete = stocktake ? canDeleteStocktake(stocktake) : false;
 
   const copyToClipboard = () => {
     navigator.clipboard
-      .writeText(JSON.stringify(data, null, 4) ?? '')
+      .writeText(JSON.stringify(stocktake, null, 4) ?? '')
       .then(() => success('Copied to clipboard successfully')());
   };
 
   const deleteAction = async () => {
-    if (!data) return;
-    await mutateAsync([data]);
+    if (!stocktake) return;
+    await mutateAsync([stocktake]);
+    navigate(
+      RouteBuilder.create(AppRoute.Inventory)
+        .addPart(AppRoute.Stocktakes)
+        .build()
+    );
   };
 
   const onDelete = useDeleteConfirmation({
-    selectedRows: [data],
+    selectedRows: [stocktake],
     deleteAction,
     messages: {
       confirmMessage: t('messages.confirm-delete-stocktake', {
-        number: data?.stocktakeNumber,
+        number: stocktake?.stocktakeNumber,
       }),
       deleteSuccess: t('messages.deleted-stocktakes', {
         count: 1,

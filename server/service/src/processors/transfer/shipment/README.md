@@ -20,4 +20,4 @@ When an outbound shipment is updated and an inbound shipment is already generate
 
 ## Same site transfer (both stores on same site)
 
-You may want to refer to [requisition trasfer docs](../requisition/README.md#same-site-transfer-both-stores-on-same-site) for example of how one instance of triggered processor can itself upsert records and process them in the next iteration
+You may want to refer to [requisition transfer docs](../requisition/README.md#same-site-transfer-both-stores-on-same-site) for example of how one instance of triggered processor can itself upsert records and process them in the next iteration

@@ -14,7 +14,10 @@ mod v1_02_01;
 mod v1_03_00;
 mod v1_04_00;
 mod v1_05_00;
+mod v1_05_04;
 mod v1_06_00;
+mod v1_07_00;
+mod v1_08_00;
 mod version;
 
 pub(crate) use self::types::*;
@@ -23,6 +26,7 @@ use self::v1_01_01::V1_01_01;
 use self::v1_01_02::V1_01_02;
 use self::v1_01_03::V1_01_03;
 
+pub(crate) mod helpers;
 mod templates;
 
 pub use self::version::*;
@@ -86,7 +90,10 @@ pub fn migrate(
         Box::new(v1_03_00::V1_03_00),
         Box::new(v1_04_00::V1_04_00),
         Box::new(v1_05_00::V1_05_00),
+        Box::new(v1_05_04::V1_05_04),
         Box::new(v1_06_00::V1_06_00),
+        Box::new(v1_07_00::V1_07_00),
+        Box::new(v1_08_00::V1_08_00),
     ];
 
     // Historic diesel migrations
@@ -152,7 +159,7 @@ fn get_database_version(mut connection: &StorageConnection) -> Version {
         Ok(Some(version_str)) => Version::from_str(&version_str),
         // Rust migrations start at "1.0.3"
         // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
-        // is in 1.1.0 (there is intential gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
+        // is in 1.1.0 (there is an intentional gap between 1.0.4 and 1.1.0 to allow example migrations to be runnable and testable)
         _ => Version::from_str("1.0.3"),
     }
 }
@@ -186,7 +193,7 @@ where
 
 /// Will try and execute batch sql statements, return SQL error which contains sql being run
 /// differs to execute_sql_with_error, accepts string query rather then diesel query and
-/// allows for multiple statments to be executed
+/// allows for multiple statements to be executed
 pub(crate) fn batch_execute_sql_with_error(
     mut connection: &StorageConnection,
     query: &str,

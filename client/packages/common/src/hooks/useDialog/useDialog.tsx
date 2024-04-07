@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent, { DialogContentProps } from '@mui/material/DialogContent';
 import { TransitionProps } from '@mui/material/transitions';
@@ -6,6 +6,8 @@ import { Slide } from '../../ui/animations';
 import { BasicModal, ModalTitle } from '@common/components';
 import { useIntlUtils } from '@common/intl';
 import { SxProps, Theme } from '@mui/material';
+
+type OkClickEvent = React.MouseEvent<HTMLButtonElement, MouseEvent>;
 
 export interface ButtonProps {
   icon?: React.ReactElement;
@@ -20,7 +22,9 @@ export interface ModalProps {
   cancelButton?: JSX.Element;
   height?: number;
   nextButton?: React.ReactElement<{
-    onClick: () => Promise<boolean>;
+    onClick: (e?: OkClickEvent) => Promise<boolean>;
+    disabled?: boolean;
+    type?: 'submit' | 'button' | 'reset';
   }>;
   slideAnimation?: boolean;
   Transition?: React.ForwardRefExoticComponent<
@@ -28,11 +32,19 @@ export interface ModalProps {
       children: React.ReactElement;
     } & React.RefAttributes<unknown>
   >;
-  okButton?: JSX.Element;
+  okButton?: React.ReactElement<{
+    onClick: (e?: OkClickEvent) => Promise<boolean>;
+    type?: 'submit' | 'button' | 'reset';
+  }>;
   reportSelector?: React.ReactElement;
+  copyButton?: JSX.Element;
+  saveButton?: JSX.Element;
   width?: number;
   sx?: SxProps<Theme>;
   title: string;
+  deleteButton?: JSX.Element;
+  disableOkKeyBinding?: boolean;
+  enableAutocomplete?: boolean;
 }
 
 export interface DialogProps {
@@ -103,8 +115,8 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     disableEscapeKey = false,
   } = dialogProps ?? {};
   const [open, setOpen] = React.useState(false);
-  const showDialog = () => setOpen(true);
-  const hideDialog = () => setOpen(false);
+  const showDialog = useCallback(() => setOpen(true), []);
+  const hideDialog = useCallback(() => setOpen(false), []);
   const { isRtl } = useIntlUtils();
 
   useEffect(() => {
@@ -131,12 +143,17 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
     nextButton,
     okButton,
     reportSelector,
+    copyButton,
+    saveButton,
     width,
     title,
     contentProps,
     slideAnimation = true,
     Transition,
+    disableOkKeyBinding,
+    enableAutocomplete,
     sx = {},
+    deleteButton,
   }) => {
     // The slide animation is triggered by cloning the next button and wrapping the passed
     // on click with a trigger to slide.
@@ -145,24 +162,53 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
       animationTimeout
     );
 
+    const defaultPreventedOnClick =
+      (onClick: (e?: OkClickEvent) => Promise<boolean>) =>
+      (e?: OkClickEvent) => {
+        e && e.preventDefault();
+        return onClick(e);
+      };
+
     let WrappedNextButton: ModalProps['nextButton'] = undefined;
+    let WrappedOkButton: ModalProps['okButton'] = undefined;
+
     if (nextButton) {
-      const { onClick, ...restOfNextButtonProps } = nextButton.props;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { onClick, type, ...restOfNextButtonProps } = nextButton.props;
+
+      const handler = defaultPreventedOnClick(onClick);
 
       // TODO: If you want to change the slide direction or other animation details, add a prop
       // slideAnimationConfig and add a parameter to `useSlideAnimation` to pass in the config.
       WrappedNextButton = React.cloneElement(nextButton, {
         onClick: slideAnimation
-          ? async () => {
-              const result = await onClick();
+          ? async (e?: OkClickEvent) => {
+              const result = await handler(e);
               if (!!result) onTriggerSlide();
               return result;
             }
-          : onClick,
+          : handler,
+        type: !disableOkKeyBinding ? 'submit' : 'button',
         ...restOfNextButtonProps,
       });
     }
 
+    if (okButton) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { onClick, type, ...restOfOkButtonProps } = okButton.props;
+
+      WrappedOkButton = React.cloneElement(okButton, {
+        onClick: defaultPreventedOnClick(onClick),
+        // If the next button is not present/disabled, the ok button should be a submit button (allow firing on enter key press)
+        type:
+          !disableOkKeyBinding && (!nextButton || nextButton.props.disabled)
+            ? 'submit'
+            : 'button',
+        ...restOfOkButtonProps,
+      });
+    }
+
+    const formProps = enableAutocomplete ? { autoComplete: 'on' } : {};
     const { sx: contentSX, ...restOfContentProps } = contentProps ?? {};
     const dimensions = {
       height: height ? Math.min(window.innerHeight - 50, height) : undefined,
@@ -180,30 +226,38 @@ export const useDialog = (dialogProps?: DialogProps): DialogState => {
         disableEscapeKeyDown={false}
       >
         {title ? <ModalTitle title={title} /> : null}
-        <DialogContent
-          {...restOfContentProps}
-          sx={{ overflowX: 'hidden', ...contentSX }}
+        <form
+          style={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto' }}
+          {...formProps}
         >
-          {slideAnimation ? (
-            <Slide in={slideConfig.in} direction={slideConfig.direction}>
-              <div>{slideConfig.in && children}</div>
-            </Slide>
-          ) : (
-            <div>{children}</div>
-          )}
-        </DialogContent>
-        <DialogActions
-          sx={{
-            justifyContent: 'center',
-            marginBottom: '30px',
-            marginTop: '30px',
-          }}
-        >
-          {cancelButton}
-          {okButton}
-          {WrappedNextButton}
-          {reportSelector}
-        </DialogActions>
+          <DialogContent
+            {...restOfContentProps}
+            sx={{ overflowX: 'hidden', ...contentSX }}
+          >
+            {slideAnimation ? (
+              <Slide in={slideConfig.in} direction={slideConfig.direction}>
+                <div>{slideConfig.in && children}</div>
+              </Slide>
+            ) : (
+              <div>{children}</div>
+            )}
+          </DialogContent>
+          <DialogActions
+            sx={{
+              justifyContent: 'center',
+              marginBottom: '30px',
+              marginTop: '30px',
+            }}
+          >
+            {cancelButton}
+            {deleteButton}
+            {saveButton}
+            {copyButton}
+            {WrappedOkButton}
+            {WrappedNextButton}
+            {reportSelector}
+          </DialogActions>
+        </form>
       </BasicModal>
     );
   };

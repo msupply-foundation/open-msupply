@@ -1,11 +1,10 @@
 use repository::PeriodScheduleRow;
 
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
-};
+use crate::sync::test::TestSyncIncomingRecord;
 
-const PERIOD_SCHEDULE_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "periodSchedule";
+
+const PERIOD_SCHEDULE_1: (&str, &str) = (
     "period_schedule_1",
     r#"{
     "ID": "period_schedule_1",
@@ -13,7 +12,7 @@ const PERIOD_SCHEDULE_1: (&'static str, &'static str) = (
   }"#,
 );
 
-const PERIOD_SCHEDULE_2: (&'static str, &'static str) = (
+const PERIOD_SCHEDULE_2: (&str, &str) = (
     "period_schedule_2",
     r#"{
     "ID": "period_schedule_2",
@@ -21,7 +20,7 @@ const PERIOD_SCHEDULE_2: (&'static str, &'static str) = (
   }"#,
 );
 
-const PERIOD_SCHEDULE_3: (&'static str, &'static str) = (
+const PERIOD_SCHEDULE_3: (&str, &str) = (
     "597074CBCCC24166B8C1F82553DACC2F",
     r#"{
   "ID": "597074CBCCC24166B8C1F82553DACC2F",
@@ -29,31 +28,31 @@ const PERIOD_SCHEDULE_3: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::PERIOD_SCHEDULE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             PERIOD_SCHEDULE_1,
-            PullUpsertRecord::PeriodSchedule(PeriodScheduleRow {
+            PeriodScheduleRow {
                 id: "period_schedule_1".to_string(),
                 name: "Weekly1".to_string(),
-            }),
+            },
         ),
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::PERIOD_SCHEDULE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             PERIOD_SCHEDULE_2,
-            PullUpsertRecord::PeriodSchedule(PeriodScheduleRow {
+            PeriodScheduleRow {
                 id: "period_schedule_2".to_string(),
                 name: "Yearly2".to_string(),
-            }),
+            },
         ),
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::PERIOD_SCHEDULE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             PERIOD_SCHEDULE_3,
-            PullUpsertRecord::PeriodSchedule(PeriodScheduleRow {
+            PeriodScheduleRow {
                 id: "597074CBCCC24166B8C1F82553DACC2F".to_string(),
                 name: "Quarterly".to_string(),
-            }),
+            },
         ),
     ]
 }

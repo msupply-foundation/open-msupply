@@ -23,18 +23,18 @@ pub fn delete_inbound_shipment_line(
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let (invoice_row, line) = validate(&input, &ctx.store_id, &connection)?;
+            let (invoice_row, line) = validate(&input, &ctx.store_id, connection)?;
 
             let delete_batch_id_option = line.stock_line_id.clone();
 
-            InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
+            InvoiceLineRowRepository::new(connection).delete(&line.id)?;
 
             if let Some(id) = delete_batch_id_option {
-                StockLineRowRepository::new(&connection).delete(&id)?;
+                StockLineRowRepository::new(connection).delete(&id)?;
             }
 
             if let Some(invoice_row) = generate_invoice_user_id_update(&ctx.user_id, invoice_row) {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             Ok(line.id) as Result<String, OutError>
@@ -52,6 +52,7 @@ pub enum DeleteInboundShipmentLineError {
     CannotEditFinalised,
     BatchIsReserved,
     NotThisInvoiceLine(String),
+    LineUsedInStocktake,
 }
 
 impl From<RepositoryError> for DeleteInboundShipmentLineError {
@@ -107,7 +108,7 @@ mod test {
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = String::from("outbound_shipment_e_line_a");
                 r.invoice_id = String::from("outbound_shipment_e");
-                r.item_id = String::from("item_a");
+                r.item_link_id = String::from("item_a");
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.stock_line_id = Some(String::from("item_a_line_a"));
@@ -205,7 +206,7 @@ mod test {
             .delete_inbound_shipment_line(
                 &context,
                 DeleteInboundShipmentLine {
-                    id: mock_inbound_shipment_c_invoice_lines()[0].id.clone(),
+                    id: mock_inbound_shipment_c_invoice_lines()[2].id.clone(),
                 },
             )
             .unwrap();

@@ -2,7 +2,7 @@ import { ItemRowFragment } from '@openmsupply-client/system';
 
 export { default as InvoiceService } from './InvoiceService';
 export { useOutbound } from './OutboundShipment/api';
-export { useInbound } from './InboundShipment/api';
+export { useInbound, InboundFragment } from './InboundShipment/api';
 
 export type DraftItem = Pick<ItemRowFragment, 'id' | 'unitName'>;
 

@@ -34,6 +34,10 @@ impl StorePreferenceNode {
     pub async fn vaccine_module(&self) -> &bool {
         &self.store_preference.vaccine_module
     }
+
+    pub async fn issue_in_foreign_currency(&self) -> &bool {
+        &self.store_preference.issue_in_foreign_currency
+    }
 }
 
 impl StorePreferenceNode {

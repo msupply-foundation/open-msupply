@@ -28,7 +28,7 @@ const MonthlyConsumption = ({
   averageMonthlyConsumption: number;
   showText: boolean;
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
   const text = ` (${month} ${t('label.months', {
     count: month,

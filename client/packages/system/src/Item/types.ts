@@ -1,4 +1,4 @@
-import { ItemRowFragment } from './api';
+import { ItemRowFragment, ItemStockOnHandFragment } from './api';
 
 export type ItemLike = ItemLikeLine | ItemLikeAggregate;
 
@@ -10,3 +10,8 @@ export interface ItemLikeAggregate {
   itemId: string;
   lines: ItemLikeLine[];
 }
+
+export type ItemOptionType = Pick<
+  ItemStockOnHandFragment,
+  'id' | 'code' | 'name' | 'availableStockOnHand'
+>;

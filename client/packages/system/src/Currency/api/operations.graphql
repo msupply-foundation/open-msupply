@@ -1,0 +1,23 @@
+fragment CurrencyRow on CurrencyNode {
+  id
+  code
+  rate
+  isHomeCurrency
+}
+
+query currencies(
+  $sort: CurrencySortInput
+  $filter: CurrencyFilterInput
+) {
+  currencies(
+    filter: $filter
+    sort: $sort
+  ) {
+    ... on CurrencyConnector {
+      nodes {
+        ...CurrencyRow
+      }
+      totalCount
+    }
+  }
+}

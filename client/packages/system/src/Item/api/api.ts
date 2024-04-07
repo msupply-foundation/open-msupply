@@ -2,9 +2,12 @@ import {
   ItemNodeType,
   SortBy,
   ItemSortFieldInput,
+  InsertPackVariantInput,
+  UpdatePackVariantInput,
+  DeletePackVariantInput,
   FilterByWithBoolean,
 } from '@openmsupply-client/common';
-import { Sdk, ItemRowFragment } from './operations.generated';
+import { Sdk, ItemRowFragment, VariantFragment } from './operations.generated';
 
 export type ListParams<T> = {
   first: number;
@@ -23,6 +26,24 @@ const itemParsers = {
 
     return fields[sortBy.key] ?? ItemSortFieldInput.Name;
   },
+};
+
+const packVariantParsers = {
+  toInsert: (packVariant: VariantFragment): InsertPackVariantInput => ({
+    id: packVariant.id,
+    itemId: packVariant.itemId,
+    packSize: packVariant.packSize,
+    shortName: packVariant.shortName,
+    longName: packVariant.longName,
+  }),
+  toUpdate: (packVariant: VariantFragment): UpdatePackVariantInput => ({
+    id: packVariant.id,
+    shortName: packVariant.shortName,
+    longName: packVariant.longName,
+  }),
+  toDelete: (packVariant: VariantFragment): DeletePackVariantInput => ({
+    id: packVariant.id,
+  }),
 };
 
 export const getItemQueries = (sdk: Sdk, storeId: string) => ({
@@ -44,6 +65,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filterBy: {
           ...params.filterBy,
           type: { equalTo: ItemNodeType.Service },
+          isActive: true,
         },
       });
       return result;
@@ -55,6 +77,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...params.filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isVisible: { equalTo: true },
+          isActive: true,
         },
       });
       return result;
@@ -75,6 +98,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isVisible: true,
+          isActive: true,
         },
       });
 
@@ -103,6 +127,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         filter: {
           ...filterBy,
           isVisible: true,
+          isActive: true,
         },
       });
 
@@ -130,6 +155,7 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
           ...filterBy,
           type: { equalTo: ItemNodeType.Stock },
           isVisible: true,
+          isActive: true,
         },
       });
 
@@ -153,12 +179,38 @@ export const getItemQueries = (sdk: Sdk, storeId: string) => ({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { ...filterBy, isVisible: true },
+        filter: { ...filterBy, isVisible: true, isActive: true },
       });
 
       const items = result?.items;
 
       return items;
     },
+    packVariants: async () => {
+      const result = await sdk.packVariants({ storeId });
+
+      return result.packVariants;
+    },
   },
+  insertPackVariant: async (input: VariantFragment) => {
+    const result = await sdk.insertPackVariant({
+      storeId,
+      input: packVariantParsers.toInsert(input),
+    });
+
+    return result.centralServer.packVariant.insertPackVariant;
+  },
+  updatePackVariant: async (input: VariantFragment) => {
+    const result = await sdk.updatePackVariant({
+      storeId,
+      input: packVariantParsers.toUpdate(input),
+    });
+
+    return result.centralServer.packVariant.updatePackVariant;
+  },
+  deletePackVariant: async (input: VariantFragment) =>
+    await sdk.deletePackVariant({
+      storeId,
+      input: packVariantParsers.toDelete(input),
+    }),
 });

@@ -1,11 +1,12 @@
 use crate::{
+    activity_log::activity_log_entry,
     invoice_line::{query::get_invoice_line, ShipmentTaxUpdate},
     service_provider::ServiceContext,
     NullableUpdate, WithDBError,
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+    ActivityLogType, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -39,29 +40,48 @@ pub fn update_inbound_shipment_line(
     let updated_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (line, item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (line, item, invoice) = validate(&input, &ctx.store_id, connection)?;
 
             let (invoice_row_option, updated_line, upsert_batch_option, delete_batch_id_option) =
-                generate(connection, &ctx.user_id, input, line, item, invoice)?;
+                generate(
+                    connection,
+                    &ctx.user_id,
+                    input.clone(),
+                    line.clone(),
+                    item,
+                    invoice.clone(),
+                )?;
 
-            let stock_line_respository = StockLineRowRepository::new(&connection);
+            let stock_line_repository = StockLineRowRepository::new(connection);
 
             if let Some(upsert_batch) = upsert_batch_option {
-                stock_line_respository.upsert_one(&upsert_batch)?;
+                stock_line_repository.upsert_one(&upsert_batch)?;
             }
 
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
             if let Some(id) = delete_batch_id_option {
-                stock_line_respository.delete(&id)?;
+                stock_line_repository.delete(&id)?;
             }
 
             if let Some(invoice_row) = invoice_row_option {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
+            }
+
+            if let Some(number_of_packs) = input.number_of_packs {
+                if number_of_packs == 0.0 {
+                    activity_log_entry(
+                        ctx,
+                        ActivityLogType::QuantityForLineHasBeenSetToZero,
+                        Some(invoice.id),
+                        Some(updated_line.batch.unwrap_or_default() + " " + &updated_line.id),
+                        None,
+                    )?;
+                }
             }
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -80,7 +100,7 @@ pub enum UpdateInboundShipmentLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
@@ -200,10 +220,10 @@ mod test {
                     r.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
                     r.item_id = Some(mock_item_a().id.clone());
                     r.pack_size = Some(1);
-                    r.number_of_packs = Some(0.0);
+                    r.number_of_packs = Some(-1.0);
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // CannotEditFinalised
@@ -284,7 +304,7 @@ mod test {
             inbound_line_update,
             inline_edit(&inbound_line_update, |mut u| {
                 u.id = mock_inbound_shipment_c_invoice_lines()[0].id.clone();
-                u.item_id = mock_item_a().id.clone();
+                u.item_link_id = mock_item_a().id.clone();
                 u.pack_size = 2;
                 u.number_of_packs = 3.0;
                 u

@@ -70,6 +70,7 @@ pub fn delete_stocktake(
             // TODO: implement delete lines. See https://github.com/openmsupply/remote-server/issues/839 for details.
             let lines = StocktakeLineRepository::new(&connection).query_by_filter(
                 StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to(&stocktake_id)),
+                Some(ctx.store_id.clone()),
             )?;
             for line in lines {
                 delete_stocktake_line(ctx, line.line.id.clone()).map_err(|error| {

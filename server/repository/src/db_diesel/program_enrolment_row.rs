@@ -1,15 +1,10 @@
 use super::{
-    name_row::name, name_store_join::name_store_join, program_row::program, store_row::store,
-    StorageConnection,
+    name_link_row::name_link, name_row::name, name_store_join::name_store_join,
+    program_row::program, store_row::store, RepositoryError, StorageConnection,
 };
-
-use crate::repository_error::RepositoryError;
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
-
-use diesel_derive_enum::DbEnum;
-use serde::{Deserialize, Serialize};
 
 table! {
     program_enrolment (id) {
@@ -17,30 +12,22 @@ table! {
         document_type -> Text,
         document_name -> Text,
         program_id -> Text,
-        patient_id -> Text,
+        patient_link_id -> Text,
         enrolment_datetime -> Timestamp,
         program_enrolment_id -> Nullable<Text>,
-        status -> crate::db_diesel::program_enrolment_row::ProgramEnrolmentStatusMapping,
+        status -> Nullable<Text>,
     }
 }
 
-joinable!(program_enrolment -> name (patient_id));
+joinable!(program_enrolment -> name_link (patient_link_id));
 joinable!(program_enrolment -> program (program_id));
 allow_tables_to_appear_in_same_query!(program_enrolment, name);
 allow_tables_to_appear_in_same_query!(program_enrolment, name_store_join);
 allow_tables_to_appear_in_same_query!(program_enrolment, store);
 allow_tables_to_appear_in_same_query!(program_enrolment, program);
+allow_tables_to_appear_in_same_query!(program_enrolment, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ProgramEnrolmentStatus {
-    Active,
-    OptedOut,
-    TransferredOut,
-    Paused,
-}
-
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[diesel(table_name = program_enrolment)]
 pub struct ProgramEnrolmentRow {
     /// The row id
@@ -52,27 +39,12 @@ pub struct ProgramEnrolmentRow {
     /// Reference to program id
     pub program_id: String,
     /// The patient this program belongs to
-    pub patient_id: String,
+    pub patient_link_id: String,
     /// Time when the patient has been enrolled to this program
     pub enrolment_datetime: NaiveDateTime,
     /// Program specific patient id
     pub program_enrolment_id: Option<String>,
-    pub status: ProgramEnrolmentStatus,
-}
-
-impl Default for ProgramEnrolmentRow {
-    fn default() -> Self {
-        Self {
-            id: Default::default(),
-            document_type: Default::default(),
-            program_id: Default::default(),
-            document_name: Default::default(),
-            patient_id: Default::default(),
-            enrolment_datetime: Default::default(),
-            program_enrolment_id: Default::default(),
-            status: ProgramEnrolmentStatus::Active,
-        }
-    }
+    pub status: Option<String>,
 }
 
 pub struct ProgramEnrolmentRowRepository<'a> {

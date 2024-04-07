@@ -44,9 +44,7 @@ pub fn response_store_stats(
 ) -> Result<ResponseStoreStats, RepositoryError> {
     let stock_lines = StockLineRepository::new(connection).query_by_filter(
         StockLineFilter::new()
-            .item_id(EqualFilter::equal_to(
-                &requisition_line.requisition_line_row.item_id,
-            ))
+            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
             .store_id(EqualFilter::equal_to(&store_id)),
         None,
     )?;
@@ -60,9 +58,7 @@ pub fn response_store_stats(
         RequisitionLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
             .r#type(RequisitionRowType::Request.equal_to())
-            .item_id(EqualFilter::equal_to(
-                &requisition_line.requisition_line_row.item_id,
-            ))
+            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
             .status(RequisitionRowStatus::Sent.equal_to()),
     )?;
 
@@ -75,9 +71,7 @@ pub fn response_store_stats(
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
-            .item_id(EqualFilter::equal_to(
-                &requisition_line.requisition_line_row.item_id,
-            ))
+            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
             .r#type(InvoiceLineRowType::StockIn.equal_to())
             .invoice_type(InvoiceRowType::InboundShipment.equal_to())
             .invoice_status(InvoiceRowStatus::Shipped.equal_to()),
@@ -91,9 +85,7 @@ pub fn response_store_stats(
     let response_requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
         RequisitionLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
-            .item_id(EqualFilter::equal_to(
-                &requisition_line.requisition_line_row.item_id,
-            ))
+            .item_id(EqualFilter::equal_to(&requisition_line.item_row.id))
             .r#type(RequisitionRowType::Response.equal_to())
             .status(RequisitionRowStatus::Finalised.not_equal_to()),
     )?;

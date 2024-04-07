@@ -1,16 +1,11 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   NESTED_SPLIT_CHAR,
   RANGE_SPLIT_CHAR,
   UrlQueryValue,
   useUrlQuery,
 } from './useUrlQuery';
-import {
-  Column,
-  Formatter,
-  RecordWithId,
-  useLocalStorage,
-} from '@openmsupply-client/common';
+import { Formatter, useLocalStorage } from '@openmsupply-client/common';
 import {
   FilterBy,
   FilterByWithBoolean,
@@ -70,18 +65,14 @@ export const useUrlQueryParams = ({
 
     const { key: sort, dir } = initialSort;
     updateQuery({ sort, dir: dir === 'desc' ? 'desc' : '' });
-  }, [initialSort]);
+  }, [initialSort, updateQuery, urlQuery]);
 
-  const updateSortQuery = <T extends RecordWithId>(column: Column<T>) => {
-    const currentSort = urlQuery['sort'];
-    const sort = column.key as string;
-    if (sort !== currentSort) {
-      updateQuery({ sort, dir: '', page: '' });
-    } else {
-      const dir = column.sortBy?.direction === 'desc' ? '' : 'desc';
-      updateQuery({ dir });
-    }
-  };
+  const updateSortQuery = useCallback(
+    (sort: string, dir: 'desc' | 'asc') => {
+      updateQuery({ sort, dir: dir === 'asc' ? '' : 'desc' });
+    },
+    [updateQuery]
+  );
 
   const updatePaginationQuery = (page: number) => {
     // Page is zero-indexed in useQueryParams store, so increase it by one
@@ -96,13 +87,15 @@ export const useUrlQueryParams = ({
     filters.reduce<FilterByWithBoolean>((prev, filter) => {
       const filterValue = getFilterValue(urlQuery, filter.key);
       if (filterValue === undefined) return prev;
+      // create a new object to prevent mutating the existing filter
+      const f = { ...filter };
 
-      const [key, nestedKey] = filter.key.split(NESTED_SPLIT_CHAR);
-      if (filter.key.includes(NESTED_SPLIT_CHAR)) {
-        filter.key = key ?? '';
+      const [key, nestedKey] = f.key.split(NESTED_SPLIT_CHAR);
+      if (f.key.includes(NESTED_SPLIT_CHAR)) {
+        f.key = key ?? '';
       }
 
-      prev[filter.key] = getFilterEntry(filter, filterValue, nestedKey);
+      prev[f.key] = getFilterEntry(f, filterValue, nestedKey);
       return prev;
     }, {});
 
@@ -141,7 +134,7 @@ export const useUrlQueryParams = ({
         : 0,
     first: rowsPerPage,
     sortBy: {
-      key: urlQuery['sort'] ?? '',
+      key: urlQuery['sort'] ?? initialSort?.key ?? '',
       direction: urlQuery['dir'] ?? 'asc',
       isDesc: urlQuery['dir'] === 'desc',
     } as SortBy<unknown>,

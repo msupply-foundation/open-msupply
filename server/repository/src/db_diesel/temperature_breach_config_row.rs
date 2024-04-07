@@ -1,7 +1,8 @@
 use super::{
     store_row::store,
     temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
-    temperature_breach_row::TemperatureBreachRowType, StorageConnection,
+    temperature_breach_row::TemperatureBreachRowType, temperature_log_row::temperature_log,
+    StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -29,6 +30,8 @@ table! {
 }
 
 joinable!(temperature_breach_config -> store (store_id));
+
+allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]

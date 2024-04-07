@@ -122,7 +122,7 @@ fn generate(
             &input.r#type,
             &now.to_rfc3339(),
         )),
-        parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
+        parents: input.parent.map(|p| vec![p]).unwrap_or_default(),
         author: user_id.to_string(),
         datetime: now,
         r#type: input.r#type.clone(),
@@ -495,7 +495,8 @@ mod test {
         assert_eq!(program_context, found_trace.document.context_id);
         assert_eq!(
             program.datetime,
-            DateTime::<Utc>::from_utc(found_trace.contact_trace.datetime, Utc).to_rfc3339()
+            DateTime::<Utc>::from_naive_utc_and_offset(found_trace.contact_trace.datetime, Utc)
+                .to_rfc3339()
         );
         assert_eq!(
             program.contact_trace_id,

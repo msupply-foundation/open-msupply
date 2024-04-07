@@ -1,5 +1,5 @@
-import React from 'react';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import React, { useEffect } from 'react';
+import { DateUtils, useFormatDateTime, useTranslation } from '@common/intl';
 import {
   Area,
   BasicSpinner,
@@ -16,13 +16,15 @@ import {
   XAxis,
   YAxis,
   useTheme,
+  useUrlQuery,
 } from '@openmsupply-client/common';
 import { useTemperatureChartData } from './useTemperatureChartData';
-import { TemperatureTooltipLayout } from './TemperatureTooltipLayout';
+import { Entry, TemperatureTooltipLayout } from './TemperatureTooltipLayout';
 import { BreachPopover } from './BreachPopover';
 import { BreachConfig, BreachDot, DotProps, Sensor } from './types';
 import { BreachIndicator } from './BreachIndicator';
 import { Toolbar } from '../TemperatureLog/Toolbar';
+import { useFormatTemperature } from '../../../common';
 
 const NUMBER_OF_HORIZONTAL_LINES = 4;
 const LOWER_THRESHOLD = 2;
@@ -43,33 +45,37 @@ const Chart = ({
 }) => {
   const t = useTranslation('coldchain');
   const theme = useTheme();
-  const { dayMonthTime } = useFormatDateTime();
+  const { dayMonthTime, customDate } = useFormatDateTime();
   const dateFormatter = (date: string) => dayMonthTime(date);
   const [currentBreach, setCurrentBreach] = React.useState<BreachDot | null>(
     null
   );
+  const { urlQuery, updateQuery } = useUrlQuery();
+  const formatTemp = useFormatTemperature();
 
   const formatTemperature = (value: number | null) =>
-    value === null ? '-' : `${value}${t('label.temperature-unit')}`;
+    !!value ? `${formatTemp(value)}` : '-';
 
   const TemperatureTooltip = ({
     active,
     payload,
     label,
   }: TooltipProps<number, string>) => {
-    if (!active || !payload?.length) return null;
+    const entries: Entry[] = [];
 
-    const date = payload[0]?.payload?.date;
-    const entries = sensors.map(sensor => {
-      const entry = sensor.logs.find(log => log.date === date.getTime());
-      if (!entry) return null;
-      return {
-        name: sensor.name,
-        value: formatTemperature(entry.temperature),
-        id: sensor.id,
-        color: sensor.colour,
-      };
-    });
+    if (active && !!payload?.length) {
+      const date = payload[0]?.payload?.date;
+      sensors.forEach(sensor => {
+        const entry = sensor.logs.find(log => log.date === date.getTime());
+        if (!entry) return;
+        entries.push({
+          name: sensor.name,
+          value: formatTemperature(entry.temperature),
+          id: sensor.id,
+          color: sensor.colour,
+        });
+      });
+    }
 
     return <TemperatureTooltipLayout entries={entries} label={label} />;
   };
@@ -90,14 +96,6 @@ const Chart = ({
       ),
     [setCurrentBreach]
   );
-
-  if (isLoading) {
-    return <BasicSpinner />;
-  }
-
-  if (!hasData) {
-    return <NothingHere body={t('error.no-temperature-logs')} />;
-  }
 
   const tickSpace =
     (yAxisDomain[1] - yAxisDomain[0]) / (NUMBER_OF_HORIZONTAL_LINES + 1);
@@ -142,6 +140,25 @@ const Chart = ({
     );
   };
 
+  useEffect(() => {
+    if (!urlQuery['datetime']) {
+      const from = customDate(
+        DateUtils.addDays(new Date(), -1),
+        'yyyy-MM-dd HH:mm'
+      );
+      const to = customDate(new Date(), 'yyyy-MM-dd HH:mm');
+      updateQuery({ datetime: { from, to } });
+    }
+  }, []);
+
+  if (isLoading) {
+    return <BasicSpinner />;
+  }
+
+  if (!hasData) {
+    return <NothingHere body={t('error.no-temperature-logs')} />;
+  }
+
   return (
     <Box flex={1} padding={2} sx={{ textAlign: 'center' }}>
       <Typography variant="body1" fontWeight={700} style={{ marginBottom: 10 }}>
@@ -177,6 +194,7 @@ const Chart = ({
                       borderStyle: 'solid',
                       borderColor: theme.palette.gray.light,
                       padding: 3,
+                      textAlign: 'left',
                     }}
                   >
                     <svg
@@ -221,6 +239,7 @@ const Chart = ({
             dataKey="temperature"
             stroke={theme.palette.chart.cold.main}
             fill={theme.palette.chart.cold.light}
+            baseValue="dataMin"
           />
           {sensors.map(sensor => (
             <Line

@@ -1,3 +1,11 @@
+query databaseSettings {
+  databaseSettings {
+    ... on DatabaseSettingsNode {
+      databaseType
+    }
+  }
+}
+
 query displaySettings($input: DisplaySettingsHash!) {
   displaySettings(input: $input) {
     customTheme {
@@ -8,6 +16,24 @@ query displaySettings($input: DisplaySettingsHash!) {
       value
       hash
     }
+  }
+}
+
+query plugins {
+  plugins {
+    config
+    name
+    path
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
   }
 }
 
@@ -22,6 +48,17 @@ mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
     ... on UpdateDisplaySettingsError {
       __typename
       error
+    }
+  }
+}
+
+mutation updateLabelPrinterSettings(
+  $labelPrinterSettings: LabelPrinterSettingsInput!
+) {
+  updateLabelPrinterSettings(input: $labelPrinterSettings) {
+    ... on LabelPrinterUpdateResult {
+      __typename
+      success
     }
   }
 }

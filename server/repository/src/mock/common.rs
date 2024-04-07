@@ -16,11 +16,11 @@ pub fn insert_full_mock_requisition(
     requisition: &FullMockRequisition,
     mut connection: &StorageConnection,
 ) {
-    RequisitionRowRepository::new(&mut connection)
+    RequisitionRowRepository::new(connection)
         .upsert_one(&requisition.requisition)
         .unwrap();
     for line in requisition.lines.iter() {
-        RequisitionLineRowRepository::new(&mut connection)
+        RequisitionLineRowRepository::new(connection)
             .upsert_one(line)
             .unwrap();
     }
@@ -46,14 +46,14 @@ impl FullMockInvoice {
 }
 
 pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, mut connection: &StorageConnection) {
-    InvoiceRowRepository::new(&mut connection)
+    InvoiceRowRepository::new(connection)
         .upsert_one(&invoice.invoice)
         .unwrap();
     for line in invoice.lines.iter() {
-        StockLineRowRepository::new(&mut connection)
+        StockLineRowRepository::new(connection)
             .upsert_one(&line.stock_line)
             .unwrap();
-        InvoiceLineRowRepository::new(&mut connection)
+        InvoiceLineRowRepository::new(connection)
             .upsert_one(&line.line)
             .unwrap();
     }
@@ -69,18 +69,18 @@ pub fn insert_full_mock_master_list(
     full_master_list: &FullMockMasterList,
     mut connection: &StorageConnection,
 ) {
-    MasterListRowRepository::new(&mut connection)
+    MasterListRowRepository::new(connection)
         .upsert_one(&full_master_list.master_list)
         .unwrap();
 
     for line in full_master_list.lines.iter() {
-        MasterListLineRowRepository::new(&mut connection)
+        MasterListLineRowRepository::new(connection)
             .upsert_one(line)
             .unwrap();
     }
 
     for join in full_master_list.joins.iter() {
-        MasterListNameJoinRepository::new(&mut connection)
+        MasterListNameJoinRepository::new(connection)
             .upsert_one(join)
             .unwrap();
     }

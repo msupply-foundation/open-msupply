@@ -1,17 +1,28 @@
 import {
   useQueryClient,
   useMutation,
-  InvoiceNodeStatus,
+  useNotification,
 } from '@openmsupply-client/common';
 import { usePrescriptionNumber } from '../../utils/usePrescriptionNumber';
 import { usePrescriptionApi } from '../utils/usePrescriptionApi';
 
-export const usePrescriptionSaveLines = (status: InvoiceNodeStatus) => {
+export const usePrescriptionSaveLines = () => {
   const prescriptionNumber = usePrescriptionNumber();
   const queryClient = useQueryClient();
   const api = usePrescriptionApi();
-  return useMutation(api.updateLines(status), {
-    onSuccess: () => {
+  const { error } = useNotification();
+  return useMutation(api.updateLines, {
+    onSuccess: data => {
+      data.batchPrescription.insertPrescriptionLines?.forEach(line => {
+        if (line.response.__typename === 'InsertPrescriptionLineError') {
+          error(line.response.error.description)();
+        }
+      });
+      data.batchPrescription.updatePrescriptionLines?.forEach(line => {
+        if (line.response.__typename === 'UpdatePrescriptionLineError') {
+          error(line.response.error.description)();
+        }
+      });
       queryClient.invalidateQueries(api.keys.detail(prescriptionNumber));
     },
   });

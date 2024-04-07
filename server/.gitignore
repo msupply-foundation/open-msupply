@@ -39,3 +39,6 @@ app_data/
 
 # report builder server credentials
 report_builder/config.yaml
+
+# fridge tag imports
+sensor_*.txt

@@ -61,7 +61,7 @@ fragment FullSyncStatus on FullSyncStatusNode {
     ...SyncError
   }
   integration {
-    ...SyncStatus
+    ...SyncStatusWithProgress
   }
   isSyncing
   prepareInitial {

@@ -1,6 +1,6 @@
 use crate::{
     requisition::common::{
-        check_approval_status, check_requisition_exists, generate_requisition_user_id_update,
+        check_approval_status, check_requisition_row_exists, generate_requisition_user_id_update,
         get_lines_for_requisition,
     },
     service_provider::ServiceContext,
@@ -72,7 +72,7 @@ fn validate(
     store_id: &str,
     input: &SupplyRequestedQuantity,
 ) -> Result<RequisitionRow, OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.response_requisition_id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.response_requisition_id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
 
     if requisition_row.store_id != store_id {
@@ -139,7 +139,8 @@ impl From<RepositoryError> for SupplyRequestedQuantityError {
 mod test {
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
+            mock_finalised_response_requisition,
+            mock_full_draft_response_requisition_for_update_test,
             mock_new_response_requisition_test, mock_sent_request_requisition, mock_store_a,
             mock_store_b, mock_user_account_b, MockDataInserts,
         },
@@ -209,7 +210,9 @@ mod test {
             service.supply_requested_quantity(
                 &context,
                 SupplyRequestedQuantity {
-                    response_requisition_id: mock_draft_response_requisition_for_update_test().id,
+                    response_requisition_id: mock_full_draft_response_requisition_for_update_test()
+                        .requisition
+                        .id,
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)

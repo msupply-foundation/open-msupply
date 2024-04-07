@@ -6,6 +6,8 @@ pub mod simple_generic_errors;
 pub mod standard_graphql_error;
 pub mod test_helpers;
 
+use std::sync::Mutex;
+
 use actix_web::cookie::Cookie;
 use actix_web::web::Data;
 use actix_web::HttpRequest;
@@ -14,6 +16,7 @@ use async_graphql::{Context, Request, Response};
 use repository::StorageConnectionManager;
 use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
+use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 
 use loader::LoaderRegistry;
@@ -36,12 +39,13 @@ pub trait ContextExt {
     fn get_auth_token(&self) -> Option<String>;
     fn self_request(&self) -> Option<&BoxedSelfRequest>;
     fn get_settings(&self) -> &Settings;
+    fn get_validated_plugins(&self) -> &Mutex<ValidatedPluginBucket>;
     fn restart_switch(&self) -> Sender<bool>;
 }
 
 impl<'a> ContextExt for Context<'a> {
     fn get_connection_manager(&self) -> &StorageConnectionManager {
-        &self.data_unchecked::<Data<StorageConnectionManager>>()
+        self.data_unchecked::<Data<StorageConnectionManager>>()
     }
 
     fn get_loader<T: anymap::any::Any + Send + Sync>(&self) -> &T {
@@ -63,6 +67,10 @@ impl<'a> ContextExt for Context<'a> {
 
     fn get_settings(&self) -> &Settings {
         self.data_unchecked::<Data<Settings>>()
+    }
+
+    fn get_validated_plugins(&self) -> &Mutex<ValidatedPluginBucket> {
+        self.data_unchecked::<Data<Mutex<ValidatedPluginBucket>>>()
     }
 
     fn self_request(&self) -> Option<&BoxedSelfRequest> {
@@ -99,7 +107,7 @@ pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
             .to_str()
             .ok()
             .and_then(|header| {
-                let cookies = header.split(" ").collect::<Vec<&str>>();
+                let cookies = header.split(' ').collect::<Vec<&str>>();
                 cookies
                     .into_iter()
                     .map(|raw_cookie| Cookie::parse(raw_cookie).ok())

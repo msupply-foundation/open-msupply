@@ -19,18 +19,16 @@ service = { path = "../service" }
 server = { path = "../server" }
 graphql = { path = "../graphql" }
 
+anyhow = { workspace = true }
+async-graphql = { workspace = true }
+clap = { version = "3.1.8", features = ["derive"] }
+chrono = { version = "0.4.23" }
+diesel = { version = "2.1.5", default-features = false, features = ["chrono"] }
+log = "0.4.14"
 serde = "1.0.126"
 serde_json = "1.0.66"
-clap = { version = "3.1.8", features = ["derive"] }
-diesel = { version = "2.1.0", default-features = false, features = ["chrono"] }
-chrono = { version = "0.4.23" }
-reqwest = { version = "0.11.10" }
-tokio = { version = "1.17.0", features = ["macros"] }
 simple-log = { version = "1.6" }
-log = "0.4.14"
-async-graphql = "3.0.35"
-
-anyhow.workspace = true
+tokio = { version = "1.17.0", features = ["macros"] }
 
 [dev-dependencies]
 actix-rt = "2.6.0"

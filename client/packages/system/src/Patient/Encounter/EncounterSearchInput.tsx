@@ -1,13 +1,10 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import {
   Autocomplete,
   AutocompleteOptionRenderer,
   Box,
   DefaultAutocompleteItemOption,
-  ProgramEnrolmentNodeStatus,
   Typography,
-  useBufferState,
-  useTranslation,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import {
@@ -19,24 +16,19 @@ import {
 interface EncounterSearchInputProps {
   onChange: (type: EncounterRegistryByProgram) => void;
   width?: number;
-  value: EncounterRegistryByProgram | null;
+  lastEncounterType: string | undefined;
   disabled?: boolean;
 }
 
 export const getEncounterOptionRenderer =
-  (
-    t: ReturnType<typeof useTranslation>
-  ): AutocompleteOptionRenderer<EncounterRegistryByProgram> =>
+  (): AutocompleteOptionRenderer<EncounterRegistryByProgram> =>
   (props, node) => {
     const name = node.encounter.name ?? '';
-    const isActive = node.program.status === ProgramEnrolmentNodeStatus.Active;
 
     return (
       <DefaultAutocompleteItemOption {...props} key={props.id}>
         <Box display="flex" alignItems="flex-end" gap={1} height={25}>
-          <Typography>
-            {isActive ? name : <i>{`${name} (${t('messages.inactive')})`}</i>}
-          </Typography>
+          <Typography>{name}</Typography>
         </Box>
       </DefaultAutocompleteItemOption>
     );
@@ -45,10 +37,9 @@ export const getEncounterOptionRenderer =
 export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
   onChange,
   width = 250,
-  value,
   disabled = false,
+  lastEncounterType: encounterType,
 }) => {
-  const t = useTranslation('dispensary');
   const patientId = usePatient.utils.id();
   const { data: enrolmentData, isLoading: isEnrolmentDataLoading } =
     useProgramEnrolments.document.list({
@@ -60,9 +51,19 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
     useDocumentRegistry.get.encounterRegistriesByPrograms(
       enrolmentData?.nodes ?? []
     );
-  const [buffer, setBuffer] = useBufferState(value);
-  const EncounterOptionRenderer = getEncounterOptionRenderer(t);
+  const [buffer, setBuffer] = useState<EncounterRegistryByProgram | null>(null);
 
+  useEffect(() => {
+    if (!encounterData || !!buffer) return;
+
+    const registry = encounterData.find(
+      it => it.encounter.documentType === encounterType
+    );
+    setBuffer(registry ?? null);
+    registry && onChange(registry);
+  }, [buffer, encounterData, encounterType, setBuffer, onChange]);
+
+  const EncounterOptionRenderer = getEncounterOptionRenderer();
   return (
     <Autocomplete
       disabled={disabled}
@@ -74,9 +75,9 @@ export const EncounterSearchInput: FC<EncounterSearchInputProps> = ({
         }
       }
       loading={isEnrolmentDataLoading || isEncounterLoading}
-      onChange={(_, name) => {
-        setBuffer(name);
-        name && onChange(name);
+      onChange={(_, registry) => {
+        setBuffer(registry ?? null);
+        registry && onChange(registry);
       }}
       options={encounterData ?? []}
       renderOption={EncounterOptionRenderer}

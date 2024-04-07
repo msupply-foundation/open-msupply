@@ -26,11 +26,14 @@ export const useInbound = {
     delete: Lines.useDeleteInboundLines,
     deleteSelected: Lines.useDeleteSelectedLines,
     save: Lines.useSaveInboundLines,
+
+    zeroQuantities: Lines.useZeroInboundLinesQuantity,
   },
   utils: {
     addFromMasterList: Utils.useAddFromMasterList,
     api: Utils.useInboundApi,
     isDisabled: Utils.useIsInboundDisabled,
     isStatusChangeDisabled: Utils.useIsStatusChangeDisabled,
+    selectedLines: Utils.useSelectedLines,
   },
 };

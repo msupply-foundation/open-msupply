@@ -6,6 +6,7 @@ import {
   FilterController,
   Box,
   TemperatureBreachNodeType,
+  DateUtils,
 } from '@openmsupply-client/common';
 
 export const Toolbar: FC<{ filter: FilterController }> = () => {
@@ -31,8 +32,8 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             {
               type: 'text',
               name: t('label.location'),
-              urlParameter: 'location.name',
-              placeholder: t('placeholder.search-by-location-name'),
+              urlParameter: 'location.code',
+              placeholder: t('placeholder.search-by-location-code'),
             },
             {
               type: 'group',
@@ -43,12 +44,16 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                   name: t('label.from-datetime'),
                   urlParameter: 'datetime',
                   range: 'from',
+                  maxDate: DateUtils.addMinutes(new Date(), -30),
+                  isDefault: true,
                 },
                 {
                   type: 'dateTime',
                   name: t('label.to-datetime'),
                   urlParameter: 'datetime',
                   range: 'to',
+                  maxDate: new Date(),
+                  isDefault: true,
                 },
               ],
             },

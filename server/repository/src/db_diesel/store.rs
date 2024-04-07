@@ -22,6 +22,7 @@ pub struct Store {
 pub struct StoreFilter {
     pub id: Option<EqualFilter<String>>,
     pub code: Option<StringFilter>,
+    pub name_id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub name_code: Option<StringFilter>,
     pub site_id: Option<EqualFilter<i32>>,
@@ -50,6 +51,11 @@ impl StoreFilter {
 
     pub fn code(mut self, filter: StringFilter) -> Self {
         self.code = Some(filter);
+        self
+    }
+
+    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.name_id = Some(filter);
         self
     }
 
@@ -132,6 +138,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
         let StoreFilter {
             id,
             code,
+            name_id,
             name,
             name_code,
             site_id,
@@ -139,6 +146,7 @@ fn create_filtered_query(filter: Option<StoreFilter>) -> BoxedStoreQuery {
 
         apply_equal_filter!(query, id, store_dsl::id);
         apply_string_filter!(query, code, store_dsl::code);
+        apply_equal_filter!(query, name_id, store_dsl::name_id);
         apply_string_filter!(query, name, name_dsl::name_);
         apply_string_filter!(query, name_code, name_dsl::code);
         apply_equal_filter!(query, site_id, store_dsl::site_id);

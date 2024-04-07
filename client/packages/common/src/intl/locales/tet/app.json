@@ -61,6 +61,7 @@
   "heading.password": "Liafuan Passe",
   "button.login": "Tama",
   "error.login": "Naran ujuáriu ou liafuan passe invalidu",
+  "error.account-blocked": "Konta taka tiha to'o períodu taka-dalan remata ona",
   "error.site-has-no-store": "Site laiha Store",
   "error.site-incorrect-hardware-id": "Hardware ID la los",
   "error.site-incorrect-password": "Liafuan passe la los",

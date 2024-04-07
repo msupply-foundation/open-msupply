@@ -52,12 +52,14 @@ const PatientListComponent: FC = () => {
       { key: 'firstName' },
       { key: 'identifier' },
       { key: 'lastName' },
+      { key: 'programEnrolmentName' },
     ],
   });
   const { store } = useAuthContext();
   const queryParams = {
     filterBy,
     offset,
+    first,
     sortBy,
   };
 
@@ -65,6 +67,7 @@ const PatientListComponent: FC = () => {
 
   const { data, isError, isLoading } = usePatient.document.list(queryParams);
   const pagination = { page, first, offset };
+
   const { localisedDate } = useFormatDateTime();
   const navigate = useNavigate();
 

@@ -3,15 +3,14 @@ use chrono::{DateTime, Utc};
 use graphql_core::{
     generic_filters::{DatetimeFilterInput, EqualFilterStringInput, StringFilterInput},
     loader::{DocumentLoader, PatientLoader},
-    map_filter,
     pagination::PaginationInput,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EncounterFilter, EqualFilter, PaginationOption, ProgramEnrolment,
-    ProgramEnrolmentFilter, ProgramEnrolmentSort, ProgramEnrolmentSortField,
-    ProgramEnrolmentStatus, ProgramEventFilter, ProgramEventSortField, Sort, StringFilter,
+    DatetimeFilter, EncounterFilter, EqualFilter, NameRow, PaginationOption, ProgramEnrolment,
+    ProgramEnrolmentFilter, ProgramEnrolmentRow, ProgramEnrolmentSort, ProgramEnrolmentSortField,
+    ProgramEventFilter, ProgramEventSortField, ProgramRow, Sort, StringFilter,
 };
 
 use super::{
@@ -64,18 +63,11 @@ impl ProgramEnrolmentSortInput {
 }
 
 #[derive(InputObject, Clone)]
-pub struct EqualFilterProgramEnrolmentStatusInput {
-    pub equal_to: Option<ProgramEnrolmentNodeStatus>,
-    pub equal_any: Option<Vec<ProgramEnrolmentNodeStatus>>,
-    pub not_equal_to: Option<ProgramEnrolmentNodeStatus>,
-}
-
-#[derive(InputObject, Clone)]
 pub struct ProgramEnrolmentFilterInput {
     pub patient_id: Option<EqualFilterStringInput>,
     pub enrolment_datetime: Option<DatetimeFilterInput>,
     pub program_enrolment_id: Option<StringFilterInput>,
-    pub status: Option<EqualFilterProgramEnrolmentStatusInput>,
+    pub status: Option<StringFilterInput>,
     /// Same as program enrolment document type
     pub r#type: Option<EqualFilterStringInput>,
     /// The program id
@@ -89,9 +81,7 @@ impl From<ProgramEnrolmentFilterInput> for ProgramEnrolmentFilter {
             patient_id: f.patient_id.map(EqualFilter::from),
             enrolment_datetime: f.enrolment_datetime.map(DatetimeFilter::from),
             program_enrolment_id: f.program_enrolment_id.map(StringFilter::from),
-            status: f
-                .status
-                .map(|s| map_filter!(s, ProgramEnrolmentNodeStatus::to_domain)),
+            status: f.status.map(StringFilter::from),
             document_name: f.document_name.map(EqualFilter::from),
             document_type: f.r#type.map(EqualFilter::from),
             program_id: f.program_id.map(EqualFilter::from),
@@ -146,36 +136,24 @@ pub enum ProgramEnrolmentNodeStatus {
     Paused,
 }
 
-impl ProgramEnrolmentNodeStatus {
-    pub fn from_domain(from: &ProgramEnrolmentStatus) -> ProgramEnrolmentNodeStatus {
-        use ProgramEnrolmentNodeStatus as to;
-        use ProgramEnrolmentStatus as from;
-
-        match from {
-            from::Active => to::Active,
-            from::OptedOut => to::OptedOut,
-            from::TransferredOut => to::TransferredOut,
-            from::Paused => to::Paused,
-        }
-    }
-
-    pub fn to_domain(self) -> ProgramEnrolmentStatus {
-        use ProgramEnrolmentNodeStatus as from;
-        use ProgramEnrolmentStatus as to;
-
-        match self {
-            from::Active => to::Active,
-            from::OptedOut => to::OptedOut,
-            from::TransferredOut => to::TransferredOut,
-            from::Paused => to::Paused,
-        }
-    }
-}
-
 pub struct ProgramEnrolmentNode {
     pub store_id: String,
     pub program_enrolment: ProgramEnrolment,
     pub allowed_ctx: Vec<String>,
+}
+
+impl ProgramEnrolmentNode {
+    fn row(&self) -> &ProgramEnrolmentRow {
+        &self.program_enrolment.row
+    }
+
+    fn program_row(&self) -> &ProgramRow {
+        &self.program_enrolment.program_row
+    }
+
+    fn patient_row(&self) -> &NameRow {
+        &self.program_enrolment.patient_row
+    }
 }
 
 #[derive(SimpleObject)]
@@ -193,27 +171,27 @@ pub enum ProgramEnrolmentResponse {
 impl ProgramEnrolmentNode {
     /// The program type
     pub async fn r#type(&self) -> &str {
-        &self.program_enrolment.0.document_type
+        &self.row().document_type
     }
 
     pub async fn context_id(&self) -> &str {
-        &self.program_enrolment.1.context_id
+        &self.program_row().context_id
     }
 
     /// The program document name
     pub async fn name(&self) -> &str {
-        &self.program_enrolment.0.document_name
+        &self.row().document_name
     }
 
     pub async fn patient_id(&self) -> &str {
-        &self.program_enrolment.0.patient_id
+        &self.patient_row().id
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
-            .load_one(self.program_enrolment.0.patient_id.clone())
+            .load_one(self.patient_row().id.clone())
             .await?
             .map(|patient| PatientNode {
                 store_id: self.store_id.clone(),
@@ -226,15 +204,15 @@ impl ProgramEnrolmentNode {
     }
 
     pub async fn enrolment_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.program_enrolment.0.enrolment_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().enrolment_datetime, Utc)
     }
 
     pub async fn program_enrolment_id(&self) -> &Option<String> {
-        &self.program_enrolment.0.program_enrolment_id
+        &self.row().program_enrolment_id
     }
 
-    pub async fn status(&self) -> ProgramEnrolmentNodeStatus {
-        ProgramEnrolmentNodeStatus::from_domain(&self.program_enrolment.0.status)
+    pub async fn status(&self) -> &Option<String> {
+        &self.row().status
     }
 
     /// The encounter document
@@ -242,7 +220,7 @@ impl ProgramEnrolmentNode {
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
 
         let result = loader
-            .load_one(self.program_enrolment.0.document_name.clone())
+            .load_one(self.row().document_name.clone())
             .await?
             .map(|document| DocumentNode {
                 allowed_ctx: self.allowed_ctx.clone(),
@@ -265,9 +243,9 @@ impl ProgramEnrolmentNode {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(EncounterFilter::from)
-            .unwrap_or(EncounterFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
-            .context_id(EqualFilter::equal_to(&self.program_enrolment.1.context_id));
+            .unwrap_or_default()
+            .patient_id(EqualFilter::equal_to(&self.patient_row().id))
+            .context_id(EqualFilter::equal_to(&self.program_row().context_id));
 
         let entries = ctx
             .service_provider()
@@ -307,11 +285,9 @@ impl ProgramEnrolmentNode {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(|f| f.to_domain())
-            .unwrap_or(ProgramEventFilter::new())
-            .patient_id(EqualFilter::equal_to(&self.program_enrolment.0.patient_id))
-            .document_type(EqualFilter::equal_to(
-                &self.program_enrolment.0.document_type,
-            ));
+            .unwrap_or_default()
+            .patient_id(EqualFilter::equal_to(&self.patient_row().id))
+            .document_type(EqualFilter::equal_to(&self.row().document_type));
         let list_result = ctx
             .service_provider()
             .program_event_service
@@ -325,6 +301,7 @@ impl ProgramEnrolmentNode {
                     key: ProgramEventSortField::Datetime,
                     desc: Some(true),
                 })),
+                Some(&self.allowed_ctx),
             )
             .map_err(StandardGraphqlError::from_list_error)?;
         Ok(ProgramEventResponse::Response(ProgramEventConnector {
@@ -332,9 +309,9 @@ impl ProgramEnrolmentNode {
             nodes: list_result
                 .rows
                 .into_iter()
-                .map(|row| ProgramEventNode {
+                .map(|program_event| ProgramEventNode {
                     store_id: self.store_id.clone(),
-                    row,
+                    program_event,
                     allowed_ctx: self.allowed_ctx.clone(),
                 })
                 .collect(),

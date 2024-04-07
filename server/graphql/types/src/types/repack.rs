@@ -57,7 +57,7 @@ impl RepackNode {
     }
 
     async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.datetime, Utc)
     }
 
     async fn from(&self) -> &RepackStockLineNode {

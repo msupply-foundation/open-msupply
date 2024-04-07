@@ -57,11 +57,11 @@ mod test {
                 0,
                 vec![RemoteSyncRecordV5 {
                     sync_id: "ID1".to_string(),
-                    record: CommonSyncRecordV5 {
+                    record: CommonSyncRecord {
                         table_name: "test_table_name".to_string(),
                         record_id: "ID2".to_string(),
-                        action: SyncActionV5::Insert,
-                        data: json!({"test_key": "test_value"}),
+                        action: SyncAction::Insert,
+                        record_data: json!({"test_key": "test_value"}),
                     },
                 }],
             )

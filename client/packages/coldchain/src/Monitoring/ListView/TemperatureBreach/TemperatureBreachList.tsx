@@ -1,18 +1,14 @@
 import React, { FC } from 'react';
 import { useUrlQueryParams } from '@common/hooks';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { useTranslation } from '@common/intl';
 import {
-  Box,
-  CellProps,
-  CircleAlertIcon,
+  ColumnAlign,
   DataTable,
   Formatter,
   NothingHere,
   TableProvider,
-  Typography,
   createTableStore,
   useColumns,
-  useTheme,
 } from '@openmsupply-client/common';
 import {
   TemperatureBreachFragment,
@@ -20,41 +16,9 @@ import {
 } from '../../api/TemperatureBreach';
 import { BreachTypeCell } from '../../../common';
 import { Toolbar } from './Toolbar';
-
-const DurationCell = ({ rowData }: CellProps<TemperatureBreachFragment>) => {
-  const t = useTranslation('coldchain');
-  const { localisedDistance } = useFormatDateTime();
-  const duration = !rowData.endDatetime
-    ? t('label.ongoing')
-    : localisedDistance(rowData.startDatetime, rowData.endDatetime);
-
-  return (
-    <Box
-      flexDirection="row"
-      display="flex"
-      flex={1}
-      sx={
-        !rowData.endDatetime
-          ? {
-              color: 'error.main',
-              fontStyle: 'italic',
-            }
-          : {}
-      }
-    >
-      <Typography
-        style={{
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          color: 'inherit',
-          fontSize: 'inherit',
-        }}
-      >
-        {duration}
-      </Typography>
-    </Box>
-  );
-};
+import { useAcknowledgeBreachModal } from './useAcknowledgeBreachModal';
+import { DurationCell, IconCell } from './TempereatureBreachCells';
+import { useFormatTemperature } from '../../../common/utils';
 
 const ListView: FC = () => {
   const {
@@ -70,7 +34,7 @@ const ListView: FC = () => {
         key: 'sensor.name',
       },
       {
-        key: 'location.name',
+        key: 'location.code',
       },
       {
         key: 'type',
@@ -90,22 +54,23 @@ const ListView: FC = () => {
   };
   const { data, isLoading, isError } =
     useTemperatureBreach.document.list(queryParams);
+  const { AcknowledgeBreachModal, acknowledgeBreach } =
+    useAcknowledgeBreachModal();
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
-  const theme = useTheme();
+  const formatTemperature = useFormatTemperature();
+
   const columns = useColumns<TemperatureBreachFragment>(
     [
       {
-        key: 'acknowledgedIcon',
-        Cell: ({ rowData }) => {
-          return !!rowData?.unacknowledged ? (
-            <CircleAlertIcon
-              fill={theme.palette.error.main}
-              sx={{ color: 'background.white' }}
-            />
-          ) : null;
-        },
+        key: 'icon',
+        sortable: false,
+        width: 60,
+        align: ColumnAlign.Center,
+        Cell: ({ rowData }) => (
+          <IconCell acknowledgeBreach={acknowledgeBreach} rowData={rowData} />
+        ),
       },
       {
         key: 'unacknowledged',
@@ -124,9 +89,9 @@ const ListView: FC = () => {
         sortable: false,
       },
       {
-        key: 'locationName',
+        key: 'location',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
         sortable: false,
       },
       {
@@ -163,10 +128,12 @@ const ListView: FC = () => {
       },
       {
         key: 'temperature',
-        label: 'label.temperature',
+        label: 'label.max-min-temperature',
+        description: 'description.max-min-temperature',
+        width: 125,
         accessor: ({ rowData }) => {
           return !!rowData.maxOrMinTemperature
-            ? `${rowData.maxOrMinTemperature}${t('label.temperature-unit')}`
+            ? `${formatTemperature(rowData.maxOrMinTemperature)}`
             : null;
         },
         sortable: false,
@@ -192,6 +159,7 @@ const ListView: FC = () => {
         }
         enableColumnSelection
       />
+      <AcknowledgeBreachModal />
     </>
   );
 };

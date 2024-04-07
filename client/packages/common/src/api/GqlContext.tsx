@@ -1,11 +1,9 @@
 import React, {
   FC,
-  createContext,
   useMemo,
-  useEffect,
-  useState,
   useCallback,
   PropsWithChildren,
+  useRef,
 } from 'react';
 import {
   GraphQLClient,
@@ -17,21 +15,40 @@ import { AuthError } from '../authentication/AuthContext';
 import { LocalStorage } from '../localStorage';
 import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
 import { RequestConfig } from 'graphql-request/build/esm/types';
+import { createRegisteredContext } from 'react-singleton-context';
 
 export type SkipRequest = (documentNode: DocumentNode) => boolean;
 
+// these queries are allowed to fail silently with permission denied errors
+// as they are for background data fetches only; the user will be notified
+// by other, page-level, queries instead. Allowing the exceptions here
+// prevents the display of multiple permission denied errors for a single page
 const permissionExceptions = [
   'reports',
   'stockCounts',
   'invoiceCounts',
   'itemCounts',
   'requisitionCounts',
-  'temperatureBreaches',
+  'temperatureNotifications',
 ];
+
+// these queries are not considered to be part of the user's activity
+// they occur in the background and should not be used to determine
+// if the user has remained active
+const ignoredQueries = ['refreshToken', 'syncInfo', 'temperatureNotifications'];
+
 interface ResponseError {
   message?: string;
   path?: string[];
   extensions?: { details?: string };
+}
+
+export class GraphqlStdError extends Error {
+  public stdError?: string | undefined;
+  constructor(message: string, stdError: string | undefined) {
+    super(message);
+    this.stdError = stdError;
+  }
 }
 
 const hasError = (errors: ResponseError[], error: AuthError) =>
@@ -44,7 +61,7 @@ const hasPermissionException = (errors: ResponseError[]) =>
 
 const handleResponseError = (errors: ResponseError[]) => {
   if (hasError(errors, AuthError.Unauthenticated)) {
-    LocalStorage.setItem('/auth/error', AuthError.Unauthenticated);
+    LocalStorage.setItem('/error/auth', AuthError.Unauthenticated);
     return;
   }
 
@@ -52,17 +69,18 @@ const handleResponseError = (errors: ResponseError[]) => {
     if (hasPermissionException(errors)) {
       throw errors[0];
     }
-    LocalStorage.setItem('/auth/error', AuthError.PermissionDenied);
+    LocalStorage.setItem('/error/auth', AuthError.PermissionDenied);
     return;
   }
 
   const error = errors[0];
   const { extensions } = error || {};
   const { details } = extensions || {};
-  throw new Error(details || error?.message || 'Unknown error');
+  throw new GraphqlStdError(
+    details || error?.message || 'Unknown error',
+    error?.message
+  );
 };
-
-const ignoredQueries = ['refreshToken', 'syncInfo'];
 
 const shouldIgnoreQuery = (definitionNode: DefinitionNode) => {
   const operationNode = definitionNode as OperationDefinitionNode;
@@ -141,14 +159,6 @@ class GQLClient extends GraphQLClient {
   public getLastRequestTime = () => this.lastRequestTime;
 }
 
-export const createGql = (
-  url: string,
-  skipRequest?: SkipRequest
-): { client: GQLClient } => {
-  const client = new GQLClient(url, { credentials: 'include' }, skipRequest);
-  return { client };
-};
-
 interface GqlControl {
   client: GQLClient;
   setHeader: (header: string, value: string) => void;
@@ -156,7 +166,10 @@ interface GqlControl {
   setSkipRequest: (skipRequest: SkipRequest) => void;
 }
 
-const GqlContext = createContext<GqlControl>({} as any);
+const GqlContext = createRegisteredContext<GqlControl>(
+  'gql-context',
+  {} as any
+);
 
 const { Provider } = GqlContext;
 
@@ -170,9 +183,9 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
   skipRequest,
   children,
 }) => {
-  const [{ client }, setApi] = useState<{
-    client: GQLClient;
-  }>(() => createGql(url, skipRequest));
+  const client = useRef(
+    new GQLClient(url, { credentials: 'include' }, skipRequest)
+  ).current;
 
   const setUrl = useCallback(
     (newUrl: string) => {
@@ -194,10 +207,6 @@ export const GqlProvider: FC<PropsWithChildren<ApiProviderProps>> = ({
     },
     [client]
   );
-
-  useEffect(() => {
-    setApi(createGql(url, skipRequest));
-  }, [url, skipRequest]);
 
   const val = useMemo(
     () => ({

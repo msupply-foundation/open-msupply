@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use chrono::{Duration, NaiveDate, NaiveDateTime};
 use repository::{
-    DatetimeFilter, EqualFilter, Pagination, PaginationOption, ProgramEventFilter,
+    DatetimeFilter, EqualFilter, Pagination, PaginationOption, ProgramEvent, ProgramEventFilter,
     ProgramEventRepository, ProgramEventRow, ProgramEventRowRepository, ProgramEventSort,
     ProgramEventSortField, RepositoryError, StorageConnection,
 };
@@ -72,7 +72,7 @@ fn remove_event_stack(
             desc: Some(true),
         }),
     )?;
-    let Some(longest) = stack_events.get(0) else {
+    let Some(longest) = stack_events.get(0).map(|it| &it.program_event_row) else {
         // no stack found -> done
         return Ok(());
     };
@@ -83,21 +83,33 @@ fn remove_event_stack(
     // For simplicity we cleanly remove the whole stack though.
 
     // update active_end_datetime of the latest event from the previous stack
-    let previous_stack = repo.query(
-        Pagination::all(),
-        Some(
-            event_target_filter(event_target)
-                .active_end_datetime(DatetimeFilter::equal_to(datetime)),
-        ),
-        Some(ProgramEventSort {
-            key: ProgramEventSortField::ActiveEndDatetime,
-            desc: Some(true),
-        }),
-    )?;
+    let previous_stack = repo
+        .query(
+            Pagination::all(),
+            Some(
+                event_target_filter(event_target)
+                    .active_end_datetime(DatetimeFilter::equal_to(datetime)),
+            ),
+            Some(ProgramEventSort {
+                key: ProgramEventSortField::ActiveStartDatetime,
+                desc: Some(true),
+            }),
+        )?
+        .into_iter()
+        .map(|it| it.program_event_row)
+        .collect::<Vec<_>>();
+
+    // Adjust active_end_datetime of previous stack. For example:
+    //    prev              longest.active_end_datetime
+    //                        50
+    //      5-----------------|------------>80
+    //      5-----------------|-->60
+    //      5--------->40-----|
+    //      5---->20--|
     let mut current_end_datetime = longest.active_end_datetime;
     for mut current in previous_stack {
         current.active_end_datetime = current_end_datetime;
-        current_end_datetime = current.active_start_datetime;
+        current_end_datetime = std::cmp::min(current.active_start_datetime, current_end_datetime);
         ProgramEventRowRepository::new(connection).upsert_one(&current)?;
     }
 
@@ -111,9 +123,24 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
-    ) -> Result<ListResult<ProgramEventRow>, ListError> {
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<ListResult<ProgramEvent>, ListError> {
         let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
         let repository = ProgramEventRepository::new(&ctx.connection);
+
+        let filter = if let Some(allowed_ctx) = allowed_ctx {
+            let mut filter = filter.unwrap_or(ProgramEventFilter::new());
+            // restrict query results to allowed entries
+            filter.context_id = Some(
+                filter
+                    .context_id
+                    .unwrap_or_default()
+                    .restrict_results(&allowed_ctx),
+            );
+            Some(filter)
+        } else {
+            filter
+        };
         Ok(ListResult {
             rows: repository.query(pagination, filter.clone(), sort)?,
             count: i64_to_u32(repository.count(filter)?),
@@ -127,7 +154,8 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         pagination: Option<PaginationOption>,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
-    ) -> Result<ListResult<ProgramEventRow>, ListError> {
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<ListResult<ProgramEvent>, ListError> {
         let filter = filter
             .unwrap_or(ProgramEventFilter::new())
             .active_start_datetime(DatetimeFilter::before_or_equal_to(at))
@@ -136,7 +164,7 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                 at.checked_add_signed(Duration::nanoseconds(1))
                     .unwrap_or(at),
             ));
-        self.events(ctx, pagination, Some(filter), sort)
+        self.events(ctx, pagination, Some(filter), sort, allowed_ctx)
     }
 
     /// Upserts all events of a patient with a given datetime, i.e. it removes exiting events and
@@ -157,7 +185,6 @@ pub trait ProgramEventServiceTrait: Sync + Send {
         let result = connection
             .transaction_sync(|con| -> Result<(), RepositoryError> {
                 // TODO do we need to lock rows in case events are updated concurrently?
-
                 let repo = ProgramEventRepository::new(con);
                 let targets = if events.is_empty() {
                     // We need to clear all events. For this we still need to find all targets.
@@ -172,11 +199,12 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                     .fold(
                         HashMap::<EventTarget, Vec<StackEvent>>::new(),
                         |mut map, it| {
+                            let row = it.program_event_row;
                             let target = EventTarget {
                                 patient_id: patient_id.clone(),
-                                document_type: it.document_type,
-                                document_name: it.document_name,
-                                r#type: it.r#type,
+                                document_type: row.document_type,
+                                document_name: row.document_name,
+                                r#type: row.r#type,
                             };
 
                             map.entry(target).or_insert(vec![]);
@@ -224,8 +252,9 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                         }),
                     )?;
 
-                    let active_end_datetime = if let Some(active_end_datetime) =
-                        overlaps.get(0).map(|it| it.active_end_datetime)
+                    let active_end_datetime = if let Some(active_end_datetime) = overlaps
+                        .get(0)
+                        .map(|it| it.program_event_row.active_end_datetime)
                     {
                         active_end_datetime
                     } else {
@@ -233,20 +262,28 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                         // event.
                         // First test if there is a next event:
                         let next = repo
-                            .query_by_filter(
-                                event_target_filter(&target)
-                                    .datetime(DatetimeFilter::after_or_equal_to(datetime)),
+                            .query(
+                                Pagination::one(),
+                                Some(
+                                    event_target_filter(&target)
+                                        .datetime(DatetimeFilter::after_or_equal_to(datetime)),
+                                ),
+                                Some(ProgramEventSort {
+                                    key: ProgramEventSortField::Datetime,
+                                    desc: Some(false),
+                                }),
                             )?
                             .pop()
-                            .map(|e| e.datetime);
+                            .map(|row| row.program_event_row.datetime);
                         // If there is no next event we are inserting the very first event, thus
                         // use max_datetime()
                         next.unwrap_or(max_datetime())
                     };
 
                     for mut overlap in overlaps {
-                        overlap.active_end_datetime = datetime;
-                        ProgramEventRowRepository::new(con).upsert_one(&overlap)?;
+                        let row = &mut overlap.program_event_row;
+                        row.active_end_datetime = datetime;
+                        ProgramEventRowRepository::new(con).upsert_one(row)?;
                     }
 
                     events.sort_by(|a, b| b.active_start_datetime.cmp(&a.active_start_datetime));
@@ -257,7 +294,8 @@ pub trait ProgramEventServiceTrait: Sync + Send {
                             datetime,
                             active_start_datetime: it.active_start_datetime,
                             active_end_datetime,
-                            patient_id: Some(patient_id.clone()),
+                            // Use the current patient_id as link id
+                            patient_link_id: Some(patient_id.clone()),
                             document_type: target.document_type.clone(),
                             document_name: target.document_name.clone(),
                             context_id: context_id.to_string(),
@@ -312,6 +350,7 @@ mod test {
                     None,
                     Some(ProgramEventFilter::new()),
                     None,
+                    None,
                 )
                 .unwrap();
             let mut expected: Vec<&str> = $expected;
@@ -323,13 +362,23 @@ mod test {
             let mut actual_names = events
                 .rows
                 .iter()
-                .map(|it| it.data.clone().unwrap())
+                .map(|row| row.program_event_row.data.clone().unwrap())
                 .collect::<Vec<_>>();
+
             actual_names.sort();
             assert_eq!(expected, actual_names);
         }};
     }
 
+    fn event(active_start_datetime: NaiveDateTime, name: &str) -> EventInput {
+        EventInput {
+            active_start_datetime,
+            document_type: "DocType".to_string(),
+            document_name: None,
+            r#type: "status".to_string(),
+            name: Some(name.to_string()),
+        }
+    }
     #[actix_rt::test]
     async fn test_basic_program_events() {
         let (_, _, connection_manager, _) = setup_all(
@@ -352,13 +401,10 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                    document_type: "DocType".to_string(),
-                    document_name: None,
-                    r#type: "status".to_string(),
-                    name: Some("data1".to_string()),
-                }],
+                vec![event(
+                    NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                    "data1",
+                )],
             )
             .unwrap();
         assert_names!(service, ctx, 5, vec![]);
@@ -373,13 +419,10 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
-                    document_type: "DocType".to_string(),
-                    document_name: None,
-                    r#type: "status".to_string(),
-                    name: Some("data2".to_string()),
-                }],
+                vec![event(
+                    NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
+                    "data2",
+                )],
             )
             .unwrap();
         assert_names!(service, ctx, 19, vec!["data1"]);
@@ -396,13 +439,10 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
-                    document_type: "DocType".to_string(),
-                    document_name: None,
-                    r#type: "status".to_string(),
-                    name: Some("data3".to_string()),
-                }],
+                vec![event(
+                    NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
+                    "data3",
+                )],
             )
             .unwrap();
         assert_names!(service, ctx, 31, vec![]);
@@ -451,13 +491,10 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                    document_type: "DocType".to_string(),
-                    document_name: None,
-                    r#type: "status".to_string(),
-                    name: Some("data1".to_string()),
-                }],
+                vec![event(
+                    NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
+                    "data1",
+                )],
             )
             .unwrap();
         assert_names!(service, ctx, 5, vec![]);
@@ -472,13 +509,10 @@ mod test {
                 "patient2".to_string(),
                 NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
                 &mock_program_a().context_id,
-                vec![EventInput {
-                    active_start_datetime: NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
-                    document_type: "DocType".to_string(),
-                    document_name: None,
-                    r#type: "status".to_string(),
-                    name: Some("data2".to_string()),
-                }],
+                vec![event(
+                    NaiveDateTime::from_timestamp_opt(5, 0).unwrap(),
+                    "data2",
+                )],
             )
             .unwrap();
         assert_names!(service, ctx, 6, vec!["data2"]);
@@ -509,20 +543,8 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_1".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(20, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_2".to_string()),
-                    },
+                    event(NaiveDateTime::from_timestamp_opt(10, 0).unwrap(), "G1_1"),
+                    event(NaiveDateTime::from_timestamp_opt(20, 0).unwrap(), "G1_2"),
                 ],
             )
             .unwrap();
@@ -541,20 +563,8 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_3".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_4".to_string()),
-                    },
+                    event(NaiveDateTime::from_timestamp_opt(15, 0).unwrap(), "G1_3"),
+                    event(NaiveDateTime::from_timestamp_opt(30, 0).unwrap(), "G1_4"),
                 ],
             )
             .unwrap();
@@ -576,20 +586,8 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_1".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_2".to_string()),
-                    },
+                    event(NaiveDateTime::from_timestamp_opt(35, 0).unwrap(), "G2_1"),
+                    event(NaiveDateTime::from_timestamp_opt(40, 0).unwrap(), "G2_2"),
                 ],
             )
             .unwrap();
@@ -676,20 +674,8 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(10, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(15, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_1".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(30, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_2".to_string()),
-                    },
+                    event(NaiveDateTime::from_timestamp_opt(15, 0).unwrap(), "G1_1"),
+                    event(NaiveDateTime::from_timestamp_opt(30, 0).unwrap(), "G1_2"),
                 ],
             )
             .unwrap();
@@ -700,20 +686,8 @@ mod test {
                 NaiveDateTime::from_timestamp_opt(25, 0).unwrap(),
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(35, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_1".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: NaiveDateTime::from_timestamp_opt(40, 0).unwrap(),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_2".to_string()),
-                    },
+                    event(NaiveDateTime::from_timestamp_opt(35, 0).unwrap(), "G2_1"),
+                    event(NaiveDateTime::from_timestamp_opt(40, 0).unwrap(), "G2_2"),
                 ],
             )
             .unwrap();
@@ -736,6 +710,12 @@ mod test {
         assert_names!(service, ctx, 31, vec!["G1_2"]);
     }
 
+    fn datetime_from_date(year: i32, month: u32, day: u32) -> NaiveDateTime {
+        NaiveDate::from_ymd_opt(year, month, day)
+            .unwrap()
+            .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
+    }
+
     #[actix_rt::test]
     async fn test_program_events_bug() {
         let (_, _, connection_manager, _) = setup_all(
@@ -748,12 +728,6 @@ mod test {
         let ctx = service_provider.basic_context().unwrap();
 
         let service = service_provider.program_event_service;
-
-        let datetime_from_date = |year: i32, month: u32, day: u32| {
-            NaiveDate::from_ymd_opt(year, month, day)
-                .unwrap()
-                .and_time(NaiveTime::from_hms_opt(0, 0, 0).unwrap())
-        };
 
         // An earlier stack is inserted after a later stack.
         // When inserting the earlier stack all events of the earlier stack should finish before
@@ -768,7 +742,7 @@ mod test {
         //   17/6---------->16/09          // end datetime = 18/09 (previously set to 13/12)
         //   17/6------------|----->13/12  // end datetime = 18/09
 
-        let later_stack_datetime = datetime_from_date(2023, 09, 18);
+        let later_stack_datetime = datetime_from_date(2023, 9, 18);
         service
             .upsert_events(
                 &ctx.connection,
@@ -776,32 +750,14 @@ mod test {
                 later_stack_datetime,
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: datetime_from_date(2023, 12, 16),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_1".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: datetime_from_date(2024, 01, 13),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_2".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: datetime_from_date(2024, 03, 15),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G2_3".to_string()),
-                    },
+                    event(datetime_from_date(2023, 12, 16), "G2_1"),
+                    event(datetime_from_date(2024, 1, 13), "G2_2"),
+                    event(datetime_from_date(2024, 3, 15), "G2_3"),
                 ],
             )
             .unwrap();
 
-        let earlier_stack_datetime = datetime_from_date(2023, 06, 17);
+        let earlier_stack_datetime = datetime_from_date(2023, 6, 17);
         service
             .upsert_events(
                 &ctx.connection,
@@ -809,27 +765,9 @@ mod test {
                 earlier_stack_datetime,
                 &mock_program_a().context_id,
                 vec![
-                    EventInput {
-                        active_start_datetime: datetime_from_date(2023, 09, 14),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_1".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: datetime_from_date(2023, 09, 16),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_2".to_string()),
-                    },
-                    EventInput {
-                        active_start_datetime: datetime_from_date(2023, 12, 13),
-                        document_type: "DocType".to_string(),
-                        document_name: None,
-                        r#type: "status".to_string(),
-                        name: Some("G1_3".to_string()),
-                    },
+                    event(datetime_from_date(2023, 9, 14), "G1_1"),
+                    event(datetime_from_date(2023, 9, 16), "G1_2"),
+                    event(datetime_from_date(2023, 12, 13), "G1_3"),
                 ],
             )
             .unwrap();
@@ -840,6 +778,7 @@ mod test {
                 datetime_from_date(2023, 10, 5),
                 None,
                 Some(ProgramEventFilter::new()),
+                None,
                 None,
             )
             .unwrap();
@@ -858,19 +797,222 @@ mod test {
                     key: ProgramEventSortField::ActiveStartDatetime,
                     desc: Some(false),
                 }),
+                None,
             )
             .unwrap()
             .rows
             .into_iter()
-            .map(|e| e.active_end_datetime)
+            .map(|row| row.program_event_row.active_end_datetime)
             .collect::<Vec<_>>();
         assert_eq!(
             event_end_datetimes,
             vec![
-                datetime_from_date(2023, 09, 16),
+                datetime_from_date(2023, 9, 16),
                 later_stack_datetime,
                 later_stack_datetime
             ]
         )
+    }
+
+    fn check_integrity(mut events: Vec<ProgramEventRow>) {
+        if events.is_empty() {
+            return;
+        }
+        events.sort_by(|a, b| {
+            a.datetime
+                .cmp(&b.datetime)
+                .then_with(|| a.active_start_datetime.cmp(&b.active_start_datetime))
+        });
+
+        // init with first datetime
+        let mut prev_event_end = events[0].datetime;
+        while !events.is_empty() {
+            let cur_stack_time = events[0].datetime;
+            // remove first stack, i.e., events with the same datetime
+            let mut stack = vec![];
+            while !events.is_empty() && events[0].datetime == cur_stack_time {
+                let e = events.remove(0);
+                stack.push(e);
+            }
+
+            // validate stack integrity
+            let stack_end = stack.last().unwrap().active_end_datetime;
+            let mut stack_end_time_reached = false;
+            for (i, event) in stack.iter().enumerate() {
+                assert!(event.datetime <= event.active_start_datetime);
+                assert!(event.datetime <= event.active_end_datetime);
+
+                if !stack_end_time_reached && event.active_end_datetime == stack_end {
+                    stack_end_time_reached = true;
+                }
+                if i == 0 {
+                    assert_eq!(
+                        event.datetime, prev_event_end,
+                        "Event {:?} must start where previous event ended",
+                        event.data
+                    );
+                } else if !stack_end_time_reached {
+                    assert_eq!(
+                        event.active_start_datetime, prev_event_end,
+                        "Event {:?} must start where previous event ended",
+                        event.data
+                    );
+                } else {
+                    assert_eq!(
+                        event.active_end_datetime, stack_end,
+                        "End of stack changed in {:?}",
+                        event.data
+                    );
+                }
+                assert!(event.active_end_datetime >= prev_event_end);
+                prev_event_end = event.active_end_datetime;
+            }
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_bug_2() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_bug_2",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        let stack_3_datetime = datetime_from_date(2012, 5, 1);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                stack_3_datetime,
+                &mock_program_a().context_id,
+                vec![event(stack_3_datetime, "G3_1")],
+            )
+            .unwrap();
+
+        let stack_2_datetime = datetime_from_date(2012, 4, 3);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                stack_2_datetime,
+                &mock_program_a().context_id,
+                vec![event(datetime_from_date(2012, 5, 10), "G2_1")],
+            )
+            .unwrap();
+
+        let stack_1_datetime = datetime_from_date(2011, 11, 29);
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                stack_1_datetime,
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2011, 12, 31), "G1_1"),
+                    event(datetime_from_date(2012, 1, 28), "G1_2"),
+                ],
+            )
+            .unwrap();
+
+        // Expect the following events:
+        // G3_1: datetime: 2012-05-01T00:00:00, start: 2012-05-01T00:00:00, end: 9999-09-09T09:09:09
+        // G2_1: datetime: 2012-04-03T00:00:00, start: 2012-05-10T00:00:00, end: 2012-05-01T00:00:00
+        // G1_2: datetime: 2011-11-29T00:00:00, start: 2012-01-28T00:00:00, end: 2012-04-03T00:00:00
+        // G1_1: datetime: 2011-11-29T00:00:00, start: 2011-12-31T00:00:00, end: 2012-01-28T00:00:00
+        let result = service
+            .events(&ctx, None, None, None, None)
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.program_event_row)
+            .collect();
+        check_integrity(result);
+    }
+
+    #[actix_rt::test]
+    async fn test_program_events_remove_stack() {
+        let (_, _, connection_manager, _) = setup_all(
+            "test_program_events_remove_stack",
+            MockDataInserts::none().names().contexts(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "");
+        let ctx = service_provider.basic_context().unwrap();
+
+        let service = service_provider.program_event_service;
+
+        // stack 1
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 10, 4),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 10, 4), "G1_1"),
+                    event(datetime_from_date(2023, 11, 1), "G1_2"),
+                    event(datetime_from_date(2024, 1, 2), "G1_3"),
+                ],
+            )
+            .unwrap();
+
+        // stack 2
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 10, 16),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 10, 16), "G2_1"),
+                    event(datetime_from_date(2023, 11, 13), "G2_2"),
+                    event(datetime_from_date(2024, 1, 14), "G2_3"),
+                ],
+            )
+            .unwrap();
+
+        //stack 3
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 11, 2),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 12, 12), "G3_1"),
+                    event(datetime_from_date(2024, 1, 9), "G3_2"),
+                    event(datetime_from_date(2024, 3, 11), "G3_3"),
+                ],
+            )
+            .unwrap();
+
+        // Updating stack 2 caused the problem
+        service
+            .upsert_events(
+                &ctx.connection,
+                "patient2".to_string(),
+                datetime_from_date(2023, 10, 16),
+                &mock_program_a().context_id,
+                vec![
+                    event(datetime_from_date(2023, 10, 16), "G2_1"),
+                    event(datetime_from_date(2023, 11, 13), "G2_2"),
+                    event(datetime_from_date(2024, 1, 14), "G2_3"),
+                ],
+            )
+            .unwrap();
+        let result = service
+            .events(&ctx, None, None, None, None)
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| row.program_event_row)
+            .collect();
+        check_integrity(result);
     }
 }

@@ -17,7 +17,6 @@ export {
   useQuery,
   UseQueryResult,
   QueryClient,
-  QueryClientProvider,
 } from 'react-query';
 
 export {
@@ -44,5 +43,6 @@ export * from './localStorage';
 export * from './types';
 export * from './api';
 export * from './authentication';
+export * from './plugins';
 
 export { create };

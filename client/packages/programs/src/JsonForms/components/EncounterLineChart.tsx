@@ -143,7 +143,10 @@ const UIComponent = (props: ControlProps) => {
   }
 
   // with no valid data, the y-axis label cannot be shown, so we provide some defaults
-  const domain = (data.every(value => value.y === null) || data.length === 0) ? [0, 100] : undefined;
+  const domain =
+    data.every(value => value.y === null) || data.length === 0
+      ? [0, 100]
+      : undefined;
 
   return (
     <Box
@@ -164,7 +167,6 @@ const UIComponent = (props: ControlProps) => {
         <XAxis
           dataKey="time"
           scale="time"
-          type="number"
           tickFormatter={dayMonthShort}
           domain={['auto', 'auto']}
         />

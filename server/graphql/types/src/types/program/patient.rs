@@ -7,12 +7,12 @@ use graphql_core::{map_filter, ContextExt};
 
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use repository::contact_trace::ContactTraceFilter;
 use repository::{
     DateFilter, EqualFilter, Pagination, PaginationOption, Patient, PatientFilter,
     ProgramEnrolmentFilter, StringFilter,
 };
 use service::programs::patient::main_patient_doc_name;
+use service::programs::patient::patient_updated::patient_draft_document;
 use service::usize_to_u32;
 
 use crate::types::document::DocumentNode;
@@ -43,8 +43,8 @@ pub struct PatientFilterInput {
     pub country: Option<StringFilterInput>,
     pub email: Option<StringFilterInput>,
     pub identifier: Option<StringFilterInput>,
-    pub name_or_code: Option<StringFilterInput>,
     pub date_of_death: Option<DateFilterInput>,
+    pub program_enrolment_name: Option<StringFilterInput>,
 }
 
 impl From<PatientFilterInput> for PatientFilter {
@@ -64,8 +64,8 @@ impl From<PatientFilterInput> for PatientFilter {
             country: f.country.map(StringFilter::from),
             email: f.email.map(StringFilter::from),
             identifier: f.identifier.map(StringFilter::from),
-            name_or_code: f.name_or_code.map(StringFilter::from),
             date_of_death: f.date_of_death.map(DateFilter::from),
+            program_enrolment_name: f.program_enrolment_name.map(StringFilter::from),
         }
     }
 }
@@ -107,11 +107,11 @@ impl PatientNode {
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.patient.date_of_birth.clone()
+        self.patient.date_of_birth
     }
 
     pub async fn age(&self) -> Option<i64> {
-        self.patient.date_of_birth.clone().map(|dob| {
+        self.patient.date_of_birth.map(|dob| {
             let diff = Local::now().naive_utc().date().signed_duration_since(dob);
             diff.num_days() / 365
         })
@@ -146,7 +146,7 @@ impl PatientNode {
     }
 
     pub async fn date_of_death(&self) -> Option<NaiveDate> {
-        self.patient.date_of_death.clone()
+        self.patient.date_of_death
     }
 
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
@@ -163,6 +163,33 @@ impl PatientNode {
         Ok(result)
     }
 
+    /// Returns a draft version of the document data.
+    ///
+    /// The draft version can differ from the current document data if a patient has been edited
+    /// remotely in mSupply.
+    /// In this case the draft version contains the mSupply patient changes, i.e. information from
+    /// the name row has been integrated into the current document version.
+    /// When editing a patient in omSupply the document draft version should be used.
+    /// This means when the document is eventually saved, the remote changes are incorporated into
+    /// the document data.
+    pub async fn document_draft(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();
+
+        let result = loader
+            .load_one(main_patient_doc_name(&self.patient.id))
+            .await?;
+        let Some(document_data) = result.map(|d| d.data) else {
+            return Ok(None);
+        };
+
+        let document_data = serde_json::from_value(document_data)
+            .map_err(|e| StandardGraphqlError::from_error(&e))?;
+        let draft = patient_draft_document(&self.patient, document_data);
+        let draft = serde_json::to_value(draft)
+            .map_err(|e| StandardGraphqlError::InternalError(format!("{}", e)).extend())?;
+        Ok(Some(draft))
+    }
+
     pub async fn program_enrolments(
         &self,
         ctx: &Context<'_>,
@@ -171,7 +198,7 @@ impl PatientNode {
         let context = ctx.service_provider().basic_context()?;
         let filter = filter
             .map(ProgramEnrolmentFilter::from)
-            .unwrap_or(ProgramEnrolmentFilter::new())
+            .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(&self.patient.id));
 
         let nodes: Vec<_> = ctx
@@ -209,9 +236,7 @@ impl PatientNode {
         let service_provider = ctx.service_provider();
         let context = service_provider.basic_context()?;
 
-        let mut filter = filter
-            .map(|f| f.to_domain_filter())
-            .unwrap_or(ContactTraceFilter::default());
+        let mut filter = filter.map(|f| f.to_domain_filter()).unwrap_or_default();
         filter.patient_id = Some(EqualFilter::equal_to(&self.patient.id));
         let result = service_provider
             .contact_trace_service

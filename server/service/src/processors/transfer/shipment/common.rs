@@ -24,7 +24,7 @@ pub(crate) fn generate_inbound_shipment_lines(
             |InvoiceLineRow {
                  id: _,
                  invoice_id: _,
-                 item_id,
+                 item_link_id,
                  item_name,
                  item_code,
                  stock_line_id: _,
@@ -41,22 +41,24 @@ pub(crate) fn generate_inbound_shipment_lines(
                  total_before_tax: _,
                  tax,
                  inventory_adjustment_reason_id: _,
+                 return_reason_id,
+                 foreign_currency_price_before_tax,
              }| {
                 let cost_price_per_pack = sell_price_per_pack;
 
                 InvoiceLineRow {
                     id: uuid(),
                     invoice_id: inbound_shipment_id.to_string(),
-                    item_id,
+                    item_link_id,
                     item_name,
                     item_code,
                     batch,
                     expiry_date,
                     pack_size,
                     // TODO clarify this
-                    total_before_tax: cost_price_per_pack * number_of_packs as f64,
+                    total_before_tax: cost_price_per_pack * number_of_packs,
                     total_after_tax: (cost_price_per_pack * number_of_packs)
-                        * (1.0 + tax.unwrap_or(0.0) / 100.0) as f64,
+                        * (1.0 + tax.unwrap_or(0.0) / 100.0),
                     cost_price_per_pack,
                     r#type: match r#type {
                         InvoiceLineRowType::Service => InvoiceLineRowType::Service,
@@ -65,6 +67,8 @@ pub(crate) fn generate_inbound_shipment_lines(
                     number_of_packs,
                     note,
                     tax,
+                    foreign_currency_price_before_tax,
+                    return_reason_id,
                     // Default
                     stock_line_id: None,
                     location_id: None,
@@ -84,8 +88,8 @@ pub(crate) fn convert_invoice_line_to_single_pack(
     invoice_lines
         .into_iter()
         .map(|mut line| {
-            line.number_of_packs = line.number_of_packs * line.pack_size as f64;
-            line.cost_price_per_pack = line.cost_price_per_pack / line.pack_size as f64;
+            line.number_of_packs *= line.pack_size as f64;
+            line.cost_price_per_pack /= line.pack_size as f64;
             line.pack_size = 1;
             line
         })

@@ -2,12 +2,45 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const CopyPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-// const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
+const ModuleFederationPlugin = webpack.container.ModuleFederationPlugin;
 const path = require('path');
-// const deps = require('./package.json').dependencies;
+const dependencies = require('./package.json').dependencies;
 const BundleAnalyzerPlugin =
   require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const EncodingPlugin = require('webpack-encoding-plugin');
+const fs = require('fs');
+
+const localPlugins = () => {
+  const plugins = [];
+  try {
+    fs.readdirSync('../plugins')
+      .map(fileName => ({
+        fileName,
+        fullFileName: path.join('../plugins', fileName),
+      }))
+      .filter(({ fullFileName }) => fs.lstatSync(fullFileName).isDirectory())
+      .forEach(plugin => {
+        try {
+          plugins.push({
+            path: plugin.fileName,
+            name: plugin.fileName,
+            config: fs.readFileSync(
+              path.join(plugin.fullFileName, 'plugin.json'),
+              'utf8'
+            ),
+          });
+        } catch (e) {
+          console.error(
+            `Error parsing plugin ${plugin.fileName}: ${e.message}`
+          );
+        }
+      });
+  } catch (e) {
+    console.error(`Error reading plugins directory: ${e.message}`);
+  }
+  return plugins;
+};
 
 class DummyWebpackPlugin {
   apply(compiler) {
@@ -110,7 +143,10 @@ module.exports = env => {
     },
     plugins: [
       new ReactRefreshWebpackPlugin(),
-      new webpack.DefinePlugin({ API_HOST: JSON.stringify(env.API_HOST) }),
+      new webpack.DefinePlugin({
+        API_HOST: JSON.stringify(env.API_HOST),
+        LOCAL_PLUGINS: JSON.stringify(localPlugins()),
+      }),
       bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({
         favicon: './public/favicon.ico',
@@ -134,36 +170,27 @@ module.exports = env => {
           },
         ],
       }),
-      // new ModuleFederationPlugin({
-      //   name: 'host',
-      //   filename: 'remoteEntry.js',
-      //   remotes: {
-      //     customers: 'customers@http://localhost:3007/remoteEntry.js',
-      //     dashboard: 'dashboard@http://localhost:3004/remoteEntry.js',
-      //     invoices: 'invoices@http://localhost:3005/remoteEntry.js',
-      //   },
-      //   exposes: {
-      //     './Host': './src/Host',
-      //   },
-      //   shared: [
-      //     {
-      //       ...deps,
-      //       react: {
-      //         singleton: true,
-      //         requiredVersion: deps.react,
-      //       },
-      //       'react-dom': {
-      //         singleton: true,
-      //         requiredVersion: deps['react-dom'],
-      //       },
-      //     },
-      //     {
-      //       '@openmsupply-client/common': {
-      //         requiredVersion: require('../common/package.json').version,
-      //       },
-      //     },
-      //   ],
-      // }),
+      new ModuleFederationPlugin({
+        name: 'host',
+        shared: [
+          {
+            react: {
+              singleton: true,
+              eager: true,
+              requiredVersion: dependencies.react,
+            },
+            'react-dom': {
+              singleton: true,
+              eager: true,
+              requiredVersion: dependencies['react-dom'],
+            },
+            'react-singleton-context': { singleton: true, eager: true },
+          },
+        ],
+      }),
+      new EncodingPlugin({
+        encoding: 'UTF-16',
+      }),
     ],
   };
 };

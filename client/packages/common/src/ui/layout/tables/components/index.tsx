@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { FC, PropsWithChildren, ReactElement } from 'react';
 import { CellProps, HeaderProps } from '../columns/types';
 import { RecordWithId } from '@common/types';
 import { useTranslation } from '@common/intl';
@@ -9,13 +9,9 @@ export * from './Cells';
 export * from './Header';
 export * from './Expand';
 
-export const BasicCell = <T extends RecordWithId>({
-  column,
-  rowData,
-  localisedText,
-  localisedDate,
-  isError,
-}: CellProps<T>): ReactElement => (
+export const BasicCellLayout: FC<
+  PropsWithChildren<{ isError?: boolean; width?: number }>
+> = ({ children, isError, width }) => (
   <Box
     sx={{
       border: theme =>
@@ -26,16 +22,29 @@ export const BasicCell = <T extends RecordWithId>({
   >
     <div
       style={{
+        width,
         overflow: 'hidden',
         textOverflow: 'ellipsis',
       }}
     >
-      {column.formatter(column.accessor({ rowData }), {
-        t: localisedText,
-        d: localisedDate,
-      })}
+      {children}
     </div>
   </Box>
+);
+
+export const BasicCell = <T extends RecordWithId>({
+  column,
+  rowData,
+  localisedText,
+  localisedDate,
+  isError,
+}: CellProps<T>): ReactElement => (
+  <BasicCellLayout isError={isError}>
+    {column.formatter(column.accessor({ rowData }), {
+      t: localisedText,
+      d: localisedDate,
+    })}
+  </BasicCellLayout>
 );
 
 export const BasicHeader = <T extends RecordWithId>({

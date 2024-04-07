@@ -196,7 +196,7 @@ mod test {
         let requisition1 = RequisitionRow {
             id: "requisition1".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -207,7 +207,7 @@ mod test {
         let requisition2 = RequisitionRow {
             id: "requisition2".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -218,7 +218,7 @@ mod test {
         let requisition3 = RequisitionRow {
             id: "requisition3".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program2.id.clone()),
@@ -229,7 +229,7 @@ mod test {
         let requisition4 = RequisitionRow {
             id: "requisition4".to_string(),
             order_type: Some("Order Type 2".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -240,7 +240,7 @@ mod test {
         let requisition5 = RequisitionRow {
             id: "requisition5".to_string(),
             order_type: Some("Order Type 2".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_b().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -251,7 +251,7 @@ mod test {
         let requisition6 = RequisitionRow {
             id: "requisition6".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period2.id.clone()),
             program_id: Some(program1.id.clone()),

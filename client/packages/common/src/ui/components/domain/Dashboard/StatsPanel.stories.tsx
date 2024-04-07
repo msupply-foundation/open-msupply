@@ -6,7 +6,7 @@ import { useTranslation } from '@common/intl';
 
 const Template: ComponentStory<typeof StatsPanel> = () => {
   const [isLoading, setIsLoading] = React.useState(true);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const stats: Stat[] = [
     { label: t('label.expired'), value: '8' },
     {

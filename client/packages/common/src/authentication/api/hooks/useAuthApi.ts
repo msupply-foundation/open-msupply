@@ -10,6 +10,7 @@ export const useAuthApi = () => {
 
   const keys = {
     me: (token: string) => ['me', token] as const,
+    isCentralServer: ['isCentralServer'] as const,
     refresh: (token: string) => ['refresh', token] as const,
   };
 

@@ -12,6 +12,8 @@ import {
   ContactTraceSortFieldInput,
   UpdatePatientInput,
   BasicSpinner,
+  DocumentRegistryCategoryNode,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { usePatient } from '../api';
 import { AppBarButtons } from './AppBarButtons';
@@ -26,7 +28,6 @@ import {
   SaveDocumentMutation,
   SavedDocument,
   SchemaData,
-  useDocumentDataAccessor,
   useDocumentRegistry,
   useJsonForms,
   usePatientModalStore,
@@ -97,14 +98,17 @@ const PatientDetailView = ({
     setCreateNewPatient,
   } = usePatientStore();
   const patientId = usePatient.utils.id();
-  const { data: currentPatient } = usePatient.document.get(patientId);
-
-  const { data: patientRegistries, isLoading } =
+  const { data: currentPatient, isLoading: isCurrentPatientLoading } =
+    usePatient.document.get(patientId);
+  const { data: patientRegistries, isLoading: isPatientRegistryLoading } =
     useDocumentRegistry.get.documentRegistries({
       filter: {
-        documentType: { equalTo: 'Patient' },
+        category: { equalTo: DocumentRegistryCategoryNode.Patient },
       },
     });
+  const isLoading = isCurrentPatientLoading || isPatientRegistryLoading;
+  const navigate = useNavigate();
+
   const patientRegistry = patientRegistries?.nodes[0];
   const isCreatingPatient = !!createNewPatient;
   // we have to memo the data to avoid an infinite render loop
@@ -113,7 +117,7 @@ const PatientDetailView = ({
       // Use the unsaved patient information from createNewPatient, i.e. from a "create patient"
       // request
       return {
-        schema: createNewPatient.documentRegistry ?? DEFAULT_SCHEMA,
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
         data: {
           id: createNewPatient.id,
           code: createNewPatient.code,
@@ -149,18 +153,34 @@ const PatientDetailView = ({
         },
         isCreating: false,
       };
-    } else return undefined;
+    } else if (currentPatient?.document) {
+      // Take the data from the document
+      return {
+        schema: patientRegistry ?? DEFAULT_SCHEMA,
+        data: currentPatient.documentDraft,
+        isCreating: false,
+      };
+    }
   }, [createNewPatient, currentPatient, patientRegistry]);
 
   const handleProgramPatientSave = useUpsertProgramPatient();
   const handlePatientSave = useUpsertPatient(isCreatingPatient);
-  const documentDataAccessor = useDocumentDataAccessor(
-    createNewPatient ? undefined : documentName,
-    inputData,
-    handleProgramPatientSave
-  );
+
   const accessor: JsonFormData<SavedDocument | void> = patientRegistry
-    ? documentDataAccessor
+    ? {
+        loadedData: inputData?.data,
+        isLoading: false,
+        error: undefined,
+        isCreating: isCreatingPatient,
+        schema: patientRegistry,
+        save: async (data: unknown) => {
+          await handleProgramPatientSave(
+            data,
+            patientRegistry.formSchemaId,
+            currentPatient?.document?.id
+          );
+        },
+      }
     : {
         loadedData: inputData?.data,
         isLoading: false,
@@ -183,7 +203,7 @@ const PatientDetailView = ({
 
   useEffect(() => {
     return () => setCreateNewPatient(undefined);
-  }, []);
+  }, [setCreateNewPatient]);
 
   const save = useCallback(async () => {
     const savedDocument = await saveData();
@@ -192,21 +212,29 @@ const PatientDetailView = ({
     if (savedDocument) {
       setDocumentName(savedDocument.name);
     }
-  }, [saveData]);
+  }, [saveData, setCreateNewPatient, setDocumentName]);
 
   useEffect(() => {
     if (!documentName && currentPatient) {
       setDocumentName(currentPatient?.document?.name);
     }
-  }, [currentPatient]);
+  }, [currentPatient, documentName, setDocumentName]);
 
   useEffect(() => {
     onEdit(isDirty);
-  }, [isDirty]);
+  }, [isDirty, onEdit]);
 
   const showSaveConfirmation = useConfirmationModal({
     onConfirm: save,
     message: t('messages.confirm-save-generic'),
+    title: t('heading.are-you-sure'),
+  });
+
+  const showCancelConfirmation = useConfirmationModal({
+    onConfirm: () => {
+      navigate(-1);
+    },
+    message: t('messages.confirm-cancel-generic'),
     title: t('heading.are-you-sure'),
   });
 
@@ -222,6 +250,7 @@ const PatientDetailView = ({
         validationError={validationError}
         inputData={inputData}
         showSaveConfirmation={showSaveConfirmation}
+        showCancelConfirmation={showCancelConfirmation}
       />
     </Box>
   );
@@ -255,7 +284,7 @@ export const PatientView = () => {
   useEffect(() => {
     if (!currentPatient) return;
     setCurrentPatient(currentPatient);
-  }, [currentPatient]);
+  }, [currentPatient, setCurrentPatient]);
 
   const tabs = [
     {

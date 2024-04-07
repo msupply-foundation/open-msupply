@@ -19,7 +19,11 @@ interface LocationSearchInputProps {
 interface LocationOption {
   label: string;
   value: string | null;
+  code?: string;
 }
+
+const getOptionLabel = (option: LocationOption) =>
+  `${option.code} - ${option.label}`;
 
 const optionRenderer = (
   props: React.HTMLAttributes<HTMLLIElement>,
@@ -45,7 +49,7 @@ const optionRenderer = (
     </MenuItem>
   ) : (
     <MenuItem {...props} key={location.label}>
-      <span style={{ whiteSpace: 'nowrap' }}>{location.label}</span>
+      <span style={{ whiteSpace: 'nowrap' }}>{getOptionLabel(location)}</span>
     </MenuItem>
   );
 };
@@ -71,6 +75,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
   const options: AutocompleteOption<LocationOption>[] = locations.map(l => ({
     value: l.id,
     label: l.name,
+    code: l.code,
   }));
 
   if (locations.length > 0 && selectedLocation !== null) {
@@ -88,6 +93,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
         selectedLocation && {
           value: selectedLocation.id,
           label: selectedLocation.name,
+          code: selectedLocation.code,
         }
       }
       loading={isLoading}
@@ -97,6 +103,7 @@ export const LocationSearchInput: FC<LocationSearchInputProps> = ({
       options={options}
       noOptionsText={t('messages.no-locations')}
       renderOption={optionRenderer}
+      getOptionLabel={getOptionLabel}
     />
   );
 };

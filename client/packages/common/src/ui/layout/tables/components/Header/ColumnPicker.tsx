@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -27,7 +27,7 @@ export const ColumnPicker = <T extends RecordWithId>({
   columns,
   onChange,
 }: ColumnPickerProps<T>) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [hiddenColumnsConfig, setHiddenColumnsConfig] =
     useLocalStorage('/columns/hidden');
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
@@ -37,10 +37,15 @@ export const ColumnPicker = <T extends RecordWithId>({
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
 
-  const getHiddenColumns = () => hiddenColumnsConfig?.[tableKey] ?? [];
+  const getHiddenColumns = useCallback(
+    () => hiddenColumnsConfig?.[tableKey] ?? [],
+    [hiddenColumnsConfig, tableKey]
+  );
 
-  const isVisible = (column: Column<T>) =>
-    !getHiddenColumns()?.includes(String(column.key));
+  const isVisible = useCallback(
+    (column: Column<T>) => !getHiddenColumns()?.includes(String(column.key)),
+    [getHiddenColumns]
+  );
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -62,7 +67,9 @@ export const ColumnPicker = <T extends RecordWithId>({
     });
   };
 
-  useEffect(() => onChange(columns.filter(isVisible)), [hiddenColumnsConfig]);
+  useEffect(() => {
+    onChange(columns.filter(isVisible));
+  }, [columns, onChange, isVisible]);
 
   return (
     <>

@@ -1,8 +1,13 @@
 use super::{
     barcode_row::{barcode, barcode::dsl as barcode_dsl},
-    BarcodeRow, DBType, StorageConnection,
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
+    name_row::{name, name::dsl as name_dsl},
+    BarcodeRow, DBType, NameLinkRow, NameRow, StorageConnection,
 };
-use diesel::prelude::*;
+use diesel::{
+    helper_types::{InnerJoin, IntoBoxed, LeftJoin},
+    prelude::*,
+};
 
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -14,9 +19,10 @@ use crate::{EqualFilter, Pagination, Sort};
 #[derive(PartialEq, Debug, Clone)]
 pub struct Barcode {
     pub barcode_row: BarcodeRow,
+    pub manufacturer_name_row: Option<NameRow>,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct BarcodeFilter {
     pub id: Option<EqualFilter<String>>,
     pub gtin: Option<EqualFilter<String>>,
@@ -31,6 +37,7 @@ pub enum BarcodeSortField {
 }
 
 pub type BarcodeSort = Sort<BarcodeSortField>;
+type BarcodeJoin = (BarcodeRow, Option<(NameLinkRow, NameRow)>);
 
 pub struct BarcodeRepository<'a> {
     connection: &'a mut StorageConnection,
@@ -73,16 +80,19 @@ impl<'a> BarcodeRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<BarcodeRow>(&mut self.connection.connection)?;
+            .load::<BarcodeJoin>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-type BoxedLogQuery = barcode::BoxedQuery<'static, DBType>;
+type BoxedBarcodeQuery =
+    IntoBoxed<'static, LeftJoin<barcode::table, InnerJoin<name_link::table, name::table>>, DBType>;
 
-fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedLogQuery {
-    let mut query = barcode::table.into_boxed();
+fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedBarcodeQuery {
+    let mut query = barcode_dsl::barcode
+        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
+        .into_boxed();
 
     if let Some(filter) = filter {
         apply_equal_filter!(query, filter.id, barcode_dsl::id);
@@ -94,18 +104,16 @@ fn create_filtered_query(filter: Option<BarcodeFilter>) -> BoxedLogQuery {
     query
 }
 
-pub fn to_domain(barcode_row: BarcodeRow) -> Barcode {
-    Barcode { barcode_row }
+fn to_domain((barcode_row, name_link): BarcodeJoin) -> Barcode {
+    Barcode {
+        barcode_row,
+        manufacturer_name_row: name_link.map(|(_, name)| name),
+    }
 }
 
 impl BarcodeFilter {
     pub fn new() -> BarcodeFilter {
-        BarcodeFilter {
-            id: None,
-            gtin: None,
-            item_id: None,
-            pack_size: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

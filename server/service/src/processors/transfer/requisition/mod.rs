@@ -9,12 +9,12 @@ pub(crate) mod test;
 
 use repository::{
     ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    EqualFilter, KeyValueStoreRepository, KeyValueType, RepositoryError, Requisition,
-    StorageConnection,
+    EqualFilter, KeyValueType, RepositoryError, Requisition, StorageConnection,
 };
 use thiserror::Error;
 
 use crate::{
+    cursor_controller::CursorController,
     processors::transfer::{
         get_requisition_and_linked_requisition,
         requisition::{
@@ -76,7 +76,7 @@ pub(crate) fn process_requisition_transfers(
         ActiveStoresOnSite::get(&ctx.connection).map_err(Error::GetActiveStoresOnSiteError)?;
 
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
-    let key_value_store_repo = KeyValueStoreRepository::new(&ctx.connection);
+    let cursor_controller = CursorController::new(KeyValueType::RequisitionTransferProcessorCursor);
     // For transfers, changelog MUST be filtered by records where name_id is active store on this site
     // this is the contract obligation for try_process_record in ProcessorTrait
     let filter = ChangelogFilter::new()
@@ -86,10 +86,9 @@ pub(crate) fn process_requisition_transfers(
         .action(ChangelogAction::Upsert.equal_to());
 
     loop {
-        let cursor = key_value_store_repo
-            .get_i64(KeyValueType::RequisitionTransferProcessorCursor)
-            .map_err(Error::DatabaseError)?
-            .unwrap_or(0) as u64;
+        let cursor = cursor_controller
+            .get(&ctx.connection)
+            .map_err(Error::DatabaseError)?;
 
         let logs = changelog_repo
             .changelogs(cursor, CHANGELOG_BATCH_SIZE, Some(filter.clone()))
@@ -129,11 +128,8 @@ pub(crate) fn process_requisition_transfers(
                     .map_err(Error::ProcessorError)?;
             }
 
-            key_value_store_repo
-                .set_i64(
-                    KeyValueType::RequisitionTransferProcessorCursor,
-                    Some(log.cursor + 1),
-                )
+            cursor_controller
+                .update(&ctx.connection, (log.cursor + 1) as u64)
                 .map_err(Error::DatabaseError)?;
         }
     }
@@ -154,7 +150,7 @@ trait RequisitionTransferProcessor {
         record: &RequisitionTransferProcessorRecord,
     ) -> Result<Option<String>, ProcessorError> {
         let result = connection
-            .transaction_sync(|connection| self.try_process_record(connection, &record))
+            .transaction_sync(|connection| self.try_process_record(connection, record))
             .map_err(|e| ProcessorError(self.get_description(), e.to_inner_error()))?;
 
         if let Some(result) = &result {

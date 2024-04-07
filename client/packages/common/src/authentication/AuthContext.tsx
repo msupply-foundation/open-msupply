@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { createContext, useMemo, useState, useEffect, FC } from 'react';
+import React, { useMemo, useState, useEffect, FC } from 'react';
 import { AppRoute } from '@openmsupply-client/config';
 import { useLocalStorage } from '../localStorage';
 import Cookies from 'js-cookie';
@@ -12,8 +12,10 @@ import { PropsWithChildrenOnly, UserPermission } from '@common/types';
 import { RouteBuilder } from '../utils/navigation';
 import { matchPath } from 'react-router-dom';
 import { useGql } from '../api';
+import { createRegisteredContext } from 'react-singleton-context';
 
-export const COOKIE_LIFETIME_MINUTES = 60;
+// Also determines auth cookie lifetime
+export const INACTIVITY_TIMEOUT_MINUTES = 60;
 const TOKEN_CHECK_INTERVAL = 60 * 1000;
 
 export enum AuthError {
@@ -75,7 +77,7 @@ export const getAuthCookie = (): AuthCookie => {
 };
 
 export const setAuthCookie = (cookie: AuthCookie) => {
-  const expires = addMinutes(new Date(), COOKIE_LIFETIME_MINUTES);
+  const expires = addMinutes(new Date(), INACTIVITY_TIMEOUT_MINUTES);
   const authCookie = { ...cookie, expires };
 
   Cookies.set('auth', JSON.stringify(authCookie), { expires });
@@ -92,13 +94,16 @@ const authControl = {
   userHasPermission: (_permission: UserPermission) => false,
 };
 
-const AuthContext = createContext<AuthControl>(authControl);
+const AuthContext = createRegisteredContext<AuthControl>(
+  'auth-context',
+  authControl
+);
 const { Provider } = AuthContext;
 
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
-  const [error, setError] = useLocalStorage('/auth/error');
+  const [error, setError] = useLocalStorage('/error/auth');
   const storeId = cookie?.store?.id ?? '';
   const {
     login,
@@ -107,7 +112,11 @@ export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
     mostRecentCredentials,
   } = useLogin(setCookie);
   const getUserPermissions = useGetUserPermissions();
-  const { refreshToken } = useRefreshToken();
+  const { refreshToken } = useRefreshToken(() => {
+    Cookies.remove('auth');
+    setCookie(undefined);
+    setError(AuthError.Timeout);
+  });
   const { setHeader } = useGql();
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
 

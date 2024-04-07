@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import { Box, CircularProgress, Paper, Typography } from '@mui/material';
+import { Box, Card, CircularProgress, Typography } from '@mui/material';
 
 const Loading = () => (
   <Box display="flex" flex={1} justifyContent="center" alignItems="center">
@@ -17,7 +17,7 @@ export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
   height = '100%',
   title,
 }) => (
-  <Paper
+  <Card
     sx={{
       borderRadius: '16px',
       height,
@@ -34,5 +34,5 @@ export const Widget: React.FC<PropsWithChildren<WidgetProps>> = ({
     </Typography>
 
     <React.Suspense fallback={<Loading />}>{children}</React.Suspense>
-  </Paper>
+  </Card>
 );

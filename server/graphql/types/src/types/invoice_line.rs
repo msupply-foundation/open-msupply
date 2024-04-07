@@ -8,7 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineRowType};
+use repository::{InvoiceLine, InvoiceLineRow, InvoiceLineRowType, ItemRow};
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -28,6 +28,16 @@ impl InvoiceLineNodeType {
             InvoiceLineRowType::StockOut => StockOut,
             InvoiceLineRowType::UnallocatedStock => UnallocatedStock,
             InvoiceLineRowType::Service => Service,
+        }
+    }
+
+    pub fn to_domain(self) -> InvoiceLineRowType {
+        use InvoiceLineNodeType::*;
+        match self {
+            StockIn => InvoiceLineRowType::StockIn,
+            StockOut => InvoiceLineRowType::StockOut,
+            UnallocatedStock => InvoiceLineRowType::UnallocatedStock,
+            Service => InvoiceLineRowType::Service,
         }
     }
 }
@@ -55,7 +65,7 @@ impl InvoiceLineNode {
     }
     // Item
     pub async fn item_id(&self) -> &str {
-        &self.row().item_id
+        &self.item_row().id
     }
     pub async fn item_name(&self) -> &str {
         &self.row().item_name
@@ -65,12 +75,12 @@ impl InvoiceLineNode {
     }
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.row().item_id.clone()).await?;
+        let item_option = loader.load_one(self.item_row().id.clone()).await?;
 
         item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item ({}) linked to invoice_line ({})",
-                &self.row().item_id,
+                &self.item_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -124,6 +134,9 @@ impl InvoiceLineNode {
     pub async fn tax_percentage(&self) -> &Option<f64> {
         &self.row().tax
     }
+    pub async fn foreign_currency_price_before_tax(&self) -> &Option<f64> {
+        &self.row().foreign_currency_price_before_tax
+    }
     // Location
     pub async fn location_name(&self) -> Option<&str> {
         self.invoice_line.location_name()
@@ -147,6 +160,9 @@ impl InvoiceLineNode {
     // Other
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
+    }
+    pub async fn return_reason_id(&self) -> &Option<String> {
+        &self.row().return_reason_id
     }
 }
 
@@ -199,6 +215,10 @@ impl InvoiceLineNode {
     pub fn row(&self) -> &InvoiceLineRow {
         &self.invoice_line.invoice_line_row
     }
+
+    pub fn item_row(&self) -> &ItemRow {
+        &self.invoice_line.item_row
+    }
 }
 
 #[cfg(test)]
@@ -206,10 +226,10 @@ mod test {
 
     use async_graphql::{EmptyMutation, Object};
     use chrono::NaiveDate;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-        LocationRow,
+        ItemRow, LocationRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -221,7 +241,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_test_invoice_line_basic",
@@ -238,17 +258,18 @@ mod test {
                             r.id = "line_id".to_string();
                             r.invoice_id = "line_invoice_id".to_string();
                             r.r#type = InvoiceLineRowType::Service;
-                            r.item_id = "line_item_id".to_string();
+                            r.item_link_id = "line_item_id".to_string();
                             r.item_name = "line_item_name".to_string();
                             r.item_code = "line_item_code".to_string();
                             r.pack_size = 1;
                             r.number_of_packs = 2.0;
                             r.batch = Some("line_batch".to_string());
-                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
                             r.location_id = Some("line_location_id".to_string());
                             r.note = None;
                         }),
                         invoice_row: InvoiceRow::default(),
+                        item_row: inline_init(|r: &mut ItemRow| r.id = "line_item_id".to_string()),
                         location_row_option: Some(inline_init(|r: &mut LocationRow| {
                             r.name = "line_location_name".to_string();
                         })),
@@ -307,7 +328,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_test_invoice_line_pricing",

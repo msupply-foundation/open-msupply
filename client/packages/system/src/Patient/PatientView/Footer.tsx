@@ -23,6 +23,7 @@ interface FooterProps {
   validationError?: string | boolean;
   inputData?: FormInputData;
   showSaveConfirmation: () => void;
+  showCancelConfirmation: () => void;
 }
 
 export const Footer: FC<FooterProps> = ({
@@ -32,8 +33,9 @@ export const Footer: FC<FooterProps> = ({
   validationError,
   inputData,
   showSaveConfirmation,
+  showCancelConfirmation,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { Modal, showDialog, hideDialog } = useDialog();
   const navigate = useNavigate();
   const { userHasPermission } = useAuthContext();
@@ -64,9 +66,13 @@ export const Footer: FC<FooterProps> = ({
           >
             <DialogButton
               variant="cancel"
-              disabled={!isDirty || isSaving}
+              disabled={isSaving}
               onClick={() => {
-                navigate(-1);
+                if (isDirty) {
+                  showCancelConfirmation();
+                } else {
+                  navigate(-1);
+                }
               }}
             />
             <LoadingButton

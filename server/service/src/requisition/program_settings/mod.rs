@@ -33,10 +33,9 @@ pub(super) fn get_program_requisition_settings(
     store_id: &str,
 ) -> Result<Vec<ProgramSettings>, RepositoryError> {
     // Get program_settings, order_types, periods and requisitions_in_periods for a store
-    let Some(prepared) =
-        prepare(ctx, store_id)? else {
-            return Ok(Vec::new())
-        };
+    let Some(prepared) = prepare(ctx, store_id)? else {
+        return Ok(Vec::new());
+    };
 
     // Map program_settings, order_types, periods and requisitions_in_periods to ProgramSettings
     Ok(map(prepared))
@@ -72,7 +71,7 @@ mod test {
         let name_tag_join1 = NameTagJoinRow {
             id: "name_tag_join1".to_string(),
             name_tag_id: name_tag1.id.clone(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             ..Default::default()
         };
         let name_tag2 = NameTagRow {
@@ -82,7 +81,7 @@ mod test {
         let name_tag_join2 = NameTagJoinRow {
             id: "name_tag_join2".to_string(),
             name_tag_id: name_tag2.id.clone(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             ..Default::default()
         };
 
@@ -94,7 +93,7 @@ mod test {
         };
         let master_list_name_join1 = MasterListNameJoinRow {
             id: "master_list_name_join1".to_string(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             master_list_id: master_list1.id.clone(),
         };
         let context1 = ContextRow {
@@ -114,7 +113,7 @@ mod test {
         };
         let master_list_name_join2 = MasterListNameJoinRow {
             id: "master_list_name_join2".to_string(),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             master_list_id: master_list2.id.clone(),
         };
         let context2 = ContextRow {
@@ -193,7 +192,7 @@ mod test {
         let requisition1 = RequisitionRow {
             id: "requisition1".to_string(),
             order_type: Some("Order Type 1".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period1.id.clone()),
             program_id: Some(program1.id.clone()),
@@ -203,7 +202,7 @@ mod test {
             id: "requisition2".to_string(),
             // Checking case insensitive match
             order_type: Some("OrDeR TyPe 2".to_string()),
-            name_id: mock_name_store_a().id,
+            name_link_id: mock_name_store_a().id,
             store_id: mock_store_a().id,
             period_id: Some(period4.id.clone()),
             program_id: Some(program2.id.clone()),
@@ -214,24 +213,24 @@ mod test {
         // to program 1 and program 2 respecively and visible in mock_store_a
         let master_list_name_join3 = MasterListNameJoinRow {
             id: "master_list_name_join3".to_string(),
-            name_id: mock_name_store_b().id,
+            name_link_id: mock_name_store_b().id,
             master_list_id: master_list1.id.clone(),
         };
         let master_list_name_join4 = MasterListNameJoinRow {
             id: "master_list_name_join4".to_string(),
-            name_id: mock_name_store_c().id,
+            name_link_id: mock_name_store_c().id,
             master_list_id: master_list2.id.clone(),
         };
         let name_store_join1 = NameStoreJoinRow {
             id: "name_store_join1".to_string(),
-            name_id: mock_name_store_b().id.clone(),
+            name_link_id: mock_name_store_b().id.clone(),
             store_id: mock_store_a().id,
             name_is_supplier: true,
             ..Default::default()
         };
         let name_store_join2 = NameStoreJoinRow {
             id: "name_store_join2".to_string(),
-            name_id: mock_name_store_c().id.clone(),
+            name_link_id: mock_name_store_c().id.clone(),
             store_id: mock_store_a().id,
             name_is_supplier: true,
             ..Default::default()
@@ -276,14 +275,21 @@ mod test {
 
         // Test
 
-        let result = service_provider
+        let mut result = service_provider
             .requisition_service
-            .get_program_requisition_settings(&service_context, &mock_store_a().id);
+            .get_program_requisition_settings(&service_context, &mock_store_a().id)
+            .unwrap();
+        result.sort_by(|a, b| {
+            a.program_requisition_settings
+                .program_settings_row
+                .id
+                .cmp(&b.program_requisition_settings.program_settings_row.id)
+        });
 
         assert_eq!(
             result,
             // Should have two program settings (two programs)
-            Ok(vec![
+            vec![
                 ProgramSettings {
                     program_requisition_settings: ProgramRequisitionSettings {
                         program_settings_row: program_requisition_setting1.clone(),
@@ -332,7 +338,7 @@ mod test {
                         program: program2.clone(),
                     }]
                 }
-            ])
+            ]
         )
     }
 }

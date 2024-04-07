@@ -18,7 +18,7 @@ pub struct TemperatureBreachConfig {
     pub temperature_breach_config_row: TemperatureBreachConfigRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachConfigFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
@@ -120,9 +120,7 @@ fn create_filtered_query(filter: Option<TemperatureBreachConfigFilter>) -> Boxed
     query
 }
 
-pub fn to_domain(
-    temperature_breach_config_row: TemperatureBreachConfigRow,
-) -> TemperatureBreachConfig {
+fn to_domain(temperature_breach_config_row: TemperatureBreachConfigRow) -> TemperatureBreachConfig {
     TemperatureBreachConfig {
         temperature_breach_config_row,
     }
@@ -130,13 +128,7 @@ pub fn to_domain(
 
 impl TemperatureBreachConfigFilter {
     pub fn new() -> TemperatureBreachConfigFilter {
-        TemperatureBreachConfigFilter {
-            id: None,
-            is_active: None,
-            r#type: None,
-            store_id: None,
-            description: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

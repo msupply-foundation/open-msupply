@@ -3,6 +3,7 @@ use serde::{
     de::{value::StrDeserializer, IntoDeserializer},
     Deserialize, Deserializer, Serialize, Serializer,
 };
+use util::format_error;
 
 pub fn empty_str_as_option_string<'de, D: Deserializer<'de>>(
     d: D,
@@ -59,7 +60,14 @@ where
 /// consistent v5 behaviour might change in the future. This helper will make it easy to do the
 /// change on our side.
 pub fn naive_time<'de, D: Deserializer<'de>>(d: D) -> Result<NaiveTime, D::Error> {
-    let secs = u32::deserialize(d)?;
+    // Ignore gracefully https://github.com/msupply-foundation/open-msupply-internal/issues/37
+    let secs = match u32::deserialize(d) {
+        Ok(secs) => secs,
+        Err(err) => {
+            log::warn!("Problem deserialising time: {}", format_error(&err));
+            0
+        }
+    };
     // using the _opt version of the method and on error returning a time of 00:00:00
     // as there have been some invalid time values returned by 4D - unsure of the origin of these
     // if the deserialisation panics then the whole server crashes, so have used the error & default

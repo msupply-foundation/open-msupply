@@ -83,6 +83,8 @@ const inboundParsers = {
         'taxPercentage' in patch
           ? { percentage: patch.taxPercentage }
           : undefined,
+      currencyId: 'currency' in patch ? patch.currency?.id : undefined,
+      currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
     };
   },
   toInsertLine: (line: DraftInboundLine): InsertInboundShipmentLineInput => {
@@ -285,20 +287,14 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
         .map(inboundParsers.toInsertLine),
       updateInboundShipmentLines: draftInboundLine
         .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks }) =>
-            !isCreated &&
-            isUpdated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks > 0
+          ({ type, isCreated, isUpdated }) =>
+            !isCreated && isUpdated && type === InvoiceLineNodeType.StockIn
         )
         .map(inboundParsers.toUpdateLine),
       deleteInboundShipmentLines: draftInboundLine
         .filter(
-          ({ type, isCreated, isUpdated, numberOfPacks }) =>
-            !isCreated &&
-            isUpdated &&
-            type === InvoiceLineNodeType.StockIn &&
-            numberOfPacks === 0
+          ({ type, isCreated, isDeleted }) =>
+            !isCreated && isDeleted && type === InvoiceLineNodeType.StockIn
         )
         .map(inboundParsers.toDeleteLine),
       insertInboundShipmentServiceLines: draftInboundLine

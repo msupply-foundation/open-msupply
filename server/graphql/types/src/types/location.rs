@@ -1,6 +1,6 @@
 use super::StockLineConnector;
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use async_graphql::{dataloader::DataLoader, Context};
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};

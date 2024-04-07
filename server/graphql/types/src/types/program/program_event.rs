@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{DocumentLoader, PatientLoader},
     ContextExt,
 };
-use repository::{ProgramEventRow, ProgramEventSort, ProgramEventSortField};
+use repository::{NameRow, ProgramEvent, ProgramEventRow, ProgramEventSort, ProgramEventSortField};
 
 use super::{document::DocumentNode, patient::PatientNode};
 
@@ -64,18 +64,28 @@ impl ProgramEventSortInput {
 
 pub struct ProgramEventNode {
     pub store_id: String,
-    pub row: ProgramEventRow,
+    pub program_event: ProgramEvent,
     pub allowed_ctx: Vec<String>,
+}
+
+impl ProgramEventNode {
+    fn row(&self) -> &ProgramEventRow {
+        &self.program_event.program_event_row
+    }
+
+    fn name_row(&self) -> &Option<NameRow> {
+        &self.program_event.name_row
+    }
 }
 
 #[Object]
 impl ProgramEventNode {
-    pub async fn patient_id(&self) -> &Option<String> {
-        &self.row.patient_id
+    pub async fn patient_id(&self) -> Option<String> {
+        self.name_row().as_ref().map(|it| it.id.clone())
     }
 
     pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
-        let Some(patient_id) = &self.row.patient_id else {
+        let Some(patient_id) = self.name_row().as_ref().map(|it| &it.id) else {
             return Ok(None);
         };
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
@@ -97,36 +107,36 @@ impl ProgramEventNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row.datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().datetime, Utc)
     }
 
     pub async fn active_start_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row.active_start_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().active_start_datetime, Utc)
     }
 
     pub async fn active_end_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.row.active_end_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().active_end_datetime, Utc)
     }
 
     pub async fn document_type(&self) -> &str {
-        &&self.row.document_type
+        &&self.row().document_type
     }
 
     pub async fn document_name(&self) -> &Option<String> {
-        &self.row.document_name
+        &self.row().document_name
     }
 
     pub async fn data(&self) -> &Option<String> {
-        &self.row.data
+        &self.row().data
     }
 
     pub async fn r#type(&self) -> &str {
-        &self.row.r#type
+        &self.row().r#type
     }
 
     /// The document associated with the document_name
     pub async fn document(&self, ctx: &Context<'_>) -> Result<Option<DocumentNode>> {
-        let Some(document_name) = self.row.document_name.clone() else {
+        let Some(document_name) = self.row().document_name.clone() else {
             return Ok(None);
         };
         let loader = ctx.get_loader::<DataLoader<DocumentLoader>>();

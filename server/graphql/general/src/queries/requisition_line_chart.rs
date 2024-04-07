@@ -1,10 +1,10 @@
+use crate::types::ItemChartNode;
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::RecordNotFound,
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-use graphql_types::types::ItemChartNode;
 use service::{
     auth::{Resource, ResourceAccessRequest},
     requisition_line::chart::{
@@ -144,7 +144,7 @@ mod graphql {
     use async_graphql::EmptyMutation;
 
     use graphql_core::assert_standard_graphql_error;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use serde_json::json;
 
@@ -230,7 +230,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_requisition_line_chart_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_get_requisition_line_chart_errors",
@@ -291,7 +291,7 @@ mod graphql {
 
     #[actix_rt::test]
     async fn test_graphql_get_requisition_line_chart_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             GeneralQueries,
             EmptyMutation,
             "test_graphql_get_requisition_line_chart_success",

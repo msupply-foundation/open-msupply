@@ -14,6 +14,8 @@ import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
 import { AppRoute } from '@openmsupply-client/config';
+import { usePackVariant } from '../context';
+import { PackVariantsTab } from './Tabs/PackVariants';
 
 export const ItemDetailView: FC = () => {
   const { data, isLoading } = useItem();
@@ -25,22 +27,30 @@ export const ItemDetailView: FC = () => {
     setSuffix(data?.name ?? '');
   }, [data]);
 
-  if (isLoading) return <DetailFormSkeleton />;
+  const { variantsControl, numberOfPacksFromQuantity } = usePackVariant(
+    data?.id ?? '',
+    data?.name ?? null
+  );
+  if (isLoading || !data) return <DetailFormSkeleton />;
 
   const tabs = [
     {
-      Component: <GeneralTab />,
-      value: 'General',
+      Component: <GeneralTab variantControl={variantsControl} />,
+      value: t('label.general'),
     },
     {
       Component: <MasterListsTab />,
-      value: 'Master Lists',
+      value: t('label.master-lists'),
+    },
+    {
+      Component: <PackVariantsTab itemId={data.id} />,
+      value: t('label.pack-variants'),
     },
   ];
 
   return !!data ? (
     <Box style={{ width: '100%' }}>
-      <Toolbar />
+      <Toolbar numberOfPacksFromQuantity={numberOfPacksFromQuantity} />
       <DetailTabs tabs={tabs} />
     </Box>
   ) : (

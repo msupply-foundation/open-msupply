@@ -1,9 +1,12 @@
 use super::program_row::program::dsl as program_dsl;
 
 use crate::{
-    db_diesel::{context_row::context, document::document, master_list_row::master_list},
+    db_diesel::{
+        context_row::context, document::document, master_list_row::master_list,
+        name_link_row::name_link,
+    },
     repository_error::RepositoryError,
-    StorageConnection,
+    StorageConnection, Upsert,
 };
 
 use diesel::prelude::*;
@@ -20,6 +23,7 @@ table! {
 joinable!(program -> master_list (master_list_id));
 joinable!(program -> context (context_id));
 allow_tables_to_appear_in_same_query!(program, document);
+allow_tables_to_appear_in_same_query!(program, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = program)]
@@ -64,5 +68,19 @@ impl<'a> ProgramRowRepository<'a> {
             .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+impl Upsert for ProgramRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ProgramRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ProgramRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

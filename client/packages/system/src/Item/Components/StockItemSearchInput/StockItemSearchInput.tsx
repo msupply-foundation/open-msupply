@@ -8,7 +8,11 @@ import {
   ArrayUtils,
   useDebounceCallback,
 } from '@openmsupply-client/common';
-import { ItemStockOnHandFragment, useItemStockOnHand } from '../../api';
+import {
+  ItemStockOnHandFragment,
+  useItemById,
+  useItemStockOnHand,
+} from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
 import { useItemFilter, usePagination } from './hooks';
@@ -32,10 +36,15 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     pagination,
     filter,
   });
-  const t = useTranslation('common');
+  // changed from useStockLines even though that is more appropriate
+  // when viewing a stocktake, you may have a stocktake line which has no stock lines.
+  // this call is to fetch the current item; if you have a large number of items
+  // then the current item may not be in the available list of items due to pagination batching
+  const { data: currentItem } = useItemById(currentItemId ?? undefined);
+
+  const t = useTranslation();
   const formatNumber = useFormatNumber();
 
-  const value = items.find(({ id }) => id === currentItemId) ?? null;
   const selectControl = useToggle();
 
   const options = useMemo(
@@ -47,10 +56,15 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
     [items]
   );
 
-  const cachedSearchedItems = useMemo(
-    () => ArrayUtils.uniqBy([...items, ...(data?.nodes ?? [])], 'id'),
-    [data]
-  );
+  const cachedSearchedItems = useMemo(() => {
+    const newItems = [...items, ...(data?.nodes ?? [])];
+    if (!!currentItem) newItems.unshift(currentItem);
+
+    return ArrayUtils.uniqBy(newItems, 'id');
+  }, [data, currentItem]);
+
+  const value =
+    cachedSearchedItems.find(({ id }) => id === currentItemId) ?? null;
 
   const debounceOnFilter = useDebounceCallback(
     (searchText: string) => {

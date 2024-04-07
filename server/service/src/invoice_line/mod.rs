@@ -2,9 +2,12 @@ pub mod validate;
 
 use repository::InvoiceLine;
 use repository::InvoiceLineFilter;
+use repository::InvoiceLineSort;
+use repository::PaginationOption;
 use repository::RepositoryError;
 
 use crate::service_provider::ServiceContext;
+use crate::ListResult;
 
 pub mod query;
 use self::query::*;
@@ -24,6 +27,11 @@ use self::outbound_shipment_unallocated_line::*;
 pub mod stock_out_line;
 use self::stock_out_line::*;
 
+pub mod stock_in_line;
+
+pub mod update_return_reason_id;
+use self::update_return_reason_id::*;
+
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
         &self,
@@ -36,9 +44,13 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_lines(
         &self,
         ctx: &ServiceContext,
+        store_id: &str,
+        invoice_id: &str,
+        pagination: Option<PaginationOption>,
         filter: Option<InvoiceLineFilter>,
-    ) -> Result<Vec<InvoiceLine>, RepositoryError> {
-        get_invoice_lines(ctx, filter)
+        sort: Option<InvoiceLineSort>,
+    ) -> Result<ListResult<InvoiceLine>, GetInvoiceLinesError> {
+        get_invoice_lines(ctx, store_id, invoice_id, pagination, filter, sort)
     }
 
     // Stock out: Outbound/Prescription
@@ -170,6 +182,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         line_id: String,
     ) -> Result<AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError> {
         allocate_outbound_shipment_unallocated_line(ctx, line_id)
+    }
+
+    fn update_return_reason_id(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateLineReturnReason,
+    ) -> Result<InvoiceLine, UpdateLineReturnReasonError> {
+        update_return_reason_id(ctx, input)
     }
 }
 

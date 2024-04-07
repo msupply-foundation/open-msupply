@@ -28,6 +28,7 @@ import { useZodOptionsValidation } from '../../hooks/useZodOptionsValidation';
 import {
   FORM_LABEL_COLUMN_WIDTH,
   FORM_INPUT_COLUMN_WIDTH,
+  FORM_GAP,
 } from '../../styleConstants';
 import { JsonData } from '../../JsonForm';
 import { EnumArrayComponent } from './';
@@ -79,7 +80,7 @@ const isStringEnum = (
 };
 
 export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [removeIndex, setRemoveIndex] = useState<number | undefined>();
   const {
     uischema,
@@ -116,6 +117,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
           fontWeight: 'bold',
           textAlign: 'end',
           whiteSpace: 'nowrap',
+          lineHeight: '32px',
         }}
       >
         {uischema.itemLabel
@@ -176,7 +178,7 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
     );
 
   return (
-    <Box display="flex" flexDirection="column" gap={0.5} marginTop={2}>
+    <Box display="flex" flexDirection="column" gap={0.5} marginTop={FORM_GAP}>
       <Box display="flex" width="100%" alignItems="center">
         <Box width={FORM_LABEL_COLUMN_WIDTH}>
           <Typography
@@ -217,14 +219,13 @@ export const ArrayCommonComponent = (props: ArrayControlCustomProps) => {
               expanded={expandedItems[index]}
               onChange={() => handleToggle(index)}
               sx={{
-                mt: '0 !important',
-                mb: index === data.length - 1 ? '20px !important' : 1,
                 border: isError ? '1px solid red' : '',
               }}
             >
               <AccordionSummary
                 expandIcon={<ChevronDownIcon />}
                 sx={{
+                  height: '32',
                   '&:hover .array-remove-icon': { visibility: 'visible' },
                   '.MuiAccordionSummary-content': {
                     margin: '5px !important',

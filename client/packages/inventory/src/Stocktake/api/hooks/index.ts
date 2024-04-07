@@ -16,10 +16,7 @@ export const useStocktake = {
     fields: Document.useStocktakeFields,
   },
   line: {
-    stocktakeItems: Lines.useStocktakeItems,
-    stocktakeLines: Lines.useStocktakeLines,
     rows: Lines.useStocktakeRows,
-
     delete: Lines.useStocktakeDeleteLines,
     deleteSelected: Lines.useStocktakeDeleteSelectedLines,
     save: Lines.useSaveStocktakeLines,

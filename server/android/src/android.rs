@@ -53,6 +53,7 @@ pub mod android {
                 port: 0,
                 host: "n/a".to_string(),
                 database_name: db_path.to_string_lossy().to_string(),
+                database_path: None,
                 // See https://github.com/openmsupply/remote-server/issues/1076
                 init_sql: Some(format!("PRAGMA temp_store_directory = '{}';", cache_dir)),
             },

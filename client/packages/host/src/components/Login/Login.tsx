@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowRightIcon,
   useTranslation,
+  useInterval,
   LoadingButton,
   useHostContext,
   LocalStorage,
   ErrorWithDetails,
+  useFormatDateTime,
 } from '@openmsupply-client/common';
 import { LoginTextInput } from './LoginTextInput';
 import { useLoginForm } from './hooks';
@@ -21,7 +23,6 @@ export const Login = () => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
-
   const passwordRef = React.useRef(null);
   const {
     isValid,
@@ -34,6 +35,43 @@ export const Login = () => {
     error,
     siteName,
   } = useLoginForm(passwordRef);
+  const [timeoutRemaining, setTimeoutRemaining] = useState(
+    error?.timeoutRemaining ?? 0
+  );
+  const { customDate } = useFormatDateTime();
+
+  useInterval(
+    () => {
+      setTimeoutRemaining(prevTimeoutRemaining =>
+        prevTimeoutRemaining > 0 ? prevTimeoutRemaining - 1000 : 0
+      );
+    },
+    timeoutRemaining > 0 ? 1000 : null
+  );
+
+  useEffect(() => {
+    if (error && error.message === 'AccountBlocked') {
+      setTimeoutRemaining(error.timeoutRemaining ?? 0);
+    }
+  }, [error]);
+
+  const loginErrorMessage = useMemo(() => {
+    if (!error) return '';
+    if (error.message === 'AccountBlocked') {
+      if (timeoutRemaining < 1000) return '';
+
+      const formattedTime = customDate(
+        new Date(0, 0, 0, 0, 0, 0, timeoutRemaining),
+        'm:ss'
+      );
+      return `${t('error.account-blocked')} ${formattedTime}`;
+    }
+    if (error?.stdError === 'Internal error') {
+      return t('error.internal-error');
+    }
+
+    return t('error.login');
+  }, [error, timeoutRemaining, customDate, t]);
 
   useEffect(() => {
     if (!displaySettings) return;
@@ -51,8 +89,8 @@ export const Login = () => {
 
   useEffect(() => {
     setPageTitle(`${t('app.login')} | ${t('app')} `);
-    LocalStorage.removeItem('/auth/error');
-  }, []);
+    LocalStorage.removeItem('/error/auth');
+  }, [setPageTitle, t]);
 
   return (
     <LoginLayout
@@ -95,9 +133,10 @@ export const Login = () => {
         </LoadingButton>
       }
       ErrorMessage={
-        error && (
+        error &&
+        loginErrorMessage !== '' && (
           <ErrorWithDetails
-            error={error.message || t('error.login')}
+            error={loginErrorMessage}
             details={error.detail || ''}
           />
         )

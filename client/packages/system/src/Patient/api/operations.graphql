@@ -11,11 +11,44 @@ fragment PatientRow on PatientNode {
   gender
   email
   document {
-    data
+    name
+  }
+  isDeceased
+  dateOfDeath
+  programEnrolments {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ProgramPatientRow on PatientNode {
+  id
+  code
+  code2
+  firstName
+  lastName
+  name
+  dateOfBirth
+  address1
+  phone
+  gender
+  email
+  document {
     id
     name
     type
   }
+  documentDraft
   isDeceased
   dateOfDeath
   programEnrolments {
@@ -56,7 +89,7 @@ query patientById($storeId: String!, $nameId: String!) {
     ... on PatientConnector {
       __typename
       nodes {
-        ...PatientRow
+        ...ProgramPatientRow
       }
       totalCount
     }
@@ -70,7 +103,7 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
       nodes {
         score
         patient {
-          ...PatientRow
+          ...ProgramPatientRow
         }
       }
       totalCount
@@ -131,7 +164,7 @@ mutation insertProgramPatient(
   insertProgramPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
@@ -143,7 +176,7 @@ mutation updateProgramPatient(
   updateProgramPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
@@ -152,7 +185,7 @@ mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
   insertPatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
     }
   }
 }
@@ -161,7 +194,37 @@ mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
   updatePatient(storeId: $storeId, input: $input) {
     ... on PatientNode {
       __typename
-      ...PatientRow
+      ...ProgramPatientRow
+    }
+  }
+}
+
+query latestPatientEncounter(
+  $storeId: String!
+  $patientId: String!
+  $encounterType: String
+) {
+  encounters(
+    storeId: $storeId
+    filter: {
+      patientId: { equalTo: $patientId }
+      type: { equalTo: $encounterType }
+    }
+    sort: { key: startDatetime, desc: true }
+    page: { first: 1 }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        id
+        type
+        startDatetime
+        suggestedNextEncounter {
+          startDatetime
+          label
+        }
+      }
+      totalCount
     }
   }
 }

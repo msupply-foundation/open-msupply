@@ -1,6 +1,5 @@
 import React from 'react';
 import Bugsnag from '@bugsnag/js';
-
 import {
   BrowserRouter,
   Routes,
@@ -26,9 +25,12 @@ import {
 import { AppRoute, Environment } from '@openmsupply-client/config';
 import { Initialise, Login, Viewport } from './components';
 import { Site } from './Site';
-import { AuthenticationAlert } from './components/AuthenticationAlert';
+import { ErrorAlert } from './components/ErrorAlert';
 import { Discovery } from './components/Discovery';
 import { Android } from './components/Android';
+import { useRefreshPackVariant } from '@openmsupply-client/system';
+import { useInitPlugins } from './plugins';
+import { BackButtonHandler } from './BackButtonHandler';
 
 const appVersion = require('../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -56,7 +58,19 @@ Bugsnag.start({
 });
 
 const skipRequest = () =>
-  LocalStorage.getItem('/auth/error') === AuthError.NoStoreAssigned;
+  LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned;
+
+/**
+ * Empty component which can be used to call startup hooks.
+ * For example, this component is called when auth information such as user or store id changed.
+ */
+const Init = () => {
+  // Fetch pack units at startup. Note, the units are cached, i.e. they are not fetched repeatedly.
+  // They will be refetched on page reload or when store is changed based on cache usePackVariants cache keys
+  useRefreshPackVariant();
+  useInitPlugins();
+  return <></>;
+};
 
 const Host = () => (
   <React.Suspense fallback={<div />}>
@@ -69,11 +83,13 @@ const Host = () => (
               skipRequest={skipRequest}
             >
               <AuthProvider>
+                <Init />
                 <AppThemeProvider>
                   <ConfirmationModalProvider>
                     <AlertModalProvider>
                       <BrowserRouter>
-                        <AuthenticationAlert />
+                        <ErrorAlert />
+                        <BackButtonHandler />
                         <Viewport>
                           <Box display="flex" style={{ minHeight: '100%' }}>
                             <Routes>

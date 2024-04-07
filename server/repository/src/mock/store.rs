@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use util::inline_init;
 
 use crate::StoreRow;
@@ -9,6 +10,7 @@ pub fn mock_store_a() -> StoreRow {
         s.id = "store_a".to_string();
         s.name_id = "name_store_a".to_string();
         s.code = "code".to_string();
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
     })
 }
 
@@ -18,6 +20,7 @@ pub fn mock_store_b() -> StoreRow {
         s.name_id = "name_store_b".to_string();
         s.code = "code".to_string();
         s.site_id = 2;
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
     })
 }
 
@@ -26,6 +29,7 @@ pub fn mock_store_c() -> StoreRow {
         s.id = "store_c".to_string();
         s.name_id = "name_store_c".to_string();
         s.code = "code".to_string();
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
     })
 }
 
@@ -34,6 +38,7 @@ pub fn program_master_list_store() -> StoreRow {
         s.id = "program_master_list_store".to_string();
         s.name_id = mock_program_master_list_test().id;
         s.code = mock_program_master_list_test().code;
+        s.created_date = NaiveDate::from_ymd_opt(2020, 1, 1);
     })
 }
 

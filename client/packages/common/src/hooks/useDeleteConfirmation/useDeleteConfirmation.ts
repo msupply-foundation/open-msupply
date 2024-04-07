@@ -30,7 +30,7 @@ export const useDeleteConfirmation = <T>({
     cantDelete,
     selectRows,
   } = messages;
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { success, info } = useNotification();
   const cannotDeleteSnack = info(
     cantDelete || t('messages.cant-delete-generic')

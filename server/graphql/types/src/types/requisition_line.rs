@@ -2,7 +2,7 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowType},
-    RequisitionLine, RequisitionLineRow,
+    ItemRow, RequisitionLine, RequisitionLineRow,
 };
 use service::{item_stats::ItemStats, usize_to_u32, ListResult};
 
@@ -35,7 +35,7 @@ impl RequisitionLineNode {
     }
 
     pub async fn item_id(&self) -> &str {
-        &self.row().item_id
+        &self.item_row().id
     }
 
     pub async fn comment(&self) -> &Option<String> {
@@ -44,12 +44,12 @@ impl RequisitionLineNode {
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.row().item_id.clone()).await?;
+        let item_option = loader.load_one(self.item_row().id.clone()).await?;
 
         item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item_id {} for requisition_line_id {}",
-                &self.row().item_id,
+                &self.item_row().id,
                 &self.row().id
             ))
             .extend(),
@@ -96,8 +96,8 @@ impl RequisitionLineNode {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
         let result_option = loader
             .load_one(RequisitionAndItemId::new(
-                &requisition_id,
-                &self.row().item_id,
+                requisition_id,
+                &self.item_row().id,
             ))
             .await?;
 
@@ -122,8 +122,8 @@ impl RequisitionLineNode {
         let loader = ctx.get_loader::<DataLoader<InvoiceLineForRequisitionLine>>();
         let result_option = loader
             .load_one(RequisitionAndItemId::new(
-                &requisition_id,
-                &self.row().item_id,
+                requisition_id,
+                &self.item_row().id,
             ))
             .await?;
 
@@ -141,7 +141,7 @@ impl RequisitionLineNode {
     ) -> Result<ItemStatsNode> {
         if self.requisition_row().r#type == RequisitionRowType::Request {
             return Ok(ItemStatsNode {
-                item_stats: ItemStats::from_requisition_line(self.row()),
+                item_stats: ItemStats::from_requisition_line(&self.requisition_line),
             });
         }
 
@@ -149,14 +149,14 @@ impl RequisitionLineNode {
         let result = loader
             .load_one(ItemStatsLoaderInput::new(
                 &self.requisition_row().store_id,
-                &self.row().item_id,
+                &self.item_row().id,
                 amc_lookback_months,
             ))
             .await?
             .ok_or(
                 StandardGraphqlError::InternalError(format!(
                     "Cannot find item stats for requisition line {} and store {}",
-                    &self.row().item_id,
+                    &self.item_row().id,
                     &self.requisition_row().store_id,
                 ))
                 .extend(),
@@ -178,12 +178,28 @@ impl RequisitionLineNode {
         let response_option = loader
             .load_one(RequisitionAndItemId::new(
                 &self.row().requisition_id,
-                &self.row().item_id,
+                &self.item_row().id,
             ))
             .await?;
 
         Ok(response_option
             .map(|requisition_line_status| requisition_line_status.remaining_quantity())
+            .unwrap_or(0.0))
+    }
+
+    /// Quantity already issued in outbound shipments
+    pub async fn already_issued(&self, ctx: &Context<'_>) -> Result<f64> {
+        let loader = ctx.get_loader::<DataLoader<RequisitionLineSupplyStatusLoader>>();
+
+        let response_option = loader
+            .load_one(RequisitionAndItemId::new(
+                &self.row().requisition_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(response_option
+            .map(|requisition_line_status| requisition_line_status.quantity_in_invoices())
             .unwrap_or(0.0))
     }
 
@@ -201,8 +217,8 @@ impl RequisitionLineNode {
         let loader = ctx.get_loader::<DataLoader<LinkedRequisitionLineLoader>>();
         let result_option = loader
             .load_one(RequisitionAndItemId::new(
-                &linked_requisition_id,
-                &self.row().item_id,
+                linked_requisition_id,
+                &self.item_row().id,
             ))
             .await?;
 
@@ -246,28 +262,34 @@ impl RequisitionLineNode {
     pub fn requisition_row(&self) -> &RequisitionRow {
         &self.requisition_line.requisition_row
     }
+    pub fn item_row(&self) -> &ItemRow {
+        &self.requisition_line.item_row
+    }
 }
 
 #[cfg(test)]
 mod test {
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
-    use repository::{mock::MockDataInserts, RequisitionLine};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
+    use repository::{
+        mock::{mock_item_a, mock_item_b, mock_item_c, mock_item_d, MockDataInserts},
+        RequisitionLine,
+    };
     use serde_json::json;
     use util::inline_init;
 
     use crate::types::RequisitionLineNode;
 
     #[actix_rt::test]
-    async fn graphql_requisition_line_quantity_remaing_to_supply() {
+    async fn graphql_requisition_line_quantity_remaining_to_supply() {
         use repository::mock::test_remaining_to_supply as TestData;
         #[derive(Clone)]
         struct TestQuery;
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
-            "graphql_requisition_line_quantity_remaing_to_supply",
+            "graphql_requisition_line_quantity_remaining_to_supply",
             MockDataInserts::all(),
             TestData::test_remaining_to_supply(),
         )
@@ -280,6 +302,7 @@ mod test {
                     requisition_line: inline_init(|r: &mut RequisitionLine| {
                         r.requisition_line_row = TestData::line_to_supply_q5();
                         r.requisition_row = TestData::requisition();
+                        r.item_row = mock_item_a();
                     }),
                 }
             }
@@ -289,6 +312,7 @@ mod test {
                     requisition_line: inline_init(|r: &mut RequisitionLine| {
                         r.requisition_line_row = TestData::line_to_supply_q2();
                         r.requisition_row = TestData::requisition();
+                        r.item_row = mock_item_b();
                     }),
                 }
             }
@@ -298,6 +322,7 @@ mod test {
                     requisition_line: inline_init(|r: &mut RequisitionLine| {
                         r.requisition_line_row = TestData::line_to_supply_q1();
                         r.requisition_row = TestData::requisition();
+                        r.item_row = mock_item_c();
                     }),
                 }
             }
@@ -307,6 +332,7 @@ mod test {
                     requisition_line: inline_init(|r: &mut RequisitionLine| {
                         r.requisition_line_row = TestData::line_to_supply_q0();
                         r.requisition_row = TestData::requisition();
+                        r.item_row = mock_item_d();
                     }),
                 }
             }

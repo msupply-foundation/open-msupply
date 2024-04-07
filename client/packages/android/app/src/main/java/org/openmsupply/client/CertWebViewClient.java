@@ -199,10 +199,14 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // will not only reload, but will open the URL in a browser tab
         // for local URLs we don't want this to happen!
         Uri url = request.getUrl();
-        if (url.toString().startsWith(nativeApi.getServerUrl())) {
-            return false;
+        try {
+            if (url.toString().startsWith(nativeApi.getServerUrl())) {
+                return false;
+            }
         }
-
+        catch(Exception e){
+            Log.e(TAG,e.getMessage());
+        }
         return bridge.launchIntent(url);
     }
 }

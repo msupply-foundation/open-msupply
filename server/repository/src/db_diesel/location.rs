@@ -16,7 +16,7 @@ pub struct Location {
     pub location_row: LocationRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -107,19 +107,13 @@ impl<'a> LocationRepository<'a> {
 
 type BoxedLocationQuery = location::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(location_row: LocationRow) -> Location {
+fn to_domain(location_row: LocationRow) -> Location {
     Location { location_row }
 }
 
 impl LocationFilter {
     pub fn new() -> LocationFilter {
-        LocationFilter {
-            id: None,
-            name: None,
-            code: None,
-            on_hold: None,
-            store_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
