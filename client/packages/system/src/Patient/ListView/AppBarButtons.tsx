@@ -24,7 +24,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   const t = useTranslation('dispensary');
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const { userHasPermission } = useAuthContext();
-  const [open, setOpen] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const csvExport = async () => {
     const data = await mutateAsync();
@@ -45,7 +45,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
           disabled={!userHasPermission(UserPermission.PatientMutate)}
-          onClick={() => setOpen(true)}
+          onClick={() => setCreateModalOpen(true)}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
@@ -57,7 +57,9 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
         </LoadingButton>
       </Grid>
 
-      {open ? <CreatePatientModal onClose={() => setOpen(false)} /> : null}
+      {createModalOpen ? (
+        <CreatePatientModal onClose={() => setCreateModalOpen(false)} />
+      ) : null}
     </AppBarButtonsPortal>
   );
 };

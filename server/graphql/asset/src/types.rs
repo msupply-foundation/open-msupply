@@ -105,7 +105,7 @@ impl AssetNode {
         &self.row().notes
     }
 
-    pub async fn asset_number(&self) -> &str {
+    pub async fn asset_number(&self) -> &Option<String> {
         &self.row().asset_number
     }
 

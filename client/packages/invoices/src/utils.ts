@@ -203,7 +203,7 @@ export const isPrescriptionDisabled = (
 };
 
 export const isInboundListItemDisabled = (
-  inbound: InboundRowFragment
+  inbound: InboundRowFragment | InboundReturnRowFragment
 ): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
