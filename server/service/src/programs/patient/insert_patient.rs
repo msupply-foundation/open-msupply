@@ -103,7 +103,7 @@ pub(crate) fn insert_patient(
 
             let name_repo = NameRowRepository::new(con);
             name_repo.upsert_one(&row)?;
-            create_patient_name_store_join(&con, store_id, &row.id)?;
+            create_patient_name_store_join(con, store_id, &row.id)?;
 
             let patient = service_provider
                 .patient_service
@@ -114,7 +114,7 @@ pub(crate) fn insert_patient(
                     None,
                     None,
                 )
-                .map_err(|err| InsertPatientError::DatabaseError(err))?
+                .map_err(InsertPatientError::DatabaseError)?
                 .rows
                 .pop()
                 .ok_or(InsertPatientError::InternalError(
