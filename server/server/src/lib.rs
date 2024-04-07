@@ -3,7 +3,9 @@ extern crate machine_uid;
 
 use crate::{
     certs::Certificates, cold_chain::config_cold_chain, configuration::get_or_create_token_secret,
-    cors::cors_policy, serve_frontend::config_server_frontend, static_files::config_static_files,
+    cors::cors_policy, middleware::central_server_only, print::config_print,
+    serve_frontend::config_serve_frontend, static_files::config_static_files,
+    support::config_support, sync_on_central::config_sync_on_central,
     upload_fridge_tag::config_upload_fridge_tag,
 };
 
@@ -20,6 +22,7 @@ use repository::{get_storage_connection_manager, migrations::migrate};
 
 use service::{
     auth_data::AuthData,
+    plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
@@ -28,7 +31,8 @@ use service::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
+use util::is_central_server;
 
 pub mod certs;
 pub mod cold_chain;
@@ -39,8 +43,11 @@ mod logging;
 pub mod middleware;
 mod serve_frontend;
 pub mod static_files;
+pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+pub mod print;
+mod sync_on_central;
 
 // Only import discovery for non android features (otherwise build for android targets would fail due to local-ip-address)
 #[cfg(not(target_os = "android"))]
@@ -58,11 +65,16 @@ pub async fn start_server(
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
-        "Server starting in {} mode",
+        "{} server starting in {} mode on port {}",
+        match is_central_server() {
+            true => "Central",
+            false => "Remote",
+        },
         match is_develop() {
             true => "Development",
             false => "Production",
-        }
+        },
+        settings.server.port
     );
 
     // INITIALISE DATABASE AND CONNECTION
@@ -75,6 +87,10 @@ pub async fn start_server(
         .context("Failed to run DB migrations")
         .unwrap();
     info!("Run DB migrations...done");
+
+    if is_central_server() {
+        info!("Running as central");
+    }
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");
@@ -204,6 +220,10 @@ pub async fn start_server(
             false => "initialisation",
         }
     );
+
+    let validated_plugins = ValidatedPluginBucket::new(&settings.server.base_dir).unwrap();
+    let validated_plugins = Data::new(Mutex::new(validated_plugins));
+
     let graphql_schema = Data::new(GraphqlSchema::new(
         GraphSchemaData {
             connection_manager: Data::new(connection_manager),
@@ -211,6 +231,7 @@ pub async fn start_server(
             service_provider: service_provider.clone(),
             settings: Data::new(settings.clone()),
             auth: auth.clone(),
+            validated_plugins: validated_plugins.clone(),
         },
         is_operational,
     ));
@@ -279,12 +300,16 @@ pub async fn start_server(
             // needed for cold chain service
             .app_data(service_provider.clone())
             .app_data(auth.clone())
+            .app_data(validated_plugins.clone())
             .configure(attach_graphql_schema(graphql_schema.clone()))
             .configure(config_static_files)
             .configure(config_cold_chain)
             .configure(config_upload_fridge_tag)
+            .configure(config_sync_on_central)
+            .configure(config_support)
+            .configure(config_print)
             // Needs to be last to capture all unmatches routes
-            .configure(config_server_frontend)
+            .configure(config_serve_frontend)
     })
     .disable_signals();
 

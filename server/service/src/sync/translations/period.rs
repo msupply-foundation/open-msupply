@@ -2,15 +2,9 @@ use chrono::NaiveDate;
 use repository::{PeriodRow, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use crate::sync::translations::period_schedule::PeriodScheduleTranslation;
 
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::PERIOD;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -25,25 +19,27 @@ pub struct LegacyPeriodRow {
     pub end_date: NaiveDate,
     pub name: String,
 }
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(PeriodTranslation)
+}
 
-pub(crate) struct PeriodTranslation {}
+pub(super) struct PeriodTranslation;
 impl SyncTranslation for PeriodTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::PERIOD,
-            dependencies: vec![LegacyTableName::PERIOD_SCHEDULE],
-        }
+    fn table_name(&self) -> &str {
+        "period"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![PeriodScheduleTranslation.table_name()]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyPeriodRow {
             id,
             period_schedule_id,
@@ -60,9 +56,7 @@ impl SyncTranslation for PeriodTranslation {
             name,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Period(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 }
 
@@ -80,8 +74,9 @@ mod tests {
             setup_all("test_period_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

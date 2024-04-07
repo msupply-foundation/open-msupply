@@ -18,7 +18,7 @@ pub fn get_default_gql_query(query: DefaultQuery) -> GraphQlQuery {
 }
 
 const INVOICE_QUERY: &str = r#"
-query InvoiceQuery($storeId: String, $dataId: String) {
+query InvoiceQuery($storeId: String, $dataId: String, $sort: PrintReportSortInput) {
   invoice(storeId: $storeId, id: $dataId) {
     ... on InvoiceNode {
       id
@@ -45,6 +45,7 @@ query InvoiceQuery($storeId: String, $dataId: String) {
         taxPercentage
         totalAfterTax
         totalBeforeTax
+        foreignCurrencyTotalAfterTax
       }
       otherParty(storeId: $storeId) {
         name
@@ -55,54 +56,65 @@ query InvoiceQuery($storeId: String, $dataId: String) {
         address1
         address2
       }
-      lines {
-        nodes {
-          batch
-          costPricePerPack
-          expiryDate
-          invoiceId
-          id
-          itemCode
-          itemId
-          itemName
-          item {
-            unitName
-          }
-          locationId
-          locationName
-          note
-          numberOfPacks
-          packSize
-          sellPricePerPack
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+        dateUpdated
+      }
+      currencyRate
+    }
+  }
+  invoiceLines(storeId: $storeId, invoiceId: $dataId, reportSort: $sort) {
+    ... on InvoiceLineConnector {
+      nodes {
+        batch
+        costPricePerPack
+        expiryDate
+        id
+        invoiceId
+        itemCode
+        itemId
+        itemName
+        item {
+          unitName
+        }
+        locationId
+        locationName
+        note
+        numberOfPacks
+        packSize
+        sellPricePerPack
+        taxPercentage
+        totalAfterTax
+        totalBeforeTax
+        type
+        pricing {
+          serviceTotalAfterTax
+          serviceTotalBeforeTax
+          stockTotalAfterTax
+          stockTotalBeforeTax
           taxPercentage
           totalAfterTax
           totalBeforeTax
-          type
-          pricing {
-            serviceTotalAfterTax
-            serviceTotalBeforeTax
-            stockTotalAfterTax
-            stockTotalBeforeTax
-            taxPercentage
-            totalAfterTax
-            totalBeforeTax
-          }
-          stockLine {
-            availableNumberOfPacks
-            batch
-            costPricePerPack
-            expiryDate
-            id
-            itemId
-            locationId
-            locationName
-            note
-            onHold
-            packSize
-            sellPricePerPack
-            storeId
-            totalNumberOfPacks
-          }
+          foreignCurrencyTotalAfterTax
+        }
+        stockLine {
+          availableNumberOfPacks
+          batch
+          costPricePerPack
+          expiryDate
+          id
+          itemId
+          locationId
+          locationName
+          note
+          onHold
+          packSize
+          sellPricePerPack
+          storeId
+          totalNumberOfPacks
         }
       }
     }

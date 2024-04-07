@@ -23,7 +23,7 @@ pub struct TemperatureBreach {
     pub temperature_breach_row: TemperatureBreachRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
@@ -60,7 +60,7 @@ impl<'a> TemperatureBreachRepository<'a> {
     }
 
     pub fn count(&self, filter: Option<TemperatureBreachFilter>) -> Result<i64, RepositoryError> {
-        let query = Self::create_filtered_query(filter)?;
+        let query = Self::create_filtered_query(filter);
         Ok(query.count().get_result(&self.connection.connection)?)
     }
 
@@ -77,7 +77,7 @@ impl<'a> TemperatureBreachRepository<'a> {
         filter: Option<TemperatureBreachFilter>,
         sort: Option<TemperatureBreachSort>,
     ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-        let mut query = Self::create_filtered_query(filter)?;
+        let mut query = Self::create_filtered_query(filter);
         if let Some(sort) = sort {
             match sort.key {
                 TemperatureBreachSortField::Id => {
@@ -104,7 +104,7 @@ impl<'a> TemperatureBreachRepository<'a> {
 
     pub fn create_filtered_query(
         filter: Option<TemperatureBreachFilter>,
-    ) -> Result<BoxedTemperatureBreachQuery, RepositoryError> {
+    ) -> BoxedTemperatureBreachQuery {
         let mut query = temperature_breach_dsl::temperature_breach.into_boxed();
 
         if let Some(f) = filter {
@@ -146,7 +146,7 @@ impl<'a> TemperatureBreachRepository<'a> {
             }
         }
 
-        Ok(query)
+        query
     }
 }
 
@@ -166,7 +166,7 @@ impl TemperatureBreachRowType {
     }
 }
 
-pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
+fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
     }
@@ -174,16 +174,7 @@ pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBre
 
 impl TemperatureBreachFilter {
     pub fn new() -> TemperatureBreachFilter {
-        TemperatureBreachFilter {
-            id: None,
-            store_id: None,
-            unacknowledged: None,
-            start_datetime: None,
-            end_datetime: None,
-            r#type: None,
-            sensor: None,
-            location: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

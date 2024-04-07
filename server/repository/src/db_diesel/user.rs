@@ -133,8 +133,8 @@ fn to_domain(results: Vec<UserAndUserStoreJoin>) -> Vec<User> {
             })
         }
     }
-    let users = user_map.into_values().collect();
-    users
+
+    user_map.into_values().collect()
 }
 
 // user_store_join_dsl::user_id.eq(user_dsl::id)

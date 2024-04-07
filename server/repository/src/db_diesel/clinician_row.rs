@@ -1,6 +1,8 @@
-use super::StorageConnection;
+use super::{name_link_row::name_link, StorageConnection};
 
-use crate::{Gender, RepositoryError};
+use crate::{
+    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError, Upsert,
+};
 
 use diesel::prelude::*;
 
@@ -19,6 +21,7 @@ table! {
     gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
     is_active -> Bool,
   }
+
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
@@ -44,6 +47,23 @@ table! {
         id -> Text,
         is_sync_update -> Bool,
     }
+}
+
+allow_tables_to_appear_in_same_query!(clinician, clinician_link);
+allow_tables_to_appear_in_same_query!(clinician, name_link);
+
+fn insert_or_ignore_clinician_link(
+    connection: &StorageConnection,
+    row: &ClinicianRow,
+) -> Result<(), RepositoryError> {
+    let clinician_link_row = ClinicianLinkRow {
+        id: row.id.clone(),
+        clinician_id: row.id.clone(),
+    };
+
+    ClinicianLinkRowRepository::new(connection).insert_one_or_ignore(&clinician_link_row)?;
+
+    Ok(())
 }
 
 pub struct ClinicianRowRepository<'a> {
@@ -76,6 +96,7 @@ impl<'a> ClinicianRowRepository<'a> {
 
     pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_clinician_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
@@ -96,7 +117,7 @@ impl<'a> ClinicianRowRepository<'a> {
             .filter(clinician::dsl::id.eq(row_id))
             .first(&mut self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
@@ -107,6 +128,7 @@ impl<'a> ClinicianRowRepository<'a> {
 
     pub fn sync_upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
+        insert_or_ignore_clinician_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
         Ok(())
@@ -120,6 +142,22 @@ impl<'a> ClinicianRowRepository<'a> {
             .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+pub struct ClinicianRowDelete(pub String);
+
+impl Upsert for ClinicianRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ClinicianRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

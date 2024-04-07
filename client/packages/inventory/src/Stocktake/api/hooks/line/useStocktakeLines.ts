@@ -1,38 +1,16 @@
-import { useCallback } from 'react';
-import { useQuerySelector, UseQueryResult } from '@openmsupply-client/common';
-import {
-  StocktakeFragment,
-  StocktakeLineFragment,
-} from '../../operations.generated';
-import { useStocktakeNumber } from '../document/useStocktake';
+import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
 import { useStocktakeApi } from '../utils/useStocktakeApi';
+import { useStocktakeNumber } from '../document/useStocktake';
 
-export const useStocktakeSelector = <ReturnType>(
-  select: (data: StocktakeFragment) => ReturnType
-) => {
+export const useStocktakeLines = (id: string) => {
+  const { queryParams } = useUrlQueryParams({
+    initialSort: { key: 'itemName', dir: 'asc' },
+    filters: [{ key: 'itemCodeOrName' }],
+  });
+  const api = useStocktakeApi();
   const stocktakeNumber = useStocktakeNumber();
 
-  const api = useStocktakeApi();
-  return useQuerySelector(
-    api.keys.detail(stocktakeNumber),
-    () => api.get.byNumber(stocktakeNumber),
-    select
+  return useQuery(api.keys.lines(stocktakeNumber, queryParams), () =>
+    api.get.lines(id, queryParams)
   );
-};
-
-export const useStocktakeLines = (
-  itemId?: string
-): UseQueryResult<StocktakeLineFragment[], unknown> => {
-  const selectLines = useCallback(
-    (stocktake: StocktakeFragment) => {
-      return itemId
-        ? stocktake.lines.nodes.filter(
-            ({ itemId: stocktakeLineItemId }) => itemId === stocktakeLineItemId
-          )
-        : stocktake.lines.nodes;
-    },
-    [itemId]
-  );
-
-  return useStocktakeSelector(selectLines);
 };

@@ -5,7 +5,7 @@ pub fn date_now_with_offset(off_set: Duration) -> NaiveDate {
 }
 
 pub fn date_with_offset(date: &NaiveDate, off_set: Duration) -> NaiveDate {
-    date.checked_add_signed(off_set).unwrap_or(date.clone())
+    date.checked_add_signed(off_set).unwrap_or(*date)
 }
 
 pub fn date_with_days_offset(date: &NaiveDate, days_offset: i32) -> NaiveDate {
@@ -18,7 +18,7 @@ pub fn date_now() -> NaiveDate {
 }
 
 pub fn datetime_with_offset(date: &NaiveDateTime, off_set: Duration) -> NaiveDateTime {
-    date.checked_add_signed(off_set).unwrap_or(date.clone())
+    date.checked_add_signed(off_set).unwrap_or(*date)
 }
 
 pub fn datetime_with_days_offset(date: &NaiveDateTime, days_offset: i32) -> NaiveDateTime {
@@ -89,4 +89,15 @@ pub fn last_day_of_the_month(date: &NaiveDate) -> NaiveDate {
 
 pub fn first_day_of_the_month(date: &NaiveDate) -> NaiveDate {
     NaiveDate::from_ymd_opt(date.year(), date.month(), 1).unwrap()
+}
+
+pub fn create_datetime(
+    year: i32,
+    month: u32,
+    day: u32,
+    hour: u32,
+    minute: u32,
+    second: u32,
+) -> Option<NaiveDateTime> {
+    NaiveDate::from_ymd_opt(year, month, day).and_then(|d| d.and_hms_opt(hour, minute, second))
 }

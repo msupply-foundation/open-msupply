@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, useState, useEffect } from 'react';
+import React, { FC, ReactNode, useState, useEffect, useCallback } from 'react';
 import TabContext from '@mui/lab/TabContext';
 import { Box } from '@mui/material';
 import {
@@ -9,7 +9,6 @@ import {
   useDrawer,
 } from '@common/hooks';
 import { LocaleKey, useTranslation } from '@common/intl';
-import { debounce } from '@common/utils';
 import { AppBarTabsPortal } from '../../portals';
 import { DetailTab } from './DetailTab';
 import { ShortTabList, Tab } from './Tabs';
@@ -25,52 +24,74 @@ interface DetailTabsProps {
   tabs: TabDefinition[];
   requiresConfirmation?: (tab: string) => boolean;
 }
+
 export const DetailTabs: FC<DetailTabsProps> = ({
   tabs,
   requiresConfirmation = () => false,
 }) => {
+  const isValidTab = useCallback(
+    (tab?: string): tab is string =>
+      !!tab && tabs.some(({ value }) => value === tab),
+    [tabs]
+  );
+
   const { urlQuery, updateQuery } = useUrlQuery();
-  const [currentTab, setCurrentTab] = useState<string>(tabs[0]?.value ?? '');
   const t = useTranslation();
+  const currentUrlTab = urlQuery['tab'] as string | undefined;
+  const currentTab = isValidTab(currentUrlTab)
+    ? currentUrlTab
+    : tabs[0]?.value ?? '';
+  const { showConfirmation } = useConfirmOnLeaving(false);
 
   // Inelegant hack to force the "Underline" indicator for the currently active
   // tab to re-render in the correct position when one of the side "drawers" is
   // expanded. See issue #777 for more detail.
   const { isOpen: detailPanelOpen } = useDetailPanelStore();
   const { isOpen: drawerOpen } = useDrawer();
-  const { showConfirmation } = useConfirmOnLeaving(false);
-  const handleResize = debounce(
-    () => window.dispatchEvent(new Event('resize')),
-    100
-  );
   useEffect(() => {
-    handleResize();
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
   }, [detailPanelOpen, drawerOpen]);
 
-  const onChange = (_: React.SyntheticEvent, tab: string) => {
-    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+  const [tabQueryParams, setTabQueryParams] = useState<
+    Record<string, UrlQueryObject>
+  >({});
+
+  const getDefaultTabQueryParams = (tab: string): UrlQueryObject => {
     const tabDefinition = tabs.find(({ value }) => value === tab);
     const sort = tabDefinition?.sort;
     const query: UrlQueryObject = sort
       ? { tab, sort: sort.key, dir: sort.dir }
       : { tab };
-
-    if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
-      showConfirmation(() => updateQuery(query));
-    } else {
-      updateQuery(query);
-    }
+    return query;
   };
 
-  const isValidTab = (tab?: string): tab is string =>
-    !!tab && tabs.some(({ value }) => value === tab);
+  const onChange = (_: React.SyntheticEvent, tab: string) => {
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+    // restore the query params for the tab
+    const query: UrlQueryObject =
+      tabQueryParams[tab] ?? getDefaultTabQueryParams(tab);
+
+    if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
+      showConfirmation(() => updateQuery(query, true));
+    } else {
+      updateQuery(query, true);
+    }
+  };
 
   useEffect(() => {
     const tab = urlQuery['tab'] as string | undefined;
     if (isValidTab(tab)) {
-      setCurrentTab(tab);
+      // store the query params for the current tab
+      setTabQueryParams(value => {
+        return {
+          ...value,
+          [tab]: urlQuery,
+        };
+      });
     }
-  }, [urlQuery]);
+  }, [isValidTab, urlQuery]);
 
   return (
     <TabContext value={currentTab}>

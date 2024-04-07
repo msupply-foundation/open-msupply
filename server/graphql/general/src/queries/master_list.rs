@@ -50,6 +50,7 @@ pub struct MasterListFilterInput {
     pub exists_for_name_id: Option<EqualFilterStringInput>,
     pub exists_for_store_id: Option<EqualFilterStringInput>,
     pub is_program: Option<bool>,
+    pub item_id: Option<EqualFilterStringInput>,
 }
 
 impl MasterListFilterInput {
@@ -63,6 +64,7 @@ impl MasterListFilterInput {
             exists_for_name_id: self.exists_for_name_id.map(EqualFilter::from),
             exists_for_store_id: self.exists_for_store_id.map(EqualFilter::from),
             is_program: self.is_program,
+            item_id: self.item_id.map(EqualFilter::from),
         }
     }
 }

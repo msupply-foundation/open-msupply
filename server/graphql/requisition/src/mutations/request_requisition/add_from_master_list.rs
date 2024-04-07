@@ -1,11 +1,12 @@
 use async_graphql::*;
 use graphql_core::{
-    simple_generic_errors::{CannotEditRequisition, RecordNotFound},
+    simple_generic_errors::{
+        CannotEditRequisition, MasterListNotFoundForThisStore, RecordNotFound,
+    },
     standard_graphql_error::validate_auth,
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use graphql_general::MasterListNotFoundForThisStore;
 use graphql_types::types::RequisitionLineConnector;
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -118,11 +119,12 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
-            mock_request_draft_requisition, mock_sent_request_requisition_line, MockDataInserts,
+            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
+            MockDataInserts,
         },
         RequisitionLine, StorageConnectionManager,
     };
@@ -175,7 +177,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_add_from_master_list_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_add_from_master_list_structured_errors",
@@ -284,7 +286,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_add_from_master_list_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_add_from_master_list_success",
@@ -316,6 +318,7 @@ mod test {
             Ok(vec![RequisitionLine {
                 requisition_line_row: mock_sent_request_requisition_line(),
                 requisition_row: mock_request_draft_requisition(),
+                item_row: mock_item_a(),
             }])
         }));
 

@@ -33,7 +33,10 @@ import {
   usePackSizeController,
 } from '../../../StockOut';
 import { DraftStockOutLine } from '../../../types';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import {
+  CurrencyRowFragment,
+  ItemRowFragment,
+} from '@openmsupply-client/system';
 
 interface ItemDetailsModalProps {
   isOpen: boolean;
@@ -63,14 +66,19 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : draft.item ?? null;
-  const t = useTranslation(['distribution']);
+  const t = useTranslation('distribution');
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
   const [isAutoAllocated, setIsAutoAllocated] = useState(false);
+  const [okDisabled, setOkDisabled] = useState(false);
 
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
-  const { status } = useOutbound.document.fields('status');
+  const { status, currency, otherParty } = useOutbound.document.fields([
+    'status',
+    'currency',
+    'otherParty'
+  ]);
   const { mutateAsync } = useOutbound.line.save(status);
   const isDisabled = useOutbound.utils.isDisabled();
   const {
@@ -79,7 +87,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setDraftStockOutLines,
     isLoading,
   } = useDraftOutboundLines(currentItem);
-  const packSizeController = usePackSizeController(draftStockOutLines);
+  const packSizeController = usePackSizeController(
+    currentItem,
+    draftStockOutLines
+  );
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
@@ -219,7 +230,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
       }
       okButton={
         <DialogButton
-          disabled={!currentItem}
+          disabled={!currentItem || okDisabled}
           variant="ok"
           onClick={() => handleSave(onClose)}
         />
@@ -244,6 +255,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           showZeroQuantityConfirmation={showZeroQuantityConfirmation}
           hasOnHold={hasOnHold}
           hasExpired={hasExpired}
+          setOkDisabled={setOkDisabled}
+          draftStockOutLines={draftStockOutLines}
         />
 
         <TableWrapper
@@ -255,6 +268,8 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           draftOutboundLines={draftStockOutLines}
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           batch={draft?.barcode?.batch}
+          currency={currency}
+          isExternalSupplier={!otherParty?.store}
         />
       </Grid>
     </Modal>
@@ -270,6 +285,8 @@ interface TableProps {
   draftOutboundLines: DraftStockOutLine[];
   allocatedQuantity: number;
   batch?: string;
+  currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -281,6 +298,8 @@ const TableWrapper: React.FC<TableProps> = ({
   draftOutboundLines,
   allocatedQuantity,
   batch,
+  currency,
+  isExternalSupplier
 }) => {
   const t = useTranslation('distribution');
 
@@ -320,6 +339,8 @@ const TableWrapper: React.FC<TableProps> = ({
         item={currentItem}
         batch={batch}
         allocatedQuantity={allocatedQuantity}
+        currency={currency}
+        isExternalSupplier={isExternalSupplier}
       />
     </TableProvider>
   );

@@ -10,9 +10,14 @@ import {
   useTranslation,
   createQueryParamsStore,
   DetailTabs,
+  useNotification,
+  ModalMode,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
-import { LogList, toItemWithPackSize } from '@openmsupply-client/system';
+import {
+  ActivityLogList,
+  toItemWithPackSize,
+} from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 import { Footer } from './Footer';
 import { AppBarButtons } from './AppBarButtons';
@@ -21,6 +26,8 @@ import { ContentArea } from './ContentArea';
 import { InboundLineEdit } from './modals/InboundLineEdit';
 import { InboundItem } from '../../types';
 import { useInbound, InboundLineFragment } from '../api';
+import { OutboundReturnEditModal } from '../../Returns';
+import { canReturnInboundLines } from '../../utils';
 
 type InboundLineItem = InboundLineFragment['item'];
 
@@ -29,8 +36,17 @@ export const DetailView: FC = () => {
   const isDisabled = useInbound.utils.isDisabled();
   const { onOpen, onClose, mode, entity, isOpen } =
     useEditModal<InboundLineItem>();
+  const {
+    onOpen: onOpenReturns,
+    onClose: onCloseReturns,
+    isOpen: returnsIsOpen,
+    entity: stockLineIds,
+    mode: returnModalMode,
+    setMode: setReturnMode,
+  } = useEditModal<string[]>();
   const navigate = useNavigate();
   const t = useTranslation('replenishment');
+  const { info, error } = useNotification();
 
   const onRowClick = React.useCallback(
     (line: InboundItem | InboundLineFragment) => {
@@ -38,6 +54,32 @@ export const DetailView: FC = () => {
     },
     [onOpen]
   );
+
+  const onReturn = async (selectedLines: InboundLineFragment[]) => {
+    if (!data || !canReturnInboundLines(data)) {
+      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      cantReturnSnack();
+      return;
+    }
+    if (!selectedLines.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+      return;
+    }
+    if (selectedLines.some(line => !line.stockLine)) {
+      const errMsg = 'No stock line associated with the selected line(s).';
+      const selectLinesSnack = error(`${t('error.something-wrong')} ${errMsg}`);
+      selectLinesSnack();
+      return;
+    }
+
+    const selectedStockLineIds = selectedLines.map(
+      line => line.stockLine?.id ?? ''
+    );
+
+    onOpenReturns(selectedStockLineIds);
+    setReturnMode(ModalMode.Create);
+  };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
 
@@ -52,7 +94,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];
@@ -74,7 +116,7 @@ export const DetailView: FC = () => {
         >
           <AppBarButtons onAddItem={() => onOpen()} />
 
-          <Toolbar />
+          <Toolbar onReturnLines={onReturn} />
 
           <DetailTabs tabs={tabs} />
 
@@ -88,6 +130,19 @@ export const DetailView: FC = () => {
               onClose={onClose}
               mode={mode}
               item={entity}
+              currency={data.currency}
+              isExternalSupplier={!data.otherParty.store}
+            />
+          )}
+          {returnsIsOpen && (
+            <OutboundReturnEditModal
+              isOpen={returnsIsOpen}
+              onClose={onCloseReturns}
+              stockLineIds={stockLineIds || []}
+              supplierId={data.otherParty.id}
+              modalMode={returnModalMode}
+              inboundShipmentId={data.id}
+              isNewReturn
             />
           )}
         </TableProvider>

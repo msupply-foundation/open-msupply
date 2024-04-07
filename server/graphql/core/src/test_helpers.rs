@@ -20,7 +20,7 @@ use crate::{
     loader::{get_loaders, LoaderRegistry},
 };
 
-pub struct TestGraphlSettings<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone> {
+pub struct TestGraphqlSettings<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone> {
     pub queries: Q,
     pub mutations: M,
     pub connection_manager: StorageConnectionManager,
@@ -30,7 +30,7 @@ pub async fn run_test_gql_query<
     Q: 'static + ObjectType + Clone,
     M: 'static + ObjectType + Clone,
 >(
-    settings: &TestGraphlSettings<Q, M>,
+    settings: &TestGraphqlSettings<Q, M>,
     query: &str,
     variables: &Option<serde_json::Value>,
     service_provider_override: Option<ServiceProvider>,
@@ -54,7 +54,7 @@ pub async fn run_test_gql_query<
         debug_no_access_control: true,
     });
 
-    let mut app = actix_web::test::init_service(
+    let app = actix_web::test::init_service(
         actix_web::App::new()
             .app_data(Data::new(
                 Schema::build(
@@ -78,22 +78,18 @@ pub async fn run_test_gql_query<
 
     let mut payload: String;
     if let Some(variables) = variables {
-        payload = format!(
-            "{{\"query\":\"{}\",\"variables\":{}}}",
-            query,
-            variables.to_string()
-        );
+        payload = format!("{{\"query\":\"{}\",\"variables\":{}}}", query, variables);
     } else {
         payload = format!("{{\"query\":\"{}\"}}", query);
     }
-    payload = payload.replace("\n", "");
+    payload = payload.replace('\n', "");
 
     let req = actix_web::test::TestRequest::post()
         .set_payload(payload)
         .uri("/graphql")
         .to_request();
 
-    actix_web::test::call_and_read_body_json(&mut app, req).await
+    actix_web::test::call_and_read_body_json(&app, req).await
 }
 
 async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
@@ -106,10 +102,9 @@ async fn graphql<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clon
     schema.execute(query).await.into()
 }
 
-// TODO should really re-export dev deps (actix_rt, assert_json_dif, to avoid need to import in consumer)
 #[macro_export]
-macro_rules! assert_graphql_query {
-    ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr) => {{
+macro_rules! assert_graphql_query_with_config {
+    ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr, $config:ident) => {{
         let actual = graphql_core::test_helpers::run_test_gql_query(
             $settings,
             $query,
@@ -134,9 +129,7 @@ macro_rules! assert_graphql_query {
         );
 
         // Inclusive means only match fields in rhs against lhs (lhs can have more fields)
-        let config = assert_json_diff::Config::new(assert_json_diff::CompareMode::Inclusive);
-
-        match assert_json_diff::assert_json_matches_no_panic(&actual, &expected, config) {
+        match assert_json_diff::assert_json_matches_no_panic(&actual, &expected, $config) {
             Ok(_) => assert!(true),
             Err(error) => {
                 panic!(
@@ -152,6 +145,15 @@ macro_rules! assert_graphql_query {
 }
 
 #[macro_export]
+macro_rules! assert_graphql_query {
+    ($settings:expr, $query:expr, $variables:expr, $expected_inner:expr, $service_provider_override:expr) => {{
+        // TODO should really re-export dev deps (actix_rt, assert_json_dif, to avoid need to import in consumer)
+        let config = assert_json_diff::Config::new(assert_json_diff::CompareMode::Inclusive);
+        graphql_core::assert_graphql_query_with_config!($settings, $query, $variables, $expected_inner, $service_provider_override, config);
+    }};
+}
+
+#[macro_export]
 macro_rules! get_invoice_lines_inline {
     ($invoice_id:expr, $connection:expr) => {{
         repository::InvoiceLineRowRepository::new($connection)
@@ -162,7 +164,7 @@ macro_rules! get_invoice_lines_inline {
 
 #[macro_export]
 macro_rules! assert_standard_graphql_error {
-    // expected_etensions should be an Option<serde_json::json>>
+    // expected_extensions should be an Option<serde_json::json>>
     ($settings:expr, $query:expr, $variables:expr, $expected_message:expr, $expected_extensions:expr, $service_provider_override:expr) => {{
         let actual = graphql_core::test_helpers::run_test_gql_query(
             $settings,
@@ -204,7 +206,7 @@ macro_rules! assert_standard_graphql_error {
     }};
 }
 
-pub async fn setup_graphl_test_with_data<
+pub async fn setup_graphql_test_with_data<
     Q: 'static + ObjectType + Clone,
     M: 'static + ObjectType + Clone,
 >(
@@ -217,7 +219,7 @@ pub async fn setup_graphl_test_with_data<
     MockDataCollection,
     StorageConnection,
     StorageConnectionManager,
-    TestGraphlSettings<Q, M>,
+    TestGraphqlSettings<Q, M>,
 ) {
     let (mock_data, connection, connection_manager, _) =
         setup_all_with_data(db_name, inserts, extra_mock_data).await;
@@ -226,7 +228,7 @@ pub async fn setup_graphl_test_with_data<
         mock_data,
         connection,
         connection_manager.clone(),
-        TestGraphlSettings {
+        TestGraphqlSettings {
             queries,
             mutations,
             connection_manager,
@@ -234,7 +236,10 @@ pub async fn setup_graphl_test_with_data<
     )
 }
 
-pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + ObjectType + Clone>(
+pub async fn setup_graphql_test<
+    Q: 'static + ObjectType + Clone,
+    M: 'static + ObjectType + Clone,
+>(
     queries: Q,
     mutations: M,
     db_name: &str,
@@ -243,7 +248,7 @@ pub async fn setup_graphl_test<Q: 'static + ObjectType + Clone, M: 'static + Obj
     MockDataCollection,
     StorageConnection,
     StorageConnectionManager,
-    TestGraphlSettings<Q, M>,
+    TestGraphqlSettings<Q, M>,
 ) {
-    setup_graphl_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
+    setup_graphql_test_with_data(queries, mutations, db_name, inserts, MockData::default()).await
 }

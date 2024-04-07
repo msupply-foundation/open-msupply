@@ -1,14 +1,16 @@
 {
   "control.adherence-status-warning": "Pill Count: after last visit = {{previousCountOnHand}} < before visit = {{remainingCount}}",
-  "control.note.text-label": "Text",
   "control.note.author-label": "Author",
-  "control.search.searching-label": "Searching...",
+  "control.note.text-label": "Text",
+  "control.search.below-min-chars": "Please enter at least {{minChars}} characters",
+  "control.search.error.no-data": "Unable to extract path \"{{docPath}}\" from document",
+  "control.search.error.no-document": "Unable to access requested document",
+  "control.search.error.no-patient-contact": "No matching patient contact found",
+  "control.search.matching-patients": "We've found some existing patients that match the above entered data. Please select from this list if applicable",
   "control.search.no-results-label": "No results",
   "control.search.reset-button": "Unlink matched patient",
-  "control.search.matching-patients": "We've found some existing patients that match the above entered data. Please select from this list if applicable",
-  "control.search.error.no-document": "Unable to access requested document",
-  "control.search.error.no-data": "Unable to extract path \"{{docPath}}\" from document",
-  "control.search.error.no-patient-contact": "No matching patient contact found",
-  "control.search.below-min-chars": "Please enter at least {{minChars}} characters",
-  "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement"
+  "control.search.searching-label": "Searching...",
+  "label.bmi-prev-height-message": "Using height of {{height}}m from previous measurement",
+  "label.diastolic": "Diastolic",
+  "label.systolic": "Systolic"
 }

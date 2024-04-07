@@ -1,6 +1,6 @@
 {
 	"appId": "org.openmsupply.client",
-	"appName": "openmsupply-client",
+	"appName": "Open mSupply",
 	"webDir": "../host/dist/",
 	"bundledWebRuntime": false,
 	"android": {

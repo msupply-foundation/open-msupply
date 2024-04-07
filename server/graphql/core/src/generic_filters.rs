@@ -29,6 +29,7 @@ impl From<StringFilterInput> for StringFilter {
 #[graphql(concrete(name = "EqualFilterStringInput", params(String)))]
 #[graphql(concrete(name = "EqualFilterNumberInput", params(i32)))]
 #[graphql(concrete(name = "EqualFilterBigNumberInput", params(i64)))]
+#[graphql(concrete(name = "EqualFilterBigFloatingNumberInput", params(f64)))]
 pub struct EqualFilterInput<T: InputType> {
     pub equal_to: Option<T>,
     pub equal_any: Option<Vec<T>>,
@@ -38,6 +39,7 @@ pub struct EqualFilterInput<T: InputType> {
 pub type EqualFilterStringInput = EqualFilterInput<String>;
 pub type EqualFilterNumberInput = EqualFilterInput<i32>;
 pub type EqualFilterBigNumberInput = EqualFilterInput<i64>;
+pub type EqualFilterBigFloatingNumberInput = EqualFilterInput<f64>;
 
 impl<I: InputType> EqualFilterInput<I> {
     pub fn map_to_domain<F, T>(self, to_domain: F) -> EqualFilter<T>
@@ -109,9 +111,9 @@ pub struct DateFilterInput {
 impl From<DateFilterInput> for DateFilter {
     fn from(f: DateFilterInput) -> Self {
         DateFilter {
-            equal_to: f.equal_to.map(|t| t.clone()),
-            before_or_equal_to: f.before_or_equal_to.map(|t| t.clone()),
-            after_or_equal_to: f.after_or_equal_to.map(|t| t.clone()),
+            equal_to: f.equal_to,
+            before_or_equal_to: f.before_or_equal_to,
+            after_or_equal_to: f.after_or_equal_to,
         }
     }
 }

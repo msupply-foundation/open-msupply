@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Grid, Typography } from '@mui/material';
 import { BasicModal } from '../BasicModal';
-import { AlertIcon, InfoIcon } from '@common/icons';
+import { AlertIcon, HelpIcon, InfoIcon } from '@common/icons';
 import { DialogButton, LoadingButton } from '../../buttons';
 
 interface ConfirmationModalProps {
@@ -12,11 +12,12 @@ interface ConfirmationModalProps {
   onCancel: () => void;
   title: string;
   message: string;
-  iconType?: 'alert' | 'info';
+  iconType?: 'alert' | 'info' | 'help';
 }
 
 const iconLookup = {
   alert: AlertIcon,
+  help: HelpIcon,
   info: InfoIcon,
 };
 
@@ -38,7 +39,7 @@ export const ConfirmationModal = ({
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
           <Grid item>
-            <Icon color={iconType === 'info' ? 'secondary' : 'primary'} />
+            <Icon color={iconType === 'alert' ? 'primary' : 'secondary'} />
           </Grid>
           <Grid item>
             <Typography variant="h6">{title}</Typography>

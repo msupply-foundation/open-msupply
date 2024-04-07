@@ -39,7 +39,7 @@ export const CreateRequisitionModal: FC<CreateRequisitionModalProps> = ({
 }) => {
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
   const { height: windowHeight } = useWindowDimensions();
   const height = windowHeight * 0.8;
 

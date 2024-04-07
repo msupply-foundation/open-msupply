@@ -1,5 +1,5 @@
 use async_graphql::*;
-use graphql_core::generic_filters::EqualFilterStringInput;
+use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
 use graphql_core::pagination::PaginationInput;
 use graphql_core::standard_graphql_error::{
@@ -17,6 +17,7 @@ pub struct StocktakeLineFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub stocktake_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
+    pub item_code_or_name: Option<StringFilterInput>,
 }
 
 impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
@@ -25,6 +26,7 @@ impl From<StocktakeLineFilterInput> for StocktakeLineFilter {
             id: f.id.map(EqualFilter::from),
             stocktake_id: f.stocktake_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
+            item_code_or_name: f.item_code_or_name.map(StringFilterInput::into),
         }
     }
 }
@@ -41,8 +43,8 @@ pub enum StocktakeLineSortFieldInput {
     ExpiryDate,
     /// Stocktake line pack size
     PackSize,
-    /// Stocktake line item stock location name
-    LocationName,
+    /// Stocktake line item stock location code
+    LocationCode,
 }
 
 #[derive(InputObject)]
@@ -64,7 +66,7 @@ impl StocktakeLineSortInput {
             from::Batch => to::Batch,
             from::ExpiryDate => to::ExpiryDate,
             from::PackSize => to::PackSize,
-            from::LocationName => to::LocationName,
+            from::LocationCode => to::LocationCode,
         };
 
         StocktakeLineSort {
@@ -119,7 +121,7 @@ pub fn stocktake_lines(
             nodes: stocktake_lines
                 .rows
                 .into_iter()
-                .map(|line| StocktakeLineNode::from_domain(line))
+                .map(StocktakeLineNode::from_domain)
                 .collect(),
         }))
     } else {
@@ -141,13 +143,12 @@ pub fn stocktake_lines(
 
 #[cfg(test)]
 mod test {
-    use async_graphql::EmptyMutation;
     use async_graphql::*;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
     use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
-    use graphql_core::test_helpers::setup_graphl_test;
-    use repository::mock::mock_stocktake_line_a;
+    use graphql_core::test_helpers::setup_graphql_test;
+    use repository::mock::{mock_item_a, mock_stocktake_line_a};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{
         PaginationOption, StocktakeLine, StocktakeLineFilter, StocktakeLineRow, StocktakeLineSort,
@@ -232,10 +233,10 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_lines_query() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             StocktakeLineQueries,
             EmptyMutation,
-            "omsupply-database-gql-stocktake_lines_query",
+            "test_graphql_stocktake_lines_query",
             MockDataInserts::all(),
         )
         .await;
@@ -266,8 +267,9 @@ mod test {
                         l.batch = Some("batch".to_string());
                         l.expiry_date = Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap());
                         l.stocktake_id = "stocktake_id".to_string();
-                        l.item_id = mock_stocktake_line_a().item_id;
+                        l.item_link_id = mock_stocktake_line_a().item_link_id;
                     });
+                    r.item = mock_item_a()
                 })],
                 count: 1,
             })

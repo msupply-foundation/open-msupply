@@ -13,10 +13,10 @@ pub struct SyncSettingsInput {
 }
 
 impl SyncSettingsInput {
-    pub fn to_domain(self) -> SyncSettings {
+    pub fn to_domain(&self) -> SyncSettings {
         SyncSettings {
-            url: self.url,
-            username: self.username,
+            url: self.url.clone(),
+            username: self.username.clone(),
             password_sha256: sha256(&self.password),
             interval_seconds: self.interval_seconds,
             batch_size: Default::default(),

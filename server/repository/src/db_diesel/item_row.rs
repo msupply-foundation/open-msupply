@@ -1,6 +1,9 @@
-use super::{item_row::item::dsl::*, unit_row::unit, StorageConnection};
+use crate::{Delete, Upsert};
 
-use crate::repository_error::RepositoryError;
+use super::{
+    item_link_row::item_link, item_row::item::dsl::*, name_link_row::name_link, unit_row::unit,
+    ItemLinkRow, ItemLinkRowRepository, RepositoryError, StorageConnection,
+};
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -15,6 +18,7 @@ table! {
         #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemRowTypeMapping,
         // TODO, this is temporary, remove
         legacy_record -> Text,
+        is_active -> Bool,
     }
 }
 
@@ -27,6 +31,8 @@ table! {
 
 joinable!(item -> unit (unit_id));
 joinable!(item_is_visible -> item (id));
+allow_tables_to_appear_in_same_query!(item, item_link);
+allow_tables_to_appear_in_same_query!(item, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -48,6 +54,7 @@ pub struct ItemRow {
     pub r#type: ItemRowType,
     // TODO, this is temporary, remove
     pub legacy_record: String,
+    pub is_active: bool,
 }
 
 impl Default for ItemRow {
@@ -60,12 +67,25 @@ impl Default for ItemRow {
             default_pack_size: Default::default(),
             r#type: ItemRowType::Stock,
             legacy_record: Default::default(),
+            is_active: true,
         }
     }
 }
 
 pub struct ItemRowRepository<'a> {
     connection: &'a mut StorageConnection,
+}
+
+fn insert_or_ignore_item_link(
+    connection: &StorageConnection,
+    item_row: &ItemRow,
+) -> Result<(), RepositoryError> {
+    let item_link_row = ItemLinkRow {
+        id: item_row.id.clone(),
+        item_id: item_row.id.clone(),
+    };
+    ItemLinkRowRepository::new(connection).insert_one_or_ignore(&item_link_row)?;
+    Ok(())
 }
 
 impl<'a> ItemRowRepository<'a> {
@@ -81,6 +101,8 @@ impl<'a> ItemRowRepository<'a> {
             .do_update()
             .set(item_row)
             .execute(&mut self.connection.connection)?;
+
+        insert_or_ignore_item_link(&self.connection, item_row)?;
         Ok(())
     }
 
@@ -89,6 +111,8 @@ impl<'a> ItemRowRepository<'a> {
         diesel::replace_into(item)
             .values(item_row)
             .execute(&mut self.connection.connection)?;
+
+        insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
     }
 
@@ -96,6 +120,8 @@ impl<'a> ItemRowRepository<'a> {
         diesel::insert_into(item)
             .values(item_row)
             .execute(&mut self.connection.connection)?;
+
+        insert_or_ignore_item_link(self.connection, item_row)?;
         Ok(())
     }
 
@@ -104,7 +130,14 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result?)
     }
 
-    pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+    pub fn find_active_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        let result = self
+            .find_one_by_id(item_id)?
+            .and_then(|r| r.is_active.then_some(r));
+        Ok(result)
+    }
+
+    fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq(item_id))
             .first(&mut self.connection.connection)
@@ -120,7 +153,41 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(item.filter(id.eq(item_id))).execute(&mut self.connection.connection)?;
+        diesel::update(item.filter(id.eq(item_id)))
+            .set(is_active.eq(false))
+            .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ItemRowDelete(pub String);
+impl Delete for ItemRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            ItemRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(Some(ItemRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
+    }
+}
+
+impl Upsert for ItemRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ItemRowRepository::new(con).find_active_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

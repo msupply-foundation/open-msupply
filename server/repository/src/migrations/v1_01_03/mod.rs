@@ -17,11 +17,11 @@ impl Migration for V1_01_03 {
             r#"ALTER TABLE store 
                 ADD logo TEXT;"#
         )?;
-        
+
         #[cfg(not(feature = "postgres"))]
-        const STORE_PREFERENCE_TYPE: &'static str = "TEXT";
+        const STORE_PREFERENCE_TYPE: &str = "TEXT";
         #[cfg(feature = "postgres")]
-        const STORE_PREFERENCE_TYPE: &'static str = "store_preference_type";
+        const STORE_PREFERENCE_TYPE: &str = "store_preference_type";
         #[cfg(feature = "postgres")]
         sql!(
             connection,

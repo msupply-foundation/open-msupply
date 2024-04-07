@@ -45,10 +45,10 @@ pub fn insert_outbound_shipment_unallocated_line(
         .transaction_sync(|connection| {
             let item_row = validate(connection, &ctx.store_id, &input)?;
             let new_line = generate(input, item_row)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
 
             get_invoice_line(ctx, &new_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -105,7 +105,7 @@ fn generate(
         invoice_id,
         pack_size: 1,
         number_of_packs: quantity as f64,
-        item_id,
+        item_link_id: item_id,
         item_code: item.code,
         item_name: item.name,
         r#type: InvoiceLineRowType::UnallocatedStock,
@@ -122,6 +122,8 @@ fn generate(
         cost_price_per_pack: 0.0,
         stock_line_id: None,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
+        foreign_currency_price_before_tax: None,
     };
 
     Ok(new_line)
@@ -273,7 +275,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: "new unallocated line id".to_owned(),
                     invoice_id: mock_new_invoice_with_unallocated_line().id.clone(),
-                    item_id: existing_invoice_line.item_id.clone(),
+                    item_id: existing_invoice_line.item_link_id.clone(),
                     quantity: 0
                 },
             ),
@@ -287,7 +289,7 @@ mod test_insert {
                 InsertOutboundShipmentUnallocatedLine {
                     id: new_line_id.clone(),
                     invoice_id: new_outbound_shipment.id.clone(),
-                    item_id: existing_invoice_line.item_id.clone(),
+                    item_id: existing_invoice_line.item_link_id.clone(),
                     quantity: 0
                 },
             ),
@@ -310,7 +312,7 @@ mod test_insert {
         // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
         let item = ItemRowRepository::new(&connection)
-            .find_one_by_id(&mock_unallocated_line2().item_id)
+            .find_active_by_id(&mock_unallocated_line2().item_link_id)
             .unwrap()
             .unwrap();
 
@@ -337,7 +339,7 @@ mod test_insert {
                 pack_size: 1,
                 r#type: InvoiceLineRowType::UnallocatedStock,
                 number_of_packs: 4.0,
-                item_id: item.id.clone(),
+                item_link_id: item.id.clone(),
                 item_name: item.name.clone(),
                 item_code: item.code.clone(),
                 total_before_tax: 0.0,
@@ -351,6 +353,8 @@ mod test_insert {
                 cost_price_per_pack: 0.0,
                 stock_line_id: None,
                 inventory_adjustment_reason_id: None,
+                return_reason_id: None,
+                foreign_currency_price_before_tax: None,
             }
         )
     }

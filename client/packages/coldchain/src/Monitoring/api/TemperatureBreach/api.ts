@@ -1,6 +1,7 @@
 import { SortBy } from '@common/hooks';
 import { Sdk, TemperatureBreachFragment } from './operations.generated';
 import {
+  RecordPatch,
   TemperatureBreachFilterInput,
   TemperatureBreachSortFieldInput,
 } from '@common/types';
@@ -29,5 +30,16 @@ export const getTemperatureBreachQueries = (sdk: Sdk, storeId: string) => ({
 
         return result?.temperatureBreaches;
       },
+  },
+  update: async (patch: RecordPatch<TemperatureBreachFragment>) => {
+    const input = {
+      comment: patch.comment,
+      id: patch.id,
+      unacknowledged: patch.unacknowledged || false,
+    };
+    const result =
+      (await sdk.updateTemperatureBreach({ input, storeId })) || {};
+
+    return result.updateTemperatureBreach;
   },
 });

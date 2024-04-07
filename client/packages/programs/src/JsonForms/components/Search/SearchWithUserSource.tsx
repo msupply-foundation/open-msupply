@@ -1,12 +1,15 @@
-import React from 'react';
-import { RegexUtils } from '@openmsupply-client/common';
+import React, { useEffect } from 'react';
+import {
+  GenderInput,
+  PatientSearchInput,
+  RegexUtils,
+} from '@openmsupply-client/common';
 import { ControlProps, UISchemaElement } from '@jsonforms/core';
 import {
   useTranslation,
   Box,
   Typography,
   DetailInputWithLabelRow,
-  FilterBy,
   Select,
   Button,
 } from '@openmsupply-client/common';
@@ -36,22 +39,26 @@ export const SearchWithUserSource = (
     renderers,
   } = props;
   const t = useTranslation('programs');
-
   const isPatientSelected = !!data?.id;
+  const { results, error: queryError, mutateAsync } = usePatientSearchQuery();
 
-  const searchFilter = !isPatientSelected
-    ? createSearchFilter(options?.searchFields, data)
-    : undefined;
-
-  const { results, error: queryError } = usePatientSearchQuery(searchFilter);
+  useEffect(() => {
+    const searchFilter = !isPatientSelected
+      ? createSearchFilter(options?.searchFields, data)
+      : undefined;
+    if (!searchFilter) return;
+    mutateAsync(searchFilter);
+  }, [data, isPatientSelected, mutateAsync, options?.searchFields]);
 
   const getOptionLabel = (data: PatientSchema) =>
     options?.optionString
       ? formatTemplateString(options?.optionString, data)
-      : `${data['code']} - ${data['firstName']} ${data['lastName']}`;
+      : `${data['code'] ? data['code'] + '-' : ''} ${data['firstName']} ${
+          data['lastName']
+        }`;
 
   const handlePatientSelect = (patientId: string) => {
-    const patient = results.find(p => (p.id = patientId));
+    const patient = results.find(p => p.id === patientId);
     if (!patient) return;
     if (!options?.saveFields) {
       handleChange(path, patient);
@@ -145,29 +152,31 @@ export const SearchWithUserSource = (
   );
 };
 
-// Most search fields will be matched using partial string matching, using
-// "like". However, this is not available/reasonable for some fields, so their
-// match type is referenced here
-const queryMatchTypes = {
-  // Add more as required
-  gender: 'equalTo',
-  dateOfBirth: 'equalTo',
-};
-
 const createSearchFilter = (
   searchFields: string[],
   data: Record<string, string | undefined> | undefined
 ) => {
   if (!data) return undefined;
 
-  const searchFilter: FilterBy = {};
-  searchFields.forEach(field => {
-    const match =
-      field in queryMatchTypes
-        ? queryMatchTypes?.[field as keyof typeof queryMatchTypes]
-        : 'like';
-    if (data[field]) searchFilter[field] = { [match]: data[field] };
-  });
+  const searchFilter: PatientSearchInput = {
+    code: searchFields.includes('code') ? data['code'] : undefined,
+    code2: searchFields.includes('code2') ? data['code2'] : undefined,
+    dateOfBirth: searchFields.includes('dateOfBirth')
+      ? data['dateOfBirth']
+      : undefined,
+    firstName: searchFields.includes('firstName')
+      ? data['firstName']
+      : undefined,
+    gender: searchFields.includes('gender')
+      ? (data['gender'] as GenderInput)
+      : undefined,
+    lastName: searchFields.includes('lastName') ? data['lastName'] : undefined,
+    identifier: searchFields.includes('identifier')
+      ? data['identifier']
+      : undefined,
+  };
 
-  return Object.keys(searchFilter).length > 0 ? searchFilter : undefined;
+  return Object.values(searchFilter).every(v => v === undefined)
+    ? undefined
+    : searchFilter;
 };

@@ -19,6 +19,7 @@ export const SupplyRequestedQuantityButtonComponent = () => {
     : t('button.supply-to-requested');
 
   const getConfirmation = useConfirmationModal({
+    iconType: 'info',
     onConfirm: supplyRequestedQuantity,
     message: isRemoteAuthorisation
       ? t('messages.supply-to-approved')

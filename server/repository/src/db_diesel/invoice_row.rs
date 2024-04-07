@@ -1,9 +1,12 @@
+use std::any::Any;
+
 use super::{
-    clinician_row::clinician, invoice_row::invoice::dsl::*, name_row::name, store_row::store,
-    user_row::user_account, StorageConnection,
+    clinician_link_row::clinician_link, currency_row::currency, invoice_row::invoice::dsl::*,
+    item_link_row::item_link, name_link_row::name_link, store_row::store, user_row::user_account,
+    StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::{dsl::max, prelude::*};
 
@@ -15,7 +18,7 @@ use util::Defaults;
 table! {
     invoice (id) {
         id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
         name_store_id -> Nullable<Text>,
         store_id -> Text,
         user_id -> Nullable<Text>,
@@ -36,14 +39,20 @@ table! {
         requisition_id -> Nullable<Text>,
         linked_invoice_id -> Nullable<Text>,
         tax -> Nullable<Double>,
-        clinician_id -> Nullable<Text>,
+        currency_id -> Nullable<Text>,
+        currency_rate -> Double,
+        clinician_link_id -> Nullable<Text>,
+        original_shipment_id -> Nullable<Text>,
     }
 }
 
-joinable!(invoice -> name (name_id));
+joinable!(invoice -> name_link (name_link_id));
 joinable!(invoice -> store (store_id));
 joinable!(invoice -> user_account (user_id));
-joinable!(invoice -> clinician (clinician_id));
+joinable!(invoice -> currency (currency_id));
+joinable!(invoice -> clinician_link (clinician_link_id));
+allow_tables_to_appear_in_same_query!(invoice, item_link);
+allow_tables_to_appear_in_same_query!(invoice, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -52,12 +61,14 @@ pub enum InvoiceRowType {
     OutboundShipment,
     InboundShipment,
     Prescription,
-    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two seperate types
-    // central server may have old inventory adjustement type, thus map it to inventory additions
+    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two separate types
+    // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
     InventoryAddition,
     InventoryReduction,
     Repack,
+    InboundReturn,
+    OutboundReturn,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -77,7 +88,7 @@ pub enum InvoiceRowStatus {
 #[diesel(table_name = invoice)]
 pub struct InvoiceRow {
     pub id: String,
-    pub name_id: String,
+    pub name_link_id: String,
     pub name_store_id: Option<String>,
     pub store_id: String,
     pub user_id: Option<String>,
@@ -99,7 +110,10 @@ pub struct InvoiceRow {
     pub requisition_id: Option<String>,
     pub linked_invoice_id: Option<String>,
     pub tax: Option<f64>,
-    pub clinician_id: Option<String>,
+    pub currency_id: Option<String>,
+    pub currency_rate: f64,
+    pub clinician_link_id: Option<String>,
+    pub original_shipment_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -111,7 +125,7 @@ impl Default for InvoiceRow {
             // Defaults
             id: Default::default(),
             user_id: Default::default(),
-            name_id: Default::default(),
+            name_link_id: Default::default(),
             name_store_id: Default::default(),
             store_id: Default::default(),
             invoice_number: Default::default(),
@@ -128,7 +142,10 @@ impl Default for InvoiceRow {
             requisition_id: Default::default(),
             linked_invoice_id: Default::default(),
             tax: Default::default(),
-            clinician_id: Default::default(),
+            currency_id: Default::default(),
+            currency_rate: Default::default(),
+            clinician_link_id: Default::default(),
+            original_shipment_id: Default::default(),
         }
     }
 }
@@ -171,7 +188,7 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(&mut self.connection.connection);
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     // TODO replace find_one_by_id with this one
@@ -206,37 +223,35 @@ impl<'a> InvoiceRowRepository<'a> {
     }
 }
 
-pub struct OutboundShipmentRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+#[derive(Debug, Clone)]
+pub struct InvoiceRowDelete(pub String);
+impl Delete for InvoiceRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
 }
 
-impl<'a> OutboundShipmentRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
-        OutboundShipmentRowRepository { connection }
+impl Upsert for InvoiceRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con).upsert_one(self)
     }
 
-    pub async fn find_many_by_name_id(
-        &mut self,
-        name: &str,
-    ) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(name_id.eq(name)),
-            )
-            .get_results(&mut self.connection.connection)?;
-        Ok(result)
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 
-    pub fn find_many_by_store_id(&self, store: &str) -> Result<Vec<InvoiceRow>, RepositoryError> {
-        let result = invoice
-            .filter(
-                type_
-                    .eq(InvoiceRowType::OutboundShipment)
-                    .and(store_id.eq(store)),
-            )
-            .get_results(&mut self.connection.connection)?;
-        Ok(result)
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

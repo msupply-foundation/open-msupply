@@ -1,4 +1,5 @@
 use super::{
+    item_link_row::item_link::dsl as item_link_dsl,
     item_row::{item, item::dsl as item_dsl},
     master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
@@ -12,6 +13,7 @@ use diesel::{
     dsl::{IntoBoxed, LeftJoin},
     prelude::*,
 };
+use util::inline_init;
 
 use crate::{
     diesel_macros::{
@@ -36,7 +38,7 @@ pub enum ItemSortField {
 
 pub type ItemSort = Sort<ItemSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -45,18 +47,12 @@ pub struct ItemFilter {
     /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilter>,
+    pub is_active: Option<bool>,
 }
 
 impl ItemFilter {
     pub fn new() -> ItemFilter {
-        ItemFilter {
-            id: None,
-            name: None,
-            code: None,
-            r#type: None,
-            is_visible: None,
-            code_or_name: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -88,9 +84,14 @@ impl ItemFilter {
         self.code_or_name = Some(filter);
         self
     }
+
+    pub fn is_active(mut self, value: bool) -> Self {
+        self.is_active = Some(value);
+        self
+    }
 }
 
-type ItemAndMasterList = (ItemRow, Option<UnitRow>);
+type ItemAndUnit = (ItemRow, Option<UnitRow>);
 
 pub struct ItemRepository<'a> {
     connection: &'a mut StorageConnection,
@@ -162,13 +163,13 @@ impl<'a> ItemRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemAndMasterList>(&mut self.connection.connection)?;
+        let result = final_query.load::<ItemAndUnit>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 }
 
-fn to_domain((item_row, unit_row): ItemAndMasterList) -> Item {
+fn to_domain((item_row, unit_row): ItemAndUnit) -> Item {
     Item { item_row, unit_row }
 }
 
@@ -185,6 +186,7 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             r#type,
             is_visible,
             code_or_name,
+            is_active,
         } = f;
 
         // or filter need to be applied before and filters
@@ -198,11 +200,19 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
         apply_string_filter!(query, name, item_dsl::name);
         apply_equal_filter!(query, r#type, item_dsl::type_);
 
-        let visible_item_ids = master_list_line_dsl::master_list_line
-            .select(master_list_line_dsl::item_id)
+        if let Some(is_active) = is_active {
+            query = query.filter(item_dsl::is_active.eq(is_active));
+        }
+
+        let visible_item_ids = item_link_dsl::item_link
+            .select(item_link_dsl::item_id)
+            .inner_join(
+                master_list_line_dsl::master_list_line
+                    .on(master_list_line_dsl::item_link_id.eq(item_link_dsl::id)),
+            )
             .inner_join(
                 master_list_dsl::master_list
-                    .on(master_list_line_dsl::master_list_id.eq(master_list_dsl::id)),
+                    .on(master_list_dsl::id.eq(master_list_line_dsl::master_list_id)),
             )
             .inner_join(
                 master_list_name_join_dsl::master_list_name_join
@@ -210,9 +220,10 @@ fn create_filtered_query(store_id: String, filter: Option<ItemFilter>) -> BoxedI
             )
             .inner_join(
                 store_dsl::store.on(store_dsl::name_id
-                    .eq(master_list_name_join_dsl::name_id)
-                    .and(store_dsl::id.eq(store_id))),
+                    .eq(master_list_name_join_dsl::name_link_id)
+                    .and(store_dsl::id.eq(store_id.clone()))),
             )
+            .filter(store_dsl::id.eq(store_id.clone()))
             .into_boxed();
 
         query = match is_visible {
@@ -232,6 +243,16 @@ impl Item {
     }
 }
 
+impl ItemRowType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::convert::TryFrom;
@@ -239,11 +260,12 @@ mod tests {
     use util::inline_init;
 
     use crate::{
-        mock::{mock_item_b, MockDataInserts},
-        test_db, EqualFilter, ItemFilter, ItemRepository, ItemRow, ItemRowRepository, ItemRowType,
-        MasterListLineRow, MasterListLineRowRepository, MasterListNameJoinRepository,
-        MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameRow, NameRowRepository,
-        Pagination, StoreRow, StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
+        mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
+        test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
+        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
+        MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
+        StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
     };
 
     use super::{Item, ItemSort, ItemSortField};
@@ -293,7 +315,7 @@ mod tests {
             rows.len()
         );
 
-        // .query, no pagenation (default)
+        // .query, no pagination (default)
         assert_eq!(
             item_query_repository
                 .query(Pagination::new(), None, None, None)
@@ -302,7 +324,7 @@ mod tests {
             default_page_size
         );
 
-        // .query, pagenation (offset 10)
+        // .query, pagination (offset 10)
         let result = item_query_repository
             .query(
                 Pagination {
@@ -321,7 +343,7 @@ mod tests {
             rows[10 + default_page_size - 1]
         );
 
-        // .query, pagenation (first 10)
+        // .query, pagination (first 10)
         let result = item_query_repository
             .query(
                 Pagination {
@@ -336,7 +358,7 @@ mod tests {
         assert_eq!(result.len(), 10);
         assert_eq!((*result.last().unwrap()), rows[9]);
 
-        // .query, pagenation (offset 150, first 90) <- more then records in table
+        // .query, pagination (offset 150, first 90) <- more then records in table
         let result = item_query_repository
             .query(
                 Pagination {
@@ -467,6 +489,14 @@ mod tests {
             }),
         ];
 
+        let item_link_rows = vec![
+            mock_item_link_from_item(&item_rows[0]),
+            mock_item_link_from_item(&item_rows[1]),
+            mock_item_link_from_item(&item_rows[2]),
+            mock_item_link_from_item(&item_rows[3]),
+            mock_item_link_from_item(&item_rows[4]),
+        ];
+
         let master_list_rows = vec![
             MasterListRow {
                 id: "master_list1".to_owned(),
@@ -487,22 +517,22 @@ mod tests {
         let master_list_line_rows = vec![
             MasterListLineRow {
                 id: "id1".to_owned(),
-                item_id: "item1".to_owned(),
+                item_link_id: "item1".to_owned(),
                 master_list_id: "master_list1".to_owned(),
             },
             MasterListLineRow {
                 id: "id2".to_owned(),
-                item_id: "item2".to_owned(),
+                item_link_id: "item2".to_owned(),
                 master_list_id: "master_list1".to_owned(),
             },
             MasterListLineRow {
                 id: "id3".to_owned(),
-                item_id: "item3".to_owned(),
+                item_link_id: "item3".to_owned(),
                 master_list_id: "master_list2".to_owned(),
             },
             MasterListLineRow {
                 id: "id4".to_owned(),
-                item_id: "item4".to_owned(),
+                item_link_id: "item4".to_owned(),
                 master_list_id: "master_list2".to_owned(),
             },
         ];
@@ -522,13 +552,19 @@ mod tests {
 
         let master_list_name_join_1 = MasterListNameJoinRow {
             id: "id1".to_owned(),
-            name_id: "name1".to_owned(),
+            name_link_id: "name1".to_owned(),
             master_list_id: "master_list1".to_owned(),
         };
 
         for row in item_rows.iter() {
             ItemRowRepository::new(&mut storage_connection)
-                .upsert_one(&row)
+                .upsert_one(row)
+                .unwrap();
+        }
+
+        for row in item_link_rows.iter() {
+            ItemLinkRowRepository::new(&storage_connection)
+                .upsert_one(row)
                 .unwrap();
         }
 

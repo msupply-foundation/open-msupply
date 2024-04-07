@@ -1,5 +1,9 @@
-import { useLogsByRecord } from './useLogsByRecord';
+import { useLogFileNames } from './useLogFileNames';
+import { useLogContentsByFileName } from './useLogContentsByFileName';
+import { useLogLevel } from './useLogLevel';
 
 export const Document = {
-  useLogsByRecord,
+  useLogFileNames,
+  useLogLevel,
+  useLogContentsByFileName,
 };

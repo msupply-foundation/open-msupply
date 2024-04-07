@@ -56,7 +56,9 @@ fn get_default_service_item(
     let item_row = ItemRepository::new(connection)
         .query_one(
             None,
-            ItemFilter::new().code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE)),
+            ItemFilter::new()
+                .code(StringFilter::equal_to(DEFAULT_SERVICE_ITEM_CODE))
+                .is_active(true),
         )?
         .map(|item| item.item_row);
 

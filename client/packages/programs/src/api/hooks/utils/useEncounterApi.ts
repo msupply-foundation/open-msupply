@@ -1,9 +1,9 @@
 import {
   useGql,
   useAuthContext,
-  FilterByWithBoolean,
   PaginationInput,
   SortBy,
+  EncounterFilterInput,
 } from '@openmsupply-client/common';
 import { getEncounterQueries } from '../../api';
 import { EncounterFragment, getSdk } from '../../operations.generated';
@@ -12,7 +12,7 @@ export type EncounterListParams = {
   first?: number;
   offset?: number;
   sortBy?: SortBy<EncounterFragment>;
-  filterBy?: FilterByWithBoolean | null;
+  filterBy?: EncounterFilterInput;
   pagination?: PaginationInput;
 };
 

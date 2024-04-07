@@ -6,7 +6,10 @@ import {
   useTranslation,
   BasicTextInput,
 } from '@openmsupply-client/common';
-import { StockItemSearchInput } from '@openmsupply-client/system';
+import {
+  ItemStockOnHandFragment,
+  StockItemSearchInput,
+} from '@openmsupply-client/system';
 import { InboundLineFragment, useInbound } from '../../../api';
 
 type InboundLineItem = InboundLineFragment['item'];
@@ -14,7 +17,7 @@ type InboundLineItem = InboundLineFragment['item'];
 interface InboundLineEditProps {
   item: InboundLineItem | null;
   disabled: boolean;
-  onChangeItem: (item: InboundLineItem) => void;
+  onChangeItem: (item: ItemStockOnHandFragment) => void;
 }
 
 export const InboundLineEditForm: FC<InboundLineEditProps> = ({
@@ -22,7 +25,7 @@ export const InboundLineEditForm: FC<InboundLineEditProps> = ({
   disabled,
   onChangeItem,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { data: items } = useInbound.lines.items();
 
   return (

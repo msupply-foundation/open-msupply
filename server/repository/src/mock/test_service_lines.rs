@@ -26,7 +26,7 @@ pub fn mock_test_service_item() -> MockData {
 pub fn mock_draft_outbound_with_service_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_draft_outbound_with_service_lines".to_string();
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
@@ -37,14 +37,14 @@ pub fn mock_draft_outbound_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_outbound_service_line".to_string();
         r.invoice_id = mock_draft_outbound_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }
 
 pub fn mock_draft_outbound_shipped_with_service_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_draft_outbound_shipped_with_service_lines".to_string();
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::Shipped;
@@ -55,7 +55,7 @@ pub fn mock_draft_outbound_shipped_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_outbound_shipped_service_line".to_string();
         r.invoice_id = mock_draft_outbound_shipped_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }
 
@@ -64,7 +64,7 @@ pub fn mock_draft_outbound_shipped_service_line() -> InvoiceLineRow {
 pub fn mock_draft_inbound_shipment_with_service_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_draft_inbound_shipment_with_service_lines".to_string();
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::New;
@@ -75,14 +75,14 @@ pub fn mock_draft_inbound_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_inbound_service_line".to_string();
         r.invoice_id = mock_draft_inbound_shipment_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }
 
 pub fn mock_draft_inbound_shipment_no_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_draft_inbound_shipment_no_lines".to_string();
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::New;
@@ -92,7 +92,7 @@ pub fn mock_draft_inbound_shipment_no_lines() -> InvoiceRow {
 pub fn mock_draft_inbound_verified_with_service_lines() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "mock_draft_inbound_shipped_with_service_lines".to_string();
-        r.name_id = mock_name_a().id;
+        r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
         r.r#type = InvoiceRowType::InboundShipment;
         r.status = InvoiceRowStatus::Verified;
@@ -103,6 +103,6 @@ pub fn mock_draft_inbound_verified_service_line() -> InvoiceLineRow {
     inline_init(|r: &mut InvoiceLineRow| {
         r.id = "mock_draft_inbound_shipped_service_line".to_string();
         r.invoice_id = mock_draft_inbound_verified_with_service_lines().id;
-        r.item_id = mock_default_service_item().id;
+        r.item_link_id = mock_default_service_item().id;
     })
 }

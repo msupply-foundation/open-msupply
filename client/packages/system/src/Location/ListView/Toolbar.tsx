@@ -26,7 +26,7 @@ export const Toolbar: FC<{
 }> = ({ data }) => {
   const t = useTranslation('inventory');
   const { mutateAsync: deleteLocation } = useLocation.document.delete();
-  const { error, info, success } = useNotification();
+  const { error, success, info } = useNotification();
   const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
@@ -128,7 +128,7 @@ export const Toolbar: FC<{
         onOk={() => setDeleteErrors([])}
       />
 
-      <DropdownMenu label={t('label.select')}>
+      <DropdownMenu label={t('label.actions')}>
         <DropdownMenuItem
           IconComponent={DeleteIcon}
           onClick={() => showDeleteConfirmation()}

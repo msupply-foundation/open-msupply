@@ -1,6 +1,6 @@
 use super::{name_tag_row::name_tag::dsl as name_tag_dsl, StorageConnection};
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
@@ -66,6 +66,20 @@ impl<'a> NameTagRowRepository<'a> {
         diesel::delete(name_tag_dsl::name_tag.filter(name_tag_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for NameTagRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameTagRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameTagRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

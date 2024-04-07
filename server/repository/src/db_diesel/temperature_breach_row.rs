@@ -3,7 +3,7 @@ use super::{
     temperature_breach_row::temperature_breach::dsl as temperature_breach_dsl, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -24,14 +24,7 @@ table! {
         threshold_minimum -> Double,
         threshold_maximum -> Double,
         threshold_duration_milliseconds -> Integer,
-    }
-}
-
-table! {
-    #[sql_name = "temperature_breach"]
-    temperature_breach_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
+        comment -> Nullable<Text>,
     }
 }
 
@@ -48,6 +41,7 @@ pub enum TemperatureBreachRowType {
     #[default]
     HotConsecutive,
     HotCumulative,
+    Excursion,
 }
 
 #[derive(
@@ -69,6 +63,7 @@ pub struct TemperatureBreachRow {
     pub threshold_minimum: f64,
     pub threshold_maximum: f64,
     pub threshold_duration_milliseconds: i32,
+    pub comment: Option<String>,
 }
 
 pub struct TemperatureBreachRowRepository<'a> {
@@ -122,5 +117,19 @@ impl<'a> TemperatureBreachRowRepository<'a> {
         Ok(temperature_breach_dsl::temperature_breach
             .filter(temperature_breach_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)
+    }
+}
+
+impl Upsert for TemperatureBreachRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        TemperatureBreachRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            TemperatureBreachRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

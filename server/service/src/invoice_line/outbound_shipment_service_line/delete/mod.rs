@@ -14,8 +14,8 @@ pub fn delete_outbound_shipment_service_line(
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, &ctx.store_id, &connection)?;
-            InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
+            let line = validate(&input, &ctx.store_id, connection)?;
+            InvoiceLineRowRepository::new(connection).delete(&line.id)?;
 
             Ok(line.id) as Result<String, OutError>
         })

@@ -10,9 +10,16 @@ export const useConfirmationModal = ({
   message,
   title,
   onCancel,
+  iconType = 'help',
 }: PartialBy<ConfirmationModalState, 'open'>) => {
-  const { setOpen, setMessage, setOnConfirm, setOnCancel, setTitle } =
-    useContext(ConfirmationModalContext);
+  const {
+    setIconType,
+    setOpen,
+    setMessage,
+    setOnConfirm,
+    setOnCancel,
+    setTitle,
+  } = useContext(ConfirmationModalContext);
 
   const trigger = (
     paramPatch?: Partial<PartialBy<ConfirmationModalState, 'open'>>
@@ -21,6 +28,7 @@ export const useConfirmationModal = ({
     setOnConfirm(paramPatch?.onConfirm ?? onConfirm);
     setTitle(paramPatch?.title ?? title);
     setOnCancel(paramPatch?.onCancel ?? onCancel);
+    setIconType(iconType);
     setOpen(true);
   };
 
@@ -32,5 +40,6 @@ export const useConfirmationModal = ({
     setOnConfirm,
     setTitle,
     setOpen,
+    iconType,
   ]);
 };

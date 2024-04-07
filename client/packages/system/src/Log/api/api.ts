@@ -1,28 +1,22 @@
-import {
-  SortBy,
-  ActivityLogSortInput,
-  ActivityLogSortFieldInput,
-} from '@openmsupply-client/common';
-import { Sdk, ActivityLogRowFragment } from './operations.generated';
+import { Sdk } from './operations.generated';
 
-export type ListParams = { recordId: string; sortBy?: SortBy<ActivityLogRowFragment> };
+export type logContentsByFileNameParams = { fileName: string };
 
-const logParsers = {
-  toSortInput: (sortBy: SortBy<ActivityLogRowFragment>): ActivityLogSortInput => {
-    return { desc: sortBy.isDesc, key: sortBy.key as ActivityLogSortFieldInput };
-  },
-};
-
-export const getLogQueries = (sdk: Sdk) => ({
+export const getServerLogQueries = (sdk: Sdk) => ({
   get: {
-    listByRecord: async ({ sortBy, recordId }: ListParams) => {
-      const response = await sdk.activityLogs({
-        offset: 0,
-        first: 1000,
-        sort: sortBy ? logParsers.toSortInput(sortBy) : undefined,
-        filter: { recordId: { equalTo: recordId } },
-      });
-      return response?.activityLogs;
+    logLevel: async () => {
+      const response = await sdk.logLevel();
+      return response?.logLevel;
+    },
+    logFileNames: async () => {
+      const response = await sdk.logFileNames();
+      return response?.logFileNames;
+    },
+    logContentsByFileName: async ({
+      fileName,
+    }: logContentsByFileNameParams) => {
+      const response = await sdk.logContentsByFileName({ fileName });
+      return response?.logContents;
     },
   },
 });

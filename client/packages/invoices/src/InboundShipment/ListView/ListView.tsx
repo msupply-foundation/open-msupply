@@ -12,6 +12,7 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -25,6 +26,7 @@ const useDisableInboundRows = (rows?: InboundRowFragment[]) => {
       ?.filter(isInboundListItemDisabled)
       .map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows]);
 };
 
@@ -69,8 +71,13 @@ export const InboundListView: FC = () => {
       ['invoiceNumber', { maxWidth: 80 }],
       'createdDatetime',
       'deliveredDatetime',
-      ['comment', { width: '100%' }],
-      'theirReference',
+      ['comment', { width: 125, Cell: TooltipTextCell }],
+      [
+        'theirReference',
+        {
+          Cell: TooltipTextCell,
+        },
+      ],
       [
         'totalAfterTax',
         {

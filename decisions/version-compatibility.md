@@ -3,16 +3,16 @@
 - *Date*: 2023-01-08
 - *Deciders*: Mark Prins, Andrei Evguenov, Clemens
 - *Status*: DECIDED
-- *Outcome*: Option 4 - Seperate sync version and server knows which previous version it is compatible with
+- *Outcome*: Option 4 - Separate sync version and server knows which previous version it is compatible with
 
 ## Context
 
 API changes may result in version compatibility issues between apps in omSupply/mSupply ecosystem. A strategy to `know` what versions are compatible with each other is good to have and implement early on.
 So far we have the following independent apps to think about in this space:
 * Remote Server <-> Central Server (sync api)
-* Remote Server <-> omSupply Client (discovery API and potentialy omSupply client specific api)
+* Remote Server <-> omSupply Client (discovery API and potentially omSupply client specific api)
 
-I will focuse on Remote Server <-> Central Server for the rest of the document, same concept should apply uniformly
+I will focus on Remote Server <-> Central Server for the rest of the document, same concept should apply uniformly
 
 ###  Examples of breaking compatibility changes
 
@@ -98,9 +98,9 @@ In `Example 2`. -> Whole new API version is added with new logic keeping existin
 
 Both central and remote keep track of `from` version of compatibility, and during sync these are exchanged and checked (either on remote or central, prefer remote to reduce logic slightly on central).
 
-Basicallly for `Example 1.`, when new field is added on remote, we add it to central, and change `from version of central` on remote to this never version of central. (previous version of remote will still be supported)
+For `Example 1.`, when a new field is added on remote, we add it to central, and change `from version of central` on remote to this newer version of central. (previous version of remote will still be supported)
 
-For `Example 2.`, when api shape changes on central we update remote to use new api, and keep existing api support on remote, in this case `from verion of remote` will now be updated to match new `remote` version (this new remote version will still be backwards compatible with older central versions)
+For `Example 2.`, when api shape changes on central we update remote to use new api, and keep existing api support on remote, in this case `from version of remote` will now be updated to match new `remote` version (this new remote version will still be backwards compatible with older central versions)
 
 *An example:*
 * 1.01 remote is compatible with `>=` 5.06 central
@@ -125,7 +125,7 @@ So let's say 1.07 is trying to sync with 5.08, central says it's compatible with
 1.02 is trying to sync with 7.01, remote knows it's compatible with 5.07 and up, but central says it's only compatible with 2 and up, sync is not allowed
 
 *Pros:*
-- Simpler then `Option 2` and slighly more invovled then `Option 1`, but seems (subjectively) the best balance for compatibility/complexity
+- Simpler then `Option 2` and slightly more involved then `Option 1`, but seems (subjectively) the best balance for compatibility/complexity
 - Quite flexible in forward and backwards compatibility
 
 *Cons:*
@@ -137,7 +137,7 @@ This option originated from a conversation with Chris about this KDD after it wa
 
 This is similar to Option 3, but it would be more generic (server doesn't need to know about consumer version just the version of API they are compatible with). 
 
-Basically the server know which API version it is on and which API version it is backwards compatible with, and the consumer states which API version it uses.
+Basically the server knows which API version it is on and which API version it is backwards compatible with, and the consumer states which API version it uses.
 
 Compatibility matrix would look like this (same compatibility matrix but now with API version):
 
@@ -170,7 +170,7 @@ I suggest to go with `Option 4`, seems simple and direct way to meet the require
 
 ### For sync
 
-We already use `major` versioning with seperate routes, omSupply is currently using v5. We can still introduce backwards incompatible change on central server (like tweaking the shape of API), in this case instead of re-defining the route we should just increment the minor (even though technically it shouldn't be a breaking change according to semantic versioning).
+We already use `major` versioning with separate routes, omSupply is currently using v5. We can still introduce backwards incompatible change on central server (like tweaking the shape of API), in this case instead of re-defining the route we should just increment the minor (even though technically it shouldn't be a breaking change according to semantic versioning).
 
 Some realistic examples of `Option 4`:
 

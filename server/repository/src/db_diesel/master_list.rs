@@ -1,6 +1,9 @@
 use super::{
+    item_link_row::item_link::dsl as item_link_dsl,
+    master_list_line_row::master_list_line::dsl as master_list_line_dsl,
     master_list_name_join::master_list_name_join::dsl as master_list_name_join_dsl,
     master_list_row::{master_list, master_list::dsl as master_list_dsl},
+    name_link_row::name_link::dsl as name_link_dsl,
     name_row::name::dsl as name_dsl,
     program_row::program::dsl as program_dsl,
     store_row::store::dsl as store_dsl,
@@ -22,7 +25,7 @@ pub struct MasterListRepository<'a> {
     connection: &'a mut StorageConnection,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct MasterListFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
@@ -32,6 +35,7 @@ pub struct MasterListFilter {
     pub exists_for_name_id: Option<EqualFilter<String>>,
     pub exists_for_store_id: Option<EqualFilter<String>>,
     pub is_program: Option<bool>,
+    pub item_id: Option<EqualFilter<String>>,
 }
 
 pub enum MasterListSortField {
@@ -82,7 +86,10 @@ impl<'a> MasterListRepository<'a> {
                 let mut name_join_query = master_list_name_join_dsl::master_list_name_join
                     .select(master_list_name_join_dsl::master_list_id)
                     .distinct()
-                    .left_join(name_dsl::name.left_join(store_dsl::store))
+                    .left_join(
+                        name_link_dsl::name_link
+                            .left_join(name_dsl::name.left_join(store_dsl::store)),
+                    )
                     .into_boxed();
 
                 apply_string_filter!(name_join_query, f.exists_for_name, name_dsl::name_);
@@ -103,6 +110,18 @@ impl<'a> MasterListRepository<'a> {
                 } else {
                     query = query.filter(master_list_dsl::id.ne_all(program_join_query));
                 }
+            }
+
+            if f.item_id.is_some() {
+                let mut master_list_line_query = master_list_line_dsl::master_list_line
+                    .select(master_list_line_dsl::master_list_id)
+                    .left_join(item_link_dsl::item_link)
+                    .distinct()
+                    .into_boxed::<DBType>();
+
+                apply_equal_filter!(master_list_line_query, f.item_id, item_link_dsl::item_id);
+
+                query = query.filter(master_list_dsl::id.eq_any(master_list_line_query));
             }
         }
 
@@ -147,16 +166,7 @@ type BoxedMasterListQuery = master_list::BoxedQuery<'static, DBType>;
 
 impl MasterListFilter {
     pub fn new() -> MasterListFilter {
-        MasterListFilter {
-            id: None,
-            name: None,
-            code: None,
-            description: None,
-            exists_for_name: None,
-            exists_for_name_id: None,
-            exists_for_store_id: None,
-            is_program: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -196,6 +206,11 @@ impl MasterListFilter {
 
     pub fn is_program(mut self, filter: bool) -> Self {
         self.is_program = Some(filter);
+        self
+    }
+
+    pub fn item_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.item_id = Some(filter);
         self
     }
 }

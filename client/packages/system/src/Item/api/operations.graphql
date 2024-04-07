@@ -22,6 +22,7 @@ fragment StockLine on StockLineNode {
   item {
     name
     code
+    unitName
   }
   note
   onHold
@@ -159,16 +160,26 @@ query itemStockOnHand(
     ... on ItemConnector {
       __typename
       nodes {
-        __typename
-        code
-        id
-        name
-        unitName
-        defaultPackSize
-        availableStockOnHand(storeId: $storeId)
+        ...ItemStockOnHand
       }
       totalCount
     }
+  }
+}
+
+fragment ItemsWithStats on ItemNode {
+  __typename
+  code
+  id
+  name
+  unitName
+  defaultPackSize
+  availableStockOnHand(storeId: $storeId)
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
   }
 }
 
@@ -189,19 +200,7 @@ query itemsWithStats(
     ... on ItemConnector {
       __typename
       nodes {
-        __typename
-        code
-        id
-        name
-        unitName
-        defaultPackSize
-        availableStockOnHand(storeId: $storeId)
-        stats(storeId: $storeId) {
-          __typename
-          averageMonthlyConsumption
-          availableStockOnHand
-          availableMonthsOfStockOnHand
-        }
+        ...ItemsWithStats
       }
       totalCount
     }
@@ -209,7 +208,7 @@ query itemsWithStats(
 }
 
 query itemById($storeId: String!, $itemId: String!) {
-  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId }, isActive: true }) {
     ... on ItemConnector {
       __typename
       nodes {
@@ -229,6 +228,84 @@ query itemById($storeId: String!, $itemId: String!) {
         }
       }
       totalCount
+    }
+  }
+}
+
+fragment Variant on VariantNode {
+  __typename
+  id
+  itemId
+  longName
+  packSize
+  shortName
+}
+
+fragment PackVariant on ItemPackVariantNode {
+  itemId
+  mostUsedPackVariantId
+  packVariants {
+    ...Variant
+  }
+}
+
+query packVariants($storeId: String!) {
+  packVariants(storeId: $storeId) {
+    __typename
+    nodes {
+      ...PackVariant
+    }
+    totalCount
+  }
+}
+
+mutation insertPackVariant($storeId: String!, $input: InsertPackVariantInput!) {
+  centralServer {
+    packVariant {
+      insertPackVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on VariantNode {
+          ...Variant
+        }
+        ... on InsertPackVariantError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updatePackVariant($storeId: String!, $input: UpdatePackVariantInput!) {
+  centralServer {
+    packVariant {
+      updatePackVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on VariantNode {
+          ...Variant
+        }
+        ... on UpdatePackVariantError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deletePackVariant($storeId: String!, $input: DeletePackVariantInput!) {
+  centralServer {
+    packVariant {
+      deletePackVariant(storeId: $storeId, input: $input) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
     }
   }
 }

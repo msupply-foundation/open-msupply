@@ -2,7 +2,7 @@ import { useTheme } from '@common/styles';
 import { Box, Typography, useFormatDateTime } from '@openmsupply-client/common';
 import React from 'react';
 
-type Entry = {
+export type Entry = {
   color: string | undefined;
   id: string;
   name: string;
@@ -10,7 +10,7 @@ type Entry = {
 };
 
 interface TemperatureTooltipLayoutProps {
-  entries: (Entry | null)[];
+  entries: Entry[];
   label: string;
 }
 
@@ -36,24 +36,25 @@ export const TemperatureTooltipLayout = ({
       <Typography sx={{ fontWeight: 'bold' }}>
         {dateFormatter(label)}
       </Typography>
-      {entries
-        .filter(entry => entry !== null)
-        .map(entry => (
-          <Box display="flex" key={entry?.id} gap={2}>
-            <Typography sx={{ color: entry?.color, flex: 1 }} component="div">
-              {entry?.name}
-            </Typography>
-            <Typography
-              key={entry?.id}
-              sx={{ flex: 1 }}
-              component="div"
-              display="flex"
-              justifyContent="flex-end"
-            >
-              {entry?.value}
-            </Typography>
-          </Box>
-        ))}
+      {entries.map(entry => (
+        <Box display="flex" key={entry?.id} gap={2}>
+          <Typography
+            sx={{ color: entry?.color, flex: 1, textAlign: 'left' }}
+            component="div"
+          >
+            {entry?.name}
+          </Typography>
+          <Typography
+            key={entry?.id}
+            sx={{ flex: 1 }}
+            component="div"
+            display="flex"
+            justifyContent="flex-end"
+          >
+            {entry?.value}
+          </Typography>
+        </Box>
+      ))}
     </Box>
   );
 };

@@ -1,9 +1,11 @@
 use repository::{
-    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
-    InvoiceRow, MasterList, MasterListFilter, MasterListRepository, RepositoryError, StockLineRow,
-    StorageConnection,
+    CurrencyFilter, CurrencyRepository, EqualFilter, InvoiceLine, InvoiceLineFilter,
+    InvoiceLineRepository, InvoiceLineRowType, InvoiceRow, MasterList, MasterListFilter,
+    MasterListRepository, NameLinkRowRepository, RepositoryError, StockLineRow, StorageConnection,
 };
 use util::inline_edit;
+
+use crate::store_preference::get_store_preferences;
 
 pub fn generate_invoice_user_id_update(
     user_id: &str,
@@ -36,21 +38,46 @@ pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64
     }
 }
 
+pub fn calculate_foreign_currency_total(
+    connection: &StorageConnection,
+    total: f64,
+    currency_id: Option<String>,
+    currency_rate: &f64,
+) -> Result<Option<f64>, RepositoryError> {
+    let Some(currency_id) = currency_id else {
+        return Ok(None);
+    };
+
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
+    if currency_id == currency.currency_row.id {
+        return Ok(None);
+    }
+
+    Ok(Some(total / currency_rate))
+}
+
 #[derive(Debug, PartialEq)]
 pub struct AddToShipmentFromMasterListInput {
     pub shipment_id: String,
     pub master_list_id: String,
 }
 
-pub fn check_master_list_for_name(
+pub fn check_master_list_for_name_link_id(
     connection: &StorageConnection,
-    name_id: &str,
+    name_link_id: &str,
     master_list_id: &str,
 ) -> Result<Option<MasterList>, RepositoryError> {
+    let Some(name_link) = NameLinkRowRepository::new(connection).find_one_by_id(name_link_id)?
+    else {
+        return Ok(None);
+    };
     let mut rows = MasterListRepository::new(connection).query_by_filter(
         MasterListFilter::new()
             .id(EqualFilter::equal_to(master_list_id))
-            .exists_for_name_id(EqualFilter::equal_to(name_id)),
+            .exists_for_name_id(EqualFilter::equal_to(&name_link.name_id)),
     )?;
     Ok(rows.pop())
 }
@@ -66,6 +93,14 @@ pub fn check_master_list_for_store(
             .exists_for_store_id(EqualFilter::equal_to(store_id)),
     )?;
     Ok(rows.pop())
+}
+
+pub fn check_can_issue_in_foreign_currency(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<bool, RepositoryError> {
+    let store_preferences = get_store_preferences(connection, store_id)?;
+    Ok(store_preferences.issue_in_foreign_currency)
 }
 
 pub enum InvoiceLineHasNoStockLine {
@@ -84,7 +119,7 @@ pub fn generate_batches_total_number_of_packs_update(
                 .invoice_id(EqualFilter::equal_to(invoice_id))
                 .r#type(InvoiceLineRowType::StockOut.equal_to()),
         )
-        .map_err(|err| InvoiceLineHasNoStockLine::DatabaseError(err))?;
+        .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
 
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
@@ -93,8 +128,7 @@ pub fn generate_batches_total_number_of_packs_update(
             InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
         )?;
 
-        stock_line.total_number_of_packs =
-            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
+        stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
     Ok(result)

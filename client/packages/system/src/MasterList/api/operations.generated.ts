@@ -8,9 +8,7 @@ export type MasterListItemFragment = { __typename: 'ItemNode', id: string, code:
 
 export type MasterListLineFragment = { __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } };
 
-export type MasterListFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
-
-export type MasterListRowFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number } };
+export type MasterListRowFragment = { __typename: 'MasterListNode', name: string, code: string, description: string, id: string, linesCount?: number | null };
 
 export type MasterListsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -22,7 +20,15 @@ export type MasterListsQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', totalCount: number } }> } };
+export type MasterListsQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, linesCount?: number | null }> } };
+
+export type MasterListsByItemIdQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+}>;
+
+
+export type MasterListsByItemIdQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, linesCount?: number | null }> } };
 
 export type MasterListQueryVariables = Types.Exact<{
   filter?: Types.InputMaybe<Types.MasterListFilterInput>;
@@ -30,7 +36,18 @@ export type MasterListQueryVariables = Types.Exact<{
 }>;
 
 
-export type MasterListQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, lines: { __typename: 'MasterListLineConnector', nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } }> } };
+export type MasterListQuery = { __typename: 'Queries', masterLists: { __typename: 'MasterListConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListNode', name: string, code: string, description: string, id: string, linesCount?: number | null }> } };
+
+export type MasterListLinesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
+  page?: Types.InputMaybe<Types.PaginationInput>;
+  sort?: Types.InputMaybe<Array<Types.MasterListLineSortInput> | Types.MasterListLineSortInput>;
+  filter?: Types.InputMaybe<Types.MasterListLineFilterInput>;
+}>;
+
+
+export type MasterListLinesQuery = { __typename: 'Queries', masterListLines: { __typename: 'MasterListLineConnector', totalCount: number, nodes: Array<{ __typename: 'MasterListLineNode', id: string, item: { __typename: 'ItemNode', id: string, code: string, name: string, unitName?: string | null } }> } };
 
 export const MasterListItemFragmentDoc = gql`
     fragment MasterListItem on ItemNode {
@@ -50,20 +67,6 @@ export const MasterListLineFragmentDoc = gql`
   }
 }
     ${MasterListItemFragmentDoc}`;
-export const MasterListFragmentDoc = gql`
-    fragment MasterList on MasterListNode {
-  __typename
-  name
-  code
-  description
-  id
-  lines {
-    nodes {
-      ...MasterListLine
-    }
-  }
-}
-    ${MasterListLineFragmentDoc}`;
 export const MasterListRowFragmentDoc = gql`
     fragment MasterListRow on MasterListNode {
   __typename
@@ -71,9 +74,7 @@ export const MasterListRowFragmentDoc = gql`
   code
   description
   id
-  lines {
-    totalCount
-  }
+  linesCount
 }
     `;
 export const MasterListsDocument = gql`
@@ -94,6 +95,22 @@ export const MasterListsDocument = gql`
   }
 }
     ${MasterListRowFragmentDoc}`;
+export const MasterListsByItemIdDocument = gql`
+    query masterListsByItemId($storeId: String!, $itemId: String!) {
+  masterLists(
+    filter: {itemId: {equalTo: $itemId}, existsForStoreId: {equalTo: $storeId}}
+    storeId: $storeId
+  ) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListRow
+      }
+    }
+  }
+}
+    ${MasterListRowFragmentDoc}`;
 export const MasterListDocument = gql`
     query masterList($filter: MasterListFilterInput, $storeId: String!) {
   masterLists(filter: $filter, storeId: $storeId) {
@@ -101,12 +118,31 @@ export const MasterListDocument = gql`
       __typename
       totalCount
       nodes {
-        ...MasterList
+        ...MasterListRow
       }
     }
   }
 }
-    ${MasterListFragmentDoc}`;
+    ${MasterListRowFragmentDoc}`;
+export const MasterListLinesDocument = gql`
+    query masterListLines($storeId: String!, $masterListId: String!, $page: PaginationInput, $sort: [MasterListLineSortInput!], $filter: MasterListLineFilterInput) {
+  masterListLines(
+    storeId: $storeId
+    masterListId: $masterListId
+    page: $page
+    sort: $sort
+    filter: $filter
+  ) {
+    ... on MasterListLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListLine
+      }
+    }
+  }
+}
+    ${MasterListLineFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -118,8 +154,14 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     masterLists(variables: MasterListsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MasterListsQuery>(MasterListsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterLists', 'query');
     },
+    masterListsByItemId(variables: MasterListsByItemIdQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListsByItemIdQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListsByItemIdQuery>(MasterListsByItemIdDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListsByItemId', 'query');
+    },
     masterList(variables: MasterListQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MasterListQuery>(MasterListDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterList', 'query');
+    },
+    masterListLines(variables: MasterListLinesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MasterListLinesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<MasterListLinesQuery>(MasterListLinesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'masterListLines', 'query');
     }
   };
 }
@@ -146,6 +188,23 @@ export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<M
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockMasterListsByItemIdQuery((req, res, ctx) => {
+ *   const { storeId, itemId } = req.variables;
+ *   return res(
+ *     ctx.data({ masterLists })
+ *   )
+ * })
+ */
+export const mockMasterListsByItemIdQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListsByItemIdQueryVariables>, GraphQLContext<MasterListsByItemIdQuery>, any>) =>
+  graphql.query<MasterListsByItemIdQuery, MasterListsByItemIdQueryVariables>(
+    'masterListsByItemId',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockMasterListQuery((req, res, ctx) => {
  *   const { filter, storeId } = req.variables;
  *   return res(
@@ -156,5 +215,22 @@ export const mockMasterListsQuery = (resolver: ResponseResolver<GraphQLRequest<M
 export const mockMasterListQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListQueryVariables>, GraphQLContext<MasterListQuery>, any>) =>
   graphql.query<MasterListQuery, MasterListQueryVariables>(
     'masterList',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockMasterListLinesQuery((req, res, ctx) => {
+ *   const { storeId, masterListId, page, sort, filter } = req.variables;
+ *   return res(
+ *     ctx.data({ masterListLines })
+ *   )
+ * })
+ */
+export const mockMasterListLinesQuery = (resolver: ResponseResolver<GraphQLRequest<MasterListLinesQueryVariables>, GraphQLContext<MasterListLinesQuery>, any>) =>
+  graphql.query<MasterListLinesQuery, MasterListLinesQueryVariables>(
+    'masterListLines',
     resolver
   )

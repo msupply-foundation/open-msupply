@@ -1,6 +1,7 @@
 mod central;
 mod central_server_configurations;
 mod errors;
+mod omsupply_central;
 mod remote;
 mod site_info;
 mod transfer;
@@ -9,13 +10,13 @@ use self::central_server_configurations::NewSiteProperties;
 use crate::{
     service_provider::ServiceProvider,
     sync::{
-        settings::SyncSettings,
-        synchroniser::Synchroniser,
-        translations::{IntegrationRecords, PullDeleteRecord},
+        settings::SyncSettings, synchroniser::Synchroniser, translations::IntegrationOperation,
     },
     test_helpers::{setup_all_and_service_provider, ServiceTestContext},
 };
 use repository::{mock::MockDataInserts, StorageConnection};
+use serde::Serialize;
+use serde_json::json;
 use std::{error::Error, future::Future, sync::Arc};
 use tokio::task::JoinHandle;
 
@@ -63,17 +64,25 @@ async fn init_test_context(
     }
 }
 
+#[derive(Default, Serialize)]
+pub(crate) struct GraphqlRequest {
+    query: String,
+    variables: serde_json::Value,
+}
 struct TestStepData {
     central_upsert: serde_json::Value,
     central_delete: serde_json::Value,
-    integration_records: IntegrationRecords,
+    integration_records: Vec<IntegrationOperation>,
+    om_supply_central_graphql_operations: Vec<GraphqlRequest>,
 }
 
-impl IntegrationRecords {
-    fn from_deletes(rows: Vec<PullDeleteRecord>) -> IntegrationRecords {
-        IntegrationRecords {
-            upserts: Vec::new(),
-            deletes: rows,
+impl Default for TestStepData {
+    fn default() -> Self {
+        Self {
+            central_upsert: json!({}),
+            central_delete: json!({}),
+            integration_records: Default::default(),
+            om_supply_central_graphql_operations: Default::default(),
         }
     }
 }
@@ -85,7 +94,7 @@ trait SyncRecordTester {
 
 // Sometime central server returns unexpected errors
 // this seems to happen when it's `overloaded` (when multiple requests are fired up at once)
-// ingore these errors in integration tests
+// ignore these errors in integration tests
 const NUMBER_OF_RETRIES: u32 = 5;
 async fn with_retry<T, E, F, Fut>(f: F) -> Result<T, E>
 where
@@ -95,7 +104,7 @@ where
 {
     let mut retries = 0;
     loop {
-        // Reduce chance concurrent operations runing at the same time (when tests all start at once)
+        // Reduce chance concurrent operations running at the same time (when tests all start at once)
         random_delay(10, 50).await;
         let error = match f().await {
             Ok(result) => return Ok(result),

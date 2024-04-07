@@ -12,6 +12,7 @@ import {
   Typography,
   BufferedTextInput,
   Alert,
+  Tooltip,
 } from '@openmsupply-client/common';
 import { CustomerSearchInput } from '@openmsupply-client/system';
 
@@ -19,7 +20,7 @@ import { useResponse } from '../api';
 import { getApprovalStatusKey } from '../../utils';
 
 export const Toolbar: FC = () => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
   const isDisabled = useResponse.utils.isDisabled();
   const { itemFilter, setItemFilter } = useResponse.line.list();
 
@@ -76,13 +77,15 @@ export const Toolbar: FC = () => {
               <InputWithLabelRow
                 label={t('label.customer-ref')}
                 Input={
-                  <BufferedTextInput
-                    disabled={isDisabled}
-                    size="small"
-                    sx={{ width: 250 }}
-                    value={theirReference}
-                    onChange={e => update({ theirReference: e.target.value })}
-                  />
+                  <Tooltip title={theirReference} placement="bottom-start">
+                    <BufferedTextInput
+                      disabled={isDisabled}
+                      size="small"
+                      sx={{ width: 250 }}
+                      value={theirReference}
+                      onChange={e => update({ theirReference: e.target.value })}
+                    />
+                  </Tooltip>
                 }
               />
               {isRemoteAuthorisation && (

@@ -16,7 +16,7 @@ pub struct LocationMovement {
     pub location_movement_row: LocationMovementRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct LocationMovementFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -121,7 +121,7 @@ fn create_filtered_query(filter: Option<LocationMovementFilter>) -> BoxedLocatio
     query
 }
 
-pub fn to_domain(location_movement_row: LocationMovementRow) -> LocationMovement {
+fn to_domain(location_movement_row: LocationMovementRow) -> LocationMovement {
     LocationMovement {
         location_movement_row,
     }
@@ -129,14 +129,7 @@ pub fn to_domain(location_movement_row: LocationMovementRow) -> LocationMovement
 
 impl LocationMovementFilter {
     pub fn new() -> LocationMovementFilter {
-        LocationMovementFilter {
-            id: None,
-            store_id: None,
-            location_id: None,
-            stock_line_id: None,
-            enter_datetime: None,
-            exit_datetime: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

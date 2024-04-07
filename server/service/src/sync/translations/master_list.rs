@@ -2,9 +2,7 @@ use repository::{MasterListRow, StorageConnection, SyncBufferRow};
 
 use serde::Deserialize;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -14,30 +12,29 @@ pub struct LegacyListMasterRow {
     description: String,
     code: String,
     note: String,
-    inactive: bool,
+    inactive: Option<bool>,
+}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(MasterListTranslation)
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::LIST_MASTER
-}
-pub(crate) struct MasterListTranslation {}
+pub(super) struct MasterListTranslation;
 impl SyncTranslation for MasterListTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::LIST_MASTER,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &str {
+        "list_master"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
         let result = MasterListRow {
@@ -45,11 +42,10 @@ impl SyncTranslation for MasterListTranslation {
             name: data.description,
             code: data.code,
             description: data.note,
-            is_active: !data.inactive,
+            // By default if inactive = null, or missing, it should mean is_active = true
+            is_active: !data.inactive.unwrap_or(true),
         };
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::MasterList(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 }
 
@@ -61,14 +57,15 @@ mod tests {
     #[actix_rt::test]
     async fn test_master_list_translation() {
         use crate::sync::test::test_data::master_list as test_data;
-        let translator = MasterListTranslation {};
+        let translator = MasterListTranslation;
 
         let (_, connection, _, _) =
             setup_all("test_master_list_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

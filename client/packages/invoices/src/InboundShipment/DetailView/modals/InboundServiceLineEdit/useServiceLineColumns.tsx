@@ -8,9 +8,9 @@ import {
   TextInputCell,
   CurrencyInputCell,
   ColumnAlign,
-  NonNegativeDecimalCell,
-  useFormatCurrency,
+  NumberInputCell,
   CellProps,
+  CurrencyCell,
 } from '@openmsupply-client/common';
 import {
   ServiceItemSearchInput,
@@ -19,14 +19,13 @@ import {
 import { DraftInboundLine } from './../../../../types';
 
 const TaxPercentageCell = (props: CellProps<DraftInboundLine>) => (
-  <NonNegativeDecimalCell max={100} {...props} />
+  <NumberInputCell {...props} max={100} decimalLimit={2} />
 );
 
 export const useServiceLineColumns = (
   setter: (patch: RecordPatch<DraftInboundLine>) => void
 ) => {
   const t = useTranslation('replenishment');
-  const c = useFormatCurrency();
   return useColumns<DraftInboundLine>([
     {
       key: 'serviceItemName',
@@ -74,7 +73,8 @@ export const useServiceLineColumns = (
       label: 'label.total',
       align: ColumnAlign.Right,
       width: 75,
-      accessor: ({ rowData }) => c(rowData?.totalAfterTax),
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => rowData?.totalAfterTax,
     },
     {
       key: 'isDeleted',

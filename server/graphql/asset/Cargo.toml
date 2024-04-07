@@ -1,0 +1,34 @@
+[package]
+name = "graphql_asset"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+
+repository = { path = "../../repository" }
+service = { path = "../../service" }
+util = { path = "../../util" }
+graphql_core = { path = "../core" }
+graphql_types = { path = "../types" }
+graphql_asset_catalogue = { path = "../asset_catalogue" }
+
+actix-web = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
+actix-rt = { workspace = true }
+assert-json-diff = { workspace = true }
+
+[features]
+default = ["sqlite"]
+sqlite = ["repository/sqlite"]
+postgres = ["repository/postgres"]

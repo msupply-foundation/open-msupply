@@ -12,6 +12,7 @@ import {
   NothingHere,
   useUrlQueryParams,
   ColumnDescription,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
@@ -65,12 +66,13 @@ export const ResponseRequisitionListView: FC = () => {
       label: 'label.number',
       width: 100,
     },
-    'createdDatetime',
+    ['createdDatetime', { width: 150 }],
     [
       'status',
       {
         formatter: status =>
           getRequisitionTranslator(t)(status as RequisitionNodeStatus),
+        width: 100,
       },
     ],
     {
@@ -111,7 +113,7 @@ export const ResponseRequisitionListView: FC = () => {
         t(getApprovalStatusKey(rowData.approvalStatus)),
     });
   }
-  columnDefinitions.push(['comment', { minWidth: 400 }]);
+  columnDefinitions.push(['comment', { minWidth: 400, Cell: TooltipTextCell }]);
 
   const columns = useColumns<ResponseRowFragment>(
     columnDefinitions,

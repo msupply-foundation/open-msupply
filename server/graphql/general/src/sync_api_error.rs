@@ -2,7 +2,7 @@ use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use repository::SyncLogRowErrorCode;
 use service::sync::{
-    api::{SyncApiError, SyncApiErrorVariant, SyncApiV5CreatingError, SyncErrorCodeV5},
+    api::{SyncApiError, SyncApiErrorVariantV5, SyncApiV5CreatingError, SyncErrorCodeV5},
     site_info::RequestAndSetSiteInfoError,
     sync_status::SyncLogError,
 };
@@ -81,8 +81,8 @@ impl SyncErrorNode {
 
     pub fn from_sync_api_error(error: &SyncApiError) -> Self {
         let sync_v5_error_code = match &error.source {
-            SyncApiErrorVariant::ParsedError { source, .. } => &source.code,
-            SyncApiErrorVariant::ConnectionError { .. } => {
+            SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
+            SyncApiErrorVariantV5::ConnectionError { .. } => {
                 return Self::from_error_variant(Variant::ConnectionError, error)
             }
             _ => return Self::unknown_error(error),
@@ -130,7 +130,7 @@ impl SyncErrorNode {
 mod test {
     use super::*;
     use actix_web::http::StatusCode;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use reqwest::{Client, Url};
     use serde_json::json;
@@ -141,7 +141,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_api_error",
@@ -154,14 +154,14 @@ mod test {
         }
 
         fn sync_api_error_unknown() -> SyncApiError {
-            SyncApiError::new_test(SyncApiErrorVariant::AsText {
+            SyncApiError::new_test(SyncApiErrorVariantV5::AsText {
                 text: "n/a".to_string(),
                 status: StatusCode::UNAUTHORIZED,
             })
         }
 
         fn sync_api_error_hardware() -> SyncApiError {
-            SyncApiError::new_test(SyncApiErrorVariant::ParsedError {
+            SyncApiError::new_test(SyncApiErrorVariantV5::ParsedError {
                 source: ParsedError {
                     code: SyncErrorCodeV5::SiteIncorrectHardwareId,
                     message: "n/a".to_string(),
@@ -276,7 +276,6 @@ mod test {
             .get(Url::parse("http://0.0.0.0:0").unwrap())
             .send()
             .await
-            .err()
-            .expect("Must be error")
+            .expect_err("Must be error")
     }
 }

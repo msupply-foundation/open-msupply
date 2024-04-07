@@ -201,10 +201,10 @@ fn validate(
         )])
     })?;
 
-    if input.parent.is_none() {
-        if !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)? {
-            return Err(UpsertProgramEnrolmentError::ProgramEnrolmentExists);
-        }
+    if input.parent.is_none()
+        && !validate_program_not_exists(ctx, service_provider, &input.patient_id, &input.r#type)?
+    {
+        return Err(UpsertProgramEnrolmentError::ProgramEnrolmentExists);
     }
 
     Ok((program_enrolment_json, document_registry, program_row))
@@ -458,14 +458,15 @@ mod test {
             .find_one_by_program_id_and_patient(&mock_program_a().id, &patient.id)
             .unwrap()
             .unwrap();
-        assert_eq!(program_context, found_program.1.context_id);
+        assert_eq!(program_context, found_program.program_row.context_id);
         assert_eq!(
             program.enrolment_datetime,
-            DateTime::<Utc>::from_utc(found_program.0.enrolment_datetime, Utc).to_rfc3339()
+            DateTime::<Utc>::from_naive_utc_and_offset(found_program.row.enrolment_datetime, Utc)
+                .to_rfc3339()
         );
         assert_eq!(
             program.program_enrolment_id,
-            found_program.0.program_enrolment_id
+            found_program.row.program_enrolment_id
         );
     }
 }

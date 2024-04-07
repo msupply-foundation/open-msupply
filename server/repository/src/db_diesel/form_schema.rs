@@ -81,7 +81,7 @@ impl<'a> FormSchemaRepository<'a> {
 
 type BoxedFormSchemaQuery = IntoBoxed<'static, form_schema::table, DBType>;
 
-fn create_filtered_query<'a>(filter: Option<FormSchemaFilter>) -> BoxedFormSchemaQuery {
+fn create_filtered_query(filter: Option<FormSchemaFilter>) -> BoxedFormSchemaQuery {
     let mut query = form_schema_dsl::form_schema.into_boxed();
 
     if let Some(filter) = filter {

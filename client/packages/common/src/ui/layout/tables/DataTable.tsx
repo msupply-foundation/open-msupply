@@ -180,6 +180,12 @@ const DataTableComponent = <T extends RecordWithId>({
     if (page * first > total) onChangePage(0);
   }, [pagination]);
 
+  // if the columns array changes, such as when a plugin column is added
+  // reset the display columns to the full set
+  useEffect(() => {
+    setDisplayColumns(columns);
+  }, [columns]);
+
   const ref = useRef<HTMLDivElement>(null);
 
   if (isLoading) return <BasicSpinner />;
@@ -241,6 +247,7 @@ const DataTableComponent = <T extends RecordWithId>({
                 sx={{
                   backgroundColor: 'transparent',
                   borderBottom: '0px',
+                  width: 30,
                 }}
               >
                 <ColumnPicker

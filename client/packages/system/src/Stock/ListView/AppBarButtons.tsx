@@ -15,7 +15,7 @@ import { stockLinesToCsv } from '../../utils';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
   const { fetchAsync, isLoading } = useStock.line.listAll({
     key: 'itemName',
     direction: 'asc',

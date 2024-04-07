@@ -1,15 +1,19 @@
 use repository::{
     ContextRow, NameTagRowRepository, PeriodScheduleRowRepository, ProgramRequisitionOrderTypeRow,
-    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionOrderTypeRowDelete, ProgramRequisitionOrderTypeRowRepository,
+    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete,
     ProgramRequisitionSettingsRowRepository, ProgramRow, StorageConnection, SyncBufferRow,
 };
 
 use serde::Deserialize;
 use std::collections::HashMap;
 
+use crate::sync::translations::{
+    name_tag::NameTagTranslation, period_schedule::PeriodScheduleTranslation,
+};
+
 use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullDependency,
-    PullUpsertRecord, SyncTranslation,
+    master_list::MasterListTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
 };
 
 #[allow(non_snake_case)]
@@ -47,82 +51,75 @@ struct LegacyOrderType {
     #[serde(rename = "maxOrdersPerPeriod")]
     max_order_per_period: i32,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::LIST_MASTER
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ProgramRequisitionSettingsTranslation)
 }
-pub(crate) struct ProgramRequisitionSettingsTranslation {}
+
+pub(super) struct ProgramRequisitionSettingsTranslation;
 impl SyncTranslation for ProgramRequisitionSettingsTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::LIST_MASTER,
-            dependencies: vec![LegacyTableName::NAME_TAG, LegacyTableName::PERIOD_SCHEDULE],
-        }
+    fn table_name(&self) -> &str {
+        MasterListTranslation.table_name()
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            NameTagTranslation.table_name(),
+            PeriodScheduleTranslation.table_name(),
+        ]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyListMasterRow>(&sync_record.data)?;
 
-        let Some(generate) = generate_requisition_program(connection, data.clone())? else {
-            return Ok(None);
-        };
-        let Some(delete) = delete_requisition_program(connection, data)? else {
-            return Ok(None);
-        };
+        if !data.is_program {
+            return Ok(PullTranslateResult::NotMatched);
+        }
 
-        let mut upserts = Vec::new();
-        let mut deletes = Vec::new();
+        let upserts = generate_requisition_program(connection, data.clone())?;
+        let deletes = delete_requisition_program(connection, data)?;
 
-        delete
+        let mut integration_operations = Vec::new();
+
+        deletes
             .program_requisition_order_type_ids
             .into_iter()
             .for_each(|order_type_id| {
-                deletes.push(PullDeleteRecord {
-                    id: order_type_id,
-                    table: PullDeleteRecordTable::ProgramRequisitionOrderType,
-                })
+                integration_operations.push(IntegrationOperation::delete(
+                    ProgramRequisitionOrderTypeRowDelete(order_type_id),
+                ))
             });
 
-        delete
+        deletes
             .program_requisition_settings_ids
             .into_iter()
             .for_each(|settings_id| {
-                deletes.push(PullDeleteRecord {
-                    id: settings_id,
-                    table: PullDeleteRecordTable::ProgramRequisitionSettings,
-                })
+                integration_operations.push(IntegrationOperation::delete(
+                    ProgramRequisitionSettingsRowDelete(settings_id),
+                ))
             });
 
-        upserts.push(PullUpsertRecord::Context(generate.context_row));
-        upserts.push(PullUpsertRecord::Program(generate.program_row));
+        integration_operations.push(IntegrationOperation::upsert(upserts.context_row));
+        integration_operations.push(IntegrationOperation::upsert(upserts.program_row));
 
-        generate
+        upserts
             .program_requisition_settings_rows
             .into_iter()
-            .for_each(|program_requisition_setting| {
-                upserts.push(PullUpsertRecord::ProgramRequisitionSettings(
-                    program_requisition_setting,
-                ))
-            });
+            .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
 
-        generate
+        upserts
             .program_requisition_order_type_rows
             .into_iter()
-            .for_each(|program_requisition_order_type| {
-                upserts.push(PullUpsertRecord::ProgramRequisitionOrderType(
-                    program_requisition_order_type,
-                ))
-            });
+            .for_each(|u| integration_operations.push(IntegrationOperation::upsert(u)));
 
-        Ok(Some(IntegrationRecords { upserts, deletes }))
+        Ok(PullTranslateResult::IntegrationOperations(
+            integration_operations,
+        ))
     }
 }
 
@@ -135,11 +132,7 @@ struct DeleteRequisitionProgram {
 fn delete_requisition_program(
     connection: &StorageConnection,
     master_list: LegacyListMasterRow,
-) -> Result<Option<DeleteRequisitionProgram>, anyhow::Error> {
-    if master_list.is_program == false {
-        return Ok(None);
-    }
-
+) -> Result<DeleteRequisitionProgram, anyhow::Error> {
     let mut program_requisition_settings_ids = Vec::new();
     let mut program_requisition_order_type_ids = Vec::new();
 
@@ -155,10 +148,10 @@ fn delete_requisition_program(
         .iter()
         .for_each(|order_type| program_requisition_order_type_ids.push(order_type.id.clone()));
 
-    Ok(Some(DeleteRequisitionProgram {
+    Ok(DeleteRequisitionProgram {
         program_requisition_settings_ids,
         program_requisition_order_type_ids,
-    }))
+    })
 }
 
 #[derive(Clone)]
@@ -172,11 +165,7 @@ struct GenerateRequisitionProgram {
 fn generate_requisition_program(
     connection: &StorageConnection,
     master_list: LegacyListMasterRow,
-) -> Result<Option<GenerateRequisitionProgram>, anyhow::Error> {
-    if master_list.is_program == false {
-        return Ok(None);
-    }
-
+) -> Result<GenerateRequisitionProgram, anyhow::Error> {
     let program_settings = master_list.program_settings.clone().ok_or(anyhow::anyhow!(
         "Program settings not found for program {}",
         master_list.id
@@ -247,35 +236,18 @@ fn generate_requisition_program(
         }
     }
 
-    Ok(Some(GenerateRequisitionProgram {
+    Ok(GenerateRequisitionProgram {
         context_row,
         program_row,
         program_requisition_settings_rows,
         program_requisition_order_type_rows,
-    }))
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use repository::{mock::MockDataInserts, test_db::setup_all};
-
-    fn sort_results(unsorted: Option<IntegrationRecords>) -> Option<IntegrationRecords> {
-        unsorted.map(|mut unsorted| {
-            use PullUpsertRecord::*;
-            unsorted.upserts.sort_by(|a, b| match (a, b) {
-                (Program(a), Program(b)) => a.id.cmp(&b.id),
-                (Program(_), _) => std::cmp::Ordering::Greater,
-                (_, Program(_)) => std::cmp::Ordering::Less,
-                (ProgramRequisitionSettings(a), ProgramRequisitionSettings(b)) => a.id.cmp(&b.id),
-                (ProgramRequisitionSettings(_), _) => std::cmp::Ordering::Greater,
-                (_, ProgramRequisitionSettings(_)) => std::cmp::Ordering::Less,
-                (ProgramRequisitionOrderType(a), ProgramRequisitionOrderType(b)) => a.id.cmp(&b.id),
-                _ => std::cmp::Ordering::Equal,
-            });
-            unsorted
-        })
-    }
 
     #[actix_rt::test]
     async fn test_program_requisition_translation() {
@@ -289,8 +261,9 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(
@@ -298,5 +271,21 @@ mod tests {
                 sort_results(record.translated_record)
             );
         }
+    }
+
+    // Since storeTags in programSettings is an a json object, order is not guaranteed
+    // and sometimes different order of integraiton records will be returned by translator
+    // thus we need to sort by type and by id, this is quite easily done just by sorting by
+    // debug output
+    fn sort_results(unsorted: PullTranslateResult) -> PullTranslateResult {
+        let mut to_be_sorted = match unsorted {
+            PullTranslateResult::IntegrationOperations(u) => u,
+            PullTranslateResult::Ignored(i) => return PullTranslateResult::Ignored(i),
+            PullTranslateResult::NotMatched => return PullTranslateResult::NotMatched,
+        };
+
+        to_be_sorted.sort_by(|a, b| format!("{a:?}").cmp(&format!("{b:?}")));
+
+        PullTranslateResult::IntegrationOperations(to_be_sorted)
     }
 }

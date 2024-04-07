@@ -1,6 +1,6 @@
-use super::{clinician_row::clinician, StorageConnection};
+use super::{clinician_link_row::clinician_link, clinician_row::clinician, StorageConnection};
 
-use crate::RepositoryError;
+use crate::{RepositoryError, Upsert};
 
 use diesel::prelude::*;
 
@@ -8,7 +8,7 @@ table! {
   clinician_store_join (id) {
     id -> Text,
     store_id -> Text,
-    clinician_id -> Text,
+    clinician_link_id -> Text,
   }
 }
 
@@ -20,15 +20,16 @@ table! {
     }
 }
 
-joinable!(clinician_store_join -> clinician (clinician_id));
+joinable!(clinician_store_join -> clinician_link (clinician_link_id));
 allow_tables_to_appear_in_same_query!(clinician, clinician_store_join);
+allow_tables_to_appear_in_same_query!(clinician_store_join, clinician_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = clinician_store_join)]
 pub struct ClinicianStoreJoinRow {
     pub id: String,
     pub store_id: String,
-    pub clinician_id: String,
+    pub clinician_link_id: String,
 }
 
 pub struct ClinicianStoreJoinRowRepository<'a> {
@@ -80,7 +81,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             .filter(clinician_store_join::dsl::id.eq(row_id))
             .first(&mut self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
@@ -107,6 +108,22 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
             .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+pub struct ClinicianStoreJoinRowDelete(pub String);
+
+impl Upsert for ClinicianStoreJoinRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ClinicianStoreJoinRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 
@@ -145,7 +162,7 @@ mod test {
         let repo = ClinicianStoreJoinRowRepository::new(&mut connection);
 
         let base_row = ClinicianStoreJoinRow {
-            clinician_id: clinician.id,
+            clinician_link_id: clinician.id,
             store_id: mock_store_a().id,
             ..Default::default()
         };

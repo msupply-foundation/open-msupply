@@ -15,7 +15,7 @@ use diesel::{
     prelude::*,
 };
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct DocumentRegistryFilter {
     pub id: Option<EqualFilter<String>>,
     pub document_type: Option<EqualFilter<String>>,
@@ -94,7 +94,7 @@ impl<'a> DocumentRegistryRepository<'a> {
             .limit(pagination.limit as i64)
             .load::<DocumentRegistrySchemaJoin>(&mut self.connection.connection)?
             .into_iter()
-            .map(|data| to_domain(data))
+            .map(to_domain)
             .collect();
 
         result
@@ -127,12 +127,7 @@ fn create_filtered_query(filter: Option<DocumentRegistryFilter>) -> BoxedDocRegi
 
 impl DocumentRegistryFilter {
     pub fn new() -> DocumentRegistryFilter {
-        DocumentRegistryFilter {
-            id: None,
-            document_type: None,
-            context_id: None,
-            category: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

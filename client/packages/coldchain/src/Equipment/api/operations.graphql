@@ -1,0 +1,184 @@
+fragment Asset on AssetNode {
+  __typename
+  catalogueItemId
+  assetNumber
+  createdDatetime
+  id
+  installationDate
+  locations {
+    nodes {
+      id
+      code
+      name
+      onHold
+    }
+    totalCount
+  }
+  modifiedDatetime
+  notes
+  replacementDate
+  serialNumber
+  statusLog {
+    logDatetime
+    reason
+    status
+  }
+  storeId
+  store {
+    id
+    code
+    storeName
+  }
+  catalogueItem {
+    manufacturer
+    model
+  }
+  assetType {
+    name
+  }
+  assetClass {
+    name
+  }
+  assetCategory {
+    name
+  }
+}
+
+fragment AssetLog on AssetLogNode {
+  comment
+  id
+  logDatetime
+  reason
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+    jobTitle
+  }
+}
+
+query assets(
+  $desc: Boolean
+  $filter: AssetFilterInput!
+  $first: Int
+  $key: AssetSortFieldInput!
+  $offset: Int
+  $storeId: String!
+) {
+  assets(
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    storeId: $storeId
+  ) {
+    ... on AssetConnector {
+      nodes {
+        ...Asset
+      }
+      totalCount
+    }
+  }
+}
+
+query assetById($storeId: String!, $assetId: String!) {
+  assets(storeId: $storeId, filter: { id: { equalTo: $assetId } }) {
+    ... on AssetConnector {
+      __typename
+      nodes {
+        __typename
+        ...Asset
+      }
+      totalCount
+    }
+  }
+}
+
+query assetLogs(
+  $filter: AssetLogFilterInput!
+  $sort: AssetLogSortInput
+  $storeId: String!
+) {
+  assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLog
+      }
+    }
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+
+mutation deleteAsset($assetId: String!, $storeId: String!) {
+  deleteAsset(assetId: $assetId, storeId: $storeId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation insertAsset($input: InsertAssetInput!, $storeId: String!) {
+  insertAsset(input: $input, storeId: $storeId) {
+    ... on InsertAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateAsset($input: UpdateAssetInput!, $storeId: String!) {
+  updateAsset(input: $input, storeId: $storeId) {
+    ... on UpdateAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
+  insertAssetLog(input: $input, storeId: $storeId) {
+    ... on AssetLogNode {
+      __typename
+      id
+      assetId
+    }
+    ... on InsertAssetLogError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

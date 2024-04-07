@@ -1,3 +1,9 @@
+mod asset_catalogue_item;
+mod asset_category;
+mod asset_class;
+mod asset_location;
+mod asset_status_log;
+mod asset_type;
 mod clinician;
 mod document;
 mod document_registry;
@@ -10,7 +16,6 @@ mod item_stock_on_hand;
 mod json_schema;
 mod loader_registry;
 mod location;
-mod master_list_line;
 mod name;
 mod name_row;
 mod patient;
@@ -28,6 +33,12 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use asset_catalogue_item::*;
+pub use asset_category::*;
+pub use asset_class::*;
+pub use asset_location::*;
+pub use asset_status_log::*;
+pub use asset_type::*;
 pub use clinician::*;
 pub use document::*;
 pub use document_registry::*;
@@ -40,7 +51,6 @@ pub use item_stock_on_hand::*;
 pub use json_schema::*;
 pub use loader_registry::{get_loaders, LoaderMap, LoaderRegistry};
 pub use location::LocationByIdLoader;
-pub use master_list_line::MasterListLineByMasterListId;
 pub use name::*;
 pub use name_row::*;
 pub use patient::*;

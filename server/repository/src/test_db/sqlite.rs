@@ -20,6 +20,7 @@ pub fn get_test_db_settings(db_name: &str) -> DatabaseSettings {
         // put DB test files into a test directory (also works for in-memory)
         database_name: format!("{}/{}.sqlite", TEST_OUTPUT_DIR, db_name),
         init_sql: None,
+        database_path: None,
     }
 }
 
@@ -40,7 +41,7 @@ pub(crate) async fn setup_with_version(
 
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
-        let connection_manager = create_db(&db_settings, version.clone());
+        let connection_manager = create_db(db_settings, version.clone());
         let connection = connection_manager.connection().unwrap();
         let collection = insert_all_mock_data(&connection, inserts).await;
         (connection_manager, collection)
@@ -119,7 +120,7 @@ pub(crate) async fn setup_with_version(
 
 fn connection_manager(db_settings: &DatabaseSettings) -> StorageConnectionManager {
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&db_settings.connection_string());
+        ConnectionManager::<DBBackendConnection>::new(db_settings.connection_string());
     const SQLITE_LOCKWAIT_MS: u32 = 10 * 1000; // 10 second wait for test lock timeout
     let pool = Pool::builder()
         .min_idle(Some(1))

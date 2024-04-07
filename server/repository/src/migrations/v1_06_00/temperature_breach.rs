@@ -6,6 +6,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         r#"
         UPDATE temperature_breach SET acknowledged = not acknowledged;
         ALTER TABLE temperature_breach RENAME COLUMN acknowledged TO unacknowledged;
+        ALTER TABLE temperature_breach ADD COLUMN comment TEXT
         "#,
     )?;
 

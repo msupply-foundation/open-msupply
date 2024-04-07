@@ -9,6 +9,7 @@ import {
   LoadingButton,
   ReportContext,
   PrinterIcon,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useOutbound } from '../api';
 import {
@@ -31,15 +32,23 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   const isDisabled = useOutbound.utils.isDisabled();
   const { data } = useOutbound.document.get();
   const { OpenButton } = useDetailPanel();
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { print, isPrinting } = useReport.utils.print();
+  const {
+    queryParams: { sortBy },
+  } = useUrlQueryParams();
 
   const printReport = (
     report: ReportRowFragment,
     args: JsonData | undefined
   ) => {
     if (!data) return;
-    print({ reportId: report.id, dataId: data?.id, args });
+    print({
+      reportId: report.id,
+      dataId: data?.id,
+      args,
+      sort: { key: sortBy.key, desc: sortBy.isDesc },
+    });
   };
 
   return (

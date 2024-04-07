@@ -32,31 +32,29 @@ pub fn generate(
 
     let mut new_invoice = InvoiceRow {
         id: uuid(),
-        name_id: input_other_party_id.unwrap_or(existing_invoice.name_id.clone()),
+        name_link_id: input_other_party_id.unwrap_or(existing_invoice.name_link_id.clone()),
         linked_invoice_id: None,
         ..old_invoice.clone()
     };
 
     let new_invoice_lines = old_invoice_lines
         .iter()
-        .map(|line| {
-            let new_line = InvoiceLine {
-                invoice_line_row: InvoiceLineRow {
-                    id: uuid(),
-                    invoice_id: new_invoice.id.clone(),
-                    ..line.invoice_line_row.clone()
-                },
-                invoice_row: new_invoice.clone(),
-                location_row_option: line.location_row_option.clone(),
-                stock_line_option: line.stock_line_option.clone(),
-            };
-            new_line
+        .map(|line| InvoiceLine {
+            invoice_line_row: InvoiceLineRow {
+                id: uuid(),
+                invoice_id: new_invoice.id.clone(),
+                ..line.invoice_line_row.clone()
+            },
+            invoice_row: new_invoice.clone(),
+            item_row: line.item_row.clone(),
+            location_row_option: line.location_row_option.clone(),
+            stock_line_option: line.stock_line_option.clone(),
         })
         .collect();
 
     if let Some(other_party) = other_party_option {
         new_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        new_invoice.name_id = other_party.name_row.id;
+        new_invoice.name_link_id = other_party.name_row.id;
     }
 
     let new_activity_log = ActivityLogRepository::new(connection)

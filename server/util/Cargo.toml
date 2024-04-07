@@ -13,8 +13,7 @@ chrono = { workspace = true }
 serde = "1.0.126"
 env_logger = "0.8.3"
 serde_json = "1.0.66"
-
 anyhow.workspace = true
 
 [dev-dependencies]
-thiserror = "1"
+thiserror = {workspace = true}

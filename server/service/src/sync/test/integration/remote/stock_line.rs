@@ -2,10 +2,10 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{LocationRow, StockLineRow};
+use repository::{LocationRow, StockLineRow, StockLineRowDelete};
 use serde_json::json;
 use util::{inline_edit, uuid::uuid};
 pub struct StockLineRecordTester;
@@ -17,7 +17,7 @@ impl SyncRecordTester for StockLineRecordTester {
         // create test location
         let location_row = LocationRow {
             id: uuid(),
-            name: "LoationName".to_string(),
+            name: "LocationName".to_string(),
             code: "LocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
@@ -25,7 +25,7 @@ impl SyncRecordTester for StockLineRecordTester {
 
         let stock_line_row = StockLineRow {
             id: uuid(),
-            item_id: uuid(),
+            item_link_id: uuid(),
             store_id: store_id.to_string(),
             location_id: Some(location_row.id.clone()),
             batch: Some("some remote sync test batch".to_string()),
@@ -37,24 +37,24 @@ impl SyncRecordTester for StockLineRecordTester {
             expiry_date: NaiveDate::from_ymd_opt(2021, 03, 21),
             on_hold: true,
             note: Some("some remote sync test note".to_string()),
-            supplier_id: Some(new_site_properties.name_id.clone()),
+            supplier_link_id: Some(new_site_properties.name_id.clone()),
             barcode_id: None,
         };
 
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_id,
+                "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(location_row),
-                PullUpsertRecord::StockLine(stock_line_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(location_row),
+                IntegrationOperation::upsert(stock_line_row.clone()),
+            ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let stock_line_row = inline_edit(&stock_line_row, |mut d| {
-            d.item_id = uuid();
+            d.item_link_id = uuid();
             d.location_id = None;
             d.batch = Some("some remote sync test batch 2".to_string());
             d.pack_size = 10;
@@ -65,27 +65,23 @@ impl SyncRecordTester for StockLineRecordTester {
             d.expiry_date = NaiveDate::from_ymd_opt(2021, 03, 22);
             d.on_hold = false;
             d.note = Some("some remote sync test note 2".to_string());
-            d.supplier_id = None;
+            d.supplier_link_id = None;
             d
         });
         result.push(TestStepData {
             central_upsert: json!({"item": [{
-                "ID": stock_line_row.item_id,
+                "ID": stock_line_row.item_link_id,
                 "type_of": "general"
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::StockLine(stock_line_row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(stock_line_row.clone())],
+            ..Default::default()
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_delete(
-                &stock_line_row.id,
-                crate::sync::translations::PullDeleteRecordTable::StockLine,
-            ),
+            integration_records: vec![IntegrationOperation::delete(StockLineRowDelete(
+                stock_line_row.id,
+            ))],
+            ..Default::default()
         });
         result
     }

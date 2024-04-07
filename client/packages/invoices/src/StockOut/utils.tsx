@@ -1,5 +1,5 @@
 import { FnUtils, SortUtils } from '@common/utils';
-import { NonNegativeIntegerCell, CellProps } from '@openmsupply-client/common';
+import { NumberInputCell, CellProps } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../types';
 import { InvoiceLineNodeType, InvoiceNodeStatus } from '@common/types';
 import {
@@ -170,12 +170,14 @@ export const allocateQuantities =
       numberOfPacks: 0,
       isUpdated: batch.numberOfPacks > 0,
     }));
+
     const validBatches = newDraftStockOutLines
       .filter(
-        ({ expiryDate, packSize, stockLine }) =>
+        ({ expiryDate, packSize, stockLine, location }) =>
           (issuePackSize ? packSize === issuePackSize : true) &&
           (stockLine?.availableNumberOfPacks ?? 0) > 0 &&
           !stockLine?.onHold &&
+          !location?.onHold &&
           !(!!expiryDate && DateUtils.isExpired(new Date(expiryDate)))
       )
       .sort(SortUtils.byExpiryAsc);
@@ -336,10 +338,11 @@ export const shouldUpdatePlaceholder = (
 ) => quantity > 0 && !placeholder.isCreated;
 
 export const PackQuantityCell = (props: CellProps<DraftStockOutLine>) => (
-  <NonNegativeIntegerCell
+  <NumberInputCell
+    {...props}
     max={props.rowData.stockLine?.availableNumberOfPacks}
     id={getPackQuantityCellId(props.rowData.stockLine?.batch)}
-    {...props}
+    min={1}
   />
 );
 

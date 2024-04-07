@@ -134,7 +134,7 @@ mod test {
     use crate::RequisitionMutations;
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_request_draft_requisition, MockDataInserts},
@@ -188,7 +188,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_response_requisition_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_update_response_requisition_structured_errors",
@@ -289,7 +289,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_response_requisition_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_update_response_requisition_success",

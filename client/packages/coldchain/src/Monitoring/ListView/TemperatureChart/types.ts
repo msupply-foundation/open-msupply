@@ -1,5 +1,4 @@
 import { TemperatureBreachNodeType } from '@common/types';
-import { TemperatureBreachRowFragment } from '../../api';
 import { SensorFragment } from '../../../Sensor/api';
 
 export interface PopoverVirtualElement {
@@ -28,7 +27,7 @@ export type Log = {
   sensorId: string;
   temperature: number | null;
   breach: {
-    row: TemperatureBreachRowFragment;
+    ids: string[];
     sensor: Pick<SensorFragment, 'id' | 'name'>;
   } | null;
 };

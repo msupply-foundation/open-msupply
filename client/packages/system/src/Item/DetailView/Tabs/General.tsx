@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FC } from 'react';
 import {
   DetailContainer,
   DetailInputWithLabelRow,
@@ -10,8 +10,14 @@ import {
   NumericTextDisplay,
 } from '@openmsupply-client/common';
 import { useItem } from '../../api';
+import { VariantControl } from '../../context';
+import { PackVariantSelect } from '../../Components';
 
-export const GeneralTab = () => {
+interface GeneralTabProps {
+  variantControl?: VariantControl;
+}
+
+export const GeneralTab: FC<GeneralTabProps> = ({ variantControl }) => {
   const t = useTranslation('catalogue');
   const { data, isLoading } = useItem();
   const isDisabled = true;
@@ -35,10 +41,22 @@ export const GeneralTab = () => {
             label={t('label.code')}
             inputProps={{ value: data?.code, disabled: isDisabled }}
           />
-          <DetailInputWithLabelRow
-            label={t('label.unit')}
-            inputProps={{ value: data?.unitName, disabled: isDisabled }}
-          />
+          {variantControl ? (
+            <DetailInputWithLabelRow
+              Input={
+                <PackVariantSelect
+                  variantControl={variantControl}
+                  sx={{ width: '185px' }}
+                />
+              }
+              label={t('label.unit')}
+            />
+          ) : (
+            <DetailInputWithLabelRow
+              label={t('label.unit')}
+              inputProps={{ value: data?.unitName, disabled: isDisabled }}
+            />
+          )}
           <DetailInputWithLabelRow
             label={t('label.strength')}
             inputProps={{ value: data?.strength, disabled: isDisabled }}
@@ -46,7 +64,12 @@ export const GeneralTab = () => {
           <DetailInputWithLabelRow
             label={t('label.ddd')}
             inputProps={{ disabled: isDisabled }}
-            Input={<NumericTextInput value={data?.ddd} disabled={isDisabled} />}
+            Input={
+              <NumericTextInput
+                value={Number(data?.ddd)}
+                disabled={isDisabled}
+              />
+            }
             DisabledInput={<NumericTextDisplay value={data?.ddd} />}
           />
           <DetailInputWithLabelRow

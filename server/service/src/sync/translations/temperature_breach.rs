@@ -1,8 +1,10 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{
         date_from_date_time, date_option_to_isostring, empty_str_as_option,
         empty_str_as_option_string, naive_time, zero_date_as_option,
+    },
+    translations::{
+        location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -13,18 +15,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TEMPERATURE_BREACH;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::TemperatureBreach
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -33,6 +24,7 @@ pub enum LegacyTemperatureBreachType {
     HotConsecutive,
     ColdCumulative,
     HotCumulative,
+    Excursion,
 }
 
 #[allow(non_snake_case)]
@@ -74,30 +66,40 @@ pub struct LegacyTemperatureBreachRow {
     #[serde(rename = "om_start_datetime")]
     #[serde(deserialize_with = "empty_str_as_option")]
     pub start_datetime: Option<NaiveDateTime>,
+    #[serde(rename = "om_comment")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub comment: Option<String>,
 }
 
-pub(crate) struct TemperatureBreachTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(TemperatureBreachTranslation)
+}
+
+pub(crate) struct TemperatureBreachTranslation;
 impl SyncTranslation for TemperatureBreachTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::TEMPERATURE_BREACH,
-            dependencies: vec![
-                LegacyTableName::STORE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::SENSOR,
-            ],
-        }
+    fn table_name(&self) -> &str {
+        "temperature_breach"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            SensorTranslation.table_name(),
+            StoreTranslation.table_name(),
+            LocationTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::TemperatureBreach)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyTemperatureBreachRow>(&sync_record.data)?;
         let LegacyTemperatureBreachRow {
             id,
@@ -116,6 +118,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             threshold_duration_milliseconds,
             end_datetime,
             start_datetime,
+            comment,
         } = data;
 
         let r#type = from_legacy_breach_type(&r#type);
@@ -134,22 +137,17 @@ impl SyncTranslation for TemperatureBreachTranslation {
             start_datetime: start_datetime
                 .or(start_date.map(|date| NaiveDateTime::new(date, start_time)))
                 .unwrap(),
+            comment,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::TemperatureBreach(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let TemperatureBreachRow {
             id,
             duration_milliseconds,
@@ -163,6 +161,7 @@ impl SyncTranslation for TemperatureBreachTranslation {
             threshold_minimum,
             threshold_maximum,
             threshold_duration_milliseconds,
+            comment,
         } = TemperatureBreachRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
@@ -191,12 +190,14 @@ impl SyncTranslation for TemperatureBreachTranslation {
             threshold_duration_milliseconds,
             start_datetime: Some(start_datetime),
             end_datetime,
+            comment,
         };
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -206,6 +207,7 @@ pub fn from_legacy_breach_type(t: &LegacyTemperatureBreachType) -> TemperatureBr
         LegacyTemperatureBreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
         LegacyTemperatureBreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
         LegacyTemperatureBreachType::HotCumulative => TemperatureBreachRowType::HotCumulative,
+        LegacyTemperatureBreachType::Excursion => TemperatureBreachRowType::Excursion,
     }
 }
 
@@ -215,6 +217,7 @@ pub fn to_legacy_breach_type(t: &TemperatureBreachRowType) -> LegacyTemperatureB
         TemperatureBreachRowType::HotConsecutive => LegacyTemperatureBreachType::HotConsecutive,
         TemperatureBreachRowType::ColdCumulative => LegacyTemperatureBreachType::ColdCumulative,
         TemperatureBreachRowType::HotCumulative => LegacyTemperatureBreachType::HotCumulative,
+        TemperatureBreachRowType::Excursion => LegacyTemperatureBreachType::Excursion,
     }
 }
 
@@ -235,8 +238,9 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

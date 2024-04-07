@@ -88,7 +88,11 @@
         "MALE",
         "TRANSGENDER",
         "TRANSGENDER_MALE",
+        "TRANSGENDER_MALE_HORMONE",
+        "TRANSGENDER_MALE_SURGICAL",
         "TRANSGENDER_FEMALE",
+        "TRANSGENDER_FEMALE_HORMONE",
+        "TRANSGENDER_FEMALE_SURGICAL",
         "UNKNOWN",
         "NON_BINARY"
       ],
@@ -143,17 +147,32 @@
           "description": "Patient's program id",
           "type": "string"
         },
-        "status": {
-          "$ref": "#/definitions/ProgramEnrolmentStatus",
-          "description": "Current status of the program enrolment"
+        "statusLog": {
+          "items": {
+            "$ref": "#/definitions/ProgramStatus"
+          },
+          "type": "array"
         }
       },
-      "required": ["enrolmentDatetime", "status"],
+      "required": ["enrolmentDatetime"],
       "type": "object"
     },
-    "ProgramEnrolmentStatus": {
-      "enum": ["ACTIVE", "OPTED_OUT", "TRANSFERRED_OUT", "PAUSED"],
-      "type": "string"
+    "ProgramStatus": {
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "datetime": {
+          "description": "Date and time when the status become valid",
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": ["status", "datetime"],
+      "type": "object"
     },
     "RelatedPerson": {
       "properties": {

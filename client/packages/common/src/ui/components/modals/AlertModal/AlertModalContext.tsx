@@ -1,4 +1,5 @@
-import React, { createContext } from 'react';
+import React from 'react';
+import { createRegisteredContext } from 'react-singleton-context';
 
 export interface AlertModalState {
   open: boolean;
@@ -18,6 +19,8 @@ export interface AlertModalControllerState extends AlertModalState {
   setImportant: (important: boolean) => void;
 }
 
-export const AlertModalContext = createContext<AlertModalControllerState>(
-  {} as any
-);
+export const AlertModalContext =
+  createRegisteredContext<AlertModalControllerState>(
+    'alert-modal-context',
+    {} as any
+  );

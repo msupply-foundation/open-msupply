@@ -1,6 +1,6 @@
 use super::period_row::period::dsl as period_dsl;
 
-use crate::{repository_error::RepositoryError, StorageConnection};
+use crate::{repository_error::RepositoryError, StorageConnection, Upsert, db_diesel::name_link_row::name_link};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -24,6 +24,8 @@ pub struct PeriodRow {
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
 }
+
+allow_tables_to_appear_in_same_query!(period, name_link);
 
 pub struct PeriodRowRepository<'a> {
     connection: &'a mut StorageConnection,
@@ -69,5 +71,19 @@ impl<'a> PeriodRowRepository<'a> {
             .filter(period_dsl::period_schedule_id.eq_any(period_schedule_ids))
             .load(&mut self.connection.connection)?;
         Ok(result)
+    }
+}
+
+impl Upsert for PeriodRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        PeriodRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            PeriodRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

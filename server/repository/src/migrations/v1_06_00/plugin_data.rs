@@ -1,10 +1,10 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     #[cfg(not(feature = "postgres"))]
-    const RELATED_RECORD_TYPE: &'static str = "TEXT";
+    const RELATED_RECORD_TYPE: &str = "TEXT";
     #[cfg(feature = "postgres")]
-    const RELATED_RECORD_TYPE: &'static str = "related_record_type";
+    const RELATED_RECORD_TYPE: &str = "related_record_type";
     #[cfg(feature = "postgres")]
     sql!(
         connection,
