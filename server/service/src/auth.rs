@@ -231,6 +231,20 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         ]),
     );
     map.insert(
+        Resource::QueryInventoryAdjustment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InventoryAdjustmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInventoryAdjustment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InventoryAdjustmentMutate),
+        ]),
+    );
+    map.insert(
         Resource::CreateRepack,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
