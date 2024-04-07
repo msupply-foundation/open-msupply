@@ -1,36 +1,57 @@
 # Mobile App with Discovery
 
 The Android app can run as standalone site with a local server, as a client connecting to another server or as a server for other clients.
-On android, the server always starts and this allows for one mobile app for both client and client/server.
+On Android, the server always starts on the device.
+This makes it possible to have one mobile app for all operational modes.
 The mobile app will broadcast via dns sd and will be reachable by both Mobile and Electron clients on the local network.
 We are using Capacitor to make use of existing optimisations and large library of native plugins.
-UI is not bundled within Capacitor, it is served by the server the client connect to, and discovery UI is always served by local bundled server.
+The UI is not bundled within Capacitor, it is served by the server the client connect to, and discovery UI is always served by local bundled server.
 
-## Getting started
+## Building the Rust Server Library for Android
 
-First of all, need to make sure that you can build [server binaries](../../../server/android/README.md)
+Before building the Android app, the Rust server library that allows us to run the mSupply server on the mobile device needs to be built.
+This requires a couple of steps.
 
-When you are confident they are building, can use `yarn build:server` form this directory, this builds `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`, see `RemoteServer.java` for more details of how these libs are loaded. It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
+- Install Android Studio
+- Install NDK (26.1.10909125 at the time of writing on the 8/4/24)
 
-Next step is to open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix. Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
+![omSupply Android NDK](./doc/omSupply_android_ndk.png)
 
-## Debugging
+Currently, we support two Android architectures;
 
-It's recommended to use Android Studio for debugging and running Android App, there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code they are quite limited).
+| rust target             | android ABI |
+| ----------------------- | ----------- |
+| aarch64-linux-android   | arm64-v8a   |
+| armv7-linux-androideabi | armeabi-v7a |
 
-Debugging native code is straight forward, breakpoint in Android Studio and press debug.
+To add the required build targets to Rust run:
 
-Debugging web app code is done by opening `chrome://inspect`, you should see Web View when app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
+```bash
+rustup target add aarch64-linux-android && rustup target add armv7-linux-androideabi
+```
 
-Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
+Next we have to tell Rust where to find then Android NDK binaries required to link the server library.
+This is done by setting the `NDK_BIN` env variable to the previously installed Android NDK.
+For example, to permanently add the `NDK_BIN` env variable do:
 
-When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
+```bash
+echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/" >> ~/.zshrc
+```
+
+Open a new terminal and validate that `$NDK_BIN` is set correctly: `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
+Note, which linker Rust should use is defined in `server/android/.cargo/config.toml`, under [target.*].
+
+You can now use `yarn build:server` form this directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
+Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
+It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
 ## Scripts
 
-The following scripts are available
+The following (low-level) scripts are available in this directory
 
 ```bash
+# in the client/packages/android directory:
+
 # Builds remote server binaries for android and copies them to android package
 yarn build:server
 # Assembles android apk
@@ -42,10 +63,37 @@ yarn apply-config
 ```
 
 As per earlier comment, please make sure to build front end with `yarn build` from client directory prior to runner the above or run `yarn android:{command here}` from client directory to do both with one command.
+For this reason it's often easier to run the following scripts in the `client` directory which makes sure everything is built correctly:
+
+```bash
+# in the client directory:
+
+# Build the frontend and the server libs
+yarn android:build:server
+# Build the frontend and assembles an Android debug apk
+yarn android:build:debug
+# Build the frontend and assembles an Android release apk
+yarn android:release
+```
 
 ### Know script issues
 
 When building apk `properties.local` files is required (it can be empty). Also can sometime get a lock on gradle build, can run `find ~/.gradle -type f -name "*.lock" -delete` to fix it
+
+## Debugging
+
+It's recommended to use Android Studio for debugging and running Android App, there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code they are quite limited).
+
+Open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
+Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
+
+Debugging native Java code is straight forward, breakpoint in Android Studio and press debug.
+
+Debugging web app code is done by opening `chrome://inspect`, you should see Web View when app is running in emulator. When bundled is served from remote server (default setup), js bundle is minimised and this makes debugging very hard, however we can run the bundle from webpack server by commenting out plugins section in `capacitor.config.ts` and entering your local ip in the debugUrl field and running `yarn apply-config`. Please make sure that you start front end server with `yarn start-local` from 'client' directory for this to work.
+
+Please note that when debugging with live reload, connections to a discovered server will always go through to the webpack server (regardless of which server is being selected).
+
+When running the Android app in an emulator the service discovery will not work outside of the emulator network, to test discovery you will need to run the app on a physical device.
 
 ## Release build
 
@@ -141,14 +189,14 @@ Alternatively when using an emulator, navigate to `data/user/0/org.openmsupply.c
 
 ## Common Android Studio Errors
 
-#### Java
+### Java
 
-If you get Java Compatibility\* error in Android studio during gradle sync, you can download a new JDK via settings/preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> (drop down Gradle JDK:), and choose Java version as per [capacitor.build.gradle](https://github.com/openmsupply/open-msupply/blob/7befca66e757570bcec1eacc58099393e8eba8d0/client/packages/android/app/capacitor.build.gradle#L5). Then sync gradle files vai elephant icon on top right or File -> Sync Project with Gradle Files.
+If you get Java Compatibility error in Android studio during gradle sync, you can download a new JDK via settings/preferences -> Build, Execution, Deployment -> Build Tools -> Gradle -> (drop down Gradle JDK:), and choose Java version as per [capacitor.build.gradle](https://github.com/openmsupply/open-msupply/blob/7befca66e757570bcec1eacc58099393e8eba8d0/client/packages/android/app/capacitor.build.gradle#L5). Then sync gradle files vai elephant icon on top right or File -> Sync Project with Gradle Files.
 
-#### AGP
+### AGP
 
 If you get AGP compatibility error in Android Studio during gradle sync, you will need to update your Android Studio version.
 
-#### Failed to find/build :capacitor
+### Failed to find/build :capacitor
 
 Run `npx cap sync` from android directory
