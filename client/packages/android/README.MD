@@ -41,7 +41,7 @@ echo "export NDK_BIN=~/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/pre
 Open a new terminal and validate that `$NDK_BIN` is set correctly: `ls $NDK_BIN` (this should give a list of files starting with aarch64 and armv7a)
 Note, which linker Rust should use is defined in `server/android/.cargo/config.toml`, under [target.*].
 
-You can now use `yarn build:server` form this directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
+You can now use `yarn build:server` from this directory, this builds the `libremote_server_lib.so` binaries and relocate them to `app/src/main/jniLibs`.
 Please see `client/packages/android/app/src/main/java/org/openmsupply/client/RemoteServer.java` for more details of how these libs are loaded.
 It's important to note that web app is bundled in the remote server binary, and web app needs to be built from `client` directory with `yarn build` command, so it's best to use `yarn android:build:server` from client directory as it does both (builds web app and then build android remote server).
 
