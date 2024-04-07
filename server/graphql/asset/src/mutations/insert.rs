@@ -2,7 +2,8 @@ use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueViolation,
+        DatabaseError, InternalError, NoPermissionForThisStore, RecordAlreadyExist,
+        UniqueValueViolation,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -11,6 +12,7 @@ use service::{
     asset::insert::{InsertAsset, InsertAssetError as ServiceError},
     auth::{Resource, ResourceAccessRequest},
 };
+use util::is_central_server;
 
 use crate::types::AssetNode;
 
@@ -27,12 +29,37 @@ pub fn insert_asset(
         },
     )?;
 
+    // add store_id if not inserting from central server
+    let asset_input;
+    if !is_central_server() {
+        match input.clone().store_id {
+            Some(input_store_id) => {
+                if input_store_id != store_id.to_owned() {
+                    return Ok(InsertAssetResponse::Error(InsertAssetError {
+                        error: InsertAssetErrorInterface::PermissionError(NoPermissionForThisStore),
+                    }));
+                }
+                asset_input = input;
+            }
+            None => {
+                asset_input = {
+                    InsertAssetInput {
+                        store_id: Some(store_id.to_owned()),
+                        ..input
+                    }
+                }
+            }
+        }
+    } else {
+        asset_input = input
+    }
+
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
     match service_provider
         .asset_service
-        .insert_asset(&service_context, input.into())
+        .insert_asset(&service_context, asset_input.into())
     {
         Ok(asset) => Ok(InsertAssetResponse::Response(AssetNode::from_domain(asset))),
         Err(error) => Ok(InsertAssetResponse::Error(InsertAssetError {
@@ -41,12 +68,12 @@ pub fn insert_asset(
     }
 }
 
-#[derive(InputObject)]
+#[derive(InputObject, Clone)]
 pub struct InsertAssetInput {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub asset_number: String,
+    pub asset_number: Option<String>,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
     pub category_id: Option<String>,
@@ -105,6 +132,7 @@ pub enum InsertAssetErrorInterface {
     UniqueValueViolation(UniqueValueViolation),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
+    PermissionError(NoPermissionForThisStore),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertAssetErrorInterface> {
@@ -117,6 +145,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetErrorInterface> {
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::SerialNumberAlreadyExists => BadUserInput(formatted_error),
+        ServiceError::AssetNumberAlreadyExists => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -198,7 +227,7 @@ mod test {
             Ok(Asset {
                 id: "id".to_owned(),
                 notes: Some("notes".to_owned()),
-                asset_number: "asset_number".to_owned(),
+                asset_number: Some("asset_number".to_owned()),
                 ..Default::default()
             })
         }));

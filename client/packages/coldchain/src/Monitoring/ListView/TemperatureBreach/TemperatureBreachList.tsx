@@ -59,7 +59,7 @@ const ListView: FC = () => {
 
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
-  const formatTemperature = useFormatTemperature;
+  const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<TemperatureBreachFragment>(
     [

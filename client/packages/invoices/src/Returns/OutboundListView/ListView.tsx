@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   useNavigate,
   DataTable,
@@ -12,19 +12,13 @@ import {
   useToggle,
   useUrlQueryParams,
   ColumnDataSetter,
+  useTableStore,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
-import { getStatusTranslator } from '../../utils';
+import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
 import { OutboundReturnRowFragment, useReturns } from '../api';
-
-// const useDisableOutboundRows = (rows?: OutboundReturnRowFragment[]) => {
-//   const { setDisabledRows } = useTableStore();
-//   useEffect(() => {
-//     const disabledRows = rows?.filter(isOutboundDisabled).map(({ id }) => id);
-//     if (disabledRows) setDisabledRows(disabledRows);
-//   }, [rows]);
-// };
 
 const OutboundReturnListViewComponent: FC = () => {
   const t = useTranslation('replenishment');
@@ -40,6 +34,7 @@ const OutboundReturnListViewComponent: FC = () => {
       { key: 'status', condition: 'equalTo' },
     ],
   });
+  const { setDisabledRows } = useTableStore();
   const navigate = useNavigate();
   const modalController = useToggle();
   const pagination = { page, first, offset };
@@ -47,7 +42,13 @@ const OutboundReturnListViewComponent: FC = () => {
 
   const { data, isError, isLoading } =
     useReturns.document.listOutbound(queryParams);
-  // useDisableOutboundRows(data?.nodes);
+
+  useEffect(() => {
+    const disabledRows = data?.nodes
+      .filter(isOutboundDisabled)
+      .map(({ id }) => id);
+    if (disabledRows) setDisabledRows(disabledRows);
+  }, [data?.nodes, setDisabledRows]);
 
   const { mutate } = useReturns.document.updateOutboundReturn();
 
@@ -73,6 +74,13 @@ const OutboundReturnListViewComponent: FC = () => {
         { description: 'description.invoice-number', maxWidth: 110 },
       ],
       'createdDatetime',
+      ['comment', { width: 125, Cell: TooltipTextCell }],
+      [
+        'theirReference',
+        {
+          Cell: TooltipTextCell,
+        },
+      ],
       'selection',
     ],
     { onChangeSortBy: updateSortQuery, sortBy },

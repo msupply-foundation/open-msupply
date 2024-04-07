@@ -427,7 +427,7 @@ export type AssetNode = {
   __typename: 'AssetNode';
   assetCategory?: Maybe<AssetCategoryNode>;
   assetClass?: Maybe<AssetClassNode>;
-  assetNumber: Scalars['String']['output'];
+  assetNumber?: Maybe<Scalars['String']['output']>;
   assetType?: Maybe<AssetTypeNode>;
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
@@ -1828,24 +1828,8 @@ export type GenerateOutboundReturnLinesResponse = OutboundReturnLineConnector;
 
 export type GeneratedInboundReturnLineConnector = {
   __typename: 'GeneratedInboundReturnLineConnector';
-  nodes: Array<GeneratedInboundReturnLineNode>;
+  nodes: Array<InboundReturnLineNode>;
   totalCount: Scalars['Int']['output'];
-};
-
-export type GeneratedInboundReturnLineNode = {
-  __typename: 'GeneratedInboundReturnLineNode';
-  batch?: Maybe<Scalars['String']['output']>;
-  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
-  id: Scalars['String']['output'];
-  itemCode: Scalars['String']['output'];
-  itemId: Scalars['String']['output'];
-  itemName: Scalars['String']['output'];
-  note?: Maybe<Scalars['String']['output']>;
-  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
-  numberOfPacksReturned: Scalars['Float']['output'];
-  packSize: Scalars['Int']['output'];
-  reasonId?: Maybe<Scalars['String']['output']>;
-  stockLineId?: Maybe<Scalars['String']['output']>;
 };
 
 export type InboundInvoiceCounts = {
@@ -1872,6 +1856,22 @@ export type InboundReturnLineInput = {
   reasonId?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type InboundReturnLineNode = {
+  __typename: 'InboundReturnLineNode';
+  batch?: Maybe<Scalars['String']['output']>;
+  expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
+  id: Scalars['String']['output'];
+  item: ItemNode;
+  itemCode: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
+  note?: Maybe<Scalars['String']['output']>;
+  numberOfPacksIssued?: Maybe<Scalars['Float']['output']>;
+  numberOfPacksReturned: Scalars['Float']['output'];
+  packSize: Scalars['Int']['output'];
+  reasonId?: Maybe<Scalars['String']['output']>;
+  stockLineId?: Maybe<Scalars['String']['output']>;
+};
+
 export type InitialisationStatusNode = {
   __typename: 'InitialisationStatusNode';
   siteName?: Maybe<Scalars['String']['output']>;
@@ -1896,7 +1896,7 @@ export type InsertAssetErrorInterface = {
 };
 
 export type InsertAssetInput = {
-  assetNumber: Scalars['String']['input'];
+  assetNumber?: InputMaybe<Scalars['String']['input']>;
   catalogueItemId?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['String']['input']>;
   classId?: InputMaybe<Scalars['String']['input']>;
@@ -3932,6 +3932,11 @@ export type NameStoreJoinNode = {
 
 export type NamesResponse = NameConnector;
 
+export type NoPermissionForThisStore = InsertAssetErrorInterface & {
+  __typename: 'NoPermissionForThisStore';
+  description: Scalars['String']['output'];
+};
+
 export type NoRefreshTokenProvided = RefreshTokenErrorInterface & {
   __typename: 'NoRefreshTokenProvided';
   description: Scalars['String']['output'];
@@ -4063,6 +4068,7 @@ export type OutboundReturnLineNode = {
   batch?: Maybe<Scalars['String']['output']>;
   expiryDate?: Maybe<Scalars['NaiveDate']['output']>;
   id: Scalars['String']['output'];
+  item: ItemNode;
   itemCode: Scalars['String']['output'];
   itemName: Scalars['String']['output'];
   note?: Maybe<Scalars['String']['output']>;
