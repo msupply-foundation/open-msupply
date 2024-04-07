@@ -41,6 +41,9 @@ pub enum Permission {
     // stocktake
     StocktakeQuery,
     StocktakeMutate,
+    // inventory adjustment
+    InventoryAdjustmentQuery,
+    InventoryAdjustmentMutate,
     // requisition
     RequisitionQuery,
     RequisitionMutate,

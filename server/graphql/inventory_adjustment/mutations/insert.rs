@@ -26,8 +26,7 @@ pub fn create_inventory_adjustment(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            // TODO map Permissions::EnterInventoryAdjustments
-            resource: Resource::CreateRepack,
+            resource: Resource::MutateInventoryAdjustment,
             store_id: Some(store_id.to_string()),
         },
     )?;

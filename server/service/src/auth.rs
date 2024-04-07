@@ -58,6 +58,9 @@ pub enum Resource {
     // stocktake
     QueryStocktake,
     MutateStocktake,
+    // inventory adjustment
+    QueryInventoryAdjustment,
+    MutateInventoryAdjustment,
     // requisition
     QueryRequisition,
     MutateRequisition,
