@@ -578,7 +578,7 @@ impl ShipmentTransferTester {
         );
         assert_eq!(inbound_shipment.colour, None);
         assert_eq!(inbound_shipment.user_id, None);
-        assert!(!inbound_shipment.on_hold);
+        assert_eq!(inbound_shipment.on_hold, false);
         assert_eq!(inbound_shipment.allocated_datetime, None);
 
         if self.response_requisition.is_some() {

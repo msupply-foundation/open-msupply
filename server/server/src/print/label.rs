@@ -172,21 +172,21 @@ mod tests {
 001,0,0,0,1,2,4,0,00000000,1,000
 1234,0"#;
         let parsed_valid_response = HostResponse::parse(valid_response);
-        assert!(parsed_valid_response.is_valid);
-        assert!(!parsed_valid_response.paper_out);
-        assert!(!parsed_valid_response.pause);
-        assert!(!parsed_valid_response.over_temperature);
-        assert!(!parsed_valid_response.under_temperature);
+        assert_eq!(parsed_valid_response.is_valid, true);
+        assert_eq!(parsed_valid_response.paper_out, false);
+        assert_eq!(parsed_valid_response.pause, false);
+        assert_eq!(parsed_valid_response.over_temperature, false);
+        assert_eq!(parsed_valid_response.under_temperature, false);
         assert_eq!(parsed_valid_response.label_length, 290);
 
         // Test invalid response with incorrect number of lines
         let invalid_response1 = "030,0,0,0290,000,0,0,0,000,0,0,0\n";
         let parsed_invalid_response1 = HostResponse::parse(invalid_response1);
-        assert!(!parsed_invalid_response1.is_valid);
+        assert_eq!(parsed_invalid_response1.is_valid, false);
 
         // Test invalid response with incorrect line format
         let invalid_response2 = "030,0,0,0290,000,0,0,0,000,0,0,0\n";
         let parsed_invalid_response2 = HostResponse::parse(invalid_response2);
-        assert!(!parsed_invalid_response2.is_valid);
+        assert_eq!(parsed_invalid_response1.is_valid, false);
     }
 }
