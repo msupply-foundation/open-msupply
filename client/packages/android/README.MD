@@ -30,7 +30,7 @@ To add the required build targets to Rust run:
 rustup target add aarch64-linux-android && rustup target add armv7-linux-androideabi
 ```
 
-Next we have to tell Rust where to find then Android NDK binaries required to link the server library.
+Next we have to tell Rust where to find the Android NDK binaries required to link the server library.
 This is done by setting the `NDK_BIN` env variable to the previously installed Android NDK.
 For example, to permanently add the `NDK_BIN` env variable do:
 
