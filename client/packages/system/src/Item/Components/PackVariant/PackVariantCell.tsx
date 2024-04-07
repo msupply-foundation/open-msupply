@@ -25,7 +25,7 @@ export const PackVariantCell =
       getUnitName(rowData)
     );
 
-    const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
+    const packSizes = ArrayUtils.dedupe(getPackSizes(rowData));
 
     const displayValue =
       packSizes.length > 1 ? '[multiple]' : asPackVariant(packSizes[0] ?? 1);
