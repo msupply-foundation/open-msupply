@@ -73,7 +73,7 @@ yarn android:build:server
 # Build the frontend and assembles an Android debug apk
 yarn android:build:debug
 # Build the frontend and assembles an Android release apk
-yarn android:release
+yarn android:build:release
 ```
 
 ### Know script issues
