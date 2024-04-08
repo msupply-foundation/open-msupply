@@ -187,6 +187,6 @@ mod tests {
         // Test invalid response with incorrect line format
         let invalid_response2 = "030,0,0,0290,000,0,0,0,000,0,0,0\n";
         let parsed_invalid_response2 = HostResponse::parse(invalid_response2);
-        assert_eq!(parsed_invalid_response1.is_valid, false);
+        assert_eq!(parsed_invalid_response2.is_valid, false);
     }
 }
