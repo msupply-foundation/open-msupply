@@ -1,5 +1,4 @@
 import React, { FC } from 'react';
-
 import {
   FnUtils,
   DownloadIcon,
@@ -14,19 +13,23 @@ import {
   ToggleState,
   Platform,
   EnvUtils,
+  useNavigate,
+  RouteBuilder,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { requestsToCsv } from '../../utils';
 import { CreateRequisitionModal } from './CreateRequisitionModal';
 import { NewRequisitionType } from './types';
+import { AppRoute } from '@openmsupply-client/config';
 
 export const AppBarButtons: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
-  const { mutate: onCreate } = useRequest.document.insert();
-  const { mutate: onProgramCreate } = useRequest.document.insertProgram();
-  const { success, error } = useNotification();
   const t = useTranslation();
+  const navigate = useNavigate();
+  const { mutateAsync: onCreate } = useRequest.document.insert();
+  const { mutateAsync: onProgramCreate } = useRequest.document.insertProgram();
+  const { success, error } = useNotification();
   const { isLoading, fetchAsync } = useRequest.document.listAll({
     key: 'createdDatetime',
     direction: 'desc',
@@ -73,6 +76,14 @@ export const AppBarButtons: FC<{
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
+              }).then(requisitionNumber => {
+                navigate(
+                  RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
+                    .addPart(String(requisitionNumber))
+                    .build(),
+                  { replace: true }
+                );
               });
             case NewRequisitionType.Program:
               // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -80,6 +91,14 @@ export const AppBarButtons: FC<{
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
+              }).then(requisitionNumber => {
+                navigate(
+                  RouteBuilder.create(AppRoute.Replenishment)
+                    .addPart(AppRoute.InternalOrder)
+                    .addPart(String(requisitionNumber))
+                    .build(),
+                  { replace: true }
+                );
               });
           }
         }}

@@ -1,11 +1,10 @@
-use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection, User};
+use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection};
 
-use crate::{lower, repository_error::RepositoryError};
+use crate::{lower, repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
-use util::Defaults;
 
 table! {
     user_account (id) {
@@ -18,14 +17,15 @@ table! {
         last_name -> Nullable<Text>,
         phone_number -> Nullable<Text>,
         job_title -> Nullable<Text>,
-        last_successful_sync -> Timestamp,
+        last_successful_sync -> Nullable<Timestamp>,
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum Language {
+    #[default]
     English,
     French,
     Spanish,
@@ -36,13 +36,7 @@ pub enum Language {
     Tetum,
 }
 
-impl Default for Language {
-    fn default() -> Self {
-        Self::English
-    }
-}
-
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
 #[table_name = "user_account"]
 pub struct UserAccountRow {
     pub id: String,
@@ -54,24 +48,7 @@ pub struct UserAccountRow {
     pub last_name: Option<String>,
     pub phone_number: Option<String>,
     pub job_title: Option<String>,
-    pub last_successful_sync: NaiveDateTime,
-}
-
-impl Default for UserAccountRow {
-    fn default() -> Self {
-        Self {
-            id: "".to_string(),
-            username: "".to_string(),
-            hashed_password: "".to_string(),
-            email: None,
-            language: Default::default(),
-            first_name: None,
-            last_name: None,
-            phone_number: None,
-            job_title: None,
-            last_successful_sync: Defaults::naive_date_time(),
-        }
-    }
+    pub last_successful_sync: Option<NaiveDateTime>,
 }
 
 pub struct UserAccountRowRepository<'a> {
@@ -157,20 +134,17 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 }
 
-// TODO
-// Users don't sync and will only be available after first log in, thus in schema reference is not enforced
-// API consumers would like users to be returned for records that are linked to them, as if reference was enforced
-// Using uknown user until we start syncing users
-pub fn unknown_user() -> User {
-    User {
-        user_row: UserAccountRow {
-            id: "unknown".to_string(),
-            username: "unknown".to_string(),
-            hashed_password: "unknown".to_string(),
-            email: Some("unknown@sussol.net".to_string()),
-            ..UserAccountRow::default()
-        },
-        stores: vec![],
+impl Upsert for UserAccountRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        UserAccountRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            UserAccountRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

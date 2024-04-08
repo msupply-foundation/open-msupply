@@ -67,7 +67,7 @@ pub fn update_outbound_shipment_name(
             }
 
             get_invoice(ctx, None, &new_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -88,7 +88,7 @@ impl From<RepositoryError> for UpdateOutboundShipmentNameError {
 mod test {
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_a, mock_name_a, mock_outbound_shipment_a,
+            mock_inbound_shipment_a, mock_name_a, mock_outbound_shipment_a,
             mock_outbound_shipment_b, mock_outbound_shipment_c, mock_store_a, mock_store_b,
             mock_store_c, MockData, MockDataInserts,
         },
@@ -230,7 +230,6 @@ mod test {
                 r.store_id = mock_store_c().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.status = InvoiceRowStatus::Picked;
-                r.currency_id = currency_a().id;
             })
         }
 

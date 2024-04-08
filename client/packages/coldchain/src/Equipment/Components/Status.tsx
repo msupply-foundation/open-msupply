@@ -6,10 +6,10 @@ const parseStatus = (
   status: StatusType
 ): { key: LocaleKey; colour: string } | undefined => {
   switch (status) {
-    case StatusType.Decomissioned:
+    case StatusType.Decommissioned:
       return {
-        key: 'status.decomissioned',
-        colour: 'cceStatus.decomissioned',
+        key: 'status.decommissioned',
+        colour: 'cceStatus.decommissioned',
       };
     case StatusType.Functioning:
       return {

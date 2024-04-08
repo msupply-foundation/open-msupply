@@ -1,4 +1,7 @@
-use super::{query::get_asset, validate::check_asset_exists};
+use super::{
+    query::get_asset,
+    validate::{check_asset_exists, check_asset_number_exists},
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
@@ -18,6 +21,7 @@ pub enum InsertAssetError {
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
     SerialNumberAlreadyExists,
+    AssetNumberAlreadyExists,
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -84,6 +88,12 @@ pub fn validate(
 ) -> Result<(), InsertAssetError> {
     if check_asset_exists(&input.id, connection)?.is_some() {
         return Err(InsertAssetError::AssetAlreadyExists);
+    }
+
+    if let Some(asset_number) = &input.asset_number {
+        if check_asset_number_exists(&asset_number, connection)?.len() == 1 {
+            return Err(InsertAssetError::AssetNumberAlreadyExists);
+        }
     }
 
     // Check the serial number is unique (if present)

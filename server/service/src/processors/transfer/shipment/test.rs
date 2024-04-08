@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    mock::{currency_a, insert_extra_mock_data, MockData, MockDataInserts},
+    mock::{insert_extra_mock_data, MockData, MockDataInserts},
     EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
     InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRepository, InvoiceRow,
     InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, ItemRow, KeyValueStoreRow,
@@ -365,7 +365,6 @@ impl ShipmentTransferTester {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
-            r.currency_id = currency_a().id;
         });
 
         let location = inline_init(|r: &mut LocationRow| {
@@ -396,7 +395,7 @@ impl ShipmentTransferTester {
             r.cost_price_per_pack = 20.0;
             r.sell_price_per_pack = 10.0;
             r.batch = stock_line1.batch.clone();
-            r.expiry_date = stock_line1.expiry_date.clone();
+            r.expiry_date = stock_line1.expiry_date;
             r.stock_line_id = Some(stock_line1.id.clone());
             r.location_id = Some(location.id.clone());
         });
@@ -424,7 +423,7 @@ impl ShipmentTransferTester {
             r.cost_price_per_pack = 15.0;
             r.sell_price_per_pack = 35.0;
             r.batch = stock_line2.batch.clone();
-            r.expiry_date = stock_line2.expiry_date.clone();
+            r.expiry_date = stock_line2.expiry_date;
             r.stock_line_id = Some(stock_line2.id.clone());
             // Location todo
         });
@@ -496,7 +495,7 @@ impl ShipmentTransferTester {
     pub(crate) fn insert_outbound_shipment(&self, connection: &StorageConnection) {
         let response_requisition_id = self.response_requisition.clone().map(|r| r.id);
         insert_extra_mock_data(
-            &connection,
+            connection,
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![inline_edit(&self.outbound_shipment, |mut r| {
                     r.requisition_id = response_requisition_id;
@@ -547,7 +546,7 @@ impl ShipmentTransferTester {
     }
 
     pub(crate) fn check_inbound_shipment_created(&mut self, connection: &StorageConnection) {
-        let inbound_shipment = InvoiceRepository::new(&connection)
+        let inbound_shipment = InvoiceRepository::new(connection)
             .query_one(InvoiceFilter::new_match_linked_invoice_id(
                 &self.outbound_shipment.id,
             ))
@@ -699,7 +698,7 @@ impl ShipmentTransferTester {
     }
 
     pub(crate) fn check_inbound_shipment_was_updated(&mut self, connection: &StorageConnection) {
-        let inbound_shipment = InvoiceRowRepository::new(&connection)
+        let inbound_shipment = InvoiceRowRepository::new(connection)
             .find_one_by_id_option(&self.inbound_shipment.clone().map(|r| r.id).unwrap())
             .unwrap();
 
@@ -833,11 +832,11 @@ fn check_line(
     );
     assert_eq!(
         inbound_line.total_before_tax,
-        outbound_line.sell_price_per_pack * outbound_line.number_of_packs as f64
+        outbound_line.sell_price_per_pack * outbound_line.number_of_packs
     );
     assert_eq!(
         inbound_line.total_after_tax,
-        outbound_line.sell_price_per_pack * outbound_line.number_of_packs as f64
+        outbound_line.sell_price_per_pack * outbound_line.number_of_packs
     );
     assert_eq!(inbound_line.stock_line_id, None);
     assert_eq!(inbound_line.location_id, None);

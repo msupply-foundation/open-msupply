@@ -8,11 +8,13 @@ import {
   SaveIcon,
   XCircleIcon,
   DownloadIcon,
+  ArrowLeftIcon,
 } from '@common/icons';
 import { ButtonWithIcon } from './ButtonWithIcon';
 
 type DialogButtonVariant =
   | 'cancel'
+  | 'back'
   | 'next'
   | 'ok'
   | 'save'
@@ -31,6 +33,7 @@ interface DialogButtonProps {
   autoFocus?: boolean;
   color?: 'primary';
   type?: 'button' | 'submit' | 'reset';
+  customLabel?: string;
 }
 
 const getButtonProps = (
@@ -45,6 +48,12 @@ const getButtonProps = (
       return {
         icon: <XCircleIcon />,
         labelKey: 'button.cancel',
+        variant: 'outlined',
+      };
+    case 'back':
+      return {
+        icon: <ArrowLeftIcon />,
+        labelKey: 'button.back',
         variant: 'outlined',
       };
     case 'ok':
@@ -93,6 +102,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   autoFocus = false,
   color,
   type,
+  customLabel,
 }) => {
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
@@ -105,7 +115,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       onClick={onClick}
       Icon={icon}
       variant={buttonVariant}
-      label={t(labelKey)}
+      label={customLabel ?? t(labelKey)}
       tabIndex={variant === 'cancel' ? 1 : 0}
       type={type}
       onKeyDown={e => {

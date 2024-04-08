@@ -16,7 +16,7 @@ pub fn generate(
         note,
     }: InsertInboundShipmentServiceLine,
     item: ItemRow,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, RepositoryError> {
     Ok(InvoiceLineRow {
@@ -46,5 +46,6 @@ pub fn generate(
         sell_price_per_pack: 0.0,
         number_of_packs: 0.0,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
     })
 }

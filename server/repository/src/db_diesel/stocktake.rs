@@ -106,7 +106,7 @@ pub type StocktakeSort = Sort<StocktakeSortField>;
 
 type BoxedStocktakeQuery = IntoBoxed<'static, stocktake::table, DBType>;
 
-fn create_filtered_query<'a>(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
+fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
     let mut query = stocktake_dsl::stocktake.into_boxed();
 
     if let Some(f) = filter {

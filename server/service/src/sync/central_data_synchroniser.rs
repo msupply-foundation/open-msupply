@@ -48,7 +48,7 @@ impl CentralDataSynchroniser {
 
             for sync_record in data {
                 cursor = sync_record.cursor.clone();
-                let buffer_row = sync_record.record.to_buffer_row()?;
+                let buffer_row = sync_record.record.to_buffer_row(None)?;
 
                 insert_one_and_update_cursor(connection, &cursor_controller, &buffer_row, cursor)?;
             }

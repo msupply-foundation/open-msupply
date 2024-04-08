@@ -92,7 +92,7 @@ fn generate_invoice_and_lines(
         on_hold: false,
         created_datetime: Utc::now().naive_utc(),
         verified_datetime: Some(Utc::now().naive_utc()),
-        currency_id: currency.currency_row.id,
+        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         ..Default::default()
     };

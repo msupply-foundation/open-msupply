@@ -73,7 +73,7 @@ mod query {
             Err(InsertAssetError::AssetAlreadyExists)
         );
 
-        // 3. Check we can't create an asset with the same serial number
+        // 3. Check we can't create an asset with the same asset number
         assert_eq!(
             service.insert_asset(
                 &ctx,
@@ -82,6 +82,27 @@ mod query {
                     store_id: Some(mock_store_a().id),
                     notes: Some("test_note".to_string()),
                     asset_number: Some("test_code".to_string()),
+                    serial_number: Some("test_serial_number_2".to_string()),
+                    catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
+                    installation_date: None,
+                    replacement_date: None,
+                    category_id: None,
+                    class_id: None,
+                    type_id: None,
+                },
+            ),
+            Err(InsertAssetError::AssetNumberAlreadyExists)
+        );
+
+        // 4. Check we can't create an asset with the same serial number
+        assert_eq!(
+            service.insert_asset(
+                &ctx,
+                InsertAsset {
+                    id: "new_id".to_string(),
+                    store_id: Some(mock_store_a().id),
+                    notes: Some("test_note".to_string()),
+                    asset_number: Some("test_code_2".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,

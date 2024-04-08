@@ -31,7 +31,7 @@ pub fn delete_location(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
-            match LocationRowRepository::new(&connection).delete(&input.id) {
+            match LocationRowRepository::new(connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(err) => Err(DeleteLocationError::from(err)),
             }
@@ -70,7 +70,7 @@ pub fn check_location_in_use(
     let invoice_lines = InvoiceLineRepository::new(connection)
         .query_by_filter(InvoiceLineFilter::new().location_id(EqualFilter::equal_to(id)))?;
 
-    if stock_lines.len() > 0 || invoice_lines.len() > 0 {
+    if !stock_lines.is_empty() || !invoice_lines.is_empty() {
         Ok(Some(LocationInUse {
             stock_lines,
             invoice_lines,

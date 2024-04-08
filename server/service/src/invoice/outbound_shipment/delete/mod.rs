@@ -24,7 +24,7 @@ pub fn delete_outbound_shipment(
     let invoice_id = ctx
         .connection
         .transaction_sync(|connection| {
-            validate(&id, &ctx.store_id, &connection)?;
+            validate(&id, &ctx.store_id, connection)?;
 
             let lines = get_lines_for_invoice(connection, &id)?;
             for line in lines {
@@ -42,14 +42,14 @@ pub fn delete_outbound_shipment(
             }
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceDeleted,
                 Some(id.to_owned()),
                 None,
                 None,
             )?;
 
-            match InvoiceRowRepository::new(&connection).delete(&id) {
+            match InvoiceRowRepository::new(connection).delete(&id) {
                 Ok(_) => Ok(id.clone()),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }

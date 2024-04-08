@@ -166,19 +166,16 @@ mod query {
 
         // 7. Check fail on trying to add locations which are already assigned to other assets
 
-        assert_eq!(
-            service
-                .update_asset(
-                    &ctx,
-                    UpdateAsset {
-                        id: id2.clone(),
-                        location_ids: Some(location_ids_to_add.clone()),
-                        ..Default::default()
-                    },
-                )
-                .is_err(),
-            true
-        );
+        assert!(service
+            .update_asset(
+                &ctx,
+                UpdateAsset {
+                    id: id2.clone(),
+                    location_ids: Some(location_ids_to_add.clone()),
+                    ..Default::default()
+                },
+            )
+            .is_err());
         // 8. Check that adding a new location array which includes locations already assigned won't prompt error
 
         let location_ids_to_add = vec![
