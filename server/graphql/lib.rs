@@ -22,7 +22,7 @@ use graphql_general::{
 };
 
 use graphql_asset::{AssetLogMutations, AssetLogQueries, AssetMutations, AssetQueries};
-use graphql_asset_catalogue::AssetCatalogueQueries;
+use graphql_asset_catalogue::{AssetCatalogueMutations, AssetCatalogueQueries};
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
@@ -144,6 +144,7 @@ pub struct Mutations(
     pub CentralServerMutations,
     pub AssetMutations,
     pub AssetLogMutations,
+    pub AssetCatalogueMutations,
 );
 
 impl Mutations {
@@ -167,6 +168,7 @@ impl Mutations {
             CentralServerMutations,
             AssetMutations,
             AssetLogMutations,
+            AssetCatalogueMutations,
         )
     }
 }
