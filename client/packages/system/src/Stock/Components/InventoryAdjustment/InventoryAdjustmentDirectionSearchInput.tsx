@@ -13,8 +13,8 @@ export const InventoryAdjustmentDirectionInput: FC<
   const t = useTranslation('inventory');
 
   const options = [
-    { label: t('label.addition'), value: Adjustment.Addition },
-    { label: t('label.reduction'), value: Adjustment.Reduction },
+    { label: t('label.increase-qty'), value: Adjustment.Addition },
+    { label: t('label.decrease-qty'), value: Adjustment.Reduction },
   ];
 
   return (
@@ -24,6 +24,11 @@ export const InventoryAdjustmentDirectionInput: FC<
       value={options.find(option => option.value === value) ?? null}
       onChange={(_, direction) => {
         onChange(direction?.value);
+      }}
+      sx={{
+        '.MuiFormControl-root > .MuiInput-root, > input': {
+          width: '160px',
+        },
       }}
     />
   );

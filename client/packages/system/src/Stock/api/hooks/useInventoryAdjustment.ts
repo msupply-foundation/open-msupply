@@ -22,10 +22,10 @@ type DraftInventoryAdjustment = {
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
-    direction: Adjustment.None,
+    direction: Adjustment.Addition,
     reason: null,
     adjustBy: 0,
-    newNumberOfPacks: 0,
+    newNumberOfPacks: stockLine.totalNumberOfPacks,
   });
 
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
@@ -33,7 +33,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const create = useCallback(async () => {
     await createMutation(draft);
     setDraft({
-      direction: Adjustment.None,
+      direction: Adjustment.Addition,
       reason: null,
       adjustBy: 0,
       newNumberOfPacks: 0,
