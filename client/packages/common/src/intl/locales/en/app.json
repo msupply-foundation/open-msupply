@@ -13,6 +13,8 @@
   "button.open-the-menu": "Open the menu",
   "catalogue": "Catalogue",
   "cmdk.drawer-toggle": "Toggle Menu",
+  "cmdk.goto-cold-chain-equipment": "Go to: Cold chain equipment",
+  "cmdk.goto-cold-chain-monitoring": "Go to: Cold chain monitoring",
   "cmdk.goto-customer-requisition": "Go to: Customer Requisition",
   "cmdk.goto-customers": "Go to: Customers",
   "cmdk.goto-dashboard": "Go to: Dashboard",

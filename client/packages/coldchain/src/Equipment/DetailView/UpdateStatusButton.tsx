@@ -53,7 +53,7 @@ export const UpdateStatusButtonComponent = ({
 
   const onOk = async () => {
     await insert(draft)
-      .then(id => {
+      .then(({ id }) => {
         if (!draft.files?.length)
           return new Promise(resolve => resolve('no files'));
 
