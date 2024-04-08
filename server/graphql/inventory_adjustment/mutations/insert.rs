@@ -2,7 +2,10 @@ use async_graphql::*;
 use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
 use graphql_types::types::InvoiceNode;
 use repository::Invoice;
-use service::auth::{Resource, ResourceAccessRequest};
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    invoice::inventory_adjustment,
+};
 
 #[derive(InputObject)]
 #[graphql(name = "CreateInventoryAdjustmentInput")]
@@ -34,10 +37,16 @@ pub fn create_inventory_adjustment(
     let service_provider = ctx.service_provider();
     let _service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    // another pattern to discuss - returning data from mutation when we don't use it?
-    Ok(InsertResponse::Response(InvoiceNode::from_domain(
-        Invoice {
-            ..Default::default()
-        },
-    )))
+    let result = service_provider
+        .invoice_service
+        .insert_inventory_adjustment(ctx, input.to_domain());
+
+    let result = match result {
+        Ok(invoice) => InsertResponse::Response(InvoiceNode::from_domain(invoice)),
+        Err(err) => InsertResponse::Error(InsertError {
+            error: map_error(err)?,
+        }),
+    };
+
+    Ok(result)
 }

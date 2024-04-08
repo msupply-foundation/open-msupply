@@ -6,6 +6,7 @@ mod activity_log_add_zero_line;
 mod add_source_site_id;
 mod assets;
 mod central_omsupply;
+mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod linked_shipment;
 mod pack_variant;
@@ -33,6 +34,7 @@ impl Migration for V1_08_00 {
         linked_shipment::migrate(connection)?;
         sync_file_reference::migrate(connection)?;
         user_change_last_synced_to_optional::migrate(connection)?;
+        inventory_adjustment_logtype::migrate(connection)?;
         Ok(())
     }
 }
