@@ -82,7 +82,7 @@ When building apk `properties.local` files is required (it can be empty). Also c
 
 ## Debugging
 
-It's recommended to use Android Studio for debugging and running Android App, there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code they are quite limited).
+It's recommended to use Android Studio for debugging and running Android App, there is a lot of functionality that cannot be replicated in Visual Studio Code (although there are some extensions for Visual Studio Code, they are quite limited).
 
 Open this directory in Android Studio, this will engage gradle sync process (initialising pre-requisites etc.), if you get an error during 'sync' process Android Studio should outline the issue with suggested fix.
 Usually you will need to either set `ANDROID_SDK_ROOT` or add `sdk.dir` in `local.properties` file, and skd is usually located in `/Users/{user}/Library/Android/sdk/`. Pressing play (run) should restart sync process.
