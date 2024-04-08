@@ -15,7 +15,7 @@ use util::is_central_server;
 
 use crate::types::asset_catalogue_item::AssetCatalogueItemNode;
 
-pub fn insert_asset_asset_catalogue_item(
+pub fn insert_asset_catalogue_item(
     ctx: &Context<'_>,
     store_id: &str,
     input: InsertAssetCatalogueItemInput,
