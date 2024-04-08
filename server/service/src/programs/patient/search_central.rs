@@ -1,4 +1,4 @@
-use repository::RepositoryError;
+use repository::{PaginationOption, RepositoryError};
 use reqwest::ClientBuilder;
 use url::Url;
 
@@ -6,11 +6,15 @@ use crate::{
     apis::patient_v4::{
         NameStoreJoinParamsV4, NameStoreJoinV2, PatientApiV4, PatientParamsV4, PatientV4,
     },
+    get_default_pagination,
     service_provider::{ServiceContext, ServiceProvider},
     sync::settings::SyncSettings,
 };
 
 use super::PatientSearch;
+
+pub const MAX_LIMIT: u32 = 1000;
+pub const MIN_LIMIT: u32 = 1;
 
 #[derive(Debug)]
 pub enum CentralPatientRequestError {
@@ -22,7 +26,15 @@ pub enum CentralPatientRequestError {
 pub async fn patient_search_central(
     sync_settings: &SyncSettings,
     params: PatientSearch,
+    pagination: Option<PaginationOption>,
 ) -> Result<Vec<PatientV4>, CentralPatientRequestError> {
+    let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT).map_err(|err| {
+        CentralPatientRequestError::InternalError(format!(
+            "Failed to get default pagination: {:?}",
+            err
+        ))
+    })?;
+
     let central_server_url = Url::parse(&sync_settings.url).map_err(|err| {
         CentralPatientRequestError::InternalError(format!(
             "Failed to parse central server url: {}",
@@ -51,8 +63,8 @@ pub async fn patient_search_central(
     } = params;
     let patients = api
         .patient(PatientParamsV4 {
-            limit: None,
-            offset: None,
+            limit: Some(pagination.limit),
+            offset: Some(pagination.offset),
             first_name,
             last_name,
             dob: date_of_birth,

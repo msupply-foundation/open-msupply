@@ -14,6 +14,7 @@ import {
   useFormatDateTime,
   useNavigate,
   useTranslation,
+  useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { PatientPanel } from './PatientPanel';
 import { FetchPatientModal } from './FetchPatientModal';
@@ -116,6 +117,11 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
   const t = useTranslation('dispensary');
   const navigate = useNavigate();
   const { localisedDate } = useFormatDateTime();
+  const {
+    updatePaginationQuery,
+    queryParams: { page, first, offset },
+  } = useUrlQueryParams();
+  const pagination = { page, first, offset };
 
   const columns = useColumns<PatientColumnData>([
     {
@@ -240,6 +246,8 @@ export const PatientResultsTab: FC<PatientPanel & { active: boolean }> = ({
         {t('messages.patients-create', { count })}
       </Typography>
       <DataTable
+        pagination={{ ...pagination, total: data.length }}
+        onChangePage={updatePaginationQuery}
         dense
         id="create-patient-duplicates"
         data={data}

@@ -53,6 +53,7 @@ use mutations::program_patient::update::UpdateProgramPatientInput;
 use mutations::program_patient::update::UpdateProgramPatientResponse;
 use mutations::update_document::*;
 use queries::contact_trace::contact_traces;
+use repository::PaginationOption;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::programs::patient::patient_search_central;
@@ -138,6 +139,7 @@ impl ProgramsQueries {
         ctx: &Context<'_>,
         store_id: String,
         input: CentralPatientSearchInput,
+        page: Option<PaginationInput>,
     ) -> Result<CentralPatientSearchResponse> {
         // Note, we can't move the ctx to another async method because then it would need to be
         // Sync. For this reason split the method as done below.
@@ -156,7 +158,12 @@ impl ProgramsQueries {
             StandardGraphqlError::InternalError("Missing sync settings".to_string()).extend(),
         )?;
 
-        let result = patient_search_central(&sync_settings, input.to_domain()).await;
+        let result = patient_search_central(
+            &sync_settings,
+            input.to_domain(),
+            page.map(PaginationOption::from),
+        )
+        .await;
         map_central_patient_search_result(result)
     }
 

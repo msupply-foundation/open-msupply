@@ -4485,6 +4485,7 @@ export type QueriesBarcodeByGtinArgs = {
 
 export type QueriesCentralPatientSearchArgs = {
   input: CentralPatientSearchInput;
+  page?: InputMaybe<PaginationInput>;
   storeId: Scalars['String']['input'];
 };
 

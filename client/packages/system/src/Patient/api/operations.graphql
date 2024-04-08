@@ -114,8 +114,9 @@ query patientSearch($input: PatientSearchInput!, $storeId: String!) {
 query centralPatientSearch(
   $input: CentralPatientSearchInput!
   $storeId: String!
+  $page: PaginationInput
 ) {
-  centralPatientSearch(input: $input, storeId: $storeId) {
+  centralPatientSearch(input: $input, storeId: $storeId, page: $page) {
     __typename
     ... on CentralPatientSearchConnector {
       nodes {
