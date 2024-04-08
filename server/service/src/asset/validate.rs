@@ -1,10 +1,13 @@
 use repository::{
+    asset::{Asset, AssetFilter, AssetRepository},
+    asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
+    asset_internal_location_row::AssetInternalLocationRow,
     asset_log_row::{AssetLogReason, AssetLogStatus},
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    RepositoryError, StorageConnection,
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 pub fn check_asset_exists(
@@ -12,6 +15,14 @@ pub fn check_asset_exists(
     connection: &StorageConnection,
 ) -> Result<Option<AssetRow>, RepositoryError> {
     AssetRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_asset_number_exists(
+    asset_number: &str,
+    connection: &StorageConnection,
+) -> Result<Vec<Asset>, RepositoryError> {
+    AssetRepository::new(connection)
+        .query_by_filter(AssetFilter::new().asset_number(StringFilter::equal_to(asset_number)))
 }
 
 pub fn check_asset_log_exists(
@@ -37,10 +48,10 @@ pub fn check_reason_matches_status(
 
     match status {
         AssetLogStatus::NotInUse => {
-            reason == AssetLogReason::AwaitingDecomissioning
+            reason == AssetLogReason::AwaitingDecommissioning
                 || reason == AssetLogReason::Stored
                 || reason == AssetLogReason::OffsiteForRepairs
-                || reason == AssetLogReason::AwaitingDecomissioning
+                || reason == AssetLogReason::AwaitingDecommissioning
         }
         AssetLogStatus::FunctioningButNeedsAttention => {
             reason == AssetLogReason::NeedsServicing
@@ -54,4 +65,16 @@ pub fn check_reason_matches_status(
         // If a reason exists, it won't match the reamining statuses which require a None reason.
         _ => false,
     }
+}
+
+pub fn check_locations_are_assigned(
+    location_ids: Vec<String>,
+    asset_id: &str,
+    connection: &StorageConnection,
+) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
+    AssetInternalLocationRepository::new(connection).query_by_filter(
+        AssetInternalLocationFilter::new()
+            .location_id(EqualFilter::equal_any(location_ids))
+            .asset_id(EqualFilter::not_equal_to(asset_id)),
+    )
 }

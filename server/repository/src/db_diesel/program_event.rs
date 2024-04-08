@@ -142,7 +142,7 @@ type BoxedProgramEventQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query<'a>(filter: Option<ProgramEventFilter>) -> BoxedProgramEventQuery {
+fn create_filtered_query(filter: Option<ProgramEventFilter>) -> BoxedProgramEventQuery {
     let mut query = program_event_dsl::program_event
         .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .into_boxed();

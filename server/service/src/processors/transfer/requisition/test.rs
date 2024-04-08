@@ -312,7 +312,7 @@ impl RequisitionTransferTester {
     }
 
     pub(crate) fn check_response_requisition_created(&mut self, connection: &StorageConnection) {
-        let response_requisition = RequisitionRepository::new(&connection)
+        let response_requisition = RequisitionRepository::new(connection)
             .query_one(RequisitionFilter::by_linked_requisition_id(
                 &self.request_requisition.id,
             ))

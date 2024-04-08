@@ -41,6 +41,8 @@ pub enum Permission {
     // stocktake
     StocktakeQuery,
     StocktakeMutate,
+    // inventory adjustment
+    InventoryAdjustmentMutate,
     // requisition
     RequisitionQuery,
     RequisitionMutate,
@@ -51,6 +53,12 @@ pub enum Permission {
     // inbound shipment
     InboundShipmentQuery,
     InboundShipmentMutate,
+    // outbound return
+    OutboundReturnQuery,
+    OutboundReturnMutate,
+    // inbound return
+    InboundReturnQuery,
+    InboundReturnMutate,
     // Prescription
     PrescriptionQuery,
     PrescriptionMutate,

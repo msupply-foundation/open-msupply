@@ -46,6 +46,11 @@ export const BasicTextInput: FC<BasicTextInputProps> = React.forwardRef(
         flexBasis={style?.flexBasis}
         flex={style?.flex}
         width={props.fullWidth ? '100%' : undefined}
+        sx={
+          props.fullWidth
+            ? { '& .MuiTextField-root': { width: '100%' } }
+            : undefined
+        }
       >
         <TextField
           ref={ref}

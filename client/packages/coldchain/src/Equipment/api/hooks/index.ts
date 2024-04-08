@@ -1,10 +1,15 @@
 import { Document } from './document';
 import { Log } from './log';
+import { Utils } from './utils';
 
 export const useAssets = {
-  utils: {},
+  utils: {
+    api: Utils.useAssetApi,
+    labelPrinterSettings: Utils.useLabelPrinterSettings,
+  },
 
   document: {
+    fetch: Document.useFetchAssetById,
     get: Document.useAsset,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,

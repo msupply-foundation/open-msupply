@@ -2274,6 +2274,7 @@ dependencies = [
  "graphql_core",
  "graphql_form_schema",
  "graphql_general",
+ "graphql_inventory_adjustment",
  "graphql_invoice",
  "graphql_invoice_line",
  "graphql_location",
@@ -2457,6 +2458,27 @@ dependencies = [
  "graphql_types",
  "repository",
  "reqwest",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_inventory_adjustment"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
  "serde 1.0.197",
  "serde_json",
  "service",
@@ -4950,6 +4972,7 @@ dependencies = [
  "rustls-pemfile",
  "sanitize-filename",
  "serde 1.0.197",
+ "serde_json",
  "service",
  "simple-log",
  "tokio",
@@ -4988,6 +5011,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "simple-log",
+ "telnet",
  "temperature-sensor",
  "tera",
  "thiserror",
@@ -5286,6 +5310,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "telnet"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99f2cc260bea5219955ab4832c9600a41b87101d280939edae6dd10b3c68a4f3"
 
 [[package]]
 name = "temperature-sensor"

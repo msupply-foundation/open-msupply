@@ -12,16 +12,20 @@ import {
   ButtonWithIcon,
   PlusCircleIcon,
   ToggleState,
+  UploadIcon,
   useDisabledNotification,
   useAuthContext,
   UserPermission,
 } from '@openmsupply-client/common';
 import { useAssets } from '../api';
 import { assetsToCsv } from '../utils';
+import { AddFromScannerButton } from './AddFromScannerButton';
 
 export const AppBarButtonsComponent = ({
+  importModalController,
   modalController,
 }: {
+  importModalController: ToggleState;
   modalController: ToggleState;
 }) => {
   const { success, error } = useNotification();
@@ -54,11 +58,16 @@ export const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          Icon={<UploadIcon />}
+          label={t('button.upload-assets')}
+          onClick={importModalController.toggleOn}
+        />
+        <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-asset')}
           onClick={onAdd}
         />
-
+        <AddFromScannerButton />
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}

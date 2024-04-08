@@ -1,9 +1,13 @@
-use super::{query::get_asset, validate::check_asset_exists};
+use super::{
+    query::get_asset,
+    validate::{check_asset_exists, check_asset_number_exists},
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, SingleRecordError,
 };
 use chrono::{NaiveDate, Utc};
 use repository::{
+    asset_catalogue_item_row::AssetCatalogueItemRowRepository,
     assets::{
         asset::{AssetFilter, AssetRepository},
         asset_row::{AssetRow, AssetRowRepository},
@@ -17,15 +21,20 @@ pub enum InsertAssetError {
     CreatedRecordNotFound,
     DatabaseError(RepositoryError),
     SerialNumberAlreadyExists,
+    AssetNumberAlreadyExists,
 }
 
+#[derive(PartialEq, Debug, Clone)]
 pub struct InsertAsset {
     pub id: String,
     pub store_id: Option<String>,
     pub notes: Option<String>,
-    pub asset_number: String,
+    pub asset_number: Option<String>,
     pub serial_number: Option<String>,
     pub catalogue_item_id: Option<String>,
+    pub category_id: Option<String>,
+    pub class_id: Option<String>,
+    pub type_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
 }
@@ -38,6 +47,24 @@ pub fn insert_asset(
         .connection
         .transaction_sync(|connection| {
             validate(&input, connection)?;
+
+            // populate category_id, class_id, type_id from catalogue_item_id if present and valid
+            let input = match input.catalogue_item_id.clone() {
+                Some(catalogue_item_id) => {
+                    match AssetCatalogueItemRowRepository::new(connection)
+                        .find_one_by_id(&catalogue_item_id)?
+                    {
+                        Some(catalogue_item) => InsertAsset {
+                            category_id: Some(catalogue_item.category_id),
+                            class_id: Some(catalogue_item.class_id),
+                            type_id: Some(catalogue_item.type_id),
+                            ..input
+                        },
+                        None => input,
+                    }
+                }
+                None => input,
+            };
             let new_asset = generate(input);
             AssetRowRepository::new(connection).upsert_one(&new_asset)?;
 
@@ -63,6 +90,12 @@ pub fn validate(
         return Err(InsertAssetError::AssetAlreadyExists);
     }
 
+    if let Some(asset_number) = &input.asset_number {
+        if check_asset_number_exists(&asset_number, connection)?.len() == 1 {
+            return Err(InsertAssetError::AssetNumberAlreadyExists);
+        }
+    }
+
     // Check the serial number is unique (if present)
     if let Some(serial_number) = &input.serial_number {
         if AssetRepository::new(connection)
@@ -86,6 +119,9 @@ pub fn generate(
         catalogue_item_id,
         installation_date,
         replacement_date,
+        category_id,
+        class_id,
+        type_id,
     }: InsertAsset,
 ) -> AssetRow {
     AssetRow {
@@ -100,6 +136,9 @@ pub fn generate(
         created_datetime: Utc::now().naive_utc(),
         modified_datetime: Utc::now().naive_utc(),
         deleted_datetime: None,
+        asset_category_id: Some(category_id.unwrap_or_default()),
+        asset_class_id: Some(class_id.unwrap_or_default()),
+        asset_type_id: Some(type_id.unwrap_or_default()),
     }
 }
 
