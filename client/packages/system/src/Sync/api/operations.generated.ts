@@ -48,17 +48,17 @@ export type ManualSyncMutationVariables = Types.Exact<{ [key: string]: never; }>
 
 export type ManualSyncMutation = { __typename: 'Mutations', manualSync: string };
 
-export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulSync: string };
+export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null };
 
 export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'ConnectionError' } | { __typename: 'UpdateUserNode', lastSuccessfulSync: string } };
+export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'ConnectionError' } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
 
 export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type LastSuccessfulUserSyncQuery = { __typename: 'Queries', lastSuccessfulUserSync: { __typename: 'UpdateUserNode', lastSuccessfulSync: string } };
+export type LastSuccessfulUserSyncQuery = { __typename: 'Queries', lastSuccessfulUserSync: { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
 
 export const SyncSettingsFragmentDoc = gql`
     fragment SyncSettings on SyncSettingsNode {

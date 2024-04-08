@@ -47,10 +47,10 @@ pub fn get_invoice_lines(
         return Err(GetInvoiceLinesError::InvalidStore);
     }
     let filter = filter
-        .unwrap_or(InvoiceLineFilter::new())
+        .unwrap_or_default()
         .invoice_id(EqualFilter::equal_to(invoice_id));
     let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)
-        .map_err(|err| GetInvoiceLinesError::ListError(err))?;
+        .map_err(GetInvoiceLinesError::ListError)?;
 
     let repository = InvoiceLineRepository::new(&ctx.connection);
 

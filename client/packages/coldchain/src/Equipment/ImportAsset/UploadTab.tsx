@@ -30,10 +30,11 @@ interface ParsedAsset {
 }
 
 enum AssetColumn {
-  ID = 0,
-  ASSET_NUMBER = 1,
-  CATALOGUE_ITEM_CODE = 2,
-  NOTES = 3,
+  ASSET_NUMBER = 0,
+  CATALOGUE_ITEM_CODE = 1,
+  NOTES = 2,
+  SERIAL_NUMBER = 3,
+  INSTALLATION_DATE = 4,
 }
 
 // the row object indexes are returned in column order
@@ -63,8 +64,9 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         (_row: ImportRow): Partial<ImportRow> => ({
           assetNumber: undefined,
           catalogueItemCode: undefined,
-          id: undefined,
           notes: undefined,
+          serialNumber: undefined,
+          installationDate: undefined,
         })
       ),
       t
@@ -107,19 +109,23 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
 
     const rows: EquipmentImportModal.ImportRow[] = [];
     let hasErrors = false;
-    for (const row of data.data) {
+    data.data.sort(function (row, row2) {
+      const number1 = getCell(row, AssetColumn.ASSET_NUMBER);
+      const number2 = getCell(row2, AssetColumn.ASSET_NUMBER);
+      return number1 < number2 ? -1 : number1 > number2 ? 1 : 0;
+    });
+
+    data.data.map((row, index) => {
       const importRow = {} as EquipmentImportModal.ImportRow;
       const rowErrors: string[] = [];
-      if (row.id && row.id.trim() != '') {
-        importRow.id = row.id;
-        importRow.isUpdate = true;
-      } else {
-        importRow.id = FnUtils.generateUUID();
-        importRow.isUpdate = false;
-      }
+      importRow.id = FnUtils.generateUUID();
       const assetNumber = getCell(row, AssetColumn.ASSET_NUMBER);
       if (assetNumber && assetNumber.trim() != '') {
         importRow.assetNumber = assetNumber;
+        // check if more than one of this asset number exists if is asset number
+        if (assetNumber == rows[index - 1]?.assetNumber) {
+          rowErrors.push(t('error.duplicate-asset-number'));
+        }
       } else {
         rowErrors.push(
           t('error.field-must-be-specified', { field: t('label.asset-number') })
@@ -143,14 +149,25 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       } else {
         importRow.catalogueItemCode = code;
       }
-      // notes aren't essential for bulk upload
+      // notes, serialNumner, and installationDate aren't essential for bulk upload
       if (getCell(row, AssetColumn.NOTES) !== undefined) {
         importRow.notes = getCell(row, AssetColumn.NOTES);
+      }
+      if (getCell(row, AssetColumn.SERIAL_NUMBER) !== undefined) {
+        importRow.serialNumber = getCell(row, AssetColumn.SERIAL_NUMBER);
+      }
+      // TODO parse date correctly for back end
+      if (getCell(row, AssetColumn.INSTALLATION_DATE) !== undefined) {
+        importRow.installationDate = getCell(
+          row,
+          AssetColumn.INSTALLATION_DATE
+        );
       }
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
-    }
+    });
+
     if (hasErrors) {
       setErrorMessage(t('messages.import-error-on-upload'));
     }

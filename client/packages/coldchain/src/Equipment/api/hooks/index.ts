@@ -3,7 +3,10 @@ import { Log } from './log';
 import { Utils } from './utils';
 
 export const useAssets = {
-  utils: { api: Utils.useAssetApi },
+  utils: {
+    api: Utils.useAssetApi,
+    labelPrinterSettings: Utils.useLabelPrinterSettings,
+  },
 
   document: {
     fetch: Document.useFetchAssetById,

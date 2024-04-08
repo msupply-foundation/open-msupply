@@ -35,7 +35,7 @@ pub fn insert_pack_variant(
         .transaction_sync(|connection| {
             validate(connection, &input, &ctx.store_id)?;
             let new_pack_variant = generate(input);
-            let repo = PackVariantRowRepository::new(&connection);
+            let repo = PackVariantRowRepository::new(connection);
             repo.upsert_one(&new_pack_variant)?;
 
             repo.find_one_by_id(&new_pack_variant.id)?
@@ -75,9 +75,8 @@ fn validate(
     input: &InsertPackVariant,
     store_id: &str,
 ) -> Result<(), InsertPackVariantError> {
-    match check_pack_variant_exists(connection, &input.id)? {
-        Some(_) => return Err(InsertPackVariantError::PackVariantAlreadyExists),
-        None => (),
+    if check_pack_variant_exists(connection, &input.id)?.is_some() {
+        return Err(InsertPackVariantError::PackVariantAlreadyExists);
     }
 
     if !check_pack_size_is_unique(connection, &input.item_id, input.pack_size)? {

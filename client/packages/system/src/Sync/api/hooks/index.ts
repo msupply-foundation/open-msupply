@@ -14,6 +14,7 @@ export const useSync = {
   },
   utils: {
     syncStatus: Utils.useSyncStatus,
+    mutateSyncStatus: Utils.useMutateSyncStatus,
     syncInfo: Utils.useSyncInfo,
     lastSuccessfulUserSync: Utils.useLastSuccessfulUserSync,
   },

@@ -12,7 +12,7 @@ import {
   NumberCell,
   CurrencyCell,
 } from '@openmsupply-client/common';
-import { PackVariantCell } from '@openmsupply-client/system';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -160,7 +160,8 @@ export const usePrescriptionColumn = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackVariantCell({
+        // eslint-disable-next-line new-cap
+        Cell: getPackVariantCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;

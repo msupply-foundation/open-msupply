@@ -57,11 +57,11 @@ pub(crate) fn generate(
     update_invoice.tax = input_tax
         .map(|tax| tax.percentage)
         .unwrap_or(update_invoice.tax);
-    update_invoice.currency_id = input_currency_id.unwrap_or(update_invoice.currency_id);
+    update_invoice.currency_id = input_currency_id.or(update_invoice.currency_id);
     update_invoice.currency_rate = input_currency_rate.unwrap_or(update_invoice.currency_rate);
 
     if let Some(status) = input_status.clone() {
-        update_invoice.status = status.full_status().into()
+        update_invoice.status = status.full_status()
     }
 
     let batches_to_update = if should_update_batches_total_number_of_packs {
@@ -92,7 +92,7 @@ pub(crate) fn generate(
             connection,
             &update_invoice.id,
             update_invoice.tax,
-            &update_invoice.currency_id,
+            update_invoice.currency_id.clone(),
             &update_invoice.currency_rate,
         )?)
     } else {
@@ -146,7 +146,7 @@ fn lines_to_trim(
     }
 
     // If new invoice status is not new and previous invoice status is new
-    // add all unallocated lines to be deleted
+    // add all unallocated lines or empty lines to be deleted
 
     let mut lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
@@ -157,7 +157,8 @@ fn lines_to_trim(
     let mut empty_lines = InvoiceLineRepository::new(connection).query_by_filter(
         InvoiceLineFilter::new()
             .invoice_id(EqualFilter::equal_to(&invoice.id))
-            .number_of_packs(EqualFilter::equal_to_f64(0.0)),
+            .number_of_packs(EqualFilter::equal_to_f64(0.0))
+            .r#type(InvoiceLineRowType::StockOut.equal_to()),
     )?;
 
     if lines.is_empty() && empty_lines.is_empty() {
@@ -167,7 +168,7 @@ fn lines_to_trim(
     lines.append(&mut empty_lines);
 
     let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
-    return Ok(Some(invoice_line_rows));
+    Ok(Some(invoice_line_rows))
 }
 
 fn set_new_status_datetime(
@@ -192,12 +193,12 @@ fn set_new_status_datetime(
         (InvoiceRowStatus::Shipped, _) => {}
         // From New to Shipped, Picked, Allocated
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Shipped) => {
-            invoice.allocated_datetime = Some(current_datetime.clone());
-            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.allocated_datetime = Some(current_datetime);
+            invoice.picked_datetime = Some(current_datetime);
             invoice.shipped_datetime = Some(current_datetime)
         }
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Picked) => {
-            invoice.allocated_datetime = Some(current_datetime.clone());
+            invoice.allocated_datetime = Some(current_datetime);
             invoice.picked_datetime = Some(current_datetime);
         }
         (InvoiceRowStatus::New, UpdateOutboundShipmentStatus::Allocated) => {
@@ -205,7 +206,7 @@ fn set_new_status_datetime(
         }
         // From Allocated to Shipped or Picked
         (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Shipped) => {
-            invoice.picked_datetime = Some(current_datetime.clone());
+            invoice.picked_datetime = Some(current_datetime);
             invoice.shipped_datetime = Some(current_datetime)
         }
         (InvoiceRowStatus::Allocated, UpdateOutboundShipmentStatus::Picked) => {
@@ -223,7 +224,7 @@ fn generate_update_for_lines(
     connection: &StorageConnection,
     invoice_id: &str,
     tax: Option<f64>,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<Vec<InvoiceLineRow>, UpdateOutboundShipmentError> {
     let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
@@ -245,7 +246,7 @@ fn generate_update_for_lines(
         invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
             connection,
             invoice_line_row.total_before_tax,
-            &currency_id,
+            currency_id.clone(),
             currency_rate,
         )?;
 
@@ -282,8 +283,8 @@ pub fn generate_location_movements(
                 .map(|l| l.location_movement_row)
                 .min_by_key(|l| l.enter_datetime);
 
-            if filter.is_some() {
-                movements_filter.push(filter.unwrap());
+            if let Some(filter) = filter {
+                movements_filter.push(filter);
             }
         }
     }

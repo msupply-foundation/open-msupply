@@ -18,7 +18,7 @@ pub(crate) fn contact_traces(
     allowed_ctx: Vec<String>,
 ) -> Result<ListResult<ContactTrace>, ListError> {
     // restrict query results to allowed entries
-    let mut filter = filter.unwrap_or(ContactTraceFilter::default());
+    let mut filter = filter.unwrap_or_default();
     filter.program_context_id = Some(
         filter
             .program_context_id

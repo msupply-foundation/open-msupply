@@ -83,7 +83,7 @@ declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
     cceStatus: {
-      decomissioned: string;
+      decommissioned: string;
       functioning: string;
       functioningButNeedsAttention: string;
       notFunctioning: string;
@@ -204,7 +204,7 @@ export const themeOptions = {
       lines: ['#EED600', '#922DD0', '#E1A200', '#59639C', '#E500EA', '#00DBCE'],
     },
     cceStatus: {
-      decomissioned: '#323232',
+      decommissioned: '#323232',
       functioning: '#69a607',
       functioningButNeedsAttention: '#f2a001',
       notFunctioning: '#de0001',
