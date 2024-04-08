@@ -13,7 +13,7 @@ import {
 } from '@openmsupply-client/common';
 import { OutboundReturnLineFragment } from '../api';
 import { OutboundReturnItem } from '../../types';
-import { PackVariantCell } from 'packages/system';
+import { getPackVariantCell } from '@openmsupply-client/system';
 
 interface UseOutboundColumnOptions {
   sortBy: SortBy<OutboundReturnLineFragment | OutboundReturnItem>;
@@ -145,7 +145,7 @@ export const useOutboundReturnColumns = ({
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackVariantCell({
+        Cell: getPackVariantCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;
