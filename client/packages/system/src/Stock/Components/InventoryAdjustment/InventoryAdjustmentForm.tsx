@@ -38,10 +38,13 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
   const saveDisabled = !draft.direction || draft.adjustBy === 0;
 
   const save = async () => {
-    // TODO: handle error if no reason selected when reasons required
-    await create();
-    const successSnack = success(t('messages.inventory-adjustment-saved'));
-    successSnack();
+    try {
+      await create();
+      const successSnack = success(t('messages.inventory-adjustment-saved'));
+      successSnack();
+    } catch {
+      // TODO: handle error if no reason selected when reasons required
+    }
   };
 
   return (
