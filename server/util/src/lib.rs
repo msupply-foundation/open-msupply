@@ -29,6 +29,9 @@ pub use error::*;
 mod file;
 pub use file::*;
 
+mod fuzzy_search;
+pub use fuzzy_search::*;
+
 pub fn is_central_server() -> bool {
     env::var("IS_CENTRAL_SERVER")
         .map(|is_central_server| is_central_server.to_lowercase() == "true")

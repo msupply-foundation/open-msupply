@@ -16,6 +16,7 @@ use crate::{
 
 use chrono::NaiveDate;
 use diesel::{dsl::IntoBoxed, prelude::*};
+use util::fuzzy_search;
 
 pub type Patient = NameRow;
 
@@ -98,6 +99,104 @@ impl<'a> PatientRepository<'a> {
         allowed_ctx: Option<&[String]>,
     ) -> Result<Option<Patient>, RepositoryError> {
         Ok(self.query_by_filter(filter, allowed_ctx)?.pop())
+    }
+
+    pub fn query_by_fuzzy_search(
+        &self,
+        pagination: Pagination,
+        filter: Option<PatientFilter>,
+        sort: Option<PatientSort>,
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<Vec<Patient>, RepositoryError> {
+        let mut query = name_dsl::name.into_boxed();
+
+        let mut first_name_search = "".to_string();
+        let mut last_name_search = "".to_string();
+
+        if let Some(f) = filter.clone() {
+            if let Some(first_name) = f.first_name {
+                if let Some(first_name_like) = first_name.like {
+                    first_name_search = first_name_like.chars().take(2).collect::<String>();
+                    query =
+                        query.filter(name_dsl::first_name.like(format!("%{}%", first_name_search)));
+                }
+            }
+
+            if let Some(last_name) = f.last_name {
+                if let Some(last_name_like) = last_name.like {
+                    last_name_search = last_name_like.chars().take(2).collect::<String>();
+                    query =
+                        query.filter(name_dsl::last_name.like(format!("%{}%", last_name_search)));
+                }
+            }
+        }
+
+        let result = query.load::<NameRow>(&self.connection.connection)?;
+
+        let first_names = result
+            .iter()
+            .map(|name| name.first_name.as_deref().unwrap_or(""))
+            .collect::<Vec<&str>>();
+
+        let last_names = result
+            .iter()
+            .map(|name| name.last_name.as_deref().unwrap_or(""))
+            .collect::<Vec<&str>>();
+
+        let first_names = fuzzy_search(&first_name_search, &first_names);
+        let last_names = fuzzy_search(&last_name_search, &last_names);
+
+        let mut query = Self::create_filtered_query(filter, allowed_ctx);
+
+        if first_names.len() > 0 {
+            // take the highest score matching first_name value
+            query = query.filter(name_dsl::first_name.like(format!("%{}%", first_names[0])));
+        }
+
+        if last_names.len() > 0 {
+            // take the highest score matching last_name value
+            query = query.filter(name_dsl::last_name.like(format!("%{}%", last_names[0])));
+        }
+
+        if let Some(sort) = sort {
+            match sort.key {
+                PatientSortField::Name => {
+                    apply_sort_no_case!(query, sort, name_dsl::name_);
+                }
+                PatientSortField::Code => {
+                    apply_sort_no_case!(query, sort, name_dsl::code);
+                }
+                PatientSortField::FirstName => {
+                    apply_sort_no_case!(query, sort, name_dsl::first_name)
+                }
+                PatientSortField::LastName => apply_sort_no_case!(query, sort, name_dsl::last_name),
+                PatientSortField::Gender => apply_sort_no_case!(query, sort, name_dsl::gender),
+                PatientSortField::DateOfBirth => {
+                    apply_sort_no_case!(query, sort, name_dsl::date_of_birth)
+                }
+                PatientSortField::Phone => apply_sort_no_case!(query, sort, name_dsl::phone),
+                PatientSortField::Address1 => apply_sort_no_case!(query, sort, name_dsl::address1),
+                PatientSortField::Address2 => apply_sort_no_case!(query, sort, name_dsl::address2),
+                PatientSortField::Country => apply_sort_no_case!(query, sort, name_dsl::country),
+                PatientSortField::Email => apply_sort_no_case!(query, sort, name_dsl::email),
+                PatientSortField::Code2 => {
+                    apply_sort_no_case!(query, sort, name_dsl::national_health_number)
+                }
+                PatientSortField::DateOfDeath => {
+                    apply_sort_no_case!(query, sort, name_dsl::date_of_death)
+                }
+            }
+        } else {
+            query = query.order(name_dsl::id.asc())
+        }
+
+        let final_query = query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
+
+        let result = final_query.load::<NameRow>(&self.connection.connection)?;
+
+        Ok(result)
     }
 
     pub fn query(

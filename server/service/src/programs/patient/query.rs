@@ -16,7 +16,7 @@ pub fn get_patients(
     let pagination = get_default_pagination_unlimited(pagination);
     let repository = PatientRepository::new(&ctx.connection);
 
-    let rows = repository.query(pagination, filter.clone(), sort, allowed_ctx)?;
+    let rows = repository.query_by_fuzzy_search(pagination, filter.clone(), sort, allowed_ctx)?;
 
     Ok(ListResult {
         rows,
