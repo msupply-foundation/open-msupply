@@ -58,6 +58,8 @@ pub enum Resource {
     // stocktake
     QueryStocktake,
     MutateStocktake,
+    // inventory adjustment
+    MutateInventoryAdjustment,
     // requisition
     QueryRequisition,
     MutateRequisition,
@@ -225,6 +227,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::StockLineMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInventoryAdjustment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InventoryAdjustmentMutate),
         ]),
     );
     map.insert(

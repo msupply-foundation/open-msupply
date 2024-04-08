@@ -15,7 +15,6 @@ import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
 import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
-import { LocationIds } from '../DetailView';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -62,7 +61,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
       emptyRows.map(
-        (_row: ImportRow): Partial<ImportRow & LocationIds> => ({
+        (_row: ImportRow): Partial<ImportRow> => ({
           assetNumber: undefined,
           catalogueItemCode: undefined,
           notes: undefined,

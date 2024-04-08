@@ -24,6 +24,7 @@ use graphql_general::{
 use graphql_asset::{AssetLogMutations, AssetLogQueries, AssetMutations, AssetQueries};
 use graphql_asset_catalogue::AssetCatalogueQueries;
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
@@ -144,6 +145,7 @@ pub struct Mutations(
     pub CentralServerMutations,
     pub AssetMutations,
     pub AssetLogMutations,
+    pub InventoryAdjustmentMutations,
 );
 
 impl Mutations {
@@ -167,6 +169,7 @@ impl Mutations {
             CentralServerMutations,
             AssetMutations,
             AssetLogMutations,
+            InventoryAdjustmentMutations,
         )
     }
 }
