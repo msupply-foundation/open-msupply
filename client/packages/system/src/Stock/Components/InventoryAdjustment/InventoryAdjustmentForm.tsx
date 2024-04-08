@@ -1,8 +1,6 @@
 import React, { FC } from 'react';
 import {
   TextWithLabelRow,
-  InputWithLabelRow,
-  InputWithLabelRowProps,
   useTranslation,
   Box,
   NumericTextInput,
@@ -16,6 +14,7 @@ import {
   usePackVariant,
 } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
+import { StyledInputRow } from '../StyledInputRow';
 
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;
@@ -143,19 +142,3 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
     </Box>
   );
 };
-
-const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
-  <InputWithLabelRow
-    label={label}
-    Input={Input}
-    labelProps={{ sx: { textAlign: 'end' } }}
-    labelWidth="100px"
-    sx={{
-      justifyContent: 'space-between',
-      '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '160px',
-        width: '160px',
-      },
-    }}
-  />
-);
