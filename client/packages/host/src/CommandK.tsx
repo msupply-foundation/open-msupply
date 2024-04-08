@@ -306,8 +306,8 @@ const Actions = () => {
       });
       actions.push({
         id: 'navigation:coldchain-equipment',
-        name: `${t('cmdk.goto-cold-chain-equipment')} (e)`,
-        shortcut: ['e'],
+        name: `${t('cmdk.goto-cold-chain-equipment')} (c + e)`,
+        shortcut: ['c', 'e'],
         keywords: 'cold chain coldchain equipment',
         perform: () =>
           navigate(

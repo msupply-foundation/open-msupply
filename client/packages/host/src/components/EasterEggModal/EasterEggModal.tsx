@@ -14,8 +14,8 @@ export const EasterEggModal = ({
   open,
   width = 650,
   height = 300,
-}: ConfirmationModalProps) => {
-  return (
+}: ConfirmationModalProps) =>
+  open ? (
     <BasicModal width={width} height={height} open={open}>
       <Box
         flex={1}
@@ -39,5 +39,4 @@ export const EasterEggModal = ({
         </Box>
       </Box>
     </BasicModal>
-  );
-};
+  ) : null;
