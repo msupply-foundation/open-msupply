@@ -6,6 +6,7 @@ mod activity_log_add_zero_line;
 mod add_source_site_id;
 mod assets;
 mod central_omsupply;
+mod inventory_adjustment_permissions;
 mod linked_shipment;
 mod pack_variant;
 mod returns;
@@ -26,6 +27,7 @@ impl Migration for V1_08_00 {
         assets::migrate_assets(connection)?;
         returns::migrate_returns(connection)?;
         pack_variant::migrate(connection)?;
+        inventory_adjustment_permissions::migrate(connection)?;
         store_add_created_date::migrate(connection)?;
         activity_log_add_zero_line::migrate(connection)?;
         linked_shipment::migrate(connection)?;
