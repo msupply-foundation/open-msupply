@@ -12,7 +12,7 @@ pub fn mock_asset_a() -> AssetRow {
     AssetRow {
         id: String::from("asset_a"),
         notes: Some(String::from("Freezer A - HBD 116")),
-        asset_number: String::from("asset_a"),
+        asset_number: Some(String::from("asset_a")),
         store_id: None,
         serial_number: Some(String::from("serial_number_a")),
         catalogue_item_id: Some("c7d48b5c-74b2-4077-94f5-2b25d67a447b".to_string()),
@@ -26,6 +26,9 @@ pub fn mock_asset_a() -> AssetRow {
         )
         .unwrap(),
         deleted_datetime: None,
+        asset_category_id: Some("02cbea92-d5bf-4832-863b-c04e093a7760".to_string()),
+        asset_class_id: Some("fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string()),
+        asset_type_id: Some("710194ce-8c6c-47ab-b7fe-13ba8cf091f6".to_string()),
     }
 }
 
@@ -37,7 +40,7 @@ pub fn mock_asset_b() -> AssetRow {
     AssetRow {
         id: String::from("asset_b"),
         notes: Some(String::from("Vaccine Carrier LR 3L - RCW4")),
-        asset_number: String::from("asset_b"),
+        asset_number: Some(String::from("asset_b")),
         store_id: Some(mock_store_a().id),
         serial_number: Some(String::from("serial_number")),
         catalogue_item_id: Some("c74a3f72-fda6-4bb8-a08f-5f79a20a8716".to_string()),
@@ -46,6 +49,9 @@ pub fn mock_asset_b() -> AssetRow {
         created_datetime: NaiveDateTime::default(),
         modified_datetime: NaiveDateTime::default(),
         deleted_datetime: None,
+        asset_category_id: Some("b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d".to_string()),
+        asset_class_id: Some("fad280b6-8384-41af-84cf-c7b6b4526ef0".to_string()),
+        asset_type_id: Some("0b7ac91d-6cfa-49bb-bac2-35e7cb31564b".to_string()),
     }
 }
 
@@ -53,7 +59,7 @@ pub fn mock_deleted_asset() -> AssetRow {
     AssetRow {
         id: String::from("deleted_asset"),
         notes: None,
-        asset_number: String::new(),
+        asset_number: Some(String::new()),
         store_id: None,
         serial_number: None,
         catalogue_item_id: None,
@@ -62,6 +68,9 @@ pub fn mock_deleted_asset() -> AssetRow {
         created_datetime: NaiveDateTime::default(),
         modified_datetime: NaiveDateTime::default(),
         deleted_datetime: Some(NaiveDateTime::default()),
+        asset_category_id: None,
+        asset_class_id: None,
+        asset_type_id: None,
     }
 }
 

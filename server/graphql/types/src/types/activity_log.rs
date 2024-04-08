@@ -5,7 +5,7 @@ use graphql_core::{
     loader::{StoreByIdLoader, UserLoader},
     ContextExt,
 };
-use repository::{activity_log::ActivityLog, unknown_user, ActivityLogRow, ActivityLogType};
+use repository::{activity_log::ActivityLog, ActivityLogRow, ActivityLogType};
 use service::ListResult;
 
 use super::{StoreNode, UserNode};
@@ -101,9 +101,9 @@ impl ActivityLogNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     pub async fn store(&self, ctx: &Context<'_>) -> Result<Option<StoreNode>> {

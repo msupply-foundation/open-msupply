@@ -47,8 +47,9 @@ impl<'a> TranslationAndIntegration<'a> {
             if !translator.should_translate_from_sync_record(sync_record) {
                 continue;
             }
+            let source_site_id = sync_record.source_site_id.clone();
 
-            let translation_result = match sync_record.action {
+            let mut translation_result = match sync_record.action {
                 SyncBufferAction::Upsert => translator
                     .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
                 SyncBufferAction::Delete => translator
@@ -57,6 +58,12 @@ impl<'a> TranslationAndIntegration<'a> {
                     translator.try_translate_from_merge_sync_record(self.connection, sync_record)?
                 }
             };
+
+            // Add source_site_id to translation result if it exists in the sync buffer row
+            match source_site_id {
+                Some(id) => translation_result.add_source_site_id(id),
+                None => {}
+            }
 
             match translation_result {
                 PullTranslateResult::IntegrationOperations(records) => {
@@ -169,7 +176,19 @@ impl<'a> TranslationAndIntegration<'a> {
 impl IntegrationOperation {
     fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
         match self {
-            IntegrationOperation::Upsert(upsert) => upsert.upsert_sync(connection),
+            IntegrationOperation::Upsert(upsert, source_site_id) => {
+                let cursor_id = upsert.upsert(connection)?;
+
+                // Update the change log if we get a cursor id
+                if let Some(cursor_id) = cursor_id {
+                    ChangelogRepository::new(connection).set_source_site_id_and_is_sync_update(
+                        cursor_id,
+                        source_site_id.to_owned(),
+                    )?;
+                }
+                Ok(())
+            }
+
             IntegrationOperation::Delete(delete) => delete.delete(connection),
         }
     }

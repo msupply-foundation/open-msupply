@@ -48,6 +48,15 @@ pub mod last_successful_user_sync;
 pub use self::last_successful_user_sync::*;
 pub use self::plugin::*;
 pub mod currency;
+pub mod label_printer_settings;
+pub use self::label_printer_settings::*;
+
+pub mod generate_inbound_return_lines;
+pub use self::generate_inbound_return_lines::*;
+pub mod generate_outbound_return_lines;
+pub use self::generate_outbound_return_lines::*;
+pub mod return_reason;
+pub use self::return_reason::*;
 
 #[cfg(test)]
 mod tests;

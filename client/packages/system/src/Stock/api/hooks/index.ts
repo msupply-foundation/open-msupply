@@ -1,6 +1,8 @@
 import { Lines } from './line';
 import { Utils } from './utils';
 
+export * from './useInventoryAdjustment';
+
 export const useStock = {
   line: {
     get: Lines.useStockLine,

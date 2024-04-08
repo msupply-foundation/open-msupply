@@ -1,18 +1,24 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
+use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
+use graphql_asset_catalogue::types::asset_class::AssetClassNode;
+use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetStatusLogLoader, StoreByIdLoader, UserLoader,
+    AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
+    AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
+use graphql_core::loader::{AssetStatusLogLoader, SyncFileReferenceLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{StoreNode, UserNode};
+use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector, UserNode};
 
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
+
 use repository::{
     assets::asset::{Asset, AssetFilter, AssetSort},
     EqualFilter,
@@ -51,6 +57,7 @@ pub struct AssetFilterInput {
     pub category_id: Option<EqualFilterStringInput>,
     pub type_id: Option<EqualFilterStringInput>,
     pub catalogue_item_id: Option<EqualFilterStringInput>,
+    pub is_non_catalogue: Option<bool>,
     pub installation_date: Option<DateFilterInput>,
     pub replacement_date: Option<DateFilterInput>,
 }
@@ -68,6 +75,7 @@ impl From<AssetFilterInput> for AssetFilter {
             catalogue_item_id: f.catalogue_item_id.map(EqualFilter::from),
             installation_date: f.installation_date.map(DateFilter::from),
             replacement_date: f.replacement_date.map(DateFilter::from),
+            is_non_catalogue: f.is_non_catalogue,
         }
     }
 }
@@ -97,7 +105,7 @@ impl AssetNode {
         &self.row().notes
     }
 
-    pub async fn asset_number(&self) -> &str {
+    pub async fn asset_number(&self) -> &Option<String> {
         &self.row().asset_number
     }
 
@@ -152,6 +160,65 @@ impl AssetNode {
             .load_one(catalogue_item_id.clone())
             .await?
             .map(AssetCatalogueItemNode::from_domain))
+    }
+
+    pub async fn locations(&self, ctx: &Context<'_>) -> Result<LocationConnector> {
+        let asset_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<AssetLocationLoader>>();
+        let result_option = loader.load_one(asset_id.to_string()).await?;
+
+        let locations = LocationConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(locations)
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let asset_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(asset_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
+    }
+
+    pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetCategoryLoader>>();
+        let category_id = match self.row().asset_category_id.clone() {
+            Some(category_id) => category_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(category_id)
+            .await?
+            .map(AssetCategoryNode::from_domain))
+    }
+
+    pub async fn asset_class(&self, ctx: &Context<'_>) -> Result<Option<AssetClassNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetClassLoader>>();
+        let class_id = match self.row().asset_class_id.clone() {
+            Some(class_id) => class_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(class_id)
+            .await?
+            .map(AssetClassNode::from_domain))
+    }
+
+    pub async fn asset_type(&self, ctx: &Context<'_>) -> Result<Option<AssetTypeNode>> {
+        let loader = ctx.get_loader::<DataLoader<AssetTypeLoader>>();
+        let type_id = match self.row().asset_type_id.clone() {
+            Some(type_id) => type_id,
+            None => return Ok(None),
+        };
+
+        Ok(loader
+            .load_one(type_id)
+            .await?
+            .map(AssetTypeNode::from_domain))
     }
 
     pub async fn status_log(&self, ctx: &Context<'_>) -> Result<Option<AssetLogNode>> {
@@ -234,7 +301,7 @@ pub enum AssetLogStatusInput {
     Functioning,
     FunctioningButNeedsAttention,
     NotFunctioning,
-    Decomissioned,
+    Decommissioned,
 }
 
 impl AssetLogStatusInput {
@@ -246,7 +313,7 @@ impl AssetLogStatusInput {
                 AssetLogStatus::FunctioningButNeedsAttention
             }
             AssetLogStatusInput::NotFunctioning => AssetLogStatus::NotFunctioning,
-            AssetLogStatusInput::Decomissioned => AssetLogStatus::Decomissioned,
+            AssetLogStatusInput::Decommissioned => AssetLogStatus::Decommissioned,
         }
     }
 }
@@ -297,14 +364,14 @@ pub enum AssetLogReasonInput {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
-    AwaitingDecomissioning,
+    AwaitingDecommissioning,
     NeedsServicing,
     MultipleTemperatureBreaches,
     Unknown,
     NeedsSpareParts,
     LackOfPower,
     Functioning,
-    Decomissioned,
+    Decommissioned,
 }
 
 impl AssetLogReasonInput {
@@ -313,7 +380,7 @@ impl AssetLogReasonInput {
             AssetLogReasonInput::AwaitingInstallation => AssetLogReason::AwaitingInstallation,
             AssetLogReasonInput::Stored => AssetLogReason::Stored,
             AssetLogReasonInput::OffsiteForRepairs => AssetLogReason::OffsiteForRepairs,
-            AssetLogReasonInput::AwaitingDecomissioning => AssetLogReason::AwaitingDecomissioning,
+            AssetLogReasonInput::AwaitingDecommissioning => AssetLogReason::AwaitingDecommissioning,
             AssetLogReasonInput::NeedsServicing => AssetLogReason::NeedsServicing,
             AssetLogReasonInput::MultipleTemperatureBreaches => {
                 AssetLogReason::MultipleTemperatureBreaches
@@ -322,7 +389,7 @@ impl AssetLogReasonInput {
             AssetLogReasonInput::NeedsSpareParts => AssetLogReason::NeedsSpareParts,
             AssetLogReasonInput::LackOfPower => AssetLogReason::LackOfPower,
             AssetLogReasonInput::Functioning => AssetLogReason::Functioning,
-            AssetLogReasonInput::Decomissioned => AssetLogReason::Decomissioned,
+            AssetLogReasonInput::Decommissioned => AssetLogReason::Decommissioned,
         }
     }
 }
@@ -341,14 +408,14 @@ pub enum ReasonType {
     AwaitingInstallation,
     Stored,
     OffsiteForRepairs,
-    AwaitingDecomissioning,
+    AwaitingDecommissioning,
     NeedsServicing,
     MultipleTemperatureBreaches,
     Unknown,
     NeedsSpareParts,
     LackOfPower,
     Functioning,
-    Decomissioned,
+    Decommissioned,
 }
 impl ReasonType {
     pub fn from_domain(reason: &AssetLogReason) -> Self {
@@ -356,14 +423,14 @@ impl ReasonType {
             AssetLogReason::AwaitingInstallation => ReasonType::AwaitingInstallation,
             AssetLogReason::Stored => ReasonType::Stored,
             AssetLogReason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
-            AssetLogReason::AwaitingDecomissioning => ReasonType::AwaitingDecomissioning,
+            AssetLogReason::AwaitingDecommissioning => ReasonType::AwaitingDecommissioning,
             AssetLogReason::NeedsServicing => ReasonType::NeedsServicing,
             AssetLogReason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
             AssetLogReason::Unknown => ReasonType::Unknown,
             AssetLogReason::NeedsSpareParts => ReasonType::NeedsSpareParts,
             AssetLogReason::LackOfPower => ReasonType::LackOfPower,
             AssetLogReason::Functioning => ReasonType::Functioning,
-            AssetLogReason::Decomissioned => ReasonType::Decomissioned,
+            AssetLogReason::Decommissioned => ReasonType::Decommissioned,
         }
     }
 }
@@ -376,7 +443,7 @@ pub enum StatusType {
     Functioning,
     FunctioningButNeedsAttention,
     NotFunctioning,
-    Decomissioned,
+    Decommissioned,
 }
 impl StatusType {
     pub fn from_domain(status: &AssetLogStatus) -> Self {
@@ -387,7 +454,7 @@ impl StatusType {
                 StatusType::FunctioningButNeedsAttention
             }
             AssetLogStatus::NotFunctioning => StatusType::NotFunctioning,
-            AssetLogStatus::Decomissioned => StatusType::Decomissioned,
+            AssetLogStatus::Decommissioned => StatusType::Decommissioned,
         }
     }
 }
@@ -440,6 +507,16 @@ impl AssetLogNode {
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
         &self.row().log_datetime
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let asset_log_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(asset_log_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
     }
 }
 

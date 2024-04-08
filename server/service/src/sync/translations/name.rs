@@ -291,7 +291,7 @@ impl SyncTranslation for NameTranslation {
             NameType::Patient => LegacyNameType::Patient,
             _ => {
                 return Ok(PushTranslateResult::Ignored(
-                    "Only push name records that belong to patiens".to_string(),
+                    "Only push name records that belong to patients".to_string(),
                 ))
             }
         };

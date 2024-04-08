@@ -38,7 +38,7 @@ export const ArrayUtils = {
     return arr.reduce((sum, someEntity) => sum + someEntity[key], 0);
   },
   // De-duplicate (remove duplicates)
-  dedup: uniq,
+  dedupe: uniq,
   immutablePatch: <T extends RecordWithId>(arr: T[], patch: RecordPatch<T>) =>
     arr.map(entity => {
       if (entity.id === patch.id) {

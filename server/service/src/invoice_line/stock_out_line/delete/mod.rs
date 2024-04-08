@@ -24,14 +24,14 @@ pub fn delete_stock_out_line(
     let line_id = ctx
         .connection
         .transaction_sync(|connection| {
-            let line = validate(&input, &ctx.store_id, &connection)?;
+            let line = validate(&input, &ctx.store_id, connection)?;
             let stock_line_id_option = line.stock_line_id.clone();
 
-            InvoiceLineRowRepository::new(&connection).delete(&line.id)?;
+            InvoiceLineRowRepository::new(connection).delete(&line.id)?;
 
             if let Some(stock_line_id) = stock_line_id_option {
-                let invoice_repository = InvoiceRowRepository::new(&connection);
-                let stock_line_repository = StockLineRowRepository::new(&connection);
+                let invoice_repository = InvoiceRowRepository::new(connection);
+                let stock_line_repository = StockLineRowRepository::new(connection);
 
                 let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
                 stock_line.available_number_of_packs += line.number_of_packs;
@@ -213,7 +213,7 @@ mod test {
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
             let stock_line_id = invoice_line.stock_line_id.as_ref().unwrap();
             StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id(stock_line_id)
                 .unwrap()
         };
 

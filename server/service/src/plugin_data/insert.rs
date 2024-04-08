@@ -31,9 +31,9 @@ pub fn insert(
             validate(ctx, &input)?;
             let data = generate(&ctx.store_id, input.clone());
 
-            PluginDataRowRepository::new(&connection)
+            PluginDataRowRepository::new(connection)
                 .insert_one(&data)
-                .map_err(|error| InsertPluginDataError::DatabaseError(error))
+                .map_err(InsertPluginDataError::DatabaseError)
         })
         .map_err(|error| error.to_inner_error())?;
 

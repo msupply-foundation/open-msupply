@@ -47,9 +47,6 @@ fn get_timestamp_fields() -> Vec<TableAndFieldName> {
         ("temperature_log", "datetime"),
         ("asset", "created_datetime"),
         ("asset", "modified_datetime"),
-        ("asset_internal_location", "created_datetime"),
-        ("asset_internal_location", "modified_datetime"),
-        ("asset_log", "log_datetime"),
         ("sync_file_reference", "created_datetime"),
     ]
     .iter()
@@ -80,8 +77,11 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("sync_log", "integration_finished_datetime"),
         ("sync_log", "pull_v6_started_datetime"),
         ("sync_log", "pull_v6_finished_datetime"),
+        ("sync_log", "push_v6_started_datetime"),
+        ("sync_log", "push_v6_finished_datetime"),
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
+        ("asset_log", "log_datetime"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -376,7 +376,6 @@ mod tests {
                     .unwrap()
                     .and_hms_opt(00, 00, 00)
                     .unwrap();
-                r.currency_id = "currency_a".to_string();
             })
         }
 
@@ -395,7 +394,6 @@ mod tests {
                         .and_hms_opt(00, 00, 00)
                         .unwrap(),
                 );
-                r.currency_id = "currency_a".to_string();
             })
         }
 

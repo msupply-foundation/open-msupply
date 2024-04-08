@@ -7,7 +7,9 @@ pub mod invoice_queries;
 use self::invoice_queries::*;
 
 pub mod mutations;
-use self::mutations::{inbound_shipment, outbound_shipment, prescription};
+use self::mutations::{
+    inbound_return, inbound_shipment, outbound_return, outbound_shipment, prescription,
+};
 
 #[cfg(test)]
 mod query_tests;
@@ -170,5 +172,76 @@ impl InvoiceMutations {
         id: String,
     ) -> Result<prescription::delete::DeleteResponse> {
         prescription::delete::delete(ctx, &store_id, id)
+    }
+
+    async fn insert_outbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_return::insert::InsertInput,
+    ) -> Result<outbound_return::insert::InsertResponse> {
+        outbound_return::insert::insert(ctx, &store_id, input)
+    }
+
+    async fn update_outbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_return::update::UpdateInput,
+    ) -> Result<outbound_return::update::UpdateResponse> {
+        outbound_return::update::update(ctx, &store_id, input)
+    }
+    async fn update_outbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: outbound_return::update_lines::UpdateInput,
+    ) -> Result<outbound_return::update_lines::UpdateResponse> {
+        outbound_return::update_lines::update_lines(ctx, &store_id, input)
+    }
+
+    async fn delete_outbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<outbound_return::delete::DeleteResponse> {
+        outbound_return::delete::delete(ctx, &store_id, id)
+    }
+
+    async fn insert_inbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_return::insert::InsertInput,
+    ) -> Result<inbound_return::insert::InsertResponse> {
+        inbound_return::insert::insert(ctx, &store_id, input)
+    }
+
+    async fn update_inbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_return::update::UpdateInput,
+    ) -> Result<inbound_return::update::UpdateResponse> {
+        inbound_return::update::update(ctx, &store_id, input)
+    }
+
+    async fn update_inbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: inbound_return::update_lines::UpdateInput,
+    ) -> Result<inbound_return::update_lines::UpdateResponse> {
+        inbound_return::update_lines::update_lines(ctx, &store_id, input)
+    }
+
+    async fn delete_inbound_return(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<inbound_return::delete::DeleteResponse> {
+        inbound_return::delete::delete(ctx, &store_id, id)
     }
 }

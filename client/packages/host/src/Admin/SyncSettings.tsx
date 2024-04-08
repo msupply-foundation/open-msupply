@@ -12,7 +12,6 @@ import {
   PasswordTextInput,
   SaveIcon,
   SyncSettingsInput,
-  Typography,
   useNotification,
 } from '@openmsupply-client/common';
 import { Setting } from './Setting';
@@ -196,9 +195,6 @@ export const SyncSettings = ({}) => {
 
   return (
     <Grid container>
-      <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-        {t('heading.settings-sync')}
-      </Typography>
       {!syncSettings ? (
         <Grid item justifyContent="center" width="100%" display="flex">
           <CircularProgress size={20} />

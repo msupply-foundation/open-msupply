@@ -35,9 +35,9 @@ fn generate_batch_update(
 
     let reduction = input.number_of_packs;
 
-    update_batch.available_number_of_packs = update_batch.available_number_of_packs - reduction;
+    update_batch.available_number_of_packs -= reduction;
     if adjust_total_number_of_packs {
-        update_batch.total_number_of_packs = update_batch.total_number_of_packs - reduction;
+        update_batch.total_number_of_packs -= reduction;
     }
 
     update_batch
@@ -49,7 +49,6 @@ fn generate_line(
         id,
         r#type: _,
         invoice_id,
-        item_id,
         stock_line_id,
         number_of_packs,
         total_before_tax,
@@ -57,6 +56,7 @@ fn generate_line(
         note,
     }: InsertStockOutLine,
     ItemRow {
+        id: item_id,
         name: item_name,
         code: item_code,
         ..
@@ -82,12 +82,12 @@ fn generate_line(
         ..
     }: InvoiceRow,
 ) -> Result<InvoiceLineRow, RepositoryError> {
-    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs as f64);
+    let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
     let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         total_before_tax,
-        &currency_id,
+        currency_id,
         &currency_rate,
     )?;
 
@@ -111,6 +111,7 @@ fn generate_line(
         tax,
         note,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
         foreign_currency_price_before_tax,
     })
 }

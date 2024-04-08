@@ -29,7 +29,7 @@ pub fn update_pack_variant(
         .transaction_sync(|connection| {
             let pack_variant_row = validate(connection, &input)?;
             let updated_pack_variant = generate(input, pack_variant_row);
-            let repo = PackVariantRowRepository::new(&connection);
+            let repo = PackVariantRowRepository::new(connection);
             repo.upsert_one(&updated_pack_variant)?;
 
             repo.find_one_by_id(&updated_pack_variant.id)?

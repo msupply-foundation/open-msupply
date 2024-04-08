@@ -58,6 +58,8 @@ pub enum Resource {
     // stocktake
     QueryStocktake,
     MutateStocktake,
+    // inventory adjustment
+    MutateInventoryAdjustment,
     // requisition
     QueryRequisition,
     MutateRequisition,
@@ -75,6 +77,11 @@ pub enum Resource {
     MutateOutboundShipment,
     // inbound shipment
     MutateInboundShipment,
+    // outbound return
+    MutateOutboundReturn,
+    // inbound return
+    MutateInboundReturn,
+    // prescription
     MutatePrescription,
     // reporting
     Report,
@@ -223,6 +230,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         ]),
     );
     map.insert(
+        Resource::MutateInventoryAdjustment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InventoryAdjustmentMutate),
+        ]),
+    );
+    map.insert(
         Resource::CreateRepack,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
@@ -310,6 +324,8 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::OutboundShipmentQuery),
             PermissionDSL::HasPermission(Permission::InboundShipmentQuery),
             PermissionDSL::HasPermission(Permission::PrescriptionQuery),
+            PermissionDSL::HasPermission(Permission::OutboundReturnQuery),
+            PermissionDSL::HasPermission(Permission::InboundReturnQuery),
         ]),
     );
     map.insert(
@@ -334,6 +350,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::InboundShipmentMutate),
+        ]),
+    );
+    // outbound return
+    map.insert(
+        Resource::MutateOutboundReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::OutboundReturnMutate),
+        ]),
+    );
+    // inbound return
+    map.insert(
+        Resource::MutateInboundReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InboundReturnMutate),
         ]),
     );
     // prescription
@@ -679,13 +711,15 @@ fn validate_resource_permissions(
         PermissionDSL::Any(children) => {
             let mut found_any = false;
             for child in children {
-                if let Ok(_) = validate_resource_permissions(
+                if validate_resource_permissions(
                     user_id,
                     user_permissions,
                     resource_request,
                     child,
                     dynamic_permissions,
-                ) {
+                )
+                .is_ok()
+                {
                     found_any = true;
                     // We could stop iterating children here but we want to collect all
                     // HasDynamicPermission instances that are valid in this Any list.
@@ -747,8 +781,7 @@ impl AuthServiceTrait for AuthService {
         // permissions.
         if user_permissions
             .iter()
-            .find(|item| item.permission == Permission::PatientQuery)
-            .is_some()
+            .any(|item| item.permission == Permission::PatientQuery)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
@@ -760,8 +793,7 @@ impl AuthServiceTrait for AuthService {
         }
         if user_permissions
             .iter()
-            .find(|item| item.permission == Permission::PatientMutate)
-            .is_some()
+            .any(|item| item.permission == Permission::PatientMutate)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),

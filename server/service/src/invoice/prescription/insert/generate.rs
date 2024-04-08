@@ -32,7 +32,7 @@ pub fn generate(
         created_datetime: current_datetime,
         status: InvoiceRowStatus::New,
         // Default
-        currency_id: currency.currency_row.id,
+        currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         colour: None,
         tax: None,
@@ -48,6 +48,7 @@ pub fn generate(
         linked_invoice_id: None,
         requisition_id: None,
         clinician_link_id: None,
+        original_shipment_id: None,
     };
 
     Ok(result)
