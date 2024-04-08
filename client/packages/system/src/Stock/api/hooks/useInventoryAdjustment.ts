@@ -1,17 +1,12 @@
 import { useCallback, useState } from 'react';
-import {
-  useAuthContext,
-  useGql,
-  useMutation,
-  useQueryClient,
-} from '@openmsupply-client/common';
+import { useMutation } from '@openmsupply-client/common';
 import {
   Adjustment,
   InventoryAdjustmentReasonRowFragment,
   StockLineRowFragment,
 } from '../../..';
-import { getSdk } from '..';
 import { STOCK_LINE } from './keys';
+import { useStockGraphQL } from '../useStockGraphQL';
 
 type DraftInventoryAdjustment = {
   direction: Adjustment;
@@ -48,10 +43,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
 }
 
 const useCreate = (stockLineId: string) => {
-  const { client } = useGql();
-  const sdk = getSdk(client);
-  const queryClient = useQueryClient();
-  const { storeId } = useAuthContext();
+  const { stockApi, storeId, queryClient } = useStockGraphQL();
 
   return useMutation(
     async ({
@@ -61,7 +53,7 @@ const useCreate = (stockLineId: string) => {
     }: DraftInventoryAdjustment) => {
       if (!direction) return;
       // TODO: error helper to handle structured/standard errors
-      return await sdk.createInventoryAdjustment({
+      return await stockApi.createInventoryAdjustment({
         storeId,
         input: {
           newNumberOfPacks,
