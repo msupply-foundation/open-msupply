@@ -1,17 +1,12 @@
 import { useCallback, useState } from 'react';
-import {
-  useAuthContext,
-  useGql,
-  useMutation,
-  useQueryClient,
-} from '@openmsupply-client/common';
+import { useMutation } from '@openmsupply-client/common';
 import {
   Adjustment,
   InventoryAdjustmentReasonRowFragment,
   StockLineRowFragment,
 } from '../../..';
-import { getSdk } from '..';
-import { STOCK } from './keys';
+import { STOCK_LINE } from './keys';
+import { useStockGraphQL } from '../useStockGraphQL';
 
 type DraftInventoryAdjustment = {
   direction: Adjustment;
@@ -22,10 +17,10 @@ type DraftInventoryAdjustment = {
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
-    direction: Adjustment.None,
+    direction: Adjustment.Addition,
     reason: null,
     adjustBy: 0,
-    newNumberOfPacks: 0,
+    newNumberOfPacks: stockLine.totalNumberOfPacks,
   });
 
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
@@ -33,7 +28,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const create = useCallback(async () => {
     await createMutation(draft);
     setDraft({
-      direction: Adjustment.None,
+      direction: Adjustment.Addition,
       reason: null,
       adjustBy: 0,
       newNumberOfPacks: 0,
@@ -48,10 +43,7 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
 }
 
 const useCreate = (stockLineId: string) => {
-  const { client } = useGql();
-  const sdk = getSdk(client);
-  const queryClient = useQueryClient();
-  const { storeId } = useAuthContext();
+  const { stockApi, storeId, queryClient } = useStockGraphQL();
 
   return useMutation(
     async ({
@@ -61,7 +53,7 @@ const useCreate = (stockLineId: string) => {
     }: DraftInventoryAdjustment) => {
       if (!direction) return;
       // TODO: error helper to handle structured/standard errors
-      return await sdk.createInventoryAdjustment({
+      return await stockApi.createInventoryAdjustment({
         storeId,
         input: {
           newNumberOfPacks,
@@ -73,7 +65,7 @@ const useCreate = (stockLineId: string) => {
     {
       onSuccess: () =>
         // Stock line needs to be re-fetched to refresh quantity
-        queryClient.invalidateQueries([STOCK]),
+        queryClient.invalidateQueries([STOCK_LINE]),
     }
   );
 };

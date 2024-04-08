@@ -5,10 +5,8 @@ import {
   DateUtils,
   Formatter,
   TextWithLabelRow,
-  InputWithLabelRow,
   BasicTextInput,
   CurrencyInput,
-  InputWithLabelRowProps,
   ExpiryDateInput,
   useTranslation,
   Box,
@@ -23,21 +21,8 @@ import {
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
 import { usePackVariant } from '../..';
+import { StyledInputRow } from './StyledInputRow';
 
-const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
-  <InputWithLabelRow
-    label={label}
-    Input={Input}
-    labelProps={{ sx: { textAlign: 'end' } }}
-    labelWidth="100px"
-    sx={{
-      justifyContent: 'space-between',
-      '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '160px',
-      },
-    }}
-  />
-);
 interface StockLineFormProps {
   draft: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
