@@ -911,6 +911,14 @@ export type ContactTraceSortInput = {
   key: ContactTraceSortFieldInput;
 };
 
+export type CreateInventoryAdjustmentInput = {
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  newNumberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type CreateInventoryAdjustmentResponse = InvoiceNode;
+
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
   error: CreateRequisitionShipmentErrorInterface;
@@ -3124,6 +3132,7 @@ export type Mutations = {
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
+  createInventoryAdjustment: CreateInventoryAdjustmentResponse;
   /**
    * Create shipment for response requisition
    * Will create Outbound Shipment with placeholder lines for each requisition line
@@ -3296,6 +3305,12 @@ export type MutationsBatchRequestRequisitionArgs = {
 
 export type MutationsBatchStocktakeArgs = {
   input: BatchStocktakeInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsCreateInventoryAdjustmentArgs = {
+  input: CreateInventoryAdjustmentInput;
   storeId: Scalars['String']['input'];
 };
 
