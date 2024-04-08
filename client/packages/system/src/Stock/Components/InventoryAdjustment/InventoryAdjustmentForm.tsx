@@ -52,26 +52,22 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           text={packUnit}
           textProps={{ textAlign: 'end' }}
         />
-        <StyledInputRow
-          label={t('label.direction')}
-          Input={
-            <Box display="flex" width={160}>
-              <InventoryAdjustmentDirectionInput
-                value={draft.direction}
-                onChange={direction => {
-                  if (direction !== undefined) {
-                    setDraft({
-                      direction,
-                      reason: null,
-                      adjustBy: 0,
-                      newNumberOfPacks: stockLine.totalNumberOfPacks,
-                    });
-                  }
-                }}
-              />
-            </Box>
-          }
-        />
+        <Box display="flex" justifyContent={'end'}>
+          <InventoryAdjustmentDirectionInput
+            value={draft.direction}
+            onChange={direction => {
+              if (direction !== undefined) {
+                setDraft({
+                  direction,
+                  reason: null,
+                  adjustBy: 0,
+                  newNumberOfPacks: stockLine.totalNumberOfPacks,
+                });
+              }
+            }}
+          />
+        </Box>
+
         <StyledInputRow
           label={t('label.reason')}
           Input={
@@ -102,7 +98,6 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.adjust-by')}
           Input={
             <NumericTextInput
-              disabled={draft.direction === Adjustment.None}
               width={160}
               max={
                 draft.direction === Adjustment.Reduction
@@ -124,10 +119,9 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           }
         />
         <StyledInputRow
-          label={t('label.new-num-packs')}
+          label={t('label.new-pack-qty')}
           Input={
             <NumericTextInput
-              disabled={draft.direction === Adjustment.None}
               width={160}
               value={draft.newNumberOfPacks}
               max={
