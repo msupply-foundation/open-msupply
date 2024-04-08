@@ -11,7 +11,7 @@ import {
   StockLineRowFragment,
 } from '../../..';
 import { getSdk } from '..';
-import { STOCK } from './keys';
+import { STOCK_LINE } from './keys';
 
 type DraftInventoryAdjustment = {
   direction: Adjustment;
@@ -73,7 +73,7 @@ const useCreate = (stockLineId: string) => {
     {
       onSuccess: () =>
         // Stock line needs to be re-fetched to refresh quantity
-        queryClient.invalidateQueries([STOCK]),
+        queryClient.invalidateQueries([STOCK_LINE]),
     }
   );
 };
