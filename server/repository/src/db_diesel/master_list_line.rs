@@ -49,7 +49,7 @@ impl<'a> MasterListLineRepository<'a> {
         MasterListLineRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter)?;
 
@@ -57,7 +57,7 @@ impl<'a> MasterListLineRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: MasterListLineFilter,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
@@ -65,7 +65,7 @@ impl<'a> MasterListLineRepository<'a> {
 
         query = query.order(master_list_line_dsl::id.asc());
 
-        let result = query.load::<MasterListLineJoin>(&self.connection.connection)?;
+        let result = query.load::<MasterListLineJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

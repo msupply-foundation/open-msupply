@@ -149,7 +149,7 @@ pub struct NameRow {
     pub is_deceased: bool,
     pub national_health_number: Option<String>,
     pub date_of_death: Option<NaiveDate>,
-    #[column_name = "custom_data"]
+    #[diesel(column_name = "custom_data")]
     pub custom_data_string: Option<String>,
 }
 
@@ -175,7 +175,7 @@ impl<'a> NameRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&mut self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
             .on_conflict(id)
@@ -186,7 +186,7 @@ impl<'a> NameRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&mut self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name)
             .values(name_row)
             .execute(&mut self.connection.connection)?;
@@ -194,7 +194,7 @@ impl<'a> NameRowRepository<'a> {
     }
 
     fn toggle_is_sync_update(
-        &self,
+        &mut self,
         name_id: &str,
         is_sync_update: bool,
     ) -> Result<(), RepositoryError> {
@@ -205,14 +205,14 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, name_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name.filter(id.eq(name_id))).execute(&mut self.connection.connection)?;
         Ok(())
     }
@@ -225,7 +225,7 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq(name_id))
             .first(&mut self.connection.connection)
@@ -233,7 +233,10 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {
+    pub fn find_one_by_code(
+        &mut self,
+        name_code: &str,
+    ) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(code.eq(name_code))
             .first(&mut self.connection.connection)
@@ -241,7 +244,7 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
+    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq_any(ids))
             .load(&mut self.connection.connection)?;
@@ -257,7 +260,10 @@ impl<'a> NameRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, name_id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(
+        &mut self,
+        name_id: &str,
+    ) -> Result<Option<bool>, RepositoryError> {
         let result = name_is_sync_update::table
             .find(name_id)
             .select(name_is_sync_update::dsl::is_sync_update)
@@ -271,11 +277,11 @@ impl<'a> NameRowRepository<'a> {
 pub struct NameRowDelete(pub String);
 // TODO soft delete
 impl Delete for NameRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         NameRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             NameRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -284,12 +290,12 @@ impl Delete for NameRowDelete {
 }
 
 impl Upsert for NameRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         NameRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             NameRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -311,7 +317,7 @@ mod test {
         )
         .await;
 
-        let repo = NameRowRepository::new(&mut connection);
+        let mut repo = NameRowRepository::new(&mut connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = NameRow {

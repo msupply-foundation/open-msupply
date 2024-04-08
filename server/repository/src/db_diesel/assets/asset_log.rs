@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 use super::super::user_row::user_account::dsl as user_account_dsl;
 use super::asset_log_row::{
     asset_log, asset_log::dsl as asset_log_dsl, latest_asset_log::dsl as latest_asset_log_dsl,
@@ -61,32 +63,35 @@ impl AssetLogFilter {
 }
 
 pub struct AssetLogRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetLogRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetLogRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<AssetLogFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<AssetLogFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: AssetLogFilter) -> Result<Option<AssetLog>, RepositoryError> {
+    pub fn query_one(
+        &mut self,
+        filter: AssetLogFilter,
+    ) -> Result<Option<AssetLog>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: AssetLogFilter,
     ) -> Result<Vec<AssetLog>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<AssetLogFilter>,
         sort: Option<AssetLogSort>,
@@ -116,13 +121,13 @@ impl<'a> AssetLogRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetLog>(&self.connection.connection)?;
+        let result = final_query.load::<AssetLog>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 
     pub fn query_latest(
-        &self,
+        &mut self,
         filter: Option<AssetLogFilter>,
     ) -> Result<Vec<AssetLog>, RepositoryError> {
         let mut query = create_latest_filtered_query(filter);
@@ -134,7 +139,7 @@ impl<'a> AssetLogRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = query.load::<AssetLog>(&self.connection.connection)?;
+        let result = query.load::<AssetLog>(self.connection.connection.deref_mut())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -200,12 +205,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_asset_log_query_repository() {
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_asset_log_sort_query_repository",
             MockDataInserts::none().assets().asset_logs(),
         )
         .await;
-        let asset_log_repository = AssetLogRepository::new(&storage_connection);
+        let mut asset_log_repository = AssetLogRepository::new(&mut storage_connection);
 
         // test query by one
 

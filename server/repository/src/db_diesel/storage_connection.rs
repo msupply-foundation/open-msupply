@@ -250,7 +250,7 @@ mod connection_manager_tests {
     async fn test_nested_tx() {
         let settings = test_db::get_test_db_settings("omsupply-nested-tx");
         let connection_manager = test_db::setup(&settings).await;
-        let connection = connection_manager.connection().unwrap();
+        let mut connection = connection_manager.connection().unwrap();
 
         assert_eq!(connection.transaction_level.get(), 0);
         let _result: Result<(), TransactionError<RepositoryError>> = connection

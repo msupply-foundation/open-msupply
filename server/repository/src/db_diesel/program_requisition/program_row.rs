@@ -55,14 +55,14 @@ impl<'a> ProgramRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ProgramRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_dsl::program)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<ProgramRow>, RepositoryError> {
         let result = program_dsl::program
             .filter(program_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -72,12 +72,12 @@ impl<'a> ProgramRowRepository<'a> {
 }
 
 impl Upsert for ProgramRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ProgramRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ProgramRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

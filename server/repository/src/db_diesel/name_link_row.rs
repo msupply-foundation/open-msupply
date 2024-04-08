@@ -13,7 +13,7 @@ table! {
 joinable!(name_link -> name (name_id));
 
 #[derive(Queryable, Insertable, Clone, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[table_name = "name_link"]
+#[diesel(table_name = name_link)]
 pub struct NameLinkRow {
     pub id: String,
     pub name_id: String,
@@ -40,35 +40,35 @@ impl<'a> NameLinkRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_link)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(feature = "postgres")]
-    pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+    pub fn insert_one_or_ignore(&mut self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
             .on_conflict(name_link::id)
             .do_nothing()
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn insert_one_or_ignore(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+    pub fn insert_one_or_ignore(&mut self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_or_ignore_into(name_link)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn insert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&mut self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 

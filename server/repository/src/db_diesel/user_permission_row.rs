@@ -146,11 +146,11 @@ impl<'a> UserPermissionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct UserPermissionRowDelete(pub String);
 impl Delete for UserPermissionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         UserPermissionRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             UserPermissionRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -159,12 +159,12 @@ impl Delete for UserPermissionRowDelete {
 }
 
 impl Upsert for UserPermissionRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         UserPermissionRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             UserPermissionRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

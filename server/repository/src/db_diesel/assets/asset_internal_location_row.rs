@@ -15,7 +15,7 @@ table! {
 }
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
-#[table_name = "asset_internal_location"]
+#[diesel(table_name = asset_internal_location)]
 pub struct AssetInternalLocationRow {
     pub id: String,
     pub asset_id: String,
@@ -23,17 +23,17 @@ pub struct AssetInternalLocationRow {
 }
 
 pub struct AssetInternalLocationRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetInternalLocationRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetInternalLocationRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
     pub fn upsert_one(
-        &self,
+        &mut self,
         asset_internal_location_row: &AssetInternalLocationRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_internal_location)
@@ -41,88 +41,88 @@ impl<'a> AssetInternalLocationRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_internal_location_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(
-        &self,
+        &mut self,
         asset_internal_location_row: &AssetInternalLocationRow,
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_internal_location)
             .values(asset_internal_location_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn insert_one(
-        &self,
+        &mut self,
         asset_internal_location_row: &AssetInternalLocationRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_internal_location)
             .values(asset_internal_location_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn find_all_by_location(
-        &self,
+        &mut self,
         some_location_id: String,
     ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(location_id.eq(some_location_id))
-            .load(&self.connection.connection);
+            .load(&mut self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_all_by_asset(
-        &self,
+        &mut self,
         some_asset_id: String,
     ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(asset_id.eq(some_asset_id))
-            .load(&self.connection.connection);
+            .load(&mut self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         asset_internal_location_id: &str,
     ) -> Result<Option<AssetInternalLocationRow>, RepositoryError> {
         let result = asset_internal_location
             .filter(id.eq(asset_internal_location_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&self, asset_internal_location_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, asset_internal_location_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_internal_location)
             .filter(id.eq(asset_internal_location_id))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn delete_all_for_asset_id(
-        &self,
+        &mut self,
         asset_id_to_delete_locations: &str,
     ) -> Result<(), RepositoryError> {
         diesel::delete(asset_internal_location)
             .filter(asset_id.eq(asset_id_to_delete_locations))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
 
 impl Upsert for AssetInternalLocationRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         let _change_log_id = AssetInternalLocationRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             AssetInternalLocationRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

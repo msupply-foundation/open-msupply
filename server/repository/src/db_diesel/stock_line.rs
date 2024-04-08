@@ -220,7 +220,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
 fn apply_item_filter(
     query: BoxedStockLineQuery,
     filter: Option<StockLineFilter>,
-    connection: &StorageConnection,
+    connection: &mut StorageConnection,
     store_id: String,
 ) -> BoxedStockLineQuery {
     if let Some(f) = filter {
@@ -229,6 +229,7 @@ fn apply_item_filter(
             item_filter.code_or_name = Some(item_code_or_name.clone());
             item_filter.is_visible = Some(true);
             item_filter.is_active = Some(true);
+            let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))
                 .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();

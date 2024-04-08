@@ -14,7 +14,7 @@ pub struct FullMockRequisition {
 
 pub fn insert_full_mock_requisition(
     requisition: &FullMockRequisition,
-    mut connection: &StorageConnection,
+    connection: &mut StorageConnection,
 ) {
     RequisitionRowRepository::new(connection)
         .upsert_one(&requisition.requisition)

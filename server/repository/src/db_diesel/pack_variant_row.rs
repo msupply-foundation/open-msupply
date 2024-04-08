@@ -32,7 +32,7 @@ joinable!(pack_variant -> item (item_id));
     Serialize,
     Deserialize,
 )]
-#[table_name = "pack_variant"]
+#[diesel(table_name = pack_variant)]
 #[serde(rename_all = "camelCase")]
 pub struct PackVariantRow {
     pub id: String,
@@ -65,10 +65,10 @@ impl<'a> PackVariantRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &PackVariantRow) -> Result<(), RepositoryError> {
         diesel::replace_into(pack_variant::dsl::pack_variant)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 

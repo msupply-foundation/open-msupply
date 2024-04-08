@@ -19,18 +19,22 @@ use crate::{
 
 #[actix_rt::test]
 async fn test_changelog() {
-    let (_, connection, _, _) =
+    let (_, mut connection, _, _) =
         test_db::setup_all("test_changelog", MockDataInserts::none().names().stores()).await;
 
     // Use location entries to populate the changelog (via the trigger)
-    let location_repo = LocationRowRepository::new(&mut connection);
-    let repo = ChangelogRepository::new(&mut connection);
     // Clear change log and get starting cursor
-    let starting_cursor = repo.latest_cursor().unwrap();
-    repo.delete(0).unwrap();
+    let starting_cursor = ChangelogRepository::new(&mut connection)
+        .latest_cursor()
+        .unwrap();
+    ChangelogRepository::new(&mut connection).delete(0).unwrap();
     // single entry:
-    location_repo.upsert_one(&mock_location_1()).unwrap();
-    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
+    LocationRowRepository::new(&mut connection)
+        .upsert_one(&mock_location_1())
+        .unwrap();
+    let mut result = ChangelogRepository::new(&mut connection)
+        .changelogs(starting_cursor, 10, None)
+        .unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -45,18 +49,22 @@ async fn test_changelog() {
 
     // querying from the first entry should give the same result:
     assert_eq!(
-        repo.changelogs(starting_cursor, 10, None).unwrap(),
-        repo.changelogs(starting_cursor + 1, 10, None).unwrap()
+        ChangelogRepository::new(&mut connection)
+            .changelogs(starting_cursor, 10, None)
+            .unwrap(),
+        ChangelogRepository::new(&mut connection)
+            .changelogs(starting_cursor + 1, 10, None)
+            .unwrap()
     );
 
     // update the entry
-    location_repo
+    LocationRowRepository::new(&mut connection)
         .upsert_one(&inline_edit(&mock_location_1(), |mut u| {
             u.code = "new_code".to_string();
             u
         }))
         .unwrap();
-    let mut result = repo
+    let mut result = ChangelogRepository::new(&mut connection)
         .changelogs((log_entry.cursor + 1) as u64, 10, None)
         .unwrap();
     assert_eq!(1, result.len());
@@ -73,7 +81,9 @@ async fn test_changelog() {
 
     // query the full list from cursor=0
     // because we use the changelog_deduped view, we should only get the latest changelog row for the record_id
-    let mut result = repo.changelogs(starting_cursor, 10, None).unwrap();
+    let mut result = ChangelogRepository::new(&mut connection)
+        .changelogs(starting_cursor, 10, None)
+        .unwrap();
     assert_eq!(1, result.len());
     let log_entry = result.pop().unwrap();
     assert_eq!(
@@ -87,8 +97,12 @@ async fn test_changelog() {
     );
 
     // add another entry
-    location_repo.upsert_one(&mock_location_on_hold()).unwrap();
-    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
+    LocationRowRepository::new(&mut connection)
+        .upsert_one(&mock_location_on_hold())
+        .unwrap();
+    let result = ChangelogRepository::new(&mut connection)
+        .changelogs(starting_cursor, 10, None)
+        .unwrap();
     assert_eq!(2, result.len());
     assert_eq!(
         result,
@@ -109,8 +123,12 @@ async fn test_changelog() {
     );
 
     // delete an entry
-    location_repo.delete(&mock_location_on_hold().id).unwrap();
-    let result = repo.changelogs(starting_cursor, 10, None).unwrap();
+    LocationRowRepository::new(&mut connection)
+        .delete(&mock_location_on_hold().id)
+        .unwrap();
+    let result = ChangelogRepository::new(&mut connection)
+        .changelogs(starting_cursor, 10, None)
+        .unwrap();
     assert_eq!(2, result.len());
     assert_eq!(
         result,
@@ -133,36 +151,48 @@ async fn test_changelog() {
 
 #[actix_rt::test]
 async fn test_changelog_iteration() {
-    let (_, connection, _, _) =
+    let (_, mut connection, _, _) =
         test_db::setup_all("test_changelog_2", MockDataInserts::none().names().stores()).await;
 
     // use names entries to populate the changelog (via the trigger)
-    let location_repo = LocationRowRepository::new(&mut connection);
-    let repo = ChangelogRepository::new(&mut connection);
     // Clear change log and get starting cursor
-    let starting_cursor = repo.latest_cursor().unwrap();
-    repo.delete(0).unwrap();
+    let starting_cursor = ChangelogRepository::new(&mut connection)
+        .latest_cursor()
+        .unwrap();
+    ChangelogRepository::new(&mut connection).delete(0).unwrap();
 
-    location_repo.upsert_one(&mock_location_1()).unwrap();
-    location_repo.upsert_one(&mock_location_on_hold()).unwrap();
-    location_repo
+    LocationRowRepository::new(&mut connection)
+        .upsert_one(&mock_location_1())
+        .unwrap();
+    LocationRowRepository::new(&mut connection)
+        .upsert_one(&mock_location_on_hold())
+        .unwrap();
+    LocationRowRepository::new(&mut connection)
         .upsert_one(&mock_location_in_another_store())
         .unwrap();
-    location_repo.upsert_one(&mock_location_2()).unwrap();
-    location_repo.delete(&mock_location_on_hold().id).unwrap();
-    location_repo
+    LocationRowRepository::new(&mut connection)
+        .upsert_one(&mock_location_2())
+        .unwrap();
+    LocationRowRepository::new(&mut connection)
+        .delete(&mock_location_on_hold().id)
+        .unwrap();
+    LocationRowRepository::new(&mut connection)
         .upsert_one(&mock_location_in_another_store())
         .unwrap();
-    location_repo.upsert_one(&mock_location_1()).unwrap();
-    location_repo
+    LocationRowRepository::new(&mut connection)
+        .upsert_one(&mock_location_1())
+        .unwrap();
+    LocationRowRepository::new(&mut connection)
         .upsert_one(&mock_location_in_another_store())
         .unwrap();
-    location_repo
+    LocationRowRepository::new(&mut connection)
         .delete(&mock_location_in_another_store().id)
         .unwrap();
 
     // test iterating through the change log
-    let changelogs = repo.changelogs(starting_cursor, 3, None).unwrap();
+    let changelogs = ChangelogRepository::new(&mut connection)
+        .changelogs(starting_cursor, 3, None)
+        .unwrap();
     let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
     assert_eq!(
         changelogs
@@ -176,7 +206,9 @@ async fn test_changelog_iteration() {
         ]
     );
 
-    let changelogs = repo.changelogs(latest_id + 1, 3, None).unwrap();
+    let changelogs = ChangelogRepository::new(&mut connection)
+        .changelogs(latest_id + 1, 3, None)
+        .unwrap();
     let latest_id: u64 = changelogs.last().map(|r| r.cursor).unwrap() as u64;
 
     assert_eq!(
@@ -187,7 +219,9 @@ async fn test_changelog_iteration() {
         vec![mock_location_in_another_store().id]
     );
 
-    let changelogs = repo.changelogs(latest_id + 1, 3, None).unwrap();
+    let changelogs = ChangelogRepository::new(&mut connection)
+        .changelogs(latest_id + 1, 3, None)
+        .unwrap();
     assert_eq!(changelogs.len(), 0);
 }
 
@@ -195,13 +229,12 @@ async fn test_changelog_iteration() {
 async fn test_changelog_filter() {
     // changelog repository gets changelog.name_id from the related name_link
     // name_link.name_id so we need to add names and name_links into the DB.
-    let (_, connection, _, _) =
+    let (_, mut connection, _, _) =
         setup_all("test_changelog_filter", MockDataInserts::none().names()).await;
 
     // But remove any names and name_links from change log so
     // the cursors below don't conflict.
-    let changelog_repo = ChangelogRepository::new(&connection);
-    changelog_repo.delete(0).unwrap();
+    ChangelogRepository::new(&mut connection).delete(0).unwrap();
 
     let log1 = ChangelogRow {
         cursor: 1,
@@ -256,7 +289,7 @@ async fn test_changelog_filter() {
 
     // Filter by table name
     assert_eq!(
-        changelog_repo
+        ChangelogRepository::new(&mut connection)
             .changelogs(
                 0,
                 20,
@@ -268,7 +301,7 @@ async fn test_changelog_filter() {
 
     // Filter by name_id in
     assert_eq!(
-        changelog_repo
+        ChangelogRepository::new(&mut connection)
             .changelogs(
                 0,
                 20,
@@ -283,7 +316,7 @@ async fn test_changelog_filter() {
 
     // Filter by store_id in or null
     assert_eq!(
-        changelog_repo
+        ChangelogRepository::new(&mut connection)
             .changelogs(
                 0,
                 20,
@@ -309,18 +342,16 @@ struct TestRecord<T> {
 /// Helper method to test name and store id
 /// Does db operation passed in as a function and then queries changelog to confirm name_id and store_id are set correctly
 fn test_changelog_name_and_store_id<T, F>(
-    mut connection: &StorageConnection,
+    connection: &mut StorageConnection,
     record: TestRecord<T>,
     row_action: ChangelogAction,
     db_op: F,
 ) where
-    F: Fn(&StorageConnection, &T),
+    F: Fn(&mut StorageConnection, &T),
 {
-    let repo = ChangelogRepository::new(connection);
-
     db_op(connection, &record.record);
 
-    let change_logs = repo
+    let change_logs = ChangelogRepository::new(connection)
         .changelogs(
             0,
             20,
@@ -399,7 +430,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         })
     }
 
-    let (_, connection, _, _) = setup_all_with_data(
+    let (_, mut connection, _, _) = setup_all_with_data(
         "test_changelog_name_and_store_id_insert",
         MockDataInserts::none().units().items(),
         inline_init(|r: &mut MockData| {
@@ -417,7 +448,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Invoice Line Insert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
@@ -433,7 +464,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Invoice Line Upsert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
@@ -442,7 +473,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Upsert,
         |connection, r| {
-            InvoiceLineRowRepository::new(&mut connection)
+            InvoiceLineRowRepository::new(connection)
                 .upsert_one(r)
                 .unwrap()
         },
@@ -451,7 +482,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Invoice Line Delete
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: invoice_line(),
             record_id: invoice_line().id,
@@ -460,7 +491,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Delete,
         |connection, r| {
-            InvoiceLineRowRepository::new(&mut connection)
+            InvoiceLineRowRepository::new(connection)
                 .delete(&r.id)
                 .unwrap()
         },
@@ -469,7 +500,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Invoice Insert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
@@ -485,7 +516,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Invoice Upsert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
@@ -493,17 +524,13 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             store_id: invoice().store_id,
         },
         ChangelogAction::Upsert,
-        |connection, r| {
-            InvoiceRowRepository::new(&mut connection)
-                .upsert_one(r)
-                .unwrap()
-        },
+        |connection, r| InvoiceRowRepository::new(connection).upsert_one(r).unwrap(),
     );
 
     // Invoice Delete
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: invoice(),
             record_id: invoice().id,
@@ -511,17 +538,13 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             store_id: invoice().store_id,
         },
         ChangelogAction::Delete,
-        |connection, r| {
-            InvoiceRowRepository::new(&mut connection)
-                .delete(&r.id)
-                .unwrap()
-        },
+        |connection, r| InvoiceRowRepository::new(connection).delete(&r.id).unwrap(),
     );
 
     // Requisition Line Insert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
@@ -537,7 +560,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Requisition Line Upsert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
@@ -546,7 +569,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Upsert,
         |connection, r| {
-            RequisitionLineRowRepository::new(&mut connection)
+            RequisitionLineRowRepository::new(connection)
                 .upsert_one(r)
                 .unwrap()
         },
@@ -555,7 +578,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Requisition Line Deletes
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: requisition_line(),
             record_id: requisition_line().id,
@@ -564,7 +587,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Delete,
         |connection, r| {
-            RequisitionLineRowRepository::new(&mut connection)
+            RequisitionLineRowRepository::new(connection)
                 .delete(&r.id)
                 .unwrap()
         },
@@ -573,7 +596,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Requisition Insert
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
@@ -589,7 +612,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Requisition Upserts
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
@@ -598,7 +621,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Upsert,
         |connection, r| {
-            RequisitionRowRepository::new(&mut connection)
+            RequisitionRowRepository::new(connection)
                 .upsert_one(r)
                 .unwrap()
         },
@@ -607,7 +630,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
     // Requisition Deletes
 
     test_changelog_name_and_store_id(
-        &connection,
+        &mut connection,
         TestRecord {
             record: requisition(),
             record_id: requisition().id,
@@ -616,7 +639,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
         },
         ChangelogAction::Delete,
         |connection, r| {
-            RequisitionRowRepository::new(&mut connection)
+            RequisitionRowRepository::new(connection)
                 .delete(&r.id)
                 .unwrap()
         },
@@ -625,15 +648,13 @@ async fn test_changelog_name_and_store_id_in_trigger() {
 
 #[actix_rt::test]
 async fn test_changelog_outgoing_sync_records() {
-    let (_, connection, _, _) = test_db::setup_all(
+    let (_, mut connection, _, _) = test_db::setup_all(
         "test_changelog_outgoing_sync_records",
         MockDataInserts::none().names().stores(),
     )
     .await;
 
-    let repo = ChangelogRepository::new(&connection);
-
-    let outgoing_results = repo
+    let outgoing_results = ChangelogRepository::new(&mut connection)
         .outgoing_sync_records_from_central(0, 10, 1, true)
         .unwrap();
     assert_eq!(outgoing_results.len(), 0); // Nothing to send to the remote site yet...
@@ -651,9 +672,9 @@ async fn test_changelog_outgoing_sync_records() {
         id: asset_class_id.clone(),
         ..Default::default()
     };
-    let _result = row.upsert(&connection).unwrap();
+    let _result = row.upsert(&mut connection).unwrap();
 
-    let outgoing_results = repo
+    let outgoing_results = ChangelogRepository::new(&mut connection)
         .outgoing_sync_records_from_central(0, 1000, 1, true)
         .unwrap();
     // outgoing_results should contain the changelog record for the asset class
@@ -669,16 +690,17 @@ async fn test_changelog_outgoing_sync_records() {
         ..Default::default()
     };
 
-    let cursor_id = row.upsert(&connection).unwrap().unwrap();
+    let cursor_id = row.upsert(&mut connection).unwrap().unwrap();
 
     // Set the source_site_id (usually this happens during integration step in sync)
-    repo.set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
+    ChangelogRepository::new(&mut connection)
+        .set_source_site_id_and_is_sync_update(cursor_id, Some(site1_id))
         .unwrap();
 
     // Now we should have two records to send to site 1 the remote site on initialisation
     // The asset class and the asset
 
-    let outgoing_results = repo
+    let outgoing_results = ChangelogRepository::new(&mut connection)
         .outgoing_sync_records_from_central(0, 1000, site1_id, false)
         .unwrap();
     assert_eq!(outgoing_results.len(), 2);
@@ -686,14 +708,14 @@ async fn test_changelog_outgoing_sync_records() {
     assert_eq!(outgoing_results[1].record_id, asset_id);
 
     // If not during initialisation, we should only get the asset_class as the asset was synced from the site already
-    let outgoing_results = repo
+    let outgoing_results = ChangelogRepository::new(&mut connection)
         .outgoing_sync_records_from_central(0, 1000, site1_id, true)
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);
     assert_eq!(outgoing_results[0].record_id, asset_class_id);
 
     // Site 2 should only get the asset_class
-    let outgoing_results = repo
+    let outgoing_results = ChangelogRepository::new(&mut connection)
         .outgoing_sync_records_from_central(0, 1000, site2_id, true)
         .unwrap();
     assert_eq!(outgoing_results.len(), 1);

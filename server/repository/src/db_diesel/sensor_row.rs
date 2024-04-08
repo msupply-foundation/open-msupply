@@ -48,8 +48,8 @@ pub fn get_sensor_type(serial: &str) -> SensorType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Serialize)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "sensor"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sensor)]
 pub struct SensorRow {
     pub id: String,
     pub name: String,
@@ -60,7 +60,7 @@ pub struct SensorRow {
     pub log_interval: Option<i32>,
     pub is_active: bool,
     pub last_connection_datetime: Option<NaiveDateTime>,
-    #[column_name = "type_"]
+    #[diesel(column_name = "type_")]
     pub r#type: SensorType,
 }
 

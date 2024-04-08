@@ -53,7 +53,10 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(
+        &mut self,
+        row: &ProgramRequisitionOrderTypeRow,
+    ) -> Result<(), RepositoryError> {
         diesel::replace_into(program_requisition_order_type_dsl::program_requisition_order_type)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -61,7 +64,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         id: &str,
     ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
@@ -72,7 +75,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
     }
 
     pub fn find_many_by_program_requisition_settings_ids(
-        &self,
+        &mut self,
         ids: &[String],
     ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
@@ -82,7 +85,7 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, order_type_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, order_type_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             program_requisition_order_type_dsl::program_requisition_order_type
                 .filter(program_requisition_order_type_dsl::id.eq(order_type_id)),
@@ -95,11 +98,11 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionOrderTypeRowDelete(pub String);
 impl Delete for ProgramRequisitionOrderTypeRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -108,12 +111,12 @@ impl Delete for ProgramRequisitionOrderTypeRowDelete {
 }
 
 impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

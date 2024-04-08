@@ -26,7 +26,7 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/postg
 #[cfg(not(feature = "postgres"))]
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/sqlite");
 
-pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
+pub fn run_db_migrations(connection: &mut StorageConnection) -> Result<(), String> {
     let mut boxed_buffer = Box::<Vec<u8>>::default();
 
     *connection
@@ -43,16 +43,16 @@ pub fn run_db_migrations(connection: &StorageConnection) -> Result<(), String> {
 
 use std::fmt::Debug as DebugTrait;
 pub trait Delete: DebugTrait {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError>;
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection);
+    fn assert_deleted(&self, con: &mut StorageConnection);
 }
 
 pub trait Upsert: DebugTrait {
     // TODO:(Long term) DELETE THIS TRAIT METHOD AND REMOVE TRIGGERS?
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError>;
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError>;
 
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &mut StorageConnection) -> Result<Option<i64>, RepositoryError> {
         self.upsert_sync(con)?;
         // When not using triggers to create changelog records, this is where you may want to implement changelog logic
         // This function should return the id of the changelog record created...
@@ -60,7 +60,7 @@ pub trait Upsert: DebugTrait {
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection);
+    fn assert_upserted(&self, con: &mut StorageConnection);
     // Test only, can be used to drill down to concrete type (see test below)
     // also casting to any must be implemented by concrete type to be able to downcast to it
     // This is needed for integration test (where test record is generated for inventory adjustment, but id is not know until site is created)

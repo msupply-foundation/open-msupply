@@ -139,7 +139,7 @@ struct IdAndTimestamp {
 struct IdAndDate {
     #[diesel(sql_type = Text)]
     id: String,
-    #[diesel(sql_type =Date)]
+    #[diesel(sql_type = Date)]
     d: NaiveDate,
 }
 #[derive(Debug, PartialEq)]

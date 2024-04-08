@@ -47,12 +47,12 @@ pub enum TemperatureBreachRowType {
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "temperature_breach"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = temperature_breach)]
 pub struct TemperatureBreachRow {
     pub id: String,
     pub duration_milliseconds: i32,
-    #[column_name = "type_"]
+    #[diesel(column_name = "type_")]
     pub r#type: TemperatureBreachRowType,
     pub sensor_id: String,
     pub location_id: Option<String>,

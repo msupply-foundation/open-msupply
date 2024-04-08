@@ -37,20 +37,20 @@ impl<'a> PeriodScheduleRepository<'a> {
         PeriodScheduleRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<PeriodScheduleFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<PeriodScheduleFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: PeriodScheduleFilter,
     ) -> Result<Vec<PeriodSchedule>, RepositoryError> {
         self.query(Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         filter: Option<PeriodScheduleFilter>,
         sort: Option<PeriodScheduleSort>,
     ) -> Result<Vec<PeriodSchedule>, RepositoryError> {

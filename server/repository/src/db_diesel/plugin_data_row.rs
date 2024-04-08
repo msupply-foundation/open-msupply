@@ -27,8 +27,8 @@ pub enum RelatedRecordType {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "plugin_data"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = plugin_data)]
 pub struct PluginDataRow {
     pub id: String,
     pub plugin_name: String,
@@ -47,10 +47,10 @@ impl<'a> PluginDataRowRepository<'a> {
         PluginDataRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&mut self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -66,10 +66,10 @@ impl<'a> PluginDataRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::replace_into(plugin_data::table)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 

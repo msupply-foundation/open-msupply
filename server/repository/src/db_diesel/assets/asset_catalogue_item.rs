@@ -40,29 +40,32 @@ pub enum AssetCatalogueItemSortField {
 pub type AssetCatalogueItemSort = Sort<AssetCatalogueItemSortField>;
 
 pub struct AssetCatalogueItemRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetCatalogueItemRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetCatalogueItemRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<AssetCatalogueItemFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &mut self,
+        filter: Option<AssetCatalogueItemFilter>,
+    ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: AssetCatalogueItemFilter,
     ) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<AssetCatalogueItemFilter>,
         sort: Option<AssetCatalogueItemSort>,
@@ -94,7 +97,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<AssetCatalogueItemRow>(&self.connection.connection)?;
+            .load::<AssetCatalogueItemRow>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

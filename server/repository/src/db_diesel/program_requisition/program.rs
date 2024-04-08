@@ -33,22 +33,25 @@ impl<'a> ProgramRepository<'a> {
         ProgramRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: ProgramFilter) -> Result<Vec<Program>, RepositoryError> {
+    pub fn query_by_filter(
+        &mut self,
+        filter: ProgramFilter,
+    ) -> Result<Vec<Program>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(&self, filter: ProgramFilter) -> Result<Option<Program>, RepositoryError> {
+    pub fn query_one(&mut self, filter: ProgramFilter) -> Result<Option<Program>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<ProgramFilter>,
         sort: Option<ProgramSort>,

@@ -55,7 +55,7 @@ impl<'a> BarcodeRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&mut self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(barcode_dsl::barcode)
             .values(row)
             .on_conflict(barcode_dsl::id)
@@ -66,14 +66,18 @@ impl<'a> BarcodeRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&mut self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(barcode_dsl::barcode)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(
+        &mut self,
+        id: &str,
+        is_sync_update: bool,
+    ) -> Result<(), RepositoryError> {
         diesel::update(barcode_is_sync_update::table.find(id))
             .set(barcode_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&mut self.connection.connection)?;
@@ -81,13 +85,13 @@ impl<'a> BarcodeRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
             .filter(barcode_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -102,7 +106,7 @@ impl<'a> BarcodeRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn sync_upsert_one(&self, row: &BarcodeRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&mut self, row: &BarcodeRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -110,7 +114,7 @@ impl<'a> BarcodeRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = barcode_is_sync_update::table
             .find(id)
             .select(barcode_is_sync_update::dsl::is_sync_update)
@@ -122,12 +126,12 @@ impl<'a> BarcodeRowRepository<'a> {
 
 pub struct BarcodeRowDelete(pub String);
 impl Upsert for BarcodeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         BarcodeRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             BarcodeRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -161,7 +165,7 @@ mod test {
 
     #[actix_rt::test]
     async fn barcode_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
+        let (_, mut connection, _, _) = setup_all(
             "barcode_is_sync_update",
             MockDataInserts::none().items().units(),
         )

@@ -3,7 +3,7 @@ use super::{user_row::user_account::dsl as user_account_dsl, StorageConnection};
 use crate::{lower, repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
-use diesel::prelude::*;
+use diesel::{prelude::*, query_builder::QueryId};
 use diesel_derive_enum::DbEnum;
 
 table! {
@@ -135,12 +135,12 @@ impl<'a> UserAccountRowRepository<'a> {
 }
 
 impl Upsert for UserAccountRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         UserAccountRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             UserAccountRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

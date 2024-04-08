@@ -20,20 +20,20 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize, Default,
 )]
-#[table_name = "asset_type"]
+#[diesel(table_name = asset_type)]
 pub struct AssetTypeRow {
     pub id: String,
     pub name: String,
-    #[column_name = "asset_category_id"]
+    #[diesel(column_name = "asset_category_id")]
     pub category_id: String,
 }
 
 pub struct AssetTypeRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetTypeRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetTypeRowRepository { connection }
     }
 
@@ -49,51 +49,51 @@ impl<'a> AssetTypeRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_type)
             .values(asset_type_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn insert_one(&self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&mut self, asset_type_row: &AssetTypeRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_type)
             .values(asset_type_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_all(&self) -> Result<Vec<AssetTypeRow>, RepositoryError> {
-        let result = asset_type.load(&self.connection.connection);
+    pub fn find_all(&mut self) -> Result<Vec<AssetTypeRow>, RepositoryError> {
+        let result = asset_type.load(&mut self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         asset_type_id: &str,
     ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         let result = asset_type
             .filter(id.eq(asset_type_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&self, asset_type_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, asset_type_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_type)
             .filter(id.eq(asset_type_id))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
 
 impl Upsert for AssetTypeRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         AssetTypeRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             AssetTypeRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
