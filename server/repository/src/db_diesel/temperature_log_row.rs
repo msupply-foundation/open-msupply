@@ -48,7 +48,7 @@ impl<'a> TemperatureLogRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&mut self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_log_dsl::temperature_log)
             .values(row)
             .on_conflict(temperature_log_dsl::id)
@@ -59,10 +59,12 @@ impl<'a> TemperatureLogRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&mut self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
+        use std::ops::DerefMut;
+
         diesel::replace_into(temperature_log_dsl::temperature_log)
             .values(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.connection.deref_mut())?;
         Ok(())
     }
 

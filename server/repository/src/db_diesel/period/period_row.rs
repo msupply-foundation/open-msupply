@@ -1,6 +1,9 @@
 use super::period_row::period::dsl as period_dsl;
 
-use crate::{repository_error::RepositoryError, StorageConnection, Upsert, db_diesel::name_link_row::name_link};
+use crate::{
+    db_diesel::name_link_row::name_link, repository_error::RepositoryError, StorageConnection,
+    Upsert,
+};
 
 use chrono::NaiveDate;
 use diesel::prelude::*;
@@ -48,14 +51,14 @@ impl<'a> PeriodRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &PeriodRow) -> Result<(), RepositoryError> {
         diesel::replace_into(period_dsl::period)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
         let result = period_dsl::period
             .filter(period_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -64,7 +67,7 @@ impl<'a> PeriodRowRepository<'a> {
     }
 
     pub fn find_many_by_program_schedule_ids(
-        &self,
+        &mut self,
         period_schedule_ids: Vec<&str>,
     ) -> Result<Vec<PeriodRow>, RepositoryError> {
         let result = period_dsl::period
@@ -75,12 +78,12 @@ impl<'a> PeriodRowRepository<'a> {
 }
 
 impl Upsert for PeriodRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         PeriodRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             PeriodRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

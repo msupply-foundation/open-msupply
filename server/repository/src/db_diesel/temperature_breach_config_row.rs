@@ -34,12 +34,12 @@ joinable!(temperature_breach_config -> store (store_id));
 allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "temperature_breach_config"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = temperature_breach_config)]
 pub struct TemperatureBreachConfigRow {
     pub id: String,
     pub duration_milliseconds: i32,
-    #[column_name = "type_"]
+    #[diesel(column_name = "type_")]
     pub r#type: TemperatureBreachRowType,
     pub description: String,
     pub is_active: bool,

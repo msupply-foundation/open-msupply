@@ -42,7 +42,10 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(
+        &mut self,
+        row: &ProgramRequisitionSettingsRow,
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(program_requisition_settings_dsl::program_requisition_settings)
             .values(row)
             .on_conflict(program_requisition_settings_dsl::id)
@@ -53,7 +56,10 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramRequisitionSettingsRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(
+        &mut self,
+        row: &ProgramRequisitionSettingsRow,
+    ) -> Result<(), RepositoryError> {
         diesel::replace_into(program_requisition_settings_dsl::program_requisition_settings)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -61,7 +67,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         id: &str,
     ) -> Result<Option<ProgramRequisitionSettingsRow>, RepositoryError> {
         let result = program_requisition_settings_dsl::program_requisition_settings
@@ -72,7 +78,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
     }
 
     pub fn find_many_by_program_id(
-        &self,
+        &mut self,
         program_id: &str,
     ) -> Result<Vec<ProgramRequisitionSettingsRow>, RepositoryError> {
         let result = program_requisition_settings_dsl::program_requisition_settings
@@ -81,7 +87,7 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, settings_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, settings_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             program_requisition_settings_dsl::program_requisition_settings
                 .filter(program_requisition_settings_dsl::id.eq(settings_id)),
@@ -94,11 +100,11 @@ impl<'a> ProgramRequisitionSettingsRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionSettingsRowDelete(pub String);
 impl Delete for ProgramRequisitionSettingsRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ProgramRequisitionSettingsRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ProgramRequisitionSettingsRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -107,12 +113,12 @@ impl Delete for ProgramRequisitionSettingsRowDelete {
 }
 
 impl Upsert for ProgramRequisitionSettingsRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ProgramRequisitionSettingsRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ProgramRequisitionSettingsRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

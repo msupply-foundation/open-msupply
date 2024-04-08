@@ -15,7 +15,7 @@ joinable!(item_link -> item (item_id));
 allow_tables_to_appear_in_same_query!(item_link, name_link);
 
 #[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default)]
-#[table_name = "item_link"]
+#[diesel(table_name = item_link)]
 pub struct ItemLinkRow {
     pub id: String,
     pub item_id: String,
@@ -31,28 +31,28 @@ impl<'a> ItemLinkRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_link_dsl::item_link)
             .values(item_link_row)
             .on_conflict(item_link::id)
             .do_update()
             .set(item_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::replace_into(item_link_dsl::item_link)
             .values(item_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn insert_one(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&mut self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item_link_dsl::item_link)
             .values(item_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -67,7 +67,10 @@ impl<'a> ItemLinkRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn insert_one_or_ignore(&self, item_link_row: &ItemLinkRow) -> Result<(), RepositoryError> {
+    pub fn insert_one_or_ignore(
+        &mut self,
+        item_link_row: &ItemLinkRow,
+    ) -> Result<(), RepositoryError> {
         diesel::insert_or_ignore_into(item_link_dsl::item_link)
             .values(item_link_row)
             .execute(&self.connection.connection)?;
@@ -75,17 +78,17 @@ impl<'a> ItemLinkRowRepository<'a> {
     }
 
     pub async fn find_all(&self) -> Result<Vec<ItemLinkRow>, RepositoryError> {
-        let result = item_link_dsl::item_link.load(&self.connection.connection);
+        let result = item_link_dsl::item_link.load(&mut self.connection.connection);
         Ok(result?)
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         item_link_id: &str,
     ) -> Result<Option<ItemLinkRow>, RepositoryError> {
         let result = item_link_dsl::item_link
             .filter(item_link::id.eq(item_link_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
@@ -115,12 +118,12 @@ impl<'a> ItemLinkRowRepository<'a> {
 }
 
 impl Upsert for ItemLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ItemLinkRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ItemLinkRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

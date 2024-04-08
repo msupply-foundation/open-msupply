@@ -55,11 +55,11 @@ impl QueryFragment<DBType> for TemperatureChart {
             union_prefix = " UNION ";
 
             out.push_sql(" SELECT ");
-            out.push_bind_param::<Timestamp, _>(&from_date)?;
+            out.push_bind_param::<Timestamp, _>(from_date)?;
             out.push_sql(" as from_datetime, ");
-            out.push_bind_param::<Timestamp, _>(&to_date)?;
+            out.push_bind_param::<Timestamp, _>(to_date)?;
             out.push_sql(" as to_datetime, ");
-            out.push_bind_param::<Text, _>(&interval_id)?;
+            out.push_bind_param::<Text, _>(interval_id)?;
             out.push_sql(" as interval_id ");
         }
 
@@ -266,12 +266,12 @@ mod test {
 
     #[actix_rt::test]
     async fn test_datetime_milliseconds() {
-        let (_, connection, _, _) =
+        let (_, mut connection, _, _) =
             setup_all("test_datetime_milliseconds", MockDataInserts::none()).await;
 
         #[derive(QueryableByName, Debug, PartialEq)]
         struct Res {
-            #[sql_type = "Bool"]
+            #[diesel(sql_type = diesel::sql_types::Bool)]
             result: bool,
         }
 
@@ -286,7 +286,7 @@ mod test {
             sql_query(query)
                 .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 50).unwrap())
                 .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 49).unwrap())
-                .load::<Res>(&connection.connection)
+                .load::<Res>(&mut connection.connection)
                 .unwrap()
         );
 
@@ -300,7 +300,7 @@ mod test {
                         .checked_add_signed(Duration::milliseconds(500))
                         .unwrap()
                 )
-                .load::<Res>(&connection.connection)
+                .load::<Res>(&mut connection.connection)
                 .unwrap()
         );
     }

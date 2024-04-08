@@ -89,14 +89,17 @@ impl<'a> ActivityLogRowRepository<'a> {
         ActivityLogRowRepository { connection }
     }
 
-    pub fn insert_one(&self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&mut self, row: &ActivityLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(activity_log_dsl::activity_log)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, log_id: &str) -> Result<Option<ActivityLogRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        log_id: &str,
+    ) -> Result<Option<ActivityLogRow>, RepositoryError> {
         let result = activity_log_dsl::activity_log
             .filter(activity_log_dsl::id.eq(log_id))
             .first(&mut self.connection.connection)
@@ -104,7 +107,10 @@ impl<'a> ActivityLogRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_record_id(&self, id: &str) -> Result<Vec<ActivityLogRow>, RepositoryError> {
+    pub fn find_many_by_record_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Vec<ActivityLogRow>, RepositoryError> {
         let result = activity_log_dsl::activity_log
             .filter(activity_log_dsl::record_id.eq(id))
             .get_results(&mut self.connection.connection)?;
@@ -113,12 +119,12 @@ impl<'a> ActivityLogRowRepository<'a> {
 }
 
 impl Upsert for ActivityLogRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ActivityLogRowRepository::new(con).insert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ActivityLogRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -130,12 +136,12 @@ impl Upsert for ActivityLogRow {
 // Only used in tests
 pub struct ActivityLogRowDelete(pub String);
 impl Delete for ActivityLogRowDelete {
-    fn delete(&self, _: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, _: &mut StorageConnection) -> Result<(), RepositoryError> {
         // Not deleting in tests, just want to check asserted_deleted
         Ok(())
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ActivityLogRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)

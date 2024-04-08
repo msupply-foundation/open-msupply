@@ -67,7 +67,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         RequisitionsInPeriodFilter {
             program_id,
             period_id,
@@ -259,7 +259,7 @@ mod test {
             ..Default::default()
         };
 
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, mut connection, _, _) = setup_all_with_data(
             "requisitions_in_period_repository",
             MockDataInserts::none().names().stores().period_schedules(),
             MockData {
@@ -285,7 +285,7 @@ mod test {
         )
         .await;
 
-        let repo = RequisitionsInPeriodRepository::new(&mut connection);
+        let mut repo = RequisitionsInPeriodRepository::new(&mut connection);
 
         // TEST query for first program in first store, and all periods
         let mut filter = RequisitionsInPeriodFilter::new()

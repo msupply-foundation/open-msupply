@@ -230,7 +230,7 @@ mod test {
             ..Default::default()
         };
 
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, mut connection, _, _) = setup_all_with_data(
             "program_supplier_repository",
             MockDataInserts::none(),
             MockData {
@@ -253,14 +253,12 @@ mod test {
 
         // TEST 1 without master list join for store 1 and without name_store_join for store 2
         // should result in nothing (since name1 is not store)
-        let repo = ProgramSupplierRepository::new(&mut connection);
-
         let filter = ProgramSupplierFilter::new().program_id(EqualFilter::equal_any(vec![
             program1.id.clone(),
             program2.id.clone(),
         ]));
 
-        let result = repo.query(&store3.id, filter);
+        let result = ProgramSupplierRepository::new(&mut connection).query(&store3.id, filter);
 
         assert_eq!(result, Ok(Vec::new()));
 
@@ -275,7 +273,7 @@ mod test {
             .upsert_one(&master_list_name_join2)
             .unwrap();
 
-        let result = repo.query(&store3.id, filter);
+        let result = ProgramSupplierRepository::new(&mut connection).query(&store3.id, filter);
 
         assert_eq!(
             result,
@@ -300,7 +298,9 @@ mod test {
             .upsert_one(&name_store_join3)
             .unwrap();
 
-        let mut result = repo.query(&store3.id, filter).unwrap();
+        let mut result = ProgramSupplierRepository::new(&mut connection)
+            .query(&store3.id, filter)
+            .unwrap();
         result.sort_by(|a, b| a.supplier.name_row.id.cmp(&b.supplier.name_row.id));
 
         assert_eq!(

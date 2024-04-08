@@ -152,7 +152,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&mut self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(requisition_dsl::requisition)
             .values(row)
             .on_conflict(requisition_dsl::id)
@@ -163,14 +163,18 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&mut self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_dsl::requisition)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(
+        &mut self,
+        id: &str,
+        is_sync_update: bool,
+    ) -> Result<(), RepositoryError> {
         diesel::update(requisition_is_sync_update::table.find(id))
             .set(requisition_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&mut self.connection.connection)?;
@@ -178,19 +182,19 @@ impl<'a> RequisitionRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    pub fn delete(&self, requisition_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, requisition_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(requisition_dsl::requisition.filter(requisition_dsl::id.eq(requisition_id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
         let result = requisition_dsl::requisition
             .filter(requisition_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -199,7 +203,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     pub fn find_max_requisition_number(
-        &self,
+        &mut self,
         r#type: RequisitionRowType,
         store_id: &str,
     ) -> Result<Option<i64>, RepositoryError> {
@@ -214,7 +218,7 @@ impl<'a> RequisitionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn sync_upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&mut self, row: &RequisitionRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -222,7 +226,7 @@ impl<'a> RequisitionRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = requisition_is_sync_update::table
             .find(id)
             .select(requisition_is_sync_update::dsl::is_sync_update)
@@ -235,11 +239,11 @@ impl<'a> RequisitionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct RequisitionRowDelete(pub String);
 impl Delete for RequisitionRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         RequisitionRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             RequisitionRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -248,12 +252,12 @@ impl Delete for RequisitionRowDelete {
 }
 
 impl Upsert for RequisitionRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         RequisitionRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             RequisitionRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -275,13 +279,13 @@ mod test {
 
     #[actix_rt::test]
     async fn approval_status_enum() {
-        let (_, connection, _, _) = setup_all(
+        let (_, mut connection, _, _) = setup_all(
             "approval_status_enum",
             MockDataInserts::none().names().stores(),
         )
         .await;
 
-        let repo = RequisitionRowRepository::new(&mut connection);
+        let mut repo = RequisitionRowRepository::new(&mut connection);
         // Try upsert all variants of RequisitionRowApprovalStatus, confirm that diesel enums match postgres
         for variant in RequisitionRowApprovalStatus::iter() {
             let row = RequisitionRow {
@@ -301,13 +305,13 @@ mod test {
 
     #[actix_rt::test]
     async fn requisition_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
+        let (_, mut connection, _, _) = setup_all(
             "requisition_is_sync_update",
             MockDataInserts::none().names().stores(),
         )
         .await;
 
-        let repo = RequisitionRowRepository::new(&mut connection);
+        let mut repo = RequisitionRowRepository::new(&mut connection);
         // Two rows, to make sure is_sync_update update only affects one row
         let row = mock_request_draft_requisition_all_fields().requisition;
         let row2 = mock_response_draft_requisition_all_fields().requisition;

@@ -36,8 +36,8 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, Serialize, Deserialize,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "asset"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = asset)]
 pub struct AssetRow {
     pub id: String,
     pub notes: Option<String>,
@@ -47,7 +47,7 @@ pub struct AssetRow {
     pub asset_type_id: Option<String>,
     pub store_id: Option<String>,
     pub serial_number: Option<String>,
-    #[column_name = "asset_catalogue_item_id"]
+    #[diesel(column_name = "asset_catalogue_item_id")]
     pub catalogue_item_id: Option<String>,
     pub installation_date: Option<NaiveDate>,
     pub replacement_date: Option<NaiveDate>,
@@ -57,11 +57,11 @@ pub struct AssetRow {
 }
 
 pub struct AssetRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetRowRepository { connection }
     }
 
@@ -77,14 +77,14 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&mut self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset)
             .values(asset_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&mut self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_row)?;
         self.insert_changelog(
             asset_row.id.to_owned(),
@@ -94,7 +94,7 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     fn insert_changelog(
-        &self,
+        &mut self,
         asset_id: String,
         action: ChangelogAction,
         row: Option<AssetRow>,
@@ -106,46 +106,46 @@ impl<'a> AssetRowRepository<'a> {
             store_id: row.map(|r| r.store_id).unwrap_or(None),
             name_link_id: None,
         };
-        ChangelogRepository::new(self.connection).insert(&row)
+        ChangelogRepository::new(&mut self.connection).insert(&row)
     }
 
-    pub fn find_all(&self) -> Result<Vec<AssetRow>, RepositoryError> {
+    pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
         let result = asset
             .filter(deleted_datetime.is_null())
-            .load(&self.connection.connection);
+            .load(&mut self.connection.connection);
         Ok(result?)
     }
 
-    pub fn find_one_by_id(&self, asset_id: &str) -> Result<Option<AssetRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, asset_id: &str) -> Result<Option<AssetRow>, RepositoryError> {
         let result = asset
             .filter(id.eq(asset_id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&self, asset_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, asset_id: &str) -> Result<(), RepositoryError> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         _ = self.insert_changelog(asset_id.to_owned(), ChangelogAction::Delete, None); // TODO: return this and enable delete sync...
         Ok(())
     }
 }
 
 impl Upsert for AssetRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         let _change_log_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 
-    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &mut StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             AssetRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

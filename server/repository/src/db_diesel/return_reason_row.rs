@@ -13,7 +13,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
-#[table_name = "return_reason"]
+#[diesel(table_name = return_reason)]
 pub struct ReturnReasonRow {
     pub id: String,
     pub is_active: bool,

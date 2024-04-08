@@ -48,17 +48,20 @@ impl<'a> BarcodeRepository<'a> {
         BarcodeRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<BarcodeFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<BarcodeFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: BarcodeFilter) -> Result<Vec<Barcode>, RepositoryError> {
+    pub fn query_by_filter(
+        &mut self,
+        filter: BarcodeFilter,
+    ) -> Result<Vec<Barcode>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<BarcodeFilter>,
         sort: Option<BarcodeSort>,
@@ -80,7 +83,7 @@ impl<'a> BarcodeRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<BarcodeJoin>(&self.connection.connection)?;
+            .load::<BarcodeJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

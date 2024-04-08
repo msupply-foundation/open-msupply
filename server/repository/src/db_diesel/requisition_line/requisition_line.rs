@@ -32,27 +32,27 @@ impl<'a> RequisitionLineRepository<'a> {
         RequisitionLineRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter)?;
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: RequisitionLineFilter,
     ) -> Result<Option<RequisitionLine>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: RequisitionLineFilter,
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
-        &self,
+        &mut self,
         filter: Option<RequisitionLineFilter>,
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
         let mut query = create_filtered_query(filter)?;

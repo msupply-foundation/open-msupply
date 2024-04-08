@@ -102,30 +102,30 @@ impl AssetFilter {
 }
 
 pub struct AssetRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<AssetFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<AssetFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: AssetFilter) -> Result<Option<Asset>, RepositoryError> {
+    pub fn query_one(&mut self, filter: AssetFilter) -> Result<Option<Asset>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: AssetFilter) -> Result<Vec<Asset>, RepositoryError> {
+    pub fn query_by_filter(&mut self, filter: AssetFilter) -> Result<Vec<Asset>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<AssetFilter>,
         sort: Option<AssetSort>,
@@ -161,7 +161,7 @@ impl<'a> AssetRepository<'a> {
         // Debug diesel query
         println!("{}", diesel::debug_query::<DBType, _>(&final_query));
 
-        let result = final_query.load::<Asset>(&self.connection.connection)?;
+        let result = final_query.load::<Asset>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -231,16 +231,13 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_asset_query_repository",
             MockDataInserts::none().stores(),
         )
         .await;
 
         // Create an asset without catalogue item
-        let asset_repository = AssetRepository::new(&storage_connection);
-        let asset_row_repository = AssetRowRepository::new(&storage_connection);
-
         let asset_id = "test_asset_id".to_string();
         let serial_number = "test_serial_number".to_string();
         let asset = AssetRow {
@@ -251,10 +248,12 @@ mod tests {
             ..Default::default()
         };
 
-        let _result = asset_row_repository.upsert_one(&asset).unwrap();
+        let _result = AssetRowRepository::new(&mut storage_connection)
+            .upsert_one(&asset)
+            .unwrap();
 
         // Query by id
-        let result = asset_repository
+        let result = AssetRepository::new(&mut storage_connection)
             .query_one(AssetFilter::new().id(EqualFilter::equal_to(&asset_id)))
             .unwrap()
             .unwrap();

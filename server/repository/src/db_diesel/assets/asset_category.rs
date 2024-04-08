@@ -46,36 +46,36 @@ impl AssetCategoryFilter {
 }
 
 pub struct AssetCategoryRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> AssetCategoryRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         AssetCategoryRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<AssetCategoryFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<AssetCategoryFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: AssetCategoryFilter,
     ) -> Result<Option<AssetCategoryRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: AssetCategoryFilter,
     ) -> Result<Vec<AssetCategoryRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<AssetCategoryFilter>,
         sort: Option<AssetCategorySort>,
@@ -102,7 +102,7 @@ impl<'a> AssetCategoryRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetCategoryRow>(&self.connection.connection)?;
+        let result = final_query.load::<AssetCategoryRow>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -145,7 +145,7 @@ mod tests {
     #[actix_rt::test]
     async fn test_asset_category_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_asset_category_query_repository",
             MockDataInserts::none(),
         )
@@ -158,25 +158,24 @@ mod tests {
             id: class_id.clone(),
             name: class_name.clone(),
         };
-        let class_row_repo = AssetClassRowRepository::new(&storage_connection);
+        let mut class_row_repo = AssetClassRowRepository::new(&mut storage_connection);
         class_row_repo.insert_one(&class_row).unwrap();
 
         // Create the category
-        let category_repository = AssetCategoryRepository::new(&storage_connection);
-        let category_row_repository = AssetCategoryRowRepository::new(&storage_connection);
-
         let id = "test_id".to_string();
         let name = "test_name".to_string();
 
         // Insert a row
-        let _category_row = category_row_repository.insert_one(&AssetCategoryRow {
-            id: id.clone(),
-            name: name.clone(),
-            class_id: class_id.clone(),
-        });
+        let _category_row = AssetCategoryRowRepository::new(&mut storage_connection).insert_one(
+            &AssetCategoryRow {
+                id: id.clone(),
+                name: name.clone(),
+                class_id: class_id.clone(),
+            },
+        );
 
         // Query by id
-        let category = category_repository
+        let category = AssetCategoryRepository::new(&mut storage_connection)
             .query_one(AssetCategoryFilter::new().id(EqualFilter::equal_to(&id)))
             .unwrap()
             .unwrap();
@@ -184,7 +183,7 @@ mod tests {
         assert_eq!(category.name, name);
 
         // Query by name
-        let category = category_repository
+        let category = AssetCategoryRepository::new(&mut storage_connection)
             .query_one(AssetCategoryFilter::new().name(StringFilter::equal_to(&name)))
             .unwrap()
             .unwrap();

@@ -17,6 +17,8 @@ diesel = { version = "2.1.5", default-features = false, features = [
     "r2d2",
     "numeric",
     "chrono",
+    "32-column-tables",
+    "with-deprecated"
 ] }
 diesel-derive-enum = { version = "2.1.0", default-features = false }
 diesel_migrations = "2.1.0"
