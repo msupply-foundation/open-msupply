@@ -37,6 +37,7 @@ pub enum ActivityLogType {
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
     InvoiceStatusVerified,
+    InventoryAdjustment,
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
