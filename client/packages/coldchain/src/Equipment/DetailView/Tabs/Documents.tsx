@@ -54,7 +54,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
   };
 
   const deleteFile = (id: string) => {
-    fetch(`${Environment.SYNC_FILES_URL}/asset/${draft.id}?id=${id}`, {
+    fetch(`${Environment.SYNC_FILES_URL}/asset/${draft.id}/${id}`, {
       method: 'DELETE',
     })
       .then(response => {
@@ -71,25 +71,29 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
       });
   };
 
-  const onUpload = (files: File[]) => {
+  const onUpload = async (files: File[]) => {
     const url = `${Environment.SYNC_FILES_URL}/asset/${draft.id}`;
     const formData = new FormData();
     files?.forEach(file => {
       formData.append('files', file);
     });
 
-    return fetch(url, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-      },
-      body: formData,
-    })
-      .then(onSuccess)
-      .catch(e => {
-        console.error(e);
-        error(t('error.an-error-occurred', { message: e.message }))();
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+        },
+        body: formData,
       });
+      if (response.ok) {
+        return onSuccess();
+      }
+      error(t('error.an-error-occurred', { message: response.statusText }))();
+    } catch (e) {
+      console.error(e);
+      error(t('error.an-error-occurred', { message: (e as Error).message }))();
+    }
   };
 
   return (

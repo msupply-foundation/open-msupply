@@ -56,7 +56,7 @@ export const FileList = ({
           >
             {file.id ? (
               <Link
-                to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}?id=${file.id}`}
+                to={`${Environment.SYNC_FILES_URL}/${tableName}/${assetId}/${file.id}`}
                 target="_blank"
               >
                 {file.name}
