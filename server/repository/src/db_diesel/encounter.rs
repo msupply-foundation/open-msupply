@@ -235,21 +235,21 @@ impl<'a> EncounterRepository<'a> {
         EncounterRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<EncounterFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<EncounterFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: EncounterFilter,
     ) -> Result<Vec<Encounter>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<EncounterFilter>,
         sort: Option<EncounterSort>,
@@ -285,7 +285,7 @@ impl<'a> EncounterRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<EncounterJoin>(&self.connection.connection)?;
+            .load::<EncounterJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

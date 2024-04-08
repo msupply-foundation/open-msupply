@@ -233,14 +233,18 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Inserts a document
-    fn _insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+    fn _insert(&mut self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(
+        &mut self,
+        id: &str,
+        is_sync_update: bool,
+    ) -> Result<(), RepositoryError> {
         diesel::update(document_is_sync_update::table.find(id))
             .set(document_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&mut self.connection.connection)?;
@@ -248,7 +252,7 @@ impl<'a> DocumentRepository<'a> {
         Ok(())
     }
 
-    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&mut self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
             .execute(&mut self.connection.connection)?;
@@ -257,7 +261,10 @@ impl<'a> DocumentRepository<'a> {
     }
 
     /// Get a specific document version
-    pub fn find_one_by_id(&self, document_id: &str) -> Result<Option<Document>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        document_id: &str,
+    ) -> Result<Option<Document>, RepositoryError> {
         let row: Option<DocumentJoin> = document::dsl::document
             .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .filter(document::dsl::id.eq(document_id))
@@ -270,7 +277,7 @@ impl<'a> DocumentRepository<'a> {
         })
     }
 
-    pub fn sync_insert(&self, row: &Document) -> Result<(), RepositoryError> {
+    pub fn sync_insert(&mut self, row: &Document) -> Result<(), RepositoryError> {
         self.insert(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -278,7 +285,7 @@ impl<'a> DocumentRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = document_is_sync_update::table
             .find(id)
             .select(document_is_sync_update::dsl::is_sync_update)
@@ -287,7 +294,7 @@ impl<'a> DocumentRepository<'a> {
         Ok(result)
     }
 
-    pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
         let query = create_latest_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
@@ -295,7 +302,7 @@ impl<'a> DocumentRepository<'a> {
 
     /// Get the latest version of some documents
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<DocumentFilter>,
         sort: Option<DocumentSort>,
@@ -340,7 +347,7 @@ impl<'a> DocumentRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: DocumentFilter,
     ) -> Result<Vec<Document>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -348,7 +355,7 @@ impl<'a> DocumentRepository<'a> {
 
     /// Gets all document versions
     pub fn document_history(
-        &self,
+        &mut self,
         filter: Option<DocumentFilter>,
     ) -> Result<Vec<Document>, RepositoryError> {
         let mut query = document::dsl::document
@@ -469,7 +476,7 @@ mod test {
 
     #[actix_rt::test]
     async fn document_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
+        let (_, mut connection, _, _) = setup_all(
             "document_is_sync_update",
             MockDataInserts::none().items().units(),
         )
@@ -483,7 +490,7 @@ mod test {
             .upsert_one(&context_row)
             .unwrap();
 
-        let repo = DocumentRepository::new(&mut connection);
+        let mut repo = DocumentRepository::new(&mut connection);
 
         let base_row = DocumentRow {
             data: "{}".to_string(),

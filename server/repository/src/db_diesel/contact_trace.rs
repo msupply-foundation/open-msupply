@@ -116,21 +116,21 @@ impl<'a> ContactTraceRepository<'a> {
         ContactTraceRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<ContactTraceFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<ContactTraceFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: ContactTraceFilter,
     ) -> Result<Vec<ContactTrace>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<ContactTraceFilter>,
         sort: Option<ContactTraceSort>,
@@ -178,6 +178,7 @@ impl<'a> ContactTraceRepository<'a> {
         //    diesel::debug_query::<DBType, _>(&final_query).to_string()
         //);
         let result = final_query
+            .load::<ContactTraceJoin>(&mut self.connection.connection)?
             .into_iter()
             .map(|row| ContactTrace {
                 contact_trace: row.0,

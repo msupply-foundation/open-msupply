@@ -77,7 +77,7 @@ pub struct ItemRowRepository<'a> {
 }
 
 fn insert_or_ignore_item_link(
-    connection: &StorageConnection,
+    connection: &mut StorageConnection,
     item_row: &ItemRow,
 ) -> Result<(), RepositoryError> {
     let item_link_row = ItemLinkRow {
@@ -94,7 +94,7 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::insert_into(item)
             .values(item_row)
             .on_conflict(id)
@@ -107,7 +107,7 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, item_row: &ItemRow) -> Result<(), RepositoryError> {
         diesel::replace_into(item)
             .values(item_row)
             .execute(&mut self.connection.connection)?;
@@ -130,14 +130,14 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result?)
     }
 
-    pub fn find_active_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+    pub fn find_active_by_id(&mut self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = self
             .find_one_by_id(item_id)?
             .and_then(|r| r.is_active.then_some(r));
         Ok(result)
     }
 
-    fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+    fn find_one_by_id(&mut self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq(item_id))
             .first(&mut self.connection.connection)
@@ -145,17 +145,17 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
+    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq_any(ids))
             .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn delete(&self, item_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(item.filter(id.eq(item_id)))
             .set(is_active.eq(false))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
@@ -163,11 +163,11 @@ impl<'a> ItemRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ItemRowDelete(pub String);
 impl Delete for ItemRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ItemRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert!(matches!(
             ItemRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(ItemRow {
@@ -179,12 +179,12 @@ impl Delete for ItemRowDelete {
 }
 
 impl Upsert for ItemRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ItemRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ItemRowRepository::new(con).find_active_by_id(&self.id),
             Ok(Some(self.clone()))

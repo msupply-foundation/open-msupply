@@ -51,7 +51,7 @@ impl<'a> MasterListRepository<'a> {
         MasterListRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<MasterListFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<MasterListFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
@@ -59,7 +59,7 @@ impl<'a> MasterListRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: MasterListFilter,
     ) -> Result<Vec<MasterList>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -129,7 +129,7 @@ impl<'a> MasterListRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<MasterListFilter>,
         sort: Option<MasterListSort>,

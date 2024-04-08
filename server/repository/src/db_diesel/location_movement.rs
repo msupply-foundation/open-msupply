@@ -43,7 +43,10 @@ impl<'a> LocationMovementRepository<'a> {
         LocationMovementRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<LocationMovementFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &mut self,
+        filter: Option<LocationMovementFilter>,
+    ) -> Result<i64, RepositoryError> {
         // TODO (beyond M2), check that store_id matches current store
         let query = create_filtered_query(filter);
 
@@ -51,14 +54,14 @@ impl<'a> LocationMovementRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: LocationMovementFilter,
     ) -> Result<Vec<LocationMovement>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<LocationMovementFilter>,
         sort: Option<LocationMovementSort>,

@@ -76,7 +76,7 @@ impl<'a> EncounterRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &EncounterRow) -> Result<(), RepositoryError> {
         diesel::insert_into(encounter::dsl::encounter)
             .values(row)
             .on_conflict(encounter::dsl::id)
@@ -87,14 +87,14 @@ impl<'a> EncounterRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &EncounterRow) -> Result<(), RepositoryError> {
         diesel::replace_into(encounter::dsl::encounter)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {
         let result = encounter::dsl::encounter
             .filter(encounter::dsl::id.eq(id))
             .first(&mut self.connection.connection)

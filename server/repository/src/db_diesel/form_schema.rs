@@ -34,21 +34,21 @@ impl<'a> FormSchemaRepository<'a> {
         FormSchemaRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<FormSchemaFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<FormSchemaFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: FormSchemaFilter,
     ) -> Result<Vec<FormSchema>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<FormSchemaFilter>,
         sort: Option<FormSchemaSort>,

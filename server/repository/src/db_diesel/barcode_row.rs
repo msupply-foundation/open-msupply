@@ -99,7 +99,10 @@ impl<'a> BarcodeRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<BarcodeRow>, RepositoryError> {
+    pub fn find_many_by_item_id(
+        &mut self,
+        item_id: &str,
+    ) -> Result<Vec<BarcodeRow>, RepositoryError> {
         let result = barcode_dsl::barcode
             .filter(barcode_dsl::item_id.eq(item_id))
             .get_results(&mut self.connection.connection)?;
@@ -171,7 +174,7 @@ mod test {
         )
         .await;
 
-        let repo = BarcodeRowRepository::new(&mut connection);
+        let mut repo = BarcodeRowRepository::new(&mut connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = mock_barcode_row_1();

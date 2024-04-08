@@ -103,7 +103,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(invoice_line)
             .values(row)
             .on_conflict(id)
@@ -114,7 +114,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -122,19 +122,19 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn update_return_reason_id(
-        &self,
+        &mut self,
         record_id: &str,
         reason_id: Option<String>,
     ) -> Result<(), RepositoryError> {
         diesel::update(invoice_line)
             .filter(id.eq(record_id))
             .set(return_reason_id.eq(reason_id))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
     pub fn update_tax(
-        &self,
+        &mut self,
         record_id: &str,
         tax_input: Option<f64>,
         total_after_tax_calculation: f64,
@@ -150,7 +150,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn update_currency(
-        &self,
+        &mut self,
         record_id: &str,
         foreign_currency_price_before_tax_calculation: Option<f64>,
     ) -> Result<(), RepositoryError> {
@@ -159,24 +159,27 @@ impl<'a> InvoiceLineRowRepository<'a> {
             .set(
                 foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
             )
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn delete(&self, invoice_line_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, invoice_line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(invoice_line.filter(id.eq(invoice_line_id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
+    pub fn find_one_by_id(&mut self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
         let result = invoice_line
             .filter(id.eq(record_id))
             .first(&mut self.connection.connection);
         result.map_err(RepositoryError::from)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &mut self,
+        ids: &[String],
+    ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
             .filter(id.eq_any(ids))
             .load(&mut self.connection.connection)?;
@@ -185,7 +188,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
 
     // TODO replace find_one_by_id with this one
     pub fn find_one_by_id_option(
-        &self,
+        &mut self,
         invoice_line_id: &str,
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
@@ -196,7 +199,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn find_many_by_invoice_and_batch_id(
-        &self,
+        &mut self,
         stock_line_id_param: &str,
         invoice_id_param: &str,
     ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
@@ -207,7 +210,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn find_many_by_invoice_id(
-        &self,
+        &mut self,
         invoice_id_param: &str,
     ) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
         let result = invoice_line
@@ -220,11 +223,11 @@ impl<'a> InvoiceLineRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceLineRowDelete(pub String);
 impl Delete for InvoiceLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         InvoiceLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.0),
             Ok(None)
@@ -233,12 +236,12 @@ impl Delete for InvoiceLineRowDelete {
 }
 
 impl Upsert for InvoiceLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         InvoiceLineRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))

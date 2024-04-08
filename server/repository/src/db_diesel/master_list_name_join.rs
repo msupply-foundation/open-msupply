@@ -38,7 +38,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_name_join)
             .values(row)
             .on_conflict(id)
@@ -49,7 +49,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &MasterListNameJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_name_join)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -67,7 +67,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
     }
 
     pub fn find_one_by_id_option(
-        &self,
+        &mut self,
         record_id: &str,
     ) -> Result<Option<MasterListNameJoinRow>, RepositoryError> {
         let result = master_list_name_join
@@ -77,7 +77,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, record_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, record_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list_name_join.filter(id.eq(record_id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
@@ -87,11 +87,11 @@ impl<'a> MasterListNameJoinRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct MasterListNameJoinRowDelete(pub String);
 impl Delete for MasterListNameJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         MasterListNameJoinRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.0),
             Ok(None)
@@ -100,12 +100,12 @@ impl Delete for MasterListNameJoinRowDelete {
 }
 
 impl Upsert for MasterListNameJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         MasterListNameJoinRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
