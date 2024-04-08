@@ -9,10 +9,12 @@ import {
   useTranslation,
   useUrlQueryParams,
   TooltipTextCell,
+  useToggle,
 } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
 
 const AssetListComponent: FC = () => {
   const {
@@ -34,6 +36,7 @@ const AssetListComponent: FC = () => {
   const pagination = { page, first, offset };
   // const navigate = useNavigate();
   const t = useTranslation('catalogue');
+  const importModalController = useToggle();
 
   const columns = useColumns<AssetCatalogueItemFragment>(
     [
@@ -84,7 +87,11 @@ const AssetListComponent: FC = () => {
 
   return (
     <>
-      <AppBarButtons />
+      <AssetCatalogueItemImportModal
+        isOpen={importModalController.isOn}
+        onClose={importModalController.toggleOff}
+      />
+      <AppBarButtons importModalController={importModalController} />
       <Toolbar />
       <DataTable
         id="item-list"

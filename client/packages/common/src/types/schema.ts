@@ -85,6 +85,7 @@ export type ActivityLogNode = {
 };
 
 export enum ActivityLogNodeType {
+  AssetCatalogueItemCreated = 'ASSET_CATALOGUE_ITEM_CREATED',
   AssetCreated = 'ASSET_CREATED',
   AssetDeleted = 'ASSET_DELETED',
   AssetLogCreated = 'ASSET_LOG_CREATED',
@@ -966,7 +967,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1880,6 +1881,28 @@ export enum InitialisationStatusType {
 
 export type InitialiseSiteResponse = SyncErrorNode | SyncSettingsNode;
 
+export type InsertAssetCatalogueItemError = {
+  __typename: 'InsertAssetCatalogueItemError';
+  error: InsertAssetCatalogueItemErrorInterface;
+};
+
+export type InsertAssetCatalogueItemErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertAssetCatalogueItemInput = {
+  categoryId: Scalars['String']['input'];
+  classId: Scalars['String']['input'];
+  code: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  manufacturer?: InputMaybe<Scalars['String']['input']>;
+  model: Scalars['String']['input'];
+  subCatalogue: Scalars['String']['input'];
+  typeId: Scalars['String']['input'];
+};
+
+export type InsertAssetCatalogueItemResponse = AssetCatalogueItemNode | InsertAssetCatalogueItemError;
+
 export type InsertAssetError = {
   __typename: 'InsertAssetError';
   error: InsertAssetErrorInterface;
@@ -2469,7 +2492,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -3152,6 +3175,7 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
+  insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
   insertContactTrace: InsertContactTraceResponse;
@@ -3417,6 +3441,12 @@ export type MutationsInitialiseSiteArgs = {
 
 export type MutationsInsertAssetArgs = {
   input: InsertAssetInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertAssetCatalogueItemArgs = {
+  input: InsertAssetCatalogueItemInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -3919,7 +3949,7 @@ export type NameStoreJoinNode = {
 
 export type NamesResponse = NameConnector;
 
-export type NoPermissionForThisStore = InsertAssetErrorInterface & {
+export type NoPermissionForThisStore = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & {
   __typename: 'NoPermissionForThisStore';
   description: Scalars['String']['output'];
 };
@@ -5173,7 +5203,7 @@ export enum ReasonType {
   Unknown = 'UNKNOWN'
 }
 
-export type RecordAlreadyExist = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
@@ -6204,7 +6234,7 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;

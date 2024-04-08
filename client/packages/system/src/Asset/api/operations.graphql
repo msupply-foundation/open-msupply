@@ -93,3 +93,21 @@ query assetCategories(
     }
   }
 }
+
+mutation insertAssetCatalogueItem(
+  $input: InsertAssetCatalogueItemInput!
+  $storeId: String!
+) {
+  insertAssetCatalogueItem(input: $input, storeId: $storeId) {
+    ... on AssetCatalogueItemNode {
+      __typename
+      id
+    }
+    ... on InsertAssetCatalogueItemError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
