@@ -28,7 +28,7 @@ impl<'a> NameTagRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameTagRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_tag_dsl::name_tag)
             .values(row)
             .on_conflict(name_tag_dsl::id)
@@ -39,14 +39,14 @@ impl<'a> NameTagRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameTagRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameTagRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_tag_dsl::name_tag)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<NameTagRow>, RepositoryError> {
         let result = name_tag_dsl::name_tag
             .filter(name_tag_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -54,7 +54,7 @@ impl<'a> NameTagRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_name(&self, name: &str) -> Result<Option<NameTagRow>, RepositoryError> {
+    pub fn find_one_by_name(&mut self, name: &str) -> Result<Option<NameTagRow>, RepositoryError> {
         let result = name_tag_dsl::name_tag
             .filter(name_tag_dsl::name.like(name))
             .first(&mut self.connection.connection)
@@ -62,7 +62,7 @@ impl<'a> NameTagRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_tag_dsl::name_tag.filter(name_tag_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
@@ -70,12 +70,12 @@ impl<'a> NameTagRowRepository<'a> {
 }
 
 impl Upsert for NameTagRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         NameTagRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             NameTagRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -93,7 +93,7 @@ mod test_name_tag_row {
 
     #[actix_rt::test]
     async fn test_name_tag_repository() {
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, mut connection, _, _) = setup_all_with_data(
             "omsupply-database-test_store_tag_repository",
             MockDataInserts::none(),
             MockData {
@@ -109,15 +109,15 @@ mod test_name_tag_row {
 
         /* TESTS */
 
-        let repo = NameTagRowRepository::new(&mut connection);
-
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
             id: "tag_name_id".to_string(),
             name: "tag1".to_string(),
         };
 
-        repo.upsert_one(&name_tag_row).unwrap();
+        NameTagRowRepository::new(&mut connection)
+            .upsert_one(&name_tag_row)
+            .unwrap();
 
         // Check we can find the name tag by id
         let found_name_tag = NameTagRowRepository::new(&mut connection)
@@ -133,7 +133,9 @@ mod test_name_tag_row {
             id: "tag_name_id".to_string(),
             name: "tag1-b".to_string(),
         };
-        repo.upsert_one(&name_tag_row).unwrap();
+        NameTagRowRepository::new(&mut connection)
+            .upsert_one(&name_tag_row)
+            .unwrap();
 
         // Check the name tag has been updated
 

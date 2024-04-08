@@ -57,7 +57,7 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::insert_into(document_registry_dsl::document_registry)
             .values(row)
             .on_conflict(document_registry_dsl::id)
@@ -68,14 +68,17 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &DocumentRegistryRow) -> Result<(), RepositoryError> {
         diesel::replace_into(document_registry_dsl::document_registry)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<DocumentRegistryRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<DocumentRegistryRow>, RepositoryError> {
         Ok(document_registry_dsl::document_registry
             .filter(document_registry_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -83,7 +86,7 @@ impl<'a> DocumentRegistryRowRepository<'a> {
     }
 
     pub fn find_many_by_id(
-        &self,
+        &mut self,
         ids: &[String],
     ) -> Result<Vec<DocumentRegistryRow>, RepositoryError> {
         Ok(document_registry_dsl::document_registry
@@ -91,7 +94,7 @@ impl<'a> DocumentRegistryRowRepository<'a> {
             .load(&mut self.connection.connection)?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             document_registry_dsl::document_registry.filter(document_registry_dsl::id.eq(id)),
         )
@@ -101,12 +104,12 @@ impl<'a> DocumentRegistryRowRepository<'a> {
 }
 
 impl Upsert for DocumentRegistryRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         DocumentRegistryRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             DocumentRegistryRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

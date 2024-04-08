@@ -309,15 +309,17 @@ mod repository_test {
     async fn test_name_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-name-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let connection = connection_manager.connection().unwrap();
+        let mut connection = connection_manager.connection().unwrap();
 
-        let repo = NameRowRepository::new(&mut connection);
         let name_1 = data::name_1();
-        NameRowRepository::new(&connection)
+        NameRowRepository::new(&mut connection)
             .insert_one(&name_1)
             .await
             .unwrap();
-        let loaded_item = repo.find_one_by_id(name_1.id.as_str()).unwrap().unwrap();
+        let loaded_item = NameRowRepository::new(&mut connection)
+            .find_one_by_id(name_1.id.as_str())
+            .unwrap()
+            .unwrap();
         assert_eq!(name_1, loaded_item);
     }
 

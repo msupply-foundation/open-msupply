@@ -33,7 +33,10 @@ impl<'a> NameTagRepository<'a> {
         NameTagRepository { connection }
     }
 
-    pub fn query(&self, filter: Option<NameTagFilter>) -> Result<Vec<NameTag>, RepositoryError> {
+    pub fn query(
+        &mut self,
+        filter: Option<NameTagFilter>,
+    ) -> Result<Vec<NameTag>, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         let result = query.load::<NameTag>(&mut self.connection.connection)?;

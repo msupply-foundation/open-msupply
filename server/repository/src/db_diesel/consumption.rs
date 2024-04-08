@@ -58,14 +58,14 @@ impl<'a> ConsumptionRepository<'a> {
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: ConsumptionFilter,
     ) -> Result<Option<ConsumptionRow>, RepositoryError> {
         Ok(self.query(Some(filter))?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         filter: Option<ConsumptionFilter>,
     ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
         // Query Consumption

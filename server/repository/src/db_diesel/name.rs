@@ -424,12 +424,12 @@ mod tests {
     #[actix_rt::test]
     async fn test_name_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) =
+        let (_, mut storage_connection, _, _) =
             test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
         let repository = NameRepository::new(&mut storage_connection);
 
         let (rows, queries) = data();
-        let name_repo = NameRowRepository::new(&storage_connection);
+        let name_repo = NameRowRepository::new(&mut storage_connection);
         for row in rows {
             name_repo.upsert_one(&row).unwrap();
         }

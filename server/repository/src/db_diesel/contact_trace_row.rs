@@ -136,7 +136,7 @@ impl<'a> ContactTraceRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .on_conflict(contact_trace::dsl::id)
@@ -147,7 +147,7 @@ impl<'a> ContactTraceRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .execute(&mut self.connection.connection)?;
@@ -181,10 +181,8 @@ mod tests {
     // This trivial looking test has been added to test name_id -> name_link_id changes
     #[actix_rt::test]
     async fn test_contact_trace_name_links() {
-        let (_, connection, _, _) =
+        let (_, mut connection, _, _) =
             test_db::setup_all("test_contact_trace_name_links", MockDataInserts::all()).await;
-        let row_repo = ContactTraceRowRepository::new(&connection);
-        let repo = ContactTraceRepository::new(&connection);
 
         let patient_link = mock_merged_patient_name_link();
         let row = ContactTraceRow {
@@ -206,13 +204,15 @@ mod tests {
             store_id: Some(mock_store_a().id),
             relationship: Some("rel".to_string()),
         };
-        row_repo.upsert_one(&row).unwrap();
+        ContactTraceRowRepository::new(&mut connection)
+            .upsert_one(&row)
+            .unwrap();
 
         // the query result should point to the actual name_ids
         let mut expected = row;
         expected.patient_id = patient_link.name_id.clone();
         expected.contact_patient_id = Some(patient_link.name_id.clone());
-        let contact_trace = repo
+        let contact_trace = ContactTraceRepository::new(&mut connection)
             .query(Pagination::all(), None, None)
             .unwrap()
             .pop()

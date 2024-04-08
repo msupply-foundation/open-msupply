@@ -169,7 +169,7 @@ impl<'a> InvoiceLineRepository<'a> {
         InvoiceLineRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<InvoiceLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<InvoiceLineFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
@@ -177,21 +177,21 @@ impl<'a> InvoiceLineRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: InvoiceLineFilter,
     ) -> Result<Vec<InvoiceLine>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: InvoiceLineFilter,
     ) -> Result<Option<InvoiceLine>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<InvoiceLineFilter>,
         sort: Option<InvoiceLineSort>,
@@ -226,13 +226,13 @@ impl<'a> InvoiceLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<InvoiceLineJoin>(&self.connection.connection)?;
+            .load::<InvoiceLineJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 
     /// Calculates invoice line stats for a given invoice ids
-    pub fn stats(&self, invoice_ids: &[String]) -> Result<Vec<PricingRow>, RepositoryError> {
+    pub fn stats(&mut self, invoice_ids: &[String]) -> Result<Vec<PricingRow>, RepositoryError> {
         let results: Vec<PricingRow> = invoice_stats_dsl::invoice_stats
             .filter(invoice_stats_dsl::invoice_id.eq_any(invoice_ids))
             .load(&mut self.connection.connection)?;

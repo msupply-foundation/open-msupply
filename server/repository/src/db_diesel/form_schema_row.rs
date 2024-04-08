@@ -83,7 +83,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(&row)
@@ -95,7 +95,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::replace_into(form_schema::dsl::form_schema)
             .values(row)
@@ -104,7 +104,7 @@ impl<'a> FormSchemaRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         schema_id: &str,
     ) -> Result<Option<FormSchemaJson>, RepositoryError> {
         let row = form_schema::dsl::form_schema
@@ -117,7 +117,10 @@ impl<'a> FormSchemaRowRepository<'a> {
         }
     }
 
-    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchemaJson>, RepositoryError> {
+    pub fn find_many_by_ids(
+        &mut self,
+        ids: &[String],
+    ) -> Result<Vec<FormSchemaJson>, RepositoryError> {
         let rows: Vec<FormSchemaRow> = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq_any(ids))
             .load(&mut self.connection.connection)?;
@@ -130,12 +133,12 @@ impl<'a> FormSchemaRowRepository<'a> {
 }
 
 impl Upsert for FormSchemaJson {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         FormSchemaRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             FormSchemaRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

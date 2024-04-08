@@ -22,11 +22,11 @@ pub struct ItemLinkRow {
 }
 
 pub struct ItemLinkRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> ItemLinkRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         ItemLinkRowRepository { connection }
     }
 
@@ -73,11 +73,11 @@ impl<'a> ItemLinkRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::insert_or_ignore_into(item_link_dsl::item_link)
             .values(item_link_row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn find_all(&self) -> Result<Vec<ItemLinkRow>, RepositoryError> {
+    pub async fn find_all(&mut self) -> Result<Vec<ItemLinkRow>, RepositoryError> {
         let result = item_link_dsl::item_link.load(&mut self.connection.connection);
         Ok(result?)
     }
@@ -94,25 +94,28 @@ impl<'a> ItemLinkRowRepository<'a> {
     }
 
     pub fn find_many_by_id(
-        &self,
+        &mut self,
         item_link_ids: &[String],
     ) -> Result<Vec<ItemLinkRow>, RepositoryError> {
         let result = item_link_dsl::item_link
             .filter(item_link::id.eq_any(item_link_ids))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn find_many_by_item_id(&self, item_id: &str) -> Result<Vec<ItemLinkRow>, RepositoryError> {
+    pub fn find_many_by_item_id(
+        &mut self,
+        item_id: &str,
+    ) -> Result<Vec<ItemLinkRow>, RepositoryError> {
         let result = item_link_dsl::item_link
             .filter(item_link::item_id.eq(item_id))
-            .load(&self.connection.connection)?;
+            .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn delete(&self, item_link_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, item_link_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(item_link_dsl::item_link.filter(item_link::id.eq(item_link_id)))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }

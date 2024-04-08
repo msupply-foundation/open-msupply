@@ -71,7 +71,7 @@ impl<'a> MasterListLineRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
         sort: Option<MasterListLineSort>,
@@ -95,7 +95,7 @@ impl<'a> MasterListLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListLineJoin>(&self.connection.connection)?;
+            .load::<MasterListLineJoin>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

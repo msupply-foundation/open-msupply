@@ -158,7 +158,7 @@ pub struct NameRowRepository<'a> {
 }
 
 fn insert_or_ignore_name_link(
-    connection: &StorageConnection,
+    connection: &mut StorageConnection,
     name_row: &NameRow,
 ) -> Result<(), RepositoryError> {
     let name_link_row = NameLinkRow {
@@ -251,7 +251,7 @@ impl<'a> NameRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&mut self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
@@ -311,7 +311,7 @@ mod test {
 
     #[actix_rt::test]
     async fn name_is_sync_update() {
-        let (_, connection, _, _) = setup_all(
+        let (_, mut connection, _, _) = setup_all(
             "name_is_sync_update",
             MockDataInserts::none().items().units(),
         )

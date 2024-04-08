@@ -93,24 +93,27 @@ impl<'a> InvoiceRepository<'a> {
         InvoiceRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<InvoiceFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<InvoiceFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: InvoiceFilter) -> Result<Vec<Invoice>, RepositoryError> {
+    pub fn query_by_filter(
+        &mut self,
+        filter: InvoiceFilter,
+    ) -> Result<Vec<Invoice>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
-    pub fn query_one(&self, filter: InvoiceFilter) -> Result<Option<Invoice>, RepositoryError> {
+    pub fn query_one(&mut self, filter: InvoiceFilter) -> Result<Option<Invoice>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     /// Gets all invoices
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<InvoiceFilter>,
         sort: Option<InvoiceSort>,
@@ -171,7 +174,7 @@ impl<'a> InvoiceRepository<'a> {
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
+    pub fn find_one_by_id(&mut self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
         Ok(invoice_dsl::invoice
             .filter(invoice_dsl::id.eq(record_id))
             .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
@@ -455,9 +458,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {
-        let (_, connection, _, _) =
+        let (_, mut connection, _, _) =
             test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
-        let repo = InvoiceRepository::new(&mut connection);
+        let mut repo = InvoiceRepository::new(&mut connection);
 
         let mut invoices = repo.query(Pagination::new(), None, None).unwrap();
 

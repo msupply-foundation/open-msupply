@@ -32,7 +32,7 @@ impl<'a> NameTagJoinRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_tag_join_dsl::name_tag_join)
             .values(row)
             .on_conflict(name_tag_join_dsl::id)
@@ -43,14 +43,14 @@ impl<'a> NameTagJoinRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameTagJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name_tag_join_dsl::name_tag_join)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<NameTagJoinRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<NameTagJoinRow>, RepositoryError> {
         let result = name_tag_join_dsl::name_tag_join
             .filter(name_tag_join_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -58,7 +58,7 @@ impl<'a> NameTagJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(name_tag_join_dsl::name_tag_join.filter(name_tag_join_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
@@ -68,11 +68,11 @@ impl<'a> NameTagJoinRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct NameTagJoinRowDelete(pub String);
 impl Delete for NameTagJoinRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         NameTagJoinRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             NameTagJoinRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -81,12 +81,12 @@ impl Delete for NameTagJoinRowDelete {
 }
 
 impl Upsert for NameTagJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         NameTagJoinRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             NameTagJoinRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -104,7 +104,7 @@ mod test_name_tag_row {
 
     #[actix_rt::test]
     async fn test_name_tag_join_repository() {
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, mut connection, _, _) = setup_all_with_data(
             "omsupply-database-test_name_tag_join_repository",
             MockDataInserts::none(),
             MockData {
@@ -119,18 +119,17 @@ mod test_name_tag_row {
         .await;
 
         /* TESTS */
-
-        let name_tag_repo = NameTagRowRepository::new(&mut connection);
-
         // Check we can insert a name tag
         let name_tag_row = NameTagRow {
             id: "tag_name_id".to_string(),
             name: "tag1".to_string(),
         };
 
-        name_tag_repo.upsert_one(&name_tag_row).unwrap();
+        NameTagRowRepository::new(&mut connection)
+            .upsert_one(&name_tag_row)
+            .unwrap();
 
-        let repo = NameTagJoinRepository::new(&mut connection);
+        let mut repo = NameTagJoinRepository::new(&mut connection);
 
         // Check we can insert a name tag join
         let name_tag_join_row = NameTagJoinRow {

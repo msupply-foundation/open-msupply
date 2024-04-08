@@ -57,7 +57,10 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(
+        &mut self,
+        row: &InventoryAdjustmentReasonRow,
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
             .on_conflict(inventory_adjustment_reason_dsl::id)
@@ -68,7 +71,10 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &InventoryAdjustmentReasonRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(
+        &mut self,
+        row: &InventoryAdjustmentReasonRow,
+    ) -> Result<(), RepositoryError> {
         diesel::replace_into(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -76,7 +82,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         id: &str,
     ) -> Result<Option<InventoryAdjustmentReasonRow>, RepositoryError> {
         let result = inventory_adjustment_reason_dsl::inventory_adjustment_reason
@@ -86,7 +92,7 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, inventory_adjustment_reason_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(inventory_adjustment_reason_dsl::inventory_adjustment_reason)
             .filter(inventory_adjustment_reason_dsl::id.eq(inventory_adjustment_reason_id))
             .execute(&mut self.connection.connection)?;
@@ -98,11 +104,11 @@ impl<'a> InventoryAdjustmentReasonRowRepository<'a> {
 pub struct InventoryAdjustmentReasonRowDelete(pub String);
 // TODO soft delete
 impl Delete for InventoryAdjustmentReasonRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         InventoryAdjustmentReasonRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             InventoryAdjustmentReasonRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -111,12 +117,12 @@ impl Delete for InventoryAdjustmentReasonRowDelete {
 }
 
 impl Upsert for InventoryAdjustmentReasonRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         InventoryAdjustmentReasonRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             InventoryAdjustmentReasonRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

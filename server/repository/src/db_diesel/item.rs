@@ -103,7 +103,7 @@ impl<'a> ItemRepository<'a> {
     }
 
     pub fn count(
-        &self,
+        &mut self,
         store_id: String,
         filter: Option<ItemFilter>,
     ) -> Result<i64, RepositoryError> {
@@ -113,7 +113,7 @@ impl<'a> ItemRepository<'a> {
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         store_id: Option<String>,
         filter: ItemFilter,
     ) -> Result<Option<Item>, RepositoryError> {
@@ -121,7 +121,7 @@ impl<'a> ItemRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: ItemFilter,
         store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
@@ -129,7 +129,7 @@ impl<'a> ItemRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<ItemFilter>,
         sort: Option<ItemSort>,
@@ -163,7 +163,7 @@ impl<'a> ItemRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemAndUnit>(&self.connection.connection)?;
+        let result = final_query.load::<ItemAndUnit>(&mut self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -295,9 +295,8 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository() {
         // Prepare
-        let (_, storage_connection, _, _) =
+        let (_, mut storage_connection, _, _) =
             test_db::setup_all("test_item_query_repository", MockDataInserts::none()).await;
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         let rows = data();
         for row in rows.iter() {
@@ -307,6 +306,7 @@ mod tests {
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
+        let mut item_query_repository = ItemRepository::new(&mut storage_connection);
 
         // Test
         // .count()
@@ -376,7 +376,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_item_query_filter_repository() {
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_item_query_filter_repository",
             MockDataInserts::none()
                 .units()
@@ -385,7 +385,7 @@ mod tests {
                 .full_master_list(),
         )
         .await;
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
+        let mut item_query_repository = ItemRepository::new(&mut storage_connection);
 
         // test any id filter:
         let results = item_query_repository
@@ -449,12 +449,11 @@ mod tests {
     #[actix_rt::test]
     async fn test_item_query_repository_visibility() {
         // Prepare
-        let (_, storage_connection, _, _) = test_db::setup_all(
+        let (_, mut storage_connection, _, _) = test_db::setup_all(
             "test_item_query_repository_visibility",
             MockDataInserts::none(),
         )
         .await;
-        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         let item_rows = vec![
             inline_init(|r: &mut ItemRow| {
@@ -563,7 +562,7 @@ mod tests {
         }
 
         for row in item_link_rows.iter() {
-            ItemLinkRowRepository::new(&storage_connection)
+            ItemLinkRowRepository::new(&mut storage_connection)
                 .upsert_one(row)
                 .unwrap();
         }
@@ -589,7 +588,7 @@ mod tests {
             .unwrap();
 
         // Before adding any joins
-        let results0 = item_query_repository
+        let results0 = ItemRepository::new(&mut storage_connection)
             .query(Pagination::new(), None, None, None)
             .unwrap();
 
@@ -601,7 +600,7 @@ mod tests {
             .unwrap();
 
         // test is_visible filter:
-        let results = item_query_repository
+        let results = ItemRepository::new(&mut storage_connection)
             .query(
                 Pagination::new(),
                 // query invisible rows
@@ -612,7 +611,7 @@ mod tests {
             .unwrap();
         assert_eq!(results.len(), 3);
         // get visible rows
-        let results = item_query_repository
+        let results = ItemRepository::new(&mut storage_connection)
             .query(
                 Pagination::new(),
                 Some(ItemFilter::new().is_visible(true)),
@@ -625,9 +624,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_item_query_sort() {
-        let (_, connection, _, _) =
+        let (_, mut connection, _, _) =
             test_db::setup_all("test_item_query_sort", MockDataInserts::all()).await;
-        let repo = ItemRepository::new(&mut connection);
+        let mut repo = ItemRepository::new(&mut connection);
 
         let mut items = repo.query(Pagination::new(), None, None, None).unwrap();
 

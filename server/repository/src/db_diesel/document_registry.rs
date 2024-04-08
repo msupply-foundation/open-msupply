@@ -54,21 +54,24 @@ impl<'a> DocumentRegistryRepository<'a> {
         DocumentRegistryRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<DocumentRegistryFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &mut self,
+        filter: Option<DocumentRegistryFilter>,
+    ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: DocumentRegistryFilter,
     ) -> Result<Vec<DocumentRegistry>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<DocumentRegistryFilter>,
         sort: Option<DocumentRegistrySort>,

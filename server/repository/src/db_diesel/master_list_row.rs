@@ -51,7 +51,7 @@ impl<'a> MasterListRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -59,7 +59,7 @@ impl<'a> MasterListRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         master_list_id: &str,
     ) -> Result<Option<MasterListRow>, RepositoryError> {
         let result = master_list
@@ -69,7 +69,7 @@ impl<'a> MasterListRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, master_list_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, master_list_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list.filter(id.eq(master_list_id)))
             .execute(&mut self.connection.connection)?;
         Ok(())

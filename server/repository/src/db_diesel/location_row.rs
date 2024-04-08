@@ -39,7 +39,7 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::insert_into(location_dsl::location)
             .values(row)
             .on_conflict(location_dsl::id)
@@ -50,14 +50,14 @@ impl<'a> LocationRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &LocationRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &LocationRow) -> Result<(), RepositoryError> {
         diesel::replace_into(location_dsl::location)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<LocationRow>, RepositoryError> {
         match location_dsl::location
             .filter(location_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -68,13 +68,13 @@ impl<'a> LocationRowRepository<'a> {
         }
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
+    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<LocationRow>, RepositoryError> {
         Ok(location_dsl::location
             .filter(location_dsl::id.eq_any(ids))
             .load(&mut self.connection.connection)?)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(location_dsl::location.filter(location_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
@@ -85,11 +85,11 @@ impl<'a> LocationRowRepository<'a> {
 // Only used in tests
 pub struct LocationRowDelete(pub String);
 impl Delete for LocationRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         LocationRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             LocationRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -98,12 +98,12 @@ impl Delete for LocationRowDelete {
 }
 
 impl Upsert for LocationRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         LocationRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             LocationRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

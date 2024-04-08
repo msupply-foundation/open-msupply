@@ -42,7 +42,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
             .on_conflict(clinician_store_join::dsl::id)
@@ -53,19 +53,23 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
-    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(
+        &mut self,
+        id: &str,
+        is_sync_update: bool,
+    ) -> Result<(), RepositoryError> {
         diesel::update(clinician_store_join_is_sync_update::table.find(id))
             .set(clinician_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
             .execute(&mut self.connection.connection)?;
@@ -74,7 +78,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     }
 
     pub fn find_one_by_id_option(
-        &self,
+        &mut self,
         row_id: &str,
     ) -> Result<Option<ClinicianStoreJoinRow>, RepositoryError> {
         let result = clinician_store_join::dsl::clinician_store_join
@@ -84,7 +88,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         result.map_err(RepositoryError::from)
     }
 
-    pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, row_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             clinician_store_join::dsl::clinician_store_join
                 .filter(clinician_store_join::dsl::id.eq(row_id)),
@@ -93,7 +97,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
         Ok(())
     }
 
-    pub fn sync_upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -101,7 +105,7 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = clinician_store_join_is_sync_update::table
             .find(id)
             .select(clinician_store_join_is_sync_update::dsl::is_sync_update)
@@ -114,12 +118,12 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 pub struct ClinicianStoreJoinRowDelete(pub String);
 
 impl Upsert for ClinicianStoreJoinRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             ClinicianStoreJoinRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
@@ -144,7 +148,7 @@ mod test {
             ..Default::default()
         };
 
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, mut connection, _, _) = setup_all_with_data(
             "clinician_store_join_is_sync_update",
             MockDataInserts::none()
                 .items()
@@ -159,7 +163,7 @@ mod test {
         )
         .await;
 
-        let repo = ClinicianStoreJoinRowRepository::new(&mut connection);
+        let mut repo = ClinicianStoreJoinRowRepository::new(&mut connection);
 
         let base_row = ClinicianStoreJoinRow {
             clinician_link_id: clinician.id,

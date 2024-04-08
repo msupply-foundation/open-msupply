@@ -47,7 +47,7 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
     }
 
     pub fn count(
-        &self,
+        &mut self,
         filter: Option<InventoryAdjustmentReasonFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
@@ -55,14 +55,14 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: InventoryAdjustmentReasonFilter,
     ) -> Result<Vec<InventoryAdjustmentReason>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<InventoryAdjustmentReasonFilter>,
         sort: Option<InventoryAdjustmentReasonSort>,

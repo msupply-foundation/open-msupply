@@ -20,22 +20,22 @@ pub struct NameLinkRow {
 }
 
 pub struct NameLinkRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> NameLinkRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         NameLinkRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &NameLinkRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &NameLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name_link)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
@@ -73,31 +73,34 @@ impl<'a> NameLinkRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         name_link_id: &str,
     ) -> Result<Option<NameLinkRow>, RepositoryError> {
         let result = name_link
             .filter(name_link::id.eq(name_link_id))
-            .first::<NameLinkRow>(&self.connection.connection)
+            .first::<NameLinkRow>(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
-    pub fn find_many_by_name_id(&self, name: &str) -> Result<Vec<NameLinkRow>, RepositoryError> {
+    pub fn find_many_by_name_id(
+        &mut self,
+        name: &str,
+    ) -> Result<Vec<NameLinkRow>, RepositoryError> {
         let result = name_link
             .filter(name_id.eq(name))
-            .load::<NameLinkRow>(&self.connection.connection)?;
+            .load::<NameLinkRow>(&mut self.connection.connection)?;
         Ok(result)
     }
 }
 
 impl Upsert for NameLinkRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         NameLinkRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             NameLinkRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
