@@ -14,14 +14,14 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
-import { PackVariantCell } from '@openmsupply-client/system';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
   onChange,
   unit,
   currency,
-  isExternalSupplier
+  isExternalSupplier,
 }: {
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
@@ -51,7 +51,7 @@ export const useOutboundLineEditColumns = ({
       'location',
       {
         accessor: ({ rowData }) => rowData.location?.code,
-        width: 70,
+        width: 85,
         Cell: LocationCell,
       },
     ],
@@ -59,17 +59,17 @@ export const useOutboundLineEditColumns = ({
       'sellPricePerPack',
       {
         Cell: CurrencyCell,
-        width: 120,
+        width: 85,
       },
     ],
-  ]
-  
+  ];
+
   if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencySellPricePerPack',
       label: 'label.fc-sell-price',
       description: 'description.fc-sell-price',
-      width: 100,
+      width: 85,
       align: ColumnAlign.Right,
       Cell: ForeignCurrencyCell,
       accessor: ({ rowData }) => {
@@ -85,7 +85,8 @@ export const useOutboundLineEditColumns = ({
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackVariantCell({
+      width: 90,
+      Cell: getPackVariantCell({
         getItemId: row => row?.item.id,
         getPackSizes: row => [row.packSize ?? 1],
         getUnitName: row => row?.item.unitName ?? null,
@@ -104,14 +105,14 @@ export const useOutboundLineEditColumns = ({
       label: 'label.available-packs',
       key: 'availableNumberOfPacks',
       align: ColumnAlign.Right,
-      width: 85,
+      width: 90,
       accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
     },
     [
       'numberOfPacks',
       {
         Cell: PackQuantityCell,
-        width: 120,
+        width: 100,
         label: 'label.pack-quantity-issued',
         setter: ({ packSize, id, numberOfPacks }) =>
           onChange(id, numberOfPacks ?? 0, packSize ?? 1),
@@ -123,7 +124,7 @@ export const useOutboundLineEditColumns = ({
         label: 'label.unit-quantity-issued',
         labelProps: { unit },
         accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-        width: 120,
+        width: 90,
       },
     ],
     {
@@ -132,43 +133,8 @@ export const useOutboundLineEditColumns = ({
       Cell: CheckCell,
       accessor: ({ rowData }) => rowData.stockLine?.onHold,
       align: ColumnAlign.Center,
-      width: 80,
-    },
-    {
-      Cell: NumberCell,
-      label: 'label.in-store',
-      key: 'totalNumberOfPacks',
-      align: ColumnAlign.Right,
-      width: 80,
-      accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
-    },
-    {
-      Cell: NumberCell,
-      label: 'label.available-packs',
-      key: 'availableNumberOfPacks',
-      align: ColumnAlign.Right,
-      width: 85,
-      accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
-    },
-    [
-      'unitQuantity',
-      {
-        label: 'label.unit-quantity-issued',
-        labelProps: { unit },
-        accessor: ({ rowData }) => rowData.numberOfPacks * rowData.packSize,
-        width: 120,
-      },
-    ],
-    [
-      'numberOfPacks',
-      {
-        Cell: PackQuantityCell,
-        width: 120,
-        label: 'label.pack-quantity-issued',
-        setter: ({ packSize, id, numberOfPacks }) =>
-          onChange(id, numberOfPacks ?? 0, packSize ?? 1),
-      },
-    ]
+      width: 70,
+    }
   );
 
   const columns = useColumns<DraftStockOutLine>(columnDefinitions, {}, [
@@ -192,7 +158,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackVariantCell({
+      Cell: getPackVariantCell({
         getItemId: row => row?.item.id,
         getPackSizes: row => [row.packSize ?? 1],
         getUnitName: row => row?.item.unitName ?? null,

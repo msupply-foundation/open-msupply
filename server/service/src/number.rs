@@ -41,6 +41,10 @@ pub fn next_number(
             NumberRowType::Stocktake => {
                 StocktakeRowRepository::new(connection_tx).find_max_stocktake_number(store_id)?
             }
+            NumberRowType::InboundReturn => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::InboundReturn, store_id)?,
+            NumberRowType::OutboundReturn => InvoiceRowRepository::new(&connection_tx)
+                .find_max_invoice_number(InvoiceRowType::OutboundReturn, store_id)?,
             NumberRowType::Program(_) => {
                 let next_number =
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
@@ -62,7 +66,7 @@ mod test {
 
     use repository::{
         mock::{
-            currency_a, mock_inbound_shipment_number_store_a, mock_name_c,
+            mock_inbound_shipment_number_store_a, mock_name_c,
             mock_outbound_shipment_number_store_a, mock_store_c, MockData, MockDataInserts,
         },
         test_db::{self, setup_all, setup_all_with_data},
@@ -85,7 +89,6 @@ mod test {
                 r.store_id = mock_store_c().id;
                 r.r#type = InvoiceRowType::OutboundShipment;
                 r.invoice_number = 100;
-                r.currency_id = currency_a().id;
             })
         }
 

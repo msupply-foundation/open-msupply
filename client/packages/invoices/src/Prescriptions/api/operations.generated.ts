@@ -94,13 +94,13 @@ export type PrescriptionRowFragment = {
     firstName?: string | null;
     lastName: string;
   } | null;
-  currency: {
+  currency?: {
     __typename: 'CurrencyNode';
     id: string;
     code: string;
     rate: number;
     isHomeCurrency: boolean;
-  };
+  } | null;
 };
 
 export type PrescriptionsQueryVariables = Types.Exact<{
@@ -206,13 +206,13 @@ export type PrescriptionsQuery = {
         firstName?: string | null;
         lastName: string;
       } | null;
-      currency: {
+      currency?: {
         __typename: 'CurrencyNode';
         id: string;
         code: string;
         rate: number;
         isHomeCurrency: boolean;
-      };
+      } | null;
     }>;
   };
 };
@@ -314,13 +314,13 @@ export type PrescriptionByNumberQuery = {
           firstName?: string | null;
           lastName: string;
         } | null;
-        currency: {
+        currency?: {
           __typename: 'CurrencyNode';
           id: string;
           code: string;
           rate: number;
           isHomeCurrency: boolean;
-        };
+        } | null;
       }
     | {
         __typename: 'NodeError';

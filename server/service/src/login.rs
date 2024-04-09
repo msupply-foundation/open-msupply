@@ -378,9 +378,16 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             Permissions::DeleteStocktakeLines => {
                 output.insert(Permission::StocktakeMutate);
             }
+            // inventory adjustments
+            Permissions::EnterInventoryAdjustments
+            | Permissions::EditInventoryAdjustments
+            | Permissions::FinaliseInventoryAdjustments => {
+                output.insert(Permission::InventoryAdjustmentMutate);
+            }
             // customer invoices
             Permissions::ViewCustomerInvoices => {
                 output.insert(Permission::OutboundShipmentQuery);
+                output.insert(Permission::InboundReturnQuery);
                 output.insert(Permission::PrescriptionQuery);
             }
             Permissions::CreateCustomerInvoices => {
@@ -394,12 +401,20 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
             // supplier invoices
             Permissions::ViewSupplierInvoices => {
                 output.insert(Permission::InboundShipmentQuery);
+                output.insert(Permission::OutboundReturnQuery);
             }
             Permissions::EditSupplierInvoices => {
                 output.insert(Permission::InboundShipmentMutate);
             }
             Permissions::CreateSupplierInvoices => {
                 output.insert(Permission::InboundShipmentMutate);
+            }
+            // returns
+            Permissions::ReturnStockFromSupplierInvoices => {
+                output.insert(Permission::OutboundReturnMutate);
+            }
+            Permissions::ReturnStockFromCustomerInvoices => {
+                output.insert(Permission::InboundReturnMutate);
             }
             // requisitions
             Permissions::ViewRequisitions => {

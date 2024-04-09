@@ -211,8 +211,7 @@ fn validate(
         .encounter
         .clinician
         .as_ref()
-        .map(|c| c.id.clone())
-        .flatten()
+        .and_then(|c| c.id.clone())
     {
         let clinician_row = validate_clinician_exists(&ctx.connection, &clinician_id)?;
         if clinician_row.is_none() {

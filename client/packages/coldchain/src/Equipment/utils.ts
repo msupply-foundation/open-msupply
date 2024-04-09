@@ -1,13 +1,14 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
-import { AssetFragment } from './api';
+import { AssetRowFragment } from './api';
 import { Formatter } from '@common/utils';
 import { AssetLogStatusInput, ReasonType, StatusType } from '@common/types';
+import { ImportRow, LineNumber } from './ImportAsset';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 
 export const assetsToCsv = (
-  items: AssetFragment[],
+  items: AssetRowFragment[],
   t: TypedTFunction<LocaleKey>
 ) => {
   const fields: string[] = [
@@ -38,10 +39,10 @@ export const parseLogStatus = (
   status: StatusType
 ): { key: LocaleKey; colour: string } | undefined => {
   switch (status) {
-    case StatusType.Decomissioned:
+    case StatusType.Decommissioned:
       return {
-        key: 'status.decomissioned',
-        colour: 'cceStatus.decomissioned',
+        key: 'status.decommissioned',
+        colour: 'cceStatus.decommissioned',
       };
     case StatusType.Functioning:
       return {
@@ -72,12 +73,12 @@ export const parseLogReason = (
   reason: ReasonType
 ): { key: LocaleKey } | undefined => {
   switch (reason) {
-    case ReasonType.AwaitingDecomissioning:
-      return { key: 'reason.awaiting-decomissioning' };
+    case ReasonType.AwaitingDecommissioning:
+      return { key: 'reason.awaiting-decommissioning' };
     case ReasonType.AwaitingInstallation:
       return { key: 'reason.awaiting-installation' };
-    case ReasonType.Decomissioned:
-      return { key: 'reason.decomissioned' };
+    case ReasonType.Decommissioned:
+      return { key: 'reason.decommissioned' };
     case ReasonType.Functioning:
       return { key: 'reason.functioning' };
     case ReasonType.LackOfPower:
@@ -107,7 +108,7 @@ export const reasonsByStatus = {
     ReasonType.AwaitingInstallation,
     ReasonType.Stored,
     ReasonType.OffsiteForRepairs,
-    ReasonType.AwaitingDecomissioning,
+    ReasonType.AwaitingDecommissioning,
   ],
   [AssetLogStatusInput.Functioning]: [],
   [AssetLogStatusInput.FunctioningButNeedsAttention]: [
@@ -119,7 +120,7 @@ export const reasonsByStatus = {
     ReasonType.LackOfPower,
     ReasonType.Unknown,
   ],
-  [AssetLogStatusInput.Decomissioned]: [],
+  [AssetLogStatusInput.Decommissioned]: [],
 };
 
 export const translateReason = (
@@ -132,4 +133,54 @@ export const translateReason = (
   const parsed = parseLogReason(reason);
 
   return parsed === undefined ? defaultValue : t(parsed.key);
+};
+
+export const importEquipmentToCsvWithErrors = (
+  assets: Partial<ImportRow & LineNumber>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+    t('label.line-number'),
+    t('label.error-message'),
+  ];
+
+  const data = assets.map(node => [
+    node.assetNumber,
+    node.catalogueItemCode,
+    node.notes,
+    node.serialNumber,
+    node.installationDate,
+    node.lineNumber,
+    node.errorMessage,
+  ]);
+
+  return Formatter.csv({ fields, data });
+};
+
+export const importEquipmentToCsv = (
+  assets: Partial<ImportRow>[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    t('label.asset-number'),
+    t('label.catalogue-item-code'),
+    t('label.asset-notes'),
+    t('label.serial'),
+    t('label.installation-date'),
+  ];
+
+  const data = assets.map(node => [
+    node.assetNumber,
+    node.catalogueItemCode,
+    node.notes,
+    node.serialNumber,
+    node.installationDate,
+  ]);
+
+  return Formatter.csv({ fields, data });
 };
