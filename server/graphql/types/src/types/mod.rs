@@ -88,6 +88,9 @@ pub use self::return_reason::*;
 pub mod currency;
 pub use self::currency::*;
 
+pub mod sync_file_reference;
+pub use self::sync_file_reference::*;
+
 use async_graphql::*;
 pub struct DeleteResponse(pub String);
 #[Object]

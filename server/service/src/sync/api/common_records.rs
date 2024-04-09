@@ -3,6 +3,7 @@ use repository::{SyncBufferAction, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
+use util::uuid::uuid;
 
 fn empty_object() -> serde_json::Value {
     json!({})
@@ -76,6 +77,15 @@ impl CommonSyncRecord {
             action,
             record_data: data,
         } = self;
+
+        let record_id = if action == SyncAction::Merge {
+            // This is (likely) a temporary fix to avoid merge sync records overriding upserts on target table
+            // causing errors as the merge is applied to record that never got upserted first.
+            uuid()
+        } else {
+            record_id
+        };
+
         Ok(SyncBufferRow {
             table_name,
             record_id,
@@ -114,5 +124,142 @@ impl CommonSyncRecord {
             action: SyncAction::Delete,
             record_data: json!({}),
         }
+    }
+}
+
+// tests
+#[cfg(test)]
+mod tests {
+    use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRowRepository};
+
+    use crate::sync::translations::special::item_merge::ItemMergeMessage;
+
+    use super::*;
+
+    #[test]
+    fn test_insert_to_upsert_mapping() {
+        let record = CommonSyncRecord {
+            table_name: "test".to_string(),
+            record_id: "test".to_string(),
+            action: SyncAction::Insert,
+            record_data: json!({}),
+        };
+
+        let row = record.to_buffer_row(None).unwrap();
+        assert_eq!(row.table_name, "test");
+        assert_eq!(row.record_id, "test");
+        assert_eq!(row.action, SyncBufferAction::Upsert);
+        assert_eq!(row.data, "{}");
+    }
+
+    #[actix_rt::test]
+    async fn test_remote_sync_batch_v5_to_sync_buffer_rows() {
+        let batch = RemoteSyncBatchV5 {
+            queue_length: 0,
+            data: vec![
+                RemoteSyncRecordV5 {
+                    sync_id: "test1".to_string(),
+                    record: CommonSyncRecord {
+                        table_name: "item".to_string(),
+                        record_id: "itemA".to_string(),
+                        action: SyncAction::Insert,
+                        record_data: json!({
+                            "ID": "itemA",
+                            "item_name": "itemA",
+                            "code": "itemA",
+                            "unit_ID": "",
+                            "type_of": "general",
+                            "default_pack_size": 1,
+                        }),
+                    },
+                },
+                RemoteSyncRecordV5 {
+                    sync_id: "test2".to_string(),
+                    record: CommonSyncRecord {
+                        table_name: "item".to_string(),
+                        record_id: "itemA".to_string(),
+                        action: SyncAction::Update,
+                        record_data: json!({
+                            "ID": "itemA",
+                            "item_name": "itemA",
+                            "code": "itemA",
+                            "unit_ID": "",
+                            "type_of": "general",
+                            "default_pack_size": 1,
+                        }),
+                    },
+                },
+                RemoteSyncRecordV5 {
+                    sync_id: "test3".to_string(),
+                    record: CommonSyncRecord {
+                        table_name: "item".to_string(),
+                        record_id: "itemB".to_string(),
+                        action: SyncAction::Insert,
+                        record_data: json!({
+                            "ID": "itemB",
+                            "item_name": "itemB",
+                            "code": "itemB",
+                            "unit_ID": "",
+                            "type_of": "general",
+                            "default_pack_size": 1,
+                        }),
+                    },
+                },
+                RemoteSyncRecordV5 {
+                    sync_id: "test4".to_string(),
+                    record: CommonSyncRecord {
+                        table_name: "item".to_string(),
+                        record_id: "itemA".to_string(),
+                        action: SyncAction::Merge,
+                        record_data: json!({
+                            "mergeIdToKeep": "itemA", "mergeIdToDelete": "itemB"
+                        }),
+                    },
+                },
+            ],
+        }
+        .to_sync_buffer_rows()
+        .unwrap();
+
+        let (_, connection, _, _) = setup_all(
+            "test_sync_buffer_merge_record_does_not_override_upsert",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let sync_buffer_repository = SyncBufferRowRepository::new(&connection);
+        sync_buffer_repository.upsert_many(&batch).unwrap();
+
+        let row = sync_buffer_repository
+            .find_one_by_record_id("itemB")
+            .unwrap()
+            .unwrap();
+        assert_eq!(row.action, SyncBufferAction::Upsert);
+
+        // ItemB Upsert + Two Upserts for itemA should should be only be persisted as one + ItemB->ItemA Merge
+        let rows = sync_buffer_repository.get_all().unwrap();
+        assert_eq!(rows.len(), 3);
+
+        // Just one update for item A
+        assert_eq!(
+            rows.iter()
+                .filter(|r| r.record_id == "itemA" && r.action == SyncBufferAction::Upsert)
+                .collect::<Vec<_>>()
+                .len(),
+            1
+        );
+
+        // Merge for itemA
+        assert_eq!(
+            rows.iter()
+                .filter(|r| r.action == SyncBufferAction::Merge
+                    && serde_json::from_str::<ItemMergeMessage>(&r.data)
+                        .unwrap()
+                        .merge_id_to_keep
+                        == "itemA")
+                .collect::<Vec<_>>()
+                .len(),
+            1
+        );
     }
 }

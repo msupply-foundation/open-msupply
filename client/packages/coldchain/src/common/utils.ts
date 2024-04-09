@@ -11,11 +11,14 @@ export const parseBreachType = (
   return { temperature, type };
 };
 
-export const useFormatTemperature = (temperature: number) => {
+export const useFormatTemperature = () => {
   const { currentLanguage: language } = useIntlUtils();
-  return new Intl.NumberFormat(language, {
+  const numberFormat = new Intl.NumberFormat(language, {
     style: 'unit',
     unit: 'celsius',
     unitDisplay: 'short',
-  }).format(NumUtils.round(temperature, 2));
+  });
+
+  return (temperature: number) =>
+    numberFormat.format(NumUtils.round(temperature, 2));
 };

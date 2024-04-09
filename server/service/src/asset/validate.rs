@@ -72,11 +72,9 @@ pub fn check_locations_are_assigned(
     asset_id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
-    Ok(
-        AssetInternalLocationRepository::new(connection).query_by_filter(
-            AssetInternalLocationFilter::new()
-                .location_id(EqualFilter::equal_any(location_ids))
-                .asset_id(EqualFilter::not_equal_to(asset_id)),
-        )?,
+    AssetInternalLocationRepository::new(connection).query_by_filter(
+        AssetInternalLocationFilter::new()
+            .location_id(EqualFilter::equal_any(location_ids))
+            .asset_id(EqualFilter::not_equal_to(asset_id)),
     )
 }

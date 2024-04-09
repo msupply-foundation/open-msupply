@@ -396,6 +396,7 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<ReasonType>;
@@ -452,6 +453,7 @@ export type AssetNode = {
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
+  documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
@@ -931,6 +933,14 @@ export type ContactTraceSortInput = {
   /** Sort query result by `key` */
   key: ContactTraceSortFieldInput;
 };
+
+export type CreateInventoryAdjustmentInput = {
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  newNumberOfPacks: Scalars['Float']['input'];
+  stockLineId: Scalars['String']['input'];
+};
+
+export type CreateInventoryAdjustmentResponse = InvoiceNode;
 
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
@@ -3178,6 +3188,7 @@ export type Mutations = {
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchStocktake: BatchStocktakeResponse;
   centralServer: CentralServerMutationNode;
+  createInventoryAdjustment: CreateInventoryAdjustmentResponse;
   /**
    * Create shipment for response requisition
    * Will create Outbound Shipment with placeholder lines for each requisition line
@@ -3350,6 +3361,12 @@ export type MutationsBatchRequestRequisitionArgs = {
 
 export type MutationsBatchStocktakeArgs = {
   input: BatchStocktakeInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsCreateInventoryAdjustmentArgs = {
+  input: CreateInventoryAdjustmentInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6062,6 +6079,22 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN'
 }
+
+export type SyncFileReferenceConnector = {
+  __typename: 'SyncFileReferenceConnector';
+  nodes: Array<SyncFileReferenceNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncFileReferenceNode = {
+  __typename: 'SyncFileReferenceNode';
+  createdDatetime: Scalars['NaiveDateTime']['output'];
+  fileName: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  mimeType?: Maybe<Scalars['String']['output']>;
+  recordId: Scalars['String']['output'];
+  tableName: Scalars['String']['output'];
+};
 
 export type SyncSettingsInput = {
   /** Sync interval */

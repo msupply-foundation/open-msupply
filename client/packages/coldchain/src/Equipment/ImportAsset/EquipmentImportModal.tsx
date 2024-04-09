@@ -14,13 +14,13 @@ import {
   FileUtils,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
-import { AssetFragment, useAssets } from '../api';
+import { useAssets } from '../api';
 import { importEquipmentToCsvWithErrors } from '../utils';
 import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
-import { LocationIds } from '../DetailView';
+import { DraftAsset } from '../types';
 
 interface EquipmentImportModalProps {
   isOpen: boolean;
@@ -49,7 +49,7 @@ export type LineNumber = {
 export const toInsertEquipmentInput = (
   row: ImportRow,
   catalogueItemData: AssetCatalogueItemFragment[] | undefined
-): Partial<AssetFragment & LocationIds> => ({
+): Partial<DraftAsset> => ({
   assetNumber: row.assetNumber,
   catalogueItemId: catalogueItemData
     ?.filter(
@@ -76,6 +76,21 @@ export const toExportEquipment = (
   notes: row.notes,
   lineNumber: index + 2,
   errorMessage: row.errorMessage,
+});
+
+export const toUpdateEquipmentInput = (
+  row: ImportRow,
+  catalogueItemData: AssetCatalogueItemFragment[] | undefined
+): Partial<DraftAsset> => ({
+  assetNumber: row.assetNumber,
+  catalogueItemId: catalogueItemData
+    ?.filter(
+      (item: { code: string | null | undefined }) =>
+        item.code == row.catalogueItemCode
+    )
+    ?.map((item: { id: string }) => item.id)
+    .pop(),
+  id: row.id,
 });
 
 export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({

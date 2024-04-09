@@ -22,10 +22,10 @@ import { AppBarButtons } from './AppBarButtons';
 import { CreateAssetModal } from './CreateAssetModal';
 import { EquipmentImportModal } from '../ImportAsset';
 import { Status } from '../Components';
-import { AssetFragment } from '../api/operations.generated';
+import { AssetRowFragment } from '../api/operations.generated';
 import { AppRoute } from '@openmsupply-client/config';
 
-const StatusCell = ({ rowData }: { rowData: AssetFragment }) => {
+const StatusCell = ({ rowData }: { rowData: AssetRowFragment }) => {
   return <Status status={rowData.statusLog?.status} />;
 };
 
@@ -49,7 +49,7 @@ const AssetListComponent: FC = () => {
     AppRoute.Equipment
   );
 
-  const columnsToCreate: ColumnDescription<AssetFragment>[] = [];
+  const columnsToCreate: ColumnDescription<AssetRowFragment>[] = [];
   if (isCentralServer)
     columnsToCreate.push({
       key: 'store',
