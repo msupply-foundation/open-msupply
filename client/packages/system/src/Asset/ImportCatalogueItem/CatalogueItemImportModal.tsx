@@ -13,9 +13,6 @@ import {
   ClickableStepper,
   FileUtils,
   FnUtils,
-  AssetClassNode,
-  AssetCategoryNode,
-  AssetTypeNode,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
@@ -39,32 +36,23 @@ export type ImportRow = {
   id: string;
   subCatalogue: string;
   code: string;
-  manufacturer: string;
+  manufacturer?: string;
   model: string;
   class: string;
+  classId?: string;
   category: string;
+  categoryId?: string;
   type: string;
-  errorMessage: string;
+  typeId?: string;
+  errorMessage?: string;
 };
 
 export type LineNumber = {
   lineNumber: number;
 };
 export const toInsertAssetItemInput = (
-  row: ImportRow,
-  assetClasses: AssetClassNode[],
-  assetCategories: AssetCategoryNode[],
-  assetTypes: AssetTypeNode[]
+  row: ImportRow
 ): AssetCatalogueItemFragment => {
-  const assetClassId = assetClasses.find(
-    assetClass => assetClass.name === row.class
-  )?.id;
-  const assetCategoryId = assetCategories.find(
-    assetCategory => assetCategory.name === row.category
-  )?.id;
-  const assetTypeId = assetTypes.find(assetType => assetType.name === row.type)
-    ?.id;
-
   return {
     __typename: 'AssetCatalogueItemNode',
     id: FnUtils.generateUUID(),
@@ -72,9 +60,9 @@ export const toInsertAssetItemInput = (
     code: row.code,
     manufacturer: row.manufacturer,
     model: row.model,
-    assetClassId: assetClassId ?? '',
-    assetCategoryId: assetCategoryId ?? '',
-    assetTypeId: assetTypeId ?? '',
+    assetClassId: row.classId ?? '',
+    assetCategoryId: row.categoryId ?? '',
+    assetTypeId: row.typeId ?? '',
   };
 };
 
@@ -141,22 +129,17 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 100).map(async asset => {
-            await insertAssetCatalogueItem(
-              toInsertAssetItemInput(
-                asset,
-                assetClasses?.nodes ?? [],
-                assetCategories?.nodes ?? [],
-                assetTypes?.nodes ?? []
-              )
-            ).catch(err => {
-              if (!err) {
-                err = { message: t('messages.unknown-error') };
+            await insertAssetCatalogueItem(toInsertAssetItemInput(asset)).catch(
+              err => {
+                if (!err) {
+                  err = { message: t('messages.unknown-error') };
+                }
+                importErrorRows.push({
+                  ...asset,
+                  errorMessage: err.message,
+                });
               }
-              importErrorRows.push({
-                ...asset,
-                errorMessage: err.message,
-              });
-            });
+            );
           })
         ).then(() => {
           // Update Progress Bar
@@ -268,7 +251,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
           }}
         />
       }
-      title={t('label.import-cce')}
+      title={t('label.import')}
       height={1000}
       width={1600}
     >
@@ -292,6 +275,9 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
               onUploadComplete={() => {
                 changeTab(Tabs.Review);
               }}
+              assetClasses={assetClasses?.nodes ?? []}
+              assetCategories={assetCategories?.nodes ?? []}
+              assetTypes={assetTypes?.nodes ?? []}
             />
             <AssetItemReviewTab
               tab={Tabs.Review}
