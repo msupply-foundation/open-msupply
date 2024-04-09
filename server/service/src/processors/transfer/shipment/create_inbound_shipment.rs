@@ -19,6 +19,10 @@ use super::{
 const DESCRIPTION: &str = "Create inbound shipment from outbound shipment";
 
 pub(crate) struct CreateInboundShipmentProcessor;
+pub enum InboundInvoiceType {
+    InboundReturn,
+    InboundShipment,
+}
 
 impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     fn get_description(&self) -> String {
@@ -28,7 +32,7 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
     /// Inbound shipment will be created when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source invoice is either Outbound shipment or Outbound Return
     /// 3. Source outbound shipment is either Shipped or Picked
     ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
@@ -43,19 +47,29 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_shipment, linked_shipment, request_requisition) =
+        let (outbound_shipment, linked_shipment, request_requisition, original_shipment) =
             match &record_for_processing.operation {
                 Operation::Upsert {
                     shipment: outbound_shipment,
                     linked_shipment,
                     linked_shipment_requisition: request_requisition,
-                } => (outbound_shipment, linked_shipment, request_requisition),
+                    linked_original_shipment: original_shipment,
+                } => (
+                    outbound_shipment,
+                    linked_shipment,
+                    request_requisition,
+                    original_shipment,
+                ),
                 _ => return Ok(None),
             };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
-            return Ok(None);
-        }
+        // Also get type for new invoice
+        let new_invoice_type = match outbound_shipment.invoice_row.r#type {
+            InvoiceRowType::OutboundShipment => InboundInvoiceType::InboundShipment,
+            InvoiceRowType::OutboundReturn => InboundInvoiceType::InboundReturn,
+            _ => return Ok(None),
+        };
+
         // 3.
         if !matches!(
             outbound_shipment.invoice_row.status,
@@ -86,14 +100,16 @@ impl ShipmentTransferProcessor for CreateInboundShipmentProcessor {
         // Execute
         let new_inbound_shipment = generate_inbound_shipment(
             connection,
-            &outbound_shipment,
+            outbound_shipment,
             record_for_processing,
             request_requisition,
+            original_shipment,
+            new_invoice_type,
         )?;
         let new_inbound_lines = generate_inbound_shipment_lines(
             connection,
             &new_inbound_shipment.id,
-            &outbound_shipment,
+            outbound_shipment,
         )?;
         let store_preferences = get_store_preferences(connection, &new_inbound_shipment.store_id)?;
 
@@ -136,6 +152,8 @@ fn generate_inbound_shipment(
     outbound_shipment: &Invoice,
     record_for_processing: &ShipmentTransferProcessorRecord,
     request_requisition: &Option<Requisition>,
+    original_shipment: &Option<Invoice>,
+    r#type: InboundInvoiceType,
 ) -> Result<InvoiceRow, RepositoryError> {
     let store_id = record_for_processing.other_party_store_id.clone();
     let name_link_id = outbound_shipment.store_row.name_id.clone();
@@ -152,6 +170,8 @@ fn generate_inbound_shipment(
         .as_ref()
         .map(|r| r.requisition_row.id.clone());
 
+    let original_shipment_id = original_shipment.as_ref().map(|s| s.invoice_row.id.clone());
+
     let formatted_ref = match &outbound_shipment_row.their_reference {
         Some(reference) => format!(
             "From invoice number: {} ({})",
@@ -163,15 +183,31 @@ fn generate_inbound_shipment(
         ),
     };
 
-    let formatted_comment = match &outbound_shipment_row.comment {
-        Some(comment) => format!("Stock transfer ({})", comment),
-        None => format!("Stock transfer"),
+    let formatted_comment = match r#type {
+        InboundInvoiceType::InboundShipment => match &outbound_shipment_row.comment {
+            Some(comment) => format!("Stock transfer ({})", comment),
+            None => "Stock transfer".to_string(),
+        },
+        InboundInvoiceType::InboundReturn => match &outbound_shipment_row.comment {
+            Some(comment) => format!("Stock return ({})", comment),
+            None => "Stock return".to_string(),
+        },
     };
 
     let result = InvoiceRow {
         id: uuid(),
-        invoice_number: next_number(connection, &NumberRowType::InboundShipment, &store_id)?,
-        r#type: InvoiceRowType::InboundShipment,
+        invoice_number: next_number(
+            connection,
+            &match r#type {
+                InboundInvoiceType::InboundShipment => NumberRowType::InboundShipment,
+                InboundInvoiceType::InboundReturn => NumberRowType::InboundReturn,
+            },
+            &store_id,
+        )?,
+        r#type: match r#type {
+            InboundInvoiceType::InboundReturn => InvoiceRowType::InboundReturn,
+            InboundInvoiceType::InboundShipment => InvoiceRowType::InboundShipment,
+        },
         name_link_id,
         store_id,
         status,
@@ -188,6 +224,7 @@ fn generate_inbound_shipment(
         tax: outbound_shipment_row.tax,
         currency_id: outbound_shipment_row.currency_id.clone(),
         currency_rate: outbound_shipment_row.currency_rate,
+        original_shipment_id,
         // Default
         colour: None,
         user_id: None,

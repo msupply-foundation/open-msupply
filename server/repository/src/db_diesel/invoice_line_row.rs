@@ -1,8 +1,8 @@
 use super::{
     inventory_adjustment_reason_row::inventory_adjustment_reason,
     invoice_line_row::invoice_line::dsl::*, invoice_row::invoice, item_link_row::item_link,
-    location_row::location, name_link_row::name_link, stock_line_row::stock_line,
-    StorageConnection,
+    location_row::location, name_link_row::name_link, return_reason_row::return_reason,
+    stock_line_row::stock_line, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
@@ -34,6 +34,7 @@ table! {
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
+        return_reason_id -> Nullable<Text>,
         foreign_currency_price_before_tax -> Nullable<Double>,
     }
 }
@@ -43,6 +44,7 @@ joinable!(invoice_line -> stock_line (stock_line_id));
 joinable!(invoice_line -> invoice (invoice_id));
 joinable!(invoice_line -> location (location_id));
 joinable!(invoice_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
+joinable!(invoice_line -> return_reason (return_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
@@ -87,6 +89,7 @@ pub struct InvoiceLineRow {
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub return_reason_id: Option<String>,
     pub foreign_currency_price_before_tax: Option<f64>,
 }
 
@@ -114,6 +117,48 @@ impl<'a> InvoiceLineRowRepository<'a> {
     pub fn upsert_one(&self, row: &InvoiceLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice_line)
             .values(row)
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_return_reason_id(
+        &self,
+        record_id: &str,
+        reason_id: Option<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(return_reason_id.eq(reason_id))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_tax(
+        &self,
+        record_id: &str,
+        tax_input: Option<f64>,
+        total_after_tax_calculation: f64,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set((
+                tax.eq(tax_input),
+                total_after_tax.eq(total_after_tax_calculation),
+            ))
+            .execute(&self.connection.connection)?;
+        Ok(())
+    }
+
+    pub fn update_currency(
+        &self,
+        record_id: &str,
+        foreign_currency_price_before_tax_calculation: Option<f64>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(invoice_line)
+            .filter(id.eq(record_id))
+            .set(
+                foreign_currency_price_before_tax.eq(foreign_currency_price_before_tax_calculation),
+            )
             .execute(&self.connection.connection)?;
         Ok(())
     }

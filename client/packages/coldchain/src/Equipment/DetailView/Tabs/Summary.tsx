@@ -12,14 +12,13 @@ import {
   Formatter,
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
-import { AssetFragment } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
 import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
-import { LocationIds } from '../DetailView';
+import { DraftAsset } from '../../types';
 interface SummaryProps {
-  draft?: AssetFragment & LocationIds;
-  onChange: (patch: Partial<AssetFragment & LocationIds>) => void;
+  draft?: DraftAsset;
+  onChange: (patch: Partial<DraftAsset>) => void;
   locations: {
     label: string;
     value: string;
@@ -246,7 +245,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput
-              value={draft.notes}
+              value={draft.notes ?? ''}
               onChange={e => onChange({ notes: e.target.value })}
               fullWidth
               multiline

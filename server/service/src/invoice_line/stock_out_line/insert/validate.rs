@@ -3,9 +3,8 @@ use repository::{InvoiceRow, InvoiceRowStatus, ItemRow, StockLine, StorageConnec
 use crate::{
     invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
     invoice_line::{
-        check_batch_exists, check_batch_on_hold, check_existing_stock_line,
-        check_item_matches_batch, check_location_on_hold,
-        validate::{check_item_exists, check_line_does_not_exist, check_number_of_packs},
+        check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
+        validate::{check_line_does_not_exist, check_number_of_packs},
         LocationIsOnHoldError,
     },
 };
@@ -24,11 +23,8 @@ pub fn validate(
     }
     let batch =
         check_batch_exists(store_id, &input.stock_line_id, connection)?.ok_or(StockLineNotFound)?;
-    let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
 
-    if !check_item_matches_batch(&batch, &item) {
-        return Err(ItemDoesNotMatchStockLine);
-    }
+    let item = batch.item_row.clone();
 
     let invoice =
         check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;

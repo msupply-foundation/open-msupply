@@ -775,7 +775,7 @@ mod permission_tests {
             TestData {
                 name: "insertOutboundShipmentLine",
                 query: r#"mutation Mutation {
-                insertOutboundShipmentLine(input: {id: "", invoiceId: "", itemId: "", stockLineId: "", numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
+                insertOutboundShipmentLine(input: {id: "", invoiceId: "", stockLineId: "", numberOfPacks: 10, totalBeforeTax: 1.5}, storeId: "") {
                   ... on InvoiceLineNode {
                     id
                   }

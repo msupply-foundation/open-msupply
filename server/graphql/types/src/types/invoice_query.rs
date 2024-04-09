@@ -30,6 +30,8 @@ pub enum InvoiceNodeType {
     Prescription,
     InventoryAddition,
     InventoryReduction,
+    OutboundReturn,
+    InboundReturn,
     Repack,
 }
 
@@ -316,25 +318,45 @@ impl InvoiceNode {
         Ok(Some(result))
     }
 
-    pub async fn currency(&self, ctx: &Context<'_>) -> Result<CurrencyNode> {
+    pub async fn currency(&self, ctx: &Context<'_>) -> Result<Option<CurrencyNode>> {
         let service_provider = ctx.service_provider();
         let currency_provider = &service_provider.currency_service;
         let service_context = &service_provider.basic_context()?;
 
+        let currency_id = if let Some(currency_id) = &self.row().currency_id {
+            currency_id
+        } else {
+            return Ok(None);
+        };
+
         let currency = currency_provider
-            .get_currency(service_context, &self.row().currency_id)
+            .get_currency(service_context, currency_id)
             .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
             .ok_or(StandardGraphqlError::InternalError(format!(
                 "Cannot find currency ({}) linked to invoice ({})",
-                &self.row().currency_id,
+                currency_id,
                 &self.row().id
             )))?;
 
-        Ok(CurrencyNode::from_domain(currency))
+        Ok(Some(CurrencyNode::from_domain(currency)))
     }
 
     pub async fn currency_rate(&self) -> &f64 {
         &self.row().currency_rate
+    }
+
+    /// Inbound Shipment that is the origin of this Outbound Return
+    /// OR Outbound Shipment that is the origin of this Inbound Return
+    pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let Some(original_shipment_id) = &self.row().original_shipment_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        Ok(loader
+            .load_one(original_shipment_id.to_string())
+            .await?
+            .map(InvoiceNode::from_domain))
     }
 }
 
@@ -431,6 +453,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
+            OutboundReturn => InvoiceRowType::OutboundReturn,
+            InboundReturn => InvoiceRowType::InboundReturn,
         }
     }
 
@@ -443,6 +467,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
+            InboundReturn => InvoiceNodeType::InboundReturn,
+            OutboundReturn => InvoiceNodeType::OutboundReturn,
         }
     }
 }
@@ -501,7 +527,7 @@ mod test {
                 r.id = "test_invoice_pricing".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
-                r.currency_id = currency_a().id;
+                r.currency_id = Some(currency_a().id);
             })
         }
         fn line1() -> InvoiceLineRow {

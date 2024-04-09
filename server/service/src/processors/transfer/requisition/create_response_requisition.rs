@@ -70,11 +70,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
 
         let new_response_requisition = RequisitionRow {
             approval_status,
-            ..generate_response_requisition(
-                connection,
-                &request_requisition,
-                record_for_processing,
-            )?
+            ..generate_response_requisition(connection, request_requisition, record_for_processing)?
         };
 
         let new_requisition_lines = generate_response_requisition_lines(
@@ -125,24 +121,22 @@ fn generate_response_requisition(
     let their_ref = match &request_requisition_row.their_reference {
         Some(reference) => format!(
             "From internal order {} ({})",
-            request_requisition_row.requisition_number.to_string(),
-            reference
+            request_requisition_row.requisition_number, reference
         ),
         None => format!(
             "From internal order {}",
-            request_requisition_row.requisition_number.to_string(),
+            request_requisition_row.requisition_number,
         ),
     };
 
     let comment = match &request_requisition_row.comment {
         Some(comment) => format!(
             "From internal order {} ({})",
-            request_requisition_row.requisition_number.to_string(),
-            comment
+            request_requisition_row.requisition_number, comment
         ),
         None => format!(
             "From internal order {}",
-            request_requisition_row.requisition_number.to_string(),
+            request_requisition_row.requisition_number,
         ),
     };
 
@@ -155,8 +149,8 @@ fn generate_response_requisition(
         status: RequisitionRowStatus::New,
         created_datetime: Utc::now().naive_utc(),
         their_reference: Some(their_ref),
-        max_months_of_stock: request_requisition_row.max_months_of_stock.clone(),
-        min_months_of_stock: request_requisition_row.min_months_of_stock.clone(),
+        max_months_of_stock: request_requisition_row.max_months_of_stock,
+        min_months_of_stock: request_requisition_row.min_months_of_stock,
         comment: Some(comment),
         // 5.
         linked_requisition_id: Some(request_requisition_row.id.clone()),

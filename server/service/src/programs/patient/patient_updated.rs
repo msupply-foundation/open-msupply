@@ -79,7 +79,7 @@ pub(crate) fn patient_to_name_row(
         contacts: _,
         extension: _,
     } = patient;
-    let contact = contact_details.as_ref().and_then(|it| it.get(0));
+    let contact = contact_details.as_ref().and_then(|it| it.first());
     let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
             UpdateProgramPatientError::InternalError(format!(
@@ -139,7 +139,7 @@ pub(crate) fn patient_to_name_row(
         is_donor: existing_name.map(|n| n.is_donor).unwrap_or(false),
         on_hold: existing_name.map(|n| n.on_hold).unwrap_or(false),
         created_datetime: existing_name
-            .and_then(|n| n.created_datetime.clone())
+            .and_then(|n| n.created_datetime)
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
         date_of_death,
@@ -156,8 +156,8 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
     let doc_contact_details = document_data
         .contact_details
         .as_ref()
-        .and_then(|c| c.get(0).map(|c| c.clone()))
-        .unwrap_or(ContactDetails::default());
+        .and_then(|c| c.first().map(|c| c.clone()))
+        .unwrap_or_default();
     let draft_contact_details = ContactDetails {
         address_1: patient.address1.clone(),
         address_2: patient.address2.clone(),
@@ -191,7 +191,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
     } = document_data;
     SchemaPatient {
         id: patient.id.clone(),
-        code: if patient.code == "" {
+        code: if patient.code.is_empty() {
             code
         } else {
             Some(patient.code.clone())

@@ -59,10 +59,7 @@ impl RequisitionTransferProcessor for UpdateRequestRequisitionStatusProcessor {
         let updated_request_requisition = RequisitionRow {
             // 6.
             status: RequisitionRowStatus::Finalised,
-            finalised_datetime: response_requisition
-                .requisition_row
-                .finalised_datetime
-                .clone(),
+            finalised_datetime: response_requisition.requisition_row.finalised_datetime,
             ..request_requisition.requisition_row.clone()
         };
 

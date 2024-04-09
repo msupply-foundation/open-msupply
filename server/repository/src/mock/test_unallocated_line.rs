@@ -3,7 +3,7 @@ use util::inline_init;
 
 use crate::{InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
 
-use super::{currency_a, MockData};
+use super::MockData;
 
 pub fn mock_test_unallocated_line() -> MockData {
     let mut result = MockData::default();
@@ -31,7 +31,6 @@ pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
-        r.currency_id = currency_a().id;
     })
 }
 
@@ -56,6 +55,7 @@ pub fn mock_unallocated_line() -> InvoiceLineRow {
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
         foreign_currency_price_before_tax: None,
     }
 }
@@ -74,7 +74,6 @@ pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
-        r.currency_id = currency_a().id;
     })
 }
 
@@ -99,6 +98,7 @@ pub fn mock_unallocated_line2() -> InvoiceLineRow {
         number_of_packs: 1.0,
         note: None,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
         foreign_currency_price_before_tax: None,
     }
 }
@@ -121,6 +121,5 @@ pub fn mock_allocated_invoice() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = currency_a().id;
     })
 }

@@ -18,7 +18,6 @@ pub fn mock_outbound_shipment_a() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.picked_datetime = Some(Utc::now().naive_utc());
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -44,7 +43,6 @@ pub fn mock_outbound_shipment_b() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -62,7 +60,6 @@ pub fn mock_outbound_shipment_c() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -92,7 +89,6 @@ pub fn mock_outbound_shipment_d() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -110,7 +106,6 @@ pub fn mock_outbound_shipment_e() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -136,7 +131,6 @@ pub fn mock_outbound_shipment_picked() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -162,7 +156,6 @@ pub fn mock_outbound_shipment_shipped() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -188,7 +181,6 @@ pub fn mock_outbound_shipment_no_lines() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -199,7 +191,6 @@ pub fn mock_new_outbound_shipment_no_lines() -> InvoiceRow {
         r.store_id = String::from("store_c");
         r.r#type = InvoiceRowType::OutboundShipment;
         r.status = InvoiceRowStatus::New;
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -214,7 +205,6 @@ pub fn mock_new_outbound_shipment_no_stockline() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(15, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -239,7 +229,6 @@ pub fn mock_outbound_shipment_on_hold() -> InvoiceRow {
                 .and_hms_milli_opt(15, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -257,7 +246,6 @@ pub fn mock_inbound_shipment_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(20, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -283,7 +271,6 @@ pub fn mock_inbound_shipment_b() -> InvoiceRow {
         );
         r.delivered_datetime = Some(Utc::now().naive_utc());
         r.verified_datetime = Some(Utc::now().naive_utc());
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -301,7 +288,6 @@ pub fn mock_inbound_shipment_c() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -325,7 +311,6 @@ pub fn mock_inbound_shipment_d() -> InvoiceRow {
                 .and_hms_milli_opt(21, 30, 0, 0)
                 .unwrap(),
         );
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -344,7 +329,6 @@ pub fn mock_inbound_shipment_e() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -362,7 +346,6 @@ pub fn mock_empty_draft_inbound_shipment() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -379,7 +362,6 @@ pub fn mock_unique_number_inbound_shipment() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -412,7 +394,6 @@ pub fn mock_prescription_a() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -428,7 +409,6 @@ pub fn mock_prescription_picked() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -444,7 +424,70 @@ pub fn mock_prescription_verified() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(21, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
+    })
+}
+
+pub fn mock_outbound_return_a() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("outbound_return_a");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_a");
+        r.invoice_number = 1;
+        r.r#type = InvoiceRowType::OutboundReturn;
+        r.status = InvoiceRowStatus::Picked;
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+        r.picked_datetime = Some(Utc::now().naive_utc());
+    })
+}
+
+pub fn mock_outbound_return_b() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("outbound_return_b");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 2;
+        r.r#type = InvoiceRowType::OutboundReturn;
+        r.status = InvoiceRowStatus::New;
+        r.their_reference = Some(String::from(""));
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+    })
+}
+
+pub fn mock_inbound_return_a() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("inbound_return_a");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 1;
+        r.r#type = InvoiceRowType::InboundReturn;
+        r.status = InvoiceRowStatus::Delivered;
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_milli_opt(12, 30, 0, 0)
+            .unwrap();
+        r.delivered_datetime = Some(Utc::now().naive_utc());
+    })
+}
+
+pub fn mock_inbound_return_b() -> InvoiceRow {
+    inline_init(|r: &mut InvoiceRow| {
+        r.id = String::from("inbound_return_b");
+        r.name_link_id = String::from("name_store_a");
+        r.store_id = String::from("store_b");
+        r.invoice_number = 2;
+        r.r#type = InvoiceRowType::InboundReturn;
+        r.status = InvoiceRowStatus::New;
+        r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
+            .unwrap()
+            .and_hms_opt(12, 30, 0)
+            .unwrap();
     })
 }
 
@@ -483,11 +526,21 @@ pub fn mock_inbound_shipments() -> Vec<InvoiceRow> {
     ]
 }
 
+pub fn mock_outbound_returns() -> Vec<InvoiceRow> {
+    vec![mock_outbound_return_a(), mock_outbound_return_b()]
+}
+
+pub fn mock_inbound_returns() -> Vec<InvoiceRow> {
+    vec![mock_inbound_return_a(), mock_inbound_return_b()]
+}
+
 pub fn mock_invoices() -> Vec<InvoiceRow> {
     let mut mock_invoices: Vec<InvoiceRow> = Vec::new();
 
     mock_invoices.extend(mock_outbound_shipments());
     mock_invoices.extend(mock_inbound_shipments());
+    mock_invoices.extend(mock_outbound_returns());
+    mock_invoices.extend(mock_inbound_returns());
 
     mock_invoices
 }
