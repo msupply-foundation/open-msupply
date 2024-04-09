@@ -14,9 +14,8 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{Eq, IntoBoxed, LeftJoin},
+    dsl::{Eq, IntoBoxed, LeftJoin, On},
     prelude::*,
-    query_source::joins::OnClauseWrapper,
 };
 
 #[derive(PartialEq, Debug, Clone, Default)]
@@ -69,22 +68,22 @@ impl<'a> UserRepository<'a> {
         UserRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<UserFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<UserFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_by_filter(&self, filter: UserFilter) -> Result<Vec<User>, RepositoryError> {
+    pub fn query_by_filter(&mut self, filter: UserFilter) -> Result<Vec<User>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(&self, filter: UserFilter) -> Result<Option<User>, RepositoryError> {
+    pub fn query_one(&mut self, filter: UserFilter) -> Result<Option<User>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<UserFilter>,
         sort: Option<UserSort>,
@@ -144,11 +143,11 @@ type StoreIdEqualToId = Eq<store_dsl::id, user_store_join_dsl::store_id>;
 // store_preference_dsl::id.eq(id))
 type IdEqualToId = Eq<store_preference_dsl::id, user_store_join_dsl::store_id>;
 // user_store_join.on(user_id.eq(user_dsl::id))
-type OnUserStoreJoinToUserJoin = OnClauseWrapper<user_store_join::table, UserIdEqualToId>;
+type OnUserStoreJoinToUserJoin = On<user_store_join::table, UserIdEqualToId>;
 // store.on(id.eq(store_id))
-type OnStoreJoinToUserStoreJoin = OnClauseWrapper<store::table, StoreIdEqualToId>;
+type OnStoreJoinToUserStoreJoin = On<store::table, StoreIdEqualToId>;
 // store_preference.on(id.eq(store_id))
-type OnStorePreferenceJoinToUserStoreJoin = OnClauseWrapper<store_preference::table, IdEqualToId>;
+type OnStorePreferenceJoinToUserStoreJoin = On<store_preference::table, IdEqualToId>;
 
 type BoxedUserQuery = IntoBoxed<
     'static,

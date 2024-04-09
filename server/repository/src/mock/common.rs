@@ -45,7 +45,7 @@ impl FullMockInvoice {
     }
 }
 
-pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, mut connection: &StorageConnection) {
+pub fn insert_full_mock_invoice(invoice: &FullMockInvoice, connection: &mut StorageConnection) {
     InvoiceRowRepository::new(connection)
         .upsert_one(&invoice.invoice)
         .unwrap();
@@ -67,7 +67,7 @@ pub struct FullMockMasterList {
 
 pub fn insert_full_mock_master_list(
     full_master_list: &FullMockMasterList,
-    mut connection: &StorageConnection,
+    connection: &mut StorageConnection,
 ) {
     MasterListRowRepository::new(connection)
         .upsert_one(&full_master_list.master_list)

@@ -13,7 +13,7 @@ use crate::{
 };
 
 use diesel::{
-    dsl::{And, Eq, IntoBoxed, LeftJoin},
+    dsl::{And, Eq, IntoBoxed, LeftJoin, On},
     helper_types::InnerJoin,
     prelude::*,
 };
@@ -82,7 +82,7 @@ impl<'a> NameRepository<'a> {
     }
 
     pub fn count(
-        &self,
+        &mut self,
         store_id: &str,
         filter: Option<NameFilter>,
     ) -> Result<i64, RepositoryError> {
@@ -92,7 +92,7 @@ impl<'a> NameRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         store_id: &str,
         filter: NameFilter,
     ) -> Result<Vec<Name>, RepositoryError> {
@@ -100,7 +100,7 @@ impl<'a> NameRepository<'a> {
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         store_id: &str,
         filter: NameFilter,
     ) -> Result<Option<Name>, RepositoryError> {
@@ -108,7 +108,7 @@ impl<'a> NameRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         store_id: &str,
         pagination: Pagination,
         filter: Option<NameFilter>,
@@ -258,7 +258,7 @@ type NameLinkIdEqualToId = Eq<name_store_join_dsl::name_link_id, name_link_dsl::
 // name_store_join_dsl::store_id.eq(store_id)
 type StoreIdEqualToStr = Eq<name_store_join_dsl::store_id, String>;
 type OnNameStoreJoinToNameLinkJoin =
-    OnClauseWrapper<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
+    On<name_store_join::table, And<NameLinkIdEqualToId, StoreIdEqualToStr>>;
 
 type BoxedNameQuery = IntoBoxed<
     'static,
@@ -426,12 +426,12 @@ mod tests {
         // Prepare
         let (_, mut storage_connection, _, _) =
             test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
-        let repository = NameRepository::new(&mut storage_connection);
 
         let (rows, queries) = data();
-        let name_repo = NameRowRepository::new(&mut storage_connection);
         for row in rows {
-            name_repo.upsert_one(&row).unwrap();
+            NameRowRepository::new(&mut storage_connection)
+                .upsert_one(&row)
+                .unwrap();
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
@@ -440,13 +440,18 @@ mod tests {
         // Test
         // .count()
         assert_eq!(
-            usize::try_from(repository.count(store_id, None).unwrap()).unwrap(),
+            usize::try_from(
+                NameRepository::new(&mut storage_connection)
+                    .count(store_id, None)
+                    .unwrap()
+            )
+            .unwrap(),
             queries.len()
         );
 
         // .query, no pagination (default)
         assert_eq!(
-            repository
+            NameRepository::new(&mut storage_connection)
                 .query(store_id, Pagination::new(), None, None)
                 .unwrap()
                 .len(),
@@ -454,7 +459,7 @@ mod tests {
         );
 
         // .query, pagination (offset 10)
-        let result = repository
+        let result = NameRepository::new(&mut storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -473,7 +478,7 @@ mod tests {
         );
 
         // .query, pagination (first 10)
-        let result = repository
+        let result = NameRepository::new(&mut storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -488,7 +493,7 @@ mod tests {
         assert_eq!(*result.last().unwrap(), queries[9]);
 
         // .query, pagination (offset 150, first 90) <- more then records in table
-        let result = repository
+        let result = NameRepository::new(&mut storage_connection)
             .query(
                 store_id,
                 Pagination {
@@ -509,12 +514,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_name_query_sort() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let (_, mut connection, _, _) = test_db::setup_all(
             "test_name_query_sort",
             MockDataInserts::none().names().stores(),
         )
         .await;
-        let repo = NameRepository::new(&mut connection);
+        let mut repo = NameRepository::new(&mut connection);
 
         let store_id = "store_a";
         let mut names = repo.query(store_id, Pagination::new(), None, None).unwrap();
@@ -574,12 +579,12 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_name_query_repository_all_filter_sort() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let (_, mut connection, _, _) = test_db::setup_all(
             "test_name_query_repository_all_filter_sort",
             MockDataInserts::none().names().stores().name_store_joins(),
         )
         .await;
-        let repo = NameRepository::new(&mut connection);
+        let mut repo = NameRepository::new(&mut connection);
 
         let store_id = &mock_test_name_query_store_1().id;
         // test filter:

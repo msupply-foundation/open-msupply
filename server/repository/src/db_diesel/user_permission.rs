@@ -38,28 +38,28 @@ impl<'a> UserPermissionRepository<'a> {
         UserPermissionRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<UserPermissionFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<UserPermissionFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: UserPermissionFilter,
     ) -> Result<Vec<UserPermission>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: UserPermissionFilter,
     ) -> Result<Option<UserPermission>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<UserPermissionFilter>,
         sort: Option<UserPermissionSort>,

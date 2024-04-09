@@ -39,11 +39,11 @@ pub struct TemperatureLogRow {
 }
 
 pub struct TemperatureLogRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> TemperatureLogRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         TemperatureLogRowRepository { connection }
     }
 
@@ -60,44 +60,45 @@ impl<'a> TemperatureLogRowRepository<'a> {
 
     #[cfg(not(feature = "postgres"))]
     pub fn _upsert_one(&mut self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
-        use std::ops::DerefMut;
-
         diesel::replace_into(temperature_log_dsl::temperature_log)
             .values(row)
-            .execute(self.connection.connection.deref_mut())?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn upsert_one(&self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &TemperatureLogRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureLogRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<TemperatureLogRow>, RepositoryError> {
         let result = temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(
-        &self,
+        &mut self,
         ids: &[String],
     ) -> Result<Vec<TemperatureLogRow>, RepositoryError> {
         Ok(temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq_any(ids))
-            .load(&self.connection.connection)?)
+            .load(&mut self.connection.connection)?)
     }
 }
 
 impl Upsert for TemperatureLogRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         TemperatureLogRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             TemperatureLogRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

@@ -142,7 +142,7 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_log_dsl::sync_log)
             .values(row)
             .on_conflict(sync_log_dsl::id)
@@ -153,14 +153,14 @@ impl<'a> SyncLogRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &SyncLogRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &SyncLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_log_dsl::sync_log)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<SyncLogRow>, RepositoryError> {
         let result = sync_log_dsl::sync_log
             .filter(sync_log_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -181,9 +181,10 @@ mod test {
 
     #[actix_rt::test]
     async fn sync_log_row_enum() {
-        let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
+        let (_, mut connection, _, _) =
+            setup_all("sync_log_row_enum", MockDataInserts::none()).await;
 
-        let repo = SyncLogRowRepository::new(&mut connection);
+        let mut repo = SyncLogRowRepository::new(&mut connection);
         // Try upsert all variants of SyncLogRowErrorCode, confirm that diesel enums match postgres
         for variant in SyncLogRowErrorCode::iter() {
             let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {

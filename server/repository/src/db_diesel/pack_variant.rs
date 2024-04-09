@@ -16,7 +16,7 @@ use diesel::prelude::*;
 pub type PackVariant = PackVariantRow;
 
 pub struct PackVariantRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -35,18 +35,18 @@ pub type PackVariantSort = Sort<PackVariantSortField>;
 type BoxedPackVariantQuery = pack_variant::BoxedQuery<'static, DBType>;
 
 impl<'a> PackVariantRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         PackVariantRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<PackVariantFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<PackVariantFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&self.connection.connection)?)
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: PackVariantFilter,
     ) -> Result<Vec<PackVariant>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -69,7 +69,7 @@ impl<'a> PackVariantRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<PackVariantFilter>,
         sort: Option<PackVariantSort>,
@@ -89,7 +89,7 @@ impl<'a> PackVariantRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<PackVariant>(&self.connection.connection)?;
+            .load::<PackVariant>(&mut self.connection.connection)?;
 
         Ok(result)
     }

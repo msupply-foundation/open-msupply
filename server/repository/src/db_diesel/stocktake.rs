@@ -143,7 +143,7 @@ impl<'a> StocktakeRepository<'a> {
         StocktakeRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<StocktakeFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<StocktakeFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
@@ -151,7 +151,7 @@ impl<'a> StocktakeRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: StocktakeFilter,
     ) -> Result<Vec<Stocktake>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -159,7 +159,7 @@ impl<'a> StocktakeRepository<'a> {
 
     /// Gets all invoices
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<StocktakeFilter>,
         sort: Option<StocktakeSort>,
@@ -200,7 +200,10 @@ impl<'a> StocktakeRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_id(&self, record_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        record_id: &str,
+    ) -> Result<Option<Stocktake>, RepositoryError> {
         Ok(stocktake_dsl::stocktake
             .filter(stocktake_dsl::id.eq(record_id))
             .first::<Stocktake>(&mut self.connection.connection)

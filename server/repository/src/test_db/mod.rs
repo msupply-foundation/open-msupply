@@ -96,9 +96,9 @@ pub async fn setup_test<'a>(
 ) -> SetupResult {
     let db_settings = get_test_db_settings(db_name);
     let (connection_manager, core_data) = setup_with_version(&db_settings, version, inserts).await;
-    let connection = connection_manager.connection().unwrap();
+    let mut connection = connection_manager.connection().unwrap();
 
-    insert_extra_mock_data(&connection, extra_mock_data);
+    insert_extra_mock_data(&mut connection, extra_mock_data);
     SetupResult {
         core_data,
         connection,

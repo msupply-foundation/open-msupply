@@ -68,7 +68,7 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stock_line_dsl::stock_line)
             .values(row)
             .on_conflict(stock_line_dsl::id)
@@ -79,34 +79,40 @@ impl<'a> StockLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StockLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stock_line_dsl::stock_line)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(stock_line_dsl::stock_line.filter(stock_line_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
+    pub fn find_one_by_id(&mut self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(stock_line_id))
             .first(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {
+    pub fn find_many_by_ids(
+        &mut self,
+        ids: &[String],
+    ) -> Result<Vec<StockLineRow>, RepositoryError> {
         stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq_any(ids))
             .load::<StockLineRow>(&mut self.connection.connection)
             .map_err(RepositoryError::from)
     }
 
-    pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
+    pub fn find_one_by_id_option(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<StockLineRow>, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -114,10 +120,13 @@ impl<'a> StockLineRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
+    pub fn find_by_store_id(
+        &mut self,
+        store_id: &str,
+    ) -> Result<Vec<StockLineRow>, RepositoryError> {
         stock_line_dsl::stock_line
             .filter(stock_line_dsl::store_id.eq(store_id))
-            .load::<StockLineRow>(&self.connection.connection)
+            .load::<StockLineRow>(&mut self.connection.connection)
             .map_err(RepositoryError::from)
     }
 }
@@ -126,11 +135,11 @@ impl<'a> StockLineRowRepository<'a> {
 pub struct StockLineRowDelete(pub String);
 // For tests only
 impl Delete for StockLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StockLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StockLineRowRepository::new(con).find_one_by_id_option(&self.0),
             Ok(None)
@@ -139,12 +148,12 @@ impl Delete for StockLineRowDelete {
 }
 
 impl Upsert for StockLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StockLineRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StockLineRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))

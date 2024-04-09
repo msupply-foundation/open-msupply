@@ -44,16 +44,16 @@ pub struct PackVariantRow {
 }
 
 pub struct PackVariantRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> PackVariantRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         PackVariantRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &PackVariantRow) -> Result<(), RepositoryError> {
         diesel::insert_into(pack_variant::dsl::pack_variant)
             .values(row)
             .on_conflict(pack_variant::dsl::id)
@@ -73,12 +73,12 @@ impl<'a> PackVariantRowRepository<'a> {
     }
 
     pub fn find_one_by_id(
-        &self,
+        &mut self,
         variant_id: &str,
     ) -> Result<Option<PackVariantRow>, RepositoryError> {
         let result = pack_variant
             .filter(id.eq(variant_id))
-            .first::<PackVariantRow>(&self.connection.connection)
+            .first::<PackVariantRow>(&mut self.connection.connection)
             .optional()?;
 
         Ok(result)
@@ -86,12 +86,12 @@ impl<'a> PackVariantRowRepository<'a> {
 }
 
 impl Upsert for PackVariantRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         PackVariantRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             PackVariantRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

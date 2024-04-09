@@ -42,21 +42,24 @@ impl<'a> SyncLogRepository<'a> {
         SyncLogRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<SyncLogFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<SyncLogFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: SyncLogFilter) -> Result<Option<SyncLog>, RepositoryError> {
+    pub fn query_one(&mut self, filter: SyncLogFilter) -> Result<Option<SyncLog>, RepositoryError> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: SyncLogFilter) -> Result<Vec<SyncLog>, RepositoryError> {
+    pub fn query_by_filter(
+        &mut self,
+        filter: SyncLogFilter,
+    ) -> Result<Vec<SyncLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<SyncLogFilter>,
         sort: Option<SyncLogSort>,

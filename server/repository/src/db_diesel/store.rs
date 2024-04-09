@@ -84,21 +84,21 @@ impl<'a> StoreRepository<'a> {
         StoreRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&mut self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
-    pub fn query_one(&self, filter: StoreFilter) -> Result<Option<Store>, RepositoryError> {
+    pub fn query_one(&mut self, filter: StoreFilter) -> Result<Option<Store>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: StoreFilter) -> Result<Vec<Store>, RepositoryError> {
+    pub fn query_by_filter(&mut self, filter: StoreFilter) -> Result<Vec<Store>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<StoreFilter>,
         sort: Option<StoreSort>,

@@ -57,14 +57,14 @@ impl<'a> StockMovementRepository<'a> {
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: StockMovementFilter,
     ) -> Result<Option<StockMovementRow>, RepositoryError> {
         Ok(self.query(Some(filter))?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         filter: Option<StockMovementFilter>,
     ) -> Result<Vec<StockMovementRow>, RepositoryError> {
         // Query StockMovement
@@ -161,7 +161,7 @@ mod test {
             })
         }
 
-        let (_, connection, _, _) = setup_all_with_data(
+        let (_, mut connection, _, _) = setup_all_with_data(
             "stock_movement_repository",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
@@ -251,7 +251,7 @@ mod test {
         )
         .await;
 
-        let repo = StockMovementRepository::new(&mut connection);
+        let mut repo = StockMovementRepository::new(&mut connection);
         let mut rows = repo
             .query(Some(StockMovementFilter {
                 store_id: Some(EqualFilter::equal_to(&store().id)),

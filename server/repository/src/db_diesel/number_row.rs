@@ -2,7 +2,6 @@ use std::convert::TryFrom;
 use std::fmt;
 
 use super::{number_row::number::dsl as number_dsl, StorageConnection};
-use diesel::expression::AsExpression;
 use util::uuid::uuid;
 
 use crate::repository_error::RepositoryError;
@@ -129,7 +128,7 @@ impl<'a> NumberRowRepository<'a> {
         NumberRowRepository { connection }
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<NumberRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<NumberRow>, RepositoryError> {
         let result = number_dsl::number
             .filter(number_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -138,7 +137,7 @@ impl<'a> NumberRowRepository<'a> {
     }
 
     pub fn get_next_number_for_type_and_store(
-        &self,
+        &mut self,
         r#type: &NumberRowType,
         store_id: &str,
         next_number: Option<i64>,
@@ -186,7 +185,7 @@ impl<'a> NumberRowRepository<'a> {
     }
 
     pub fn find_one_by_type_and_store(
-        &self,
+        &mut self,
         r#type: &NumberRowType,
         store_id: &str,
     ) -> Result<Option<NumberRow>, RepositoryError> {
@@ -213,7 +212,7 @@ impl<'a> NumberRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, number_row: &NumberRow) -> Result<(), RepositoryError> {
         let final_query = diesel::replace_into(number_dsl::number).values(number_row);
 
         // // Debug diesel query
@@ -226,7 +225,7 @@ impl<'a> NumberRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, number_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, number_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(number_dsl::number)
             .filter(number_dsl::id.eq(number_id))
             .execute(&mut self.connection.connection)?;
@@ -234,7 +233,7 @@ impl<'a> NumberRowRepository<'a> {
     }
 
     pub fn find_many_by_store_id(
-        &self,
+        &mut self,
         store_ids: &[String],
     ) -> Result<Vec<NumberRow>, RepositoryError> {
         let result = number_dsl::number

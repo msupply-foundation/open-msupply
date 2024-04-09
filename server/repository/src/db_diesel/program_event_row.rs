@@ -73,7 +73,7 @@ impl<'a> ProgramEventRowRepository<'a> {
         ProgramEventRowRepository { connection }
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEventRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<ProgramEventRow>, RepositoryError> {
         let result = program_event::dsl::program_event
             .filter(program_event::dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -82,7 +82,7 @@ impl<'a> ProgramEventRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_event::dsl::program_event)
             .values(row)
             .on_conflict(program_event::dsl::id)
@@ -93,7 +93,7 @@ impl<'a> ProgramEventRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ProgramEventRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_event::dsl::program_event)
             .values(row)
             .execute(&mut self.connection.connection)?;

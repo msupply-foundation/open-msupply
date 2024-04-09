@@ -39,11 +39,11 @@ pub struct PluginDataRow {
 }
 
 pub struct PluginDataRowRepository<'a> {
-    connection: &'a StorageConnection,
+    connection: &'a mut StorageConnection,
 }
 
 impl<'a> PluginDataRowRepository<'a> {
-    pub fn new(connection: &'a StorageConnection) -> Self {
+    pub fn new(connection: &'a mut StorageConnection) -> Self {
         PluginDataRowRepository { connection }
     }
 
@@ -73,10 +73,10 @@ impl<'a> PluginDataRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
         let result: Option<PluginDataRow> = plugin_data::table
             .filter(plugin_data::id.eq(id))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
 
         Ok(result)

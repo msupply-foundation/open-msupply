@@ -75,7 +75,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(stocktake_line_dsl::stocktake_line)
             .values(row)
             .on_conflict(stocktake_line_dsl::id)
@@ -86,20 +86,23 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StocktakeLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(stocktake_line_dsl::stocktake_line)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(stocktake_line_dsl::stocktake_line.filter(stocktake_line_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StocktakeLineRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<StocktakeLineRow>, RepositoryError> {
         let result = stocktake_line_dsl::stocktake_line
             .filter(stocktake_line_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -108,7 +111,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
     }
 
     pub fn find_many_by_id(
-        &self,
+        &mut self,
         ids: &[String],
     ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
         let result = stocktake_line_dsl::stocktake_line
@@ -122,11 +125,11 @@ impl<'a> StocktakeLineRowRepository<'a> {
 pub struct StocktakeLineRowDelete(pub String);
 // For tests only
 impl Delete for StocktakeLineRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StocktakeLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StocktakeLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -135,12 +138,12 @@ impl Delete for StocktakeLineRowDelete {
 }
 
 impl Upsert for StocktakeLineRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StocktakeLineRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StocktakeLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

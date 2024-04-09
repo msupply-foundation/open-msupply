@@ -77,18 +77,23 @@ impl<'a> StockLineRepository<'a> {
     }
 
     pub fn count(
-        &self,
+        &mut self,
         filter: Option<StockLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        query = apply_item_filter(
+            query,
+            filter,
+            &mut self.connection,
+            store_id.unwrap_or_default(),
+        );
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: StockLineFilter,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
@@ -96,7 +101,7 @@ impl<'a> StockLineRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
@@ -371,7 +376,7 @@ mod test {
             })
         }
 
-        let (_, connection, _, _) = test_db::setup_all_with_data(
+        let (_, mut connection, _, _) = test_db::setup_all_with_data(
             "test_stock_line_sort",
             MockDataInserts::none().stores().items().names().units(),
             inline_init(|r: &mut MockData| {
@@ -381,7 +386,7 @@ mod test {
         )
         .await;
 
-        let repo = StockLineRepository::new(&mut connection);
+        let mut repo = StockLineRepository::new(&mut connection);
         // Asc by expiry date
         let sort = StockLineSort {
             key: StockLineSortField::ExpiryDate,
@@ -438,7 +443,7 @@ mod test {
             })
         }
 
-        let (_, connection, _, _) = test_db::setup_all_with_data(
+        let (_, mut connection, _, _) = test_db::setup_all_with_data(
             "test_stock_line_is_available",
             MockDataInserts::none().stores().items().names().units(),
             inline_init(|r: &mut MockData| {
@@ -447,7 +452,7 @@ mod test {
         )
         .await;
 
-        let repo = StockLineRepository::new(&mut connection);
+        let mut repo = StockLineRepository::new(&mut connection);
 
         // Stock not available
         assert_eq!(
