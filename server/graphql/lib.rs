@@ -60,6 +60,9 @@ impl CentralServerMutationNode {
     async fn pack_variant(&self) -> PackVariantMutations {
         PackVariantMutations
     }
+    async fn asset_catalogue(&self) -> AssetCatalogueMutations {
+        AssetCatalogueMutations
+    }
 }
 
 #[derive(Default, Clone)]
@@ -144,7 +147,6 @@ pub struct Mutations(
     pub CentralServerMutations,
     pub AssetMutations,
     pub AssetLogMutations,
-    pub AssetCatalogueMutations,
 );
 
 impl Mutations {
@@ -168,7 +170,6 @@ impl Mutations {
             CentralServerMutations,
             AssetMutations,
             AssetLogMutations,
-            AssetCatalogueMutations,
         )
     }
 }

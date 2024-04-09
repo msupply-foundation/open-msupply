@@ -98,30 +98,38 @@ mutation insertAssetCatalogueItem(
   $input: InsertAssetCatalogueItemInput!
   $storeId: String!
 ) {
-  insertAssetCatalogueItem(input: $input, storeId: $storeId) {
-    ... on AssetCatalogueItemNode {
-      __typename
-      id
-    }
-    ... on InsertAssetCatalogueItemError {
-      __typename
-      error {
-        description
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItem(input: $input, storeId: $storeId) {
+        ... on AssetCatalogueItemNode {
+          __typename
+          id
+        }
+        ... on InsertAssetCatalogueItemError {
+          __typename
+          error {
+            description
+          }
+        }
       }
     }
   }
 }
 
 mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
-  deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
-    ... on DeleteResponse {
-      __typename
-      id
-    }
-    ... on DeleteAssetCatalogueItemError {
-      __typename
-      error {
-        description
+  centralServer {
+    assetCatalogue {
+      deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteAssetCatalogueItemError {
+          __typename
+          error {
+            description
+          }
+        }
       }
     }
   }
