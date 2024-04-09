@@ -90,7 +90,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             program_enrolment.program_enrolment_id,
             program_enrolment.status,
             nl.name_id as patient_id,
-            doc.data as data
+            doc.data as document_data
         FROM program_enrolment
         LEFT JOIN name_link nl ON nl.id = program_enrolment.patient_link_id
         LEFT JOIN report_document doc ON doc.name = program_enrolment.document_name
@@ -111,7 +111,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             encounter.store_id,
             nl.name_id as patient_id,
             encounter.document_type,
-            doc.data as data
+            doc.data as document_data
         FROM encounter
         LEFT JOIN name_link nl ON nl.id = encounter.patient_link_id
         LEFT JOIN report_document doc ON doc.name = encounter.document_name
