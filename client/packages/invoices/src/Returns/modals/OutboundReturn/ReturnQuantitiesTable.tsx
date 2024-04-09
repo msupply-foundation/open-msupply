@@ -4,7 +4,7 @@ import {
   useColumns,
   CellProps,
 } from '@openmsupply-client/common';
-import { PackVariantCell } from '@openmsupply-client/system';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateOutboundReturnLineFragment } from '../../api';
 
@@ -32,7 +32,7 @@ export const QuantityToReturnTableComponent = ({
         label: 'label.pack',
         sortable: false,
         // eslint-disable-next-line new-cap
-        Cell: PackVariantCell({
+        Cell: getPackVariantCell({
           getItemId: row => row.item.id,
           getPackSizes: row => [row.packSize],
           getUnitName: row => row.item.unitName || null,

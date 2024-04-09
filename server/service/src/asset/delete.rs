@@ -33,7 +33,7 @@ pub fn delete_asset(ctx: &ServiceContext, asset_id: String) -> Result<String, De
             // This means that on soft deletion of asset, location assignments will be hard deleted.
             // If we bring assets back, they won't retain their location assignments.
             // This was done to make validation checks easier for assigning locations to assets
-            let _deleted_location = AssetInternalLocationRowRepository::new(&connection)
+            let _deleted_location = AssetInternalLocationRowRepository::new(connection)
                 .delete_all_for_asset_id(&asset_id);
 
             AssetRowRepository::new(connection)
