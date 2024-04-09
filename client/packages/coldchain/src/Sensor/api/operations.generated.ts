@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type LocationRowFragment = { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string };
 
-export type SensorFragment = { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null };
+export type SensorFragment = { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null, assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', id: string, assetNumber?: string | null }> } };
 
 export type SensorsQueryVariables = Types.Exact<{
   page?: Types.InputMaybe<Types.PaginationInput>;
@@ -16,7 +16,7 @@ export type SensorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type SensorsQuery = { __typename: 'Queries', sensors: { __typename: 'SensorConnector', totalCount: number, nodes: Array<{ __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null }> } };
+export type SensorsQuery = { __typename: 'Queries', sensors: { __typename: 'SensorConnector', totalCount: number, nodes: Array<{ __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null, assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', id: string, assetNumber?: string | null }> } }> } };
 
 export type UpdateSensorMutationVariables = Types.Exact<{
   input: Types.UpdateSensorInput;
@@ -24,7 +24,7 @@ export type UpdateSensorMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateSensorMutation = { __typename: 'Mutations', updateSensor: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null } | { __typename: 'UpdateSensorError' } };
+export type UpdateSensorMutation = { __typename: 'Mutations', updateSensor: { __typename: 'SensorNode', id: string, isActive: boolean, name: string, serial: string, batteryLevel?: number | null, breach?: Types.TemperatureBreachNodeType | null, type: Types.SensorNodeType, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, latestTemperatureLog?: { __typename: 'TemperatureLogConnector', totalCount: number, nodes: Array<{ __typename: 'TemperatureLogNode', temperature: number, datetime: string }> } | null, assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', id: string, assetNumber?: string | null }> } } | { __typename: 'UpdateSensorError' } };
 
 export const LocationRowFragmentDoc = gql`
     fragment LocationRow on LocationNode {
@@ -53,6 +53,13 @@ export const SensorFragmentDoc = gql`
     nodes {
       temperature
       datetime
+    }
+  }
+  assets {
+    totalCount
+    nodes {
+      id
+      assetNumber
     }
   }
 }

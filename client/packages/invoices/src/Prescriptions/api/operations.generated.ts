@@ -3,7 +3,7 @@ import * as Types from '@openmsupply-client/common';
 import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
-import { StockOutLineFragmentDoc } from '../../StockOut/operations.generated';
+import { StockOutLineFragmentDoc } from '../../../../../packages/invoices/src/StockOut/operations.generated';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw';
 export type PrescriptionRowFragment = {
   __typename: 'InvoiceNode';

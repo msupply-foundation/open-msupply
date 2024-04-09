@@ -4508,6 +4508,8 @@ export type Queries = {
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
   assetClasses: AssetClassesResponse;
+  /** Returns a list of locations which are available to be assigned to assets */
+  assetLocations: LocationsResponse;
   assetLogs: AssetLogsResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
@@ -4683,6 +4685,14 @@ export type QueriesAssetClassesArgs = {
   filter?: InputMaybe<AssetClassFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetLocationsArgs = {
+  filter?: InputMaybe<LocationFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<LocationSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -5604,6 +5614,7 @@ export type SensorFilterInput = {
 
 export type SensorNode = {
   __typename: 'SensorNode';
+  assets: AssetConnector;
   batteryLevel?: Maybe<Scalars['Int']['output']>;
   breach?: Maybe<TemperatureBreachNodeType>;
   id: Scalars['String']['output'];
@@ -7022,6 +7033,7 @@ export enum UserPermission {
   InboundReturnQuery = 'INBOUND_RETURN_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
   ItemMutate = 'ITEM_MUTATE',
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',

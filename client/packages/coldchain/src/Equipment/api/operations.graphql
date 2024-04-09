@@ -166,6 +166,34 @@ query labelPrinterSettings {
   }
 }
 
+query assetLocations(
+  $storeId: String!
+  $sort: [LocationSortInput!]
+  $first: Int
+  $offset: Int
+  $filter: LocationFilterInput
+) {
+  assetLocations(
+    storeId: $storeId
+    sort: $sort
+    page: { first: $first, offset: $offset }
+    filter: $filter
+  ) {
+    __typename
+    ... on LocationConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        name
+        onHold
+        code
+      }
+    }
+  }
+}
+
 mutation deleteAsset($assetId: String!, $storeId: String!) {
   deleteAsset(assetId: $assetId, storeId: $storeId) {
     ... on DeleteResponse {
