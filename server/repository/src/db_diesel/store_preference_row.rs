@@ -74,7 +74,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_preference_dsl::store_preference)
             .values(row)
             .on_conflict(store_preference_dsl::id)
@@ -85,14 +85,17 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_preference_dsl::store_preference)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -101,7 +104,7 @@ impl<'a> StorePreferenceRowRepository<'a> {
     }
 
     pub fn find_many_by_id(
-        &self,
+        &mut self,
         ids: &[String],
     ) -> Result<Vec<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
@@ -112,12 +115,12 @@ impl<'a> StorePreferenceRowRepository<'a> {
 }
 
 impl Upsert for StorePreferenceRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StorePreferenceRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StorePreferenceRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

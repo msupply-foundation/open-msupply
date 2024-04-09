@@ -104,7 +104,7 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_permission_dsl::user_permission)
             .values(row)
             .on_conflict(user_permission_dsl::id)
@@ -115,14 +115,17 @@ impl<'a> UserPermissionRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_permission_dsl::user_permission)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<UserPermissionRow>, RepositoryError> {
         let result = user_permission_dsl::user_permission
             .filter(user_permission_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -130,7 +133,7 @@ impl<'a> UserPermissionRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete_by_user_id(&self, user_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete_by_user_id(&mut self, user_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
         )
@@ -138,7 +141,7 @@ impl<'a> UserPermissionRowRepository<'a> {
         Ok(())
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())

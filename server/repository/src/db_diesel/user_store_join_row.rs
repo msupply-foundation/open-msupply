@@ -41,7 +41,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_store_join_dsl::user_store_join)
             .values(row)
             .on_conflict(user_store_join_dsl::id)
@@ -52,14 +52,17 @@ impl<'a> UserStoreJoinRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_store_join_dsl::user_store_join)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
         let result = user_store_join_dsl::user_store_join
             .filter(user_store_join_dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -67,7 +70,7 @@ impl<'a> UserStoreJoinRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete_by_user_id(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             user_store_join_dsl::user_store_join.filter(user_store_join_dsl::user_id.eq(id)),
         )

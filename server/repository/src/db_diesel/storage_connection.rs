@@ -4,8 +4,10 @@ use super::{get_connection, DBBackendConnection, DBConnection};
 
 use crate::repository_error::RepositoryError;
 
-use diesel::r2d2::{ConnectionManager, Pool};
-use futures_util::Future;
+use diesel::{
+    connection::{AnsiTransactionManager, SimpleConnection, TransactionManager},
+    r2d2::{ConnectionManager, Pool},
+};
 use log::error;
 
 // feature sqlite
@@ -70,80 +72,12 @@ impl StorageConnection {
             transaction_level: Cell::new(0),
         }
     }
-    /// Executes operations in transaction. A new transaction is only started if not already in a
-    /// transaction.
-    pub async fn transaction<'a, T, E, F, Fut>(&'a mut self, f: F) -> Result<T, TransactionError<E>>
-    where
-        F: FnOnce(&'a mut StorageConnection) -> Fut,
-        Fut: Future<Output = Result<T, E>>,
-    {
-        &mut self.transaction_etc(f, true).await
-    }
-
-    pub async fn transaction_etc<'a, T, E, F, Fut>(
-        &'a mut self,
-        f: F,
-        reuse_tx: bool,
-    ) -> Result<T, TransactionError<E>>
-    where
-        F: FnOnce(&'a mut StorageConnection) -> Fut,
-        Fut: Future<Output = Result<T, E>>,
-    {
-        let current_level = self.transaction_level.get();
-        if current_level > 0 && reuse_tx {
-            let result = f(&mut self)
-                .await
-                .map_err(|err| TransactionError::Inner(err))?;
-            return Ok(result);
-        }
-
-        let con = &self.connection;
-        // let transaction_manager = con.transaction_manager();
-        let transaction_manager = con.establish();
-        if current_level == 0 {
-            // sqlite can only have 1 writer at a time, so to avoid concurrency issues,
-            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
-        } else {
-            transaction_manager.begin_transaction(con)
-        }
-        .map_err(|e| map_begin_transaction_error(e, current_level))?;
-
-        self.transaction_level.set(current_level + 1);
-        let result = f(self).await;
-        self.transaction_level.set(current_level);
-
-        match result {
-            Ok(value) => {
-                transaction_manager.commit_transaction(con).map_err(|err| {
-                    error!("Failed to end tx: {:?}", err);
-                    TransactionError::Transaction {
-                        msg: format!("Failed to end tx: {}", err),
-                        level: current_level + 1,
-                    }
-                })?;
-                Ok(value)
-            }
-            Err(e) => {
-                transaction_manager
-                    .rollback_transaction(con)
-                    .map_err(|err| {
-                        error!("Failed to rollback tx: {:?}", err);
-                        TransactionError::Transaction {
-                            msg: format!("Failed to rollback tx: {}", err),
-                            level: current_level + 1,
-                        }
-                    })?;
-                Err(TransactionError::Inner(e))
-            }
-        }
-    }
 
     /// Executes operations in transaction. A new transaction is only started if not already in a
     /// transaction.
-    pub fn transaction_sync<'a, T, E, F>(&'a self, f: F) -> Result<T, TransactionError<E>>
+    pub fn transaction_sync<'a, T, E, F>(&'a mut self, f: F) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a mut StorageConnection) -> Result<T, E>,
+        F: FnOnce(&mut StorageConnection) -> Result<T, E>,
     {
         self.transaction_sync_etc(f, true)
     }
@@ -157,23 +91,24 @@ impl StorageConnection {
         reuse_tx: bool,
     ) -> Result<T, TransactionError<E>>
     where
-        F: FnOnce(&'a mut StorageConnection) -> Result<T, E>,
+        F: FnOnce(&mut StorageConnection) -> Result<T, E>,
     {
         let current_level = self.transaction_level.get();
         if current_level > 0 && reuse_tx {
-            return match f(&mut self) {
+            return match f(self) {
                 Ok(ok) => Ok(ok),
                 Err(err) => Err(TransactionError::Inner(err)),
             };
         }
-        let con = &self.connection;
-        let transaction_manager = con.transaction_manager();
+
         if current_level == 0 {
             // sqlite can only have 1 writer, so to avoid concurrency issues,
             // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            transaction_manager.begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
+            let con: &mut DBBackendConnection = &mut self.connection;
+            AnsiTransactionManager::begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
         } else {
-            transaction_manager.begin_transaction(con)
+            let con: &mut DBBackendConnection = &mut self.connection;
+            AnsiTransactionManager::begin_transaction_sql(con, "BEGIN")
         }
         .map_err(|e| map_begin_transaction_error(e, current_level))?;
 
@@ -183,7 +118,8 @@ impl StorageConnection {
 
         match result {
             Ok(value) => {
-                transaction_manager.commit_transaction(con).map_err(|err| {
+                let con: &mut DBBackendConnection = &mut self.connection;
+                AnsiTransactionManager::commit_transaction(con).map_err(|err| {
                     error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
                         msg: format!("Failed to end tx: {}", err),
@@ -193,15 +129,14 @@ impl StorageConnection {
                 Ok(value)
             }
             Err(e) => {
-                transaction_manager
-                    .rollback_transaction(con)
-                    .map_err(|err| {
-                        error!("Failed to rollback tx: {:?}", err);
-                        TransactionError::Transaction {
-                            msg: format!("Failed to rollback tx: {}", err),
-                            level: current_level + 1,
-                        }
-                    })?;
+                let con: &mut DBBackendConnection = &mut self.connection;
+                AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
+                    error!("Failed to rollback tx: {:?}", err);
+                    TransactionError::Transaction {
+                        msg: format!("Failed to rollback tx: {}", err),
+                        level: current_level + 1,
+                    }
+                })?;
                 Err(TransactionError::Inner(e))
             }
         }
@@ -236,8 +171,8 @@ impl StorageConnectionManager {
     // Note, this method is only needed for an Android workaround to avoid adding a diesel
     // dependency to the server crate.
     pub fn execute(&self, sql: &str) -> Result<(), RepositoryError> {
-        let con = get_connection(&self.pool)?;
-        con.execute(sql)?;
+        let mut con = get_connection(&self.pool)?;
+        con.batch_execute(sql)?;
         Ok(())
     }
 }
@@ -257,11 +192,11 @@ mod connection_manager_tests {
             .transaction_sync_etc(
                 |con| {
                     assert_eq!(con.transaction_level.get(), 1);
-                    connection.transaction_sync_etc(
+                    con.transaction_sync_etc(
                         |con| {
                             assert_eq!(con.transaction_level.get(), 2);
                             // reuse previous tx
-                            connection.transaction_sync(|con| {
+                            con.transaction_sync(|con| {
                                 assert_eq!(con.transaction_level.get(), 2);
                                 Ok(())
                             })?;

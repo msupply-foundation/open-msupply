@@ -174,7 +174,7 @@ impl<'a> TranslationAndIntegration<'a> {
 }
 
 impl IntegrationOperation {
-    fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
+    fn integrate(&self, connection: &mut StorageConnection) -> Result<(), RepositoryError> {
         match self {
             IntegrationOperation::Upsert(upsert, source_site_id) => {
                 let cursor_id = upsert.upsert(connection)?;
@@ -195,7 +195,7 @@ impl IntegrationOperation {
 }
 
 pub(crate) fn integrate(
-    connection: &StorageConnection,
+    connection: &mut StorageConnection,
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
@@ -240,7 +240,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
-        let (_, connection, _, _) = test_db::setup_all(
+        let (_, mut connection, _, _) = test_db::setup_all(
             "test_fall_through_inner_transaction",
             MockDataInserts::none(),
         )
@@ -279,13 +279,13 @@ mod test {
 
         // Record should exist
         assert_matches!(
-            UnitRowRepository::new(&connection).find_one_by_id_option("unit"),
+            UnitRowRepository::new(&mut connection).find_one_by_id_option("unit"),
             Ok(Some(_))
         );
 
         // Record should not exist
         assert_matches!(
-            ItemRowRepository::new(&connection).find_active_by_id("item"),
+            ItemRowRepository::new(&mut connection).find_active_by_id("item"),
             Ok(None)
         );
     }

@@ -36,14 +36,14 @@ impl<'a> StockOnHandRepository<'a> {
     }
 
     pub fn query_one(
-        &self,
+        &mut self,
         filter: StockOnHandFilter,
     ) -> Result<Option<StockOnHandRow>, RepositoryError> {
         Ok(self.query(Some(filter))?.pop())
     }
 
     pub fn query(
-        &self,
+        &mut self,
         filter: Option<StockOnHandFilter>,
     ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
         // Query StockOnHand

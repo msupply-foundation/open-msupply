@@ -74,7 +74,7 @@ impl<'a> SyncBufferRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         let statement = diesel::insert_into(sync_buffer_dsl::sync_buffer)
             .values(row)
             .on_conflict(sync_buffer_dsl::record_id)
@@ -89,26 +89,26 @@ impl<'a> SyncBufferRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_buffer_dsl::sync_buffer)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub fn upsert_many(&self, rows: &Vec<SyncBufferRow>) -> Result<(), RepositoryError> {
+    pub fn upsert_many(&mut self, rows: &Vec<SyncBufferRow>) -> Result<(), RepositoryError> {
         for row in rows {
             self.upsert_one(row)?
         }
         Ok(())
     }
 
-    pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+    pub fn get_all(&mut self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         Ok(sync_buffer_dsl::sync_buffer.load(&mut self.connection.connection)?)
     }
 
     pub fn find_one_by_record_id(
-        &self,
+        &mut self,
         record_id: &str,
     ) -> Result<Option<SyncBufferRow>, RepositoryError> {
         let result = sync_buffer_dsl::sync_buffer
@@ -177,14 +177,14 @@ impl<'a> SyncBufferRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: SyncBufferFilter,
     ) -> Result<Vec<SyncBuffer>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
-        &self,
+        &mut self,
         filter: Option<SyncBufferFilter>,
     ) -> Result<Vec<SyncBuffer>, RepositoryError> {
         let query = create_filtered_query(filter);
@@ -258,7 +258,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_sync_buffer() {
-        let (_, connection, _, _) = test_db::setup_all_with_data(
+        let (_, mut connection, _, _) = test_db::setup_all_with_data(
             "test_sync_buffer",
             MockDataInserts::none(),
             inline_init(|r: &mut MockData| {
@@ -267,33 +267,34 @@ mod test {
         )
         .await;
 
-        let repo = SyncBufferRepository::new(&mut connection);
-
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new()
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .integration_error(EqualFilter::is_null(true))
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&mut connection)
+                .query_by_filter(
+                    SyncBufferFilter::new()
+                        .integration_datetime(DatetimeFilter::is_null(true))
+                        .integration_error(EqualFilter::is_null(true))
+                )
+                .unwrap(),
             vec![row_c()]
         );
 
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new()
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .integration_error(EqualFilter::is_null(true))
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&mut connection)
+                .query_by_filter(
+                    SyncBufferFilter::new()
+                        .integration_datetime(DatetimeFilter::is_null(true))
+                        .integration_error(EqualFilter::is_null(true))
+                )
+                .unwrap(),
             vec![row_c()]
         );
 
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new().action(SyncBufferAction::Delete.equal_to())
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&mut connection)
+                .query_by_filter(
+                    SyncBufferFilter::new().action(SyncBufferAction::Delete.equal_to())
+                )
+                .unwrap(),
             vec![row_b()]
         );
         // Test upsert overwrites integration_datetime
@@ -307,12 +308,13 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            repo.query_by_filter(
-                SyncBufferFilter::new()
-                    .integration_datetime(DatetimeFilter::is_null(true))
-                    .record_id(EqualFilter::equal_to(&row_a().record_id))
-            )
-            .unwrap(),
+            SyncBufferRepository::new(&mut connection)
+                .query_by_filter(
+                    SyncBufferFilter::new()
+                        .integration_datetime(DatetimeFilter::is_null(true))
+                        .record_id(EqualFilter::equal_to(&row_a().record_id))
+                )
+                .unwrap(),
             vec![new_a]
         );
     }

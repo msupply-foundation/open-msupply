@@ -56,7 +56,10 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
         ProgramEnrolmentRowRepository { connection }
     }
 
-    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
+    pub fn find_one_by_id(
+        &mut self,
+        id: &str,
+    ) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
         let result = program_enrolment::dsl::program_enrolment
             .filter(program_enrolment::dsl::id.eq(id))
             .first(&mut self.connection.connection)
@@ -65,7 +68,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_enrolment::dsl::program_enrolment)
             .values(row)
             .on_conflict(program_enrolment::dsl::id)
@@ -76,7 +79,7 @@ impl<'a> ProgramEnrolmentRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_enrolment::dsl::program_enrolment)
             .values(row)
             .execute(&mut self.connection.connection)?;

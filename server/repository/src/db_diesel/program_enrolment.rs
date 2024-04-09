@@ -115,21 +115,24 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         ProgramEnrolmentRepository { connection }
     }
 
-    pub fn count(&self, filter: Option<ProgramEnrolmentFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(
+        &mut self,
+        filter: Option<ProgramEnrolmentFilter>,
+    ) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
         Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: ProgramEnrolmentFilter,
     ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<ProgramEnrolmentFilter>,
         sort: Option<ProgramEnrolmentSort>,
@@ -161,7 +164,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEnrolmentJoin>(&self.connection.connection)?;
+            .load::<ProgramEnrolmentJoin>(&mut self.connection.connection)?;
         let result = result
             .into_iter()
             .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {
@@ -216,7 +219,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     }
 
     pub fn find_one_by_program_id_and_patient(
-        &self,
+        &mut self,
         program_id: &str,
         patient_id: &str,
     ) -> Result<Option<ProgramEnrolment>, RepositoryError> {

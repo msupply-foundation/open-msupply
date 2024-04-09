@@ -25,7 +25,7 @@ table! {
 }
 
 #[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     // Update changelogs for barcodes
     use self::barcode::dsl as barcode_dsl;
     use self::changelog::dsl as changelog_dsl;

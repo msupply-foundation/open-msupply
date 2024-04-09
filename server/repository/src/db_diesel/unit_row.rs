@@ -32,7 +32,7 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::insert_into(unit)
             .values(row)
             .on_conflict(id)
@@ -43,21 +43,24 @@ impl<'a> UnitRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &UnitRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &UnitRow) -> Result<(), RepositoryError> {
         diesel::replace_into(unit)
             .values(row)
             .execute(&mut self.connection.connection)?;
         Ok(())
     }
 
-    pub async fn find_active_by_id(&self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
+    pub async fn find_active_by_id(&mut self, unit_id: &str) -> Result<UnitRow, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn find_one_by_id_option(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+    pub fn find_one_by_id_option(
+        &mut self,
+        unit_id: &str,
+    ) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(&mut self.connection.connection)
@@ -65,18 +68,21 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_inactive_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+    pub fn find_inactive_by_id(
+        &mut self,
+        unit_id: &str,
+    ) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id).and(is_active.eq(false)))
-            .first(&self.connection.connection)
+            .first(&mut self.connection.connection)
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&self, unit_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, unit_id: &str) -> Result<(), RepositoryError> {
         diesel::update(unit.filter(id.eq(unit_id)))
             .set(is_active.eq(false))
-            .execute(&self.connection.connection)?;
+            .execute(&mut self.connection.connection)?;
         Ok(())
     }
 }
@@ -84,11 +90,11 @@ impl<'a> UnitRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct UnitRowDelete(pub String);
 impl Delete for UnitRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert!(matches!(
             UnitRowRepository::new(con).find_one_by_id_option(&self.0),
             Ok(Some(UnitRow {
@@ -100,12 +106,12 @@ impl Delete for UnitRowDelete {
 }
 
 impl Upsert for UnitRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         UnitRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             UnitRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))

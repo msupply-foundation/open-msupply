@@ -89,16 +89,17 @@ impl<'a> StocktakeLineRepository<'a> {
     }
 
     pub fn count(
-        &self,
+        &mut self,
         filter: Option<StocktakeLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
+        Ok(query.count().get_result(&mut self.connection.connection)?)
     }
 
     pub fn query_by_filter(
-        &self,
+        &mut self,
         filter: StocktakeLineFilter,
         store_id: Option<String>,
     ) -> Result<Vec<StocktakeLine>, RepositoryError> {
@@ -108,7 +109,7 @@ impl<'a> StocktakeLineRepository<'a> {
     /// Query stocktake lines
     /// Note `store_id` is only required when filtering by item code or name
     pub fn query(
-        &self,
+        &mut self,
         pagination: Pagination,
         filter: Option<StocktakeLineFilter>,
         sort: Option<StocktakeLineSort>,
@@ -191,7 +192,7 @@ fn to_domain((line, (_, item), stock_line, location): StocktakeLineJoin) -> Stoc
 fn apply_item_filter(
     query: BoxedStocktakeLineQuery,
     filter: Option<StocktakeLineFilter>,
-    connection: &StorageConnection,
+    connection: &mut StorageConnection,
     store_id: String,
 ) -> BoxedStocktakeLineQuery {
     if let Some(f) = filter {

@@ -63,7 +63,7 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_dsl::store)
             .values(row)
             .on_conflict(store_dsl::id)
@@ -74,7 +74,7 @@ impl<'a> StoreRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&self, row: &StoreRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&mut self, row: &StoreRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_dsl::store)
             .values(row)
             .execute(&mut self.connection.connection)?;
@@ -88,7 +88,7 @@ impl<'a> StoreRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+    pub fn find_one_by_id(&mut self, store_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::id.eq(store_id))
             .first(&mut self.connection.connection)
@@ -96,7 +96,10 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_name_id(&self, name_id: &str) -> Result<Option<StoreRow>, RepositoryError> {
+    pub fn find_one_by_name_id(
+        &mut self,
+        name_id: &str,
+    ) -> Result<Option<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::name_id.eq(name_id))
             .first(&mut self.connection.connection)
@@ -104,19 +107,19 @@ impl<'a> StoreRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
+    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store_dsl::store
             .filter(store_dsl::id.eq_any(ids))
             .load(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn all(&self) -> Result<Vec<StoreRow>, RepositoryError> {
+    pub fn all(&mut self) -> Result<Vec<StoreRow>, RepositoryError> {
         let result = store_dsl::store.load(&mut self.connection.connection)?;
         Ok(result)
     }
 
-    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(store_dsl::store.filter(store_dsl::id.eq(id)))
             .execute(&mut self.connection.connection)?;
         Ok(())
@@ -127,11 +130,11 @@ impl<'a> StoreRowRepository<'a> {
 pub struct StoreRowDelete(pub String);
 // TODO soft delete
 impl Delete for StoreRowDelete {
-    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &StorageConnection) {
+    fn assert_deleted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StoreRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -140,12 +143,12 @@ impl Delete for StoreRowDelete {
 }
 
 impl Upsert for StoreRow {
-    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
         StoreRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &StorageConnection) {
+    fn assert_upserted(&self, con: &mut StorageConnection) {
         assert_eq!(
             StoreRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
