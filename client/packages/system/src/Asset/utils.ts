@@ -5,7 +5,6 @@ import { ImportRow, LineNumber } from './ImportCatalogueItem';
 
 function assetCatalogueItemFields(t: TypedTFunction<LocaleKey>) {
   return [
-    'id',
     t('label.sub-catalogue'),
     t('label.code'),
     t('label.type'),
@@ -23,9 +22,9 @@ export const assetCatalogueItemsListToCsv = (
   const fields = assetCatalogueItemFields(t);
 
   const data = items.map(node => [
-    node.id,
     node.subCatalogue,
     node.code,
+    node.assetType?.name,
     node.manufacturer,
     node.model,
     node.assetClass?.name,
@@ -42,19 +41,20 @@ export const mapIdNameToOptions = (items: { id: string; name: string }[]) =>
 
 export const importRowToCsv = (
   catalogueItems: Partial<ImportRow & LineNumber>[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  includeErrors = true
 ) => {
   const fields = assetCatalogueItemFields(t);
-  fields.push(t('label.error-message'));
+  if (includeErrors) fields.push(t('label.error-message'));
 
   const data = catalogueItems.map(node => [
     node.subCatalogue,
     node.code,
+    node.type,
     node.manufacturer,
     node.model,
     node.class,
     node.category,
-    node.type,
     node.errorMessage,
   ]);
 

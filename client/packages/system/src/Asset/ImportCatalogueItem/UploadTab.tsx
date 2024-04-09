@@ -10,6 +10,9 @@ import {
   Link,
   FnUtils,
   FileUtils,
+  AssetClassNode,
+  AssetCategoryNode,
+  AssetTypeNode,
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
@@ -19,12 +22,15 @@ import { importRowToCsv } from '../utils';
 interface AssetItemUploadTabProps {
   setAssetItem: React.Dispatch<React.SetStateAction<ImportRow[]>>;
   setErrorMessage: (value: React.SetStateAction<string>) => void;
+  assetClasses: AssetClassNode[];
+  assetCategories: AssetCategoryNode[];
+  assetTypes: AssetTypeNode[];
   onUploadComplete: () => void;
   catalogueItemData?: AssetCatalogueItemFragment[];
 }
 
 // introduce new interface to accommodate dynamic keys of parsed result
-interface ParsedAsset {
+interface ParsedImport {
   id: string;
   [key: string]: string | undefined;
 }
@@ -41,7 +47,8 @@ enum AssetColumn {
 
 // the row object indexes are returned in column order
 // which allows us to index the keys
-const getCell = (row: ParsedAsset, index: AssetColumn) => {
+// This will need to change if we introduce properties on assets which are not always in the import
+const getCell = (row: ParsedImport, index: AssetColumn) => {
   const rowKeys = Object.keys(row);
   const key = rowKeys[index] ?? '';
   return row[key] ?? '';
@@ -51,6 +58,9 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   tab,
   setErrorMessage,
   setAssetItem,
+  assetClasses,
+  assetCategories,
+  assetTypes,
   onUploadComplete,
 }) => {
   const t = useTranslation('coldchain');
@@ -59,12 +69,25 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
 
   const csvExample = async () => {
-    const emptyRows: ImportRow[] = [];
+    const exampleRows: ImportRow[] = [
+      {
+        id: '',
+        subCatalogue: 'General',
+        code: 'A Unique Code for this item',
+        class: 'Cold chain equipment',
+        category: 'Refrigerators and freezers',
+        type: 'Refrigerator',
+        manufacturer: 'Some Manufacturer',
+        model: 'Some Model',
+        errorMessage: '',
+      },
+    ];
     const csv = importRowToCsv(
-      emptyRows.map((_row: ImportRow): Partial<ImportRow> => ({})),
-      t
+      exampleRows,
+      t,
+      false // exclude errors
     );
-    FileUtils.exportCSV(csv, t('filename.cce'));
+    FileUtils.exportCSV(csv, t('filename.asset-import-example'));
   };
 
   const csvImport = <T extends File>(files: T[]) => {
@@ -95,18 +118,18 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
     error(t('messages.error-no-file-selected'));
   };
 
-  const processUploadedDataChunk = (data: ParseResult<ParsedAsset>) => {
+  const processUploadedDataChunk = (data: ParseResult<ParsedImport>) => {
     if (!data.data || !Array.isArray(data.data)) {
       setErrorMessage(t('messages.import-error'));
     }
 
     const csvRows = data.data;
 
-    const rows: AssetItemImportModal.ImportRow[] = [];
+    const rows: ImportRow[] = [];
     let hasErrors = false;
 
     csvRows.map((row, _index) => {
-      const importRow = {} as AssetItemImportModal.ImportRow;
+      const importRow = {} as ImportRow;
       const rowErrors: string[] = [];
       importRow.id = FnUtils.generateUUID();
       const subCatalogue = getCell(row, AssetColumn.SUB_CATALOGUE);
@@ -127,23 +150,95 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
           })
         );
       }
+      importRow.code = code;
+
+      // Class (lookup from assetClasses)
+
+      const className = getCell(row, AssetColumn.CLASS);
+      if (className === undefined || className.trim() === '') {
+        rowErrors.push(
+          t('error.field-must-be-specified', {
+            field: t('label.class'),
+          })
+        );
+      } else {
+        importRow.class = className;
+        importRow.classId = assetClasses.find(c => c.name === className)?.id;
+        if (!importRow.classId) {
+          rowErrors.push(
+            t('error.invalid-field-value', {
+              field: t('label.class'),
+              value: className,
+            })
+          );
+        }
+      }
+
+      // Category (lookup from assetCategories)
+
+      const categoryName = getCell(row, AssetColumn.CATEGORY);
+      if (categoryName === undefined || categoryName.trim() === '') {
+        rowErrors.push(
+          t('error.field-must-be-specified', {
+            field: t('label.category'),
+          })
+        );
+      } else {
+        importRow.category = categoryName;
+        importRow.categoryId = assetCategories.find(
+          c => c.name === categoryName
+        )?.id;
+        if (!importRow.categoryId) {
+          rowErrors.push(
+            t('error.invalid-field-value', {
+              field: t('label.category'),
+              value: categoryName,
+            })
+          );
+        }
+      }
+
+      // Look up Type from assetTypes
+
+      const typeName = getCell(row, AssetColumn.TYPE);
+      if (typeName === undefined || typeName.trim() === '') {
+        rowErrors.push(
+          t('error.field-must-be-specified', {
+            field: t('label.type'),
+          })
+        );
+      } else {
+        importRow.type = typeName;
+        importRow.typeId = assetTypes.find(c => c.name === typeName)?.id;
+        if (!importRow.typeId) {
+          rowErrors.push(
+            t('error.invalid-field-value', {
+              field: t('label.type'),
+              value: typeName,
+            })
+          );
+        }
+      }
+
+      // Manufacturer
+      importRow.manufacturer = getCell(row, AssetColumn.MANUFACTURER);
+
+      // Model
+      const model = getCell(row, AssetColumn.MODEL);
+      if (model === undefined || model.trim() === '') {
+        rowErrors.push(
+          t('error.field-must-be-specified', {
+            field: t('label.model'),
+          })
+        );
+      } else {
+        importRow.model = model;
+      }
 
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
     });
-
-    // TODO:
-
-    // Look up Type from assetTypes
-
-    // Manufacturer
-
-    // Model
-
-    // Class (lookup from assetClasses)
-
-    // Category (lookup from assetCategories)
 
     if (hasErrors) {
       setErrorMessage(t('messages.import-error-on-upload'));

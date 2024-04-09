@@ -27,36 +27,50 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
   const columns = useColumns<ImportRow>(
     [
       {
-        key: 'assetNumber',
+        key: 'subCatalogue',
         width: 70,
         sortable: false,
-        label: 'label.asset-number',
+        label: 'label.sub-catalogue',
       },
       {
-        key: 'catalogueItemCode',
+        key: 'code',
         width: 50,
         sortable: false,
-        label: 'label.catalogue-item-code',
+        label: 'label.code',
       },
       {
-        key: 'serialNumber',
+        key: 'type',
         width: 100,
         sortable: false,
-        label: 'label.serial',
+        label: 'label.type',
         Cell: TooltipTextCell,
       },
       {
-        key: 'installationDate',
+        key: 'manufacturer',
         width: 100,
         sortable: false,
-        label: 'label.installation-date',
+        label: 'label.manufacturer',
         Cell: TooltipTextCell,
       },
       {
-        key: 'notes',
+        key: 'model',
         width: 100,
         sortable: false,
-        label: 'label.asset-notes',
+        label: 'label.model',
+        Cell: TooltipTextCell,
+      },
+      {
+        key: 'class',
+        width: 100,
+        sortable: false,
+        label: 'label.class',
+        Cell: TooltipTextCell,
+      },
+      {
+        key: 'category',
+        width: 100,
+        sortable: false,
+        label: 'label.category',
         Cell: TooltipTextCell,
       },
       {
@@ -76,7 +90,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
     }
     return (
       row.code.includes(searchString) ||
-      row.errorMessage.includes(searchString) ||
+      row.errorMessage?.includes(searchString) ||
       row.id === searchString
     );
   });
