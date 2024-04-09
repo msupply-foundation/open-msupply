@@ -37,7 +37,7 @@ export const usePrescriptionLineEditColumns = ({
         'location',
         {
           accessor: ({ rowData }) => rowData.location?.code,
-          width: 70,
+          width: 100,
           Cell: LocationCell,
         },
       ],
@@ -47,7 +47,7 @@ export const usePrescriptionLineEditColumns = ({
         Cell: CheckCell,
         accessor: ({ rowData }) => rowData.stockLine?.onHold,
         align: ColumnAlign.Center,
-        width: 80,
+        width: 70,
       },
       {
         Cell: NumberCell,

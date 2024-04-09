@@ -21,6 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
+import { useEasterEggModal } from './components/EasterEggModal';
 
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   width: 500,
@@ -86,6 +87,7 @@ const Actions = () => {
   const drawer = useDrawer();
   const t = useTranslation('app');
   const { store, logout, user, userHasPermission } = useAuthContext();
+  const showEasterEgg = useEasterEggModal();
 
   const actions = [
     {
@@ -244,6 +246,13 @@ const Actions = () => {
         navigate(RouteBuilder.create(AppRoute.Login).build());
       },
     },
+    {
+      id: 'action:easter-egg',
+      name: `${t('easter-egg')}`,
+      shortcut: ['e', 'e'],
+      keywords: 'easter egg game',
+      perform: showEasterEgg,
+    },
   ];
 
   if (userHasPermission(UserPermission.ServerAdmin)) {
@@ -297,8 +306,8 @@ const Actions = () => {
       });
       actions.push({
         id: 'navigation:coldchain-equipment',
-        name: `${t('cmdk.goto-cold-chain-equipment')} (e)`,
-        shortcut: ['e'],
+        name: `${t('cmdk.goto-cold-chain-equipment')} (c + e)`,
+        shortcut: ['c', 'e'],
         keywords: 'cold chain coldchain equipment',
         perform: () =>
           navigate(

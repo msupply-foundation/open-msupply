@@ -39,16 +39,16 @@ pub struct BuildArgs {
     #[clap(long)]
     pub query_default: Option<String>,
 
-    /// File name of the SQLite query.
-    /// If specified the query_postgres must be provided as well.
-    /// However, query_sqlite and query_postgres can point to the same file.
-    #[clap(long)]
-    pub query_sqlite: Option<String>,
-    /// File name of the Postgres query.
-    /// If specified the query_sqlite must be provided as well.
-    /// However, query_sqlite and query_postgres can point to the same file.
-    #[clap(long)]
-    pub query_postgres: Option<String>,
+    /// SQL query name.
+    /// This argument requires that there is either
+    /// - a single {query_sql}.sql file (for both Sqlite and Postgres)
+    /// - a {query_sql}.sqlite.sql file and a {query_sql}.postgres.sql file
+    ///
+    /// The query result is put in the data object under `data.{query_sql}`.
+    /// Thus, the user has to take care that the query name {query_sql} does not conflict with a
+    /// GraphQL query since otherwise data from the GraphQL query might get overwritten.
+    #[clap(long, value_parser, value_delimiter = ' ')]
+    pub query_sql: Option<Vec<String>>,
 }
 
 #[derive(clap::Args)]

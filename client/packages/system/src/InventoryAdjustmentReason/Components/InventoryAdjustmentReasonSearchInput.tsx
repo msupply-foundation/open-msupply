@@ -72,7 +72,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
               style: props.disabled ? { paddingLeft: 0 } : {},
               ...props.InputProps,
             }}
-            sx={{ width }}
+            sx={{ minWidth: width }}
             error={isError}
             required={isRequired}
           />
