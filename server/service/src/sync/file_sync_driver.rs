@@ -186,7 +186,8 @@ fn is_initialised(service_provider: &ServiceProvider) -> bool {
         .unwrap()
 }
 
-fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
+// Should this really be inside FileSyncrhoniser::new ? (similar with other sync)
+pub fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
     let ctx = service_provider.basic_context().unwrap();
     service_provider
         .settings
