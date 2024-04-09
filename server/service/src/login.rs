@@ -93,8 +93,6 @@ impl LoginService {
         min_err_response_time_sec: u64,
     ) -> Result<TokenPair, LoginError> {
         let now = SystemTime::now();
-
-        println!("LOGIN: {:?}", input);
         match LoginService::do_login(service_provider, auth_data, input).await {
             Ok(result) => Ok(result),
             Err(err) => {
@@ -120,10 +118,8 @@ impl LoginService {
                 let service_ctx =
                     service_provider.context("".to_string(), user_info.user.id.clone())?;
                 username = user_info.user.name.clone();
-                println!("Logged in successfully updating user");
                 LoginService::update_user(&service_ctx, &input.password, user_info)
                     .map_err(LoginError::UpdateUserError)?;
-                println!("User Updated");
             }
             Err(err) => match err {
                 FetchUserError::Unauthenticated => {
