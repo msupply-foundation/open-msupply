@@ -17,6 +17,7 @@ import {
   useNotification,
   Tooltip,
   useDebounceCallback,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
@@ -27,11 +28,13 @@ interface StockLineFormProps {
   draft: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
+  packQtyEditable?: boolean;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
   onUpdate,
   plugins,
+  packQtyEditable,
 }) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
@@ -99,11 +102,28 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        <TextWithLabelRow
-          label={t('label.num-packs')}
-          text={String(draft.totalNumberOfPacks)}
-          textProps={{ textAlign: 'end' }}
-        />
+        {packQtyEditable ? (
+          <StyledInputRow
+            label={t('label.num-packs')}
+            Input={
+              <NumericTextInput
+                disabled={!packQtyEditable}
+                autoFocus
+                width={160}
+                value={draft.totalNumberOfPacks}
+                onChange={totalNumberOfPacks =>
+                  onUpdate({ totalNumberOfPacks })
+                }
+              />
+            }
+          />
+        ) : (
+          <TextWithLabelRow
+            label={t('label.num-packs')}
+            text={String(draft.totalNumberOfPacks)}
+            textProps={{ textAlign: 'end' }}
+          />
+        )}
         <StyledInputRow
           label={t('label.cost-price')}
           Input={
