@@ -1,4 +1,5 @@
 {
+  "button.new-stock": "New Stock",
   "button.repack": "Repack",
   "error.cant-save": "There was a problem saving.",
   "error.no-locations": "There are no Locations to display.",

@@ -9,13 +9,15 @@ import {
   LoadingButton,
   EnvUtils,
   Platform,
+  PlusCircleIcon,
+  ButtonWithIcon,
 } from '@openmsupply-client/common';
 import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
-  const t = useTranslation('distribution');
+  const t = useTranslation('inventory');
   const { fetchAsync, isLoading } = useStock.line.listAll({
     key: 'itemName',
     direction: 'asc',
@@ -33,9 +35,16 @@ export const AppBarButtonsComponent = () => {
     success(t('success'))();
   };
 
+  const openModal = () => {};
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
+          label={t('button.new-stock')}
+          onClick={openModal}
+        />
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}
