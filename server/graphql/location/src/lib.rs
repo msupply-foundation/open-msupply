@@ -8,7 +8,10 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::*;
-use repository::{location::LocationFilter, EqualFilter, PaginationOption};
+use repository::{
+    asset_internal_location::AssetInternalLocationRepository, location::LocationFilter,
+    EqualFilter, Pagination, PaginationOption,
+};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(Default, Clone)]
@@ -42,6 +45,60 @@ impl LocationQueries {
             .map(LocationFilter::from)
             .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
+
+        let locations = service_provider
+            .location_service
+            .get_locations(
+                &service_context,
+                page.map(PaginationOption::from),
+                Some(filter),
+                // Currently only one sort option is supported, use the first from the list.
+                sort.and_then(|mut sort_list| sort_list.pop())
+                    .map(|sort| sort.to_domain()),
+            )
+            .map_err(StandardGraphqlError::from_list_error)?;
+
+        Ok(LocationsResponse::Response(LocationConnector::from_domain(
+            locations,
+        )))
+    }
+
+    /// Returns a list of locations which are available to be assigned to assets
+    pub async fn asset_locations(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LocationFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<LocationSortInput>>,
+    ) -> Result<LocationsResponse> {
+        let user = validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryLocation,
+                store_id: Some(store_id.clone()),
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+        let connection = ctx.get_connection_manager().connection()?;
+
+        let asset_location_repo = AssetInternalLocationRepository::new(&connection);
+        let allocated_location_ids = asset_location_repo
+            .query(Pagination::all(), None, None)?
+            .into_iter()
+            .map(|v| v.location_id)
+            .collect::<Vec<String>>();
+
+        // always filter by store_id
+        // and exclude locations that are already allocated to assets
+        let filter = filter
+            .map(LocationFilter::from)
+            .unwrap_or_default()
+            .store_id(EqualFilter::equal_to(&store_id))
+            .id(EqualFilter::not_equal_all(allocated_location_ids));
 
         let locations = service_provider
             .location_service

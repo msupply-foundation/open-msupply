@@ -91,6 +91,15 @@ pub struct AssetConnector {
     nodes: Vec<AssetNode>,
 }
 
+impl AssetConnector {
+    pub fn new() -> AssetConnector {
+        AssetConnector {
+            total_count: 0,
+            nodes: Vec::<AssetNode>::new(),
+        }
+    }
+}
+
 #[Object]
 impl AssetNode {
     pub async fn id(&self) -> &str {

@@ -21,7 +21,7 @@ import { Summary } from './Tabs';
 import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList, useLocation } from '@openmsupply-client/system';
+import { ActivityLogList } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 
 export const EquipmentDetailView = () => {
@@ -29,13 +29,7 @@ export const EquipmentDetailView = () => {
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
   const { data: locationData, isLoading: isLoadingLocations } =
-    useLocation.document.list({
-      sortBy: {
-        key: 'name',
-        direction: 'asc',
-      },
-      filterBy: null,
-    });
+    useAssets.utils.locations({});
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
@@ -52,7 +46,7 @@ export const EquipmentDetailView = () => {
         setIsDirty(false);
         success(t('messages.asset-saved'))();
       })
-      .catch(() => error(t('error.unable-to-save-asset'))());
+      .catch(e => error(`${t('error.unable-to-save-asset')}: ${e.message}`)());
   };
 
   const showSaveConfirmation = useConfirmationModal({
@@ -83,7 +77,7 @@ export const EquipmentDetailView = () => {
   }, [data, setDraft]);
 
   const locations =
-    locationData?.nodes.map(location => ({
+    locationData?.map(location => ({
       label: location.code,
       value: location.id,
     })) || [];

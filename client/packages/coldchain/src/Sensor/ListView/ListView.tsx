@@ -37,6 +37,8 @@ export const SensorListView: FC = () => {
         key: 'cce',
         label: 'label.cce',
         sortable: false,
+        accessor: ({ rowData }) =>
+          rowData.assets?.nodes?.map(asset => asset.assetNumber).join(', '),
       },
       {
         key: 'location',
