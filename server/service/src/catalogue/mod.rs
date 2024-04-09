@@ -1,5 +1,6 @@
 use crate::service_provider::ServiceContext;
 
+use self::delete::{delete_asset_catalogue_item, DeleteAssetCatalogueItemError};
 use self::insert::{
     insert_asset_catalogue_item, InsertAssetCatalogueItem, InsertAssetCatalogueItemError,
 };
@@ -24,6 +25,7 @@ use repository::{
     PaginationOption, StorageConnection,
 };
 
+pub mod delete;
 pub mod insert;
 pub mod query_catalogue_item;
 pub mod query_category;
@@ -114,8 +116,8 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         id: String,
-    ) -> Result<(), RepositoryError> {
-        todo!();
+    ) -> Result<String, DeleteAssetCatalogueItemError> {
+        delete_asset_catalogue_item(ctx, id)
     }
 }
 

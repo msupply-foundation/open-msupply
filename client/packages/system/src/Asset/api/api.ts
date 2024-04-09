@@ -129,4 +129,16 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
     throw new Error('Could not insert asset catalogue item');
   },
+  delete: async (id: string) => {
+    const result = await sdk.deleteAssetCatalogueItem({
+      assetCatalogueItemId: id,
+    });
+    const { deleteAssetCatalogueItem } = result;
+
+    if (deleteAssetCatalogueItem?.__typename === 'DeleteResponse') {
+      return deleteAssetCatalogueItem.id;
+    }
+
+    throw new Error('Could not delete asset catalogue item');
+  },
 });

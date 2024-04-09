@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
   FilterMenu,
   useTranslation,
   useUrlQuery,
@@ -25,6 +28,7 @@ export const Toolbar = () => {
   const t = useTranslation('catalogue');
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
+  const onDelete = useAssetData.document.delete();
 
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
@@ -104,6 +108,11 @@ export const Toolbar = () => {
           ]}
         />
       </Box>
+      <DropdownMenu label={t('label.actions')}>
+        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+          {t('button.delete-lines')}
+        </DropdownMenuItem>
+      </DropdownMenu>
     </AppBarContentPortal>
   );
 };

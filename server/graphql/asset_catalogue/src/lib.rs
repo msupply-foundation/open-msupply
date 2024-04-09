@@ -1,7 +1,8 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use mutations::{
-    insert_asset_catalogue_item, InsertAssetCatalogueItemInput, InsertAssetCatalogueItemResponse,
+    delete_asset_catalogue_item, insert_asset_catalogue_item, DeleteAssetCatalogueItemResponse,
+    InsertAssetCatalogueItemInput, InsertAssetCatalogueItemResponse,
 };
 use types::{
     asset_catalogue_item::{AssetCatalogueItemResponse, AssetCatalogueItemsResponse},
@@ -110,5 +111,13 @@ impl AssetCatalogueMutations {
         input: InsertAssetCatalogueItemInput,
     ) -> Result<InsertAssetCatalogueItemResponse> {
         insert_asset_catalogue_item(ctx, &store_id, input)
+    }
+
+    async fn delete_asset_catalogue_item(
+        &self,
+        ctx: &Context<'_>,
+        asset_catalogue_item_id: String,
+    ) -> Result<DeleteAssetCatalogueItemResponse> {
+        delete_asset_catalogue_item(ctx, &asset_catalogue_item_id)
     }
 }
