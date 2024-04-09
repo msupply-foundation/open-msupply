@@ -8,27 +8,58 @@ import {
   ModalRow,
   ModalLabel,
   Divider,
+  Box,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { StockLineForm } from './StockLineForm';
-import { StockItemSearchInput } from '../..';
+import {
+  Adjustment,
+  InventoryAdjustmentReasonRowFragment,
+  InventoryAdjustmentReasonSearchInput,
+  StockItemSearchInput,
+} from '../..';
+import { StyledInputRow } from './StyledInputRow';
 
 interface NewStockLineModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+type DummyInput = StockLineRowFragment & {
+  // tODO : only need id, manage this diff??
+  // should be like item selector, manages own state, only needs id :)
+  inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null;
+};
+
 interface UseDraftStockLineControl {
-  draft: StockLineRowFragment;
-  onUpdate: (patch: Partial<StockLineRowFragment>) => void;
+  draft: DummyInput;
+  onUpdate: (patch: Partial<DummyInput>) => void;
   onSave: () => Promise<void>;
   isLoading: boolean;
 }
 
-const useDraftStockLine = (
-  seed: StockLineRowFragment
-): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<StockLineRowFragment>({ ...seed });
+// TODO: manage state in API hook
+const useDraftStockLine = (): UseDraftStockLineControl => {
+  const [stockLine, setStockLine] = useState<DummyInput>({
+    __typename: 'StockLineNode',
+    availableNumberOfPacks: 0,
+    costPricePerPack: 0,
+    id: '',
+    itemId: '',
+    onHold: false,
+    packSize: 0,
+    sellPricePerPack: 0,
+    storeId: '',
+    totalNumberOfPacks: 0,
+    item: {
+      unitName: undefined,
+      // ... not needed..
+      __typename: 'ItemNode',
+      code: '',
+      name: '',
+    },
+    inventoryAdjustmentReason: null,
+  });
   // const { mutate, isLoading } = useStock.line.update();
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
@@ -56,27 +87,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const t = useTranslation('inventory');
   const { Modal } = useDialog({ isOpen, onClose });
 
-  // TODO
-  const stockLine: StockLineRowFragment = {
-    __typename: 'StockLineNode',
-    availableNumberOfPacks: 0,
-    costPricePerPack: 0,
-    id: '',
-    itemId: '',
-    onHold: false,
-    packSize: 0,
-    sellPricePerPack: 0,
-    storeId: '',
-    totalNumberOfPacks: 0,
-    item: {
-      __typename: 'ItemNode',
-      code: '',
-      name: '',
-      unitName: undefined,
-    },
-  };
-
-  const { draft, onUpdate, onSave } = useDraftStockLine(stockLine);
+  const { draft, onUpdate, onSave } = useDraftStockLine();
 
   return (
     <Modal
@@ -87,7 +98,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={ObjUtils.isEqual(draft, stockLine)}
+          disabled={false} // todo
           onClick={async () => {
             await onSave();
             onClose();
@@ -111,7 +122,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
           <Grid item flex={1}>
             <StockItemSearchInput
               autoFocus
-              openOnFocus
+              // openOnFocus
               currentItemId={draft.itemId}
               onChange={newItem =>
                 newItem && onUpdate({ itemId: newItem.id, item: newItem })
@@ -122,9 +133,29 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
         <Divider />
 
         {draft.itemId && (
-          <StockLineForm draft={draft} onUpdate={onUpdate} packQtyEditable />
+          <>
+            <StockLineForm draft={draft} onUpdate={onUpdate} packQtyEditable />
+
+            <Grid container justifyContent="start" display="flex">
+              <Grid item width="50%">
+                <StyledInputRow
+                  label={t('label.reason')}
+                  Input={
+                    <Box display="flex" width={160}>
+                      <InventoryAdjustmentReasonSearchInput
+                        adjustment={Adjustment.Addition}
+                        value={draft.inventoryAdjustmentReason}
+                        onChange={reason =>
+                          onUpdate({ inventoryAdjustmentReason: reason })
+                        }
+                      />
+                    </Box>
+                  }
+                />
+              </Grid>
+            </Grid>
+          </>
         )}
-        {/* TODO: reason */}
       </Grid>
     </Modal>
   );
