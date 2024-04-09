@@ -279,6 +279,23 @@ export type AssetCatalogueItemSortInput = {
 
 export type AssetCatalogueItemsResponse = AssetCatalogueItemConnector;
 
+export type AssetCatalogueMutations = {
+  __typename: 'AssetCatalogueMutations';
+  deleteAssetCatalogueItem: DeleteAssetCatalogueItemResponse;
+  insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
+};
+
+
+export type AssetCatalogueMutationsDeleteAssetCatalogueItemArgs = {
+  assetCatalogueItemId: Scalars['String']['input'];
+};
+
+
+export type AssetCatalogueMutationsInsertAssetCatalogueItemArgs = {
+  input: InsertAssetCatalogueItemInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type AssetCategoriesResponse = AssetCategoryConnector;
 
 export type AssetCategoryConnector = {
@@ -756,6 +773,7 @@ export type CentralPatientSearchResponse = CentralPatientSearchConnector | Centr
 
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
+  assetCatalogue: AssetCatalogueMutations;
   packVariant: PackVariantMutations;
 };
 
@@ -3168,7 +3186,6 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
-  deleteAssetCatalogueItem: DeleteAssetCatalogueItemResponse;
   deleteInboundReturn: DeleteInboundReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
@@ -3187,7 +3204,6 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
-  insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
   insertContactTrace: InsertContactTraceResponse;
@@ -3350,11 +3366,6 @@ export type MutationsDeleteAssetArgs = {
 };
 
 
-export type MutationsDeleteAssetCatalogueItemArgs = {
-  assetCatalogueItemId: Scalars['String']['input'];
-};
-
-
 export type MutationsDeleteInboundReturnArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -3458,12 +3469,6 @@ export type MutationsInitialiseSiteArgs = {
 
 export type MutationsInsertAssetArgs = {
   input: InsertAssetInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsInsertAssetCatalogueItemArgs = {
-  input: InsertAssetCatalogueItemInput;
   storeId: Scalars['String']['input'];
 };
 

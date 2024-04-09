@@ -121,7 +121,8 @@ export const getAssetQueries = (sdk: Sdk) => ({
       input: itemParsers.toInsert(input),
       storeId,
     });
-    const { insertAssetCatalogueItem } = result;
+    const insertAssetCatalogueItem =
+      result.centralServer.assetCatalogue.insertAssetCatalogueItem;
 
     if (insertAssetCatalogueItem?.__typename === 'AssetCatalogueItemNode') {
       return insertAssetCatalogueItem.id;
@@ -133,7 +134,8 @@ export const getAssetQueries = (sdk: Sdk) => ({
     const result = await sdk.deleteAssetCatalogueItem({
       assetCatalogueItemId: id,
     });
-    const { deleteAssetCatalogueItem } = result;
+    const deleteAssetCatalogueItem =
+      result.centralServer.assetCatalogue.deleteAssetCatalogueItem;
 
     if (deleteAssetCatalogueItem?.__typename === 'DeleteResponse') {
       return deleteAssetCatalogueItem.id;

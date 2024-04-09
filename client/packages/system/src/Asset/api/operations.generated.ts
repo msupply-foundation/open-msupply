@@ -53,14 +53,14 @@ export type InsertAssetCatalogueItemMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertAssetCatalogueItemMutation = { __typename: 'Mutations', insertAssetCatalogueItem: { __typename: 'AssetCatalogueItemNode', id: string } | { __typename: 'InsertAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'NoPermissionForThisStore', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
+export type InsertAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', insertAssetCatalogueItem: { __typename: 'AssetCatalogueItemNode', id: string } | { __typename: 'InsertAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'NoPermissionForThisStore', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } } } };
 
 export type DeleteAssetCatalogueItemMutationVariables = Types.Exact<{
   assetCatalogueItemId: Types.Scalars['String']['input'];
 }>;
 
 
-export type DeleteAssetCatalogueItemMutation = { __typename: 'Mutations', deleteAssetCatalogueItem: { __typename: 'DeleteAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } };
+export type DeleteAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', deleteAssetCatalogueItem: { __typename: 'DeleteAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } } } };
 
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
@@ -157,15 +157,19 @@ export const AssetCategoriesDocument = gql`
     `;
 export const InsertAssetCatalogueItemDocument = gql`
     mutation insertAssetCatalogueItem($input: InsertAssetCatalogueItemInput!, $storeId: String!) {
-  insertAssetCatalogueItem(input: $input, storeId: $storeId) {
-    ... on AssetCatalogueItemNode {
-      __typename
-      id
-    }
-    ... on InsertAssetCatalogueItemError {
-      __typename
-      error {
-        description
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItem(input: $input, storeId: $storeId) {
+        ... on AssetCatalogueItemNode {
+          __typename
+          id
+        }
+        ... on InsertAssetCatalogueItemError {
+          __typename
+          error {
+            description
+          }
+        }
       }
     }
   }
@@ -173,15 +177,19 @@ export const InsertAssetCatalogueItemDocument = gql`
     `;
 export const DeleteAssetCatalogueItemDocument = gql`
     mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
-  deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
-    ... on DeleteResponse {
-      __typename
-      id
-    }
-    ... on DeleteAssetCatalogueItemError {
-      __typename
-      error {
-        description
+  centralServer {
+    assetCatalogue {
+      deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteAssetCatalogueItemError {
+          __typename
+          error {
+            description
+          }
+        }
       }
     }
   }
@@ -312,7 +320,7 @@ export const mockAssetCategoriesQuery = (resolver: ResponseResolver<GraphQLReque
  * mockInsertAssetCatalogueItemMutation((req, res, ctx) => {
  *   const { input, storeId } = req.variables;
  *   return res(
- *     ctx.data({ insertAssetCatalogueItem })
+ *     ctx.data({ centralServer })
  *   )
  * })
  */
@@ -329,7 +337,7 @@ export const mockInsertAssetCatalogueItemMutation = (resolver: ResponseResolver<
  * mockDeleteAssetCatalogueItemMutation((req, res, ctx) => {
  *   const { assetCatalogueItemId } = req.variables;
  *   return res(
- *     ctx.data({ deleteAssetCatalogueItem })
+ *     ctx.data({ centralServer })
  *   )
  * })
  */

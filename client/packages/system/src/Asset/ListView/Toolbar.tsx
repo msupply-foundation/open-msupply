@@ -6,6 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuItem,
   FilterMenu,
+  useIsCentralServerApi,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -20,6 +21,8 @@ type ReferenceData = {
 
 export const Toolbar = () => {
   // const { data: classes } = useAssetData.utils.classes();
+  const isCentralServer = useIsCentralServerApi();
+
   const { data: categoryData } = useAssetData.utils.categories();
   const { data: typeData } = useAssetData.utils.types();
   const { urlQuery, updateQuery } = useUrlQuery({
@@ -108,11 +111,13 @@ export const Toolbar = () => {
           ]}
         />
       </Box>
-      <DropdownMenu label={t('label.actions')}>
-        <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
-          {t('button.delete-lines')}
-        </DropdownMenuItem>
-      </DropdownMenu>
+      {isCentralServer && (
+        <DropdownMenu label={t('label.actions')}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+            {t('button.delete-lines')}
+          </DropdownMenuItem>
+        </DropdownMenu>
+      )}
     </AppBarContentPortal>
   );
 };
