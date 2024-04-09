@@ -119,7 +119,7 @@ export const useStocktakeColumns = ({
       {
         key: 'locationCode',
         label: 'label.location',
-        width: 90,
+        width: 100,
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [
             { path: ['lines', 'location', 'code'] },
@@ -173,7 +173,7 @@ export const useStocktakeColumns = ({
         Cell: NumberCell,
         getIsError: row =>
           getLinesFromRow(row).some(
-            r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
+            r => getError(r)?.__typename === 'StockLineReducedBelowZero'
           ),
         sortable: false,
         accessor: ({ rowData }) => {
