@@ -1,4 +1,4 @@
-use repository::{RepositoryError, StockLine, StockLineRow, StorageConnection};
+use repository::{RepositoryError, StockLine, StorageConnection};
 
 use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
 use crate::invoice::inventory_adjustment::insert::AdjustmentType;
