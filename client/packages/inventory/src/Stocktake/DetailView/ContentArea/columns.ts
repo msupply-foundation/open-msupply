@@ -119,7 +119,7 @@ export const useStocktakeColumns = ({
       {
         key: 'locationCode',
         label: 'label.location',
-        width: 90,
+        width: 100,
         accessor: ({ rowData }) =>
           getColumnProperty(rowData, [
             { path: ['lines', 'location', 'code'] },
