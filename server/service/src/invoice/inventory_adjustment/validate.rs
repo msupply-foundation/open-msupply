@@ -47,7 +47,7 @@ pub fn validate(
     }
 
     if stock_line.stock_line_row.available_number_of_packs - reduction_amount < 0.0 {
-        return Err(StockLineReducedBelowZero(stock_line));
+        return Err(StockLineReducedBelowZero(stock_line.stock_line_row));
     }
 
     Ok(stock_line)
