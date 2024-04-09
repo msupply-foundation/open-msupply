@@ -1,49 +1,40 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <title>mSupply Run</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-control" content="public" />
     <meta
-      name="description"
-      content="Google Chrome's unblocked offline game about dinosaur T-rex running through the desert, jumping over cactuses and dodging pterodactyls."
+      name="viewport"
+      content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no"
     />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="style.css" />
     <script>
-      var user_name = localStorage.getItem('userName');
-      if (user_name == null) user_name = '';
+      let user_name = '';
     </script>
-    <link rel="stylesheet" href="style.css" type="text/css" />
+
+    <script>
+      window.onkeydown = function (e) {
+        if (e.keyCode == 32 && e.target == document.body) {
+          e.preventDefault();
+        }
+      };
+    </script>
   </head>
-  <body class="offline" onload="getUserName();">
-    <div class="controlsec">
-      <button class="btn" id="user" onclick="setUserName()" type="button">
-        name
-      </button>
-      <button class="btn" id="mutebtn" onclick="Mute()" type="button">
-        mute
-      </button>
-      <button class="btn" id="zoombtn" onclick="Zoom()" type="button">
-        <span class="zoom"><span class="zoom-inner"></span></span>
-      </button>
-    </div>
-    <input
-      type="hidden"
-      id="token"
-      value="6e06aff456c66849e7ef407535a01541f6b52138902d620540f266264bbc54b0"
-    />
-    <header id="main-frame-error" class="interstitial-wrapper"></header>
+
+  <body id="t" class="offline main-page">
+    <header id="main-frame-error" class="interstitial-wrapper __wrapper">
+      <div id="main-content">
+        <p>
+          Press Space or up arrow (↑) to start the game online and jump the
+          mSupply guy, use down arrow (↓) to duck.
+        </p>
+      </div>
+    </header>
     <div id="currentScore" style="display: none"></div>
+
     <section id="offline-resources">
-      <img
-        id="offline-resources-1x"
-        src="img/offline-sprite-1x.png"
-        alt="T-Rex Runner Sprite"
-      />
-      <img
-        id="offline-resources-2x"
-        src="img/offline-sprite-2x.png"
-        alt="T-Rex Runner Sprite 1"
-      />
+      <img id="offline-resources-1x" src="img/offline-sprite-1x.png" />
+      <img id="offline-resources-2x" src="img/offline-sprite-2x.png" />
       <template id="audio-resources">
         <audio
           id="offline-sound-press"
@@ -59,58 +50,25 @@
         ></audio>
       </template>
     </section>
-    <script>
-      var muteSnd = localStorage.getItem('muteSnd'),
-        muteBtn = document.getElementById('mutebtn'),
-        userN = document.getElementById('user');
-      if (muteSnd == null || muteSnd == 0) {
-        muteSnd = false;
-        muteBtn.innerText = 'mute';
-      } else {
-        muteSnd = true;
-        muteBtn.innerText = 'unmute';
-      }
-      function Mute() {
-        if (muteSnd) {
-          muteSnd = false;
-          localStorage.setItem('muteSnd', 0);
-          muteBtn.innerText = 'mute';
-        } else {
-          muteSnd = true;
-          localStorage.setItem('muteSnd', 1);
-          muteBtn.innerText = 'unmute';
+
+    <script type="text/javascript">
+      (function () {
+        var link_element = document.createElement('link'),
+          s = document.getElementsByTagName('script')[0];
+        if (
+          window.location.protocol !== 'http:' &&
+          window.location.protocol !== 'https:'
+        ) {
+          link_element.href = 'http:';
         }
-        document.getElementById('mutebtn').blur();
-        document.getElementById('main-frame-error').focus();
-      }
-      function getUserName() {
-        userN.innerText = user_name;
-        if (user_name == '') userN.innerText = 'name not set';
-      }
-      function setUserName() {
-        var e_name = '';
-        e_name = prompt('Enter name', user_name);
-        if (!e_name == '' || !e_name == null) {
-          user_name = e_name;
-          userN.innerText = user_name;
-          localStorage.setItem('userName', user_name);
-          document.getElementById('user').blur();
-          document.getElementById('main-frame-error').focus();
-        }
-      }
-      window.addEventListener('keydown', function (e) {
-        if (e.keyCode == 32 && e.target == document.body) {
-          e.preventDefault();
-        }
-      });
-      function Zoom() {
-        if (document.body.classList.contains('sizegx12')) {
-          document.body.classList.replace('sizegx12', 'sizegx15');
-        } else if (document.body.classList.contains('sizegx15')) {
-          document.body.classList.remove('sizegx15');
-        } else document.body.classList.add('sizegx12');
-      }
+        link_element.href +=
+          '//fonts.googleapis.com/css?family=Open+Sans:300italic,300,400italic,400,600italic,600,700italic,700,800italic,800';
+        link_element.rel = 'stylesheet';
+        link_element.type = 'text/css';
+        s.parentNode.insertBefore(link_element, s);
+      })();
     </script>
-    <script src="game.js"></script>
+
+    <script src="./game.js"></script>
   </body>
 </html>
