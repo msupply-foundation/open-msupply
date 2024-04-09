@@ -77,11 +77,13 @@ const AssetListComponent: FC = () => {
         sortable: false,
         accessor: ({ rowData }) => rowData.assetCategory?.name,
       },
+      'selection',
     ],
     {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
+
     [sortBy]
   );
 

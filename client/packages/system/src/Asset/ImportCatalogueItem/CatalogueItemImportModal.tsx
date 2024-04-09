@@ -103,10 +103,6 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     () => []
   );
 
-  // useEffect(() => {
-  //   fetchAsync();
-  // }, [fetchAsync]);
-
   const csvExport = async () => {
     const csv = importRowToCsv(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,7 +111,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       ),
       t
     );
-    FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
+    FileUtils.exportCSV(csv, t('filename.failed-import-rows'));
     success(t('success'))();
   };
 

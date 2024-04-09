@@ -77,6 +77,7 @@
   "filename.cce": "equipment upload template",
   "filename.asset-import-example": "Example Asset Item Import",
   "filename.cce-failed-uploads": "Assets failed to upload",
+  "filename.failed-import-rows": "Errored Import Rows",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",
   "messages.cce-created": "CCE created successfully",

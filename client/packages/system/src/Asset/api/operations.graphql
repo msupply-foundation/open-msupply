@@ -111,3 +111,18 @@ mutation insertAssetCatalogueItem(
     }
   }
 }
+
+mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
+  deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteAssetCatalogueItemError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
