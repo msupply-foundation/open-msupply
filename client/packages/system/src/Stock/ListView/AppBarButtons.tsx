@@ -11,9 +11,11 @@ import {
   Platform,
   PlusCircleIcon,
   ButtonWithIcon,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
+import { NewStockLineModal } from '../Components/NewStockLineModal';
 
 export const AppBarButtonsComponent = () => {
   const { success, error } = useNotification();
@@ -22,6 +24,8 @@ export const AppBarButtonsComponent = () => {
     key: 'itemName',
     direction: 'asc',
   });
+
+  const { isOpen, onClose, onOpen } = useEditModal();
 
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -35,15 +39,15 @@ export const AppBarButtonsComponent = () => {
     success(t('success'))();
   };
 
-  const openModal = () => {};
-
   return (
     <AppBarButtonsPortal>
+      {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
+
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-stock')}
-          onClick={openModal}
+          onClick={onOpen}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}
