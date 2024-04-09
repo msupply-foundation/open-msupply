@@ -2424,6 +2424,32 @@ export type InsertRequestRequisitionResponseWithId = {
   response: InsertRequestRequisitionResponse;
 };
 
+export type InsertStockLineError = {
+  __typename: 'InsertStockLineError';
+  error: InsertStockLineErrorInterface;
+};
+
+export type InsertStockLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertStockLineInput = {
+  /** Empty barcode will unlink barcode from StockLine */
+  barcode?: InputMaybe<Scalars['String']['input']>;
+  batch?: InputMaybe<Scalars['String']['input']>;
+  costPricePerPack: Scalars['Float']['input'];
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  itemId: Scalars['String']['input'];
+  locationId?: InputMaybe<Scalars['String']['input']>;
+  onHold: Scalars['Boolean']['input'];
+  packSize: Scalars['Int']['input'];
+  sellPricePerPack: Scalars['Float']['input'];
+};
+
+export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
+
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
@@ -3196,6 +3222,7 @@ export type Mutations = {
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertStockLine: InsertStockLineLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   /** Links a patient to a store and thus effectively to a site */
@@ -3586,6 +3613,12 @@ export type MutationsInsertRequestRequisitionArgs = {
 
 export type MutationsInsertRequestRequisitionLineArgs = {
   input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertStockLineArgs = {
+  input: InsertStockLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5198,7 +5231,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteLoca
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertStockLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -7022,6 +7055,7 @@ export enum UserPermission {
   InboundReturnQuery = 'INBOUND_RETURN_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
   ItemMutate = 'ITEM_MUTATE',
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
