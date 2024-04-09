@@ -5043,6 +5043,7 @@ dependencies = [
 name = "service"
 version = "0.1.0"
 dependencies = [
+ "actix-files",
  "actix-rt",
  "actix-web",
  "anyhow",
