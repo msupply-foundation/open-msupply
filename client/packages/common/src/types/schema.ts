@@ -2442,7 +2442,7 @@ export type InsertStockLineInput = {
   id: Scalars['String']['input'];
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
   itemId: Scalars['String']['input'];
-  locationId?: InputMaybe<Scalars['String']['input']>;
+  location?: InputMaybe<NullableStringUpdate>;
   onHold: Scalars['Boolean']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];

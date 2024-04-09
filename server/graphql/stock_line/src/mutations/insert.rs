@@ -1,7 +1,8 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    simple_generic_errors::RecordNotFound, standard_graphql_error::validate_auth, ContextExt,
+    generic_inputs::NullableUpdateInput, simple_generic_errors::RecordNotFound,
+    standard_graphql_error::validate_auth, ContextExt,
 };
 use graphql_types::types::StockLineNode;
 use repository::StockLine;
@@ -17,7 +18,7 @@ pub struct InsertInput {
     pub pack_size: u32,
     pub on_hold: bool,
     pub batch: Option<String>,
-    pub location_id: Option<String>,
+    pub location: Option<NullableUpdateInput<String>>,
     pub expiry_date: Option<NaiveDate>,
     pub inventory_adjustment_reason_id: Option<String>,
     /// Empty barcode will unlink barcode from StockLine
