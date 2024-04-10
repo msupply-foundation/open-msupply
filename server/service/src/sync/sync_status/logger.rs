@@ -296,7 +296,8 @@ impl SyncLogError {
     fn from_sync_error(sync_error: &SyncError) -> Self {
         let sync_api_error = match &sync_error {
             // Sync Api Error
-            SyncError::CentralPullError(CentralPullError::SyncApiError(error))
+            SyncError::SyncApiError(error)
+            | SyncError::CentralPullError(CentralPullError::SyncApiError(error))
             | SyncError::RemotePullError(RemotePullError::SyncApiError(error))
             | SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(error))
             | SyncError::PostInitialisationError(
