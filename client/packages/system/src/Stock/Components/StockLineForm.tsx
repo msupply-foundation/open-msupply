@@ -21,20 +21,20 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { usePackVariant } from '../..';
+import { PackVariantInput, usePackVariant } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
 interface StockLineFormProps {
   draft: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
-  packQtyEditable?: boolean;
+  packEditable?: boolean;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
   onUpdate,
   plugins,
-  packQtyEditable,
+  packEditable,
 }) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
@@ -93,6 +93,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
       paddingTop={2}
       paddingBottom={2}
       width="100%"
+      flexWrap="nowrap"
     >
       <Grid
         container
@@ -102,12 +103,11 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        {packQtyEditable ? (
+        {packEditable ? (
           <StyledInputRow
             label={t('label.num-packs')}
             Input={
               <NumericTextInput
-                disabled={!packQtyEditable}
                 autoFocus
                 width={160}
                 value={draft.totalNumberOfPacks}
@@ -177,11 +177,25 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        <TextWithLabelRow
-          label={t('label.pack')}
-          text={String(packUnit)}
-          textProps={{ textAlign: 'end' }}
-        />
+        {packEditable ? (
+          <StyledInputRow
+            label={t('label.pack')}
+            Input={
+              <PackVariantInput
+                packSize={draft.packSize}
+                itemId={draft.itemId}
+                unitName={draft.item.unitName ?? null}
+                onChange={packSize => onUpdate({ packSize })}
+              />
+            }
+          />
+        ) : (
+          <TextWithLabelRow
+            label={t('label.pack')}
+            text={String(packUnit)}
+            textProps={{ textAlign: 'end' }}
+          />
+        )}
         <StyledInputRow
           label={t('label.on-hold')}
           Input={

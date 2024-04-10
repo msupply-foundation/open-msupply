@@ -20,6 +20,8 @@ import {
 } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
+const INPUT_WIDTH = 160;
+
 interface NewStockLineModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -121,8 +123,9 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
           />
           <Grid item flex={1}>
             <StockItemSearchInput
-              autoFocus
-              // openOnFocus
+              autoFocus={!draft.itemId}
+              openOnFocus={!draft.itemId}
+              disabled={!!draft.itemId}
               currentItemId={draft.itemId}
               onChange={newItem =>
                 newItem && onUpdate({ itemId: newItem.id, item: newItem })
@@ -134,15 +137,16 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
 
         {draft.itemId && (
           <>
-            <StockLineForm draft={draft} onUpdate={onUpdate} packQtyEditable />
+            <StockLineForm draft={draft} onUpdate={onUpdate} packEditable />
 
             <Grid container justifyContent="start" display="flex">
               <Grid item width="50%">
                 <StyledInputRow
                   label={t('label.reason')}
                   Input={
-                    <Box display="flex" width={160}>
+                    <Box display="flex" width={INPUT_WIDTH}>
                       <InventoryAdjustmentReasonSearchInput
+                        width={INPUT_WIDTH}
                         adjustment={Adjustment.Addition}
                         value={draft.inventoryAdjustmentReason}
                         onChange={reason =>
