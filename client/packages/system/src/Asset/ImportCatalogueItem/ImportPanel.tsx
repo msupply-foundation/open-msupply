@@ -19,10 +19,8 @@ export interface ImportPanel {
 export const ImportPanel: FC<PropsWithChildren<ImportPanel>> = ({
   tab,
   children,
-}) => {
-  return (
-    <StyledTabPanel value={tab}>
-      <StyledTabContainer>{children}</StyledTabContainer>
-    </StyledTabPanel>
-  );
-};
+}) => (
+  <StyledTabPanel value={tab}>
+    <StyledTabContainer>{children}</StyledTabContainer>
+  </StyledTabPanel>
+);
