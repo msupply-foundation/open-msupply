@@ -1,20 +1,18 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import {
   useTranslation,
   Grid,
   DialogButton,
   useDialog,
-  ObjUtils,
   ModalRow,
   ModalLabel,
   Divider,
   Box,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../api';
+import { DraftStockLine, useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
 import {
   Adjustment,
-  InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
   StockItemSearchInput,
 } from '../..';
@@ -27,61 +25,6 @@ interface NewStockLineModalProps {
   onClose: () => void;
 }
 
-type DummyInput = StockLineRowFragment & {
-  // tODO : only need id, manage this diff??
-  // should be like item selector, manages own state, only needs id :)
-  inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null;
-};
-
-interface UseDraftStockLineControl {
-  draft: DummyInput;
-  onUpdate: (patch: Partial<DummyInput>) => void;
-  onSave: () => Promise<void>;
-  isLoading: boolean;
-}
-
-// TODO: manage state in API hook
-const useDraftStockLine = (): UseDraftStockLineControl => {
-  const [stockLine, setStockLine] = useState<DummyInput>({
-    __typename: 'StockLineNode',
-    availableNumberOfPacks: 0,
-    costPricePerPack: 0,
-    id: '',
-    itemId: '',
-    onHold: false,
-    packSize: 0,
-    sellPricePerPack: 0,
-    storeId: '',
-    totalNumberOfPacks: 0,
-    item: {
-      unitName: undefined,
-      // ... not needed..
-      __typename: 'ItemNode',
-      code: '',
-      name: '',
-    },
-    inventoryAdjustmentReason: null,
-  });
-  // const { mutate, isLoading } = useStock.line.update();
-
-  const onUpdate = (patch: Partial<StockLineRowFragment>) => {
-    const newStockLine = { ...stockLine, ...patch };
-    if (ObjUtils.isEqual(stockLine, newStockLine)) return;
-    setStockLine(newStockLine);
-  };
-  //
-  // todo check not 0
-  // todo mock api
-  // const onSave = async () => mutate(stockLine);
-
-  return {
-    draft: stockLine,
-    onUpdate,
-    onSave: () => Promise.resolve(),
-    isLoading: false,
-  };
-};
-
 export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   isOpen,
   onClose,
@@ -89,7 +32,14 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const t = useTranslation('inventory');
   const { Modal } = useDialog({ isOpen, onClose });
 
-  const { draft, onUpdate, onSave } = useDraftStockLine();
+  const { draft, setDraft, create } = useStockLine();
+
+  const onUpdate = (patch: Partial<DraftStockLine>) => {
+    setDraft({ ...draft, ...patch });
+  };
+
+  const isDisabled =
+    !draft.itemId || !draft.packSize || !draft.totalNumberOfPacks;
 
   return (
     <Modal
@@ -100,9 +50,9 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
       okButton={
         <DialogButton
           variant="ok"
-          disabled={false} // todo
+          disabled={isDisabled}
           onClick={async () => {
-            await onSave();
+            await create();
             onClose();
           }}
         />

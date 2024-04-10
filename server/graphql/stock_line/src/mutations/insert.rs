@@ -5,7 +5,7 @@ use graphql_core::{
     standard_graphql_error::validate_auth, ContextExt,
 };
 use graphql_types::types::StockLineNode;
-use repository::StockLine;
+use repository::{ItemRow, StockLine};
 use service::auth::{Resource, ResourceAccessRequest};
 
 #[derive(InputObject)]
@@ -13,6 +13,7 @@ use service::auth::{Resource, ResourceAccessRequest};
 pub struct InsertInput {
     pub id: String,
     pub item_id: String,
+    pub number_of_packs: f64,
     pub cost_price_per_pack: f64,
     pub sell_price_per_pack: f64,
     pub pack_size: u32,
@@ -60,6 +61,10 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, _input: InsertInput) -> Result<
 
     return Ok(InsertResponse::Response(StockLineNode::from_domain(
         StockLine {
+            item_row: ItemRow {
+                id: _input.item_id,
+                ..Default::default()
+            },
             ..Default::default()
         },
     )));
