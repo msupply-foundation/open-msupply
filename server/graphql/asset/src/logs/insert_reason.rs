@@ -101,3 +101,105 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogReasonErrorInterface> 
 
     Err(graphql_error.extend())
 }
+
+#[cfg(test)]
+
+mod test {
+    use async_graphql::EmptyMutation;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
+    use repository::{
+        asset_log_row::AssetLogStatus, assets::asset_log_reason::AssetLogReason,
+        mock::MockDataInserts, StorageConnectionManager,
+    };
+    use serde_json::json;
+
+    use service::{
+        asset::{
+            insert_log_reason::{InsertAssetLogReason, InsertAssetLogReasonError},
+            AssetServiceTrait,
+        },
+        service_provider::{ServiceContext, ServiceProvider},
+    };
+
+    use crate::AssetLogReasonMutations;
+
+    type InsertAssetLogReasonMethod = dyn Fn(InsertAssetLogReason) -> Result<AssetLogReason, InsertAssetLogReasonError>
+        + Sync
+        + Send;
+
+    pub struct TestService(pub Box<InsertAssetLogReasonMethod>);
+    impl AssetServiceTrait for TestService {
+        fn insert_asset_log_reason(
+            &self,
+            _: &ServiceContext,
+            input: InsertAssetLogReason,
+        ) -> Result<AssetLogReason, InsertAssetLogReasonError> {
+            (self.0)(input)
+        }
+    }
+
+    pub fn service_provider(
+        asset_service: TestService,
+        connection_manager: &StorageConnectionManager,
+    ) -> ServiceProvider {
+        let mut service_provider = ServiceProvider::new(connection_manager.clone(), "app_data");
+        service_provider.asset_service = Box::new(asset_service);
+        service_provider
+    }
+
+    #[actix_rt::test]
+    async fn test_graphql_insert_asset_log_success() {
+        let (_, _, connection_manager, settings) = setup_graphql_test(
+            EmptyMutation,
+            AssetLogReasonMutations,
+            "test_graphql_insert_asset_log_success",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let mutation = r#"
+        mutation ($input: InsertAssetLogReasonInput!) {
+            insertAssetLogReason(input: $input, storeId: \"store_a\") {
+                ... on AssetLogReasonNode {
+                    id
+                    assetLogStatus
+                    reason
+                }
+            }
+        }
+        "#;
+
+        let variables = Some(json!({
+            "input": {
+                "id": "n/a",
+                "assetLogStatus": AssetLogStatus::Functioning,
+                "reason": "reason",
+            }
+        }));
+
+        // Record already exists
+        let test_service = TestService(Box::new(|_| {
+            Ok(AssetLogReason {
+                id: "id".to_owned(),
+                asset_log_status: AssetLogStatus::Functioning,
+                reason: "reason".to_owned(),
+                ..Default::default()
+            })
+        }));
+
+        let expected = json!({
+            "insertAssetLogReason": {
+                "id": "id",
+                "assetLogStatus": AssetLogStatus::Functioning,
+                "reason": "reason",
+            }
+        });
+        assert_graphql_query!(
+            &settings,
+            mutation,
+            &variables,
+            &expected,
+            Some(service_provider(test_service, &connection_manager))
+        );
+    }
+}
