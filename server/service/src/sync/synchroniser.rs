@@ -1,6 +1,6 @@
 use crate::{
     service_provider::{ServiceContext, ServiceProvider},
-    sync::sync_status::logger::SyncStep,
+    sync::{sync_status::logger::SyncStep, CentralServerConfig},
 };
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
@@ -8,15 +8,13 @@ use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 use std::ops::Not;
 use std::sync::Arc;
 use thiserror::Error;
-use util::{format_error, is_central_server};
+use util::format_error;
 
 use super::{
-    api::SyncApiV5,
-    api_v6::SyncApiV6,
+    api::{SyncApiError, SyncApiSettings, SyncApiV5},
+    api_v6::SyncApiV6CreatingError,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    central_data_synchroniser_v6::{
-        CentralDataSynchroniserV6, CentralPullErrorV6, RemotePushErrorV6,
-    },
+    central_data_synchroniser_v6::{CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6},
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -30,17 +28,20 @@ use super::{
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
 const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
-
 pub struct Synchroniser {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
-    central_v6: CentralDataSynchroniserV6,
+    sync_v5_settings: SyncApiSettings,
     remote: RemoteDataSynchroniser,
 }
 
 #[derive(Error)]
 pub(crate) enum SyncError {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiError),
+    #[error("Failed to create Sync v6 Url")]
+    SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
     #[error("Database error while syncing")]
     DatabaseError(#[from] RepositoryError),
     #[error(transparent)]
@@ -111,7 +112,6 @@ impl Synchroniser {
     ) -> anyhow::Result<Self> {
         let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
         let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
-        let sync_api_v6 = SyncApiV6::new(sync_v5_settings)?;
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -119,7 +119,7 @@ impl Synchroniser {
             settings,
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
-            central_v6: CentralDataSynchroniserV6 { sync_api_v6 },
+            sync_v5_settings,
         })
     }
 
@@ -153,6 +153,12 @@ impl Synchroniser {
             return Ok(());
         }
 
+        // Get site info for initialisation status and for omSupply central url required in SynchroniserV6
+        let site_info = self.remote.sync_api_v5.get_site_info().await?;
+        CentralServerConfig::set_central_server_config(&site_info);
+
+        // First check sync status
+
         // Remote data was initialised
         let is_initialised = sync_status_service.is_initialised(ctx)?;
 
@@ -162,7 +168,7 @@ impl Synchroniser {
         // REQUEST INITIALISATION
         logger.start_step(SyncStep::PrepareInitial)?;
         if !is_sync_queue_initialised {
-            self.remote.request_initialisation().await?;
+            self.remote.request_initialisation(&site_info).await?;
         }
         logger.done_step(SyncStep::PrepareInitial)?;
 
@@ -173,9 +179,12 @@ impl Synchroniser {
 
         // PUSH V6
         logger.start_step(SyncStep::PushCentralV6)?;
-        if is_initialised && !is_central_server() {
-            let result = self
-                .central_v6
+        if let (true, CentralServerConfig::CentralServerUrl(url)) =
+            (is_initialised, CentralServerConfig::get())
+        {
+            let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+
+            let result = v6_sync
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await;
 
@@ -220,10 +229,11 @@ impl Synchroniser {
         logger.done_step(SyncStep::PullRemote)?;
 
         // PULL V6
-        if !is_central_server() {
+        if let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() {
+            let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+
             logger.start_step(SyncStep::PullCentralV6)?;
-            if let Err(error) = self
-                .central_v6
+            if let Err(error) = v6_sync
                 .pull(&ctx.connection, 20, is_initialised, logger)
                 .await
             {
