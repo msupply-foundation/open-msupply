@@ -37,7 +37,7 @@ impl<'a> ProgramSupplierRepository<'a> {
     }
 
     pub fn query(
-        &self,
+        &mut self,
         store_id: &str,
         ProgramSupplierFilter {
             program_id: program_id_filter,
@@ -75,10 +75,16 @@ impl<'a> ProgramSupplierRepository<'a> {
         let query = query.select((
             // Same as NameRepository
             name_dsl::name::all_columns(),
-            name_link_dsl::name_link::all_columns(),
-            name_store_join_dsl::name_store_join::all_columns(),
-            store_dsl::store::all_columns(),
-            program_dsl::program::all_columns(),
+            name_link_dsl::name_link::all_columns()
+                .nullable()
+                .assume_not_null(),
+            name_store_join_dsl::name_store_join::all_columns()
+                .nullable()
+                .assume_not_null(),
+            store_dsl::store::all_columns().nullable().assume_not_null(),
+            program_dsl::program::all_columns()
+                .nullable()
+                .assume_not_null(),
         ));
         let result = query.load::<ProgramSupplierJoin>(&mut self.connection.connection)?;
 
