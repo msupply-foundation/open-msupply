@@ -1,9 +1,9 @@
 use repository::{ChangelogRepository, SyncBufferRowRepository};
-use util::{format_error, is_central_server};
+use util::format_error;
 
 use crate::{
     service_provider::ServiceProvider,
-    sync::{api::SyncApiV5, translations::ToSyncRecordTranslationType},
+    sync::{api::SyncApiV5, translations::ToSyncRecordTranslationType, CentralServerConfig},
 };
 
 use super::{
@@ -26,7 +26,7 @@ pub async fn pull(
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !is_central_server() {
+    if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -92,7 +92,7 @@ pub async fn push(
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !is_central_server() {
+    if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server

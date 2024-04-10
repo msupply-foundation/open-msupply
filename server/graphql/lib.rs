@@ -43,8 +43,8 @@ use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
+use service::sync::CentralServerConfig;
 use tokio::sync::RwLock;
-use util::is_central_server;
 
 pub type OperationalSchema =
     async_graphql::Schema<Queries, Mutations, async_graphql::EmptySubscription>;
@@ -67,7 +67,7 @@ pub struct CentralServerMutations;
 #[Object]
 impl CentralServerMutations {
     async fn central_server(&self) -> async_graphql::Result<CentralServerMutationNode> {
-        if !is_central_server() {
+        if !CentralServerConfig::is_central_server() {
             return Err(StandardGraphqlError::from_str("Not a central server"));
         };
 
