@@ -16,6 +16,9 @@ use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, UserNode};
 
+use repository::asset_log_reason::{
+    AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort, AssetLogReasonSortField,
+};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 
@@ -475,6 +478,119 @@ impl AssetLogSortInput {
         };
 
         AssetLogSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+// asset log reason
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum AssetLogReasonSortFieldInput {
+    Status,
+}
+
+#[derive(InputObject)]
+pub struct AssetLogReasonSortInput {
+    /// Sort query result by `key`
+    key: AssetLogReasonSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct AssetLogReasonNode {
+    pub asset_log_reason: AssetLogReason,
+}
+
+#[derive(SimpleObject)]
+pub struct AssetLogReasonConnector {
+    total_count: u32,
+    nodes: Vec<AssetLogReasonNode>,
+}
+
+#[Object]
+impl AssetLogReasonNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn asset_log_status(&self) -> StatusType {
+        let asset_log_status = &self.row().asset_log_status;
+        StatusType::from_domain(&asset_log_status)
+    }
+
+    pub async fn reason(&self) -> &str {
+        &self.row().reason
+    }
+}
+
+#[derive(Union)]
+pub enum AssetLogReasonsResponse {
+    Response(AssetLogReasonConnector),
+}
+
+#[derive(Union)]
+pub enum AssetLogReasonResponse {
+    Error(NodeError),
+    Response(AssetLogReasonNode),
+}
+
+#[derive(InputObject, Clone)]
+
+pub struct AssetLogReasonFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub asset_log_status: Option<EqualFilterStatusInput>,
+    pub reason: Option<StringFilterInput>,
+}
+
+impl From<AssetLogReasonFilterInput> for AssetLogReasonFilter {
+    fn from(f: AssetLogReasonFilterInput) -> Self {
+        AssetLogReasonFilter {
+            id: f.id.map(EqualFilter::from),
+            asset_log_status: f
+                .asset_log_status
+                .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
+            reason: f.reason.map(StringFilter::from),
+        }
+    }
+}
+
+impl AssetLogReasonNode {
+    pub fn from_domain(asset_log_reason: AssetLogReason) -> AssetLogReasonNode {
+        AssetLogReasonNode { asset_log_reason }
+    }
+
+    pub fn row(&self) -> &AssetLogReason {
+        &self.asset_log_reason
+    }
+}
+
+impl AssetLogReasonConnector {
+    pub fn from_domain(assets: ListResult<AssetLogReason>) -> AssetLogReasonConnector {
+        AssetLogReasonConnector {
+            total_count: assets.count,
+            nodes: assets
+                .rows
+                .into_iter()
+                .map(AssetLogReasonNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
+impl AssetLogReasonSortInput {
+    pub fn to_domain(&self) -> AssetLogReasonSort {
+        use AssetLogReasonSortField as to;
+        use AssetLogReasonSortFieldInput as from;
+        let key = match self.key {
+            from::Status => to::AssetLogStatus,
+        };
+
+        AssetLogReasonSort {
             key,
             desc: self.desc,
         }
