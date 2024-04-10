@@ -52,8 +52,12 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
           variant="ok"
           disabled={isDisabled}
           onClick={async () => {
-            await create();
-            onClose();
+            try {
+              await create();
+              onClose();
+            } catch {
+              // todo
+            }
           }}
         />
       }
