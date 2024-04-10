@@ -128,7 +128,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           label={t('label.cost-price')}
           Input={
             <CurrencyInput
-              autoFocus
+              autoFocus={!packEditable}
               defaultValue={draft.costPricePerPack}
               onChangeNumber={costPricePerPack =>
                 debouncedUpdate({ costPricePerPack })

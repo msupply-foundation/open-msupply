@@ -149,3 +149,12 @@ mutation createInventoryAdjustment(
     }
   }
 }
+
+mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
+  insertStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
+    }
+  }
+}

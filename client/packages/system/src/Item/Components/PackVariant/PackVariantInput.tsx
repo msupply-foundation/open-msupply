@@ -31,19 +31,23 @@ export const PackVariantInput = ({
   const [isEnterPackSize, setIsEnterPackSize] = useState(false);
   const [shouldFocusInput, setShouldFocusInput] = useState(false);
 
-  const [packSize, setPackSize] = useState(
-    initialPackSize !== 0
-      ? initialPackSize
-      : // If pack size is 0 on load, set it to most used variant or 1 (ideally
-        // should be default item pack)
-        variantsControl?.activeVariant?.packSize || 1
-  );
+  const [packSize, setPackSize] = useState(initialPackSize);
 
-  // Make sure manual pack size is auto selected on load if packSize does not
-  // match variant
   useEffect(() => {
+    let size = initialPackSize;
+
+    // If pack size is 0 on load, set it to most used variant or 1 (ideally
+    // should be default item pack)
+    if (initialPackSize == 0) {
+      size = variantsControl?.activeVariant?.packSize || 1;
+
+      setPackSize(size);
+      onChange(size);
+    }
+    // Make sure manual pack size is auto selected on load if packSize does not
+    // match variant
     setIsEnterPackSize(
-      !variantsControl?.variants.some(v => v.packSize === packSize)
+      !variantsControl?.variants.some(v => v.packSize === size)
     );
   }, []);
 
