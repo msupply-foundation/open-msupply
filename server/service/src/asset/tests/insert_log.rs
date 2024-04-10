@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod query {
     use crate::{
-        asset::insert_log::{InsertAssetLog, InsertAssetLogError},
+        asset::{
+            insert_log::{InsertAssetLog, InsertAssetLogError},
+            insert_log_reason::InsertAssetLogReason,
+        },
         service_provider::ServiceProvider,
     };
     use repository::{
@@ -27,6 +30,7 @@ mod query {
 
         // check we can create an asset_log
         let id = "test_id".to_string();
+        let id2 = "test_id_2".to_string();
         let asset_log = service
             .insert_asset_log(
                 &ctx,
@@ -64,7 +68,7 @@ mod query {
             service.insert_asset_log(
                 &ctx,
                 InsertAssetLog {
-                    id: "test_id_2".to_string(),
+                    id: id2.clone(),
                     asset_id: "incorrect_asset_id".to_string(),
                     status: Some(AssetLogStatus::Functioning),
                     comment: None,
@@ -75,39 +79,84 @@ mod query {
             Err(InsertAssetLogError::AssetDoesNotExist)
         );
 
-        // TODO update tests for reason matching status (will need new mocks)
-        // // Insert log where status matches reason
-        // let id = "test_id_3".to_string();
-        // let asset_log = service
-        //     .insert_asset_log(
-        //         &ctx,
-        //         InsertAssetLog {
-        //             id: id.clone(),
-        //             asset_id: mock_asset_a().id,
-        //             status: Some(AssetLogStatus::FunctioningButNeedsAttention),
-        //             comment: None,
-        //             r#type: None,
-        //             reason: Some(AssetLogReason::NeedsServicing),
-        //         },
-        //     )
-        //     .unwrap();
+        // insert new asset log reason
 
-        // assert_eq!(asset_log.id, id);
+        let reason = service
+            .insert_asset_log_reason(
+                &ctx,
+                InsertAssetLogReason {
+                    id: "test_reason_id".to_string(),
+                    asset_log_status: AssetLogStatus::NotFunctioning,
+                    reason: "unknown error".to_string(),
+                },
+            )
+            .unwrap();
 
-        // // Insert log where status does not match reason
-        // assert_eq!(
-        //     service.insert_asset_log(
-        //         &ctx,
-        //         InsertAssetLog {
-        //             id: "test_id_4".to_string(),
-        //             asset_id: "incorrect_asset_id".to_string(),
-        //             status: Some(AssetLogStatus::FunctioningButNeedsAttention),
-        //             comment: None,
-        //             r#type: None,
-        //             reason: Some(AssetLogReason::Stored),
-        //         },
-        //     ),
-        //     Err(InsertAssetLogError::ReasonInvalidForStatus)
-        // );
+        assert_eq!(reason.id, "test_reason_id");
+
+        // Check adding log with reason but no status fails
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: id2.clone(),
+                    asset_id: mock_asset_a().id,
+                    status: None,
+                    comment: None,
+                    r#type: None,
+                    reason_id: Some("test_reason_id".to_string()),
+                },
+            ),
+            Err(InsertAssetLogError::ReasonInvalidForStatus)
+        );
+
+        // Check adding log with non matching reason fails
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: id2.clone(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::Functioning),
+                    comment: None,
+                    r#type: None,
+                    reason_id: Some("test_reason_id".to_string()),
+                },
+            ),
+            Err(InsertAssetLogError::ReasonInvalidForStatus)
+        );
+
+        // Check adding log with wrong reason id fails
+        assert_eq!(
+            service.insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: id2.clone(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::NotFunctioning),
+                    comment: None,
+                    r#type: None,
+                    reason_id: Some("non_existant_id".to_string()),
+                },
+            ),
+            Err(InsertAssetLogError::ReasonInvalidForStatus)
+        );
+
+        // Check adding log with matching status and reason works
+        let asset_log = service
+            .insert_asset_log(
+                &ctx,
+                InsertAssetLog {
+                    id: id2.clone(),
+                    asset_id: mock_asset_a().id,
+                    status: Some(AssetLogStatus::NotFunctioning),
+                    comment: None,
+                    r#type: None,
+                    reason_id: Some("test_reason_id".to_string()),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(asset_log.id, id2);
     }
 }

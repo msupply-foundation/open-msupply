@@ -19,6 +19,7 @@ pub enum InsertAssetLogError {
     AssetLogAlreadyExists,
     AssetDoesNotExist,
     CreatedRecordNotFound,
+    ReasonDoesNotExist,
     DatabaseError(RepositoryError),
     InsufficientPermission,
     ReasonInvalidForStatus,
@@ -66,7 +67,7 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
-    if !check_reason_matches_status(&input.status, &input.reason_id) {
+    if !check_reason_matches_status(&input.status, &input.reason_id, connection) {
         return Err(InsertAssetLogError::ReasonInvalidForStatus);
     }
     if check_asset_exists(&input.asset_id, connection)?

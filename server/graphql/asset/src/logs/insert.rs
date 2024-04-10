@@ -108,6 +108,7 @@ fn map_error(error: ServiceError) -> Result<InsertAssetLogErrorInterface> {
         ServiceError::AssetDoesNotExist => BadUserInput(formatted_error),
         ServiceError::InsufficientPermission => BadUserInput(formatted_error),
         ServiceError::ReasonInvalidForStatus => BadUserInput(formatted_error),
+        ServiceError::ReasonDoesNotExist => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
