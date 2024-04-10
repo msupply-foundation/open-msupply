@@ -44,17 +44,6 @@ export type LabelPrinterSettingsQueryVariables = Types.Exact<{ [key: string]: ne
 
 export type LabelPrinterSettingsQuery = { __typename: 'Queries', labelPrinterSettings?: { __typename: 'LabelPrinterSettingNode', address: string, labelHeight: number, labelWidth: number, port: number } | null };
 
-export type AssetLocationsQueryVariables = Types.Exact<{
-  storeId: Types.Scalars['String']['input'];
-  sort?: Types.InputMaybe<Array<Types.LocationSortInput> | Types.LocationSortInput>;
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  filter?: Types.InputMaybe<Types.LocationFilterInput>;
-}>;
-
-
-export type AssetLocationsQuery = { __typename: 'Queries', assetLocations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string }> } };
-
 export type DeleteAssetMutationVariables = Types.Exact<{
   assetId: Types.Scalars['String']['input'];
   storeId: Types.Scalars['String']['input'];
@@ -251,29 +240,6 @@ export const LabelPrinterSettingsDocument = gql`
   }
 }
     `;
-export const AssetLocationsDocument = gql`
-    query assetLocations($storeId: String!, $sort: [LocationSortInput!], $first: Int, $offset: Int, $filter: LocationFilterInput) {
-  assetLocations(
-    storeId: $storeId
-    sort: $sort
-    page: {first: $first, offset: $offset}
-    filter: $filter
-  ) {
-    __typename
-    ... on LocationConnector {
-      __typename
-      totalCount
-      nodes {
-        __typename
-        id
-        name
-        onHold
-        code
-      }
-    }
-  }
-}
-    `;
 export const DeleteAssetDocument = gql`
     mutation deleteAsset($assetId: String!, $storeId: String!) {
   deleteAsset(assetId: $assetId, storeId: $storeId) {
@@ -359,9 +325,6 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query');
     },
-    assetLocations(variables: AssetLocationsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLocationsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<AssetLocationsQuery>(AssetLocationsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLocations', 'query');
-    },
     deleteAsset(variables: DeleteAssetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteAssetMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetMutation>(DeleteAssetDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAsset', 'mutation');
     },
@@ -442,23 +405,6 @@ export const mockAssetLogsQuery = (resolver: ResponseResolver<GraphQLRequest<Ass
 export const mockLabelPrinterSettingsQuery = (resolver: ResponseResolver<GraphQLRequest<LabelPrinterSettingsQueryVariables>, GraphQLContext<LabelPrinterSettingsQuery>, any>) =>
   graphql.query<LabelPrinterSettingsQuery, LabelPrinterSettingsQueryVariables>(
     'labelPrinterSettings',
-    resolver
-  )
-
-/**
- * @param resolver a function that accepts a captured request and may return a mocked response.
- * @see https://mswjs.io/docs/basics/response-resolver
- * @example
- * mockAssetLocationsQuery((req, res, ctx) => {
- *   const { storeId, sort, first, offset, filter } = req.variables;
- *   return res(
- *     ctx.data({ assetLocations })
- *   )
- * })
- */
-export const mockAssetLocationsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLocationsQueryVariables>, GraphQLContext<AssetLocationsQuery>, any>) =>
-  graphql.query<AssetLocationsQuery, AssetLocationsQueryVariables>(
-    'assetLocations',
     resolver
   )
 

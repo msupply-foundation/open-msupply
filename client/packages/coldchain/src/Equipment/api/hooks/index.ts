@@ -6,7 +6,6 @@ export const useAssets = {
   utils: {
     api: Utils.useAssetApi,
     labelPrinterSettings: Utils.useLabelPrinterSettings,
-    locations: Utils.useAssetLocations,
   },
 
   document: {

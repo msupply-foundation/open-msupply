@@ -7,8 +7,6 @@ import {
   setNullableInput,
   InsertAssetLogInput,
   AssetLogSortFieldInput,
-  LocationSortFieldInput,
-  LocationFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetFragment } from './operations.generated';
 import { CCE_CLASS_ID } from '../utils';
@@ -117,14 +115,6 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
       const items = result?.assets;
 
       return items;
-    },
-    locations: async (filter?: LocationFilterInput) => {
-      const result = await sdk.assetLocations({
-        filter,
-        sort: { key: LocationSortFieldInput.Code, desc: false },
-        storeId,
-      });
-      return result.assetLocations?.nodes;
     },
     logs: async (assetId: string) => {
       const filter = { assetId: { equalTo: assetId } };

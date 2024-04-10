@@ -2941,6 +2941,7 @@ export type LocationConnector = {
 };
 
 export type LocationFilterInput = {
+  assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -4508,8 +4509,6 @@ export type Queries = {
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
   assetClasses: AssetClassesResponse;
-  /** Returns a list of locations which are available to be assigned to assets */
-  assetLocations: LocationsResponse;
   assetLogs: AssetLogsResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
@@ -4685,14 +4684,6 @@ export type QueriesAssetClassesArgs = {
   filter?: InputMaybe<AssetClassFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetClassSortInput>>;
-};
-
-
-export type QueriesAssetLocationsArgs = {
-  filter?: InputMaybe<LocationFilterInput>;
-  page?: InputMaybe<PaginationInput>;
-  sort?: InputMaybe<Array<LocationSortInput>>;
-  storeId: Scalars['String']['input'];
 };
 
 
