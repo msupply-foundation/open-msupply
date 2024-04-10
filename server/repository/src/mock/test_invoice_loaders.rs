@@ -46,7 +46,6 @@ pub fn mock_invoice_loader_invoice1() -> InvoiceRow {
             .unwrap()
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
-        r.currency_id = "currency_a".to_string();
     })
 }
 
@@ -63,6 +62,5 @@ pub fn mock_invoice_loader_invoice2() -> InvoiceRow {
             .and_hms_milli_opt(12, 30, 0, 0)
             .unwrap();
         r.linked_invoice_id = Some(mock_invoice_loader_invoice1().id);
-        r.currency_id = "currency_a".to_string();
     })
 }

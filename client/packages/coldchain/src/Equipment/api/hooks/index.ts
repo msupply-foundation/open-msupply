@@ -4,6 +4,7 @@ import { Utils } from './utils';
 
 export const useAssets = {
   utils: {
+    api: Utils.useAssetApi,
     labelPrinterSettings: Utils.useLabelPrinterSettings,
   },
 

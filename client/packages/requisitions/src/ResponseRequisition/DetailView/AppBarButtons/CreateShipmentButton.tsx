@@ -5,8 +5,11 @@ import {
   useTranslation,
   useConfirmationModal,
   useAlertModal,
+  RouteBuilder,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
+import { AppRoute } from 'packages/config/src';
 
 export const CreateShipmentButtonComponent = () => {
   const { lines, linesRemainingToSupply } = useResponse.document.fields([
@@ -14,8 +17,19 @@ export const CreateShipmentButtonComponent = () => {
     'linesRemainingToSupply',
   ]);
   const t = useTranslation('distribution');
-  const { mutate: createOutbound } = useResponse.utils.createOutbound();
+  const { mutateAsync } = useResponse.utils.createOutbound();
   const isDisabled = useResponse.utils.isDisabled();
+  const navigate = useNavigate();
+  const createOutbound = () => {
+    mutateAsync().then(invoiceNumber => {
+      navigate(
+        RouteBuilder.create(AppRoute.Distribution)
+          .addPart(AppRoute.OutboundShipment)
+          .addPart(String(invoiceNumber))
+          .build()
+      );
+    });
+  };
 
   const getConfirmation = useConfirmationModal({
     iconType: 'info',
@@ -32,6 +46,7 @@ export const CreateShipmentButtonComponent = () => {
     ),
     onOk: () => {},
   });
+
   const onCreateShipment = () => {
     if (linesRemainingToSupply.totalCount > 0) {
       getConfirmation();

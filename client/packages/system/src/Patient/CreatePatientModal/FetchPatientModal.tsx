@@ -17,24 +17,12 @@ import {
   InlineSpinner,
   Typography,
 } from '@common/components';
-import { usePatient } from '../api';
-import { mapSyncError, useSync } from '../../Sync';
+import { useFetchPatient } from './useFetchPatient';
 
 interface FetchPatientModal {
   patient: PatientColumnData;
   onClose: () => void;
 }
-
-/**
- * UI Steps:
- * - Start: modal just opened; ask user to confirm to fetch patient
- * - Linking: name_store_join is about to be created
- * - Syncing: syncing patient data from central
- * - Synced: done
- */
-type Step = 'Start' | 'Linking' | 'Syncing' | 'Synced';
-
-const STATUS_POLLING_INTERVAL = 500;
 
 /** Fetch a patient from central */
 export const FetchPatientModal: FC<FetchPatientModal> = ({
@@ -44,68 +32,16 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
   const t = useTranslation('dispensary');
   const { Modal, showDialog, hideDialog } = useDialog({ onClose });
   const { getLocalisedFullName } = useIntlUtils();
-  const [step, setStep] = useState<Step>('Start');
-  const [error, setError] = useState<string | undefined>(undefined);
-  const { mutate: linkPatientToStore, data: patientStoreLink } =
-    usePatient.utils.linkPatientToStore();
-  const { mutateAsync: manualSync, data: manualSyncResult } =
-    useSync.sync.manualSync();
-  const { data: syncStatus } = useSync.utils.syncStatus(
-    STATUS_POLLING_INTERVAL,
-    !!manualSyncResult && step !== 'Synced'
-  );
+  const [started, setStarted] = useState(false);
+  const { mutateAsync: fetchPatientToStore, step, error } = useFetchPatient();
 
   useEffect(() => {
     showDialog();
     return () => {
-      setStep('Start');
-      setError(undefined);
       hideDialog();
       onClose();
     };
-  }, []);
-
-  useEffect(() => {
-    switch (step) {
-      case 'Linking':
-        linkPatientToStore(patient.id);
-        break;
-      case 'Syncing': {
-        manualSync();
-        break;
-      }
-    }
-  }, [patient.id, step]);
-
-  useEffect(() => {
-    if (step !== 'Linking' || !patientStoreLink) return;
-    if (patientStoreLink.__typename === 'LinkPatientPatientToStoreError') {
-      switch (patientStoreLink.error.__typename) {
-        case 'ConnectionError': {
-          setError(t('messages.failed-to-reach-central'));
-          break;
-        }
-        default:
-          noOtherVariants(patientStoreLink.error.__typename);
-      }
-      return;
-    }
-    setStep('Syncing');
-  }, [step, patientStoreLink]);
-
-  useEffect(() => {
-    if (step !== 'Syncing' || !syncStatus) return;
-    if (syncStatus.error) {
-      const error = mapSyncError(
-        t,
-        syncStatus.error,
-        'error.unknown-sync-error'
-      );
-      setError(error.error);
-    } else if (!syncStatus.isSyncing) {
-      setStep('Synced');
-    }
-  }, [step, syncStatus]);
+  }, [hideDialog, onClose, showDialog]);
 
   const message = (() => {
     switch (step) {
@@ -129,11 +65,12 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
         <DialogButton
           variant={step === 'Synced' ? 'ok' : 'next'}
           onClick={() => {
-            if (step === 'Start') {
-              setStep('Linking');
+            if (!started) {
+              setStarted(true);
+              fetchPatientToStore(patient.id);
             } else {
+              setStarted(false);
               hideDialog();
-              setStep('Start');
               onClose();
             }
           }}
@@ -143,6 +80,7 @@ export const FetchPatientModal: FC<FetchPatientModal> = ({
       cancelButton={
         <DialogButton
           variant="cancel"
+          disabled={step === 'Synced'}
           onClick={() => {
             onClose();
           }}

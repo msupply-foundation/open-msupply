@@ -21,7 +21,7 @@ pub fn generate(
         code: item_code,
         ..
     }: ItemRow,
-    currency_id: &str,
+    currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<InvoiceLineRow, UpdateOutboundShipmentServiceLineError> {
     // 1) Use name from input (if specified)
@@ -121,7 +121,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1.clone(),
-            "currency_a",
+            Some("currency_a".to_string()),
             &1.0,
         )
         .unwrap();
@@ -140,7 +140,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item1,
-            "currency_a",
+            Some("currency_a".to_string()),
             &1.0,
         )
         .unwrap();
@@ -159,7 +159,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
-            "currency_a",
+            Some("currency_a".to_string()),
             &1.0,
         )
         .unwrap();
@@ -178,7 +178,7 @@ mod outbound_shipment_service_line_update_test {
             },
             line.clone(),
             item2.clone(),
-            "currency_a",
+            Some("currency_a".to_string()),
             &1.0,
         )
         .unwrap();

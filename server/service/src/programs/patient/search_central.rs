@@ -65,8 +65,8 @@ pub async fn patient_search_central(
         .patient(PatientParamsV4 {
             limit: Some(pagination.limit),
             offset: Some(pagination.offset),
-            first_name,
-            last_name,
+            first_name: first_name.map(|it| format!("@{it}@")),
+            last_name: last_name.map(|it| format!("@{it}@")),
             dob: date_of_birth,
             policy_number: None,
             barcode: None,

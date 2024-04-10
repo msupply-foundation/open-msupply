@@ -35,7 +35,7 @@ const NameListComponent: FC<{ type: 'customer' | 'supplier' }> = ({ type }) => {
         Cell: ({ rowData }) => (
           <NameRenderer label={rowData.code} isStore={!!rowData.store} />
         ),
-        width: 60,
+        width: 100,
       },
       'name',
     ],

@@ -11,7 +11,6 @@ pub(crate) mod asset_log;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod currency;
-pub(crate) mod inventory_adjustment_reason;
 pub(crate) mod invoice;
 pub(crate) mod invoice_line;
 pub(crate) mod item;
@@ -28,6 +27,7 @@ pub(crate) mod pack_variant;
 pub(crate) mod period;
 pub(crate) mod period_schedule;
 pub(crate) mod program_requisition_settings;
+pub(crate) mod reason;
 pub(crate) mod report;
 pub(crate) mod requisition;
 pub(crate) mod requisition_line;
@@ -38,13 +38,16 @@ pub(crate) mod stocktake;
 pub(crate) mod stocktake_line;
 pub(crate) mod store;
 pub(crate) mod store_preference;
+pub(crate) mod sync_file_reference;
 pub(crate) mod temperature_breach;
 pub(crate) mod temperature_log;
 pub(crate) mod unit;
+pub(crate) mod user;
 pub(crate) mod user_permission;
 
 pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncomingRecord> {
     let mut test_records = Vec::new();
+    test_records.append(&mut user::test_pull_upsert_records());
     test_records.append(&mut user_permission::test_pull_upsert_records());
     test_records.append(&mut item::test_pull_upsert_records());
     test_records.append(&mut master_list_line::test_pull_upsert_records());
@@ -57,7 +60,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut report::test_pull_upsert_records());
     test_records.append(&mut store::test_pull_upsert_records());
     test_records.append(&mut unit::test_pull_upsert_records());
-    test_records.append(&mut inventory_adjustment_reason::test_pull_upsert_records());
+    test_records.append(&mut reason::test_pull_upsert_records());
     test_records.append(&mut store_preference::test_pull_upsert_records());
     // Central but site specific
     test_records.append(&mut name_store_join::test_pull_upsert_records());
@@ -71,6 +74,7 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
     test_records.append(&mut asset::test_pull_upsert_records());
     test_records.append(&mut asset_log::test_pull_upsert_records());
+    test_records.append(&mut sync_file_reference::test_pull_upsert_records());
     test_records
 }
 
@@ -154,6 +158,7 @@ pub(crate) fn get_all_sync_v6_records() -> Vec<TestSyncOutgoingRecord> {
     test_records.append(&mut asset_catalogue_item::test_v6_central_push_records());
     test_records.append(&mut asset::test_v6_records());
     test_records.append(&mut asset_log::test_v6_records());
+    test_records.append(&mut sync_file_reference::test_v6_records());
 
     test_records
 }

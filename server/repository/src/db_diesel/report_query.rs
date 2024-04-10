@@ -52,6 +52,7 @@ pub fn query_json(
     for (i, param) in used_params.iter().enumerate() {
         sql = sql.replace(&param.0, &format!("${}", i + 1));
     }
+
     // Create the string containing all the parameter values
     let param_values = used_params
         .iter()
@@ -125,7 +126,7 @@ pub fn query_json(
         let Some(param) = statement.parameter_name(p) else {
             continue;
         };
-        // remove trailing ":"
+        // remove trailing "$"
         let param_name = &param[1..];
         let Some(param) = parameters.get(param_name) else {
             return Err(RepositoryError::DBError {
@@ -233,7 +234,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            &format!("{}", serde_json::to_string(&result).unwrap()),
+            &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"code\",\"id\":\"store_a\",\"logo\":null}]"
         );
 
@@ -242,7 +243,7 @@ mod tests {
             &connection,
             &settings,
             "SELECT id, code FROM store WHERE id=$store LIMIT $limit", // test without trailing ";"
-            &json!({
+            json!({
                 "store": "store_a",
                 "limit": 2,
             })
@@ -252,7 +253,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            &format!("{}", serde_json::to_string(&result).unwrap()),
+            &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"code\",\"id\":\"store_a\"}]"
         );
 
@@ -261,7 +262,7 @@ mod tests {
             &connection,
             &settings,
             "SELECT id, code FROM store WHERE id LIKE $b || '%' AND code LIKE $b || '%' LIMIT $a",
-            &json!({
+            json!({
                 "a": 5,
                 "b": "name",
             })
@@ -271,7 +272,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(
-            &format!("{}", serde_json::to_string(&result).unwrap()),
+            &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"name_store_code\",\"id\":\"name_store_id\"},{\"code\":\"name_store_code_a\",\"id\":\"name_store_a_id\"}]"
         );
     }

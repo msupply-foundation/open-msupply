@@ -420,7 +420,7 @@ fn create_filtered_outgoing_sync_query(
     if is_initialized {
         query = query.filter(
             changelog_deduped::source_site_id
-                .ne(Some(sync_site_id.clone()))
+                .ne(Some(sync_site_id))
                 .or(changelog_deduped::source_site_id.is_null()),
         )
     }
@@ -430,18 +430,12 @@ fn create_filtered_outgoing_sync_query(
     // Central Records
 
     let central_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
-        .filter(|table| match table.sync_style() {
-            ChangeLogSyncStyle::Central => true,
-            _ => false,
-        })
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Central))
         .collect();
 
     // Remote Records
     let remote_sync_table_names: Vec<ChangelogTableName> = ChangelogTableName::iter()
-        .filter(|table| match table.sync_style() {
-            ChangeLogSyncStyle::Remote => true,
-            _ => false,
-        })
+        .filter(|table| matches!(table.sync_style(), ChangeLogSyncStyle::Remote))
         .collect();
 
     let active_stores_for_site = store::table
@@ -453,10 +447,11 @@ fn create_filtered_outgoing_sync_query(
     query = query.filter(
         changelog_deduped::table_name
             .eq_any(central_sync_table_names)
+            .or(changelog_deduped::table_name.eq(ChangelogTableName::SyncFileReference)) // All sites get all sync file references (not necessarily files)
             .or(changelog_deduped::table_name
                 .eq_any(remote_sync_table_names)
-                .and(changelog_deduped::store_id.eq_any(active_stores_for_site))), // TODO Should this use name_link?
-                                                                                   // Any other special cases could be handled here...
+                .and(changelog_deduped::store_id.eq_any(active_stores_for_site))),
+        // Any other special cases could be handled here...
     );
 
     query

@@ -2283,6 +2283,7 @@ dependencies = [
  "graphql_core",
  "graphql_form_schema",
  "graphql_general",
+ "graphql_inventory_adjustment",
  "graphql_invoice",
  "graphql_invoice_line",
  "graphql_location",
@@ -2398,6 +2399,7 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "chrono",
+ "graphql_asset",
  "graphql_core",
  "graphql_types",
  "regex",
@@ -2466,6 +2468,27 @@ dependencies = [
  "graphql_types",
  "repository",
  "reqwest",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_inventory_adjustment"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
  "serde 1.0.197",
  "serde_json",
  "service",

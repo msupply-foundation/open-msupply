@@ -28,7 +28,6 @@ pub fn mock_full_draft_outbound_shipment_a() -> FullMockInvoice {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
-            r.currency_id = "currency_a".to_string();
         }),
         lines: vec![
             FullMockInvoiceLine {
@@ -106,7 +105,6 @@ pub fn mock_full_draft_inbound_shipment_on_hold() -> FullMockInvoice {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
-            r.currency_id = "currency_a".to_string();
         }),
         lines: Vec::new(),
     }
@@ -128,7 +126,6 @@ pub fn mock_full_draft_outbound_shipment_on_hold() -> FullMockInvoice {
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
                 .unwrap();
-            r.currency_id = "currency_a".to_string();
         }),
         lines: Vec::new(),
     }

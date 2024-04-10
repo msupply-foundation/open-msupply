@@ -316,6 +316,41 @@ impl GeneralQueries {
         database_settings(ctx)
     }
 
+    /// Generates new outbound return lines in memory, based on either stock line ids, or an item id.
+    /// Optionally includes existing outbound return lines for a specific item in a return.
+    /// Provides an friendly shape to edit these lines before calling the insert/update mutations.
+    pub async fn generate_outbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: GenerateOutboundReturnLinesInput,
+    ) -> Result<GenerateOutboundReturnLinesResponse> {
+        generate_outbound_return_lines(ctx, store_id, input)
+    }
+
+    pub async fn return_reasons(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ReturnReasonFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ReturnReasonSortInput>>,
+    ) -> Result<ReturnReasonResponse> {
+        return_reasons(&ctx, page, filter, sort)
+    }
+
+    /// Generates new inbound return lines in memory, based on outbound return line ids.
+    /// Optionally includes existing inbound return lines for a specific item in a return.
+    /// Provides an friendly shape to edit these lines before calling the insert/update mutations.
+    pub async fn generate_inbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: GenerateInboundReturnLinesInput,
+    ) -> Result<GenerateInboundReturnLinesResponse> {
+        generate_inbound_return_lines(&ctx, store_id, input)
+    }
+
     pub async fn label_printer_settings(
         &self,
         ctx: &Context<'_>,

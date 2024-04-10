@@ -25,7 +25,7 @@ pub fn delete_pack_variant(
             let existing_pack_variant = validate(connection, &input)?;
             let pack_variant = generate(existing_pack_variant, input);
 
-            let repo = PackVariantRowRepository::new(&connection);
+            let repo = PackVariantRowRepository::new(connection);
             repo.upsert_one(&pack_variant)?;
 
             repo.find_one_by_id(&pack_variant.id)?
