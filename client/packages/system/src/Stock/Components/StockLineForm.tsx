@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { PackVariantInput, usePackVariant } from '../..';
+import { PackVariantInput } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
 interface StockLineFormProps {
@@ -44,11 +44,6 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     ? draft.supplierName
     : t('message.no-supplier');
   const location = draft?.location ?? null;
-  const { asPackVariant } = usePackVariant(
-    draft.itemId,
-    draft.item.unitName ?? null
-  );
-  const packUnit = asPackVariant(draft.packSize);
 
   const scanBarcode = async () => {
     try {
@@ -103,27 +98,18 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        {packEditable ? (
-          <StyledInputRow
-            label={t('label.num-packs')}
-            Input={
-              <NumericTextInput
-                autoFocus
-                width={160}
-                value={draft.totalNumberOfPacks}
-                onChange={totalNumberOfPacks =>
-                  onUpdate({ totalNumberOfPacks })
-                }
-              />
-            }
-          />
-        ) : (
-          <TextWithLabelRow
-            label={t('label.num-packs')}
-            text={String(draft.totalNumberOfPacks)}
-            textProps={{ textAlign: 'end' }}
-          />
-        )}
+        <StyledInputRow
+          label={t('label.num-packs')}
+          Input={
+            <NumericTextInput
+              autoFocus
+              disabled={!packEditable}
+              width={160}
+              value={draft.totalNumberOfPacks}
+              onChange={totalNumberOfPacks => onUpdate({ totalNumberOfPacks })}
+            />
+          }
+        />
         <StyledInputRow
           label={t('label.cost-price')}
           Input={
@@ -177,25 +163,18 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        {packEditable ? (
-          <StyledInputRow
-            label={t('label.pack')}
-            Input={
-              <PackVariantInput
-                packSize={draft.packSize}
-                itemId={draft.itemId}
-                unitName={draft.item.unitName ?? null}
-                onChange={packSize => onUpdate({ packSize })}
-              />
-            }
-          />
-        ) : (
-          <TextWithLabelRow
-            label={t('label.pack')}
-            text={String(packUnit)}
-            textProps={{ textAlign: 'end' }}
-          />
-        )}
+        <StyledInputRow
+          label={t('label.pack')}
+          Input={
+            <PackVariantInput
+              isDisabled={!packEditable}
+              packSize={draft.packSize}
+              itemId={draft.itemId}
+              unitName={draft.item.unitName ?? null}
+              onChange={packSize => onUpdate({ packSize })}
+            />
+          }
+        />
         <StyledInputRow
           label={t('label.on-hold')}
           Input={
