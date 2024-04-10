@@ -46,7 +46,6 @@ pub enum InsertResponse {
     Response(StockLineNode),
 }
 
-// TODO: where do i live?
 pub fn insert(ctx: &Context<'_>, store_id: &str, _input: InsertInput) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
