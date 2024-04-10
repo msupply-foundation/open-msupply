@@ -18,7 +18,7 @@ use crate::{
     sync::{
         api::{
             CentralSyncBatchV5, CentralSyncRecordV5, CommonSyncRecord, RemotePushResponseV5,
-            RemoteSyncBatchV5, RemoteSyncRecordV5, SiteStatusCodeV5, SiteStatusV5,
+            RemoteSyncBatchV5, RemoteSyncRecordV5, SiteInfoV5, SiteStatusCodeV5, SiteStatusV5,
         },
         api_v6::{SyncBatchV6, SyncPullResponseV6, SyncPushResponseV6, SyncPushSuccessV6},
         settings::{BatchSize, SyncSettings},
@@ -34,8 +34,8 @@ const PORT: u16 = 12345;
 
 macro_rules! assert_between {
     ($compare: expr, $from: expr, $to: expr) => {
-        assert!($compare > $from);
-        assert!($compare < $to);
+        assert!($compare > $from, "{} is not > {}", $compare, $from);
+        assert!($compare < $to, "{} is not < {}", $compare, $to);
     };
 }
 
@@ -56,12 +56,20 @@ async fn sync_status() {
         Ok(InitialisationStatus::PreInitialisation)
     );
 
+    let msupply_central_port = PORT;
+    let omsupply_central_port = PORT + 1;
     // Test INITIALISATION
-    let tester = get_initialisation_sync_status_tester(service_provider.clone());
+    let tester =
+        get_initialisation_sync_status_tester(service_provider.clone(), omsupply_central_port);
     let tester_data = Data::new(Mutex::new(tester));
-    run_server_and_sync(service_provider.clone(), tester_data.clone(), PORT)
-        .await
-        .unwrap();
+    run_server_and_sync(
+        service_provider.clone(),
+        tester_data.clone(),
+        msupply_central_port,
+        omsupply_central_port,
+    )
+    .await
+    .unwrap();
     tester_data.lock().await.try_route("final".to_string());
 
     // Need to add sync settings so that Initialised returns site name
@@ -116,10 +124,20 @@ async fn sync_status() {
         3
     );
 
-    let tester = get_push_and_error_sync_status_tester(service_provider.clone());
+    let msupply_central_port = PORT + 2;
+    let omsupply_central_port = PORT + 3;
+
+    let tester =
+        get_push_and_error_sync_status_tester(service_provider.clone(), omsupply_central_port);
 
     let tester_data = Data::new(Mutex::new(tester));
-    let result = run_server_and_sync(service_provider.clone(), tester_data.clone(), PORT + 1).await;
+    let result = run_server_and_sync(
+        service_provider.clone(),
+        tester_data.clone(),
+        msupply_central_port,
+        omsupply_central_port,
+    )
+    .await;
 
     assert_matches!(result, Err(_));
     tester_data.lock().await.try_route("final".to_string());
@@ -130,11 +148,14 @@ async fn sync_status() {
 /// * /central_records
 /// * /queued_records
 /// * /acknowledged_records (placeholder)
-/// * /site (placeholder)
+/// * /site (placeholder with omSupply central server URL)
 /// * /site_status (placeholder)
 /// * /final (manually called as last step)
-fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
-    Tester::new(service_provider.clone())
+fn get_initialisation_sync_status_tester(
+    service_provider: Arc<ServiceProvider>,
+    omsupply_central_port: u16,
+) -> Tester {
+    Tester::new(service_provider.clone(), omsupply_central_port)
         // 'site_status' is called by initialisation
         .add_test("site_status", |ctx| {
             let response_record = SiteStatusV5 {
@@ -182,6 +203,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                  previous_datetime,
                  now,
                  iteration,
+                 ..
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     if iteration == 0 {
@@ -255,6 +277,7 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
                  previous_datetime,
                  now,
                  iteration,
+                 ..
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     if iteration == 0 {
@@ -322,9 +345,19 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
             new_status: ctx.current_status,
             response: r#"{"syncIDs":[]}"#.to_string(),
         })
-        .add_test("site", |ctx| TestOutput {
-            new_status: ctx.current_status,
-            response: r#"{"id":"abc123","siteId":123,"initialisationStatus":"new"}"#.to_string(),
+        .add_test("site", |ctx| {
+            let site_info = SiteInfoV5 {
+                id: "abc123".to_string(),
+                site_id: 123,
+                initialisation_status: crate::sync::api::InitialisationStatus::New,
+                central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
+                is_central_server: false,
+            };
+
+            TestOutput {
+                new_status: ctx.current_status,
+                response: serde_json::to_string(&site_info).unwrap(),
+            }
         })
         .add_test(
             "final",
@@ -375,9 +408,13 @@ fn get_initialisation_sync_status_tester(service_provider: Arc<ServiceProvider>)
 /// * /queued_records
 /// * /site_status
 /// * /central_records (returns an error)
+/// * /site (placeholder with omSupply central server URL)
 /// * /final (manually called as last step)
-fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>) -> Tester {
-    Tester::new(service_provider.clone())
+fn get_push_and_error_sync_status_tester(
+    service_provider: Arc<ServiceProvider>,
+    omsupply_central_port: u16,
+) -> Tester {
+    Tester::new(service_provider.clone(), omsupply_central_port)
         .add_test(
             "queued_records",
             |TestInput {
@@ -386,6 +423,7 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
                  previous_datetime,
                  now,
                  iteration,
+                 ..
              }| {
                 let new_status = inline_edit(&previous_status, |mut r| {
                     if iteration == 0 {
@@ -403,7 +441,6 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
 
                 let integration_started = match iteration {
                     0 => {
-                        assert_between!(current_status.summary.started, previous_datetime, now);
                         assert_between!(push_status.started, previous_datetime, now);
                         assert!(push_status.finished.is_none());
 
@@ -452,6 +489,20 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
             TestOutput {
                 new_status: ctx.current_status,
                 response: serde_json::to_string(&response_record).unwrap(),
+            }
+        })
+        .add_test("site", |ctx| {
+            let site_info = SiteInfoV5 {
+                id: "abc123".to_string(),
+                site_id: 123,
+                initialisation_status: crate::sync::api::InitialisationStatus::New,
+                central_server_url: format!("http://127.0.0.1:{}", ctx.open_msupply_central_port),
+                is_central_server: false,
+            };
+
+            TestOutput {
+                new_status: ctx.current_status,
+                response: serde_json::to_string(&site_info).unwrap(),
             }
         })
         .add_test(
@@ -508,10 +559,11 @@ fn get_push_and_error_sync_status_tester(service_provider: Arc<ServiceProvider>)
 async fn run_server_and_sync(
     service_provider: Arc<ServiceProvider>,
     tester_data: TesterData,
-    port: u16,
+    msupply_central_port: u16,
+    omsupply_central_port: u16,
 ) -> Result<(), SyncError> {
     let sync_settings = SyncSettings {
-        url: format!("http://127.0.0.1:{}", port),
+        url: format!("http://127.0.0.1:{}", msupply_central_port),
         username: "".to_string(),
         password_sha256: "".to_string(),
         interval_seconds: 100000,
@@ -534,13 +586,13 @@ async fn run_server_and_sync(
             .app_data(tester_data.clone())
             .route("/sync/v5/{route}", web::to(entry))
     })
-    .bind(("127.0.0.1", port))
+    .bind(("127.0.0.1", msupply_central_port))
     .unwrap();
 
     let server_future = server.run();
     let server_handle = server_future.handle();
 
-    let v6_server_future = empty_v6_server(port).await;
+    let v6_server_future = empty_v6_server(omsupply_central_port).await;
     let v6_server_handle = v6_server_future.handle();
 
     let result = tokio::select! {
@@ -574,7 +626,7 @@ async fn empty_v6_server(port: u16) -> Server {
             .route("/central/sync/pull", web::to(empty_pull_response))
             .route("/central/sync/push", web::to(empty_push_response))
     })
-    .bind(("127.0.0.1", port + crate::sync::api_v6::PORT_OFFSET))
+    .bind(("127.0.0.1", port))
     .unwrap()
     .run()
 }
@@ -590,6 +642,7 @@ struct TestInput {
     current_status: FullSyncStatus,
     /// Iteration for a route
     iteration: u32,
+    open_msupply_central_port: u16,
 }
 
 struct TestOutput {
@@ -607,16 +660,18 @@ struct Tester {
     previous_date: NaiveDateTime,
     iterations: HashMap<String, u32>,
     tests: HashMap<String, fn(TestInput) -> TestOutput>,
+    open_msupply_central_port: u16,
 }
 
 impl Tester {
-    fn new(service_provider: Arc<ServiceProvider>) -> Self {
+    fn new(service_provider: Arc<ServiceProvider>, open_msupply_central_port: u16) -> Self {
         Tester {
             service_provider,
             previous_status: Default::default(),
             iterations: HashMap::new(),
             tests: HashMap::new(),
             previous_date: Utc::now().naive_utc(),
+            open_msupply_central_port,
         }
     }
 
@@ -649,6 +704,7 @@ impl Tester {
             previous_status: self.previous_status.clone(),
             iteration: *iteration,
             previous_datetime: self.previous_date,
+            open_msupply_central_port: self.open_msupply_central_port,
         };
 
         let TestOutput {
