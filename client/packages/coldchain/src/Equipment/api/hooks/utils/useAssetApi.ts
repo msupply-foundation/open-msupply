@@ -1,10 +1,5 @@
 import { getAssetQueries, ListParams } from '../../api';
-import {
-  LocationFilterInput,
-  SortBy,
-  useAuthContext,
-  useGql,
-} from '@openmsupply-client/common';
+import { SortBy, useAuthContext, useGql } from '@openmsupply-client/common';
 import { getSdk, AssetFragment } from '../../operations.generated';
 
 export const useAssetApi = () => {
@@ -20,7 +15,6 @@ export const useAssetApi = () => {
       [...keys.list(), sortBy] as const,
     logs: (assetId: string) => [...keys.base(), assetId, 'logs'] as const,
     labelPrinterSettings: () => ['host', 'labelPrinterSettings'] as const,
-    locations: (filter?: LocationFilterInput) => ['locations', filter] as const,
   };
 
   const queries = getAssetQueries(getSdk(client), storeId);

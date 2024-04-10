@@ -21,7 +21,7 @@ import { Summary } from './Tabs';
 import { useAssets } from '../api';
 import { StatusLogs } from './Tabs/StatusLogs';
 import { Documents } from './Tabs/Documents';
-import { ActivityLogList } from '@openmsupply-client/system';
+import { ActivityLogList, useLocation } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
 
 export const EquipmentDetailView = () => {
@@ -29,7 +29,13 @@ export const EquipmentDetailView = () => {
   const { mutateAsync: update, isLoading: isSaving } =
     useAssets.document.update();
   const { data: locationData, isLoading: isLoadingLocations } =
-    useAssets.utils.locations({});
+    useLocation.document.list({
+      sortBy: {
+        key: 'name',
+        direction: 'asc',
+      },
+      filterBy: { assignedToAsset: false },
+    });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
   const { setSuffix } = useBreadcrumbs();
@@ -77,7 +83,7 @@ export const EquipmentDetailView = () => {
   }, [data, setDraft]);
 
   const locations =
-    locationData?.map(location => ({
+    locationData?.nodes.map(location => ({
       label: location.code,
       value: location.id,
     })) || [];
