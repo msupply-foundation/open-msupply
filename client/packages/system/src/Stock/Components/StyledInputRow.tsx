@@ -13,7 +13,7 @@ export const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     sx={{
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {
-        width: '160px',
+        maxWidth: '160px',
       },
     }}
   />

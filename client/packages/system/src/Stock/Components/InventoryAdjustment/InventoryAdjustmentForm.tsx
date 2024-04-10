@@ -16,6 +16,8 @@ import {
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
 import { StyledInputRow } from '../StyledInputRow';
 
+const INPUT_WIDTH = 160;
+
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
@@ -73,11 +75,12 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
         <StyledInputRow
           label={t('label.reason')}
           Input={
-            <Box display="flex" width={160}>
+            <Box display="flex" width={INPUT_WIDTH}>
               <InventoryAdjustmentReasonSearchInput
                 onChange={reason => setDraft(state => ({ ...state, reason }))}
                 value={draft.reason}
                 adjustment={draft.direction}
+                width={INPUT_WIDTH}
               />
             </Box>
           }
@@ -100,7 +103,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.adjust-by')}
           Input={
             <NumericTextInput
-              width={160}
+              width={INPUT_WIDTH}
               max={
                 draft.direction === Adjustment.Reduction
                   ? stockLine.totalNumberOfPacks
@@ -124,7 +127,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.new-pack-qty')}
           Input={
             <NumericTextInput
-              width={160}
+              width={INPUT_WIDTH}
               disabled={true}
               value={draft.newNumberOfPacks}
             />
