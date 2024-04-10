@@ -1,6 +1,7 @@
 use repository::{
     asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
     asset_internal_location_row::AssetInternalLocationRow,
+    asset_log_reason_row::AssetLogReasonRowRepository,
     asset_log_row::AssetLogStatus,
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
@@ -24,9 +25,24 @@ pub fn check_asset_log_exists(
 }
 
 pub fn check_reason_matches_status(
-    _status: &Option<AssetLogStatus>,
-    _reason: &Option<String>,
+    status: &Option<AssetLogStatus>,
+    reason_id: &Option<String>,
+    connection: &StorageConnection,
 ) -> bool {
+    if let Some(reason_id) = reason_id {
+        match status {
+            Some(status) => {
+                let reason = AssetLogReasonRowRepository::new(connection).find_one_by_id(reason_id);
+                if let Ok(Some(reason)) = reason {
+                    return reason.asset_log_status == *status;
+                } else {
+                    return false;
+                }
+            }
+            None => return false,
+        }
+    }
+
     // TODO - add function to check reason matches status
     true
 }
