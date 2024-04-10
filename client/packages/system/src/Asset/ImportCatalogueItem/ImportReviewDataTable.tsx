@@ -129,7 +129,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
         columns={columns}
         data={currentAssetItemPage}
         noDataElement={<NothingHere body={t('error.asset-not-found')} />}
-        id={''}
+        id={'import-review'}
       />
     </Grid>
   );
