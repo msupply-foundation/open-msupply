@@ -96,15 +96,17 @@ impl From<RepositoryError> for InsertInventoryAdjustmentError {
 mod test {
     use repository::{
         mock::{
-            mock_stock_line_a, mock_store_a, mock_store_b, mock_user_account_a, MockDataInserts,
+            mock_stock_line_a, mock_store_a, mock_store_b, mock_user_account_a, MockData,
+            MockDataInserts,
         },
-        test_db::setup_all,
-        InvoiceRowRepository, InvoiceRowStatus, StockLine,
+        test_db::{setup_all, setup_all_with_data},
+        InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType, InvoiceRowRepository,
+        InvoiceRowStatus, StockLine,
     };
     use util::inline_edit;
 
     use crate::{
-        invoice::inventory_adjustment::insert::InsertInventoryAdjustment,
+        invoice::inventory_adjustment::{insert::InsertInventoryAdjustment, AdjustmentType},
         service_provider::ServiceProvider,
     };
 
@@ -114,8 +116,23 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_inventory_adjustment_errors() {
-        let (_, _, connection_manager, _) =
-            setup_all("insert_inventory_adjustment_errors", MockDataInserts::all()).await;
+        fn reduction_reason() -> InventoryAdjustmentReasonRow {
+            InventoryAdjustmentReasonRow {
+                id: "reduction".to_string(),
+                reason: "test reduction".to_string(),
+                is_active: true,
+                r#type: InventoryAdjustmentReasonType::Negative,
+            }
+        }
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "insert_inventory_adjustment_errors",
+            MockDataInserts::all(),
+            MockData {
+                inventory_adjustment_reasons: vec![reduction_reason()],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let mut context = service_provider
@@ -150,16 +167,18 @@ mod test {
         context.store_id = mock_store_a().id;
 
         // Missing reason
-        // assert_eq!(
-        //     service.insert_inventory_adjustment(
-        //         &context,
-        //         InsertInventoryAdjustment {
-        //             stock_line_id: mock_stock_line_a().id,
-        //             ..Default::default()
-        //         }
-        //     ),
-        //     Err(ServiceError::AdjustmentReasonNotProvided)
-        // );
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment: 2.0,
+                    adjustment_type: AdjustmentType::Reduction,
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::AdjustmentReasonNotProvided)
+        );
 
         // Invalid reason
         assert_eq!(
