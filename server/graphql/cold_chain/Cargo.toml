@@ -13,6 +13,7 @@ repository = { path = "../../repository" }
 service = { path = "../../service" }
 graphql_core = { path = "../core" }
 graphql_types = { path = "../types" }
+graphql_asset = { path = "../asset" }
 
 async-graphql = { workspace = true }
 chrono = { workspace = true }

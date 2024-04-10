@@ -2941,6 +2941,7 @@ export type LocationConnector = {
 };
 
 export type LocationFilterInput = {
+  assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -5604,6 +5605,7 @@ export type SensorFilterInput = {
 
 export type SensorNode = {
   __typename: 'SensorNode';
+  assets: AssetConnector;
   batteryLevel?: Maybe<Scalars['Int']['output']>;
   breach?: Maybe<TemperatureBreachNodeType>;
   id: Scalars['String']['output'];
@@ -7022,6 +7024,7 @@ export enum UserPermission {
   InboundReturnQuery = 'INBOUND_RETURN_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
   ItemMutate = 'ITEM_MUTATE',
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',
