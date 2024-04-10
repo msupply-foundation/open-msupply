@@ -91,7 +91,6 @@ export const AssetCatalogueItemsDocument = gql`
     filter: $filter
   ) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
         ...AssetCatalogueItem
       }
@@ -104,9 +103,7 @@ export const AssetCatalogueItemByIdDocument = gql`
     query assetCatalogueItemById($assetCatalogueItemId: String!) {
   assetCatalogueItems(filter: {id: {equalTo: $assetCatalogueItemId}}) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
-        __typename
         ...AssetCatalogueItem
       }
       totalCount
@@ -161,11 +158,9 @@ export const InsertAssetCatalogueItemDocument = gql`
     assetCatalogue {
       insertAssetCatalogueItem(input: $input, storeId: $storeId) {
         ... on AssetCatalogueItemNode {
-          __typename
           id
         }
         ... on InsertAssetCatalogueItemError {
-          __typename
           error {
             description
           }
@@ -181,11 +176,9 @@ export const DeleteAssetCatalogueItemDocument = gql`
     assetCatalogue {
       deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
         ... on DeleteResponse {
-          __typename
           id
         }
         ... on DeleteAssetCatalogueItemError {
-          __typename
           error {
             description
           }

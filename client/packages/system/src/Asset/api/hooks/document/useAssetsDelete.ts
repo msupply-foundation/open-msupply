@@ -27,6 +27,7 @@ export const useAssetsDelete = () => {
     await Promise.all(selectedRows.map(row => mutateAsync(row.id)))
       .then(() => queryClient.invalidateQueries(api.keys.base()))
       .catch(err => {
+        console.error(err);
         throw err;
       });
   };
