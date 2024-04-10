@@ -2,7 +2,7 @@ import { Lines } from './line';
 import { Utils } from './utils';
 
 export * from './useInventoryAdjustment';
-export * from './useCreateStockLine';
+export * from './useStockLine';
 
 export const useStock = {
   line: {
