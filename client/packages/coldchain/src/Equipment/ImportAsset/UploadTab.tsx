@@ -3,13 +3,14 @@ import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { DateUtils, useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
   Link,
   FnUtils,
   FileUtils,
+  Formatter,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
@@ -56,7 +57,6 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
-
   const csvExample = async () => {
     const emptyRows: ImportRow[] = [];
     const csv = importEquipmentToCsv(
@@ -149,18 +149,16 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       } else {
         importRow.catalogueItemCode = code;
       }
-      // notes, serialNumner, and installationDate aren't essential for bulk upload
+      // notes, serialNumber, and installationDate aren't essential for bulk upload
       if (getCell(row, AssetColumn.NOTES) !== undefined) {
         importRow.notes = getCell(row, AssetColumn.NOTES);
       }
       if (getCell(row, AssetColumn.SERIAL_NUMBER) !== undefined) {
         importRow.serialNumber = getCell(row, AssetColumn.SERIAL_NUMBER);
       }
-      // TODO parse date correctly for back end
       if (getCell(row, AssetColumn.INSTALLATION_DATE) !== undefined) {
-        importRow.installationDate = getCell(
-          row,
-          AssetColumn.INSTALLATION_DATE
+        importRow.installationDate = Formatter.naiveDate(
+          DateUtils.getDateOrNull(getCell(row, AssetColumn.INSTALLATION_DATE))
         );
       }
       importRow.errorMessage = rowErrors.join(',');
