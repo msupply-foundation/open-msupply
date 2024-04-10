@@ -50,9 +50,7 @@ export type ImportRow = {
 export type LineNumber = {
   lineNumber: number;
 };
-export const toInsertAssetItemInput = (
-  row: ImportRow
-): AssetCatalogueItemFragment => {
+const toInsertAssetItemInput = (row: ImportRow): AssetCatalogueItemFragment => {
   return {
     __typename: 'AssetCatalogueItemNode',
     id: FnUtils.generateUUID(),
@@ -66,7 +64,7 @@ export const toInsertAssetItemInput = (
   };
 };
 
-export const toExportAssetItem = (
+const toExportAssetItem = (
   row: ImportRow,
   index: number
 ): Partial<ImportRow & LineNumber> => ({
@@ -105,7 +103,6 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
 
   const csvExport = async () => {
     const csv = importRowToCsv(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bufferedAssetItem.map((row: ImportRow, index: number) =>
         toExportAssetItem(row, index)
       ),
@@ -120,11 +117,11 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     const numberImportRecords = bufferedAssetItem?.length ?? 0;
     if (bufferedAssetItem && numberImportRecords > 0) {
       const importErrorRows: ImportRow[] = [];
-      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
+      // Import count can be quite large, we break this into blocks of 10 to avoid too much concurrency
       const remainingRecords = bufferedAssetItem;
       while (remainingRecords.length) {
         await Promise.all(
-          remainingRecords.splice(0, 100).map(async asset => {
+          remainingRecords.splice(0, 10).map(async asset => {
             await insertAssetCatalogueItem(toInsertAssetItemInput(asset)).catch(
               err => {
                 if (!err) {
@@ -140,7 +137,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
         ).then(() => {
           // Update Progress Bar
           const percentComplete =
-            100 - (remainingRecords.length / numberImportRecords) * 100.0;
+            10 - (remainingRecords.length / numberImportRecords) * 100.0;
           setImportProgress(percentComplete);
           setImportErrorCount(importErrorRows.length);
         });

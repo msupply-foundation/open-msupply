@@ -31,7 +31,6 @@ query assetCatalogueItems(
     filter: $filter
   ) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
         ...AssetCatalogueItem
       }
@@ -43,9 +42,7 @@ query assetCatalogueItems(
 query assetCatalogueItemById($assetCatalogueItemId: String!) {
   assetCatalogueItems(filter: { id: { equalTo: $assetCatalogueItemId } }) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
-        __typename
         ...AssetCatalogueItem
       }
       totalCount
@@ -102,11 +99,9 @@ mutation insertAssetCatalogueItem(
     assetCatalogue {
       insertAssetCatalogueItem(input: $input, storeId: $storeId) {
         ... on AssetCatalogueItemNode {
-          __typename
           id
         }
         ... on InsertAssetCatalogueItemError {
-          __typename
           error {
             description
           }
@@ -121,11 +116,9 @@ mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
     assetCatalogue {
       deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
         ... on DeleteResponse {
-          __typename
           id
         }
         ... on DeleteAssetCatalogueItemError {
-          __typename
           error {
             description
           }
