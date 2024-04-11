@@ -113,10 +113,7 @@ export const getAssetQueries = (sdk: Sdk) => ({
       return types;
     },
   },
-  insert: async (
-    input: AssetCatalogueItemFragment,
-    storeId: string
-  ): Promise<string> => {
+  insert: async (input: AssetCatalogueItemFragment, storeId: string) => {
     const result = await sdk.insertAssetCatalogueItem({
       input: itemParsers.toInsert(input),
       storeId,
@@ -124,11 +121,7 @@ export const getAssetQueries = (sdk: Sdk) => ({
     const insertAssetCatalogueItem =
       result.centralServer.assetCatalogue.insertAssetCatalogueItem;
 
-    if (insertAssetCatalogueItem?.__typename === 'AssetCatalogueItemNode') {
-      return insertAssetCatalogueItem.id;
-    }
-
-    throw new Error('Could not insert asset catalogue item');
+    return insertAssetCatalogueItem;
   },
   delete: async (id: string) => {
     const result = await sdk.deleteAssetCatalogueItem({

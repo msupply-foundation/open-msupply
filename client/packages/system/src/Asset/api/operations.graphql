@@ -102,7 +102,22 @@ mutation insertAssetCatalogueItem(
           id
         }
         ... on InsertAssetCatalogueItemError {
+          __typename
           error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+              description
+            }
+            ... on UniqueCombinationViolation {
+              __typename
+              fields
+              description
+            }
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
             description
           }
         }

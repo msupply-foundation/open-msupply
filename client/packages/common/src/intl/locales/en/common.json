@@ -512,5 +512,7 @@
   "sync-status.push": "Push",
   "table.show-columns": "Show / hide columns",
   "title.confirm-delete-encounter": "Delete encounter",
-  "warning.caps-lock": "Warning: Caps lock is on"
+  "warning.caps-lock": "Warning: Caps lock is on",
+  "error.record-already-exists": "A record with this id already exists",
+  "error.unique-value-violation": "A record with this {{ field }} already exists"
 }

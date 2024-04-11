@@ -3988,7 +3988,7 @@ export type NameStoreJoinNode = {
 
 export type NamesResponse = NameConnector;
 
-export type NoPermissionForThisStore = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & {
+export type NoPermissionForThisStore = InsertAssetErrorInterface & {
   __typename: 'NoPermissionForThisStore';
   description: Scalars['String']['output'];
 };
@@ -6282,6 +6282,17 @@ export type UnallocatedLineForItemAlreadyExists = InsertOutboundShipmentUnalloca
 export type UnallocatedLinesOnlyEditableInNewInvoice = InsertOutboundShipmentUnallocatedLineErrorInterface & {
   __typename: 'UnallocatedLinesOnlyEditableInNewInvoice';
   description: Scalars['String']['output'];
+};
+
+export enum UniqueCombinationKey {
+  Manufacturer = 'manufacturer',
+  Model = 'model'
+}
+
+export type UniqueCombinationViolation = InsertAssetCatalogueItemErrorInterface & {
+  __typename: 'UniqueCombinationViolation';
+  description: Scalars['String']['output'];
+  fields: Array<UniqueCombinationKey>;
 };
 
 export enum UniqueValueKey {

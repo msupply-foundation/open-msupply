@@ -13,6 +13,8 @@ import {
   ClickableStepper,
   FileUtils,
   FnUtils,
+  noOtherVariants,
+  UniqueCombinationKey,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { importRowToCsv } from '../utils';
@@ -112,6 +114,50 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
     success(t('success'))();
   };
 
+  const mapStructuredErrors = (
+    result: Awaited<ReturnType<typeof insertAssetCatalogueItem>>
+  ): string | undefined => {
+    if (result.__typename === 'AssetCatalogueItemNode') {
+      return undefined;
+    }
+
+    const { error: insertError } = result;
+
+    switch (insertError.__typename) {
+      case 'RecordAlreadyExist':
+        return t('error.record-already-exists');
+      case 'UniqueValueViolation': {
+        switch (insertError.field) {
+          case 'code':
+            return t('error.unique-value-violation', {
+              field: t('label.code'),
+            });
+          case 'serial':
+            return t('error.unique-value-violation', {
+              field: t('label.serial'),
+            });
+          default:
+            return insertError.description;
+        }
+        break;
+      }
+      case 'UniqueCombinationViolation':
+        if (
+          insertError.fields.includes(UniqueCombinationKey.Manufacturer) &&
+          insertError.fields.includes(UniqueCombinationKey.Manufacturer)
+        ) {
+          return t('error.manufacturer-model-unique');
+        }
+        return insertError.description;
+      case 'DatabaseError':
+        return insertError.description;
+      case 'InternalError':
+        return insertError.description;
+      default:
+        noOtherVariants(insertError);
+    }
+  };
+
   const importAction = async () => {
     onChangeTab(Tabs.Import);
     const numberImportRecords = bufferedAssetItem?.length ?? 0;
@@ -122,17 +168,25 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 10).map(async asset => {
-            await insertAssetCatalogueItem(toInsertAssetItemInput(asset)).catch(
-              err => {
-                if (!err) {
-                  err = { message: t('messages.unknown-error') };
-                }
-                importErrorRows.push({
-                  ...asset,
-                  errorMessage: err.message,
-                });
+            const result = await insertAssetCatalogueItem(
+              toInsertAssetItemInput(asset)
+            ).catch(err => {
+              if (!err) {
+                err = { message: t('messages.unknown-error') };
               }
-            );
+              importErrorRows.push({
+                ...asset,
+                errorMessage: err.message,
+              });
+            });
+            // Map structured Errors
+            if (result?.__typename === 'InsertAssetCatalogueItemError') {
+              const errorMessage = mapStructuredErrors(result);
+              importErrorRows.push({
+                ...asset,
+                errorMessage: errorMessage,
+              });
+            }
           })
         ).then(() => {
           // Update Progress Bar

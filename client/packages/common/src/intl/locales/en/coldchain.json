@@ -136,5 +136,6 @@
   "status.not-in-use": "Not in use",
   "title.new-sensor": "New sensor added",
   "title.sensor-details": "Sensor Details",
-  "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported."
+  "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported.",
+  "error.manufacturer-model-unique": "An item already exists with this manufacturer and model"
 }

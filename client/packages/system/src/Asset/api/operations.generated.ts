@@ -53,7 +53,7 @@ export type InsertAssetCatalogueItemMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', insertAssetCatalogueItem: { __typename: 'AssetCatalogueItemNode', id: string } | { __typename: 'InsertAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'NoPermissionForThisStore', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } } } };
+export type InsertAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', insertAssetCatalogueItem: { __typename: 'AssetCatalogueItemNode', id: string } | { __typename: 'InsertAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueCombinationViolation', fields: Array<Types.UniqueCombinationKey>, description: string } | { __typename: 'UniqueValueViolation', field: Types.UniqueValueKey, description: string } } } } };
 
 export type DeleteAssetCatalogueItemMutationVariables = Types.Exact<{
   assetCatalogueItemId: Types.Scalars['String']['input'];
@@ -161,7 +161,22 @@ export const InsertAssetCatalogueItemDocument = gql`
           id
         }
         ... on InsertAssetCatalogueItemError {
+          __typename
           error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+              description
+            }
+            ... on UniqueCombinationViolation {
+              __typename
+              fields
+              description
+            }
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
             description
           }
         }
