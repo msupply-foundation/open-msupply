@@ -31,7 +31,10 @@ export const ChangeLocationConfirmationModal = ({
       title={t('heading.are-you-sure')}
       message={t('messages.confirm-change-location')}
       onClose={onCancel}
-      onSave={() => onChangeLocation(location)}
+      onSave={async () => {
+        await onChangeLocation(location);
+        onCancel();
+      }}
     >
       <InputWithLabelRow
         label={t('label.location')}
