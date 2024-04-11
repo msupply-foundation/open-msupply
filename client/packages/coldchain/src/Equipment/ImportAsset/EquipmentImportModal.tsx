@@ -115,7 +115,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   } = useAssetData.document.listAll();
 
   const { mutateAsync: insertAssets } = useAssets.document.insert();
-  const { mutateAsync: insertLog } = useAssets.log.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
 
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
@@ -160,12 +160,13 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     const numberImportRecords = bufferedEquipment?.length ?? 0;
     if (bufferedEquipment && numberImportRecords > 0) {
       importErrorRows.length = 0;
-      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
+      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurrency
       const remainingRecords = bufferedEquipment;
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 100).map(insertAsset)
         ).then(() => {
+          invalidateQueries();
           // Update Progress Bar
           const percentComplete =
             100 - (remainingRecords.length / numberImportRecords) * 100.0;
