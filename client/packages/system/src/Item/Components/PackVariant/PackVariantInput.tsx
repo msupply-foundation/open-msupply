@@ -5,6 +5,7 @@ import {
   useDebounceCallback,
   Box,
   useTranslation,
+  Typography,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 
@@ -55,23 +56,22 @@ export const PackVariantInput = ({
   const disabled = isDisabled || false;
 
   // This is shared between input with drop down and without drop down
-  const PackSizeNumberInput = () => {
-    return (
-      <NumericTextInput
-        focusOnRender={shouldFocusInput}
-        value={packSize}
-        onChange={newValue => {
-          setPackSize(newValue || 1);
-          updater(newValue || 1);
-        }}
-        disabled={disabled}
-      />
-    );
-  };
+  const packSizeNumberInput = (
+    <NumericTextInput
+      focusOnRender={shouldFocusInput}
+      value={packSize}
+      onChange={newValue => {
+        setPackSize(newValue || 1);
+        updater(newValue || 1);
+      }}
+      disabled={disabled}
+      width={50}
+    />
+  );
 
   if (!variantsControl) {
     // If no variants exist, then default to just pack size entry
-    return <PackSizeNumberInput />;
+    return packSizeNumberInput;
   }
 
   const { variants } = variantsControl;
@@ -87,7 +87,7 @@ export const PackVariantInput = ({
     },
   ];
   return (
-    <Box display="flex" flexDirection="row">
+    <Box display="flex" flexDirection="row" alignItems="center" gap="8px">
       <Select
         options={options}
         value={customPackSizeEnterable ? ENTER_PACK_SIZE : packSize}
@@ -107,14 +107,14 @@ export const PackVariantInput = ({
         disabled={disabled}
       />
 
-      <Box padding="4px 8px">{'/'}</Box>
+      <Typography>{'/'}</Typography>
 
       {
         /* Allow input only when manually entering pack size */
         customPackSizeEnterable ? (
-          <PackSizeNumberInput />
+          packSizeNumberInput
         ) : (
-          <Box padding="4px 8px">{String(packSize)}</Box>
+          <Typography>{String(packSize)}</Typography>
         )
       }
     </Box>

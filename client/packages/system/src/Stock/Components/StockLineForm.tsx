@@ -86,7 +86,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
       flex={1}
       container
       paddingTop={2}
-      paddingBottom={2}
+      paddingBottom={1}
       width="100%"
       flexWrap="nowrap"
     >
