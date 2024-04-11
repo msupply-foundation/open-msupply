@@ -51,6 +51,7 @@ pub struct AssetCatalogueItemFilterInput {
     pub model: Option<StringFilterInput>,
     pub r#type: Option<StringFilterInput>,
     pub type_id: Option<EqualFilterStringInput>,
+    pub code_manufacturer_model_type: Option<StringFilterInput>,
 }
 
 impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
@@ -66,6 +67,7 @@ impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
             model: f.model.map(StringFilter::from),
             r#type: f.r#type.map(StringFilter::from),
             type_id: f.type_id.map(EqualFilter::from),
+            code_manufacturer_model_type: f.code_manufacturer_model_type.map(StringFilter::from),
         }
     }
 }
@@ -126,6 +128,7 @@ impl AssetCatalogueItemFilterInput {
             model,
             r#type,
             type_id,
+            code_manufacturer_model_type,
         } = self;
 
         AssetCatalogueItemFilter {
@@ -139,6 +142,7 @@ impl AssetCatalogueItemFilterInput {
             model: model.map(StringFilter::from),
             r#type: r#type.map(StringFilter::from),
             type_id: type_id.map(EqualFilter::from),
+            code_manufacturer_model_type: code_manufacturer_model_type.map(StringFilter::from),
         }
     }
 }
