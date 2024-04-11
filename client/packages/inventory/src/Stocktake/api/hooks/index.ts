@@ -20,6 +20,7 @@ export const useStocktake = {
     delete: Lines.useStocktakeDeleteLines,
     deleteSelected: Lines.useStocktakeDeleteSelectedLines,
     zeroQuantities: Lines.useZeroStocktakeLines,
+    changeLocation: Lines.useChangeLinesLocation,
     save: Lines.useSaveStocktakeLines,
   },
   utils: {

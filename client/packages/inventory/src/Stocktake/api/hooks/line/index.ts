@@ -1,3 +1,4 @@
+import { useChangeLinesLocation } from './useChangeLinesLocation';
 import { useStocktakeDeleteLines } from './useStocktakeDeleteLines';
 import { useStocktakeDeleteSelectedLines } from './useStocktakeDeleteSelectedLines';
 import { useStocktakeRows } from './useStocktakeRows';
@@ -10,4 +11,5 @@ export const Lines = {
   useStocktakeRows,
   useSaveStocktakeLines,
   useZeroStocktakeLines,
+  useChangeLinesLocation,
 };
