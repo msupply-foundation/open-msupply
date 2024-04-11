@@ -41,7 +41,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
         await onZeroQuantities(reason);
         onCancel();
       }}
-      canSave={reasonIsRequired && !reason}
+      disableOk={reasonIsRequired && !reason}
     >
       {reasonIsRequired && (
         <InputWithLabelRow
