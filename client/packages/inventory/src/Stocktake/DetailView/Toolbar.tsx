@@ -18,8 +18,11 @@ import {
   Alert,
   useIsGrouped,
   useUrlQuery,
+  RewindIcon,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
+import { SetLinesToZeroConfirmationModal } from './SetLinesToZeroModal';
 
 export const Toolbar = () => {
   const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
@@ -30,6 +33,9 @@ export const Toolbar = () => {
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
+
+  const { isOpen, onClose, onOpen } = useEditModal();
+
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
@@ -56,6 +62,16 @@ export const Toolbar = () => {
         flex={1}
         alignItems="flex-end"
       >
+        {/* 
+     
+        probably super similar to the delete confirmation modal,
+        can we make a confirmation with additional input modal?
+
+        will also need for change location
+        */}
+        {isOpen && (
+          <SetLinesToZeroConfirmationModal isOpen={isOpen} onCancel={onClose} />
+        )}
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('heading.description')}
@@ -112,6 +128,9 @@ export const Toolbar = () => {
             />
           </Box>
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
+            <DropdownMenuItem IconComponent={RewindIcon} onClick={onOpen}>
+              {t('button.reduce-lines-to-zero')}
+            </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
