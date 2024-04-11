@@ -28,7 +28,7 @@ export const PackVariantInput = ({
 }): ReactElement => {
   const { variantsControl } = usePackVariant(itemId, unitName);
   const t = useTranslation();
-  const [isEnterPackSize, setIsEnterPackSize] = useState(false);
+  const [customPackSizeEnterable, setCustomPackSizeEnterable] = useState(false);
   const [shouldFocusInput, setShouldFocusInput] = useState(false);
 
   const [packSize, setPackSize] = useState(initialPackSize);
@@ -46,7 +46,7 @@ export const PackVariantInput = ({
     }
     // Make sure manual pack size is auto selected on load if packSize does not
     // match variant
-    setIsEnterPackSize(
+    setCustomPackSizeEnterable(
       !variantsControl?.variants.some(v => v.packSize === size)
     );
   }, []);
@@ -55,7 +55,7 @@ export const PackVariantInput = ({
   const disabled = isDisabled || false;
 
   // This is shared between input with drop down and without drop down
-  const numberInput = () => {
+  const PackSizeNumberInput = () => {
     return (
       <NumericTextInput
         focusOnRender={shouldFocusInput}
@@ -71,7 +71,7 @@ export const PackVariantInput = ({
 
   if (!variantsControl) {
     // If no variants exist, then default to just pack size entry
-    return numberInput();
+    return <PackSizeNumberInput />;
   }
 
   const { variants } = variantsControl;
@@ -90,18 +90,18 @@ export const PackVariantInput = ({
     <Box display="flex" flexDirection="row">
       <Select
         options={options}
-        value={isEnterPackSize ? ENTER_PACK_SIZE : packSize}
+        value={customPackSizeEnterable ? ENTER_PACK_SIZE : packSize}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const newValue = Number(e.target.value);
 
           // When manually entered pack size is selected, turn on manual entry
           // and set pack size to 1
-          const isEnterPackSizeSelected = newValue === ENTER_PACK_SIZE;
-          const newPackSize = isEnterPackSizeSelected ? 1 : newValue;
+          const isCustomPackVariant = newValue === ENTER_PACK_SIZE;
+          const newPackSize = isCustomPackVariant ? 1 : newValue;
 
           setPackSize(newPackSize);
-          setIsEnterPackSize(isEnterPackSizeSelected);
-          setShouldFocusInput(isEnterPackSizeSelected);
+          setCustomPackSizeEnterable(isCustomPackVariant);
+          setShouldFocusInput(isCustomPackVariant);
           updater(newPackSize);
         }}
         disabled={disabled}
@@ -111,8 +111,8 @@ export const PackVariantInput = ({
 
       {
         /* Allow input only when manually entering pack size */
-        isEnterPackSize ? (
-          numberInput()
+        customPackSizeEnterable ? (
+          <PackSizeNumberInput />
         ) : (
           <Box padding="4px 8px">{String(packSize)}</Box>
         )
