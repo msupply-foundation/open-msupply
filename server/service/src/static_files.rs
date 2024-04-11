@@ -1,18 +1,11 @@
+use repository::sync_file_reference_row::SyncFileReferenceRow;
+use reqwest::Response;
 use std::io::Error;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
-
-use repository::sync_file_reference_row::{
-    SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
-};
-use util::constants::SYSTEM_USER_ID;
-use util::is_central_server;
 use util::uuid::uuid;
-
-use crate::service_provider::ServiceProvider;
-
 #[derive(Debug, PartialEq)]
 pub struct StaticFile {
     pub id: String,
@@ -44,6 +37,8 @@ impl StaticFileCategory {
 /// by id within a certain time frame.
 ///
 /// Old files are deleted automatically.
+
+#[derive(Debug, Clone)]
 pub struct StaticFileService {
     pub dir: PathBuf,
     /// Time [s] for how long static files are kept before they are discarded
@@ -150,128 +145,32 @@ impl StaticFileService {
         }))
     }
 
-    pub async fn download_file_from_central(
+    pub async fn download_file_in_chunks(
         &self,
-        id: &str,
-        category: StaticFileCategory,
-        service_provider: &ServiceProvider,
-    ) -> anyhow::Result<Option<StaticFile>> {
-        log::info!("Downloading file from central server");
-        if is_central_server() {
-            return Err(anyhow::Error::msg(
-                "Can't download file from central server, as I am the central server!",
-            ));
-        }
+        sync_file: &SyncFileReferenceRow,
+        mut download_response: Response,
+    ) -> anyhow::Result<StaticFile> {
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
 
-        let (table_name, record_id) = match category.clone() {
-            StaticFileCategory::SyncFile(table_name, record_id) => (table_name, record_id),
-            _ => {
-                return Err(anyhow::Error::msg(
-                    "Can't download file from central server, as it's not a sync file!",
-                ))
-            }
-        };
-
-        let ctx = service_provider
-            .context("NoStore".to_string(), SYSTEM_USER_ID.to_string())
-            .map_err(|_| anyhow::Error::msg("Can't create context"))?;
-        let settings = service_provider
-            .settings
-            .sync_settings(&ctx)
-            .map_err(|_| anyhow::Error::msg("Can't access sync settings"))?;
-
-        let base_url = match settings {
-            Some(settings) => settings.file_upload_base_url(),
-            None => {
-                return Err(anyhow::Error::msg(
-                    "Can't download file as sync is not configured",
-                ))
-            }
-        };
-
-        let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
-
-        let sync_file_ref = sync_file_repo.find_one_by_id(&id)?;
-
-        let sync_file_ref = match sync_file_ref {
-            Some(sync_file_ref) => sync_file_ref,
-            None => {
-                return Err(anyhow::Error::msg(format!(
-                    "Can't find sync file reference with id: {}",
-                    id
-                )))
-            }
-        };
-
-        let file_name = sync_file_ref.file_name.clone();
-        let download_url = format!("{}/{}/{}?id={}", base_url, table_name, record_id, id);
-        log::info!("Downloading sync file from {}", download_url);
-
-        let file = self.reserve_file(&file_name, &category, Some(id.to_owned()))?;
-
-        let mut download_response = reqwest::get(&download_url).await?;
-
-        if !download_response.status().is_success() {
-            let status = download_response.status();
-            let text = download_response.text().await?;
-            log::error!(
-                "Failed to download file from central server: {} -{}",
-                status,
-                text
-            );
-            // Update the sync file reference to indicate an error
-            let _result = SyncFileReferenceRowRepository::new(&ctx.connection).update_status(
-                &SyncFileReferenceRow {
-                    status: SyncFileStatus::DownloadError,
-                    error: Some(format!("{} : {}", status, text)),
-                    ..sync_file_ref.clone()
-                },
-            );
-            return Err(anyhow::Error::msg(format!(
-                "Failed to download file from central server: {} -{}",
-                status, text
-            )));
-        }
-
-        let mut file_handle = tokio::fs::File::create(file.path.clone()).await?;
+        let file =
+            self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
+        let mut file_handle = tokio::fs::File::create(&file.path).await?;
 
         loop {
             log::info!("Downloading chunk");
-            match download_response.chunk().await {
-                Ok(Some(bytes)) => {
-                    tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
-                }
-                Ok(None) => break, // Finished the download
-                Err(e) => {
-                    // Update the sync file reference to indicate an error
-                    let _result = SyncFileReferenceRowRepository::new(&ctx.connection)
-                        .update_status(&SyncFileReferenceRow {
-                            status: SyncFileStatus::DownloadError,
-                            error: Some(format!("{:?}", e)),
-                            ..sync_file_ref.clone()
-                        });
+            let Some(bytes) = download_response.chunk().await? else {
+                break;
+            };
 
-                    return Err(
-                        anyhow::Error::new(e).context("Downloading file from central server")
-                    );
-                }
-            }
+            tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
         }
 
-        log::info!("Download completed");
-
-        // Update the sync file reference
-        sync_file_repo.update_status(&SyncFileReferenceRow {
-            downloaded_bytes: sync_file_ref.total_bytes,
-            status: SyncFileStatus::Downloaded,
-            ..sync_file_ref.clone()
-        })?;
-
-        Ok(Some(StaticFile {
-            id: id.to_string(),
-            name: file_name,
+        Ok(StaticFile {
+            id: sync_file.id.clone(),
+            name: sync_file.file_name.clone(),
             path: file.path.to_string(),
-        }))
+        })
     }
 }
 

@@ -3,6 +3,8 @@ use rand::prelude::SliceRandom;
 use reqwest::multipart;
 use std::sync::Arc;
 use std::{cmp, io::Read};
+use thiserror::Error;
+use util::format_error;
 
 use repository::{
     sync_file_reference_row::{
@@ -11,11 +13,17 @@ use repository::{
     RepositoryError,
 };
 
+use crate::static_files::StaticFile;
+use crate::sync::api::SyncApiV5;
+use crate::sync::api_v6::SyncApiV6;
+use crate::sync::settings::SYNC_VERSION;
 use crate::{
     service_provider::ServiceProvider,
     static_files::{StaticFileCategory, StaticFileService},
 };
 
+use super::api::SyncApiV5CreatingError;
+use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
 use super::settings::SyncSettings;
 
 pub static MAX_UPLOAD_ATTEMPTS: i32 = 7 * 24; // 7 days * 24 hours Retry sending for up to for 1 week before giving up
@@ -37,6 +45,20 @@ impl From<RepositoryError> for FileSyncError {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum DownloadFileError {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiErrorV6),
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("File with id {0} does not exist")]
+    FileDoesNotExist(String),
+    #[error(transparent)]
+    SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
+    #[error(transparent)]
+    SyncApiV5CreatingError(#[from] SyncApiV5CreatingError),
+}
+
 pub struct FileSynchroniser {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
@@ -45,7 +67,7 @@ pub struct FileSynchroniser {
 }
 
 impl FileSynchroniser {
-    pub(crate) fn new(
+    pub fn new(
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         static_file_service: Arc<StaticFileService>,
@@ -56,6 +78,46 @@ impl FileSynchroniser {
             static_file_service,
             client: reqwest::Client::new(),
         }
+    }
+
+    pub async fn download_file_from_central(
+        &self,
+        file_id: &str,
+    ) -> Result<StaticFile, DownloadFileError> {
+        use DownloadFileError as Error;
+        let ctx = self.service_provider.basic_context()?;
+
+        let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+
+        let sync_file_ref = sync_file_repo
+            .find_one_by_id(&file_id)?
+            .ok_or(Error::FileDoesNotExist(file_id.to_string()))?;
+
+        // Create SyncApiV6 instance (would probably be done in 'new' method)
+        let sync_v5_settings =
+            SyncApiV5::new_settings(&self.settings, &self.service_provider, SYNC_VERSION)?;
+        let sync_api_v6 = SyncApiV6::new(sync_v5_settings)?;
+
+        let download_result = sync_api_v6
+            .download_file(&self.static_file_service, &sync_file_ref)
+            .await;
+
+        let file_row_update = match &download_result {
+            Ok(_) => SyncFileReferenceRow {
+                downloaded_bytes: sync_file_ref.total_bytes,
+                status: SyncFileStatus::Downloaded,
+                ..sync_file_ref.clone()
+            },
+            Err(error) => SyncFileReferenceRow {
+                status: SyncFileStatus::DownloadError,
+                error: Some(format_error(&error)),
+                ..sync_file_ref.clone()
+            },
+        };
+
+        sync_file_repo.update_status(&file_row_update)?;
+
+        Ok(download_result?)
     }
 
     pub(crate) async fn sync(&self) -> Result<usize, FileSyncError> {

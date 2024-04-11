@@ -1,5 +1,6 @@
 use std::io::ErrorKind;
 use std::io::Write;
+use std::sync::Arc;
 use std::sync::Mutex;
 
 use actix_files as fs;
@@ -21,6 +22,8 @@ use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::{StaticFileCategory, StaticFileService};
+use service::sync::file_sync_driver::get_sync_settings;
+use service::sync::file_synchroniser::FileSynchroniser;
 
 use crate::middleware::limit_content_length;
 
@@ -287,9 +290,9 @@ async fn sync_files(
     let service = StaticFileService::new(&settings.server.base_dir)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
-    let (table_name, record_id) = path.into_inner();
+    let (table_name, parent_record_id) = path.into_inner();
 
-    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
+    let static_file_category = StaticFileCategory::SyncFile(table_name, parent_record_id);
 
     let file = service
         .find_file(&query.id, static_file_category.clone())
@@ -302,19 +305,21 @@ async fn sync_files(
                 query.id
             );
 
-            service
-                .download_file_from_central(&query.id, static_file_category, &service_provider)
+            let file_syncrhoniser = FileSynchroniser::new(
+                get_sync_settings(&service_provider),
+                service_provider.clone().into_inner(),
+                Arc::new(service),
+            );
+
+            file_syncrhoniser
+                .download_file_from_central(&query.id)
                 .await
                 .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
         }
         Some(file) => {
             log::debug!("Sync File found: {}", query.id);
-            Some(file)
+            file
         }
-    };
-    let file = match file {
-        Some(file) => file,
-        None => return Err(InternalError::new("No file found", StatusCode::NOT_FOUND).into()),
     };
 
     let response = fs::NamedFile::open(file.path)?
