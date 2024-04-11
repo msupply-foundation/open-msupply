@@ -21,9 +21,11 @@ import {
   RewindIcon,
   useEditModal,
   useNotification,
+  ArrowRightIcon,
 } from '@openmsupply-client/common';
 import { useStocktake } from '../api';
 import { ReduceLinesToZeroConfirmationModal } from './ReduceLinesToZeroModal';
+import { ChangeLocationConfirmationModal } from './ChangeLocationModal';
 
 export const Toolbar = () => {
   const { info } = useNotification();
@@ -53,21 +55,39 @@ export const Toolbar = () => {
   const setItemFilter = (itemFilter: string) =>
     updateQuery({ itemCodeOrName: itemFilter });
 
-  const { isOpen, onClose, onOpen } = useEditModal();
+  const {
+    isOpen: reduceIsOpen,
+    onClose: onCloseReduce,
+    onOpen: onOpenReduce,
+  } = useEditModal();
+  const {
+    isOpen: changeLocationIsOpen,
+    onClose: onCloseChangeLocation,
+    onOpen: onOpenChangeLocation,
+  } = useEditModal();
+
   const selectedRows = useStocktake.utils.selectedRows();
 
-  const openReduceToZeroModal = () => {
+  const checkSelected = () => {
     if (!selectedRows.length) {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
+      const selectRowsSnack = info(t('messages.no-lines-selected'));
       selectRowsSnack();
       return;
-    } else if (isDisabled) {
+    }
+    if (isDisabled) {
       const cannotReduceSnack = info(t('error.is-locked'));
       cannotReduceSnack();
       return;
     }
+    return true;
+  };
 
-    onOpen();
+  const openReduceToZeroModal = () => {
+    if (checkSelected()) onOpenReduce();
+  };
+
+  const openChangeLocationModal = () => {
+    if (checkSelected()) onOpenChangeLocation();
   };
 
   return (
@@ -79,17 +99,16 @@ export const Toolbar = () => {
         flex={1}
         alignItems="flex-end"
       >
-        {/* 
-     
-        probably super similar to the delete confirmation modal,
-        can we make a confirmation with additional input modal?
-
-        will also need for change location
-        */}
-        {isOpen && (
+        {reduceIsOpen && (
           <ReduceLinesToZeroConfirmationModal
-            isOpen={isOpen}
-            onCancel={onClose}
+            isOpen={reduceIsOpen}
+            onCancel={onCloseReduce}
+          />
+        )}
+        {changeLocationIsOpen && (
+          <ChangeLocationConfirmationModal
+            isOpen={changeLocationIsOpen}
+            onCancel={onCloseChangeLocation}
           />
         )}
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
@@ -123,7 +142,6 @@ export const Toolbar = () => {
           />
           {isDisabled && <Alert severity="info">{infoMessage}</Alert>}
         </Grid>
-
         <Grid
           item
           display="flex"
@@ -148,6 +166,12 @@ export const Toolbar = () => {
             />
           </Box>
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
+            <DropdownMenuItem
+              IconComponent={ArrowRightIcon}
+              onClick={openChangeLocationModal}
+            >
+              {t('button.change-location')}
+            </DropdownMenuItem>
             <DropdownMenuItem
               IconComponent={RewindIcon}
               onClick={openReduceToZeroModal}

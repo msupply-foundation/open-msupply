@@ -1,26 +1,23 @@
 import { useNotification, useTranslation } from '@openmsupply-client/common';
 import { useSaveStocktakeLines } from './useStocktakeSaveLines';
-import { InventoryAdjustmentReasonRowFragment } from '@openmsupply-client/system';
+import { LocationRowFragment } from '@openmsupply-client/system';
 import { useSelectedRows } from '../utils/useSelectedRows';
 
-export const useZeroStocktakeLines = () => {
+export const useChangeLinesLocation = () => {
   const { saveAndMapStructuredErrors } = useSaveStocktakeLines();
   const t = useTranslation('inventory');
   const { error, success } = useNotification();
 
   const selectedRows = useSelectedRows();
 
-  const onZeroQuantities = async (
-    inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
-  ) => {
+  const onZeroQuantities = async (location: LocationRowFragment | null) => {
     try {
       const { errorMessages } = await saveAndMapStructuredErrors(
         selectedRows.map(line => ({
           ...line,
-          countedNumberOfPacks: 0,
           isUpdated: true,
           countThisLine: true,
-          inventoryAdjustmentReason,
+          location,
         }))
       );
 
@@ -29,7 +26,7 @@ export const useZeroStocktakeLines = () => {
         return;
       }
 
-      success(t('messages.reduced-to-zero', { count: selectedRows.length }))();
+      success(t('messages.changed-location', { count: selectedRows.length }))();
     } catch (err) {
       throw err;
     }
