@@ -1,8 +1,7 @@
 use async_graphql::*;
 use graphql_core::{
     simple_generic_errors::{
-        DatabaseError, InternalError, NoPermissionForThisStore, RecordAlreadyExist,
-        UniqueValueViolation,
+        DatabaseError, InternalError, RecordAlreadyExist, UniqueValueKey, UniqueValueViolation,
     },
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
@@ -11,7 +10,6 @@ use service::{
     auth::{Resource, ResourceAccessRequest},
     catalogue::insert::{InsertAssetCatalogueItem, InsertAssetCatalogueItemError as ServiceError},
 };
-use util::is_central_server;
 
 use crate::types::asset_catalogue_item::AssetCatalogueItemNode;
 
@@ -20,9 +18,6 @@ pub fn insert_asset_catalogue_item(
     store_id: &str,
     input: InsertAssetCatalogueItemInput,
 ) -> Result<InsertAssetCatalogueItemResponse> {
-    if !is_central_server() {
-        return Err(StandardGraphqlError::from_str("Not a central server"));
-    }
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -91,6 +86,25 @@ pub struct InsertAssetCatalogueItemError {
     pub error: InsertAssetCatalogueItemErrorInterface,
 }
 
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug)]
+#[graphql(rename_items = "camelCase")]
+pub enum UniqueCombinationKey {
+    Manufacturer,
+    Model,
+}
+
+pub struct UniqueCombinationViolation(pub Vec<UniqueCombinationKey>);
+#[Object]
+impl UniqueCombinationViolation {
+    pub async fn description(&self) -> String {
+        format!("Fields needs to be unique {:?}", self.0)
+    }
+
+    pub async fn fields(&self) -> Vec<UniqueCombinationKey> {
+        self.0.clone()
+    }
+}
+
 #[derive(Union)]
 pub enum InsertAssetCatalogueItemResponse {
     Error(InsertAssetCatalogueItemError),
@@ -102,9 +116,9 @@ pub enum InsertAssetCatalogueItemResponse {
 pub enum InsertAssetCatalogueItemErrorInterface {
     ItemAlreadyExists(RecordAlreadyExist),
     UniqueValueViolation(UniqueValueViolation),
+    DuplicateManufacturerAndModel(UniqueCombinationViolation),
     InternalError(InternalError),
     DatabaseError(DatabaseError),
-    PermissionError(NoPermissionForThisStore),
 }
 
 fn map_error(error: ServiceError) -> Result<InsertAssetCatalogueItemErrorInterface> {
@@ -112,12 +126,33 @@ fn map_error(error: ServiceError) -> Result<InsertAssetCatalogueItemErrorInterfa
     let formatted_error = format!("{:#?}", error);
 
     let graphql_error = match error {
+        // Structured Errors
+        ServiceError::ItemAlreadyExists => {
+            return Ok(InsertAssetCatalogueItemErrorInterface::ItemAlreadyExists(
+                RecordAlreadyExist {},
+            ))
+        }
+        ServiceError::CodeAlreadyExists => {
+            return Ok(
+                InsertAssetCatalogueItemErrorInterface::UniqueValueViolation(UniqueValueViolation(
+                    UniqueValueKey::Code,
+                )),
+            )
+        }
+        ServiceError::ManufacturerAndModelAlreadyExist => {
+            return Ok(
+                InsertAssetCatalogueItemErrorInterface::DuplicateManufacturerAndModel(
+                    UniqueCombinationViolation(vec![
+                        UniqueCombinationKey::Manufacturer,
+                        UniqueCombinationKey::Model,
+                    ]),
+                ),
+            )
+        }
+
         // Standard Graphql Errors
-        ServiceError::ItemAlreadyExists => BadUserInput(formatted_error),
         ServiceError::CreatedRecordNotFound => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-        ServiceError::CodeAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::ManufacturerAndModelAlreadyExist => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())
