@@ -1,43 +1,14 @@
-import {
-  useNotification,
-  useTableStore,
-  useTranslation,
-} from '@openmsupply-client/common';
+import { useNotification, useTranslation } from '@openmsupply-client/common';
 import { useSaveStocktakeLines } from './useStocktakeSaveLines';
-import { useStocktakeRows } from './useStocktakeRows';
-import { useIsStocktakeDisabled } from '../utils/useIsStocktakeDisabled';
 import { InventoryAdjustmentReasonRowFragment } from 'packages/system/src';
-import { useEffect } from 'react';
+import { useSelectedRows } from '../utils/useSelectedRows';
 
-export const useZeroStocktakeLines = (onCancel: () => void) => {
-  const { items, lines } = useStocktakeRows();
+export const useZeroStocktakeLines = () => {
   const { saveAndMapStructuredErrors } = useSaveStocktakeLines();
-  const isDisabled = useIsStocktakeDisabled();
   const t = useTranslation('inventory');
-  const { error, info, success } = useNotification();
+  const { error, success } = useNotification();
 
-  const selectedRows =
-    useTableStore(state => {
-      const { isGrouped } = state;
-
-      return isGrouped
-        ? items
-            ?.filter(({ id }) => state.rowState[id]?.isSelected)
-            .flatMap(({ lines }) => lines)
-        : lines?.filter(({ id }) => state.rowState[id]?.isSelected);
-    }) || [];
-
-  useEffect(() => {
-    if (!selectedRows.length) {
-      const selectRowsSnack = info(t('messages.select-rows-to-delete'));
-      selectRowsSnack();
-      onCancel();
-    } else if (isDisabled) {
-      const cannotReduceSnack = info(t('error.is-locked'));
-      cannotReduceSnack();
-      onCancel();
-    }
-  }, []);
+  const selectedRows = useSelectedRows();
 
   const onZeroQuantities = async (
     inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
