@@ -132,8 +132,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             table_name: ChangelogTableName::SyncFileReference,
             record_id: sync_file_reference_id,
             row_action: action,
-            store_id: None,
-            name_link_id: None,
+            ..Default::default()
         };
 
         ChangelogRepository::new(self.connection).insert(&row)
