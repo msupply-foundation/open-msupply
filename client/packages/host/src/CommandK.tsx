@@ -17,9 +17,11 @@ import {
   useAuthContext,
   UserPermission,
   StoreModeNodeType,
+  useRegisterActions,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
+import { useEasterEggModal } from './components/EasterEggModal';
 
 const CustomKBarSearch = styled(KBarSearch)(({ theme }) => ({
   width: 500,
@@ -80,11 +82,12 @@ const actionSorter = (a: Action, b: Action) => {
   return 0;
 };
 
-export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
+const Actions = () => {
   const navigate = useNavigate();
   const drawer = useDrawer();
   const t = useTranslation('app');
-  const { store, logout, userHasPermission } = useAuthContext();
+  const { store, logout, user, userHasPermission } = useAuthContext();
+  const showEasterEgg = useEasterEggModal();
 
   const actions = [
     {
@@ -243,6 +246,13 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
         navigate(RouteBuilder.create(AppRoute.Login).build());
       },
     },
+    {
+      id: 'action:easter-egg',
+      name: `${t('easter-egg')}`,
+      shortcut: ['e', 'e'],
+      keywords: 'easter egg game',
+      perform: showEasterEgg,
+    },
   ];
 
   if (userHasPermission(UserPermission.ServerAdmin)) {
@@ -280,11 +290,45 @@ export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
             .build()
         ),
     });
+
+    if (store?.preferences.vaccineModule ?? false) {
+      actions.push({
+        id: 'navigation:coldchain-monitoring',
+        name: `${t('cmdk.goto-cold-chain-monitoring')} (c+c)`,
+        shortcut: ['c', 'c'],
+        keywords: 'cold chain coldchain monitoring',
+        perform: () =>
+          navigate(
+            RouteBuilder.create(AppRoute.Coldchain)
+              .addPart(AppRoute.Monitoring)
+              .build()
+          ),
+      });
+      actions.push({
+        id: 'navigation:coldchain-equipment',
+        name: `${t('cmdk.goto-cold-chain-equipment')} (c + e)`,
+        shortcut: ['c', 'e'],
+        keywords: 'cold chain coldchain equipment',
+        perform: () =>
+          navigate(
+            RouteBuilder.create(AppRoute.Coldchain)
+              .addPart(AppRoute.Equipment)
+              .build()
+          ),
+      });
+    }
   }
 
-  const sortedActions = actions.sort(actionSorter);
+  useRegisterActions(actions.sort(actionSorter), [store, user]);
+
+  return <></>;
+};
+
+export const CommandK: FC<PropsWithChildrenOnly> = ({ children }) => {
+  const t = useTranslation('app');
   return (
-    <KBarProvider actions={sortedActions}>
+    <KBarProvider actions={[]}>
+      <Actions />
       <KBarPortal>
         <KBarPositioner style={{ zIndex: 1001 }}>
           <StyledKBarAnimator>

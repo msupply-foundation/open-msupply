@@ -376,6 +376,7 @@ export type AssetLogNode = {
   __typename: 'AssetLogNode';
   assetId: Scalars['String']['output'];
   comment?: Maybe<Scalars['String']['output']>;
+  documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
   reason?: Maybe<ReasonType>;
@@ -432,6 +433,7 @@ export type AssetNode = {
   catalogueItem?: Maybe<AssetCatalogueItemNode>;
   catalogueItemId?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['NaiveDateTime']['output'];
+  documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   installationDate?: Maybe<Scalars['NaiveDate']['output']>;
   locations: LocationConnector;
@@ -2939,6 +2941,7 @@ export type LocationConnector = {
 };
 
 export type LocationFilterInput = {
+  assignedToAsset?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<StringFilterInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   name?: InputMaybe<StringFilterInput>;
@@ -5602,6 +5605,7 @@ export type SensorFilterInput = {
 
 export type SensorNode = {
   __typename: 'SensorNode';
+  assets: AssetConnector;
   batteryLevel?: Maybe<Scalars['Int']['output']>;
   breach?: Maybe<TemperatureBreachNodeType>;
   id: Scalars['String']['output'];
@@ -6023,6 +6027,22 @@ export enum SyncErrorVariant {
   SiteUuidIsBeingChanged = 'SITE_UUID_IS_BEING_CHANGED',
   Unknown = 'UNKNOWN'
 }
+
+export type SyncFileReferenceConnector = {
+  __typename: 'SyncFileReferenceConnector';
+  nodes: Array<SyncFileReferenceNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SyncFileReferenceNode = {
+  __typename: 'SyncFileReferenceNode';
+  createdDatetime: Scalars['NaiveDateTime']['output'];
+  fileName: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  mimeType?: Maybe<Scalars['String']['output']>;
+  recordId: Scalars['String']['output'];
+  tableName: Scalars['String']['output'];
+};
 
 export type SyncSettingsInput = {
   /** Sync interval */
@@ -7004,6 +7024,7 @@ export enum UserPermission {
   InboundReturnQuery = 'INBOUND_RETURN_QUERY',
   InboundShipmentMutate = 'INBOUND_SHIPMENT_MUTATE',
   InboundShipmentQuery = 'INBOUND_SHIPMENT_QUERY',
+  InventoryAdjustmentMutate = 'INVENTORY_ADJUSTMENT_MUTATE',
   ItemMutate = 'ITEM_MUTATE',
   ItemNamesCodesAndUnitsMutate = 'ITEM_NAMES_CODES_AND_UNITS_MUTATE',
   LocationMutate = 'LOCATION_MUTATE',

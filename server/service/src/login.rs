@@ -379,9 +379,6 @@ fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
                 output.insert(Permission::StocktakeMutate);
             }
             // inventory adjustments
-            Permissions::ViewInventoryAdjustments => {
-                output.insert(Permission::InventoryAdjustmentQuery);
-            }
             Permissions::EnterInventoryAdjustments
             | Permissions::EditInventoryAdjustments
             | Permissions::FinaliseInventoryAdjustments => {

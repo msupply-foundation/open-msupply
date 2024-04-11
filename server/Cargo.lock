@@ -2390,6 +2390,7 @@ dependencies = [
  "assert-json-diff",
  "async-graphql",
  "chrono",
+ "graphql_asset",
  "graphql_core",
  "graphql_types",
  "regex",

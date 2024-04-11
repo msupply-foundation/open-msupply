@@ -34,7 +34,7 @@ fn validate_request(
 ) -> Result<ValidatedUserAuth, AuthError> {
     let token = match request.cookie(COOKIE_NAME) {
         Some(cookie) => {
-            let auth_cookie: AuthCookie = match serde_json::from_str(&cookie.value().to_string()) {
+            let auth_cookie: AuthCookie = match serde_json::from_str(cookie.value()) {
                 Ok(auth_cookie) => auth_cookie,
                 Err(err) => {
                     return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(

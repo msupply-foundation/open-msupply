@@ -10,16 +10,17 @@ mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod linked_shipment;
 mod pack_variant;
+mod report_views;
 mod returns;
 mod store_add_created_date;
 mod sync_file_reference;
 mod user_change_last_synced_to_optional;
 
-pub(crate) struct V1_08_00;
+pub(crate) struct V2_00_00;
 
-impl Migration for V1_08_00 {
+impl Migration for V2_00_00 {
     fn version(&self) -> Version {
-        Version::from_str("1.8.0")
+        Version::from_str("2.0.0")
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
@@ -35,17 +36,18 @@ impl Migration for V1_08_00 {
         sync_file_reference::migrate(connection)?;
         user_change_last_synced_to_optional::migrate(connection)?;
         inventory_adjustment_logtype::migrate(connection)?;
+        report_views::migrate(connection)?;
         Ok(())
     }
 }
 
 #[cfg(test)]
 #[actix_rt::test]
-async fn migration_1_08_00() {
+async fn migration_2_00_00() {
     use crate::migrations::*;
     use crate::test_db::*;
 
-    let version = V1_08_00.version();
+    let version = V2_00_00.version();
 
     // This test allows checking sql syntax
     let SetupResult { connection, .. } = setup_test(SetupOption {

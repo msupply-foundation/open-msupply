@@ -1,8 +1,6 @@
 import React, { FC } from 'react';
 import {
   TextWithLabelRow,
-  InputWithLabelRow,
-  InputWithLabelRowProps,
   useTranslation,
   Box,
   NumericTextInput,
@@ -16,6 +14,7 @@ import {
   usePackVariant,
 } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
+import { StyledInputRow } from '../StyledInputRow';
 
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;
@@ -38,40 +37,39 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
   const saveDisabled = !draft.direction || draft.adjustBy === 0;
 
   const save = async () => {
-    // TODO: handle error if no reason selected when reasons required
-    await create();
-    const successSnack = success(t('messages.inventory-adjustment-saved'));
-    successSnack();
+    try {
+      await create();
+      const successSnack = success(t('messages.inventory-adjustment-saved'));
+      successSnack();
+    } catch {
+      // TODO: handle error if no reason selected when reasons required
+    }
   };
 
   return (
     <Box display="flex">
-      <Box display="flex" flexDirection="column" padding={2} gap={1} flex={1}>
+      <Box display="flex" flexDirection="column" padding={2} gap={2} flex={1}>
         <TextWithLabelRow
           label={t('label.pack')}
           text={packUnit}
           textProps={{ textAlign: 'end' }}
         />
-        <StyledInputRow
-          label={t('label.direction')}
-          Input={
-            <Box display="flex" width={160}>
-              <InventoryAdjustmentDirectionInput
-                value={draft.direction}
-                onChange={direction => {
-                  if (direction !== undefined) {
-                    setDraft({
-                      direction,
-                      reason: null,
-                      adjustBy: 0,
-                      newNumberOfPacks: stockLine.totalNumberOfPacks,
-                    });
-                  }
-                }}
-              />
-            </Box>
-          }
-        />
+        <Box display="flex" justifyContent={'end'}>
+          <InventoryAdjustmentDirectionInput
+            value={draft.direction}
+            onChange={direction => {
+              if (direction !== undefined) {
+                setDraft({
+                  direction,
+                  reason: null,
+                  adjustBy: 0,
+                  newNumberOfPacks: stockLine.totalNumberOfPacks,
+                });
+              }
+            }}
+          />
+        </Box>
+
         <StyledInputRow
           label={t('label.reason')}
           Input={
@@ -88,7 +86,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
       <Box
         display="flex"
         flexDirection="column"
-        gap={1}
+        gap={2}
         paddingTop={2}
         flex={1}
       >
@@ -102,7 +100,6 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.adjust-by')}
           Input={
             <NumericTextInput
-              disabled={draft.direction === Adjustment.None}
               width={160}
               max={
                 draft.direction === Adjustment.Reduction
@@ -124,37 +121,12 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           }
         />
         <StyledInputRow
-          label={t('label.new-num-packs')}
+          label={t('label.new-pack-qty')}
           Input={
             <NumericTextInput
-              disabled={draft.direction === Adjustment.None}
               width={160}
+              disabled={true}
               value={draft.newNumberOfPacks}
-              max={
-                draft.direction === Adjustment.Reduction
-                  ? stockLine.totalNumberOfPacks
-                  : undefined
-              }
-              // // TODO: minimum new # packs when in addition mode
-              // // `min` field doesn't really work... e.g. if current/min is 5,
-              // // user wants to type 20, so starts by typing 2, it will be reset to 5!
-              // // I want a debounced min field or something lol
-              // // maybe error state? (disable ok? or show error message)
-              // // reset to min on lose focus?
-              // min={
-              //   direction === Adjustment.Addition
-              //     ? draft.totalNumberOfPacks
-              //     : undefined
-              // }
-              onChange={newNumPacks =>
-                setDraft(state => ({
-                  ...state,
-                  newNumberOfPacks: newNumPacks ?? 0,
-                  adjustBy: Math.abs(
-                    stockLine.totalNumberOfPacks - (newNumPacks ?? 0)
-                  ),
-                }))
-              }
             />
           }
         />
@@ -170,19 +142,3 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
     </Box>
   );
 };
-
-const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
-  <InputWithLabelRow
-    label={label}
-    Input={Input}
-    labelProps={{ sx: { textAlign: 'end' } }}
-    labelWidth="100px"
-    sx={{
-      justifyContent: 'space-between',
-      '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '160px',
-        width: '160px',
-      },
-    }}
-  />
-);
