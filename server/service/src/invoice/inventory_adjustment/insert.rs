@@ -250,7 +250,7 @@ mod test {
     #[actix_rt::test]
     async fn insert_inventory_adjustment_success() {
         let (_, connection, connection_manager, _) =
-            setup_all("insert_inventory_adjustment_errors", MockDataInserts::all()).await;
+            setup_all("insert_inventory_adjustment_success", MockDataInserts::all()).await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
