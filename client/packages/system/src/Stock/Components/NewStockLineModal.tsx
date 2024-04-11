@@ -90,29 +90,27 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
         <Divider />
 
         {draft.itemId && (
-          <>
+          <Grid item>
             <StockLineForm draft={draft} onUpdate={onUpdate} packEditable />
 
             <Grid container justifyContent="start" display="flex">
-              <Grid item width="50%">
-                <StyledInputRow
-                  label={t('label.reason')}
-                  Input={
-                    <Box display="flex" width={INPUT_WIDTH}>
-                      <InventoryAdjustmentReasonSearchInput
-                        width={INPUT_WIDTH}
-                        adjustment={Adjustment.Addition}
-                        value={draft.inventoryAdjustmentReason}
-                        onChange={reason =>
-                          onUpdate({ inventoryAdjustmentReason: reason })
-                        }
-                      />
-                    </Box>
-                  }
-                />
-              </Grid>
+              <StyledInputRow
+                label={t('label.reason')}
+                Input={
+                  <Box display="flex" width={INPUT_WIDTH}>
+                    <InventoryAdjustmentReasonSearchInput
+                      width={INPUT_WIDTH}
+                      adjustment={Adjustment.Addition}
+                      value={draft.inventoryAdjustmentReason}
+                      onChange={reason =>
+                        onUpdate({ inventoryAdjustmentReason: reason })
+                      }
+                    />
+                  </Box>
+                }
+              />
             </Grid>
-          </>
+          </Grid>
         )}
       </Grid>
     </Modal>
