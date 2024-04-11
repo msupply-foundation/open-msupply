@@ -20,7 +20,7 @@ export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
   const { columns } = useLedgerColumns();
 
   return (
-    <Box display="flex">
+    <Box display="flex" sx={{ maxHeight: 300, overflowY: 'auto' }}>
       <TableProvider createStore={createTableStore}>
         <DataTable
           id="stockline-ledger"
@@ -28,7 +28,7 @@ export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
           data={data as any}
           isLoading={isLoading}
           isError={isError}
-          noDataMessage={t('messages.no-repacks')}
+          noDataMessage={t('messages.no-ledger')}
           overflowX="auto"
         />
       </TableProvider>
