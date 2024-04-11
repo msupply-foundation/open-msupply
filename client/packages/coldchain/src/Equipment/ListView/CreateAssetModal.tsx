@@ -95,7 +95,7 @@ export const CreateAssetModal = ({
       categoryId: { equalTo: draft.categoryId ?? '' },
     });
   const { pagination, onPageChange } = usePagination(25);
-  const { filter, onFilter } = useStringFilter('manufacturer');
+  const { filter, onFilter } = useStringFilter('codeManufacturerModelType');
   const {
     data: catalogueItemData,
     isFetching,
