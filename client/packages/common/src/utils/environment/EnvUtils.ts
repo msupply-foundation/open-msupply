@@ -67,6 +67,8 @@ const mapRoute = (route: string): RouteMapping => {
       return { title: 'admin', docs: '/administration/' };
     case inRoute('patients'):
       return { title: 'patients', docs: '/dispensary/patients/' };
+    case inRoute('prescription'):
+      return { title: 'prescription', docs: '/dispensary/prescriptions/' };
     case inRoute('encounter'):
       return {
         title: 'encounter',
