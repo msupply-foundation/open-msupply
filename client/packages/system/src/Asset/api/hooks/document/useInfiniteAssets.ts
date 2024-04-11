@@ -1,29 +1,21 @@
 import {
   FilterByWithBoolean,
+  Pagination,
   useInfiniteQuery,
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
-import { AssetCatalogueItemFragment } from '../../operations.generated';
-
-type AssetResponse = {
-  totalCount: number;
-  nodes: AssetCatalogueItemFragment[];
-};
 
 interface useAssetsProps {
   categoryId?: string;
   filter?: FilterByWithBoolean;
-  getNextPageParam?: (
-    lastPage: AssetResponse,
-    allPages: AssetResponse[]
-  ) => unknown;
+  pagination?: Pagination;
 }
 
 export const useInfiniteAssets = ({
   categoryId,
-  getNextPageParam,
   filter,
+  pagination,
 }: useAssetsProps) => {
   const { queryParams } = useUrlQueryParams({
     filters: [
@@ -42,10 +34,7 @@ export const useInfiniteAssets = ({
   const filterBy = { ...queryFilter, ...filter };
   const params = { ...queryParams, filterBy };
 
-  return useInfiniteQuery(
-    api.keys.paramList(params),
-    ({ pageParam }) =>
-      api.get.list({ ...params, offset: 0, first: 25, ...pageParam }),
-    { getNextPageParam }
+  return useInfiniteQuery(api.keys.paramList(params), ({ pageParam }) =>
+    api.get.list({ ...params, ...pagination, ...pageParam })
   );
 };

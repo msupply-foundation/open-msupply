@@ -30,6 +30,7 @@ import { CCE_CLASS_ID } from '../utils';
 import { InsertAsset } from '../api/api';
 
 const DEBOUNCE_TIMEOUT = 300;
+const RECORDS_PER_PAGE = 100;
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -94,7 +95,7 @@ export const CreateAssetModal = ({
     useAssetData.utils.types({
       categoryId: { equalTo: draft.categoryId ?? '' },
     });
-  const { pagination, onPageChange } = usePagination(100);
+  const { pagination, onPageChange } = usePagination(RECORDS_PER_PAGE);
   const { filter, onFilter } = useStringFilter('codeManufacturerModelType');
   const {
     data: catalogueItemData,
@@ -103,6 +104,7 @@ export const CreateAssetModal = ({
   } = useAssetData.document.infiniteList({
     filter,
     categoryId: draft.categoryId,
+    pagination,
   });
   const { mutateAsync: save } = useAssets.document.insert();
   const isCentralServer = useIsCentralServerApi();
