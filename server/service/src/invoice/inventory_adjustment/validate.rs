@@ -21,7 +21,7 @@ pub fn validate(
         },
     )?;
 
-    if input.adjustment == 0.0 {
+    if input.adjustment <= 0.0 {
         return Err(InvalidAdjustment);
     };
 
