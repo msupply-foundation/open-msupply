@@ -20,6 +20,7 @@ export function useStockLedger(stockLine: StockLineRowFragment) {
 
   const queryKey = [LEDGER, stockLine.id];
   const queryFn = async () => {
+    // TO-DO: Replace with real query
     const exampleResult = [
       {
         id: 'AAAA',
