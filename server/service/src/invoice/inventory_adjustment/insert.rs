@@ -208,6 +208,19 @@ mod test {
             Err(ServiceError::InvalidAdjustment)
         );
 
+        // Invalid adjustment (adjustment < 0)
+        assert_eq!(
+            service.insert_inventory_adjustment(
+                &context,
+                InsertInventoryAdjustment {
+                    stock_line_id: mock_stock_line_a().id,
+                    adjustment: -10.0,
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::InvalidAdjustment)
+        );
+
         // Reduce stock below zero
         let stock_line = StockLineRepository::new(&context.connection)
             .query_by_filter(
@@ -302,7 +315,8 @@ mod test {
                 &context,
                 InsertInventoryAdjustment {
                     stock_line_id: mock_stock_line_b().id,
-                    adjustment: -10.5,
+                    adjustment_type: AdjustmentType::Reduction,
+                    adjustment: 10.5,
                     ..Default::default()
                 },
             )
