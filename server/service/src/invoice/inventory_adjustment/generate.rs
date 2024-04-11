@@ -42,7 +42,10 @@ pub fn generate(
         id: uuid(),
         user_id: Some(user_id.to_string()),
         name_link_id: inventory_adjustment_name.id,
-        r#type: InvoiceRowType::OutboundReturn,
+        r#type: match adjustment_type {
+            AdjustmentType::Addition => InvoiceRowType::InventoryAddition,
+            AdjustmentType::Reduction => InvoiceRowType::InventoryReduction,
+        },
         invoice_number,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
