@@ -60,6 +60,7 @@ pub struct AssetFilterInput {
     pub is_non_catalogue: Option<bool>,
     pub installation_date: Option<DateFilterInput>,
     pub replacement_date: Option<DateFilterInput>,
+    pub store: Option<StringFilterInput>,
 }
 
 impl From<AssetFilterInput> for AssetFilter {
@@ -76,6 +77,7 @@ impl From<AssetFilterInput> for AssetFilter {
             installation_date: f.installation_date.map(DateFilter::from),
             replacement_date: f.replacement_date.map(DateFilter::from),
             is_non_catalogue: f.is_non_catalogue,
+            store: f.store.map(StringFilter::from),
         }
     }
 }
