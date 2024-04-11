@@ -20,6 +20,7 @@
     "start": "webpack-cli serve",
     "start-remote": "webpack-cli serve --env API_HOST=https://demo-open.msupply.org",
     "start-local": "webpack-cli serve",
+    "start-central": "webpack-cli serve --env API_HOST=http://localhost:8890",
     "build": "webpack --env production",
     "build-stats": "webpack --env stats --env production",
     "serve": "serve dist -p 3003",

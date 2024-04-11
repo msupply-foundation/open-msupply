@@ -24,7 +24,7 @@ pub fn asset_log_reasons(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::QueryAsset,
-            store_id: Some(store_id.clone()),
+            store_id: None,
         },
     )?;
 

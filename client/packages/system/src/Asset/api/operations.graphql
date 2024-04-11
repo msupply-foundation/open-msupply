@@ -135,16 +135,18 @@ query assetLogReasons(
 }
 
 mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
-  insertAssetLogReason(input: $input, storeId: $storeId) {
-    ... on AssetLogReasonNode {
-      __typename
-      id
-      reason
-    }
-    ... on InsertAssetLogReasonError {
-      __typename
-      error {
-        description
+  centralServer {
+    insertAssetLogReason(input: $input) {
+      ... on AssetLogReasonNode {
+        __typename
+        id
+        reason
+      }
+      ... on InsertAssetLogReasonError {
+        __typename
+        error {
+          description
+        }
       }
     }
   }
