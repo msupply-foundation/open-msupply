@@ -6,7 +6,6 @@ import {
   DialogButton,
   Typography,
   InfoIcon,
-  LoadingButton,
   InputWithLabelRow,
 } from '@openmsupply-client/common';
 import {
@@ -86,18 +85,14 @@ export const ReduceLinesToZeroConfirmationModal = ({
             <DialogButton variant="cancel" onClick={onCancel} />
           </Grid>
           <Grid item>
-            <LoadingButton
-              autoFocus
+            <DialogButton
+              variant="ok"
               disabled={reasonIsRequired && !reason}
-              color="secondary"
-              isLoading={false} // todo
               onClick={async () => {
                 await onZeroQuantities(reason);
                 onCancel();
               }}
-            >
-              {t('button.ok')}
-            </LoadingButton>
+            />
           </Grid>
         </Grid>
       </Grid>
