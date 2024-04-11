@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import {
-  Grid,
   useTranslation,
-  BasicModal,
-  DialogButton,
-  Typography,
-  InfoIcon,
   InputWithLabelRow,
+  ConfirmationWithChildrenModal,
 } from '@openmsupply-client/common';
 import {
   Adjustment,
@@ -36,66 +32,32 @@ export const ReduceLinesToZeroConfirmationModal = ({
   const reasonIsRequired = data?.totalCount !== 0;
 
   return (
-    <BasicModal width={400} height={200} open={isOpen}>
-      <Grid container gap={1} flex={1} padding={4} flexDirection="column">
-        <Grid container gap={1} flexDirection="row">
-          <Grid item>
-            <InfoIcon color="secondary" />
-          </Grid>
-          <Grid item>
-            <Typography variant="h6">{t('heading.are-you-sure')}</Typography>
-          </Grid>
-        </Grid>
-        <Grid item>
-          <Typography style={{ whiteSpace: 'pre-line' }}>
-            {t('messages.confirm-reduce-lines-to-zero')}
-          </Typography>
-        </Grid>
-        {reasonIsRequired && (
-          <Grid item margin={2}>
-            <InputWithLabelRow
-              label={t('label.reason')}
-              labelWidth="100px"
-              Input={
-                <InventoryAdjustmentReasonSearchInput
-                  adjustment={Adjustment.Reduction}
-                  value={reason}
-                  onChange={reason => setReason(reason)}
-                />
-              }
-              sx={{
-                '.MuiFormControl-root > .MuiInput-root, > input': {
-                  width: '160px',
-                },
-              }}
+    <ConfirmationWithChildrenModal
+      isOpen={isOpen}
+      title={t('heading.are-you-sure')}
+      message={t('messages.confirm-reduce-lines-to-zero')}
+      onClose={onCancel}
+      onSave={() => onZeroQuantities(reason)}
+      canSave={reasonIsRequired && !reason}
+    >
+      {reasonIsRequired && (
+        <InputWithLabelRow
+          label={t('label.reason')}
+          labelWidth="100px"
+          Input={
+            <InventoryAdjustmentReasonSearchInput
+              adjustment={Adjustment.Reduction}
+              value={reason}
+              onChange={reason => setReason(reason)}
             />
-          </Grid>
-        )}
-        <Grid
-          container
-          gap={1}
-          flexDirection="row"
-          alignItems="flex-end"
-          justifyContent="center"
-          flex={1}
-          display="flex"
-          marginTop={2}
-        >
-          <Grid item>
-            <DialogButton variant="cancel" onClick={onCancel} />
-          </Grid>
-          <Grid item>
-            <DialogButton
-              variant="ok"
-              disabled={reasonIsRequired && !reason}
-              onClick={async () => {
-                await onZeroQuantities(reason);
-                onCancel();
-              }}
-            />
-          </Grid>
-        </Grid>
-      </Grid>
-    </BasicModal>
+          }
+          sx={{
+            '.MuiFormControl-root > .MuiInput-root, > input': {
+              width: '160px',
+            },
+          }}
+        />
+      )}
+    </ConfirmationWithChildrenModal>
   );
 };
