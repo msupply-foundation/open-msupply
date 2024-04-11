@@ -91,6 +91,7 @@
   "messages.no-items-with-stock": "No items with stock available",
   "messages.on-hold-stock-take": "This stocktake is on hold and cannot be edited",
   "messages.select-rows-to-delete-them": "Select rows to delete them",
+  "messages.no-ledger": "This stock line has no stock movements to display",
   "messages.no-repacks": "This stock line has not been repacked. Click New to create a new repack.",
   "messages.no-repack-detail": "Select a line to view the details of a repack or click new to create a new repack",
   "messages.all-packs-repacked": "Saved. The previous window has been closed since everything in the stock line has been repacked.",
