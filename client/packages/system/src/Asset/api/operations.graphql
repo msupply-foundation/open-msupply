@@ -6,6 +6,7 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   id
   manufacturer
   model
+  subCatalogue
   assetClass {
     name
   }
@@ -30,7 +31,6 @@ query assetCatalogueItems(
     filter: $filter
   ) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
         ...AssetCatalogueItem
       }
@@ -42,9 +42,7 @@ query assetCatalogueItems(
 query assetCatalogueItemById($assetCatalogueItemId: String!) {
   assetCatalogueItems(filter: { id: { equalTo: $assetCatalogueItemId } }) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
-        __typename
         ...AssetCatalogueItem
       }
       totalCount
@@ -89,6 +87,58 @@ query assetCategories(
         classId
       }
       totalCount
+    }
+  }
+}
+
+mutation insertAssetCatalogueItem(
+  $input: InsertAssetCatalogueItemInput!
+  $storeId: String!
+) {
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItem(input: $input, storeId: $storeId) {
+        ... on AssetCatalogueItemNode {
+          id
+        }
+        ... on InsertAssetCatalogueItemError {
+          __typename
+          error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+              description
+            }
+            ... on UniqueCombinationViolation {
+              __typename
+              fields
+              description
+            }
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
+  centralServer {
+    assetCatalogue {
+      deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteAssetCatalogueItemError {
+          error {
+            description
+          }
+        }
+      }
     }
   }
 }
