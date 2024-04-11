@@ -45,15 +45,16 @@ export const UpdateStatusButtonComponent = ({
   const { Modal, hideDialog, showDialog } = useDialog({ onClose });
   const { error, success } = useNotification();
   const [draft, setDraft] = useState<Partial<Draft>>(getEmptyAssetLog(''));
-  const { mutateAsync: insert } = useAssets.log.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
 
   const onNext = useDebounceCallback(() => {
     onChangeTab(Tabs.Upload);
   }, []);
 
   const onOk = async () => {
-    await insert(draft)
+    await insertLog(draft)
       .then(({ id }) => {
+        invalidateQueries();
         if (!draft.files?.length)
           return new Promise(resolve => resolve('no files'));
 

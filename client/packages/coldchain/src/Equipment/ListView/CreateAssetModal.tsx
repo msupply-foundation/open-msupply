@@ -93,7 +93,7 @@ export const CreateAssetModal = ({
     draft.categoryId ?? ''
   );
   const { mutateAsync: save } = useAssets.document.insert();
-  const { mutateAsync: insertLog } = useAssets.log.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
@@ -141,6 +141,7 @@ export const CreateAssetModal = ({
         comment: t('label.created'),
         status: AssetLogStatusInput.Functioning,
       });
+      invalidateQueries();
       success(t('messages.cce-created'))();
       handleClose();
     } catch (e) {
