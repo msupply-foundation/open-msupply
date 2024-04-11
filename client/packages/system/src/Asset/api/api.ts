@@ -7,6 +7,8 @@ import {
   AssetTypeSortFieldInput,
   AssetCategoryFilterInput,
   AssetTypeFilterInput,
+  InsertAssetLogReasonInput,
+  AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -27,6 +29,34 @@ const itemParsers = {
     };
 
     return fields[sortBy.key] ?? AssetCatalogueItemSortFieldInput.Manufacturer;
+  },
+};
+
+const logReasonParsers = {
+  toLogReasonInsert: (
+    input: Partial<InsertAssetLogReasonInput>
+  ): InsertAssetLogReasonInput => ({
+    id: input.id ?? '',
+    // default enum of NotInUse will never be used as it will fail the checkStatus check first
+    // and throw an error.
+    assetLogStatus: input.assetLogStatus ?? AssetLogStatusInput.NotInUse,
+    reason: input.reason ?? '',
+  }),
+  checkStatus: (status: string): boolean => {
+    switch (status) {
+      case AssetLogStatusInput.Decommissioned:
+        return true;
+      case AssetLogStatusInput.Functioning:
+        return true;
+      case AssetLogStatusInput.FunctioningButNeedsAttention:
+        return true;
+      case AssetLogStatusInput.NotFunctioning:
+        return true;
+      case AssetLogStatusInput.NotInUse:
+        return true;
+      default:
+        return false;
+    }
   },
 };
 
@@ -99,5 +129,33 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
       return types;
     },
+    logReasons: async (storeId: string) => {
+      const result = await sdk.assetLogReasons({
+        storeId,
+        // TODO functioning filter - can add later (currently not sure if query params will use this)
+        filter: {
+          assetLogStatus: undefined,
+          id: undefined,
+          reason: undefined,
+        },
+      });
+      return result?.assetLogReasons;
+    },
+  },
+  insertLogReason: async (
+    input: Partial<InsertAssetLogReasonInput>
+  ): Promise<string> => {
+    if (!logReasonParsers.checkStatus(input.assetLogStatus ?? '')) {
+      throw new Error('Cannot parse status');
+    }
+    const result = await sdk.insertAssetLogReason({
+      input: logReasonParsers.toLogReasonInsert(input),
+    });
+    const { insertAssetLogReason } = result;
+
+    if (insertAssetLogReason?.__typename === 'AssetLogReasonNode') {
+      return insertAssetLogReason.reason;
+    }
+    throw new Error('Could not insert reason');
   },
 });

@@ -154,10 +154,9 @@ impl AssetLogReasonMutations {
     async fn insert_asset_log_reason(
         &self,
         ctx: &Context<'_>,
-        store_id: String,
         input: InsertAssetLogReasonInput,
     ) -> Result<InsertAssetLogReasonResponse> {
-        insert_asset_log_reason(ctx, &store_id, input)
+        insert_asset_log_reason(ctx, input)
     }
 }
 

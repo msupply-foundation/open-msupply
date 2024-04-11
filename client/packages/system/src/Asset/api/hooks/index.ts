@@ -1,5 +1,6 @@
 import { Utils } from './utils';
 import { Document } from './document';
+import { Log } from './log';
 
 export const useAssetData = {
   utils: {
@@ -14,6 +15,11 @@ export const useAssetData = {
     listAll: Document.useAssetsAll,
 
     fields: Document.useAssetFields,
+  },
+
+  log: {
+    listReasons: Log.useAssetLogReasons,
+    insertReasons: Log.useAssetLogReasonInsert,
   },
 
   line: {},

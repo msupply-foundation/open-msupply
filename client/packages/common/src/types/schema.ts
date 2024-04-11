@@ -3468,7 +3468,6 @@ export type MutationsInsertAssetLogArgs = {
 
 export type MutationsInsertAssetLogReasonArgs = {
   input: InsertAssetLogReasonInput;
-  storeId: Scalars['String']['input'];
 };
 
 

@@ -10,11 +10,12 @@ import {
   Box,
   InsertAssetLogInput,
   StatusType,
+  useAuthContext,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AssetLogPanel } from '../Components';
-import { useAssets } from '../api';
 import { parseLogStatus } from '../utils';
+import { useAssetData } from 'packages/system/src';
 
 const Row = ({
   children,
@@ -52,6 +53,7 @@ export const StatusTab = ({
     [onChange],
     500
   );
+  const authContext = useAuthContext();
 
   const getOption = (label: string, value?: string) => ({
     label,
@@ -69,7 +71,7 @@ export const StatusTab = ({
     });
 
   const statuses = getOptionsFromEnum(StatusType, parseLogStatus);
-  const { data } = useAssets.log.listReasons();
+  const { data } = useAssetData.log.listReasons(authContext.storeId);
 
   const filteredReasons =
     data?.nodes?.map(value => {
