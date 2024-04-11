@@ -31,6 +31,7 @@ pub struct LocationFilterInput {
     pub name: Option<StringFilterInput>,
     pub code: Option<StringFilterInput>,
     pub on_hold: Option<bool>,
+    pub assigned_to_asset: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
 }
 
@@ -42,6 +43,7 @@ impl From<LocationFilterInput> for LocationFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
             on_hold: f.on_hold,
+            assigned_to_asset: f.assigned_to_asset,
         }
     }
 }

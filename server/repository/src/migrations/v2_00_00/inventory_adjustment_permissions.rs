@@ -5,7 +5,6 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-            ALTER TYPE permission_type ADD VALUE 'INVENTORY_ADJUSTMENT_QUERY';
             ALTER TYPE permission_type ADD VALUE 'INVENTORY_ADJUSTMENT_MUTATE';
             "#
         )?;
