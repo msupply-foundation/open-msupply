@@ -59,10 +59,7 @@ export const ConfirmationWithChildrenModal = ({
             <DialogButton
               variant="ok"
               disabled={canSave}
-              onClick={async () => {
-                await onSave();
-                onClose();
-              }}
+              onClick={async () => onSave()}
             />
           </Grid>
         </Grid>

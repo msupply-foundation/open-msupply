@@ -37,7 +37,10 @@ export const ReduceLinesToZeroConfirmationModal = ({
       title={t('heading.are-you-sure')}
       message={t('messages.confirm-reduce-lines-to-zero')}
       onClose={onCancel}
-      onSave={() => onZeroQuantities(reason)}
+      onSave={async () => {
+        await onZeroQuantities(reason);
+        onCancel();
+      }}
       canSave={reasonIsRequired && !reason}
     >
       {reasonIsRequired && (
