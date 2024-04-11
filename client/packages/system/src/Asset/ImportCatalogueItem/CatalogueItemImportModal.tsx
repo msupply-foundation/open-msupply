@@ -144,7 +144,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       case 'UniqueCombinationViolation':
         if (
           insertError.fields.includes(UniqueCombinationKey.Manufacturer) &&
-          insertError.fields.includes(UniqueCombinationKey.Manufacturer)
+          insertError.fields.includes(UniqueCombinationKey.Model)
         ) {
           return t('error.manufacturer-model-unique');
         }
