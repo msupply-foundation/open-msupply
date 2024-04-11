@@ -21,5 +21,10 @@ export const useAssets = {
     update: Document.useAssetUpdate,
   },
 
-  log: { insert: Log.useAssetLogInsert, list: Log.useAssetLogs },
+  log: {
+    insert: Log.useAssetLogInsert,
+    list: Log.useAssetLogs,
+    listReasons: Log.useAssetLogReasons,
+    insertReasons: Log.useAssetLogReasonInsert,
+  },
 };

@@ -7,11 +7,11 @@ use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
-use graphql_core::loader::AssetStatusLogLoader;
 use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
     AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
+use graphql_core::loader::{AssetLogReasonLoader, AssetStatusLogLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, UserNode};
@@ -425,8 +425,17 @@ impl AssetLogNode {
         &self.row().r#type
     }
 
-    pub async fn reason_id(&self) -> &Option<String> {
-        &self.row().reason_id
+    pub async fn reason(&self, ctx: &Context<'_>) -> Result<Option<AssetLogReasonNode>> {
+        match &self.row().reason_id {
+            Some(reason_id) => {
+                let loader = ctx.get_loader::<DataLoader<AssetLogReasonLoader>>();
+                Ok(loader
+                    .load_one(reason_id.clone())
+                    .await?
+                    .map(AssetLogReasonNode::from_domain))
+            }
+            None => Ok(None),
+        }
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {

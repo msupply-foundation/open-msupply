@@ -12,16 +12,14 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             al.type,
             al.log_datetime,
             al.status,            
-            alr.reason
+            al.reason_id
           FROM (
             SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
             FROM asset_log
             GROUP BY asset_id
           ) grouped
           INNER JOIN asset_log al
-            ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime
-          INNER JOIN asset_log_reason alr
-            ON alr.id = al.reason_id;
+            ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime;
            
           CREATE INDEX ix_asset_log_asset_id_log_datetime ON asset_log (asset_id, log_datetime);
         "#
