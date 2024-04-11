@@ -17,21 +17,21 @@ import {
 } from '@openmsupply-client/system';
 import { useStocktake } from '../api';
 
-interface SetLinesToZeroConfirmationModalProps {
+interface ReduceLinesToZeroConfirmationModalProps {
   isOpen: boolean;
   onCancel: () => void;
 }
 
-export const SetLinesToZeroConfirmationModal = ({
+export const ReduceLinesToZeroConfirmationModal = ({
   isOpen,
   onCancel,
-}: SetLinesToZeroConfirmationModalProps) => {
+}: ReduceLinesToZeroConfirmationModalProps) => {
   const t = useTranslation('inventory');
 
   const [reason, setReason] =
     useState<InventoryAdjustmentReasonRowFragment | null>(null);
 
-  const onZeroQuantities = useStocktake.line.zeroQuantities(onCancel);
+  const onZeroQuantities = useStocktake.line.zeroQuantities();
 
   const { data } = useInventoryAdjustmentReason.document.listAllActive();
   const reasonIsRequired = data?.totalCount !== 0;

@@ -25,5 +25,6 @@ export const useStocktake = {
   utils: {
     api: Utils.useStocktakeApi,
     isDisabled: Utils.useIsStocktakeDisabled,
+    selectedRows: Utils.useSelectedRows,
   },
 };
