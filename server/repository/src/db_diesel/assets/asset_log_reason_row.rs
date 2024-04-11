@@ -43,7 +43,10 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&self, asset_log_row: &AssetLogReasonRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(
+        &self,
+        asset_log_reason_row: &AssetLogReasonRow,
+    ) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_log_reason)
             .values(asset_log_reason_row)
             .on_conflict(id)

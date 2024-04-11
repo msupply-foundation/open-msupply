@@ -6,6 +6,10 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
+export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, status?: Types.StatusType | null, type?: string | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
+
+export type AssetLogReasonFragment = { __typename: 'AssetLogReasonNode', id: string, assetLogStatus: Types.StatusType, reason: string };
+
 export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -47,6 +51,22 @@ export type AssetCategoriesQueryVariables = Types.Exact<{
 
 export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', id: string, name: string, classId: string }> } };
 
+export type AssetLogReasonsQueryVariables = Types.Exact<{
+  filter: Types.AssetLogReasonFilterInput;
+  sort?: Types.InputMaybe<Types.AssetLogReasonSortInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type AssetLogReasonsQuery = { __typename: 'Queries', assetLogReasons: { __typename: 'AssetLogReasonConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogReasonNode', id: string, assetLogStatus: Types.StatusType, reason: string }> } };
+
+export type InsertAssetLogReasonMutationVariables = Types.Exact<{
+  input: Types.InsertAssetLogReasonInput;
+}>;
+
+
+export type InsertAssetLogReasonMutation = { __typename: 'Mutations', insertAssetLogReason: { __typename: 'AssetLogReasonNode', id: string, reason: string } | { __typename: 'InsertAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
+
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
   __typename
@@ -66,6 +86,31 @@ export const AssetCatalogueItemFragmentDoc = gql`
   assetType {
     name
   }
+}
+    `;
+export const AssetLogFragmentDoc = gql`
+    fragment AssetLog on AssetLogNode {
+  comment
+  id
+  logDatetime
+  reason {
+    reason
+  }
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+    jobTitle
+  }
+}
+    `;
+export const AssetLogReasonFragmentDoc = gql`
+    fragment AssetLogReason on AssetLogReasonNode {
+  id
+  assetLogStatus
+  reason
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
@@ -140,6 +185,37 @@ export const AssetCategoriesDocument = gql`
   }
 }
     `;
+export const AssetLogReasonsDocument = gql`
+    query assetLogReasons($filter: AssetLogReasonFilterInput!, $sort: AssetLogReasonSortInput, $storeId: String!) {
+  assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLogReason
+      }
+    }
+  }
+}
+    ${AssetLogReasonFragmentDoc}`;
+export const InsertAssetLogReasonDocument = gql`
+    mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
+  insertAssetLogReason(input: $input, storeId: $storeId) {
+    ... on AssetLogReasonNode {
+      __typename
+      id
+      reason
+    }
+    ... on InsertAssetLogReasonError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -162,6 +238,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     assetCategories(variables?: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
+    },
+    assetLogReasons(variables: AssetLogReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogReasonsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetLogReasonsQuery>(AssetLogReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogReasons', 'query');
+    },
+    insertAssetLogReason(variables: InsertAssetLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogReasonMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogReasonMutation>(InsertAssetLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLogReason', 'mutation');
     }
   };
 }
@@ -249,5 +331,39 @@ export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<As
 export const mockAssetCategoriesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCategoriesQueryVariables>, GraphQLContext<AssetCategoriesQuery>, any>) =>
   graphql.query<AssetCategoriesQuery, AssetCategoriesQueryVariables>(
     'assetCategories',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAssetLogReasonsQuery((req, res, ctx) => {
+ *   const { filter, sort, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ assetLogReasons })
+ *   )
+ * })
+ */
+export const mockAssetLogReasonsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLogReasonsQueryVariables>, GraphQLContext<AssetLogReasonsQuery>, any>) =>
+  graphql.query<AssetLogReasonsQuery, AssetLogReasonsQueryVariables>(
+    'assetLogReasons',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertAssetLogReasonMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertAssetLogReason })
+ *   )
+ * })
+ */
+export const mockInsertAssetLogReasonMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogReasonMutationVariables>, GraphQLContext<InsertAssetLogReasonMutation>, any>) =>
+  graphql.mutation<InsertAssetLogReasonMutation, InsertAssetLogReasonMutationVariables>(
+    'insertAssetLogReason',
     resolver
   )

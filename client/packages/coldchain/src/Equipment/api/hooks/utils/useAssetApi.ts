@@ -14,7 +14,6 @@ export const useAssetApi = () => {
     sortedList: (sortBy: SortBy<AssetFragment>) =>
       [...keys.list(), sortBy] as const,
     logs: (assetId: string) => [...keys.base(), assetId, 'logs'] as const,
-    logReasons: () => [...keys.base(), 'logReasons'] as const,
     labelPrinterSettings: () => ['host', 'labelPrinterSettings'] as const,
   };
 

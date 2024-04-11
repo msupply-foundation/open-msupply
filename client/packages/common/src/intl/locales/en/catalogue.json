@@ -13,6 +13,8 @@
   "label.atc-category": "ATC category",
   "label.category": "Category",
   "label.class": "Class",
+  "label.status": "Status",
+  "label.reason": "Reason",
   "label.code": "Code",
   "label.create-pack-variant": "Create Pack Variant",
   "label.ddd": "Defined Daily Dose",

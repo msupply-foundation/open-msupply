@@ -15,19 +15,18 @@ use crate::types::{AssetLogReasonNode, AssetLogStatusInput};
 
 pub fn insert_asset_log_reason(
     ctx: &Context<'_>,
-    store_id: &str,
     input: InsertAssetLogReasonInput,
 ) -> Result<InsertAssetLogReasonResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
             resource: Resource::MutateAsset,
-            store_id: Some(store_id.to_string()),
+            store_id: None,
         },
     )?;
 
     let service_provider = ctx.service_provider();
-    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_context = service_provider.context("".to_string(), user.user_id)?;
 
     match service_provider
         .asset_service
