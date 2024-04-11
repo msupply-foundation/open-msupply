@@ -62,13 +62,16 @@ const mapRoute = (route: string): RouteMapping => {
     case inRoute('stocktakes'):
       return { title: 'stocktakes', docs: '/inventory/stock-takes/' };
     case inRoute('sync'):
-      return { title: 'sync', docs: '/introduction/' };
+      return { title: 'sync', docs: '/sync/synchronisation/' };
     case inRoute('admin'):
-      return { title: 'admin', docs: '/introduction/' };
+      return { title: 'admin', docs: '/administration/' };
     case inRoute('patients'):
-      return { title: 'patients', docs: '/introduction/' };
+      return { title: 'patients', docs: '/dispensary/patients/' };
     case inRoute('encounter'):
-      return { title: 'encounter', docs: '/introduction/' };
+      return {
+        title: 'encounter',
+        docs: '/programs/program-module/#encounter',
+      };
     default:
       return { title: undefined, docs: '/introduction/' };
   }
