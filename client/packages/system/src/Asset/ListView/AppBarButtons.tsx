@@ -54,7 +54,7 @@ export const AppBarButtonsComponent = () => {
         >
           {t('button.export')}
         </LoadingButton>
-        {isCentralServer && <>hello</>}
+        {isCentralServer && <></>}
         {/* {isCentralServer && ( */}
         <LoadingButton
           isLoading={false}
