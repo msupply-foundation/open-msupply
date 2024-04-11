@@ -46,10 +46,10 @@ impl SyncSettings {
         !equal
     }
 
-    pub fn file_upload_base_url(&self) -> String {
+    pub fn file_upload_base_url(&self) -> Url {
         let omsupply_central_url = get_omsupply_central_url(&self.url)
             .unwrap_or(Url::parse("http://localhost:8000").unwrap()); // This is hacky but I think ok for now?
 
-        format!("{}sync_files", omsupply_central_url)
+        omsupply_central_url.join("sync_files").unwrap()
     }
 }
