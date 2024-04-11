@@ -19,6 +19,7 @@ export const useStocktake = {
     rows: Lines.useStocktakeRows,
     delete: Lines.useStocktakeDeleteLines,
     deleteSelected: Lines.useStocktakeDeleteSelectedLines,
+    zeroQuantities: Lines.useZeroStocktakeLines,
     save: Lines.useSaveStocktakeLines,
   },
   utils: {
