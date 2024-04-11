@@ -2,6 +2,7 @@
   "error.cannot-add-pack-size-of-zero": "Cannot add a variant with a pack size of zero",
   "error.cannot-add-with-no-abbreviation-and-name": "Cannot add a variant with no abbreviation and name",
   "button.new-catalogue-item": "New Catalogue Item",
+  "button.manage-asset-log-reasons": "Manage asset log reasons",
   "error.item-not-found": "Item not found",
   "error.master-list-not-found": "Master list not found",
   "error.no-items": "No items to display.",
