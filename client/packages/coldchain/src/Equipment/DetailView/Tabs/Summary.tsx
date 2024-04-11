@@ -237,7 +237,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row label={t('label.reason')}>
             <BasicTextInput
-              value={translateReason(draft.statusLog?.reason, t)}
+              value={translateReason(draft.statusLog?.reason?.reason, t)}
               disabled
               fullWidth
             />

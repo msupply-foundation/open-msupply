@@ -20,7 +20,9 @@ fragment Asset on AssetNode {
   serialNumber
   statusLog {
     logDatetime
-    reason
+    reason {
+      reason
+    }
     status
   }
   storeId
@@ -48,7 +50,9 @@ fragment AssetLog on AssetLogNode {
   comment
   id
   logDatetime
-  reason
+  reason {
+    reason
+  }
   status
   type
   user {
@@ -57,6 +61,12 @@ fragment AssetLog on AssetLogNode {
     username
     jobTitle
   }
+}
+
+fragment AssetLogReason on AssetLogReasonNode {
+  id
+  assetLogStatus
+  reason
 }
 
 query assets(
@@ -107,6 +117,23 @@ query assetLogs(
       nodes {
         __typename
         ...AssetLog
+      }
+    }
+  }
+}
+
+query assetLogReasons(
+  $filter: AssetLogReasonFilterInput!
+  $sort: AssetLogReasonSortInput
+  $storeId: String!
+) {
+  assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLogReason
       }
     }
   }
@@ -175,6 +202,25 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
       assetId
     }
     ... on InsertAssetLogError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation insertAssetLogReason(
+  $input: InsertAssetLogReasonInput!
+  $storeId: String!
+) {
+  insertAssetLogReason(input: $input, storeId: $storeId) {
+    ... on AssetLogReasonNode {
+      __typename
+      id
+      reason
+    }
+    ... on InsertAssetLogReasonError {
       __typename
       error {
         description

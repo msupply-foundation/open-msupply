@@ -4,9 +4,11 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null };
+export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null };
 
-export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
+export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, status?: Types.StatusType | null, type?: string | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
+
+export type AssetLogReasonFragment = { __typename: 'AssetLogReasonNode', id: string, assetLogStatus: Types.StatusType, reason: string };
 
 export type AssetsQueryVariables = Types.Exact<{
   desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
@@ -18,7 +20,7 @@ export type AssetsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null }> } };
+export type AssetsQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null }> } };
 
 export type AssetByIdQueryVariables = Types.Exact<{
   storeId: Types.Scalars['String']['input'];
@@ -26,7 +28,7 @@ export type AssetByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null }> } };
+export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber: string, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, status?: Types.StatusType | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null }> } };
 
 export type AssetLogsQueryVariables = Types.Exact<{
   filter: Types.AssetLogFilterInput;
@@ -35,7 +37,16 @@ export type AssetLogsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null }> } };
+export type AssetLogsQuery = { __typename: 'Queries', assetLogs: { __typename: 'AssetLogConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, status?: Types.StatusType | null, type?: string | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null }> } };
+
+export type AssetLogReasonsQueryVariables = Types.Exact<{
+  filter: Types.AssetLogReasonFilterInput;
+  sort?: Types.InputMaybe<Types.AssetLogReasonSortInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type AssetLogReasonsQuery = { __typename: 'Queries', assetLogReasons: { __typename: 'AssetLogReasonConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogReasonNode', id: string, assetLogStatus: Types.StatusType, reason: string }> } };
 
 export type LabelPrinterSettingsQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -74,6 +85,14 @@ export type InsertAssetLogMutationVariables = Types.Exact<{
 
 export type InsertAssetLogMutation = { __typename: 'Mutations', insertAssetLog: { __typename: 'AssetLogNode', id: string, assetId: string } | { __typename: 'InsertAssetLogError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
 
+export type InsertAssetLogReasonMutationVariables = Types.Exact<{
+  input: Types.InsertAssetLogReasonInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsertAssetLogReasonMutation = { __typename: 'Mutations', insertAssetLogReason: { __typename: 'AssetLogReasonNode', id: string, reason: string } | { __typename: 'InsertAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
+
 export const AssetFragmentDoc = gql`
     fragment Asset on AssetNode {
   __typename
@@ -97,7 +116,9 @@ export const AssetFragmentDoc = gql`
   serialNumber
   statusLog {
     logDatetime
-    reason
+    reason {
+      reason
+    }
     status
   }
   storeId
@@ -126,7 +147,9 @@ export const AssetLogFragmentDoc = gql`
   comment
   id
   logDatetime
-  reason
+  reason {
+    reason
+  }
   status
   type
   user {
@@ -135,6 +158,13 @@ export const AssetLogFragmentDoc = gql`
     username
     jobTitle
   }
+}
+    `;
+export const AssetLogReasonFragmentDoc = gql`
+    fragment AssetLogReason on AssetLogReasonNode {
+  id
+  assetLogStatus
+  reason
 }
     `;
 export const AssetsDocument = gql`
@@ -182,6 +212,20 @@ export const AssetLogsDocument = gql`
   }
 }
     ${AssetLogFragmentDoc}`;
+export const AssetLogReasonsDocument = gql`
+    query assetLogReasons($filter: AssetLogReasonFilterInput!, $sort: AssetLogReasonSortInput, $storeId: String!) {
+  assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLogReason
+      }
+    }
+  }
+}
+    ${AssetLogReasonFragmentDoc}`;
 export const LabelPrinterSettingsDocument = gql`
     query labelPrinterSettings {
   labelPrinterSettings {
@@ -258,6 +302,23 @@ export const InsertAssetLogDocument = gql`
   }
 }
     `;
+export const InsertAssetLogReasonDocument = gql`
+    mutation insertAssetLogReason($input: InsertAssetLogReasonInput!, $storeId: String!) {
+  insertAssetLogReason(input: $input, storeId: $storeId) {
+    ... on AssetLogReasonNode {
+      __typename
+      id
+      reason
+    }
+    ... on InsertAssetLogReasonError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -275,6 +336,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     assetLogs(variables: AssetLogsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetLogsQuery>(AssetLogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogs', 'query');
     },
+    assetLogReasons(variables: AssetLogReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogReasonsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetLogReasonsQuery>(AssetLogReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogReasons', 'query');
+    },
     labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query');
     },
@@ -289,6 +353,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertAssetLog(variables: InsertAssetLogMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogMutation>(InsertAssetLogDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLog', 'mutation');
+    },
+    insertAssetLogReason(variables: InsertAssetLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogReasonMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogReasonMutation>(InsertAssetLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLogReason', 'mutation');
     }
   };
 }
@@ -342,6 +409,23 @@ export const mockAssetByIdQuery = (resolver: ResponseResolver<GraphQLRequest<Ass
 export const mockAssetLogsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLogsQueryVariables>, GraphQLContext<AssetLogsQuery>, any>) =>
   graphql.query<AssetLogsQuery, AssetLogsQueryVariables>(
     'assetLogs',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAssetLogReasonsQuery((req, res, ctx) => {
+ *   const { filter, sort, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ assetLogReasons })
+ *   )
+ * })
+ */
+export const mockAssetLogReasonsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLogReasonsQueryVariables>, GraphQLContext<AssetLogReasonsQuery>, any>) =>
+  graphql.query<AssetLogReasonsQuery, AssetLogReasonsQueryVariables>(
+    'assetLogReasons',
     resolver
   )
 
@@ -426,5 +510,22 @@ export const mockUpdateAssetMutation = (resolver: ResponseResolver<GraphQLReques
 export const mockInsertAssetLogMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogMutationVariables>, GraphQLContext<InsertAssetLogMutation>, any>) =>
   graphql.mutation<InsertAssetLogMutation, InsertAssetLogMutationVariables>(
     'insertAssetLog',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertAssetLogReasonMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertAssetLogReason })
+ *   )
+ * })
+ */
+export const mockInsertAssetLogReasonMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogReasonMutationVariables>, GraphQLContext<InsertAssetLogReasonMutation>, any>) =>
+  graphql.mutation<InsertAssetLogReasonMutation, InsertAssetLogReasonMutationVariables>(
+    'insertAssetLogReason',
     resolver
   )

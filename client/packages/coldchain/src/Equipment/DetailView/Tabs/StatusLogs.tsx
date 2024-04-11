@@ -114,7 +114,7 @@ const StatusLog = ({
         <User user={log.user} />
         <Box display="flex" alignItems="flex-start">
           <Typography sx={{ fontSize: '12px' }}>
-            <b>{t('label.reason')}:</b> {translateReason(log.reason, t)}
+            <b>{t('label.reason')}:</b> {translateReason(log.reason?.reason, t)}
           </Typography>
         </Box>
         <Typography sx={{ fontSize: '12px' }}>
