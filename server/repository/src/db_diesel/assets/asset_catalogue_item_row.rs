@@ -11,6 +11,7 @@ use diesel::prelude::*;
 table! {
     asset_catalogue_item (id) {
         id -> Text,
+        sub_catalogue -> Text,
         asset_category_id -> Text,
         asset_class_id -> Text,
         code -> Text,
@@ -27,6 +28,7 @@ table! {
 #[changeset_options(treat_none_as_null = "true")]
 pub struct AssetCatalogueItemRow {
     pub id: String,
+    pub sub_catalogue: String,
     #[column_name = "asset_category_id"]
     pub category_id: String,
     #[column_name = "asset_class_id"]
