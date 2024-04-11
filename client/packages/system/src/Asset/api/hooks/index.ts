@@ -14,6 +14,8 @@ export const useAssetData = {
     listAll: Document.useAssetsAll,
 
     fields: Document.useAssetFields,
+    insert: Document.useAssetItemInsert,
+    delete: Document.useAssetsDelete,
   },
 
   line: {},
