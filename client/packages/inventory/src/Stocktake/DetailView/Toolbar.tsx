@@ -75,8 +75,8 @@ export const Toolbar = () => {
       return;
     }
     if (isDisabled) {
-      const cannotReduceSnack = info(t('error.is-locked'));
-      cannotReduceSnack();
+      const isLockedSnack = info(t('error.is-locked'));
+      isLockedSnack();
       return;
     }
     return true;

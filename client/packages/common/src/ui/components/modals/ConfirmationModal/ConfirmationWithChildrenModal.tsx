@@ -13,7 +13,7 @@ interface ConfirmationWithChildrenModalProps extends PropsWithChildren {
   onSave: () => Promise<void>;
   title: string;
   message: string;
-  canSave?: boolean;
+  disableOk?: boolean;
 }
 
 export const ConfirmationWithChildrenModal = ({
@@ -23,7 +23,7 @@ export const ConfirmationWithChildrenModal = ({
   children,
   onClose,
   onSave,
-  canSave = true,
+  disableOk = false,
 }: ConfirmationWithChildrenModalProps) => {
   return (
     <BasicModal width={400} height={200} open={isOpen}>
@@ -58,7 +58,7 @@ export const ConfirmationWithChildrenModal = ({
           <Grid item>
             <DialogButton
               variant="ok"
-              disabled={canSave}
+              disabled={disableOk}
               onClick={async () => onSave()}
             />
           </Grid>
