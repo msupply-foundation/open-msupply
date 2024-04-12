@@ -8,10 +8,13 @@ import {
   NothingHere,
   useTranslation,
   useUrlQueryParams,
+  useEditModal,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { parseStatus } from '../utils';
+import { AppBarButtons } from './AppBarButtons';
+import { LogReasonCreateModal } from './LogReasonCreateModal';
 
 const AssetListComponent: FC = () => {
   const {
@@ -51,9 +54,20 @@ const AssetListComponent: FC = () => {
     [sortBy]
   );
 
+  const { isOpen, entity, mode, onClose, onOpen } =
+    useEditModal<AssetLogReasonFragment>();
+
   return (
     <>
-      {/* <AppBarButtons /> */}
+      {isOpen && (
+        <LogReasonCreateModal
+          mode={mode}
+          isOpen={isOpen}
+          onClose={onClose}
+          location={entity}
+        />
+      )}
+      <AppBarButtons onCreate={() => onOpen()} />
       <Toolbar data={data?.nodes ?? []} filter={filter} />
       <DataTable
         id="item-list"
