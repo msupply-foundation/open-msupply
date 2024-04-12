@@ -17,10 +17,10 @@ import {
   getColumnLookupWithOverrides,
   NumberInputCell,
   ColumnAlign,
+  AdjustmentTypeInput,
 } from '@openmsupply-client/common';
 import { DraftStocktakeLine } from './utils';
 import {
-  Adjustment,
   getLocationInputColumn,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
@@ -119,15 +119,12 @@ const getInventoryAdjustmentReasonInputColumn = (
       const autoFocus = columnIndex === 0 && rowIndex === 0;
 
       const getAdjustment = () => {
-        if (!rowData.countThisLine) return Adjustment.None;
-        if (typeof rowData.countedNumberOfPacks !== 'number')
-          return Adjustment.None;
-        if (rowData.snapshotNumberOfPacks == rowData.countedNumberOfPacks)
-          return Adjustment.None;
-        if (rowData.snapshotNumberOfPacks > rowData.countedNumberOfPacks)
-          return Adjustment.Reduction;
+        if (
+          rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
+        )
+          return AdjustmentTypeInput.Reduction;
 
-        return Adjustment.Addition;
+        return AdjustmentTypeInput.Addition;
       };
 
       const errorType = getError(rowData)?.__typename;
@@ -143,7 +140,7 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={column.width}
           onChange={onChange}
-          adjustment={getAdjustment()}
+          adjustmentType={getAdjustment()}
           isError={isAdjustmentReasonError}
         />
       );

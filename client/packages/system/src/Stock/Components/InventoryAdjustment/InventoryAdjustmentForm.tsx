@@ -39,7 +39,6 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
       const successSnack = success(t('messages.inventory-adjustment-saved'));
       successSnack();
     } catch {
-      // console.log('OOPS');
       // TODO: handle error if no reason selected when reasons required
     }
   };
@@ -57,7 +56,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
             value={draft.adjustmentType}
             onChange={adjustmentType => {
               setDraft({
-                adjustmentType,
+                adjustmentType: adjustmentType ?? AdjustmentTypeInput.Addition,
                 reason: null,
                 adjustment: 0,
               });
