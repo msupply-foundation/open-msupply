@@ -28,7 +28,7 @@ export const SensorListView: FC = () => {
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
   const { urlQuery, updateQuery } = useUrlQuery();
-  const formatTemperature = useFormatTemperature;
+  const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<SensorFragment>(
     [
@@ -37,6 +37,8 @@ export const SensorListView: FC = () => {
         key: 'cce',
         label: 'label.cce',
         sortable: false,
+        accessor: ({ rowData }) =>
+          rowData.assets?.nodes?.map(asset => asset.assetNumber).join(', '),
       },
       {
         key: 'location',

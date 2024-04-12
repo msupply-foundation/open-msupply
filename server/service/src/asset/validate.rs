@@ -1,4 +1,5 @@
 use repository::{
+    asset::{Asset, AssetFilter, AssetRepository},
     asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
     asset_internal_location_row::AssetInternalLocationRow,
     asset_log_row::{AssetLogReason, AssetLogStatus},
@@ -6,7 +7,7 @@ use repository::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
         asset_row::{AssetRow, AssetRowRepository},
     },
-    EqualFilter, RepositoryError, StorageConnection,
+    EqualFilter, RepositoryError, StorageConnection, StringFilter,
 };
 
 pub fn check_asset_exists(
@@ -14,6 +15,14 @@ pub fn check_asset_exists(
     connection: &StorageConnection,
 ) -> Result<Option<AssetRow>, RepositoryError> {
     AssetRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_asset_number_exists(
+    asset_number: &str,
+    connection: &StorageConnection,
+) -> Result<Vec<Asset>, RepositoryError> {
+    AssetRepository::new(connection)
+        .query_by_filter(AssetFilter::new().asset_number(StringFilter::equal_to(asset_number)))
 }
 
 pub fn check_asset_log_exists(
@@ -63,11 +72,9 @@ pub fn check_locations_are_assigned(
     asset_id: &str,
     connection: &StorageConnection,
 ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
-    Ok(
-        AssetInternalLocationRepository::new(connection).query_by_filter(
-            AssetInternalLocationFilter::new()
-                .location_id(EqualFilter::equal_any(location_ids))
-                .asset_id(EqualFilter::not_equal_to(asset_id)),
-        )?,
+    AssetInternalLocationRepository::new(connection).query_by_filter(
+        AssetInternalLocationFilter::new()
+            .location_id(EqualFilter::equal_any(location_ids))
+            .asset_id(EqualFilter::not_equal_to(asset_id)),
     )
 }

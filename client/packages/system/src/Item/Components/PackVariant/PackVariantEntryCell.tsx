@@ -15,7 +15,9 @@ import { usePackVariant } from '../../context';
 const ENTER_PACK_SIZE = -1;
 export const PACK_VARIANT_ENTRY_CELL_MIN_WIDTH =
   150 + DEFAULT_NUMERIC_TEXT_INPUT_WIDTH;
-// This cell displays a packSize number input and unit pack drop down if unit pack variants exist
+// This cell displays a packSize number input and unit pack drop down if unit
+// pack variants exist
+
 export const PackVariantEntryCell =
   <T extends RecordWithId>({
     getItemId,
@@ -38,8 +40,9 @@ export const PackVariantEntryCell =
       Number(column.accessor({ rowData }))
     );
 
-    // If pack size is 0 on load set it to most used varaint or 1 (ideally should be default item pack)
-    // for stocklines this is possible since server would set packSize to None when created from master list
+    // If pack size is 0 on load set it to most used variant or 1 (ideally
+    // should be default item pack). For stocklines this is possible since
+    // server would set packSize to None when created from master list
     useEffect(() => {
       if (Number(column.accessor({ rowData })) == 0) {
         setPackSize(variantsControl?.activeVariant?.packSize || 1);
@@ -49,7 +52,8 @@ export const PackVariantEntryCell =
     const updater = useDebounceCallback(column.setter, [column.setter], 250);
     const disabled = isDisabled || getIsDisabled?.(rowData) || false;
 
-    // Make sure manual pack size is auto selected on load if packSize does not match variant
+    // Make sure manual pack size is auto selected on load if packSize does not
+    // match variant
     useEffect(() => {
       setIsEnterPackSize(
         !variantsControl?.variants.some(v => v.packSize === packSize)

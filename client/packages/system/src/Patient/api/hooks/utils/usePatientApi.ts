@@ -21,7 +21,7 @@ export const usePatientApi = () => {
     search: (params: PatientSearchInput) =>
       [...keys.list(), 'search', params] as const,
     centralSearch: (params: CentralPatientSearchInput) =>
-      [...keys.list(), 'centralSearch', params] as const,
+      [...keys.base(), 'centralSearch', params] as const,
     latestPatientEncounter: (
       patientId: string,
       encounterType: string | undefined

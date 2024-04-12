@@ -248,7 +248,7 @@ fn verify_plugin_manifest(
     // Verify
     // Manifest cert is now trusted. Use the manifest cert's public key to validate the manifest
     let public_key = manifest_cert.public_key();
-    let _ = match public_key.parsed()? {
+    match public_key.parsed()? {
         x509_parser::public_key::PublicKey::RSA(_) => {
             verify_rsa_signature(
                 public_key.raw,

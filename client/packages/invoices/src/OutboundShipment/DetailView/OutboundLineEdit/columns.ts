@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
-import { PackVariantCell } from '@openmsupply-client/system';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 export const useOutboundLineEditColumns = ({
@@ -86,7 +86,7 @@ export const useOutboundLineEditColumns = ({
       label: 'label.pack',
       sortable: false,
       width: 90,
-      Cell: PackVariantCell({
+      Cell: getPackVariantCell({
         getItemId: row => row?.item.id,
         getPackSizes: row => [row.packSize ?? 1],
         getUnitName: row => row?.item.unitName ?? null,
@@ -158,7 +158,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackVariantCell({
+      Cell: getPackVariantCell({
         getItemId: row => row?.item.id,
         getPackSizes: row => [row.packSize ?? 1],
         getUnitName: row => row?.item.unitName ?? null,

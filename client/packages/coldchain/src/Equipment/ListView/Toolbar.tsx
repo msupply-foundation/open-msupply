@@ -5,7 +5,9 @@ import {
   DeleteIcon,
   DropdownMenu,
   DropdownMenuItem,
+  FilterDefinition,
   FilterMenu,
+  useIsCentralServerApi,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -31,6 +33,7 @@ export const Toolbar = () => {
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
   const onDelete = useAssets.document.deleteAssets();
+  const isCentralServer = useIsCentralServerApi();
 
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
@@ -52,6 +55,62 @@ export const Toolbar = () => {
 
   useEffect(() => setCategories(categoryData?.nodes || []), [categoryData]);
 
+  const filters: FilterDefinition[] = [
+    {
+      type: 'boolean',
+      name: t('label.non-catalogue'),
+      urlParameter: 'isNonCatalogue',
+    },
+    {
+      type: 'enum',
+      name: t('label.category'),
+      urlParameter: 'categoryId',
+      options: mapIdNameToOptions(categories),
+      isDefault: true,
+    },
+    {
+      type: 'enum',
+      name: t('label.type'),
+      urlParameter: 'typeId',
+      options: mapIdNameToOptions(types),
+      isDefault: true,
+    },
+    {
+      type: 'text',
+      name: t('label.code'),
+      urlParameter: 'code',
+      isDefault: true,
+    },
+    {
+      name: t('label.installation-date'),
+      type: 'date',
+      urlParameter: 'installationDate',
+    },
+    {
+      type: 'text',
+      name: t('label.notes'),
+      urlParameter: 'notes',
+      placeholder: t('placeholder.search-by-notes'),
+    },
+    {
+      name: t('label.replacement-date'),
+      type: 'date',
+      urlParameter: 'replacementDate',
+    },
+    {
+      type: 'text',
+      name: t('label.serial'),
+      urlParameter: 'serialNumber',
+    },
+  ];
+
+  if (isCentralServer)
+    filters.push({
+      type: 'text',
+      name: t('label.store'),
+      urlParameter: 'store',
+    });
+
   return (
     <AppBarContentPortal
       sx={{
@@ -63,56 +122,7 @@ export const Toolbar = () => {
       }}
     >
       <Box display="flex" gap={1}>
-        <FilterMenu
-          filters={[
-            {
-              type: 'boolean',
-              name: t('label.non-catalogue'),
-              urlParameter: 'isNonCatalogue',
-            },
-            {
-              type: 'enum',
-              name: t('label.category'),
-              urlParameter: 'categoryId',
-              options: mapIdNameToOptions(categories),
-              isDefault: true,
-            },
-            {
-              type: 'enum',
-              name: t('label.type'),
-              urlParameter: 'typeId',
-              options: mapIdNameToOptions(types),
-              isDefault: true,
-            },
-            {
-              type: 'text',
-              name: t('label.code'),
-              urlParameter: 'code',
-              isDefault: true,
-            },
-            {
-              name: t('label.installation-date'),
-              type: 'date',
-              urlParameter: 'installationDate',
-            },
-            {
-              type: 'text',
-              name: t('label.notes'),
-              urlParameter: 'notes',
-              placeholder: t('placeholder.search-by-notes'),
-            },
-            {
-              name: t('label.replacement-date'),
-              type: 'date',
-              urlParameter: 'replacementDate',
-            },
-            {
-              type: 'text',
-              name: t('label.serial'),
-              urlParameter: 'serialNumber',
-            },
-          ]}
-        />
+        <FilterMenu filters={filters} />
       </Box>
       <DropdownMenu label={t('label.actions')}>
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
