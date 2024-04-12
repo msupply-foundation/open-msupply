@@ -120,7 +120,8 @@ export const Toolbar: FC<{
         <InputLabel>{t('placeholder.filter-by-status')}</InputLabel>
         <Autocomplete
           isOptionEqualToValue={(option, value) => option.value === value.value}
-          width="400px"
+          width="150px"
+          popperMinWidth={150}
           options={[
             {
               label: t('status.decommissioned', { ns: 'coldchain' }),
