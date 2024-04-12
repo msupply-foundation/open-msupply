@@ -8,6 +8,7 @@ import {
   ModalLabel,
   Divider,
   Box,
+  useNotification,
 } from '@openmsupply-client/common';
 import { DraftStockLine, useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
@@ -28,6 +29,8 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   onClose,
 }) => {
   const t = useTranslation('inventory');
+  const { success } = useNotification();
+
   const { Modal } = useDialog({ isOpen, onClose });
 
   const { draft, setDraft, create } = useStockLine();
@@ -39,6 +42,17 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
   const isDisabled =
     !draft.itemId || !draft.packSize || !draft.totalNumberOfPacks;
 
+  const save = async () => {
+    try {
+      await create();
+      const successSnack = success(t('messages.stock-line-saved'));
+      successSnack();
+      onClose();
+    } catch {
+      // todo
+    }
+  };
+
   return (
     <Modal
       width={700}
@@ -46,18 +60,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
       slideAnimation={false}
       title={t('title.stock-line-details')}
       okButton={
-        <DialogButton
-          variant="ok"
-          disabled={isDisabled}
-          onClick={async () => {
-            try {
-              await create();
-              onClose();
-            } catch {
-              // todo
-            }
-          }}
-        />
+        <DialogButton variant="ok" disabled={isDisabled} onClick={save} />
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
