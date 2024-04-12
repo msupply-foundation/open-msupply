@@ -554,4 +554,3 @@ export const mockDeletePrescriptionLinesMutation = (resolver: ResponseResolver<G
     'deletePrescriptionLines',
     resolver
   )
-  
