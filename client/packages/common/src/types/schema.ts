@@ -90,6 +90,7 @@ export enum ActivityLogNodeType {
   AssetDeleted = 'ASSET_DELETED',
   AssetLogCreated = 'ASSET_LOG_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
@@ -194,6 +195,11 @@ export type AdjustmentReasonNotValid = InsertStocktakeLineErrorInterface & Updat
   __typename: 'AdjustmentReasonNotValid';
   description: Scalars['String']['output'];
 };
+
+export enum AdjustmentTypeInput {
+  Addition = 'ADDITION',
+  Reduction = 'REDUCTION'
+}
 
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
@@ -935,13 +941,19 @@ export type ContactTraceSortInput = {
   key: ContactTraceSortFieldInput;
 };
 
+export type CreateInventoryAdjustmentError = {
+  __typename: 'CreateInventoryAdjustmentError';
+  error: InsertInventoryAdjustmentErrorInterface;
+};
+
 export type CreateInventoryAdjustmentInput = {
+  adjustment: Scalars['Float']['input'];
+  adjustmentType: AdjustmentTypeInput;
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
-  newNumberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
 };
 
-export type CreateInventoryAdjustmentResponse = InvoiceNode;
+export type CreateInventoryAdjustmentResponse = CreateInventoryAdjustmentError | InvoiceNode;
 
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
@@ -2141,6 +2153,10 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   response: InsertInboundShipmentServiceLineResponse;
 };
 
+export type InsertInventoryAdjustmentErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type InsertLocationError = {
   __typename: 'InsertLocationError';
   error: InsertLocationErrorInterface;
@@ -2478,6 +2494,33 @@ export type InsertRequestRequisitionResponseWithId = {
   id: Scalars['String']['output'];
   response: InsertRequestRequisitionResponse;
 };
+
+export type InsertStockLineError = {
+  __typename: 'InsertStockLineError';
+  error: InsertStockLineErrorInterface;
+};
+
+export type InsertStockLineErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertStockLineInput = {
+  /** Empty barcode will unlink barcode from StockLine */
+  barcode?: InputMaybe<Scalars['String']['input']>;
+  batch?: InputMaybe<Scalars['String']['input']>;
+  costPricePerPack: Scalars['Float']['input'];
+  expiryDate?: InputMaybe<Scalars['NaiveDate']['input']>;
+  id: Scalars['String']['input'];
+  inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
+  itemId: Scalars['String']['input'];
+  location?: InputMaybe<NullableStringUpdate>;
+  numberOfPacks: Scalars['Float']['input'];
+  onHold: Scalars['Boolean']['input'];
+  packSize: Scalars['Int']['input'];
+  sellPricePerPack: Scalars['Float']['input'];
+};
+
+export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
@@ -3252,6 +3295,7 @@ export type Mutations = {
   insertRepack: InsertRepackResponse;
   insertRequestRequisition: InsertRequestRequisitionResponse;
   insertRequestRequisitionLine: InsertRequestRequisitionLineResponse;
+  insertStockLine: InsertStockLineLineResponse;
   insertStocktake: InsertStocktakeResponse;
   insertStocktakeLine: InsertStocktakeLineResponse;
   /** Links a patient to a store and thus effectively to a site */
@@ -3642,6 +3686,12 @@ export type MutationsInsertRequestRequisitionArgs = {
 
 export type MutationsInsertRequestRequisitionLineArgs = {
   input: InsertRequestRequisitionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertStockLineArgs = {
+  input: InsertStockLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -5254,7 +5304,7 @@ export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteLoca
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertStockLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -5791,7 +5841,7 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float']['output'];
 };
 
-export type StockLineReducedBelowZero = InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type StockLineReducedBelowZero = InsertInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String']['output'];
   stockLine: StockLineNode;
