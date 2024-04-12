@@ -9,8 +9,9 @@ use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{get, guard, post, delete, web, Error, HttpRequest, HttpResponse};
+use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse};
 use futures_util::TryStreamExt;
+
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
 use serde::{Deserialize, Serialize};
@@ -24,6 +25,7 @@ use service::settings::Settings;
 use service::static_files::{StaticFileCategory, StaticFileService};
 use service::sync::file_sync_driver::get_sync_settings;
 use service::sync::file_synchroniser::FileSynchroniser;
+use util::is_central_server;
 
 use crate::middleware::limit_content_length;
 
@@ -274,6 +276,16 @@ async fn sync_files(
 
     let file = match file {
         None => {
+            if is_central_server() {
+                // If we can't find the file locally, and we are the central server don't try to download from ourself...
+                return Err(InternalError::new(
+                    "File not found, it may not have been synced from the remote site yet..."
+                        .to_string(),
+                    StatusCode::NOT_FOUND,
+                )
+                .into());
+            }
+
             log::info!(
                 "Sync File not found locally, will attempt to download it from the central server: {}",
                 file_id
@@ -288,7 +300,13 @@ async fn sync_files(
             file_synchroniser
                 .download_file_from_central(&file_id)
                 .await
-                .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+                .map_err(|err| {
+                    log::error!("Error downloading file from central server: {}", err);
+                    InternalError::new(
+                        "Couldn't download this file from the central server.",
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                })?
         }
         Some(file) => {
             log::debug!("Sync File found: {}", file_id);
