@@ -141,6 +141,15 @@ pub struct StockLineMutations;
 
 #[Object]
 impl StockLineMutations {
+    async fn insert_stock_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: mutations::InsertInput,
+    ) -> Result<mutations::InsertResponse> {
+        mutations::insert(ctx, &store_id, input)
+    }
+
     async fn update_stock_line(
         &self,
         ctx: &Context<'_>,

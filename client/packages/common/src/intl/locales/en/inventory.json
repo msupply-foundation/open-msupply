@@ -1,4 +1,5 @@
 {
+  "button.new-stock": "New Stock",
   "button.repack": "Repack",
   "error.cant-save": "There was a problem saving.",
   "error.no-locations": "There are no Locations to display.",
@@ -95,6 +96,7 @@
   "messages.no-repack-detail": "Select a line to view the details of a repack or click new to create a new repack",
   "messages.all-packs-repacked": "Saved. The previous window has been closed since everything in the stock line has been repacked.",
   "messages.repack-log-info": "Repacked from stock line",
+  "messages.stock-line-saved": "Stock line saved 🥳",
   "status.new": "New",
   "status.finalised": "Finalised",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
