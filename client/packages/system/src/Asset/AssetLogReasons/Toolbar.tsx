@@ -104,6 +104,7 @@ export const Toolbar: FC<{
 
   useEffect(() => {
     ref.current = deleteAction;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRows]);
 
   return (
