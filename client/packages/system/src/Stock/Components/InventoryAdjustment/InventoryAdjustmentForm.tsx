@@ -107,10 +107,6 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
                   ...state,
                   adjustment: value ?? 0,
                   adjustmentType: state.adjustmentType,
-                  // newNumberOfPacks:
-                  //   state.adjustmentType === AdjustmentTypeInput.Addition
-                  //     ? stockLine.totalNumberOfPacks + (adjustBy ?? 0)
-                  //     : stockLine.totalNumberOfPacks - (adjustBy ?? 0),
                 }))
               }
             />

@@ -37,6 +37,10 @@ const useDraftStockLine = (
   const [stockLine, setStockLine] = useState<StockLineRowFragment>({ ...seed });
   const { mutate, isLoading } = useStock.line.update();
 
+  useEffect(() => {
+    setStockLine(seed);
+  }, [seed]);
+
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
     const newStockLine = { ...stockLine, ...patch };
     if (ObjUtils.isEqual(stockLine, newStockLine)) return;
