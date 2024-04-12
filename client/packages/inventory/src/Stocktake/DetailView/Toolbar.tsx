@@ -55,16 +55,8 @@ export const Toolbar = () => {
   const setItemFilter = (itemFilter: string) =>
     updateQuery({ itemCodeOrName: itemFilter });
 
-  const {
-    isOpen: reduceIsOpen,
-    onClose: onCloseReduce,
-    onOpen: onOpenReduce,
-  } = useEditModal();
-  const {
-    isOpen: changeLocationIsOpen,
-    onClose: onCloseChangeLocation,
-    onOpen: onOpenChangeLocation,
-  } = useEditModal();
+  const reduceModal = useEditModal();
+  const changeLocationModal = useEditModal();
 
   const selectedRows = useStocktake.utils.selectedRows();
 
@@ -83,11 +75,11 @@ export const Toolbar = () => {
   };
 
   const openReduceToZeroModal = () => {
-    if (checkSelected()) onOpenReduce();
+    if (checkSelected()) reduceModal.onOpen();
   };
 
   const openChangeLocationModal = () => {
-    if (checkSelected()) onOpenChangeLocation();
+    if (checkSelected()) changeLocationModal.onOpen();
   };
 
   return (
@@ -99,16 +91,16 @@ export const Toolbar = () => {
         flex={1}
         alignItems="flex-end"
       >
-        {reduceIsOpen && (
+        {reduceModal.isOpen && (
           <ReduceLinesToZeroConfirmationModal
-            isOpen={reduceIsOpen}
-            onCancel={onCloseReduce}
+            isOpen={reduceModal.isOpen}
+            onCancel={reduceModal.onClose}
           />
         )}
-        {changeLocationIsOpen && (
+        {changeLocationModal.isOpen && (
           <ChangeLocationConfirmationModal
-            isOpen={changeLocationIsOpen}
-            onCancel={onCloseChangeLocation}
+            isOpen={changeLocationModal.isOpen}
+            onCancel={changeLocationModal.onClose}
           />
         )}
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
