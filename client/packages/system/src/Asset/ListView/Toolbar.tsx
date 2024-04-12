@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
   AppBarContentPortal,
   Box,
+  DeleteIcon,
+  DropdownMenu,
+  DropdownMenuItem,
   FilterMenu,
+  useIsCentralServerApi,
   useTranslation,
   useUrlQuery,
 } from '@openmsupply-client/common';
@@ -17,6 +21,8 @@ type ReferenceData = {
 
 export const Toolbar = () => {
   // const { data: classes } = useAssetData.utils.classes();
+  const isCentralServer = useIsCentralServerApi();
+
   const { data: categoryData } = useAssetData.utils.categories();
   const { data: typeData } = useAssetData.utils.types();
   const { urlQuery, updateQuery } = useUrlQuery({
@@ -25,6 +31,7 @@ export const Toolbar = () => {
   const t = useTranslation('catalogue');
   const [categories, setCategories] = useState<ReferenceData[]>([]);
   const [types, setTypes] = useState<ReferenceData[]>([]);
+  const onDelete = useAssetData.document.delete();
 
   const categoryId = urlQuery['categoryId'];
   const typeId = urlQuery['typeId'];
@@ -88,6 +95,14 @@ export const Toolbar = () => {
               placeholder: t('placeholder.search-by-location-name'),
             },
             {
+              type: 'text',
+              name: t('label.sub-catalogue'),
+              urlParameter: 'subCatalogue',
+              placeholder: t('placeholder.search-by', {
+                field: t('label.sub-catalogue'),
+              }),
+            },
+            {
               type: 'enum',
               name: t('label.type'),
               urlParameter: 'typeId',
@@ -96,6 +111,13 @@ export const Toolbar = () => {
           ]}
         />
       </Box>
+      {isCentralServer && (
+        <DropdownMenu label={t('label.actions')}>
+          <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
+            {t('button.delete-lines')}
+          </DropdownMenuItem>
+        </DropdownMenu>
+      )}
     </AppBarContentPortal>
   );
 };

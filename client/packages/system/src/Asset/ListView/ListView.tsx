@@ -9,10 +9,12 @@ import {
   useTranslation,
   useUrlQueryParams,
   TooltipTextCell,
+  useToggle,
 } from '@openmsupply-client/common';
 import { AssetCatalogueItemFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
 import { AppBarButtons } from './AppBarButtons';
+import { AssetCatalogueItemImportModal } from '../ImportCatalogueItem';
 
 const AssetListComponent: FC = () => {
   const {
@@ -27,16 +29,30 @@ const AssetListComponent: FC = () => {
       { key: 'category' },
       { key: 'class' },
       { key: 'type' },
+      { key: 'catalogue' },
     ],
   });
   const { data, isError, isLoading } = useAssetData.document.list();
   const pagination = { page, first, offset };
   // const navigate = useNavigate();
   const t = useTranslation('catalogue');
+  const importModalController = useToggle();
 
   const columns = useColumns<AssetCatalogueItemFragment>(
     [
+      {
+        key: 'subCatalogue',
+        label: 'label.sub-catalogue',
+        sortable: true,
+        width: 165,
+      },
       ['code', { width: 150 }],
+      {
+        key: 'type',
+        label: 'label.type',
+        sortable: false,
+        accessor: ({ rowData }) => rowData.assetType?.name,
+      },
       {
         key: 'manufacturer',
         Cell: TooltipTextCell,
@@ -61,17 +77,23 @@ const AssetListComponent: FC = () => {
         sortable: false,
         accessor: ({ rowData }) => rowData.assetCategory?.name,
       },
+      'selection',
     ],
     {
       sortBy,
       onChangeSortBy: updateSortQuery,
     },
+
     [sortBy]
   );
 
   return (
     <>
-      <AppBarButtons />
+      <AssetCatalogueItemImportModal
+        isOpen={importModalController.isOn}
+        onClose={importModalController.toggleOff}
+      />
+      <AppBarButtons importModalController={importModalController} />
       <Toolbar />
       <DataTable
         id="item-list"
@@ -85,6 +107,7 @@ const AssetListComponent: FC = () => {
         //   navigate(`/catalogue/assets/${row.id}`);
         // }}
         noDataElement={<NothingHere body={t('error.no-items')} />}
+        enableColumnSelection
       />
     </>
   );

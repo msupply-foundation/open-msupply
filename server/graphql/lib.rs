@@ -22,7 +22,7 @@ use graphql_general::{
 };
 
 use graphql_asset::{AssetLogMutations, AssetLogQueries, AssetMutations, AssetQueries};
-use graphql_asset_catalogue::AssetCatalogueQueries;
+use graphql_asset_catalogue::{AssetCatalogueMutations, AssetCatalogueQueries};
 use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
 use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
@@ -60,6 +60,9 @@ pub struct CentralServerMutationNode;
 impl CentralServerMutationNode {
     async fn pack_variant(&self) -> PackVariantMutations {
         PackVariantMutations
+    }
+    async fn asset_catalogue(&self) -> AssetCatalogueMutations {
+        AssetCatalogueMutations
     }
 }
 
