@@ -90,6 +90,7 @@ export enum ActivityLogNodeType {
   AssetDeleted = 'ASSET_DELETED',
   AssetLogCreated = 'ASSET_LOG_CREATED',
   AssetUpdated = 'ASSET_UPDATED',
+  InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
   InvoiceDeleted = 'INVOICE_DELETED',
   InvoiceNumberAllocated = 'INVOICE_NUMBER_ALLOCATED',
@@ -194,6 +195,11 @@ export type AdjustmentReasonNotValid = InsertStocktakeLineErrorInterface & Updat
   __typename: 'AdjustmentReasonNotValid';
   description: Scalars['String']['output'];
 };
+
+export enum AdjustmentTypeInput {
+  Addition = 'ADDITION',
+  Reduction = 'REDUCTION'
+}
 
 export type AllocateOutboundShipmentUnallocatedLineError = {
   __typename: 'AllocateOutboundShipmentUnallocatedLineError';
@@ -935,13 +941,19 @@ export type ContactTraceSortInput = {
   key: ContactTraceSortFieldInput;
 };
 
+export type CreateInventoryAdjustmentError = {
+  __typename: 'CreateInventoryAdjustmentError';
+  error: InsertInventoryAdjustmentErrorInterface;
+};
+
 export type CreateInventoryAdjustmentInput = {
+  adjustment: Scalars['Float']['input'];
+  adjustmentType: AdjustmentTypeInput;
   inventoryAdjustmentReasonId?: InputMaybe<Scalars['String']['input']>;
-  newNumberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
 };
 
-export type CreateInventoryAdjustmentResponse = InvoiceNode;
+export type CreateInventoryAdjustmentResponse = CreateInventoryAdjustmentError | InvoiceNode;
 
 export type CreateRequisitionShipmentError = {
   __typename: 'CreateRequisitionShipmentError';
@@ -2139,6 +2151,10 @@ export type InsertInboundShipmentServiceLineResponseWithId = {
   __typename: 'InsertInboundShipmentServiceLineResponseWithId';
   id: Scalars['String']['output'];
   response: InsertInboundShipmentServiceLineResponse;
+};
+
+export type InsertInventoryAdjustmentErrorInterface = {
+  description: Scalars['String']['output'];
 };
 
 export type InsertLocationError = {
@@ -5791,7 +5807,7 @@ export type StockLineNode = {
   totalNumberOfPacks: Scalars['Float']['output'];
 };
 
-export type StockLineReducedBelowZero = InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
+export type StockLineReducedBelowZero = InsertInventoryAdjustmentErrorInterface & InsertRepackErrorInterface & InsertStocktakeLineErrorInterface & UpdateStocktakeLineErrorInterface & {
   __typename: 'StockLineReducedBelowZero';
   description: Scalars['String']['output'];
   stockLine: StockLineNode;
