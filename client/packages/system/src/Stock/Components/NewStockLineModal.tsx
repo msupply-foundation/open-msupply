@@ -16,9 +16,7 @@ import {
   InventoryAdjustmentReasonSearchInput,
   StockItemSearchInput,
 } from '../..';
-import { StyledInputRow } from './StyledInputRow';
-
-const INPUT_WIDTH = 160;
+import { INPUT_WIDTH, StyledInputRow } from './StyledInputRow';
 
 interface NewStockLineModalProps {
   isOpen: boolean;
