@@ -90,10 +90,10 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
         <Divider />
 
         {draft.itemId && (
-          <Grid item>
+          <Grid item width={'100%'}>
             <StockLineForm draft={draft} onUpdate={onUpdate} packEditable />
 
-            <Grid container justifyContent="start" display="flex">
+            <Grid item width={'50%'}>
               <StyledInputRow
                 label={t('label.reason')}
                 Input={
