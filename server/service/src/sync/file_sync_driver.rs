@@ -4,6 +4,7 @@ use crate::{
     service_provider::ServiceProvider, settings::Settings, static_files::StaticFileService,
     sync::file_synchroniser::FileSynchroniser,
 };
+use crate::sync::is_initialised;
 
 use super::settings::SyncSettings;
 use tokio::{
@@ -176,14 +177,6 @@ impl FileSyncTrigger {
             log::error!("Problem unpausing file sync {:#?}", error)
         }
     }
-}
-
-fn is_initialised(service_provider: &ServiceProvider) -> bool {
-    let ctx = service_provider.basic_context().unwrap();
-    service_provider
-        .sync_status_service
-        .is_initialised(&ctx)
-        .unwrap()
 }
 
 // Should this really be inside FileSyncrhoniser::new ? (similar with other sync)

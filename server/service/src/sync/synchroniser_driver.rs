@@ -1,6 +1,7 @@
 use std::{future::Future, sync::Arc};
 
 use crate::service_provider::ServiceProvider;
+use crate::sync::is_initialised;
 
 use super::{
     file_sync_driver::FileSyncTrigger, settings::SyncSettings, synchroniser::Synchroniser,
@@ -111,14 +112,6 @@ impl SyncTrigger {
             sender: mpsc::channel(1).0,
         }
     }
-}
-
-fn is_initialised(service_provider: &ServiceProvider) -> bool {
-    let ctx = service_provider.basic_context().unwrap();
-    service_provider
-        .sync_status_service
-        .is_initialised(&ctx)
-        .unwrap()
 }
 
 fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
