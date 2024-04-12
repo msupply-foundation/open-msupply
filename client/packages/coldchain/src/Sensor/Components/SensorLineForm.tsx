@@ -51,7 +51,11 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
           />
         }
       />
-      <TextWithLabelRow sx={textSx} label={t('label.cce')} text={''} />
+      <TextWithLabelRow
+        sx={textSx}
+        label={t('label.cce')}
+        text={draft.assets?.nodes?.map(a => a.assetNumber).join(', ') || '-'}
+      />
       <TextWithLabelRow
         sx={textSx}
         label={t('label.serial')}

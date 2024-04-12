@@ -304,7 +304,7 @@ export const outboundsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.reference'),
     t('label.comment'),
     t('label.total'),
@@ -332,7 +332,7 @@ export const outboundReturnsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
   ];
 
   const data = returns.map(node => [
@@ -354,7 +354,7 @@ export const inboundReturnsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.confirmed'),
   ];
 
@@ -378,7 +378,7 @@ export const inboundsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.confirmed'),
     t('label.comment'),
     t('label.total'),
@@ -406,7 +406,7 @@ export const prescriptionToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.comment'),
   ];
 
