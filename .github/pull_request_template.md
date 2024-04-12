@@ -14,8 +14,8 @@ Fixes #
 <!-- eg. Do you have any specific questions for the reviewer? Is there a high risk/complicated change they should focus on? If there are any general areas of the codebase your changes might have have touched or could cause side effects to, mention them here.-->
 
 ## 📃 Documentation
-<!-- Note down any functionality/UI changes which require documentation updates.
-Reminder: Label the PR with: `docs: external` or `docs: internal` -->
+<!-- Bullet points or screenshots of any functionality/UI changes which require documentation updates.
+Reminder: Label the PR with: `docs: external1 or `docs: internal` -->
 _No user facing changes_
 
 or
