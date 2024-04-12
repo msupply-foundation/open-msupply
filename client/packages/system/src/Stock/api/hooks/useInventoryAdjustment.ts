@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
-import { useMutation } from '@openmsupply-client/common';
+import { AdjustmentTypeInput, useMutation } from '@openmsupply-client/common';
 import {
-  Adjustment,
   InventoryAdjustmentReasonRowFragment,
   StockLineRowFragment,
 } from '../../..';
@@ -9,18 +8,16 @@ import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
 
 type DraftInventoryAdjustment = {
-  direction: Adjustment;
   reason: InventoryAdjustmentReasonRowFragment | null;
-  adjustBy: number;
-  newNumberOfPacks: number;
+  adjustment: number;
+  adjustmentType: AdjustmentTypeInput;
 };
 
 export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const [draft, setDraft] = useState<DraftInventoryAdjustment>({
-    direction: Adjustment.Addition,
     reason: null,
-    adjustBy: 0,
-    newNumberOfPacks: stockLine.totalNumberOfPacks,
+    adjustment: 0,
+    adjustmentType: AdjustmentTypeInput.Addition,
   });
 
   const { mutateAsync: createMutation } = useCreate(stockLine.id);
@@ -28,10 +25,9 @@ export function useInventoryAdjustment(stockLine: StockLineRowFragment) {
   const create = useCallback(async () => {
     await createMutation(draft);
     setDraft({
-      direction: Adjustment.Addition,
       reason: null,
-      adjustBy: 0,
-      newNumberOfPacks: 0,
+      adjustment: 0,
+      adjustmentType: AdjustmentTypeInput.Addition,
     });
   }, [draft, createMutation]);
 
@@ -47,16 +43,17 @@ const useCreate = (stockLineId: string) => {
 
   return useMutation(
     async ({
-      direction,
-      newNumberOfPacks,
+      adjustment,
+      adjustmentType,
       reason,
     }: DraftInventoryAdjustment) => {
-      if (!direction) return;
+      // if (!direction) return;
       // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
         storeId,
         input: {
-          newNumberOfPacks,
+          adjustment,
+          adjustmentType,
           stockLineId,
           inventoryAdjustmentReasonId: reason?.id,
         },

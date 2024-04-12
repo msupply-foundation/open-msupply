@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import {
+  AdjustmentTypeInput,
   Autocomplete,
   BasicTextInput,
   Box,
@@ -25,20 +26,27 @@ interface InventoryAdjustmentReasonSearchInputProps {
     inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
   ) => void;
   autoFocus?: boolean;
-  adjustment: Adjustment;
+  adjustmentType: AdjustmentTypeInput;
   isError?: boolean;
 }
 
 export const InventoryAdjustmentReasonSearchInput: FC<
   InventoryAdjustmentReasonSearchInputProps
-> = ({ value, width, onChange, autoFocus = false, adjustment, isError }) => {
+> = ({
+  value,
+  width,
+  onChange,
+  autoFocus = false,
+  adjustmentType,
+  isError,
+}) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
   const isRequired = data?.totalCount !== 0;
-  const isDisabled = adjustment === Adjustment.None || !isRequired;
+  // const isDisabled = adjustmentType === Adjustment.None || !isRequired;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
-    if (adjustment === Adjustment.None) return false;
-    if (adjustment === Adjustment.Addition)
+    // if (adjustment === Adjustment.None) return false;
+    if (adjustmentType === AdjustmentTypeInput.Addition)
       return reason.type === InventoryAdjustmentReasonNodeType.Positive;
     return reason.type === InventoryAdjustmentReasonNodeType.Negative;
   };
@@ -48,7 +56,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
-        disabled={isDisabled}
+        // disabled={isDisabled}
         width={`${width}px`}
         clearable={false}
         value={
