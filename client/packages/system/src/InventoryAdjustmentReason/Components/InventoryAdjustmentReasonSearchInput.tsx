@@ -13,12 +13,6 @@ import {
   InventoryAdjustmentReasonRowFragment,
 } from '../api';
 
-export enum Adjustment {
-  Reduction,
-  Addition,
-  None,
-}
-
 interface InventoryAdjustmentReasonSearchInputProps {
   value: InventoryAdjustmentReasonRowFragment | null;
   width?: number | string;
