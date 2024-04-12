@@ -27,6 +27,7 @@ pub struct AssetCatalogueItemFilter {
     pub model: Option<StringFilter>,
     pub r#type: Option<StringFilter>,
     pub type_id: Option<EqualFilter<String>>,
+    pub sub_catalogue: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -72,7 +73,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetCatalogueItemSortField::Catalogue => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::id)
+                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::sub_catalogue)
                 }
                 AssetCatalogueItemSortField::Code => {
                     apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::code)
@@ -121,12 +122,18 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             class_id,
             r#type,
             type_id,
+            sub_catalogue,
         } = f;
 
         apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
         apply_string_filter!(query, code, asset_catalogue_item_dsl::code);
         apply_string_filter!(query, manufacturer, asset_catalogue_item_dsl::manufacturer);
         apply_string_filter!(query, model, asset_catalogue_item_dsl::model);
+        apply_string_filter!(
+            query,
+            sub_catalogue,
+            asset_catalogue_item_dsl::sub_catalogue
+        );
         apply_equal_filter!(
             query,
             category_id,
@@ -213,6 +220,11 @@ impl AssetCatalogueItemFilter {
 
     pub fn type_id(mut self, filter: EqualFilter<String>) -> Self {
         self.type_id = Some(filter);
+        self
+    }
+
+    pub fn sub_catalogue(mut self, filter: StringFilter) -> Self {
+        self.sub_catalogue = Some(filter);
         self
     }
 }

@@ -21,7 +21,7 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { PackVariantInput } from '../..';
+import { PackVariantInput, usePackVariant } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
 interface StockLineFormProps {
@@ -44,6 +44,12 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     ? draft.supplierName
     : t('message.no-supplier');
   const location = draft?.location ?? null;
+
+  const { asPackVariant } = usePackVariant(
+    draft.itemId,
+    draft.item.unitName ?? null
+  );
+  const packUnit = asPackVariant(draft.packSize);
 
   const scanBarcode = async () => {
     try {
@@ -86,7 +92,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
       flex={1}
       container
       paddingTop={2}
-      paddingBottom={2}
+      paddingBottom={1}
       width="100%"
       flexWrap="nowrap"
     >
@@ -163,18 +169,26 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        <StyledInputRow
-          label={t('label.pack')}
-          Input={
-            <PackVariantInput
-              isDisabled={!packEditable}
-              packSize={draft.packSize}
-              itemId={draft.itemId}
-              unitName={draft.item.unitName ?? null}
-              onChange={packSize => onUpdate({ packSize })}
-            />
-          }
-        />
+        {packEditable ? (
+          <StyledInputRow
+            label={t('label.pack')}
+            Input={
+              <PackVariantInput
+                isDisabled={!packEditable}
+                packSize={draft.packSize}
+                itemId={draft.itemId}
+                unitName={draft.item.unitName ?? null}
+                onChange={packSize => onUpdate({ packSize })}
+              />
+            }
+          />
+        ) : (
+          <TextWithLabelRow
+            label={t('label.pack')}
+            text={String(packUnit)}
+            textProps={{ textAlign: 'end' }}
+          />
+        )}
         <StyledInputRow
           label={t('label.on-hold')}
           Input={

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import {
   FnUtils,
   setNullableInput,
@@ -37,9 +37,7 @@ export function useStockLine() {
 
   const { mutateAsync: createMutation } = useCreate();
 
-  const create = useCallback(async () => {
-    await createMutation(draft);
-  }, [draft, createMutation]);
+  const create = () => createMutation(draft);
 
   return {
     draft,

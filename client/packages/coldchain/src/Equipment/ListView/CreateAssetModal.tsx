@@ -13,6 +13,7 @@ import {
   BasicTextInput,
   useIsCentralServerApi,
   Switch,
+  AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -92,6 +93,7 @@ export const CreateAssetModal = ({
     draft.categoryId ?? ''
   );
   const { mutateAsync: save } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
@@ -130,6 +132,23 @@ export const CreateAssetModal = ({
     !draft.assetNumber ||
     (isCatalogueAsset ? !draft.catalogueItemId : !draft.typeId);
 
+  const onSave = async () => {
+    try {
+      await save(draft);
+      await insertLog({
+        id: FnUtils.generateUUID(),
+        assetId: draft.id,
+        comment: t('label.created'),
+        status: AssetLogStatusInput.Functioning,
+      });
+      invalidateQueries();
+      success(t('messages.cce-created'))();
+      handleClose();
+    } catch (e) {
+      error(t(parseInsertError(e)))();
+    }
+  };
+
   return (
     <Modal
       title={t('heading.add-cold-chain-equipment')}
@@ -137,19 +156,7 @@ export const CreateAssetModal = ({
       height={100}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
       okButton={
-        <DialogButton
-          variant="ok"
-          disabled={isDisabled}
-          onClick={async () => {
-            try {
-              await save(draft);
-              success(t('messages.cce-created'))();
-              handleClose();
-            } catch (e) {
-              error(t(parseInsertError(e)))();
-            }
-          }}
-        />
+        <DialogButton variant="ok" disabled={isDisabled} onClick={onSave} />
       }
     >
       {isLoadingCategories ? (
