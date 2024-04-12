@@ -7,6 +7,7 @@
   "button.view-details": "View Details",
   "error.asset-not-found": "Asset not found",
   "button.new-asset": "New Asset",
+  "button.create-log-reason": "Create log reason",
   "error.cce-asset-number-already-used": "CCE asset number already in use, please use another number",
   "error.fetch-notifications": "Unable to display cold chain notifications",
   "error.fridge-tag-import": "Unable to import Fridge-tag logs: {{message}}",
