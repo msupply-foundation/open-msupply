@@ -118,15 +118,6 @@ const getInventoryAdjustmentReasonInputColumn = (
 
       const autoFocus = columnIndex === 0 && rowIndex === 0;
 
-      const getAdjustment = () => {
-        if (
-          rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
-        )
-          return AdjustmentTypeInput.Reduction;
-
-        return AdjustmentTypeInput.Addition;
-      };
-
       const errorType = getError(rowData)?.__typename;
       const isAdjustmentReasonError =
         errorType === 'AdjustmentReasonNotProvided' ||
@@ -140,7 +131,11 @@ const getInventoryAdjustmentReasonInputColumn = (
           value={value}
           width={column.width}
           onChange={onChange}
-          adjustmentType={getAdjustment()}
+          adjustmentType={
+            rowData.snapshotNumberOfPacks > (rowData?.countedNumberOfPacks ?? 0)
+              ? AdjustmentTypeInput.Reduction
+              : AdjustmentTypeInput.Addition
+          }
           isError={isAdjustmentReasonError}
         />
       );
