@@ -25,6 +25,7 @@ use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
+use crate::service_provider::ServiceProvider;
 
 use thiserror::Error;
 
@@ -87,4 +88,14 @@ impl ActiveStoresOnSite {
     pub(crate) fn store_ids(&self) -> Vec<String> {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
+}
+
+
+
+pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
+    let ctx = service_provider.basic_context().unwrap();
+    service_provider
+        .sync_status_service
+        .is_initialised(&ctx)
+        .unwrap()
 }
