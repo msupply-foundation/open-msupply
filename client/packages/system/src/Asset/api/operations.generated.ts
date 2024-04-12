@@ -65,7 +65,14 @@ export type InsertAssetLogReasonMutationVariables = Types.Exact<{
 }>;
 
 
-export type InsertAssetLogReasonMutation = { __typename: 'Mutations', insertAssetLogReason: { __typename: 'AssetLogReasonNode', id: string, reason: string } | { __typename: 'InsertAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
+export type InsertAssetLogReasonMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', logReason: { __typename: 'AssetLogReasonMutations', insertAssetLogReason: { __typename: 'AssetLogReasonNode', id: string, reason: string } | { __typename: 'InsertAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } } } };
+
+export type DeleteLogReasonMutationVariables = Types.Exact<{
+  reasonId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteLogReasonMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', logReason: { __typename: 'AssetLogReasonMutations', deleteLogReason: { __typename: 'DeleteAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } } } };
 
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
@@ -201,16 +208,40 @@ export const AssetLogReasonsDocument = gql`
     ${AssetLogReasonFragmentDoc}`;
 export const InsertAssetLogReasonDocument = gql`
     mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
-  insertAssetLogReason(input: $input, storeId: $storeId) {
-    ... on AssetLogReasonNode {
-      __typename
-      id
-      reason
+  centralServer {
+    logReason {
+      insertAssetLogReason(input: $input) {
+        ... on AssetLogReasonNode {
+          __typename
+          id
+          reason
+        }
+        ... on InsertAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
     }
-    ... on InsertAssetLogReasonError {
-      __typename
-      error {
-        description
+  }
+}
+    `;
+export const DeleteLogReasonDocument = gql`
+    mutation deleteLogReason($reasonId: String!) {
+  centralServer {
+    logReason {
+      deleteLogReason(reasonId: $reasonId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
+        }
       }
     }
   }
@@ -244,6 +275,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertAssetLogReason(variables: InsertAssetLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogReasonMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogReasonMutation>(InsertAssetLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLogReason', 'mutation');
+    },
+    deleteLogReason(variables: DeleteLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteLogReasonMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLogReasonMutation>(DeleteLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLogReason', 'mutation');
     }
   };
 }
@@ -358,12 +392,29 @@ export const mockAssetLogReasonsQuery = (resolver: ResponseResolver<GraphQLReque
  * mockInsertAssetLogReasonMutation((req, res, ctx) => {
  *   const { input } = req.variables;
  *   return res(
- *     ctx.data({ insertAssetLogReason })
+ *     ctx.data({ centralServer })
  *   )
  * })
  */
 export const mockInsertAssetLogReasonMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogReasonMutationVariables>, GraphQLContext<InsertAssetLogReasonMutation>, any>) =>
   graphql.mutation<InsertAssetLogReasonMutation, InsertAssetLogReasonMutationVariables>(
     'insertAssetLogReason',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteLogReasonMutation((req, res, ctx) => {
+ *   const { reasonId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockDeleteLogReasonMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteLogReasonMutationVariables>, GraphQLContext<DeleteLogReasonMutation>, any>) =>
+  graphql.mutation<DeleteLogReasonMutation, DeleteLogReasonMutationVariables>(
+    'deleteLogReason',
     resolver
   )

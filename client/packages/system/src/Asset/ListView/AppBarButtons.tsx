@@ -54,20 +54,19 @@ export const AppBarButtonsComponent = () => {
         >
           {t('button.export')}
         </LoadingButton>
-        {isCentralServer && <></>}
-        {/* {isCentralServer && ( */}
-        <LoadingButton
-          isLoading={false}
-          startIcon={<InfoIcon />}
-          variant="outlined"
-          onClick={() => {
-            navigate(path);
-          }}
-          disabled={EnvUtils.platform === Platform.Android}
-        >
-          {t('button.manage-asset-log-reasons')}
-        </LoadingButton>
-        {/* )} */}
+        {isCentralServer && (
+          <LoadingButton
+            isLoading={false}
+            startIcon={<InfoIcon />}
+            variant="outlined"
+            onClick={() => {
+              navigate(path);
+            }}
+            disabled={EnvUtils.platform === Platform.Android}
+          >
+            {t('button.manage-asset-log-reasons')}
+          </LoadingButton>
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

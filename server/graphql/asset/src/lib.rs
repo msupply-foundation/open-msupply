@@ -158,6 +158,13 @@ impl AssetLogReasonMutations {
     ) -> Result<InsertAssetLogReasonResponse> {
         insert_asset_log_reason(ctx, input)
     }
+    async fn delete_log_reason(
+        &self,
+        ctx: &Context<'_>,
+        reason_id: String,
+    ) -> Result<DeleteAssetLogReasonResponse> {
+        delete_log_reason(ctx, &reason_id)
+    }
 }
 
 #[cfg(test)]

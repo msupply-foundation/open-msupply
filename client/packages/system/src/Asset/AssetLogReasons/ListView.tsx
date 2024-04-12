@@ -10,30 +10,23 @@ import {
   useUrlQueryParams,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetData } from '../api';
-
-// import { Toolbar } from './Toolbar';
-// import { AppBarButtons } from './AppBarButtons';
+import { Toolbar } from './Toolbar';
+import { parseStatus } from '../utils';
 
 const AssetListComponent: FC = () => {
   const {
     updateSortQuery,
     updatePaginationQuery,
+    filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'code', dir: 'asc' },
-    filters: [
-      { key: 'manufacturer' },
-      { key: 'model' },
-      { key: 'category' },
-      { key: 'class' },
-      { key: 'type' },
-    ],
+    initialSort: { key: 'reason', dir: 'asc' },
+    filters: [{ key: 'reason' }, { key: 'status' }],
   });
 
   const { data, isError, isLoading } = useAssetData.log.listReasons();
   const pagination = { page, first, offset };
-  // const navigate = useNavigate();
-  const t = useTranslation('catalogue');
+  const t = useTranslation(['catalogue', 'coldchain']);
 
   const columns = useColumns<AssetLogReasonFragment>(
     [
@@ -47,8 +40,9 @@ const AssetListComponent: FC = () => {
         key: 'status',
         label: 'label.status',
         sortable: false,
-        accessor: ({ rowData }) => rowData.assetLogStatus,
+        accessor: ({ rowData }) => parseStatus(rowData.assetLogStatus, t),
       },
+      'selection',
     ],
     {
       sortBy,
@@ -59,8 +53,8 @@ const AssetListComponent: FC = () => {
 
   return (
     <>
-      {/* <AppBarButtons />
-      <Toolbar /> */}
+      {/* <AppBarButtons /> */}
+      <Toolbar data={data?.nodes ?? []} filter={filter} />
       <DataTable
         id="item-list"
         pagination={{ ...pagination, total: data?.totalCount ?? 0 }}

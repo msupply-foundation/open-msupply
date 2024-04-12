@@ -63,7 +63,7 @@ impl CentralServerMutationNode {
     async fn pack_variant(&self) -> PackVariantMutations {
         PackVariantMutations
     }
-    async fn insert_asset_log_reason(&self) -> AssetLogReasonMutations {
+    async fn log_reason(&self) -> AssetLogReasonMutations {
         AssetLogReasonMutations
     }
 }
