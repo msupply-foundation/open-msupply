@@ -33,9 +33,9 @@ export const useSaveStocktakeLines = () => {
 
     const errorMessagesMap: { [key: string]: string } = {};
 
+    // First unset error
+    errorsContext.unsetAll();
     for (const { response, id } of [...insertResults, ...updateResults]) {
-      // First unset error
-      errorsContext.unsetError(id);
       // No error
       if (response.__typename === 'StocktakeLineNode') continue;
 
