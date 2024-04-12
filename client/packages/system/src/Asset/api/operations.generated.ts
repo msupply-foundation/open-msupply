@@ -52,7 +52,7 @@ export type AssetCategoriesQueryVariables = Types.Exact<{
 export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', id: string, name: string, classId: string }> } };
 
 export type AssetLogReasonsQueryVariables = Types.Exact<{
-  filter: Types.AssetLogReasonFilterInput;
+  filter?: Types.InputMaybe<Types.AssetLogReasonFilterInput>;
   sort?: Types.InputMaybe<Types.AssetLogReasonSortInput>;
   storeId: Types.Scalars['String']['input'];
 }>;
@@ -193,7 +193,7 @@ export const AssetCategoriesDocument = gql`
 }
     `;
 export const AssetLogReasonsDocument = gql`
-    query assetLogReasons($filter: AssetLogReasonFilterInput!, $sort: AssetLogReasonSortInput, $storeId: String!) {
+    query assetLogReasons($filter: AssetLogReasonFilterInput, $sort: AssetLogReasonSortInput, $storeId: String!) {
   assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
     ... on AssetLogReasonConnector {
       __typename

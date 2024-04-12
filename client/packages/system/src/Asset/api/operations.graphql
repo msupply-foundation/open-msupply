@@ -118,7 +118,7 @@ query assetCategories(
 }
 
 query assetLogReasons(
-  $filter: AssetLogReasonFilterInput!
+  $filter: AssetLogReasonFilterInput
   $sort: AssetLogReasonSortInput
   $storeId: String!
 ) {

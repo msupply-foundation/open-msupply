@@ -4,7 +4,11 @@ import {
   SortBy,
   useGql,
 } from '@openmsupply-client/common';
-import { getSdk, AssetCatalogueItemFragment } from '../../operations.generated';
+import {
+  getSdk,
+  AssetCatalogueItemFragment,
+  AssetLogReasonFragment,
+} from '../../operations.generated';
 
 export const useAssetApi = () => {
   const { client } = useGql();
@@ -17,7 +21,8 @@ export const useAssetApi = () => {
       [...keys.list(), params] as const,
     sortedList: (sortBy: SortBy<AssetCatalogueItemFragment>) =>
       [...keys.list(), sortBy] as const,
-    logReasons: () => [...keys.base(), 'logReasons'] as const,
+    logReasons: (params: ListParams<AssetLogReasonFragment>) =>
+      [...keys.list(), params] as const,
     categories: () => [...keys.base(), 'categories'] as const,
     classes: () => [...keys.base(), 'classes'] as const,
     types: (filter?: AssetTypeFilterInput) =>
