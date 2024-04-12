@@ -47,10 +47,10 @@ export const Toolbar: FC<{
 
   const onFilterChange: AutocompleteOnChange<AssetLogStatus> = (_, option) => {
     if (!option) {
-      filter.onClearFilterRule('status');
+      filter.onClearFilterRule('assetLogStatus');
       return;
     }
-    filter.onChangeStringFilterRule('status', 'equalTo', option.value);
+    filter.onChangeStringFilterRule('assetLogStatus', 'equalTo', option.value);
   };
 
   const deleteAction = () => {

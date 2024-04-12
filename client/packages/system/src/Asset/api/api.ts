@@ -9,6 +9,7 @@ import {
   AssetTypeFilterInput,
   InsertAssetLogReasonInput,
   AssetLogStatusInput,
+  AssetLogReasonFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -129,15 +130,13 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
       return types;
     },
-    logReasons: async (storeId: string) => {
+    logReasons: async (
+      storeId: string,
+      filter: AssetLogReasonFilterInput | undefined
+    ) => {
       const result = await sdk.assetLogReasons({
+        filter,
         storeId,
-        // TODO functioning filter - can add later (currently not sure if query params will use this)
-        filter: {
-          assetLogStatus: undefined,
-          id: undefined,
-          reason: undefined,
-        },
       });
       return result?.assetLogReasons;
     },
