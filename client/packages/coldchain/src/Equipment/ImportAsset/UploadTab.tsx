@@ -3,7 +3,12 @@ import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
-import { DateUtils, useTranslation } from '@common/intl';
+import {
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+} from '@common/intl';
 import {
   Grid,
   Stack,
@@ -11,11 +16,15 @@ import {
   FnUtils,
   FileUtils,
   Formatter,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import * as EquipmentImportModal from './EquipmentImportModal';
 import { ImportRow } from './EquipmentImportModal';
 import { importEquipmentToCsv } from '../utils';
-import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
+import {
+  AssetCatalogueItemFragment,
+  useStore,
+} from '@openmsupply-client/system';
 
 interface EquipmentUploadTabProps {
   setEquipment: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -30,21 +39,96 @@ interface ParsedAsset {
   [key: string]: string | undefined;
 }
 
-enum AssetColumn {
-  ASSET_NUMBER = 0,
-  CATALOGUE_ITEM_CODE = 1,
-  NOTES = 2,
-  SERIAL_NUMBER = 3,
-  INSTALLATION_DATE = 4,
-}
+const formatDate = (value: string): string | null =>
+  Formatter.naiveDate(DateUtils.getDateOrNull(value));
 
-// the row object indexes are returned in column order
-// which allows us to index the keys
-const getCell = (row: ParsedAsset, index: AssetColumn) => {
-  const rowKeys = Object.keys(row);
-  const key = rowKeys[index] ?? '';
-  return row[key] ?? '';
-};
+function getImportHelpers<T, P>(
+  row: P,
+  rows: T[],
+  index: number,
+  t: TypedTFunction<LocaleKey>
+) {
+  const importRow = {
+    id: FnUtils.generateUUID(),
+  } as T;
+  const rowErrors: string[] = [];
+
+  const addCell = (
+    key: keyof T,
+    localeKey: LocaleKey,
+    formatter?: (value: string) => unknown
+  ) => {
+    const prop = t(localeKey) as keyof P;
+    const value = row[prop] ?? '';
+    if (value !== undefined) {
+      (importRow[key] as unknown) = formatter
+        ? formatter(value as string)
+        : value;
+    }
+  };
+
+  const addRequired = (
+    key: keyof T,
+    localeKey: LocaleKey,
+    formatter?: (value: string) => unknown
+  ) => {
+    const prop = t(localeKey) as keyof P;
+    const value = row[prop] ?? '';
+
+    if (value === undefined || (value as string).trim() === '') {
+      rowErrors.push(
+        t('error.field-must-be-specified', {
+          field: t(localeKey),
+        })
+      );
+      return;
+    }
+
+    addCell(key, localeKey, formatter);
+  };
+
+  const addUnique = (
+    key: keyof T,
+    localeKey: LocaleKey,
+    formatter?: (value: string) => unknown
+  ) => {
+    const prop = t(localeKey) as keyof P;
+    const value = row[prop] ?? '';
+
+    addRequired(key, localeKey, formatter);
+
+    // check for duplicates
+    if (rows.some((r, i) => r[key] === value && index !== i)) {
+      rowErrors.push(t('error.duplicate-asset-number'));
+    }
+  };
+
+  function addLookup<K>(
+    key: keyof T,
+    lookupData: K[],
+    lookupFn: (item: K) => string | null | undefined,
+    localeKey: LocaleKey,
+    formatter?: (value: string) => unknown
+  ) {
+    const prop = t(localeKey) as keyof P;
+    const value = row[prop] ?? '';
+    if (value === undefined || (value as string).trim() === '') {
+      rowErrors.push(
+        t('error.field-must-be-specified', {
+          field: t(localeKey),
+        })
+      );
+      return;
+    }
+    if (lookupData.filter(l => lookupFn(l) === value).length === 0) {
+      rowErrors.push(t('error.code-no-match', { field: t(localeKey) }));
+      return;
+    }
+    addCell(key, localeKey, formatter);
+  }
+
+  return { addLookup, addCell, addRequired, addUnique, importRow, rowErrors };
+}
 
 export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   tab,
@@ -54,6 +138,8 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
   catalogueItemData,
 }) => {
   const t = useTranslation('coldchain');
+  const isCentralServer = useIsCentralServerApi();
+  const { data: stores } = useStore.document.list();
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const EquipmentBuffer: EquipmentImportModal.ImportRow[] = [];
@@ -64,12 +150,14 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         (_row: ImportRow): Partial<ImportRow> => ({
           assetNumber: undefined,
           catalogueItemCode: undefined,
+          store: undefined,
           notes: undefined,
           serialNumber: undefined,
           installationDate: undefined,
         })
       ),
-      t
+      t,
+      isCentralServer
     );
     FileUtils.exportCSV(csv, t('filename.cce'));
   };
@@ -107,68 +195,42 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
       setErrorMessage(t('messages.import-error'));
     }
 
-    const rows: EquipmentImportModal.ImportRow[] = [];
+    const rows: ImportRow[] = [];
     let hasErrors = false;
-    data.data.sort(function (row, row2) {
-      const number1 = getCell(row, AssetColumn.ASSET_NUMBER);
-      const number2 = getCell(row2, AssetColumn.ASSET_NUMBER);
-      return number1 < number2 ? -1 : number1 > number2 ? 1 : 0;
-    });
 
-    data.data.map((row, index) => {
-      const importRow = {} as EquipmentImportModal.ImportRow;
-      const rowErrors: string[] = [];
-      importRow.id = FnUtils.generateUUID();
-      const assetNumber = getCell(row, AssetColumn.ASSET_NUMBER);
-      if (assetNumber && assetNumber.trim() != '') {
-        importRow.assetNumber = assetNumber;
-        // check if more than one of this asset number exists if is asset number
-        if (assetNumber == rows[index - 1]?.assetNumber) {
-          rowErrors.push(t('error.duplicate-asset-number'));
-        }
-      } else {
-        rowErrors.push(
-          t('error.field-must-be-specified', { field: t('label.asset-number') })
+    data.data.forEach((row, index) => {
+      const { addLookup, addCell, addUnique, importRow, rowErrors } =
+        getImportHelpers(row, rows, index, t);
+      const lookupCode = (item: { code: string | null | undefined }) =>
+        item.code;
+      const lookupStore = (store: { code: string }) => store.code;
+
+      addUnique('assetNumber', 'label.asset-number');
+      addLookup(
+        'catalogueItemCode',
+        catalogueItemData ?? [],
+        lookupCode,
+        'label.catalogue-item-code'
+      );
+      if (isCentralServer) {
+        addLookup(
+          'store',
+          stores?.nodes ?? [],
+          lookupStore,
+          'label.store',
+          s => stores?.nodes?.find(store => store.code === s)
         );
       }
-      const code = getCell(row, AssetColumn.CATALOGUE_ITEM_CODE);
-      if (code === undefined || code.trim() === '') {
-        rowErrors.push(
-          t('error.field-must-be-specified', {
-            field: t('label.catalogue-item-code'),
-          })
-        );
-      } else if (
-        catalogueItemData?.filter(
-          (item: { code: string | null | undefined }) => item.code == code
-        ).length === 0
-      ) {
-        rowErrors.push(
-          t('error.code-no-match', { field: t('label.catalogue-item-code') })
-        );
-      } else {
-        importRow.catalogueItemCode = code;
-      }
-      // notes, serialNumber, and installationDate aren't essential for bulk upload
-      if (getCell(row, AssetColumn.NOTES) !== undefined) {
-        importRow.notes = getCell(row, AssetColumn.NOTES);
-      }
-      if (getCell(row, AssetColumn.SERIAL_NUMBER) !== undefined) {
-        importRow.serialNumber = getCell(row, AssetColumn.SERIAL_NUMBER);
-      }
-      if (getCell(row, AssetColumn.INSTALLATION_DATE) !== undefined) {
-        importRow.installationDate = Formatter.naiveDate(
-          DateUtils.getDateOrNull(getCell(row, AssetColumn.INSTALLATION_DATE))
-        );
-      }
+      addCell('notes', 'label.asset-notes');
+      addCell('installationDate', 'label.installation-date', formatDate);
+      addCell('serialNumber', 'label.serial');
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
+      if (hasErrors) {
+        setErrorMessage(t('messages.import-error-on-upload'));
+      }
     });
-
-    if (hasErrors) {
-      setErrorMessage(t('messages.import-error-on-upload'));
-    }
     EquipmentBuffer.push(...rows);
   };
 
