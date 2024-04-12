@@ -14,15 +14,19 @@ use crate::{ChangeLogInsertRow, ChangelogAction, ChangelogRepository, ChangelogT
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SyncFileStatus {
     #[default]
-    AvailableToDownload, // This is the default because when received via sync this is the expected status
-    ReadyToUpload,
-    Uploading,
-    Uploaded,
-    Downloading,
-    Downloaded,
-    UploadError,      // Errored will be re-tried
-    DownloadError,    // Errored will be re-tried
+    New,
+    InProgress,
+    Error,
+    Done,
     PermanentFailure, // Failed will not be re-tried
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SyncFileDirection {
+    Upload,
+    #[default]
+    Download, // Download is the default as this is the direction we want for new record via sync, which will be defaulted
 }
 
 table! {
@@ -37,6 +41,7 @@ table! {
         total_bytes -> Integer,
         retries -> Integer,
         retry_at -> Nullable<Timestamp>,
+        direction -> crate::db_diesel::sync_file_reference_row::SyncFileDirectionMapping,
         status -> crate::db_diesel::sync_file_reference_row::SyncFileStatusMapping,
         error -> Nullable<Text>,
         created_datetime -> Timestamp,
@@ -68,6 +73,9 @@ pub struct SyncFileReferenceRow {
     #[serde(skip_serializing)]
     #[serde(default)]
     pub retry_at: Option<NaiveDateTime>,
+    #[serde(skip_serializing)]
+    #[serde(default)]
+    pub direction: SyncFileDirection,
     #[serde(skip_serializing)]
     #[serde(default)]
     pub status: SyncFileStatus,
@@ -160,14 +168,11 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     pub fn find_all_to_upload(&self) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
         let result = sync_file_reference
             .filter(deleted_datetime.is_null())
-            .filter(uploaded_bytes.lt(total_bytes))
+            .filter(direction.eq(SyncFileDirection::Upload))
             .filter(
-                status
-                    .eq(SyncFileStatus::ReadyToUpload)
-                    .or(status.eq(SyncFileStatus::Uploading))
-                    .or(status
-                        .eq(SyncFileStatus::UploadError)
-                        .and(retry_at.lt(diesel::dsl::now))),
+                status.eq(SyncFileStatus::New).or(status
+                    .eq(SyncFileStatus::Error)
+                    .and(retry_at.lt(diesel::dsl::now))),
             )
             .load(&self.connection.connection)?;
         Ok(result)

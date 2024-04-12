@@ -139,6 +139,7 @@ pub async fn push(
     })
 }
 
+/// Send a file to a remote open-mSupply Server
 pub async fn download_file(
     settings: &Settings,
     SyncDownloadFileRequestV6 {
@@ -149,6 +150,13 @@ pub async fn download_file(
     }: SyncDownloadFileRequestV6,
 ) -> Result<(actix_files::NamedFile, StaticFile), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
+
+    log::info!(
+        "Downloading file for table: {}, record: {}, file: {}",
+        table_name,
+        record_id,
+        id
+    );
 
     if !is_central_server() {
         return Err(Error::NotACentralServer);
