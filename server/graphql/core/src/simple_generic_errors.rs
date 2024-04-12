@@ -160,6 +160,14 @@ impl RecordBelongsToAnotherStore {
     }
 }
 
+pub struct NoPermissionForThisStore;
+#[Object]
+impl NoPermissionForThisStore {
+    pub async fn description(&self) -> &str {
+        "Asset cannot be added to other store"
+    }
+}
+
 pub struct CannotEditInvoice;
 #[Object]
 impl CannotEditInvoice {

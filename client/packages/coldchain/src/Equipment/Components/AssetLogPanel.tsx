@@ -17,11 +17,15 @@ const StyledTabContainer = styled(Box)(({ theme }) => ({
   borderColor: theme.palette.divider,
   flexDirection: 'column',
   display: 'flex',
+  alignItems: 'center',
 }));
 
+export type Draft = InsertAssetLogInput & { files?: File[] };
+
 export interface AssetLogPanel {
+  draft: Partial<Draft>;
+  onChange: (patch: Partial<Draft>) => void;
   value: string;
-  draft: Partial<InsertAssetLogInput>;
 }
 
 export const AssetLogPanel: FC<PropsWithChildren<AssetLogPanel>> = ({

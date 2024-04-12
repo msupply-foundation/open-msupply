@@ -20,7 +20,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
   const textSx = { paddingLeft: 2 };
   const labelWrap = { sx: { whiteSpace: 'pre-wrap' } };
   const inputTextAlign = { sx: { textAlign: 'end' } };
-  const formatTemperature = useFormatTemperature;
+  const formatTemperature = useFormatTemperature();
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
@@ -51,7 +51,11 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
           />
         }
       />
-      <TextWithLabelRow sx={textSx} label={t('label.cce')} text={''} />
+      <TextWithLabelRow
+        sx={textSx}
+        label={t('label.cce')}
+        text={draft.assets?.nodes?.map(a => a.assetNumber).join(', ') || '-'}
+      />
       <TextWithLabelRow
         sx={textSx}
         label={t('label.serial')}

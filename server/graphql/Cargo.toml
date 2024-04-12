@@ -17,7 +17,8 @@ graphql_core = { path = "core" }
 graphql_asset = { path = "asset" }
 graphql_general = { path = "general" }
 graphql_cold_chain = { path = "cold_chain" }
-graphql_asset_catalogue = { path="asset_catalogue" }
+graphql_asset_catalogue = { path = "asset_catalogue" }
+graphql_inventory_adjustment = { path = "inventory_adjustment" }
 graphql_invoice = { path = "invoice" }
 graphql_invoice_line = { path = "invoice_line" }
 graphql_location = { path = "location" }

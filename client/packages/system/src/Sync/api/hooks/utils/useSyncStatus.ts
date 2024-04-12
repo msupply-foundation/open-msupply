@@ -1,4 +1,4 @@
-import { useQuery } from '@openmsupply-client/common';
+import { useMutation, useQuery } from '@openmsupply-client/common';
 import { useSyncApi } from './useSyncApi';
 
 export const useSyncStatus = (
@@ -12,4 +12,9 @@ export const useSyncStatus = (
     refetchInterval,
     enabled,
   });
+};
+
+export const useMutateSyncStatus = () => {
+  const api = useSyncApi();
+  return useMutation(api.get.syncStatus);
 };

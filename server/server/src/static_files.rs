@@ -9,7 +9,7 @@ use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{get, guard, post, web, Error, HttpRequest, HttpResponse};
+use actix_web::{get, guard, post, delete, web, Error, HttpRequest, HttpResponse};
 use futures_util::TryStreamExt;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
@@ -34,6 +34,7 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/sync_files")
             .service(sync_files)
+            .service(delete_sync_file)
             .service(upload_sync_file)
             .wrap(limit_content_length()),
     );
@@ -154,6 +155,43 @@ pub(crate) async fn handle_file_upload(
         });
     }
     Ok(files)
+}
+
+#[delete("/{table_name}/{record_id}/{file_id}")]
+async fn delete_sync_file(
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+    path: web::Path<(String, String, String)>,
+) -> Result<HttpResponse, Error> {
+    let (table_name, record_id, file_id) = path.into_inner();
+    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
+
+    // delete local file, if it exists
+    let service = StaticFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    match service.find_file(&file_id, static_file_category) {
+        Ok(Some(file)) => {
+            std::fs::remove_file(file.path)?;
+        }
+        Ok(None) => {}
+        Err(_) => {}
+    };
+
+    // mark file reference as deleted
+    let db_connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+
+    match repo.delete(&file_id) {
+        Ok(_) => Ok(HttpResponse::Ok().body("file deleted")),
+        Err(err) => {
+            log::error!("Error deleting file reference: {}", err);
+            return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
+        }
+    }
 }
 
 #[post("/{table_name}/{record_id}")]
