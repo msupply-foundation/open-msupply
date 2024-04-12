@@ -47,6 +47,7 @@ export const ImportReviewDataTable: FC<ImportReviewDataTableProps> = ({
       width: 50,
       sortable: false,
       label: 'label.store',
+      accessor: ({ rowData }) => rowData.store?.code,
     });
   }
 
