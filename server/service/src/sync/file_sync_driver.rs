@@ -37,7 +37,7 @@ pub struct FileSyncTrigger {
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl FileSyncDriver {
     pub fn init(settings: &Settings) -> (FileSyncTrigger, FileSyncDriver) {
-        // We use a multi-element channel so that we don't block
+        // We use a multi-element channel so that we don't block sync if someone tries to stop at the same time as a pause message
         let (sender, receiver) = mpsc::channel(10);
 
         let static_file_service = Arc::new(
@@ -96,7 +96,7 @@ impl FileSyncDriver {
                             },
                         }
                     },
-                    // OR wait between downloading chunks/files
+                    // OR wait between downloading files
                     _ = async {
                         if files_to_upload == 0 {
                             tokio::time::sleep(FILE_SYNC_NO_FILES_DELAY).await;
@@ -127,7 +127,7 @@ impl FileSyncDriver {
     }
 
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) -> usize {
-        // ...Try to process a upload chunk
+        // ...Try to upload a file
 
         let result = FileSynchroniser::new(
             get_sync_settings(&service_provider),
