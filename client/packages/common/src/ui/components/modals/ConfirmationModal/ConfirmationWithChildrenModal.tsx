@@ -10,7 +10,7 @@ import {
 interface ConfirmationWithChildrenModalProps extends PropsWithChildren {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => Promise<void>;
+  onSave: () => void;
   title: string;
   message: string;
   disableOk?: boolean;
@@ -56,11 +56,7 @@ export const ConfirmationWithChildrenModal = ({
             <DialogButton variant="cancel" onClick={onClose} />
           </Grid>
           <Grid item>
-            <DialogButton
-              variant="ok"
-              disabled={disableOk}
-              onClick={async () => onSave()}
-            />
+            <DialogButton variant="ok" disabled={disableOk} onClick={onSave} />
           </Grid>
         </Grid>
       </Grid>
