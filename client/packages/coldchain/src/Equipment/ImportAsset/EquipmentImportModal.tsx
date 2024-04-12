@@ -12,6 +12,8 @@ import {
   Alert,
   ClickableStepper,
   FileUtils,
+  AssetLogStatusInput,
+  FnUtils,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
@@ -113,6 +115,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
   } = useAssetData.document.listAll();
 
   const { mutateAsync: insertAssets } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
 
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
@@ -124,7 +127,6 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
 
   const csvExport = async () => {
     const csv = importEquipmentToCsvWithErrors(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bufferedEquipment.map((row: ImportRow, index: number) =>
         toExportEquipment(row, index)
       ),
@@ -133,30 +135,38 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
     success(t('success'))();
   };
+  const importErrorRows: ImportRow[] = [];
+  const insertAsset = async (row: ImportRow) => {
+    try {
+      await insertAssets(toInsertEquipmentInput(row, catalogueItemData?.nodes));
+      await insertLog({
+        id: FnUtils.generateUUID(),
+        assetId: row.id,
+        comment: t('label.created'),
+        status: AssetLogStatusInput.Functioning,
+      });
+    } catch (e) {
+      const errorMessage = (e as Error).message ?? t('messages.unknown-error');
+
+      importErrorRows.push({
+        ...row,
+        errorMessage,
+      });
+    }
+  };
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
     const numberImportRecords = bufferedEquipment?.length ?? 0;
     if (bufferedEquipment && numberImportRecords > 0) {
-      const importErrorRows: ImportRow[] = [];
-      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
+      importErrorRows.length = 0;
+      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurrency
       const remainingRecords = bufferedEquipment;
       while (remainingRecords.length) {
         await Promise.all(
-          remainingRecords.splice(0, 100).map(async asset => {
-            await insertAssets(
-              toInsertEquipmentInput(asset, catalogueItemData?.nodes)
-            ).catch(err => {
-              if (!err) {
-                err = { message: t('messages.unknown-error') };
-              }
-              importErrorRows.push({
-                ...asset,
-                errorMessage: err.message,
-              });
-            });
-          })
+          remainingRecords.splice(0, 100).map(insertAsset)
         ).then(() => {
+          invalidateQueries();
           // Update Progress Bar
           const percentComplete =
             100 - (remainingRecords.length / numberImportRecords) * 100.0;
@@ -237,9 +247,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         <DialogButton
           variant="next"
           disabled={importNotReady}
-          onClick={() => {
-            importAction();
-          }}
+          onClick={importAction}
         />
       }
       cancelButton={
@@ -257,9 +265,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         <DialogButton
           variant="export"
           disabled={exportNotReady}
-          onClick={async () => {
-            csvExport();
-          }}
+          onClick={csvExport}
         />
       }
       title={t('label.import-cce')}

@@ -4,6 +4,8 @@ import {
   InputWithLabelRowProps,
 } from '@openmsupply-client/common';
 
+export const INPUT_WIDTH = 160;
+
 export const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
   <InputWithLabelRow
     label={label}
@@ -13,7 +15,7 @@ export const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
     sx={{
       justifyContent: 'space-between',
       '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '160px',
+        maxWidth: INPUT_WIDTH,
       },
     }}
   />

@@ -5,6 +5,7 @@ import {
   useDebounceCallback,
   Box,
   useTranslation,
+  Typography,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 
@@ -28,7 +29,7 @@ export const PackVariantInput = ({
 }): ReactElement => {
   const { variantsControl } = usePackVariant(itemId, unitName);
   const t = useTranslation();
-  const [isEnterPackSize, setIsEnterPackSize] = useState(false);
+  const [customPackSizeEnterable, setCustomPackSizeEnterable] = useState(false);
   const [shouldFocusInput, setShouldFocusInput] = useState(false);
 
   const [packSize, setPackSize] = useState(initialPackSize);
@@ -46,7 +47,7 @@ export const PackVariantInput = ({
     }
     // Make sure manual pack size is auto selected on load if packSize does not
     // match variant
-    setIsEnterPackSize(
+    setCustomPackSizeEnterable(
       !variantsControl?.variants.some(v => v.packSize === size)
     );
   }, []);
@@ -55,23 +56,22 @@ export const PackVariantInput = ({
   const disabled = isDisabled || false;
 
   // This is shared between input with drop down and without drop down
-  const numberInput = () => {
-    return (
-      <NumericTextInput
-        focusOnRender={shouldFocusInput}
-        value={packSize}
-        onChange={newValue => {
-          setPackSize(newValue || 1);
-          updater(newValue || 1);
-        }}
-        disabled={disabled}
-      />
-    );
-  };
+  const packSizeNumberInput = (
+    <NumericTextInput
+      focusOnRender={shouldFocusInput}
+      value={packSize}
+      onChange={newValue => {
+        setPackSize(newValue || 1);
+        updater(newValue || 1);
+      }}
+      disabled={disabled}
+      width={50}
+    />
+  );
 
   if (!variantsControl) {
     // If no variants exist, then default to just pack size entry
-    return numberInput();
+    return packSizeNumberInput;
   }
 
   const { variants } = variantsControl;
@@ -87,34 +87,34 @@ export const PackVariantInput = ({
     },
   ];
   return (
-    <Box display="flex" flexDirection="row">
+    <Box display="flex" flexDirection="row" alignItems="center" gap="8px">
       <Select
         options={options}
-        value={isEnterPackSize ? ENTER_PACK_SIZE : packSize}
+        value={customPackSizeEnterable ? ENTER_PACK_SIZE : packSize}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
           const newValue = Number(e.target.value);
 
           // When manually entered pack size is selected, turn on manual entry
           // and set pack size to 1
-          const isEnterPackSizeSelected = newValue === ENTER_PACK_SIZE;
-          const newPackSize = isEnterPackSizeSelected ? 1 : newValue;
+          const isCustomPackVariant = newValue === ENTER_PACK_SIZE;
+          const newPackSize = isCustomPackVariant ? 1 : newValue;
 
           setPackSize(newPackSize);
-          setIsEnterPackSize(isEnterPackSizeSelected);
-          setShouldFocusInput(isEnterPackSizeSelected);
+          setCustomPackSizeEnterable(isCustomPackVariant);
+          setShouldFocusInput(isCustomPackVariant);
           updater(newPackSize);
         }}
         disabled={disabled}
       />
 
-      <Box padding="4px 8px">{'/'}</Box>
+      <Typography>{'/'}</Typography>
 
       {
         /* Allow input only when manually entering pack size */
-        isEnterPackSize ? (
-          numberInput()
+        customPackSizeEnterable ? (
+          packSizeNumberInput
         ) : (
-          <Box padding="4px 8px">{String(packSize)}</Box>
+          <Typography>{String(packSize)}</Typography>
         )
       }
     </Box>

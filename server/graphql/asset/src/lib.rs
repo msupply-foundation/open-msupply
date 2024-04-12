@@ -9,7 +9,7 @@ use graphql_core::{
     standard_graphql_error::{validate_auth, StandardGraphqlError},
     ContextExt,
 };
-mod types;
+pub mod types;
 use repository::{assets::asset::AssetFilter, PaginationOption};
 use service::auth::{Resource, ResourceAccessRequest};
 use types::AssetLogFilterInput;

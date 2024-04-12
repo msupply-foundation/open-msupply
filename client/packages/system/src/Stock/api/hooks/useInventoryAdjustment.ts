@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useMutation } from '@openmsupply-client/common';
+import { AdjustmentTypeInput, useMutation } from '@openmsupply-client/common';
 import {
   Adjustment,
   InventoryAdjustmentReasonRowFragment,
@@ -46,17 +46,17 @@ const useCreate = (stockLineId: string) => {
   const { stockApi, storeId, queryClient } = useStockGraphQL();
 
   return useMutation(
-    async ({
-      direction,
-      newNumberOfPacks,
-      reason,
-    }: DraftInventoryAdjustment) => {
+    async ({ direction, adjustBy, reason }: DraftInventoryAdjustment) => {
       if (!direction) return;
       // TODO: error helper to handle structured/standard errors
       return await stockApi.createInventoryAdjustment({
         storeId,
         input: {
-          newNumberOfPacks,
+          adjustment: adjustBy,
+          adjustmentType:
+            direction === Adjustment.Addition
+              ? AdjustmentTypeInput.Addition
+              : AdjustmentTypeInput.Reduction,
           stockLineId,
           inventoryAdjustmentReasonId: reason?.id,
         },

@@ -14,9 +14,7 @@ import {
   usePackVariant,
 } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
-import { StyledInputRow } from '../StyledInputRow';
-
-const INPUT_WIDTH = 160;
+import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;

@@ -1,3 +1,4 @@
+mod asset;
 mod asset_catalogue_item;
 mod asset_category;
 mod asset_class;
@@ -34,6 +35,7 @@ mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use asset::*;
 pub use asset_catalogue_item::*;
 pub use asset_category::*;
 pub use asset_class::*;

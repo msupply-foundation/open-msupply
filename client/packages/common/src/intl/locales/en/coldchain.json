@@ -26,6 +26,7 @@
   "error.code-no-match": "{{field}} not found in catalogue",
   "error.unable-to-scan": "Unable to scan QR code",
   "error.duplicate-asset-number": "duplicate asset number in csv",
+  "error.invalid-field-value": "{{ value }} isn't a valid {{ field }}",
   "format.comment": "Acknowledged by {{name}} on {{date}}: {{comment}}.",
   "heading.acknowledgeBreach": "Acknowledge Breach",
   "heading.add-cold-chain-equipment": "Add new CCE",
@@ -77,7 +78,9 @@
   "label.asset-notes": "Notes",
   "label.error-message": "Error message",
   "filename.cce": "equipment upload template",
+  "filename.asset-import-example": "Example Asset Item Import",
   "filename.cce-failed-uploads": "Assets failed to upload",
+  "filename.failed-import-rows": "Errored Import Rows",
   "messages.acknowledge-breach-helptext": "Enter a comment and click OK to acknowledge the breach.",
   "messages.breach-ongoing": "This breach is ongoing and cannot be acknowledged until it has ended.",
   "messages.cce-created": "CCE created successfully",
@@ -107,7 +110,7 @@
   "messages.error-generic_one": "{{count}} error",
   "messages.error-generic_other": "{{count}} errors",
   "messages.invalid-file": "Invalid file",
-  "messages.import-error": "Some or all assets failed to import. Click export to download a csv file with rows which caused an error. Error free rows will have imported",
+  "messages.import-error": "Some or all assets failed to import. Click export to download a csv file with rows which caused an error. Error free rows will have been imported",
   "messages.import-error-on-upload": "Import error on upload. Please fix errors and re upload",
   "messages.error-no-file-selected": "No file selected",
   "messages.search": "Search",
@@ -133,5 +136,6 @@
   "status.not-in-use": "Not in use",
   "title.new-sensor": "New sensor added",
   "title.sensor-details": "Sensor Details",
-  "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported."
+  "tooltip.import-fridge-tag": "Import Berlinger Fridge-tag and Q-tag log files. A sensor will be created, if necessary, for each log file imported.",
+  "error.manufacturer-model-unique": "An item already exists with this manufacturer and model"
 }

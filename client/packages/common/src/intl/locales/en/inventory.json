@@ -105,6 +105,7 @@
   "messages.repack-log-info": "Repacked from stock line",
   "messages.reduced-to-zero_one": "Reduced 1 line to quantity of 0",
   "messages.reduced-to-zero_other": "Reduced {{ count }} lines to quantity of 0",
+  "messages.stock-line-saved": "Stock line saved 🥳",
   "status.new": "New",
   "status.finalised": "Finalised",
   "stocktake.description-template": "Created by {{username}} on {{date}}",
