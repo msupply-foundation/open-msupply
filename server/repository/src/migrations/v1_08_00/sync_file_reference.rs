@@ -15,6 +15,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 total_bytes INTEGER NOT NULL DEFAULT 0,
                 retries INTEGER NOT NULL DEFAULT 0,
                 retry_at TIMESTAMP,
+                direction TEXT NOT NULL,
                 status TEXT NOT NULL,
                 error TEXT,
                 created_datetime TIMESTAMP NOT NULL, -- No modified datetime, as we don't allow updates it would break sync

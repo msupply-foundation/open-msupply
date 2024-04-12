@@ -37,8 +37,8 @@ pub struct FileSyncTrigger {
 /// * Trigger sync every SyncSettings.interval_seconds (only when initialised)
 impl FileSyncDriver {
     pub fn init(settings: &Settings) -> (FileSyncTrigger, FileSyncDriver) {
-        // We use a single-element channel so that we can only have one trigger message processed at a time (no need to queue them up?)
-        let (sender, receiver) = mpsc::channel(1);
+        // We use a multi-element channel so that we don't block
+        let (sender, receiver) = mpsc::channel(10);
 
         let static_file_service = Arc::new(
             StaticFileService::new(&settings.server.base_dir)

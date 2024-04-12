@@ -1,5 +1,4 @@
 use chrono::{Duration, Utc};
-use rand::prelude::SliceRandom;
 use reqwest::multipart;
 use std::sync::Arc;
 use std::{cmp, io::Read};
@@ -31,12 +30,19 @@ pub static RETRY_DELAY_MINUTES: i64 = 15; // Doubles each retry until MAX_RETRY_
 pub static MAX_RETRY_DELAY_MINUTES: i64 = 60; // 1 hour
 
 #[derive(Debug)]
+pub(crate) enum UploadError {
+    ConnectionError,
+    NotFound,
+    Other(String),
+}
+
+#[derive(Debug)]
 pub(crate) enum FileSyncError {
     DatabaseError(RepositoryError),
     CantFindFile(String),
     StdIoError(std::io::Error),
     ReqwestError(reqwest::Error),
-    UploadError(String), //TODO improve error handling (e.g. if it needs to wait to sync etc, maybe handle permanent vs temporary errors?)
+    UploadError(UploadError),
 }
 
 impl From<RepositoryError> for FileSyncError {
@@ -105,11 +111,11 @@ impl FileSynchroniser {
         let file_row_update = match &download_result {
             Ok(_) => SyncFileReferenceRow {
                 downloaded_bytes: sync_file_ref.total_bytes,
-                status: SyncFileStatus::Downloaded,
+                status: SyncFileStatus::Done,
                 ..sync_file_ref.clone()
             },
             Err(error) => SyncFileReferenceRow {
-                status: SyncFileStatus::DownloadError,
+                status: SyncFileStatus::Error,
                 error: Some(format_error(&error)),
                 ..sync_file_ref.clone()
             },
@@ -133,14 +139,13 @@ impl FileSynchroniser {
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
         let files = sync_file_repo.find_all_to_upload()?;
 
-        // Pick a random file and upload it
-        // A random file is chosen in case one particular file is having problems, others should be able to continue
-        let file = files.choose(&mut rand::thread_rng());
+        // Try to upload the next file
+        let file = files.first();
         match file {
             Some(file) => {
                 // update the database to say we're uploading the file
                 sync_file_repo.update_status(&SyncFileReferenceRow {
-                    status: SyncFileStatus::Uploading,
+                    status: SyncFileStatus::InProgress,
                     ..file.clone()
                 })?;
 
@@ -151,7 +156,7 @@ impl FileSynchroniser {
                     Err(err) => {
                         log::error!("Error uploading file: {:#?}", err);
 
-                        // Update database to record the chunk has failed to upload
+                        // Update database to record the file has failed to upload
                         if file.retries >= MAX_UPLOAD_ATTEMPTS {
                             sync_file_repo.update_status(&SyncFileReferenceRow {
                                 status: SyncFileStatus::PermanentFailure,
@@ -160,15 +165,28 @@ impl FileSynchroniser {
                             })?;
                         } else {
                             // Calculate the next retry time
-                            let retry_at = Utc::now().naive_utc()
-                                + Duration::minutes(cmp::min(
-                                    RETRY_DELAY_MINUTES * i64::pow(2, file.retries as u32),
-                                    MAX_RETRY_DELAY_MINUTES,
-                                ));
 
-                            // Update database to record the chunk has failed to upload
+                            // if we get a 404 error it probably means the sync_file_reference hasn't been synced yet.
+                            // So wait 1 minute before retrying
+                            // Otherwise, do an exponential backoff
+                            let retry_at = match err {
+                                FileSyncError::UploadError(UploadError::NotFound) => {
+                                    // wait 1 minute before retrying
+                                    let retry_at = Utc::now().naive_utc() + Duration::minutes(1);
+                                    retry_at
+                                }
+                                _ => {
+                                    Utc::now().naive_utc()
+                                        + Duration::minutes(cmp::min(
+                                            RETRY_DELAY_MINUTES * i64::pow(2, file.retries as u32),
+                                            MAX_RETRY_DELAY_MINUTES,
+                                        ))
+                                }
+                            };
+
+                            // Update database to record the file has failed to upload
                             sync_file_repo.update_status(&SyncFileReferenceRow {
-                                status: SyncFileStatus::UploadError,
+                                status: SyncFileStatus::Error,
                                 retries: file.retries + 1,
                                 retry_at: Some(retry_at),
                                 error: Some(format!("{:?}", err)),
@@ -183,7 +201,7 @@ impl FileSynchroniser {
                 // Update database to record the chunk has been uploaded
                 sync_file_repo.update_status(&SyncFileReferenceRow {
                     uploaded_bytes: file.uploaded_bytes + bytes_uploaded,
-                    status: SyncFileStatus::Uploaded,
+                    status: SyncFileStatus::Done,
                     error: None,
                     ..file.clone()
                 })?;
@@ -243,36 +261,51 @@ impl FileSynchroniser {
         let form = multipart::Form::new().part("file", file_upload_part);
 
         // Calculate url for upload
-        let url = format!(
-            "{}/{}/{}/{}",
-            self.settings.file_upload_base_url(),
-            sync_file_reference_row.table_name,
-            sync_file_reference_row.record_id,
-            sync_file_reference_row.id
-        );
+        let url = self
+            .settings
+            .file_upload_url()
+            .join(&sync_file_reference_row.id)
+            .map_err(|err| {
+                log::error!("Error creating url: {:#?}", err);
+                FileSyncError::UploadError(UploadError::Other(
+                    "Error creating url for id".to_string(),
+                ))
+            })?;
         log::info!("Uploading {} to {}", sync_file_reference_row.file_name, url);
 
         // Upload file
         // TODO: Authentication...
-        let request = self.client.put(&url).multipart(form).send().await;
+        let request = self.client.put(url).multipart(form).send().await;
         match request {
             Ok(response) => {
                 if response.status().is_success() {
                     log::info!("File {} uploaded successfully", sync_file_reference_row.id);
                 } else {
+                    let status = response.status();
+                    let text = response.text().await.unwrap_or_default();
+
                     log::error!(
                         "Error uploading file {} - {} : {:#?}",
                         sync_file_reference_row.id,
-                        response.status(),
-                        response.text().await.unwrap_or_default()
+                        status,
+                        text
                     );
-                    return Err(FileSyncError::UploadError(
-                        "Error uploading file".to_string(),
-                    ));
+
+                    if status == reqwest::StatusCode::NOT_FOUND {
+                        return Err(FileSyncError::UploadError(UploadError::NotFound));
+                    }
+
+                    return Err(FileSyncError::UploadError(UploadError::Other(format!(
+                        "{}:{}",
+                        status, text
+                    ))));
                 }
             }
             Err(err) => {
                 log::error!("Error uploading file: {:#?}", err);
+                if err.is_connect() {
+                    return Err(FileSyncError::UploadError(UploadError::ConnectionError));
+                }
                 return Err(FileSyncError::ReqwestError(err));
             }
         }

@@ -24,7 +24,8 @@ impl SyncApiV6 {
             sync_v5_settings: sync_v5_settings.clone(),
         };
 
-        let result = Client::new().post(url.clone()).json(&request).send().await;
+        let request = Client::new().post(url.clone()).json(&request);
+        let result = request.send().await;
 
         let downloaded_file = match download_response_or_err(result).await {
             Err(error) => Err(error),

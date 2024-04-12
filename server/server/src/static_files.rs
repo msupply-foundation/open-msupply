@@ -9,7 +9,7 @@ use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
 use actix_web::web::Data;
-use actix_web::{get, guard, post, put, web, Error, HttpRequest, HttpResponse};
+use actix_web::{get, guard, post, web, Error, HttpRequest, HttpResponse};
 use futures_util::TryStreamExt;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
@@ -35,7 +35,6 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
         web::scope("/sync_files")
             .service(sync_files)
             .service(upload_sync_file)
-            .service(upload_sync_file_via_sync)
             .wrap(limit_content_length()),
     );
 }
@@ -52,7 +51,7 @@ pub struct UploadedFile {
     mime_type: Option<String>,
     #[serde(skip_serializing)]
     path: String,
-    bytes: i32,
+    pub bytes: i32,
 }
 
 async fn files(
@@ -101,7 +100,7 @@ async fn plugins(
     Ok(response)
 }
 
-async fn handle_file_upload(
+pub(crate) async fn handle_file_upload(
     mut payload: Multipart,
     settings: Data<Settings>,
     file_category: StaticFileCategory,
@@ -164,6 +163,8 @@ async fn upload_sync_file(
     service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String)>,
 ) -> Result<HttpResponse, Error> {
+    // TODO Authorization
+
     let db_connection = service_provider
         .connection()
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
@@ -190,7 +191,8 @@ async fn upload_sync_file(
             created_datetime: chrono::Utc::now().naive_utc(),
             deleted_datetime: None,
             record_id: record_id.clone(),
-            status: SyncFileStatus::ReadyToUpload,
+            status: SyncFileStatus::New,
+            direction: repository::sync_file_reference_row::SyncFileDirection::Upload,
             ..Default::default()
         });
         match result {
@@ -214,110 +216,44 @@ async fn upload_sync_file(
     Ok(HttpResponse::Ok().json(files))
 }
 
-#[put("/{table_name}/{record_id}/{file_id}")]
-async fn upload_sync_file_via_sync(
-    payload: Multipart,
+#[get("/{table_name}/{record_id}/{file_id}")]
+async fn sync_files(
+    req: HttpRequest,
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
 ) -> Result<HttpResponse, Error> {
-    let db_connection = service_provider
-        .connection()
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
-
-    let (table_name, record_id, file_id) = path.into_inner();
-
-    let repo = SyncFileReferenceRowRepository::new(&db_connection);
-    log::info!("Receiving a file via sync : {}", file_id);
-    let mut sync_file_reference = repo
-        .find_one_by_id(&file_id)
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
-        .ok_or({
-            log::error!(
-                "Sync File Reference not found, can't upload until this is synced: {}",
-                file_id
-            );
-            InternalError::new(
-                "Sync File Reference not found, can't upload until this is synced",
-                StatusCode::NOT_FOUND,
-            )
-        })?;
-
-    let files = handle_file_upload(
-        payload,
-        settings,
-        StaticFileCategory::SyncFile(table_name.clone(), record_id.clone()),
-        Some(file_id),
-    )
-    .await?;
-
-    let repo = SyncFileReferenceRowRepository::new(&db_connection);
-    if files.len() != 1 {
-        log::error!(
-            "Incorrect sync file upload received: Expected to see 1 file uploaded, but got {}",
-            files.len()
-        );
-    }
-
-    for file in files.clone() {
-        sync_file_reference.uploaded_bytes += file.bytes;
-        let result = repo.upsert_one(&sync_file_reference);
-        match result {
-            Ok(_) => {}
-            Err(err) => {
-                log::error!(
-                    "Error saving sync file reference after sync upload: {}",
-                    err
-                );
-
-                return Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into());
-            }
-        }
-        break; // Only handle the first file
-    }
-
-    Ok(HttpResponse::Ok().json(files))
-}
-
-#[get("/{table_name}/{record_id}")]
-async fn sync_files(
-    req: HttpRequest,
-    query: web::Query<FileRequestQuery>,
-    settings: Data<Settings>,
-    service_provider: Data<ServiceProvider>,
-    path: web::Path<(String, String)>,
-) -> Result<HttpResponse, Error> {
     let service = StaticFileService::new(&settings.server.base_dir)
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
-    let (table_name, parent_record_id) = path.into_inner();
+    let (table_name, parent_record_id, file_id) = path.into_inner();
 
     let static_file_category = StaticFileCategory::SyncFile(table_name, parent_record_id);
 
     let file = service
-        .find_file(&query.id, static_file_category.clone())
+        .find_file(&file_id, static_file_category.clone())
         .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
 
     let file = match file {
         None => {
             log::info!(
                 "Sync File not found locally, will attempt to download it from the central server: {}",
-                query.id
+                file_id
             );
 
-            let file_syncrhoniser = FileSynchroniser::new(
+            let file_synchroniser = FileSynchroniser::new(
                 get_sync_settings(&service_provider),
                 service_provider.clone().into_inner(),
                 Arc::new(service),
             );
 
-            file_syncrhoniser
-                .download_file_from_central(&query.id)
+            file_synchroniser
+                .download_file_from_central(&file_id)
                 .await
                 .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
         }
         Some(file) => {
-            log::debug!("Sync File found: {}", query.id);
+            log::debug!("Sync File found: {}", file_id);
             file
         }
     };
