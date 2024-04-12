@@ -63,6 +63,7 @@ pub enum ActivityLogType {
     AssetDeleted,
     AssetLogCreated,
     AssetLogReasonCreated,
+    AssetLogReasonDeleted,
     QuantityForLineHasBeenSetToZero,
 }
 

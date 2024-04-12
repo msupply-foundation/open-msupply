@@ -1,4 +1,5 @@
 use self::delete::{delete_asset, DeleteAssetError};
+use self::delete_log_reason::{delete_log_reason, DeleteAssetLogReasonError};
 use self::insert::{insert_asset, InsertAsset, InsertAssetError};
 use self::insert_log::{insert_asset_log, InsertAssetLog, InsertAssetLogError};
 use self::insert_log_reason::{
@@ -17,6 +18,7 @@ use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort};
 use repository::{PaginationOption, StorageConnection};
 
 pub mod delete;
+pub mod delete_log_reason;
 pub mod insert;
 pub mod insert_log;
 pub mod insert_log_reason;
@@ -60,6 +62,14 @@ pub trait AssetServiceTrait: Sync + Send {
 
     fn delete_asset(&self, ctx: &ServiceContext, id: String) -> Result<String, DeleteAssetError> {
         delete_asset(ctx, id)
+    }
+
+    fn delete_log_reason(
+        &self,
+        ctx: &ServiceContext,
+        reason_id: String,
+    ) -> Result<String, DeleteAssetLogReasonError> {
+        delete_log_reason(ctx, reason_id)
     }
 
     fn get_asset_logs(

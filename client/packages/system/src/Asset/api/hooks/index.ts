@@ -20,6 +20,7 @@ export const useAssetData = {
   log: {
     listReasons: Log.useAssetLogReasons,
     insertReasons: Log.useAssetLogReasonInsert,
+    deleteReason: Log.useAssetLogReasonsDelete,
   },
 
   line: {},

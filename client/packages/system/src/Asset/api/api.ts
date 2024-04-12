@@ -142,20 +142,30 @@ export const getAssetQueries = (sdk: Sdk) => ({
       return result?.assetLogReasons;
     },
   },
-  insertLogReason: async (
-    input: Partial<InsertAssetLogReasonInput>
-  ): Promise<string> => {
+  insertLogReason: async (input: Partial<InsertAssetLogReasonInput>) => {
     if (!logReasonParsers.checkStatus(input.assetLogStatus ?? '')) {
       throw new Error('Cannot parse status');
     }
     const result = await sdk.insertAssetLogReason({
       input: logReasonParsers.toLogReasonInsert(input),
     });
-    const { insertAssetLogReason } = result;
-
-    if (insertAssetLogReason?.__typename === 'AssetLogReasonNode') {
-      return insertAssetLogReason.reason;
+    if (
+      result.centralServer.logReason.insertAssetLogReason.__typename ===
+      'AssetLogReasonNode'
+    ) {
+      return result.centralServer.logReason.insertAssetLogReason;
     }
+
     throw new Error('Could not insert reason');
+  },
+  deleteLogReason: async (reasonId: string) => {
+    const result = await sdk.deleteLogReason({ reasonId });
+    if (
+      result.centralServer.logReason.deleteLogReason.__typename ===
+      'DeleteResponse'
+    ) {
+      return result.centralServer.logReason;
+    }
+    throw new Error('Could not delete reason');
   },
 });

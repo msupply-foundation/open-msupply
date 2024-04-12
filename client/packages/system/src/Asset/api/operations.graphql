@@ -136,16 +136,37 @@ query assetLogReasons(
 
 mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
   centralServer {
-    insertAssetLogReason(input: $input) {
-      ... on AssetLogReasonNode {
-        __typename
-        id
-        reason
+    logReason {
+      insertAssetLogReason(input: $input) {
+        ... on AssetLogReasonNode {
+          __typename
+          id
+          reason
+        }
+        ... on InsertAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
+        }
       }
-      ... on InsertAssetLogReasonError {
-        __typename
-        error {
-          description
+    }
+  }
+}
+
+mutation deleteLogReason($reasonId: String!) {
+  centralServer {
+    logReason {
+      deleteLogReason(reasonId: $reasonId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
         }
       }
     }
