@@ -10,7 +10,7 @@ export const useChangeLinesLocation = () => {
 
   const selectedRows = useSelectedRows();
 
-  const onZeroQuantities = async (location: LocationRowFragment | null) => {
+  const onChangeLocations = async (location: LocationRowFragment | null) => {
     try {
       const { errorMessages } = await saveAndMapStructuredErrors(
         selectedRows.map(line => ({
@@ -32,5 +32,5 @@ export const useChangeLinesLocation = () => {
     }
   };
 
-  return onZeroQuantities;
+  return onChangeLocations;
 };
