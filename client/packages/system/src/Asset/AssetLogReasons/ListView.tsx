@@ -9,6 +9,7 @@ import {
   useTranslation,
   useUrlQueryParams,
   useEditModal,
+  InsertAssetLogReasonInput,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
@@ -54,17 +55,16 @@ const AssetListComponent: FC = () => {
     [sortBy]
   );
 
-  const { isOpen, entity, mode, onClose, onOpen } =
-    useEditModal<AssetLogReasonFragment>();
+  const { isOpen, entity, onClose, onOpen } =
+    useEditModal<InsertAssetLogReasonInput>();
 
   return (
     <>
       {isOpen && (
         <LogReasonCreateModal
-          mode={mode}
           isOpen={isOpen}
           onClose={onClose}
-          location={entity}
+          logReason={entity}
         />
       )}
       <AppBarButtons onCreate={() => onOpen()} />

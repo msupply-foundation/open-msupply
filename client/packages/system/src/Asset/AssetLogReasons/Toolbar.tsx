@@ -13,9 +13,9 @@ import {
   AssetLogReasonNode,
   FilterController,
   AutocompleteOnChange,
-  AssetLogStatusInput,
   InputLabel,
   Autocomplete,
+  StatusType,
 } from '@openmsupply-client/common';
 import { useAssetData } from '../api';
 
@@ -24,9 +24,9 @@ type DeleteError = {
   message: string;
 };
 
-type AssetLogStatus = {
+export type AssetLogStatus = {
   label: string;
-  value: AssetLogStatusInput;
+  value: StatusType;
 };
 
 export const Toolbar: FC<{
@@ -125,25 +125,25 @@ export const Toolbar: FC<{
           options={[
             {
               label: t('status.decommissioned', { ns: 'coldchain' }),
-              value: AssetLogStatusInput.Decommissioned,
+              value: StatusType.Decommissioned,
             },
             {
               label: t('status.functioning', { ns: 'coldchain' }),
-              value: AssetLogStatusInput.Functioning,
+              value: StatusType.Functioning,
             },
             {
               label: t('status.functioning-but-needs-attention', {
                 ns: 'coldchain',
               }),
-              value: AssetLogStatusInput.FunctioningButNeedsAttention,
+              value: StatusType.FunctioningButNeedsAttention,
             },
             {
               label: t('status.not-functioning', { ns: 'coldchain' }),
-              value: AssetLogStatusInput.NotFunctioning,
+              value: StatusType.NotFunctioning,
             },
             {
               label: t('status.not-in-use', { ns: 'coldchain' }),
-              value: AssetLogStatusInput.NotInUse,
+              value: StatusType.NotInUse,
             },
           ]}
           onChange={onFilterChange}

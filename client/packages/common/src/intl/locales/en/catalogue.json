@@ -11,6 +11,7 @@
   "error.pack-variant-exists": "Pack variant with the same pack size already exists for item",
   "filename.asset-categories": "Asset Categories",
   "label.atc-category": "ATC category",
+  "label.create-log-reason": "Create log reason",
   "label.category": "Category",
   "label.class": "Class",
   "label.status": "Status",
