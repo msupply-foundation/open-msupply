@@ -431,13 +431,16 @@ export const getNextItemId = (
   currentItemId: string | null
 ) => {
   if (!lines || !currentItemId) return undefined;
-  const currentItemIndex = lines.findIndex(
+
+  const items = ArrayUtils.uniqBy(lines, line => line.itemId);
+
+  const currentItemIndex = items.findIndex(
     line => line.itemId === currentItemId
   );
   if (currentItemIndex === -1) return;
 
-  const nextItemIndex = lines.findIndex(
+  const nextItemIndex = items.findIndex(
     (line, index) => index > currentItemIndex && line.itemId !== currentItemId
   );
-  return nextItemIndex === -1 ? undefined : lines[nextItemIndex]?.itemId;
+  return nextItemIndex === -1 ? undefined : items[nextItemIndex]?.itemId;
 };
