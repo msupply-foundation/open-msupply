@@ -141,7 +141,7 @@ export const getAssetQueries = (sdk: Sdk) => ({
       return result?.assetLogReasons;
     },
   },
-  insertLogReason: async (input: Partial<InsertAssetLogReasonInput>) => {
+  insertLogReason: async (input: InsertAssetLogReasonInput) => {
     if (!logReasonParsers.checkStatus(input.assetLogStatus ?? '')) {
       throw new Error('Cannot parse status');
     }
