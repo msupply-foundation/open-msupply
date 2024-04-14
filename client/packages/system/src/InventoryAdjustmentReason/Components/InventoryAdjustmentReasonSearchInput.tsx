@@ -36,13 +36,14 @@ export const InventoryAdjustmentReasonSearchInput: FC<
 }) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
-  const isRequired = data?.totalCount !== 0;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
     if (adjustmentType === AdjustmentTypeInput.Addition)
       return reason.type === InventoryAdjustmentReasonNodeType.Positive;
     return reason.type === InventoryAdjustmentReasonNodeType.Negative;
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
+
+  const isRequired = reasons.length !== 0;
 
   return (
     <Box display="flex" flexDirection="row" width={120}>
