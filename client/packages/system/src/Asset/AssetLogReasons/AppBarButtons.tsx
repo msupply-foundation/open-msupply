@@ -3,8 +3,8 @@ import {
   AppBarButtonsPortal,
   Grid,
   useTranslation,
-  IconButton,
-  CloseIcon,
+  ButtonWithIcon,
+  PlusCircleIcon,
 } from '@openmsupply-client/common';
 
 interface AppBarButtonsProps {
@@ -19,12 +19,11 @@ export const AppBarButtonsComponent: FC<AppBarButtonsProps> = ({
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
-        <IconButton
-          color="primary"
-          onClick={onCreate}
-          icon={<CloseIcon />}
+        <ButtonWithIcon
+          Icon={<PlusCircleIcon />}
           label={t('button.create-log-reason')}
-        />{' '}
+          onClick={onCreate}
+        />
       </Grid>
     </AppBarButtonsPortal>
   );
