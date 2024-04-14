@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -23,8 +23,9 @@ import { InboundReturnItem } from '../../types';
 import { InboundReturnEditModal } from '../modals';
 import { getNextItemId } from '../../utils';
 
-export const InboundReturnDetailView: FC = () => {
+const InboundReturnsDetailViewComponent = () => {
   const { data, isLoading } = useReturns.document.inboundReturn();
+  const { rows } = useReturns.lines.inboundReturnRows();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
 
@@ -52,7 +53,7 @@ export const InboundReturnDetailView: FC = () => {
     },
   ];
 
-  const nextItemId = getNextItemId(data?.lines?.nodes ?? [], itemId);
+  const nextItemId = getNextItemId(rows ?? [], itemId);
 
   return (
     <React.Suspense
@@ -111,3 +112,16 @@ export const InboundReturnDetailView: FC = () => {
     </React.Suspense>
   );
 };
+
+export const InboundReturnDetailView = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<InboundReturnLineFragment>({
+      initialSortBy: {
+        key: 'itemName',
+      },
+    })}
+  >
+    <InboundReturnsDetailViewComponent />
+  </TableProvider>
+);
