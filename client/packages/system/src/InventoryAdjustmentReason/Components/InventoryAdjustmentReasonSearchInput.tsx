@@ -48,6 +48,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
+        disabled={!isRequired}
         width={`${width}px`}
         clearable={false}
         value={
