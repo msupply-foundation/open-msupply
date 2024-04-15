@@ -35,7 +35,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             );
             CREATE TABLE asset_catalogue_item_property (
                 id TEXT NOT NULL PRIMARY KEY,
-                asset_catalogue_item_id TEXT NOT NULL REFERENCES asset(id),
+                asset_catalogue_item_id TEXT NOT NULL REFERENCES asset_catalogue_item(id),
                 asset_catalogue_property_id TEXT NOT NULL REFERENCES asset_catalogue_property(id),
                 value_string TEXT,
                 value_int INTEGER,
