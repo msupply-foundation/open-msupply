@@ -83,7 +83,7 @@ fragment Asset on AssetNode {
   }
 }
 
-fragment AssetLog on AssetLogNode {
+fragment ColdchainAssetLog on AssetLogNode {
   comment
   id
   logDatetime
@@ -154,7 +154,7 @@ query assetLogs(
       totalCount
       nodes {
         __typename
-        ...AssetLog
+        ...ColdchainAssetLog
       }
     }
   }

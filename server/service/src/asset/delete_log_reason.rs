@@ -1,10 +1,7 @@
-use super::validate::check_asset_exists;
 use crate::{activity_log::activity_log_entry, service_provider::ServiceContext};
 use repository::asset_log_reason_row::AssetLogReasonRowRepository;
 use repository::assets::asset_internal_location_row::AssetInternalLocationRowRepository;
-use repository::{
-    assets::asset_row::AssetRowRepository, ActivityLogType, RepositoryError, StorageConnection,
-};
+use repository::{ActivityLogType, RepositoryError, StorageConnection};
 
 #[derive(PartialEq, Debug)]
 pub enum DeleteAssetLogReasonError {
