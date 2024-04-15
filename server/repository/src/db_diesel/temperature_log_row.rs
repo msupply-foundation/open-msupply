@@ -26,8 +26,8 @@ joinable!(temperature_log -> store (store_id));
 #[derive(
     Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize,
 )]
-#[changeset_options(treat_none_as_null = "true")]
-#[table_name = "temperature_log"]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = temperature_log)]
 pub struct TemperatureLogRow {
     pub id: String,
     pub temperature: f64,
