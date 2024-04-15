@@ -144,9 +144,7 @@ module.exports = env => {
     plugins: [
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
-        FEATURE_INVENTORY_ADJUSTMENTS: JSON.stringify(
-          env.FEATURE_INVENTORY_ADJUSTMENTS
-        ),
+        FEATURE_INVENTORY_ADJUSTMENTS: env.FEATURE_INVENTORY_ADJUSTMENTS,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
       }),
