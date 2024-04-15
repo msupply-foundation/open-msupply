@@ -29,7 +29,7 @@ impl<'a> AssetCatalogueItemPropertyPropertyRepository<'a> {
         &self,
         filter: Option<AssetCataloguePropertyItemFilter>,
     ) -> Result<Vec<AssetCatalogueItemPropertyRow>, RepositoryError> {
-        let mut query = create_filtered_query(filter.clone());
+        let query = create_filtered_query(filter.clone());
 
         // // Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
