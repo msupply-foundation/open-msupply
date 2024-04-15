@@ -1,7 +1,6 @@
 use chrono::{Duration, Utc};
-use reqwest::multipart;
+use std::cmp;
 use std::sync::Arc;
-use std::{cmp, io::Read};
 use thiserror::Error;
 use util::format_error;
 
@@ -16,12 +15,9 @@ use crate::static_files::StaticFile;
 use crate::sync::api::SyncApiV5;
 use crate::sync::api_v6::SyncApiV6;
 use crate::sync::settings::SYNC_VERSION;
-use crate::{
-    service_provider::ServiceProvider,
-    static_files::{StaticFileCategory, StaticFileService},
-};
+use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
-use super::api::{SyncApiSettings, SyncApiV5CreatingError};
+use super::api::SyncApiV5CreatingError;
 use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
 use super::settings::SyncSettings;
 
@@ -66,12 +62,9 @@ pub enum DownloadFileError {
 }
 
 pub struct FileSynchroniser {
-    settings: SyncSettings,
     sync_api_v6: SyncApiV6,
-    sync_api_settings: SyncApiSettings,
     service_provider: Arc<ServiceProvider>,
     static_file_service: Arc<StaticFileService>,
-    client: reqwest::Client,
 }
 
 impl FileSynchroniser {
@@ -79,20 +72,16 @@ impl FileSynchroniser {
         settings: SyncSettings,
         service_provider: Arc<ServiceProvider>,
         static_file_service: Arc<StaticFileService>,
-    ) -> Self {
+    ) -> anyhow::Result<Self> {
         // Create SyncApiV6 instance
-        let sync_v5_settings =
-            SyncApiV5::new_settings(&settings, &service_provider, SYNC_VERSION).unwrap(); // TODO Fix
-        let sync_api_v6 = SyncApiV6::new(sync_v5_settings.clone()).unwrap(); // TODO Fix
+        let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, SYNC_VERSION)?;
+        let sync_api_v6 = SyncApiV6::new(sync_v5_settings.clone())?;
 
-        Self {
-            settings,
+        Ok(Self {
             sync_api_v6,
-            sync_api_settings: sync_v5_settings,
             service_provider,
             static_file_service,
-            client: reqwest::Client::new(),
-        }
+        })
     }
 
     pub async fn download_file_from_central(

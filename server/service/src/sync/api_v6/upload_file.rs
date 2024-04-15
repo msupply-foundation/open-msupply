@@ -91,7 +91,6 @@ impl SyncApiV6 {
         let client = Client::new();
 
         let request = client.put(url).multipart(form);
-        println!("request: {:#?}", request);
         let response = request.send().await;
         match response {
             Ok(response) => {
