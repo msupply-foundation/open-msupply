@@ -68,7 +68,7 @@ If you've set configurations in rust analyzer, can use inlay hint play and debug
 * integration/transfer/shipment
 * integration/omsupply_central/test
 
-# How do they work (Central, Remote and open mSupply centarl)
+# How do they work (Central, Remote and open mSupply central)
 
 There is a common `SyncRecordTester` trait with a `test_step_data` method returning a vector of TestData.
 Each TestData struct contains the test data required for the various testing steps.
