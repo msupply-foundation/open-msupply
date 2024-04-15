@@ -1,6 +1,8 @@
 #[macro_use]
 extern crate diesel;
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel_migrations::{
+    embed_migrations, EmbeddedMigrations, HarnessWithOutput, MigrationHarness,
+};
 
 pub mod database_settings;
 pub mod db_diesel;
@@ -29,8 +31,7 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations/sqlit
 pub fn run_db_migrations(connection: &mut StorageConnection) -> Result<(), String> {
     let mut boxed_buffer = Box::<Vec<u8>>::default();
 
-    *connection
-        .connection
+    HarnessWithOutput::new(&mut connection.connection, &mut boxed_buffer)
         .run_pending_migrations(MIGRATIONS)
         .map_err(|e| e.to_string())?;
 
