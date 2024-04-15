@@ -202,5 +202,601 @@ INSERT INTO asset_catalogue_item (id, sub_catalogue, code, asset_class_id, asset
     "#,
     )?;
 
+    // Asset Catalogue Property
+    sql!(
+        connection,
+        r#"
+INSERT INTO asset_catalogue_property (id, asset_category_id, name, type, allowed_values) VALUES ('7613ef45-6410-41dc-a50a-c8fabf80cf71', '02cbea92-d5bf-4832-863b-c04e093a7760', 'Energy source', 'STRING', 'Electricity,Solar,Passive,Kerosene,Gas');
+INSERT INTO asset_catalogue_property (id, asset_category_id, name, type) VALUES ('1520c497-e498-478b-bc8d-bbb57a93fd16', '02cbea92-d5bf-4832-863b-c04e093a7760', 'Storage volume (+5 °C)', 'INTEGER');
+INSERT INTO asset_catalogue_property (id, asset_category_id, name, type) VALUES ('9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93', '02cbea92-d5bf-4832-863b-c04e093a7760', 'Storage volume (-20 °C)', 'INTEGER');
+INSERT INTO asset_catalogue_property (id, asset_category_id, name, type) VALUES ('4c15f2b6-6043-46f7-a3b2-e26077292224', '02cbea92-d5bf-4832-863b-c04e093a7760', 'Storage volume (-70 °C)', 'INTEGER');
+    "#,
+    )?;
+
+    // Asset Catalogue Property
+    sql!(
+        connection,
+        r#"
+        --Code: 'E003/070'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('e30125df-c5bb-4686-97d6-ef09a06db1c0', 'f17c924d-cb72-431d-8a00-514a50570449','7613ef45-6410-41dc-a50a-c8fabf80cf71','Electricity');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('9583ce04-b352-4332-b533-08b7aa3e9a1c', 'f17c924d-cb72-431d-8a00-514a50570449','1520c497-e498-478b-bc8d-bbb57a93fd16',75);
+        --Code: 'E003/123'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('ba5beb82-fafe-40bd-ae1e-a144f84007df', '3721143e-6aca-4686-b94b-a09ab064b9c4','7613ef45-6410-41dc-a50a-c8fabf80cf71','Electricity');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('d315b963-33fd-4033-99c2-a9a757330854', '3721143e-6aca-4686-b94b-a09ab064b9c4','1520c497-e498-478b-bc8d-bbb57a93fd16',120);
+        --Code: 'E003/131'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('47007c44-ee27-4483-a215-503dbb1cbf71', ''db64a976-85cd-497e-a960-476a50753a21'','7613ef45-6410-41dc-a50a-c8fabf80cf71','Electricity');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('4340b79d-a57b-40f1-bcc0-3959f99f7827', ''db64a976-85cd-497e-a960-476a50753a21'','1520c497-e498-478b-bc8d-bbb57a93fd16',211);
+        --Code: 'E003/097'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''57a4b8f7-0863-4a8d-a24a-1ee81dc61648'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''57a4b8f7-0863-4a8d-a24a-1ee81dc61648'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''57a4b8f7-0863-4a8d-a24a-1ee81dc61648'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''57a4b8f7-0863-4a8d-a24a-1ee81dc61648'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/103'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''1cf5fa83-4fd0-4e23-a5ac-dec720f52fcd'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1cf5fa83-4fd0-4e23-a5ac-dec720f52fcd'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1cf5fa83-4fd0-4e23-a5ac-dec720f52fcd'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1cf5fa83-4fd0-4e23-a5ac-dec720f52fcd'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/138'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''cb1167ed-683f-4bb0-a67b-129231af7dda'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cb1167ed-683f-4bb0-a67b-129231af7dda'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cb1167ed-683f-4bb0-a67b-129231af7dda'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cb1167ed-683f-4bb0-a67b-129231af7dda'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/060'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''7d73bfdb-76ca-4cfa-ac52-6215048bebbb'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7d73bfdb-76ca-4cfa-ac52-6215048bebbb'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7d73bfdb-76ca-4cfa-ac52-6215048bebbb'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7d73bfdb-76ca-4cfa-ac52-6215048bebbb'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/061'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''9a4f0ebf-a9cf-4e73-b8fc-5aede8fa88c3'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9a4f0ebf-a9cf-4e73-b8fc-5aede8fa88c3'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9a4f0ebf-a9cf-4e73-b8fc-5aede8fa88c3'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9a4f0ebf-a9cf-4e73-b8fc-5aede8fa88c3'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/127'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''0bbf332d-52bd-41aa-ba7d-d7709f08eeed'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''0bbf332d-52bd-41aa-ba7d-d7709f08eeed'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''0bbf332d-52bd-41aa-ba7d-d7709f08eeed'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''0bbf332d-52bd-41aa-ba7d-d7709f08eeed'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/002'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''c7d48b5c-74b2-4077-94f5-2b25d67a447b'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c7d48b5c-74b2-4077-94f5-2b25d67a447b'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c7d48b5c-74b2-4077-94f5-2b25d67a447b'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c7d48b5c-74b2-4077-94f5-2b25d67a447b'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/003'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''23bcee45-886e-42c3-8661-4e56b9bb6ff0'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''23bcee45-886e-42c3-8661-4e56b9bb6ff0'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''23bcee45-886e-42c3-8661-4e56b9bb6ff0'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''23bcee45-886e-42c3-8661-4e56b9bb6ff0'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/023'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''a067b53b-ca3e-4de9-ae5e-a19d91ce1cc5'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a067b53b-ca3e-4de9-ae5e-a19d91ce1cc5'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a067b53b-ca3e-4de9-ae5e-a19d91ce1cc5'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a067b53b-ca3e-4de9-ae5e-a19d91ce1cc5'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/024'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''b1278bbb-e818-4bb5-9839-2b8b287c637e'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b1278bbb-e818-4bb5-9839-2b8b287c637e'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b1278bbb-e818-4bb5-9839-2b8b287c637e'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b1278bbb-e818-4bb5-9839-2b8b287c637e'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/025'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''33cad6a0-4e2c-4b0f-8bb0-c1961aba8740'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''33cad6a0-4e2c-4b0f-8bb0-c1961aba8740'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''33cad6a0-4e2c-4b0f-8bb0-c1961aba8740'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''33cad6a0-4e2c-4b0f-8bb0-c1961aba8740'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/126'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''8cd56b7f-6f4e-478e-be9b-33b54d8a0c97'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8cd56b7f-6f4e-478e-be9b-33b54d8a0c97'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8cd56b7f-6f4e-478e-be9b-33b54d8a0c97'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8cd56b7f-6f4e-478e-be9b-33b54d8a0c97'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/128'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''536d23cd-f797-4558-8fa8-c509077a229e'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''536d23cd-f797-4558-8fa8-c509077a229e'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''536d23cd-f797-4558-8fa8-c509077a229e'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''536d23cd-f797-4558-8fa8-c509077a229e'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/130'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''e779cf64-d940-4500-98f2-171fbd0f3ec9'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e779cf64-d940-4500-98f2-171fbd0f3ec9'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e779cf64-d940-4500-98f2-171fbd0f3ec9'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e779cf64-d940-4500-98f2-171fbd0f3ec9'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/071'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''e6be81b8-151f-4e90-87e9-f8af776c7252'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e6be81b8-151f-4e90-87e9-f8af776c7252'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e6be81b8-151f-4e90-87e9-f8af776c7252'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e6be81b8-151f-4e90-87e9-f8af776c7252'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/125'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''42fe34c3-9f9d-4a2a-b15d-6177f7586e43'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''42fe34c3-9f9d-4a2a-b15d-6177f7586e43'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''42fe34c3-9f9d-4a2a-b15d-6177f7586e43'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''42fe34c3-9f9d-4a2a-b15d-6177f7586e43'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/007'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''9d77cc99-6098-438a-8242-0bb55a450b49'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9d77cc99-6098-438a-8242-0bb55a450b49'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9d77cc99-6098-438a-8242-0bb55a450b49'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9d77cc99-6098-438a-8242-0bb55a450b49'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/011'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''e5dc3c5e-bc12-4ea4-a3d2-c4c3b30cb753'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e5dc3c5e-bc12-4ea4-a3d2-c4c3b30cb753'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e5dc3c5e-bc12-4ea4-a3d2-c4c3b30cb753'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e5dc3c5e-bc12-4ea4-a3d2-c4c3b30cb753'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/022'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''981c12f8-b054-4793-aab1-4f8363b4191c'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''981c12f8-b054-4793-aab1-4f8363b4191c'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''981c12f8-b054-4793-aab1-4f8363b4191c'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''981c12f8-b054-4793-aab1-4f8363b4191c'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/044'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''53a49c7e-168d-4599-8a5e-5da9281914c4'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''53a49c7e-168d-4599-8a5e-5da9281914c4'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''53a49c7e-168d-4599-8a5e-5da9281914c4'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''53a49c7e-168d-4599-8a5e-5da9281914c4'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/051'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''aee18a7b-0b1f-4448-a08d-37b9d61c240c'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''aee18a7b-0b1f-4448-a08d-37b9d61c240c'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''aee18a7b-0b1f-4448-a08d-37b9d61c240c'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''aee18a7b-0b1f-4448-a08d-37b9d61c240c'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/066'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''2f74670b-5081-42d5-852c-8ce392b6a536'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''2f74670b-5081-42d5-852c-8ce392b6a536'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''2f74670b-5081-42d5-852c-8ce392b6a536'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''2f74670b-5081-42d5-852c-8ce392b6a536'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/072'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''f1ba0107-8465-44f2-aa3b-36944dce498a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f1ba0107-8465-44f2-aa3b-36944dce498a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f1ba0107-8465-44f2-aa3b-36944dce498a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f1ba0107-8465-44f2-aa3b-36944dce498a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/079'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''6f9f4cf0-7d70-4448-8b0a-57ecf3361912'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6f9f4cf0-7d70-4448-8b0a-57ecf3361912'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6f9f4cf0-7d70-4448-8b0a-57ecf3361912'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6f9f4cf0-7d70-4448-8b0a-57ecf3361912'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/080'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''d3920fb9-7927-4549-ab3b-fd13498fb570'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d3920fb9-7927-4549-ab3b-fd13498fb570'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d3920fb9-7927-4549-ab3b-fd13498fb570'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d3920fb9-7927-4549-ab3b-fd13498fb570'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/081'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''59a197c5-76ab-47ec-84fc-8a2802f1d1be'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''59a197c5-76ab-47ec-84fc-8a2802f1d1be'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''59a197c5-76ab-47ec-84fc-8a2802f1d1be'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''59a197c5-76ab-47ec-84fc-8a2802f1d1be'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/082'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''5f5b435f-8520-4dbf-84db-4db43f0ebbd0'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5f5b435f-8520-4dbf-84db-4db43f0ebbd0'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5f5b435f-8520-4dbf-84db-4db43f0ebbd0'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5f5b435f-8520-4dbf-84db-4db43f0ebbd0'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/083'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''92a77272-d0c0-43f6-85ec-647c9447f194'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''92a77272-d0c0-43f6-85ec-647c9447f194'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''92a77272-d0c0-43f6-85ec-647c9447f194'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''92a77272-d0c0-43f6-85ec-647c9447f194'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/087'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''f7270d64-1680-4928-9fa4-a0ab01af698c'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f7270d64-1680-4928-9fa4-a0ab01af698c'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f7270d64-1680-4928-9fa4-a0ab01af698c'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f7270d64-1680-4928-9fa4-a0ab01af698c'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/088'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''087e7310-8781-412f-99b6-f3b0c0afd7eb'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''087e7310-8781-412f-99b6-f3b0c0afd7eb'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''087e7310-8781-412f-99b6-f3b0c0afd7eb'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''087e7310-8781-412f-99b6-f3b0c0afd7eb'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/089'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''6baa49bf-4412-42d0-a50d-c4758f96a071'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6baa49bf-4412-42d0-a50d-c4758f96a071'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6baa49bf-4412-42d0-a50d-c4758f96a071'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6baa49bf-4412-42d0-a50d-c4758f96a071'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/096'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9ba05fbe-3a24-4f1b-af33-d45dd9de8fa8'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/100'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''b50409f4-89d5-4cef-a6e0-6185e2df9ce7'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b50409f4-89d5-4cef-a6e0-6185e2df9ce7'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b50409f4-89d5-4cef-a6e0-6185e2df9ce7'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b50409f4-89d5-4cef-a6e0-6185e2df9ce7'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/101'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''9cb9524f-b96d-4750-8d1d-28a3f239ef2b'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9cb9524f-b96d-4750-8d1d-28a3f239ef2b'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9cb9524f-b96d-4750-8d1d-28a3f239ef2b'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''9cb9524f-b96d-4750-8d1d-28a3f239ef2b'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/110'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''a1e4b0e1-f1e2-4217-b8c9-906ef901b14c'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a1e4b0e1-f1e2-4217-b8c9-906ef901b14c'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a1e4b0e1-f1e2-4217-b8c9-906ef901b14c'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a1e4b0e1-f1e2-4217-b8c9-906ef901b14c'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/111'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''a609ed46-7cc3-4c3f-bf6e-de406fdac81a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a609ed46-7cc3-4c3f-bf6e-de406fdac81a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a609ed46-7cc3-4c3f-bf6e-de406fdac81a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a609ed46-7cc3-4c3f-bf6e-de406fdac81a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/112'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''c19638fd-cefc-4369-9284-6fd67e4830ab'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c19638fd-cefc-4369-9284-6fd67e4830ab'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c19638fd-cefc-4369-9284-6fd67e4830ab'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c19638fd-cefc-4369-9284-6fd67e4830ab'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/113'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''f6011b71-4590-4d4a-bf12-0bd04cd79d4a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f6011b71-4590-4d4a-bf12-0bd04cd79d4a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f6011b71-4590-4d4a-bf12-0bd04cd79d4a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f6011b71-4590-4d4a-bf12-0bd04cd79d4a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/114'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''e8bfd677-cd75-4344-bf3f-696abe951c71'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e8bfd677-cd75-4344-bf3f-696abe951c71'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e8bfd677-cd75-4344-bf3f-696abe951c71'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e8bfd677-cd75-4344-bf3f-696abe951c71'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/115'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''5bf69a09-f734-4689-b1b6-2856155f3546'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5bf69a09-f734-4689-b1b6-2856155f3546'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5bf69a09-f734-4689-b1b6-2856155f3546'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5bf69a09-f734-4689-b1b6-2856155f3546'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/120'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''2ce1032f-311e-420e-a854-bef87c3147e5'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''2ce1032f-311e-420e-a854-bef87c3147e5'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''2ce1032f-311e-420e-a854-bef87c3147e5'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''2ce1032f-311e-420e-a854-bef87c3147e5'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/122'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''cd9caec3-bf95-4ce3-a1f6-64e3e11b390a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cd9caec3-bf95-4ce3-a1f6-64e3e11b390a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cd9caec3-bf95-4ce3-a1f6-64e3e11b390a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cd9caec3-bf95-4ce3-a1f6-64e3e11b390a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/133'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''d087d824-efa1-494a-90a8-f3a9d1519c61'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d087d824-efa1-494a-90a8-f3a9d1519c61'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d087d824-efa1-494a-90a8-f3a9d1519c61'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d087d824-efa1-494a-90a8-f3a9d1519c61'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/136'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''08b2711a-912b-4023-a94c-62f2f7ff15da'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''08b2711a-912b-4023-a94c-62f2f7ff15da'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''08b2711a-912b-4023-a94c-62f2f7ff15da'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''08b2711a-912b-4023-a94c-62f2f7ff15da'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/137'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''bb658a06-2699-43ca-a700-cd5604838a60'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''bb658a06-2699-43ca-a700-cd5604838a60'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''bb658a06-2699-43ca-a700-cd5604838a60'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''bb658a06-2699-43ca-a700-cd5604838a60'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/139'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''869ff8de-9c4b-4425-a894-0b0c6cd3bf14'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''869ff8de-9c4b-4425-a894-0b0c6cd3bf14'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''869ff8de-9c4b-4425-a894-0b0c6cd3bf14'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''869ff8de-9c4b-4425-a894-0b0c6cd3bf14'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/109'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''781f4e20-e317-4e8a-b7c8-263c95d6b675'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''781f4e20-e317-4e8a-b7c8-263c95d6b675'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''781f4e20-e317-4e8a-b7c8-263c95d6b675'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''781f4e20-e317-4e8a-b7c8-263c95d6b675'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/035'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''783da0b3-f157-46a2-9b78-1430b8680753'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''783da0b3-f157-46a2-9b78-1430b8680753'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''783da0b3-f157-46a2-9b78-1430b8680753'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''783da0b3-f157-46a2-9b78-1430b8680753'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/042'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''7b54d581-13c6-4f70-8a2f-a736fb12c881'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7b54d581-13c6-4f70-8a2f-a736fb12c881'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7b54d581-13c6-4f70-8a2f-a736fb12c881'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7b54d581-13c6-4f70-8a2f-a736fb12c881'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/043'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''6ff0747c-1639-403b-95e9-7e1dbca8a917'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6ff0747c-1639-403b-95e9-7e1dbca8a917'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6ff0747c-1639-403b-95e9-7e1dbca8a917'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''6ff0747c-1639-403b-95e9-7e1dbca8a917'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/048'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''222111ec-4aa3-41ce-8c35-b86f3fa08d23'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''222111ec-4aa3-41ce-8c35-b86f3fa08d23'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''222111ec-4aa3-41ce-8c35-b86f3fa08d23'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''222111ec-4aa3-41ce-8c35-b86f3fa08d23'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/057'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''1b2c352a-5c69-4b76-a411-d93be56cc05a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1b2c352a-5c69-4b76-a411-d93be56cc05a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1b2c352a-5c69-4b76-a411-d93be56cc05a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1b2c352a-5c69-4b76-a411-d93be56cc05a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/074'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''f400cd20-29f2-42c6-9805-df6458eba554'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f400cd20-29f2-42c6-9805-df6458eba554'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f400cd20-29f2-42c6-9805-df6458eba554'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f400cd20-29f2-42c6-9805-df6458eba554'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/077'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''5005ff6c-6f9c-44ce-bd5f-4fd3c9b5fc84'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5005ff6c-6f9c-44ce-bd5f-4fd3c9b5fc84'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5005ff6c-6f9c-44ce-bd5f-4fd3c9b5fc84'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5005ff6c-6f9c-44ce-bd5f-4fd3c9b5fc84'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/091'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''eda9ae25-6184-4141-80a0-e1b0940f7f1d'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''eda9ae25-6184-4141-80a0-e1b0940f7f1d'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''eda9ae25-6184-4141-80a0-e1b0940f7f1d'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''eda9ae25-6184-4141-80a0-e1b0940f7f1d'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/092'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''fff04c75-2f70-45e2-ac3b-89c054240ca7'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''fff04c75-2f70-45e2-ac3b-89c054240ca7'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''fff04c75-2f70-45e2-ac3b-89c054240ca7'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''fff04c75-2f70-45e2-ac3b-89c054240ca7'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/095'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''8a64271b-011d-4320-a1da-66c6bed2befa'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8a64271b-011d-4320-a1da-66c6bed2befa'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8a64271b-011d-4320-a1da-66c6bed2befa'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8a64271b-011d-4320-a1da-66c6bed2befa'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/119'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''7964fff0-ea1d-46ff-88fd-4e9c9eacc685'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7964fff0-ea1d-46ff-88fd-4e9c9eacc685'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7964fff0-ea1d-46ff-88fd-4e9c9eacc685'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''7964fff0-ea1d-46ff-88fd-4e9c9eacc685'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/129'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''beb89f3c-e33b-4ab2-9032-69f313681c24'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''beb89f3c-e33b-4ab2-9032-69f313681c24'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''beb89f3c-e33b-4ab2-9032-69f313681c24'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''beb89f3c-e33b-4ab2-9032-69f313681c24'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/132'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''92076de4-2dc7-4c6f-9c7d-b7c1141aa8e7'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''92076de4-2dc7-4c6f-9c7d-b7c1141aa8e7'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''92076de4-2dc7-4c6f-9c7d-b7c1141aa8e7'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''92076de4-2dc7-4c6f-9c7d-b7c1141aa8e7'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/124'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''e2e9d099-5eea-422c-95b6-e1dfc536b9eb'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e2e9d099-5eea-422c-95b6-e1dfc536b9eb'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e2e9d099-5eea-422c-95b6-e1dfc536b9eb'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e2e9d099-5eea-422c-95b6-e1dfc536b9eb'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/073'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''bcf6e728-1df6-4b30-bd24-300981eecbaa'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''bcf6e728-1df6-4b30-bd24-300981eecbaa'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''bcf6e728-1df6-4b30-bd24-300981eecbaa'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''bcf6e728-1df6-4b30-bd24-300981eecbaa'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/086'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''4901660d-315f-4c1c-9550-db33e8bed04f'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4901660d-315f-4c1c-9550-db33e8bed04f'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4901660d-315f-4c1c-9550-db33e8bed04f'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4901660d-315f-4c1c-9550-db33e8bed04f'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/099'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''8948b544-8283-4d19-b523-bfff7ef10967'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8948b544-8283-4d19-b523-bfff7ef10967'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8948b544-8283-4d19-b523-bfff7ef10967'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8948b544-8283-4d19-b523-bfff7ef10967'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/030'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''5752325d-f156-45d2-ae37-3905edf43690'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5752325d-f156-45d2-ae37-3905edf43690'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5752325d-f156-45d2-ae37-3905edf43690'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''5752325d-f156-45d2-ae37-3905edf43690'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/037'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''b5c76f4d-c0ef-4260-897c-f8e661ec1b68'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b5c76f4d-c0ef-4260-897c-f8e661ec1b68'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b5c76f4d-c0ef-4260-897c-f8e661ec1b68'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b5c76f4d-c0ef-4260-897c-f8e661ec1b68'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/040'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''d3239141-6073-4fb0-b3ea-55664a415917'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d3239141-6073-4fb0-b3ea-55664a415917'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d3239141-6073-4fb0-b3ea-55664a415917'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''d3239141-6073-4fb0-b3ea-55664a415917'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/045'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''48a73892-0391-48e6-bea7-a2c5e7963ad3'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''48a73892-0391-48e6-bea7-a2c5e7963ad3'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''48a73892-0391-48e6-bea7-a2c5e7963ad3'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''48a73892-0391-48e6-bea7-a2c5e7963ad3'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/049'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''4b40f057-a760-4944-9672-cd4f34810fae'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4b40f057-a760-4944-9672-cd4f34810fae'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4b40f057-a760-4944-9672-cd4f34810fae'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4b40f057-a760-4944-9672-cd4f34810fae'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/050'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''1b3c5ed3-3dc5-4a94-b70b-bbc7442fa173'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1b3c5ed3-3dc5-4a94-b70b-bbc7442fa173'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1b3c5ed3-3dc5-4a94-b70b-bbc7442fa173'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1b3c5ed3-3dc5-4a94-b70b-bbc7442fa173'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/052'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''ca835a1e-984d-46b5-b7e0-67d26dbbd630'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''ca835a1e-984d-46b5-b7e0-67d26dbbd630'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''ca835a1e-984d-46b5-b7e0-67d26dbbd630'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''ca835a1e-984d-46b5-b7e0-67d26dbbd630'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/055'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''3f2f5cb5-11f7-4f70-8cf3-1facf6e81ef0'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''3f2f5cb5-11f7-4f70-8cf3-1facf6e81ef0'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''3f2f5cb5-11f7-4f70-8cf3-1facf6e81ef0'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''3f2f5cb5-11f7-4f70-8cf3-1facf6e81ef0'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/058'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''f1d7348d-f38d-4a74-ab0a-45227b89d314'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f1d7348d-f38d-4a74-ab0a-45227b89d314'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f1d7348d-f38d-4a74-ab0a-45227b89d314'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f1d7348d-f38d-4a74-ab0a-45227b89d314'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/059'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''03a22d21-658c-4b4d-92f7-ae0b5e5f96ce'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''03a22d21-658c-4b4d-92f7-ae0b5e5f96ce'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''03a22d21-658c-4b4d-92f7-ae0b5e5f96ce'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''03a22d21-658c-4b4d-92f7-ae0b5e5f96ce'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/067'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''af28530e-b31a-4359-9209-fdf1d7b38f1e'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''af28530e-b31a-4359-9209-fdf1d7b38f1e'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''af28530e-b31a-4359-9209-fdf1d7b38f1e'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''af28530e-b31a-4359-9209-fdf1d7b38f1e'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/068'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''589736aa-d375-4905-9ff7-4faae9eedece'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''589736aa-d375-4905-9ff7-4faae9eedece'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''589736aa-d375-4905-9ff7-4faae9eedece'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''589736aa-d375-4905-9ff7-4faae9eedece'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/069'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''a00dffee-a550-44d8-b473-1d512f6c9995'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a00dffee-a550-44d8-b473-1d512f6c9995'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a00dffee-a550-44d8-b473-1d512f6c9995'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''a00dffee-a550-44d8-b473-1d512f6c9995'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/075'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''cf2569d8-e3cf-4e00-b11c-e1088555bb7a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cf2569d8-e3cf-4e00-b11c-e1088555bb7a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cf2569d8-e3cf-4e00-b11c-e1088555bb7a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cf2569d8-e3cf-4e00-b11c-e1088555bb7a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/076'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''8db398a9-3640-4675-81d9-19f5ab3f25de'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8db398a9-3640-4675-81d9-19f5ab3f25de'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8db398a9-3640-4675-81d9-19f5ab3f25de'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''8db398a9-3640-4675-81d9-19f5ab3f25de'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/078'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''676d2697-c7f5-4ea6-a2e9-b6f8bce2bd4e'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''676d2697-c7f5-4ea6-a2e9-b6f8bce2bd4e'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''676d2697-c7f5-4ea6-a2e9-b6f8bce2bd4e'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''676d2697-c7f5-4ea6-a2e9-b6f8bce2bd4e'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/084'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''4151bc4d-598d-4334-86b6-668f4ee5e5e9'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4151bc4d-598d-4334-86b6-668f4ee5e5e9'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4151bc4d-598d-4334-86b6-668f4ee5e5e9'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''4151bc4d-598d-4334-86b6-668f4ee5e5e9'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/085'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''cc2404af-1863-438d-8ff9-38d66e4f6796'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cc2404af-1863-438d-8ff9-38d66e4f6796'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cc2404af-1863-438d-8ff9-38d66e4f6796'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''cc2404af-1863-438d-8ff9-38d66e4f6796'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/090'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''1a85c145-29d2-4343-9010-d52d981bd009'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1a85c145-29d2-4343-9010-d52d981bd009'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1a85c145-29d2-4343-9010-d52d981bd009'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''1a85c145-29d2-4343-9010-d52d981bd009'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/093'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''27852f5c-a5db-4b1f-a311-9ff67e74cb88'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''27852f5c-a5db-4b1f-a311-9ff67e74cb88'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''27852f5c-a5db-4b1f-a311-9ff67e74cb88'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''27852f5c-a5db-4b1f-a311-9ff67e74cb88'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/098'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''0fbb3210-3c90-41df-b39e-eefe032f738a'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''0fbb3210-3c90-41df-b39e-eefe032f738a'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''0fbb3210-3c90-41df-b39e-eefe032f738a'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''0fbb3210-3c90-41df-b39e-eefe032f738a'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/102'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''407d4a90-c403-46c3-bf57-31c2fe1ad0e0'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''407d4a90-c403-46c3-bf57-31c2fe1ad0e0'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''407d4a90-c403-46c3-bf57-31c2fe1ad0e0'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''407d4a90-c403-46c3-bf57-31c2fe1ad0e0'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/106'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''de7bf4b4-52f4-4bbe-8155-7f0d08aa01f5'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''de7bf4b4-52f4-4bbe-8155-7f0d08aa01f5'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''de7bf4b4-52f4-4bbe-8155-7f0d08aa01f5'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''de7bf4b4-52f4-4bbe-8155-7f0d08aa01f5'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/107'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''460fd161-1f25-40dd-aafa-39dac9f8690b'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''460fd161-1f25-40dd-aafa-39dac9f8690b'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''460fd161-1f25-40dd-aafa-39dac9f8690b'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''460fd161-1f25-40dd-aafa-39dac9f8690b'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/108'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''e2285ed2-1492-41c2-8933-79591c179ec5'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e2285ed2-1492-41c2-8933-79591c179ec5'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e2285ed2-1492-41c2-8933-79591c179ec5'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''e2285ed2-1492-41c2-8933-79591c179ec5'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/116'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''f04d5fd1-150d-4ee7-8011-151f74dc42e2'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f04d5fd1-150d-4ee7-8011-151f74dc42e2'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f04d5fd1-150d-4ee7-8011-151f74dc42e2'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''f04d5fd1-150d-4ee7-8011-151f74dc42e2'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/117'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''c6ba691e-c574-4031-9ba7-65c8df849e61'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c6ba691e-c574-4031-9ba7-65c8df849e61'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c6ba691e-c574-4031-9ba7-65c8df849e61'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''c6ba691e-c574-4031-9ba7-65c8df849e61'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/118'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''b38f7ece-a922-4dbf-9000-f78854a55a17'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b38f7ece-a922-4dbf-9000-f78854a55a17'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b38f7ece-a922-4dbf-9000-f78854a55a17'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b38f7ece-a922-4dbf-9000-f78854a55a17'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/121'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''eae13af2-4e0a-4438-8594-89a350a96cdd'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''eae13af2-4e0a-4438-8594-89a350a96cdd'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''eae13af2-4e0a-4438-8594-89a350a96cdd'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''eae13af2-4e0a-4438-8594-89a350a96cdd'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/135'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''051009da-3162-487c-b7da-e6f7be61ca53'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''051009da-3162-487c-b7da-e6f7be61ca53'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''051009da-3162-487c-b7da-e6f7be61ca53'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''051009da-3162-487c-b7da-e6f7be61ca53'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+
+        --Code: 'E003/134'
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_string) VALUES ('', ''b7899fc3-972e-439b-9289-8421d344d1df'','7613ef45-6410-41dc-a50a-c8fabf80cf71','');
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b7899fc3-972e-439b-9289-8421d344d1df'','1520c497-e498-478b-bc8d-bbb57a93fd16',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b7899fc3-972e-439b-9289-8421d344d1df'','9ba1bd8a-9cb4-4dc0-af74-5278cbea6d93',);
+        INSERT INTO asset_catalogue_item_property (id, asset_catalogue_item_id, asset_catalogue_property_id, value_int) VALUES ('', ''b7899fc3-972e-439b-9289-8421d344d1df'','4c15f2b6-6043-46f7-a3b2-e26077292224',);
+        "#
+    )?;
+
     Ok(())
 }
