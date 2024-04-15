@@ -96,7 +96,7 @@ Our plan is to transition to an open source implementation of a central server, 
 
 Existing remote sites sync to both Original and Open mSupply at the same time, pushing different records to different endpoints, v5 API for legacy mSupply central server and v6 API for open mSupply central server.
 
-And instance of omSupply can be configured to identify as omSupply central server by updating site configuration in legacy mSupply. Special -> Synchronisation -> {site}, `Site is open mSupply central server` checked and `This site url` the url with which other remote sites can reach omSupply central server
+An instance of omSupply can be configured to identify as omSupply central server by updating the site configuration in legacy mSupply. Special -> Synchronisation -> {site}, `Site is open mSupply central server` checked and `This site url` the url with which other remote sites can reach omSupply central server
 
 When a remote site syncs to Open mSupply’s central server it passes through original mSupply sync settings, including the remote site’s credentials and its own hardware id; Open mSupply central server will use these credentials to check validity of the site against the original mSupply central server.
 

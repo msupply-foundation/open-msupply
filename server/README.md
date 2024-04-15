@@ -2,10 +2,10 @@
 
 Open mSupply server is a component of the Open mSupply system. The server:
 
-- Hosts the server web interface and exposes RESTful and GraphQL APIs for mSupply data.
+- Hosts the server web interface and exposes RESTful and GraphQL APIs for open mSupply data.
 - Synchronises with central servers which implement `v5` of the mSupply sync API.
 - Exposes a dynamic plugin system for customising and extending functionality.
-- Can act as a remote or central omSupply server, see [Synchornisation documentation](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#glossary)
+- Can act as a remote or central omSupply server, see [Synchronisation documentation](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/README.md#glossary)
 
 # Quick Start
 
@@ -105,7 +105,7 @@ Open mSupply server can be launched in both modes, this is controlled via `Site 
 
 From version 2.0 omSupply would require both legacy and omSupply central server for full configuration/syncrhonisation. To start both omSupply central and omSupply remote:
 - Create two sites as per [above "Set up sync with mSupply central" instructions](https://github.com/msupply-foundation/open-msupply/blob/develop/server/service/src/sync/test/integration/README.md#4-open-msupply-central-server)
-- Configure one site to be central server by check `Site is open mSupply central server` entering URL with which remote sites can reach this site in `This site url`
+- Configure one site to be central server by checking `Site is open mSupply central server` and entering the URL with which remote sites can reach this site in the field `This site url`
 - `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
 
 For example, two sites running locally from the same repo,  __central__ and  __test__, for __central__ site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055. 
