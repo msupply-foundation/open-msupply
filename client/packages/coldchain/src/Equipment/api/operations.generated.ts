@@ -18,7 +18,7 @@ export type AssetRowFragment = {
   statusLog?: {
     __typename: 'AssetLogNode';
     logDatetime: any;
-    reason?: Types.ReasonType | null;
+    reason?: Types.AssetLogReasonNode | null;
     status?: Types.StatusType | null;
   } | null;
   store?: {
@@ -70,8 +70,8 @@ export type AssetFragment = {
   statusLog?: {
     __typename: 'AssetLogNode';
     logDatetime: any;
-    reason?: Types.ReasonType | null;
     status?: Types.StatusType | null;
+    reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   } | null;
   store?: {
     __typename: 'StoreNode';
@@ -89,14 +89,14 @@ export type AssetFragment = {
   assetCategory?: { __typename: 'AssetCategoryNode'; name: string } | null;
 };
 
-export type AssetLogFragment = {
+export type ColdchainAssetLogFragment = {
   __typename: 'AssetLogNode';
   comment?: string | null;
   id: string;
   logDatetime: any;
-  reason?: Types.ReasonType | null;
   status?: Types.StatusType | null;
   type?: string | null;
+  reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
   user?: {
     __typename: 'UserNode';
     firstName?: string | null;
@@ -143,7 +143,7 @@ export type AssetsQuery = {
       statusLog?: {
         __typename: 'AssetLogNode';
         logDatetime: any;
-        reason?: Types.ReasonType | null;
+        reason?: Types.AssetLogReasonNode | null;
         status?: Types.StatusType | null;
       } | null;
       store?: {
@@ -207,8 +207,8 @@ export type AssetByIdQuery = {
       statusLog?: {
         __typename: 'AssetLogNode';
         logDatetime: any;
-        reason?: Types.ReasonType | null;
         status?: Types.StatusType | null;
+        reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
       } | null;
       store?: {
         __typename: 'StoreNode';
@@ -244,9 +244,9 @@ export type AssetLogsQuery = {
       comment?: string | null;
       id: string;
       logDatetime: any;
-      reason?: Types.ReasonType | null;
       status?: Types.StatusType | null;
       type?: string | null;
+      reason?: { __typename: 'AssetLogReasonNode'; reason: string } | null;
       user?: {
         __typename: 'UserNode';
         firstName?: string | null;
@@ -446,8 +446,8 @@ export const AssetFragmentDoc = gql`
     }
   }
 `;
-export const AssetLogFragmentDoc = gql`
-  fragment AssetLog on AssetLogNode {
+export const ColdchainAssetLogFragmentDoc = gql`
+  fragment ColdchainAssetLog on AssetLogNode {
     comment
     id
     logDatetime
@@ -523,12 +523,12 @@ export const AssetLogsDocument = gql`
         totalCount
         nodes {
           __typename
-          ...AssetLog
+          ...ColdchainAssetLog
         }
       }
     }
   }
-  ${AssetLogFragmentDoc}
+  ${ColdchainAssetLogFragmentDoc}
 `;
 export const LabelPrinterSettingsDocument = gql`
   query labelPrinterSettings {

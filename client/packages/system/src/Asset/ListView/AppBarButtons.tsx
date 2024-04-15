@@ -32,7 +32,6 @@ export const AppBarButtonsComponent = ({
   const navigate = useNavigate();
 
   const { fetchAsync, isLoading } = useAssetData.document.listAll();
-  const isCentralServer = useIsCentralServerApi();
 
   const csvExport = async () => {
     const data = await fetchAsync();

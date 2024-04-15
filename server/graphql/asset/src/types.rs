@@ -7,11 +7,12 @@ use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
+use graphql_core::loader::SyncFileReferenceLoader;
 use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
     AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
-use graphql_core::loader::{AssetStatusLogLoader, SyncFileReferenceLoader};
+use graphql_core::loader::{AssetLogReasonLoader, AssetStatusLogLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector, UserNode};
