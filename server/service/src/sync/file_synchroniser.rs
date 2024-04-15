@@ -21,7 +21,7 @@ use crate::{
     static_files::{StaticFileCategory, StaticFileService},
 };
 
-use super::api::SyncApiV5CreatingError;
+use super::api::{SyncApiSettings, SyncApiV5CreatingError};
 use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
 use super::settings::SyncSettings;
 
@@ -67,6 +67,8 @@ pub enum DownloadFileError {
 
 pub struct FileSynchroniser {
     settings: SyncSettings,
+    sync_api_v6: SyncApiV6,
+    sync_api_settings: SyncApiSettings,
     service_provider: Arc<ServiceProvider>,
     static_file_service: Arc<StaticFileService>,
     client: reqwest::Client,
@@ -78,8 +80,15 @@ impl FileSynchroniser {
         service_provider: Arc<ServiceProvider>,
         static_file_service: Arc<StaticFileService>,
     ) -> Self {
+        // Create SyncApiV6 instance
+        let sync_v5_settings =
+            SyncApiV5::new_settings(&settings, &service_provider, SYNC_VERSION).unwrap(); // TODO Fix
+        let sync_api_v6 = SyncApiV6::new(sync_v5_settings.clone()).unwrap(); // TODO Fix
+
         Self {
             settings,
+            sync_api_v6,
+            sync_api_settings: sync_v5_settings,
             service_provider,
             static_file_service,
             client: reqwest::Client::new(),
@@ -99,12 +108,8 @@ impl FileSynchroniser {
             .find_one_by_id(&file_id)?
             .ok_or(Error::FileDoesNotExist(file_id.to_string()))?;
 
-        // Create SyncApiV6 instance (would probably be done in 'new' method)
-        let sync_v5_settings =
-            SyncApiV5::new_settings(&self.settings, &self.service_provider, SYNC_VERSION)?;
-        let sync_api_v6 = SyncApiV6::new(sync_v5_settings)?;
-
-        let download_result = sync_api_v6
+        let download_result = self
+            .sync_api_v6
             .download_file(&self.static_file_service, &sync_file_ref)
             .await;
 
@@ -216,6 +221,7 @@ impl FileSynchroniser {
         Ok(num_of_files)
     }
 
+    // Move to sync_api_v6
     async fn try_uploading_file(
         &self,
         sync_file_reference_row: &SyncFileReferenceRow,
@@ -258,7 +264,20 @@ impl FileSynchroniser {
         let file_upload_part = reqwest::multipart::Part::bytes(file_bytes)
             .file_name(sync_file_reference_row.file_name.clone());
 
-        let form = multipart::Form::new().part("file", file_upload_part);
+        let sync_api_settings_json =
+            serde_json::to_string(&self.sync_api_settings).map_err(|err| {
+                log::error!("Error serializing sync_api_settings: {:#?}", err);
+                FileSyncError::UploadError(UploadError::Other(
+                    "Error serializing sync_api_settings".to_string(),
+                ))
+            })?;
+        let sync_settings_part = reqwest::multipart::Part::text(sync_api_settings_json)
+            .mime_str("application/json")
+            .unwrap(); // TODO fix unwrap
+
+        let form = multipart::Form::new()
+            .part("sync_v5_settings", sync_settings_part)
+            .part("file", file_upload_part);
 
         // Calculate url for upload
         let url = self
@@ -274,8 +293,9 @@ impl FileSynchroniser {
         log::info!("Uploading {} to {}", sync_file_reference_row.file_name, url);
 
         // Upload file
-        // TODO: Authentication...
-        let request = self.client.put(url).multipart(form).send().await;
+        let request = self.client.put(url).multipart(form);
+        println!("request: {:#?}", request);
+        let request = request.send().await;
         match request {
             Ok(response) => {
                 if response.status().is_success() {

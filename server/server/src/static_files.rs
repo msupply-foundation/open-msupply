@@ -28,6 +28,7 @@ use service::static_files::{StaticFileCategory, StaticFileService};
 use service::sync::file_sync_driver::get_sync_settings;
 use service::sync::file_synchroniser::FileSynchroniser;
 use util::is_central_server;
+use util::sanitize_filename;
 
 use crate::authentication::validate_cookie_auth;
 use crate::middleware::limit_content_length;
@@ -127,8 +128,12 @@ pub(crate) async fn handle_file_upload(
         log::debug!("Content Disposition: {:?}", content_disposition);
         log::debug!("Content Type: {:?}", field.content_type());
 
-        let sanitized_filename =
-            sanitize_filename::sanitize(content_disposition.get_filename().unwrap_or_default());
+        let sanitized_filename = sanitize_filename(
+            content_disposition
+                .get_filename()
+                .unwrap_or_default()
+                .to_owned(),
+        );
         let static_file = service
             .reserve_file(&sanitized_filename, &file_category, file_id.clone())
             .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
