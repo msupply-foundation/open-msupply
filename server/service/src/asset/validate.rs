@@ -2,7 +2,7 @@ use repository::{
     asset::{Asset, AssetFilter, AssetRepository},
     asset_internal_location::{AssetInternalLocationFilter, AssetInternalLocationRepository},
     asset_internal_location_row::AssetInternalLocationRow,
-    asset_log_reason_row::AssetLogReasonRowRepository,
+    asset_log_reason_row::{AssetLogReasonRow, AssetLogReasonRowRepository},
     asset_log_row::AssetLogStatus,
     assets::{
         asset_log_row::{AssetLogRow, AssetLogRowRepository},
@@ -51,8 +51,7 @@ pub fn check_reason_matches_status(
             None => return false,
         }
     }
-
-    // TODO - add function to check reason matches status
+    // return true as a default if no reason provided for asset log
     true
 }
 
@@ -66,4 +65,11 @@ pub fn check_locations_are_assigned(
             .location_id(EqualFilter::equal_any(location_ids))
             .asset_id(EqualFilter::not_equal_to(asset_id)),
     )
+}
+
+pub fn check_asset_log_reason_exists(
+    id: &str,
+    connection: &StorageConnection,
+) -> Result<Option<AssetLogReasonRow>, RepositoryError> {
+    AssetLogReasonRowRepository::new(connection).find_one_by_id(id)
 }

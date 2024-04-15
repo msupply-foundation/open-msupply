@@ -7,7 +7,7 @@ use repository::{
     StorageConnection,
 };
 
-use super::query_log_reason::get_asset_log_reason;
+use super::{query_log_reason::get_asset_log_reason, validate::check_asset_log_reason_exists};
 
 #[derive(PartialEq, Debug)]
 pub enum InsertAssetLogReasonError {
@@ -51,10 +51,12 @@ pub fn insert_asset_log_reason(
 }
 
 pub fn validate(
-    _input: &InsertAssetLogReason,
-    _connection: &StorageConnection,
+    input: &InsertAssetLogReason,
+    connection: &StorageConnection,
 ) -> Result<(), InsertAssetLogReasonError> {
-    // TODO add validation checks
+    if check_asset_log_reason_exists(&input.id, connection)?.is_some() {
+        return Err(InsertAssetLogReasonError::AssetLogReasonAlreadyExists);
+    }
     Ok(())
 }
 
