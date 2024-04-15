@@ -10,7 +10,9 @@ fragment AssetRow on AssetNode {
   replacementDate
   statusLog {
     logDatetime
-    reason
+    reason {
+      reason
+    }
     status
   }
   storeId
