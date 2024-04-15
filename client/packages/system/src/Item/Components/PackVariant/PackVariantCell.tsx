@@ -9,7 +9,7 @@ import React from 'react';
 
 // Shows '[multiple]' if there is more then one pack size
 // otherwise shows pack size or unit variant short name
-export const PackVariantCell =
+export const getPackVariantCell =
   <T extends RecordWithId>({
     getItemId,
     getUnitName,
@@ -25,7 +25,7 @@ export const PackVariantCell =
       getUnitName(rowData)
     );
 
-    const packSizes = ArrayUtils.dedup(getPackSizes(rowData));
+    const packSizes = ArrayUtils.dedupe(getPackSizes(rowData));
 
     const displayValue =
       packSizes.length > 1 ? '[multiple]' : asPackVariant(packSizes[0] ?? 1);

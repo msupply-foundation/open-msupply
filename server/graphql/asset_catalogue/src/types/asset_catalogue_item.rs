@@ -30,6 +30,10 @@ impl AssetCatalogueItemNode {
         &self.row().id
     }
 
+    pub async fn sub_catalogue(&self) -> &str {
+        &self.row().sub_catalogue
+    }
+
     pub async fn asset_category_id(&self) -> &str {
         &self.row().category_id
     }

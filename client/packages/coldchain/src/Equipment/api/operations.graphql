@@ -1,3 +1,33 @@
+fragment AssetRow on AssetNode {
+  __typename
+  assetNumber
+  id
+  notes
+  serialNumber
+  modifiedDatetime
+  installationDate
+  createdDatetime
+  replacementDate
+  statusLog {
+    logDatetime
+    reason
+    status
+  }
+  storeId
+  store {
+    id
+    code
+    storeName
+  }
+  catalogueItem {
+    manufacturer
+    model
+  }
+  assetType {
+    name
+  }
+}
+
 fragment Asset on AssetNode {
   __typename
   catalogueItemId
@@ -5,6 +35,13 @@ fragment Asset on AssetNode {
   createdDatetime
   id
   installationDate
+  documents {
+    nodes {
+      fileName
+      id
+      mimeType
+    }
+  }
   locations {
     nodes {
       id
@@ -61,6 +98,13 @@ fragment AssetLog on AssetLogNode {
     username
     jobTitle
   }
+  documents {
+    nodes {
+      fileName
+      id
+      mimeType
+    }
+  }
 }
 
 query assets(
@@ -79,7 +123,7 @@ query assets(
   ) {
     ... on AssetConnector {
       nodes {
-        ...Asset
+        ...AssetRow
       }
       totalCount
     }

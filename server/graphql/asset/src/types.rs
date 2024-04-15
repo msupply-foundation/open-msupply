@@ -11,10 +11,10 @@ use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
     AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
-use graphql_core::loader::{AssetLogReasonLoader, AssetStatusLogLoader};
+use graphql_core::loader::{AssetStatusLogLoader, SyncFileReferenceLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
-use graphql_types::types::{LocationConnector, StoreNode, UserNode};
+use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector, UserNode};
 
 use repository::asset_log_reason::{
     AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort, AssetLogReasonSortField,
@@ -63,6 +63,7 @@ pub struct AssetFilterInput {
     pub is_non_catalogue: Option<bool>,
     pub installation_date: Option<DateFilterInput>,
     pub replacement_date: Option<DateFilterInput>,
+    pub store: Option<StringFilterInput>,
 }
 
 impl From<AssetFilterInput> for AssetFilter {
@@ -79,6 +80,7 @@ impl From<AssetFilterInput> for AssetFilter {
             installation_date: f.installation_date.map(DateFilter::from),
             replacement_date: f.replacement_date.map(DateFilter::from),
             is_non_catalogue: f.is_non_catalogue,
+            store: f.store.map(StringFilter::from),
         }
     }
 }
@@ -92,6 +94,15 @@ pub struct AssetNode {
 pub struct AssetConnector {
     total_count: u32,
     nodes: Vec<AssetNode>,
+}
+
+impl AssetConnector {
+    pub fn new() -> AssetConnector {
+        AssetConnector {
+            total_count: 0,
+            nodes: Vec::<AssetNode>::new(),
+        }
+    }
 }
 
 #[Object]
@@ -108,7 +119,7 @@ impl AssetNode {
         &self.row().notes
     }
 
-    pub async fn asset_number(&self) -> &str {
+    pub async fn asset_number(&self) -> &Option<String> {
         &self.row().asset_number
     }
 
@@ -173,6 +184,16 @@ impl AssetNode {
         let locations = LocationConnector::from_vec(result_option.unwrap_or(vec![]));
 
         Ok(locations)
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let asset_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(asset_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
     }
 
     pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {
@@ -440,6 +461,16 @@ impl AssetLogNode {
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
         &self.row().log_datetime
+    }
+
+    pub async fn documents(&self, ctx: &Context<'_>) -> Result<SyncFileReferenceConnector> {
+        let asset_log_id = &self.row().id;
+        let loader = ctx.get_loader::<DataLoader<SyncFileReferenceLoader>>();
+        let result_option = loader.load_one(asset_log_id.to_string()).await?;
+
+        let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
+
+        Ok(documents)
     }
 }
 
