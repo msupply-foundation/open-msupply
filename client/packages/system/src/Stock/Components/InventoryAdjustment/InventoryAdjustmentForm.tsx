@@ -106,7 +106,6 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
                 setDraft(state => ({
                   ...state,
                   adjustment: value ?? 0,
-                  adjustmentType: state.adjustmentType,
                 }))
               }
             />
