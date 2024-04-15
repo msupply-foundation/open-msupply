@@ -14,6 +14,7 @@ use futures_util::TryStreamExt;
 
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
+use repository::SyncFileDirection;
 use serde::{Deserialize, Serialize};
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
@@ -232,7 +233,7 @@ async fn upload_sync_file(
             deleted_datetime: None,
             record_id: record_id.clone(),
             status: SyncFileStatus::New,
-            direction: repository::sync_file_reference_row::SyncFileDirection::Upload,
+            direction: SyncFileDirection::Upload,
             ..Default::default()
         });
         match result {
