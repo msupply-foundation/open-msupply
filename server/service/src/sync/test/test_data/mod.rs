@@ -74,6 +74,8 @@ pub(crate) fn get_all_pull_upsert_central_test_records() -> Vec<TestSyncIncoming
     test_records.append(&mut asset_category::test_pull_upsert_records());
     test_records.append(&mut asset_type::test_pull_upsert_records());
     test_records.append(&mut asset_catalogue_item::test_pull_upsert_records());
+    test_records.append(&mut asset_catalogue_property::test_pull_upsert_records());
+    test_records.append(&mut asset_catalogue_item_property::test_pull_upsert_records());
     test_records.append(&mut asset::test_pull_upsert_records());
     test_records.append(&mut asset_log::test_pull_upsert_records());
     test_records.append(&mut sync_file_reference::test_pull_upsert_records());
