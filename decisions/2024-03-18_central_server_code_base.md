@@ -65,7 +65,8 @@ _Cons:_
 
 ### Option 2 - Separate Binary but shared package/crate/library level code
 
-We could build a different central server binary, it could share some library level code with the remotes server.
+We could build a different central server binary, it could share some library level code with the remote server. 
+In Option 1 code is branched, in place, within the same crate/package. With Option 2 shared components are used by two different crate/packages, in effect 'branching' is done when composing functionality from shared components, in completely separate places.
 
 _Pros:_
 
