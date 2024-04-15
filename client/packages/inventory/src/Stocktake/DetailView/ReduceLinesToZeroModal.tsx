@@ -5,9 +5,9 @@ import {
   ConfirmationModalLayout,
   Grid,
   DialogButton,
+  AdjustmentTypeInput,
 } from '@openmsupply-client/common';
 import {
-  Adjustment,
   InventoryAdjustmentReasonRowFragment,
   InventoryAdjustmentReasonSearchInput,
   useInventoryAdjustmentReason,
@@ -62,7 +62,7 @@ export const ReduceLinesToZeroConfirmationModal = ({
           labelWidth="100px"
           Input={
             <InventoryAdjustmentReasonSearchInput
-              adjustment={Adjustment.Reduction}
+              adjustmentType={AdjustmentTypeInput.Reduction}
               value={reason}
               onChange={reason => setReason(reason)}
             />
