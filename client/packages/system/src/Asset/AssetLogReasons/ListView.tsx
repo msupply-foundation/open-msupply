@@ -10,6 +10,7 @@ import {
   useUrlQueryParams,
   useEditModal,
   InsertAssetLogReasonInput,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { AssetLogReasonFragment, useAssetData } from '../api';
 import { Toolbar } from './Toolbar';
@@ -38,6 +39,8 @@ const AssetListComponent: FC = () => {
         key: 'reason',
         label: 'label.reason',
         sortable: false,
+        Cell: TooltipTextCell,
+        width: 500,
         accessor: ({ rowData }) => rowData.reason,
       },
       {
