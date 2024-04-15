@@ -1,3 +1,4 @@
+mod asset;
 mod asset_catalogue_item;
 mod asset_category;
 mod asset_class;
@@ -28,12 +29,14 @@ mod sensor;
 mod stock_line;
 mod stocktake_lines;
 mod store;
+mod sync_file_reference;
 mod temperature_breach;
 mod temperature_log;
 mod user;
 
 use std::{collections::HashSet, hash::Hasher};
 
+pub use asset::*;
 pub use asset_catalogue_item::*;
 pub use asset_category::*;
 pub use asset_class::*;
@@ -64,6 +67,7 @@ pub use sensor::*;
 pub use stock_line::*;
 pub use stocktake_lines::*;
 pub use store::*;
+pub use sync_file_reference::*;
 pub use temperature_breach::*;
 pub use temperature_log::*;
 pub use user::*;

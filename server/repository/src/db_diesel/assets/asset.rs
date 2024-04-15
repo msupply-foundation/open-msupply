@@ -6,6 +6,7 @@ use super::asset_row::{
 use diesel::{dsl::IntoBoxed, prelude::*};
 
 use crate::{
+    db_diesel::store_row::store::dsl as store_dsl,
     diesel_macros::{
         apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
     },
@@ -38,6 +39,7 @@ pub struct AssetFilter {
     pub installation_date: Option<DateFilter>,
     pub replacement_date: Option<DateFilter>,
     pub is_non_catalogue: Option<bool>,
+    pub store: Option<StringFilter>,
 }
 
 impl AssetFilter {
@@ -97,6 +99,11 @@ impl AssetFilter {
 
     pub fn is_non_catalogue(mut self, filter: bool) -> Self {
         self.is_non_catalogue = Some(filter);
+        self
+    }
+
+    pub fn store(mut self, filter: StringFilter) -> Self {
+        self.store = Some(filter);
         self
     }
 }
@@ -159,7 +166,10 @@ impl<'a> AssetRepository<'a> {
             .limit(pagination.limit as i64);
 
         // Debug diesel query
-        println!("{}", diesel::debug_query::<DBType, _>(&final_query));
+        // println!(
+        //    "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
 
         let result = final_query.load::<Asset>(&self.connection.connection)?;
 
@@ -189,6 +199,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
             installation_date,
             replacement_date,
             is_non_catalogue,
+            store,
         } = f;
 
         apply_equal_filter!(query, id, asset_dsl::id);
@@ -210,6 +221,12 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
                 Some(EqualFilter::is_null(value)),
                 asset_dsl::asset_catalogue_item_id
             );
+        }
+
+        if store.is_some() {
+            let mut sub_query = store_dsl::store.select(store_dsl::id).into_boxed();
+            apply_string_filter!(sub_query, store, store_dsl::code);
+            query = query.filter(asset_dsl::store_id.eq_any(sub_query.nullable()));
         }
     }
     query.filter(asset_dsl::deleted_datetime.is_null()) // Don't include any deleted items

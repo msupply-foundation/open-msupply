@@ -40,13 +40,7 @@ const Row = ({
   </Box>
 );
 
-export const StatusTab = ({
-  draft,
-  onChange,
-  value,
-}: AssetLogPanel & {
-  onChange: (patch: Partial<InsertAssetLogInput>) => void;
-}) => {
+export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
   const t = useTranslation('coldchain');
   const debouncedOnChange = useDebounceCallback(
     (patch: Partial<InsertAssetLogInput>) => onChange(patch),
@@ -82,7 +76,7 @@ export const StatusTab = ({
     }) ?? [];
 
   return (
-    <AssetLogPanel value={value} draft={draft}>
+    <AssetLogPanel value={value} draft={draft} onChange={onChange}>
       <Box display="flex" flexDirection="column" sx={{ width: '100%' }}>
         <Row label={t('label.new-functional-status')}>
           <Autocomplete
