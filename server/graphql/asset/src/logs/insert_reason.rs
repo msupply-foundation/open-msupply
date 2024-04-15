@@ -158,7 +158,7 @@ mod test {
 
         let mutation = r#"
         mutation ($input: InsertAssetLogReasonInput!) {
-            insertAssetLogReason(input: $input, storeId: \"store_a\") {
+            insertAssetLogReason(input: $input) {
                 ... on AssetLogReasonNode {
                     id
                     assetLogStatus
@@ -193,6 +193,7 @@ mod test {
                 "reason": "reason",
             }
         });
+
         assert_graphql_query!(
             &settings,
             mutation,
