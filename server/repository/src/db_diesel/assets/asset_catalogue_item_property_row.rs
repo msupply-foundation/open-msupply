@@ -6,6 +6,7 @@ use crate::StorageConnection;
 use crate::Upsert;
 
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     asset_catalogue_item_property (id) {
@@ -22,7 +23,9 @@ table! {
 allow_tables_to_appear_in_same_query!(asset_catalogue_item_property, asset_catalogue_property);
 joinable!(asset_catalogue_item_property -> asset_catalogue_property (asset_catalogue_property_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, Serialize, Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "asset_catalogue_item_property"]
 #[changeset_options(treat_none_as_null = "true")]
