@@ -22,6 +22,7 @@ interface InventoryAdjustmentReasonSearchInputProps {
   autoFocus?: boolean;
   adjustmentType: AdjustmentTypeInput;
   isError?: boolean;
+  isDisabled?: boolean;
 }
 
 export const InventoryAdjustmentReasonSearchInput: FC<
@@ -33,6 +34,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
   autoFocus = false,
   adjustmentType,
   isError,
+  isDisabled,
 }) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
@@ -49,7 +51,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
-        disabled={!isRequired}
+        disabled={isDisabled || !isRequired}
         width={`${width}px`}
         clearable={false}
         value={
