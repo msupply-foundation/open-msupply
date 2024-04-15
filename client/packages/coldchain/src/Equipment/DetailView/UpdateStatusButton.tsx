@@ -69,6 +69,7 @@ export const UpdateStatusButtonComponent = ({
           headers: {
             Accept: 'application/json',
           },
+          credentials: 'include',
           body: formData,
         });
       })
