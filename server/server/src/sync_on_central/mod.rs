@@ -84,7 +84,7 @@ async fn download_file(
     request: Json<SyncDownloadFileRequestV6>,
     settings: Data<Settings>,
 ) -> actix_web::Result<impl Responder> {
-    println!("Download file requested");
+    log::info!("Sending a file via sync");
     let (file, file_description) = sync_on_central::download_file(&settings, request.into_inner())
         .await
         .map_err(ToResponseError)?;
