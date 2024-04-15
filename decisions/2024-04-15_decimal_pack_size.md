@@ -1,6 +1,6 @@
 # Decimal Pack Sizes
 
-- _Date_: 2024-02-28
+- _Date_: 2024-04-16
 - _Deciders_: @Chris-Petty, @roxy-dao, @clemens-msupply, @mark-prins, @andreievg, @craigdrown, @louisaw123, @Gwalior-84
 - _Status_: PROPOSED
 - _Outcome_: Option 1
