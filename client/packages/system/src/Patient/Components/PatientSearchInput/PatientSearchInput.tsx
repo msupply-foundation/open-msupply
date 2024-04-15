@@ -33,6 +33,7 @@ export const PatientSearchInput: FC<NameSearchInputProps> = ({
       popperMinWidth={width}
       defaultValue={value && { ...value, label: value.name }}
       filterOptions={filterByNameAndCode}
+      sx={{ minWidth: width }}
       noOptionsText=""
     />
   );
