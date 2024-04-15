@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef } from 'react';
+import React, { FC, useEffect, useRef, useState } from 'react';
 import {
   useNotification,
   DropdownMenu,
@@ -12,9 +12,6 @@ import {
   Box,
   AssetLogReasonNode,
   FilterController,
-  AutocompleteOnChange,
-  InputLabel,
-  Autocomplete,
   StatusType,
 } from '@openmsupply-client/common';
 import { useAssetData } from '../api';
@@ -37,7 +34,8 @@ export const Toolbar: FC<{
 
   const { mutateAsync: deleteReason } = useAssetData.log.deleteReason();
   const { error, success, info } = useNotification();
-  const [deleteErrors, setDeleteErrors] = React.useState<DeleteError[]>([]);
+  const [deleteErrors, setDeleteErrors] = useState<DeleteError[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<AssetLogStatus | null>();
   const { selectedRows } = useTableStore(state => ({
     selectedRows: Object.keys(state.rowState)
       .filter(id => state.rowState[id]?.isSelected)
@@ -45,12 +43,14 @@ export const Toolbar: FC<{
       .filter(Boolean) as AssetLogReasonNode[],
   }));
 
-  const onFilterChange: AutocompleteOnChange<AssetLogStatus> = (_, option) => {
+  const onFilterChange = (option?: AssetLogStatus) => {
     if (!option) {
       filter.onClearFilterRule('assetLogStatus');
+      setSelectedStatus(null);
       return;
     }
     filter.onChangeStringFilterRule('assetLogStatus', 'equalTo', option.value);
+    setSelectedStatus(option);
   };
 
   const deleteAction = () => {
@@ -107,6 +107,31 @@ export const Toolbar: FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRows]);
 
+  const options = [
+    {
+      label: t('status.decommissioned', { ns: 'coldchain' }),
+      value: StatusType.Decommissioned,
+    },
+    {
+      label: t('status.functioning', { ns: 'coldchain' }),
+      value: StatusType.Functioning,
+    },
+    {
+      label: t('status.functioning-but-needs-attention', {
+        ns: 'coldchain',
+      }),
+      value: StatusType.FunctioningButNeedsAttention,
+    },
+    {
+      label: t('status.not-functioning', { ns: 'coldchain' }),
+      value: StatusType.NotFunctioning,
+    },
+    {
+      label: t('status.not-in-use', { ns: 'coldchain' }),
+      value: StatusType.NotInUse,
+    },
+  ];
+
   return (
     <AppBarContentPortal
       sx={{
@@ -116,38 +141,32 @@ export const Toolbar: FC<{
         display: 'flex',
       }}
     >
-      <Box display="flex" alignItems="center" gap={1}>
-        <InputLabel>{t('placeholder.filter-by-status')}</InputLabel>
-        <Autocomplete
-          isOptionEqualToValue={(option, value) => option.value === value.value}
-          width="150px"
-          popperMinWidth={150}
-          options={[
-            {
-              label: t('status.decommissioned', { ns: 'coldchain' }),
-              value: StatusType.Decommissioned,
-            },
-            {
-              label: t('status.functioning', { ns: 'coldchain' }),
-              value: StatusType.Functioning,
-            },
-            {
-              label: t('status.functioning-but-needs-attention', {
-                ns: 'coldchain',
-              }),
-              value: StatusType.FunctioningButNeedsAttention,
-            },
-            {
-              label: t('status.not-functioning', { ns: 'coldchain' }),
-              value: StatusType.NotFunctioning,
-            },
-            {
-              label: t('status.not-in-use', { ns: 'coldchain' }),
-              value: StatusType.NotInUse,
-            },
-          ]}
-          onChange={onFilterChange}
-        />
+      <Box
+        display="flex"
+        gap={2}
+        sx={{ alignItems: 'flex-start', flexWrap: 'wrap' }}
+      >
+        <DropdownMenu
+          label={selectedStatus?.label ?? t('placeholder.filter-by-status')}
+        >
+          {options.map(option => (
+            <DropdownMenuItem
+              key={option.value}
+              onClick={() => {
+                onFilterChange(option);
+              }}
+            >
+              {option.label}
+            </DropdownMenuItem>
+          ))}
+          <DropdownMenuItem
+            onClick={() => {
+              onFilterChange();
+            }}
+          >
+            {t('label.clear-filter')}
+          </DropdownMenuItem>
+        </DropdownMenu>
       </Box>
       <AlertModal
         message={
