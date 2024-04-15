@@ -9,9 +9,9 @@ const ASSET_CATALOGUE_ITEM_PROPERTY1: (&str, &str) = (
     "639e728b-f64b-4eef-9fd6-a1874bafb8a4",
     r#"{
         "id": "639e728b-f64b-4eef-9fd6-a1874bafb8a4",
-        "asset_catalogue_item_id": "0dda9346-b79f-4f0f-a375-ae778240043a",
-        "asset_catalogue_property_id": "7613ef45-6410-41dc-a50a-c8fabf80cf71",
-        "value_string": "Electricity",
+        "catalogue_item_id": "0dda9346-b79f-4f0f-a375-ae778240043a",
+        "catalogue_property_id": "7613ef45-6410-41dc-a50a-c8fabf80cf71",
+        "value_string": "Electricity"
     }"#,
 );
 

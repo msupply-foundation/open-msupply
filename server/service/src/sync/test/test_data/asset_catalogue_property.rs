@@ -9,7 +9,7 @@ const ASSET_CATALOGUE_PROPERTY1: (&str, &str) = (
     "854d8e25-d265-4884-aea3-8f13de3b55fb",
     r#"{
         "id": "854d8e25-d265-4884-aea3-8f13de3b55fb",
-        "asset_category_id": "02cbea92-d5bf-4832-863b-c04e093a7760",
+        "category_id": "02cbea92-d5bf-4832-863b-c04e093a7760",
         "name": "Energy source",
         "value_type": "STRING",
         "allowed_values": "Electricity,Solar,Passive,Kerosene,Gas"
