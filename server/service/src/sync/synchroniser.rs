@@ -333,13 +333,14 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if is_initialised {
+    let result = 
+    // if is_initialised {
         connection
             .transaction_sync(integrate_and_translate)
-            .map_err::<RepositoryError, _>(|e| e.to_inner_error())
-    } else {
-        integrate_and_translate(&connection)
-    }?;
+            .map_err::<RepositoryError, _>(|e| e.to_inner_error())?;
+    // } else {
+    //     integrate_and_translate(&connection)
+    // }?;
 
     Ok(result)
 }
