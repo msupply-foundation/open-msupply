@@ -18,6 +18,7 @@ Goals:
 - Must allow Legacy mSupply data to be initialised into Open mSupply via sync
 - Must allow interoperability between Legacy and Open mSupply (i.e. transfers via sync)
 - Must make sense to users, keeping grounded in recording digitally what is physically present. 40 bottles on the shelf should be 40 bottles in the system, no more no less.
+- Should be palatable for integrations with other systems
 
 ### Additional Context
 
@@ -45,6 +46,7 @@ _Pros:_
 - Allows for targeted logic for file syncing (e.g rate limiting in future)
 - Allows for files to be downloaded where they're needed rather than needing to sync everywhere (via std sync process)
 - Straightforward for all reporting. What's in the invoice/requisition/PO/tender/GR is consistent with what the user entered.
+- Straightforward for integrations, no deep explanation needed.
 
 _Cons:_
 
@@ -85,6 +87,7 @@ _Cons:_
   - Also then reporting must take into account pack variants? I think this might already be true, but with items affected by this automation/translation it'd be absolutely mandatory (might need a line.pack_variant_ID FK to make sure a line is presented in the known physical form explicitly).
 - More complex translators updating all fields that are relative to pack size (number of packs, cost price, sell price). All these calculations introduce opportunity for float arithmetic inaccuracies to accumulate.
 - Data reviewed on remote sites will not match the same data viewed on central server.
+- Might need explaining/complex mappings in integrations.
 
 ### Option 3 - Can convert units?
 
@@ -95,6 +98,7 @@ In translation fractional pack sizes could be converted from one unit to another
 Pros:
 
 - Tidy and intuitive-ish specifically for L and mL. For pharmacy users it means data stays directly mapping with physical stock.
+- Fine for integrations?
 
 Cons:
 
