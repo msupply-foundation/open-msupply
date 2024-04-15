@@ -3,6 +3,8 @@ use repository::asset_log_reason_row::AssetLogReasonRowRepository;
 use repository::assets::asset_internal_location_row::AssetInternalLocationRowRepository;
 use repository::{ActivityLogType, RepositoryError, StorageConnection};
 
+use super::validate::check_asset_log_reason_exists;
+
 #[derive(PartialEq, Debug)]
 pub enum DeleteAssetLogReasonError {
     ReasonDoesNotExist,
@@ -20,7 +22,7 @@ pub fn delete_log_reason(
 ) -> Result<String, DeleteAssetLogReasonError> {
     ctx.connection
         .transaction_sync(|connection| {
-            validate(connection, &ctx.store_id, &reason_id)?;
+            validate(connection, &reason_id)?;
 
             activity_log_entry(
                 ctx,
@@ -42,10 +44,11 @@ pub fn delete_log_reason(
 }
 
 pub fn validate(
-    _connection: &StorageConnection,
-    _ctx_store_id: &str,
-    _asset_id: &str,
+    connection: &StorageConnection,
+    reason_id: &str,
 ) -> Result<(), DeleteAssetLogReasonError> {
-    // TODO add validation
-    Ok(())
+    match check_asset_log_reason_exists(reason_id, connection)? {
+        Some(_reason_row) => Ok(()),
+        None => return Err(DeleteAssetLogReasonError::ReasonDoesNotExist),
+    }
 }
