@@ -322,7 +322,7 @@ table! {
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
-#[table_name = "serialize_helper"]
+#[diesel(table_name = serialize_helper)]
 pub struct SerializeHelper {
     pub id: String,
     pub d: Option<NaiveDate>,
