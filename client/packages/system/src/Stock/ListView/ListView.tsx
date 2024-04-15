@@ -179,6 +179,10 @@ const StockListComponent: FC = () => {
 
   const repackModalController = useToggle();
 
+  const stockLine = entity
+    ? data?.nodes.find(({ id }) => id === entity.id)
+    : undefined;
+
   return (
     <>
       {repackModalController.isOn && (
@@ -188,11 +192,11 @@ const StockListComponent: FC = () => {
           stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
         />
       )}
-      {isOpen && entity && (
+      {isOpen && stockLine && (
         <StockLineEditModal
           isOpen={isOpen}
           onClose={onClose}
-          stockLine={entity}
+          stockLine={stockLine}
         />
       )}
       <Toolbar filter={filter} />

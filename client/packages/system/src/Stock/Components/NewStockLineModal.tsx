@@ -9,11 +9,11 @@ import {
   Divider,
   Box,
   useNotification,
+  AdjustmentTypeInput,
 } from '@openmsupply-client/common';
 import { DraftStockLine, useStockLine } from '../api';
 import { StockLineForm } from './StockLineForm';
 import {
-  Adjustment,
   InventoryAdjustmentReasonSearchInput,
   StockItemSearchInput,
 } from '../..';
@@ -101,7 +101,7 @@ export const NewStockLineModal: FC<NewStockLineModalProps> = ({
                   <Box display="flex" width={INPUT_WIDTH}>
                     <InventoryAdjustmentReasonSearchInput
                       width={INPUT_WIDTH}
-                      adjustment={Adjustment.Addition}
+                      adjustmentType={AdjustmentTypeInput.Addition}
                       value={draft.inventoryAdjustmentReason}
                       onChange={reason =>
                         onUpdate({ inventoryAdjustmentReason: reason })
