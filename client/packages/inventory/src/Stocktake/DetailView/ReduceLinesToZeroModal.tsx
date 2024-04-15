@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import {
   useTranslation,
   InputWithLabelRow,
-  ConfirmationWithChildrenModal,
+  ConfirmationModalLayout,
+  Grid,
+  DialogButton,
 } from '@openmsupply-client/common';
 import {
   Adjustment,
@@ -32,16 +34,27 @@ export const ReduceLinesToZeroConfirmationModal = ({
   const reasonIsRequired = data?.totalCount !== 0;
 
   return (
-    <ConfirmationWithChildrenModal
+    <ConfirmationModalLayout
       isOpen={isOpen}
       title={t('heading.are-you-sure')}
       message={t('messages.confirm-reduce-lines-to-zero')}
-      onClose={onCancel}
-      onSave={async () => {
-        await onZeroQuantities(reason);
-        onCancel();
-      }}
-      disableOk={reasonIsRequired && !reason}
+      buttons={
+        <>
+          <Grid item>
+            <DialogButton variant="cancel" onClick={onCancel} />
+          </Grid>
+          <Grid item>
+            <DialogButton
+              variant="ok"
+              disabled={reasonIsRequired && !reason}
+              onClick={async () => {
+                await onZeroQuantities(reason);
+                onCancel();
+              }}
+            />
+          </Grid>
+        </>
+      }
     >
       {reasonIsRequired && (
         <InputWithLabelRow
@@ -61,6 +74,6 @@ export const ReduceLinesToZeroConfirmationModal = ({
           }}
         />
       )}
-    </ConfirmationWithChildrenModal>
+    </ConfirmationModalLayout>
   );
 };
