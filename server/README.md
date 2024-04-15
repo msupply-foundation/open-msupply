@@ -1,6 +1,6 @@
 # Server
 
-Open mSupply server is a component of the Open mSupply system:
+Open mSupply server is a component of the Open mSupply system. The server:
 
 - Hosts the server web interface and exposes RESTful and GraphQL APIs for mSupply data.
 - Synchronises with central servers which implement `v5` of the mSupply sync API.
