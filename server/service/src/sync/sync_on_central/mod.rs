@@ -242,7 +242,7 @@ pub async fn upload_file(
         let destination = Path::new(&static_file.path);
 
         // Copy the file from the temp location to the final location
-        // TODO: Ideally these fs operations should be done in a separate such as using web::block (see handle_upload in static_files.rs)
+        // TODO: Ideally these fs operations should be done in a separate thread e.g. using web::block (see handle_upload in static_files.rs)
         let result = move_file(file.file.path(), destination);
         match result {
             Ok(_) => {

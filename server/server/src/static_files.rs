@@ -335,6 +335,18 @@ async fn sync_files(
                 Arc::new(service),
             );
 
+            let file_synchroniser = match file_synchroniser {
+                Ok(file_synchroniser) => file_synchroniser,
+                Err(err) => {
+                    log::error!("Error creating file synchroniser: {}", err);
+                    return Err(InternalError::new(
+                        "Couldn't download this file from the central server.",
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                    .into());
+                }
+            };
+
             file_synchroniser
                 .download_file_from_central(&file_id)
                 .await
