@@ -106,7 +106,7 @@ export const FilterMenu: FC<FilterDefinitions> = ({ filters }) => {
       gap={2}
       sx={{ alignItems: 'flex-start', flexWrap: 'wrap' }}
     >
-      {/* 13px margin t o make menu match the individual filter inputs */}
+      {/* 13px margin to make menu match the individual filter inputs */}
       <DropdownMenu label={t('label.filters')} sx={{ marginTop: '13px' }}>
         {filterOptions.map(option => (
           <FilterMenuItem
