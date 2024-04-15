@@ -137,6 +137,7 @@ const getInventoryAdjustmentReasonInputColumn = (
               : AdjustmentTypeInput.Addition
           }
           isError={isAdjustmentReasonError}
+          isDisabled={rowData.countedNumberOfPacks === null}
         />
       );
     },
