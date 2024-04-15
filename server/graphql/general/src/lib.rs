@@ -143,6 +143,18 @@ impl GeneralQueries {
         items(ctx, store_id, page, filter, sort)
     }
 
+    pub async fn ledger(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        // #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<LedgerFilterInput>,
+        // #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        // sort: Option<Vec<ItemSortInput>>,
+    ) -> Result<LedgerResponse> {
+        ledger(ctx, store_id, /*page,  */ filter /*, sort*/)
+    }
+
     pub async fn invoice_counts(
         &self,
         ctx: &Context<'_>,
