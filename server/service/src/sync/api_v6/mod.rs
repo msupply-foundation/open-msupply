@@ -1,6 +1,6 @@
 mod core;
 pub mod download_file;
-// pub mod upload_file;
+pub mod upload_file;
 
 use actix_multipart::form::{json::Json, tempfile::TempFile, MultipartForm};
 use repository::RepositoryError;
