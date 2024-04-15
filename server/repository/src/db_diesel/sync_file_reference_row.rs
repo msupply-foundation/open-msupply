@@ -166,13 +166,18 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     pub fn find_all_to_upload(&self) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
+        // NOTE: InProgress status here as the behaviour is a bit undefined. We should either upload a whole file or get an error.
+        // It's included here in case the server is restarted with an Inprogress file, it will be re-tried.
         let result = sync_file_reference
             .filter(deleted_datetime.is_null())
             .filter(direction.eq(SyncFileDirection::Upload))
             .filter(
-                status.eq(SyncFileStatus::New).or(status
-                    .eq(SyncFileStatus::Error)
-                    .and(retry_at.lt(diesel::dsl::now))),
+                status
+                    .eq(SyncFileStatus::New)
+                    .or(status.eq(SyncFileStatus::InProgress))
+                    .or(status
+                        .eq(SyncFileStatus::Error)
+                        .and(retry_at.lt(diesel::dsl::now))),
             )
             .load(&self.connection.connection)?;
         Ok(result)
