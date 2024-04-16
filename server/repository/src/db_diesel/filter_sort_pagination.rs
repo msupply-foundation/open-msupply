@@ -143,6 +143,9 @@ impl EqualFilter<i32> {
     pub fn not_equal_to_i32(value: i32) -> Self {
         inline_init(|r: &mut Self| r.not_equal_to = Some(value))
     }
+    pub fn i32_is_null(value: bool) -> Self {
+        inline_init(|r: &mut Self| r.is_null = Some(value))
+    }
 }
 
 impl EqualFilter<f64> {
