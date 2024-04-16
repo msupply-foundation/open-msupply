@@ -10,7 +10,7 @@ const ASSET_CATALOGUE_ITEM_PROPERTY1: (&str, &str) = (
     r#"{
         "id": "639e728b-f64b-4eef-9fd6-a1874bafb8a4",
         "catalogue_item_id": "0dda9346-b79f-4f0f-a375-ae778240043a",
-        "catalogue_property_id": "7613ef45-6410-41dc-a50a-c8fabf80cf71",
+        "catalogue_property_id": "854d8e25-d265-4884-aea3-8f13de3b55fb",
         "value_string": "Electricity"
     }"#,
 );
@@ -19,7 +19,7 @@ fn asset_catalogue_item_property1() -> AssetCatalogueItemPropertyRow {
     AssetCatalogueItemPropertyRow {
         id: ASSET_CATALOGUE_ITEM_PROPERTY1.0.to_string(),
         catalogue_item_id: "0dda9346-b79f-4f0f-a375-ae778240043a".to_string(),
-        catalogue_property_id: "7613ef45-6410-41dc-a50a-c8fabf80cf71".to_string(),
+        catalogue_property_id: "854d8e25-d265-4884-aea3-8f13de3b55fb".to_string(),
         value_string: Some("Electricity".to_string()),
         value_int: None,
         value_float: None,

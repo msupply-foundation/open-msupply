@@ -249,6 +249,7 @@ export type AssetCatalogueItemFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
   manufacturer?: InputMaybe<StringFilterInput>;
   model?: InputMaybe<StringFilterInput>;
+  search?: InputMaybe<StringFilterInput>;
   subCatalogue?: InputMaybe<StringFilterInput>;
   type?: InputMaybe<StringFilterInput>;
   typeId?: InputMaybe<EqualFilterStringInput>;

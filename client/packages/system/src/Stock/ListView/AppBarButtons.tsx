@@ -13,6 +13,7 @@ import {
   ButtonWithIcon,
   useEditModal,
 } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 import { useStock } from '../api';
 import { stockLinesToCsv } from '../../utils';
 import { NewStockLineModal } from '../Components/NewStockLineModal';
@@ -44,11 +45,13 @@ export const AppBarButtonsComponent = () => {
       {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
 
       <Grid container gap={1}>
-        <ButtonWithIcon
-          Icon={<PlusCircleIcon />}
-          label={t('button.new-stock')}
-          onClick={onOpen}
-        />
+        {Environment.FEATURE_INVENTORY_ADJUSTMENTS && (
+          <ButtonWithIcon
+            Icon={<PlusCircleIcon />}
+            label={t('button.new-stock')}
+            onClick={onOpen}
+          />
+        )}
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}
