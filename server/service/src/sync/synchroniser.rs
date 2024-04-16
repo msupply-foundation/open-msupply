@@ -194,6 +194,14 @@ impl Synchroniser {
                 log::info!("{}", format_error(&error));
                 let _ = logger.error(&error.into());
             };
+
+            // TODO
+            // v6_sync
+            //     .wait_for_sync_operation(
+            //         INTEGRATION_POLL_PERIOD_SECONDS,
+            //         INTEGRATION_TIMEOUT_SECONDS,
+            //     )
+            //     .await?;
         }
         logger.done_step(SyncStep::PushCentralV6)?;
 
@@ -248,10 +256,15 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes, merges) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger, None)
-                .await
-                .map_err(SyncError::IntegrationError)?;
+        let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
+            &ctx.connection,
+            is_initialised,
+            Some(logger),
+            None,
+        )
+        .await
+        .map_err(SyncError::IntegrationError)?;
+
         warn!("Upsert Integration result: {:?}", upserts);
         warn!("Delete Integration result: {:?}", deletes);
         warn!("Merge Integration result: {:?}", merges);
@@ -275,10 +288,8 @@ impl Synchroniser {
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub async fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
-    // todo: as transaction
-    is_initialised: bool,
-    // tODO: as option
-    logger: &mut SyncLogger<'a>,
+    execute_in_transaction: bool,
+    logger: Option<&mut SyncLogger<'a>>,
     source_site_id: Option<i32>,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
@@ -327,7 +338,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 upsert_sync_buffer_records.clone(),
                 &translators,
                 // Only pass Some(logger) during initalisation
-                is_initialised.not().then(|| logger),
+                // execute_in_transaction.not().then(|| logger),
+                logger, // TODO: logger now option -- move responsibility for is initialised out!
             )?;
 
         // pass the logger here
@@ -357,7 +369,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if is_initialised {
+    let result = if execute_in_transaction {
         connection
             .transaction_sync(integrate_and_translate)
             .map_err::<RepositoryError, _>(|e| e.to_inner_error())
