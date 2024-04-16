@@ -1,9 +1,9 @@
 # Central Server UI
 
 - _Date_: 2024-04-12
-- _Deciders_: 
-- _Status_: DRAFT
-- _Outcome_: 
+- _Deciders_: James Brunskill, Roxy Dao, Mark Prins
+- _Status_: DECIDED
+- _Outcome_: Option 4
 
 ## Context
 
@@ -108,8 +108,8 @@ _Cons:_
 
 ## Decision
 
-*Pending...*
+We will implement option 4, with an interim implementation of Option 1.
 
 ## Consequences
 
-*Pending...*
+There's a bit of rework as this is a significant change to the UI. Further analysis and UI design needs to happen prior to implementation. 
