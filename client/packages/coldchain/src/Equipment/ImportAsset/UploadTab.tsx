@@ -99,7 +99,11 @@ function getImportHelpers<T, P>(
 
     // check for duplicates
     if (rows.some((r, i) => r[key] === value && index !== i)) {
-      rowErrors.push(t('error.duplicate-asset-number'));
+      rowErrors.push(
+        t('error.duplicated-field', {
+          field: t(localeKey),
+        })
+      );
     }
   };
 
@@ -250,12 +254,7 @@ export const EquipmentUploadTab: FC<ImportPanel & EquipmentUploadTabProps> = ({
         <Upload onUpload={csvImport} />
         <Typography textAlign="center">
           {t('messages.template-download-text')}
-          <Link
-            onClick={() => {
-              csvExample();
-            }}
-            to={''}
-          >
+          <Link onClick={csvExample} to={''}>
             {t('heading.download-example')}
           </Link>
         </Typography>

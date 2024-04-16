@@ -140,10 +140,9 @@ export const importEquipmentToCsvWithErrors = (
   t: TypedTFunction<LocaleKey>,
   isCentralServer: boolean
 ) => {
-  const fields: string[] = [
-    t('label.asset-number'),
-    t('label.catalogue-item-code'),
-  ];
+  const fields: string[] = [];
+  fields.push(t('label.asset-number'));
+  fields.push(t('label.catalogue-item-code'));
 
   if (isCentralServer) {
     fields.push(t('label.store'));
