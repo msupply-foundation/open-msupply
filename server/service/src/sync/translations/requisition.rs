@@ -61,6 +61,10 @@ pub enum LegacyRequisitionStatus {
     /// finalised
     #[serde(rename = "fn")]
     Fn,
+    /// new
+    /// Note: this shouldn't be possible in mSupply but is seen in historical datasets
+    #[serde(rename = "nw")]
+    Nw,
     /// Bucket to catch all other variants
     /// E.g. "wp" (web progress), "wf" (web finalised)
     #[serde(other)]
@@ -439,13 +443,17 @@ fn from_legacy_status(
             LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
             &LegacyRequisitionStatus::Cn => RequisitionRowStatus::Sent,
             LegacyRequisitionStatus::Fn => RequisitionRowStatus::Sent,
-            _ => return None,
+            // Note, nw shouldn't be possible but is seen historical data:
+            LegacyRequisitionStatus::Nw => RequisitionRowStatus::Draft,
+            LegacyRequisitionStatus::Others => return None,
         },
         LegacyRequisitionType::Response => match status {
             LegacyRequisitionStatus::Sg => RequisitionRowStatus::New,
             &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
             LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
-            _ => return None,
+            // Note, nw shouldn't be possible but is seen historical data:
+            LegacyRequisitionStatus::Nw => RequisitionRowStatus::New,
+            LegacyRequisitionStatus::Others => return None,
         },
         _ => return None,
     };

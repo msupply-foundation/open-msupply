@@ -10,6 +10,7 @@ import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import { AssetLogFragment, useAssets } from '../../api';
 import { Status } from '../../Components';
 import { translateReason } from '../../utils';
+import { FileList } from '../../Components';
 
 const Divider = () => (
   <Box
@@ -85,16 +86,16 @@ const StatusLog = ({
   isLast: boolean;
   log: AssetLogFragment;
 }) => {
-  const sx = {
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  };
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('coldchain');
 
   return (
-    <Box sx={sx} flex={1} display="flex">
+    <Box
+      flex={0}
+      display="flex"
+      flexDirection="row"
+      justifyContent="space-between"
+    >
       <Box flex={0} display="flex" flexDirection="column" alignItems="center">
         <Connector visible={!isFirst} />
         <Icon username={log.user?.username} />
@@ -102,24 +103,45 @@ const StatusLog = ({
       </Box>
       <Paper
         elevation={3}
-        sx={{ borderRadius: 4, flex: 1, margin: 2, marginLeft: 4, padding: 2 }}
+        sx={{
+          borderRadius: 4,
+          flex: 1,
+          margin: 2,
+          marginLeft: 4,
+          padding: 2,
+          flexWrap: 'nowrap',
+          display: 'flex',
+        }}
       >
-        <Box display="flex" alignItems="flex-start">
-          <Typography sx={{ fontWeight: 'bold', lineHeight: 2 }}>
-            {localisedDate(log.logDatetime)}
-          </Typography>
-          <div style={{ width: 16 }} />
-          <Status status={log.status} />
-        </Box>
-        <User user={log.user} />
-        <Box display="flex" alignItems="flex-start">
+        <Box display="flex" flex={0.7} flexDirection="column">
+          <Box display="flex" alignItems="flex-start">
+            <Typography sx={{ fontWeight: 'bold', lineHeight: 2 }}>
+              {localisedDate(log.logDatetime)}
+            </Typography>
+            <div style={{ width: 16 }} />
+            <Status status={log.status} />
+          </Box>
+          <User user={log.user} />
+          <Box display="flex" alignItems="flex-start">
+            <Typography sx={{ fontSize: '12px' }}>
+              <b>{t('label.reason')}:</b> {translateReason(log.reason, t)}
+            </Typography>
+          </Box>
           <Typography sx={{ fontSize: '12px' }}>
-            <b>{t('label.reason')}:</b> {translateReason(log.reason, t)}
+            <b>{t('label.observations')}:</b> {log.comment ?? '-'}
           </Typography>
         </Box>
-        <Typography sx={{ fontSize: '12px' }}>
-          <b>{t('label.observations')}:</b> {log.comment ?? '-'}
-        </Typography>
+        <Box display="flex" flex={0.3}>
+          <FileList
+            assetId={log.id}
+            files={log.documents.nodes.map(document => ({
+              id: document.id,
+              name: document.fileName,
+            }))}
+            padding={0.5}
+            tableName="asset_log"
+          />
+        </Box>
       </Paper>
     </Box>
   );

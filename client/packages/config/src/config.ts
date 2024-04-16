@@ -1,4 +1,5 @@
 declare const API_HOST: string;
+declare const FEATURE_INVENTORY_ADJUSTMENTS: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -28,9 +29,13 @@ export const Environment = {
   FILE_URL: `${apiHost}/files?id=`,
   GRAPHQL_URL: `${apiHost}/graphql`,
   PLUGIN_URL: pluginUrl,
+  SYNC_FILES_URL: `${apiHost}/sync_files`,
   UPLOAD_FRIDGE_TAG: `${apiHost}/fridge-tag`,
   PRINT_LABEL_QR: `${apiHost}/print/label-qr`,
   PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
+
+  // Feature flags
+  FEATURE_INVENTORY_ADJUSTMENTS,
 };
 
 export default Environment;
