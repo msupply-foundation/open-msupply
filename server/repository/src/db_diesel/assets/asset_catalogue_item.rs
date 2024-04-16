@@ -29,7 +29,7 @@ pub struct AssetCatalogueItemFilter {
     pub model: Option<StringFilter>,
     pub r#type: Option<StringFilter>,
     pub type_id: Option<EqualFilter<String>>,
-    pub code_manufacturer_model_type: Option<StringFilter>,
+    pub search: Option<StringFilter>,
     pub sub_catalogue: Option<StringFilter>,
 }
 
@@ -125,37 +125,25 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             class_id,
             r#type,
             type_id,
-            code_manufacturer_model_type,
+            search,
             sub_catalogue,
         } = f;
 
         // or filter need to be applied before and filters
-        if code_manufacturer_model_type.is_some() {
+        if search.is_some() {
             let mut sub_query = asset_type_dsl::asset_type
                 .select(asset_type_dsl::id)
                 .into_boxed();
-            apply_string_filter!(
-                sub_query,
-                code_manufacturer_model_type.clone(),
-                asset_type_dsl::name
-            );
+            apply_string_filter!(sub_query, search.clone(), asset_type_dsl::name);
 
             query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(sub_query));
+            apply_string_or_filter!(query, search.clone(), asset_catalogue_item_dsl::code);
             apply_string_or_filter!(
                 query,
-                code_manufacturer_model_type.clone(),
-                asset_catalogue_item_dsl::code
-            );
-            apply_string_or_filter!(
-                query,
-                code_manufacturer_model_type.clone(),
+                search.clone(),
                 asset_catalogue_item_dsl::manufacturer
             );
-            apply_string_or_filter!(
-                query,
-                code_manufacturer_model_type,
-                asset_catalogue_item_dsl::model
-            );
+            apply_string_or_filter!(query, search, asset_catalogue_item_dsl::model);
         }
 
         apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
