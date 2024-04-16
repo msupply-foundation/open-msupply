@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   TableProvider,
   createTableStore,
@@ -23,7 +23,7 @@ import { OutboundReturnEditModal } from '../modals';
 import { OutboundReturnItem } from '../../types';
 import { getNextItemId } from '../../utils';
 
-export const OutboundReturnsDetailView: FC = () => {
+export const OutboundReturnsDetailViewComponent = () => {
   const {
     onOpen,
     onClose,
@@ -32,6 +32,7 @@ export const OutboundReturnsDetailView: FC = () => {
     mode,
   } = useEditModal<string>();
   const { data, isLoading } = useReturns.document.outboundReturn();
+  const { rows } = useReturns.lines.outboundReturnRows();
   const t = useTranslation('replenishment');
   const navigate = useNavigate();
 
@@ -53,21 +54,14 @@ export const OutboundReturnsDetailView: FC = () => {
     },
   ];
 
-  const nextItemId = getNextItemId(data?.lines?.nodes ?? [], itemId);
+  const nextItemId = getNextItemId(rows ?? [], itemId);
 
   return (
     <React.Suspense
       fallback={<DetailViewSkeleton hasGroupBy={true} hasHold={true} />}
     >
       {data ? (
-        <TableProvider
-          createStore={createTableStore}
-          queryParamsStore={createQueryParamsStore<OutboundReturnLineFragment>({
-            initialSortBy: {
-              key: 'itemName',
-            },
-          })}
-        >
+        <>
           <AppBarButtons onAddItem={onAddItem} />
           {isOpen && (
             <OutboundReturnEditModal
@@ -95,7 +89,7 @@ export const OutboundReturnsDetailView: FC = () => {
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />
-        </TableProvider>
+        </>
       ) : (
         <AlertModal
           open={true}
@@ -113,3 +107,16 @@ export const OutboundReturnsDetailView: FC = () => {
     </React.Suspense>
   );
 };
+
+export const OutboundReturnsDetailView = () => (
+  <TableProvider
+    createStore={createTableStore}
+    queryParamsStore={createQueryParamsStore<OutboundReturnLineFragment>({
+      initialSortBy: {
+        key: 'itemName',
+      },
+    })}
+  >
+    <OutboundReturnsDetailViewComponent />
+  </TableProvider>
+);

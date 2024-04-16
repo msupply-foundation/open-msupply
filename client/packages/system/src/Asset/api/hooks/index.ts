@@ -10,10 +10,13 @@ export const useAssetData = {
 
   document: {
     get: Document.useAsset,
+    infiniteList: Document.useInfiniteAssets,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,
 
     fields: Document.useAssetFields,
+    insert: Document.useAssetItemInsert,
+    delete: Document.useAssetsDelete,
   },
 
   line: {},

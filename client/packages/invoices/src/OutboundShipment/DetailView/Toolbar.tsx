@@ -55,6 +55,7 @@ export const Toolbar: FC<{
             {otherParty && (
               <InputWithLabelRow
                 label={t('label.customer-name')}
+                sx={{ minWidth: 100 }}
                 Input={
                   <CustomerSearchInput
                     disabled={isDisabled || !!requisition}
