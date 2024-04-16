@@ -5,7 +5,6 @@ use crate::{
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 
-use std::ops::Not;
 use std::sync::Arc;
 use thiserror::Error;
 use util::format_error;
@@ -318,6 +317,8 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
 
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+
+        log::info!("Integrating records for site: {:#?}", source_site_id);
 
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
