@@ -191,10 +191,13 @@ export const importEquipmentToCsv = (
   return Formatter.csv({ fields, data });
 };
 
-export const formatPropertyValue = (propertyValue: PropertyValue) => {
+export const formatPropertyValue = (
+  propertyValue: PropertyValue,
+  t: TypedTFunction<LocaleKey>
+) => {
   switch (propertyValue.valueType) {
     case PropertyNodeValueType.Boolean:
-      return propertyValue.valueBool ? 'Yes' : 'No';
+      return propertyValue.valueBool ? t('messages.yes') : t('messages.no');
     case PropertyNodeValueType.Float:
       return propertyValue.valueFloat?.toString();
     case PropertyNodeValueType.Integer:
