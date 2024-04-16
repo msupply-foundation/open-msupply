@@ -130,7 +130,7 @@ mod tests {
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger, None)
+        integrate_and_translate_sync_buffer(&connection, true, Some(&mut logger), None)
             .await
             .unwrap();
 
@@ -153,7 +153,7 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger, None)
+        integrate_and_translate_sync_buffer(&connection, true, Some(&mut logger), None)
             .await
             .unwrap();
 
