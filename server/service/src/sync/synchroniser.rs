@@ -249,7 +249,7 @@ impl Synchroniser {
         logger.start_step(SyncStep::Integrate)?;
 
         let (upserts, deletes, merges) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger, None)
                 .await
                 .map_err(SyncError::IntegrationError)?;
         warn!("Upsert Integration result: {:?}", upserts);
@@ -275,8 +275,11 @@ impl Synchroniser {
 /// Translation And Integration of sync buffer, pub since used in CLI
 pub async fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
+    // todo: as transaction
     is_initialised: bool,
+    // tODO: as option
     logger: &mut SyncLogger<'a>,
+    source_site_id: Option<i32>,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
@@ -304,12 +307,20 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
 
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+
         // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
+        let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+            SyncBufferAction::Upsert,
+            &table_order,
+            source_site_id,
+        )?;
+
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
+        let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+            SyncBufferAction::Delete,
+            &table_order,
+            source_site_id,
+        )?;
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
@@ -327,8 +338,11 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 None,
             )?;
 
-        let merge_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+        let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+            SyncBufferAction::Merge,
+            &table_order,
+            source_site_id,
+        )?;
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
                 merge_sync_buffer_records,
