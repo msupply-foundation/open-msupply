@@ -1,6 +1,6 @@
 use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     #[cfg(not(feature = "postgres"))]
     const RELATED_RECORD_TYPE: &str = "TEXT";
     #[cfg(feature = "postgres")]

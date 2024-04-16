@@ -147,11 +147,11 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
     }
 
     let connection_manager = connection_manager(db_settings);
-    let connection = connection_manager
+    let mut connection = connection_manager
         .connection()
         .expect("Failed to connect to database");
 
-    migrate(&connection, version).unwrap();
+    migrate(&mut connection, version).unwrap();
 
     connection_manager
 }

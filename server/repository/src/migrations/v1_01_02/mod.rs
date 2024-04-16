@@ -8,7 +8,7 @@ impl Migration for V1_01_02 {
         Version::from_str("1.1.2")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
         use crate::migrations::sql;
 
         sql!(
@@ -66,12 +66,12 @@ async fn migration_1_01_02() {
 
     let version = V1_01_02.version();
 
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&connection), version);
+    assert_eq!(get_database_version(&mut connection), version);
 }

@@ -18,7 +18,7 @@ table! {
     }
 }
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -156,7 +156,7 @@ async fn migration_context_program_upgrade() {
 
     // test that the migration adds a context for every program
     // Migrate to version - 1
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: "migration_context_program_upgrade",
         version: Some(prev_version.clone()),
         ..Default::default()
@@ -166,7 +166,7 @@ async fn migration_context_program_upgrade() {
     // Add two programs and master lists
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO master_list 
         (id, name, code, description)
@@ -177,7 +177,7 @@ async fn migration_context_program_upgrade() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO master_list 
         (id, name, code, description)
@@ -205,7 +205,7 @@ async fn migration_context_program_upgrade() {
         .execute(&mut connection.connection)
         .unwrap();
 
-    migrate(&connection).unwrap();
+    migrate(&mut connection).unwrap();
 
     let programs = program::dsl::program
         .select((program::dsl::id, program::dsl::name))

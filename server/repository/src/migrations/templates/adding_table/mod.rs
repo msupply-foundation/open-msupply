@@ -6,7 +6,7 @@ impl Migration for V1_00_05 {
         Version::from_str("1.0.5")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
         // DATE, DATETIME, etc.. comes from src/migrations/types.rs, which is re-exported in src/migrations/mod.rs
         sql!(
             connection,
@@ -94,14 +94,14 @@ async fn migration_1_00_05() {
     let version = V1_00_05.version();
 
     // This test allows checking sql syntax
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&connection), version);
+    assert_eq!(get_database_version(&mut connection), version);
 
     // Repository tests should check that rows can be inserted and queried
     // Also repository test can check for enum mapping, see sync_log_row.rs, use of EnumIter

@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     // requisition.program_id -> nullable text (would ideally be referencing program.id, but program data, is not protected from deletion, so this field can't have a referential constraint)
 
     sql!(

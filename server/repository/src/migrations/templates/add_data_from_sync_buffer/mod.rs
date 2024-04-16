@@ -45,12 +45,12 @@ impl Migration for V1_00_08 {
         Version::from_str("1.0.8")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
         use self::store::dsl as store_dsl;
         use self::sync_buffer::dsl as sync_buffer_dsl;
 
         sql!(
-            &mut connection,
+            connection,
             r#"
             ALTER TABLE store ADD disabled BOOLEAN NOT NULL DEFAULT false
         "#
@@ -95,7 +95,7 @@ async fn migration_1_00_08() {
     let version = V1_00_08.version();
 
     // Migrate to version - 1
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(previous_version.clone()),
         ..Default::default()
@@ -103,7 +103,7 @@ async fn migration_1_00_08() {
     .await;
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO name 
         (id, type, is_customer, is_supplier, code, name)
@@ -114,7 +114,7 @@ async fn migration_1_00_08() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code)
@@ -125,7 +125,7 @@ async fn migration_1_00_08() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code)
@@ -136,7 +136,7 @@ async fn migration_1_00_08() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code) 
@@ -190,7 +190,7 @@ async fn migration_1_00_08() {
     }"#;
 
     execute_sql_with_error(
-        &connection,
+        &mut connection,
         sql_query(format!(
             r#"
             INSERT INTO sync_buffer 
@@ -205,7 +205,7 @@ async fn migration_1_00_08() {
 
     // Simplified sync_buffer.data
     execute_sql_with_error(
-        &connection,
+        &mut connection,
         sql_query(
             r#"
             INSERT INTO sync_buffer 
@@ -220,8 +220,8 @@ async fn migration_1_00_08() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&connection), version);
+    migrate(&mut connection, Some(version.clone())).unwrap();
+    assert_eq!(get_database_version(&mut connection), version);
 
     use self::store::dsl as store_dsl;
 

@@ -13,7 +13,7 @@ impl Migration for V1_01_01 {
         Version::from_str("1.1.1")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
         #[cfg(not(feature = "postgres"))]
         remove_sqlite_check::migrate(connection)?;
 
@@ -38,7 +38,7 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
     use crate::{migrations::templates::add_data_from_sync_buffer::V1_00_08, test_db::*};
 
     // Migrate to version - 1
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: name,
         version: Some(V1_00_08.version()),
         ..Default::default()
@@ -46,7 +46,7 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
     .await;
     // Common data
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO name 
         (id, type, is_customer, is_supplier, code, name) 
@@ -57,7 +57,7 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code) 
@@ -77,12 +77,12 @@ async fn migration_1_01_01() {
 
     let version = V1_01_01.version();
 
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&connection), version);
+    assert_eq!(get_database_version(&mut connection), version);
 }

@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 #[cfg(not(feature = "postgres"))]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -31,7 +31,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 }
 
 #[cfg(feature = "postgres")]
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"

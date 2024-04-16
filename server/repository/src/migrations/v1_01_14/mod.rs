@@ -11,7 +11,7 @@ impl Migration for V1_01_14 {
         Version::from_str("1.1.14")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
         is_sync_update::migrate(connection)?;
         barcode_changelog::migrate(connection)?;
         Ok(())
@@ -27,12 +27,12 @@ async fn migration_1_01_14() {
     let version = V1_01_14.version();
 
     // This test allows checking sql syntax
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&connection), version);
+    assert_eq!(get_database_version(&mut connection), version);
 }

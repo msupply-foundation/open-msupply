@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -27,7 +27,7 @@ async fn remove_sqlite_check_name() {
     use crate::migrations::*;
     use crate::test_db::*;
     use diesel::prelude::*;
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: "remove_sqlite_check_name",
         version: Some(templates::add_data_from_sync_buffer::V1_00_08.version()),
         ..Default::default()
@@ -36,7 +36,7 @@ async fn remove_sqlite_check_name() {
 
     let default = "'', '', true, true";
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO name
         (id, name, code, is_customer, is_supplier, type, gender)
@@ -49,12 +49,12 @@ async fn remove_sqlite_check_name() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&connection), V1_01_01.version());
+    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
 
     // Make sure check was removed
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO name
         (id, name, code, is_customer, is_supplier, type, gender)

@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -22,11 +22,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 async fn remove_sqlite_check_stocktake() {
     use crate::migrations::*;
     use diesel::prelude::*;
-    let connection = super::setup_data_migration("remove_sqlite_check_stocktake").await;
+    let mut connection = super::setup_data_migration("remove_sqlite_check_stocktake").await;
 
     let default = "1, 'store_id', '', ''";
     sql!(
-        &connection,
+        &mut connection,
         r#"
             INSERT INTO stocktake
             (id, stocktake_number, store_id, user_id, created_datetime, status)
@@ -39,12 +39,12 @@ async fn remove_sqlite_check_stocktake() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&connection), V1_01_01.version());
+    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
 
     // Make sure check was removed
     sql!(
-        &connection,
+        &mut connection,
         r#"
             INSERT INTO stocktake
             (id, stocktake_number, store_id, user_id, created_datetime, status)

@@ -10,7 +10,7 @@ pub mod latest_asset_log;
 pub mod reference_data;
 mod sync_triggers_central;
 
-pub(crate) fn migrate_assets(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate_assets(connection: &mut StorageConnection) -> anyhow::Result<()> {
     reference_data::migrate(connection)?;
     asset_catalogue_item::migrate(connection)?;
     asset_catalogue_data::migrate(connection)?;
