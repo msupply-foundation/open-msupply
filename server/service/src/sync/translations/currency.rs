@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use repository::{CurrencyRow, StorageConnection, SyncBufferRow};
+use repository::{CurrencyRow, CurrencyRowRepository, StorageConnection, SyncBufferRow};
 use serde::{Deserialize, Serialize};
 
 use crate::sync::sync_serde::{date_option_to_isostring, zero_date_as_option};
@@ -38,7 +38,7 @@ impl SyncTranslation for CurrencyTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyCurrencyRow {
@@ -49,12 +49,15 @@ impl SyncTranslation for CurrencyTranslation {
             date_updated,
         } = serde_json::from_str(&sync_record.data)?;
 
+        let currency = CurrencyRowRepository::new(connection).find_one_by_id(&id)?;
+
         let result = CurrencyRow {
             id,
             rate,
             code,
             is_home_currency,
             date_updated,
+            is_active: currency.map_or(true, |c| c.is_active),
         };
 
         Ok(PullTranslateResult::upsert(result))
