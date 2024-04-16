@@ -6,6 +6,7 @@ mod activity_log_add_zero_line;
 mod add_source_site_id;
 mod assets;
 mod central_omsupply;
+mod currency_add_is_active;
 mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod linked_shipment;
@@ -37,6 +38,7 @@ impl Migration for V2_00_00 {
         user_change_last_synced_to_optional::migrate(connection)?;
         inventory_adjustment_logtype::migrate(connection)?;
         report_views::migrate(connection)?;
+        currency_add_is_active::migrate(connection)?;
         Ok(())
     }
 }
