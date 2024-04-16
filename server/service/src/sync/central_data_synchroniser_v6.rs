@@ -17,7 +17,6 @@ use super::{
     GetActiveStoresOnSiteError,
 };
 
-use log::debug;
 use repository::{
     ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
@@ -87,6 +86,7 @@ impl SynchroniserV6 {
                 end_cursor,
                 total_records,
                 records,
+                ..
             } = self
                 .sync_api_v6
                 .pull(cursor, batch_size, is_initialised)
@@ -141,14 +141,8 @@ impl SynchroniserV6 {
             };
 
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
-            log::info!(
-                "Pushing {}/{} records to v6 central server",
-                changelogs.len(),
-                change_logs_total
-            );
-            log::debug!("Records: {:#?}", changelogs);
 
-            let records = translate_changelogs_to_sync_records(
+            let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
                 ToSyncRecordTranslationType::PushToOmSupplyCentral,
@@ -157,14 +151,20 @@ impl SynchroniserV6 {
             .map(SyncRecordV6::from)
             .collect();
 
+            if records.is_empty() {
+                continue; // No v6 records to push, continue to next batch
+            }
+
+            let is_last_batch = change_logs_total <= batch_size as u64;
+
             let batch = SyncBatchV6 {
                 total_records: change_logs_total,
                 end_cursor: last_pushed_cursor.unwrap_or(0) as u64,
                 records,
+                is_last_batch,
             };
 
-            let response = self.sync_api_v6.push(batch).await?;
-            debug!("V6 Push response: {:#?}", response);
+            self.sync_api_v6.push(batch).await?;
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {

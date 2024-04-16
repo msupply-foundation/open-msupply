@@ -78,10 +78,13 @@ pub async fn pull(
     );
     log::debug!("Sending records as central server: {:#?}", records);
 
+    let is_last_batch = total_records <= batch_size as u64;
+
     Ok(SyncBatchV6 {
         total_records,
         end_cursor,
         records,
+        is_last_batch,
     })
 }
 
@@ -115,7 +118,7 @@ pub async fn push(
 
     let SyncBatchV6 {
         records,
-        total_records,
+        is_last_batch,
         ..
     } = batch;
 
@@ -129,7 +132,7 @@ pub async fn push(
         repo.upsert_one(&buffer_row)?;
     }
 
-    if total_records <= records_in_this_batch {
+    if is_last_batch {
         integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(response.site_id))
             .await
             // TODO map to IntegrationError once implemented
