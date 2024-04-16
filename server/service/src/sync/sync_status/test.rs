@@ -614,6 +614,7 @@ async fn empty_v6_server(port: u16) -> Server {
             end_cursor: 0,
             total_records: 0,
             records: Vec::new(),
+            is_last_batch: true,
         }))
     }
     async fn empty_push_response() -> impl Responder {

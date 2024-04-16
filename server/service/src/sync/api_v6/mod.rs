@@ -118,6 +118,7 @@ pub struct SyncBatchV6 {
     // Including records in this batch
     pub(crate) total_records: u64,
     pub(crate) records: Vec<SyncRecordV6>,
+    pub(crate) is_last_batch: bool,
 }
 
 impl From<PushSyncRecord> for SyncRecordV6 {
