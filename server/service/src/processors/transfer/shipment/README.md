@@ -26,7 +26,9 @@ You may want to refer to [requisition transfer docs](../requisition/README.md#sa
 
 ## Returns
 
-Returns are invoices, with outbounds and inbounds, just the same as shipments. As such, they are transferred by the same processor.
+Returns are invoices, with outbounds and inbounds, just the same as shipments. As such, they are transferred by the same processor. The flow is shown below:
+
+![omSupply return transfer workflow](./doc/omSupply_return_transfer.drawio.png)
 
 ### Related documents
 
