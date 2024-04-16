@@ -1,6 +1,10 @@
 use super::asset_catalogue_item_property_row::asset_catalogue_item_property::dsl::*;
 
 use crate::asset_catalogue_property_row::asset_catalogue_property;
+use crate::ChangeLogInsertRow;
+use crate::ChangelogAction;
+use crate::ChangelogRepository;
+use crate::ChangelogTableName;
 use crate::RepositoryError;
 use crate::StorageConnection;
 use crate::Upsert;
@@ -51,7 +55,7 @@ impl<'a> AssetCatalogueItemPropertyRowRepository<'a> {
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(
+    pub fn _upsert_one(
         &self,
         asset_catalogue_item_property_row: &AssetCatalogueItemPropertyRow,
     ) -> Result<(), RepositoryError> {
@@ -65,7 +69,7 @@ impl<'a> AssetCatalogueItemPropertyRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
+    pub fn _upsert_one(
         &self,
         asset_catalogue_item_property_row: &AssetCatalogueItemPropertyRow,
     ) -> Result<(), RepositoryError> {
@@ -75,14 +79,31 @@ impl<'a> AssetCatalogueItemPropertyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn insert_one(
+    pub fn upsert_one(
         &self,
         asset_catalogue_item_property_row: &AssetCatalogueItemPropertyRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::insert_into(asset_catalogue_item_property)
-            .values(asset_catalogue_item_property_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
+    ) -> Result<i64, RepositoryError> {
+        self._upsert_one(asset_catalogue_item_property_row)?;
+        self.insert_changelog(
+            asset_catalogue_item_property_row.id.to_owned(),
+            ChangelogAction::Upsert,
+        )
+    }
+
+    fn insert_changelog(
+        &self,
+        asset_catalogue_item_property_id: String,
+        action: ChangelogAction,
+    ) -> Result<i64, RepositoryError> {
+        let row = ChangeLogInsertRow {
+            table_name: ChangelogTableName::AssetCatalogueItemProperty,
+            record_id: asset_catalogue_item_property_id,
+            row_action: action,
+            store_id: None,
+            name_link_id: None,
+        };
+
+        ChangelogRepository::new(self.connection).insert(&row)
     }
 
     pub fn find_all(&self) -> Result<Vec<AssetCatalogueItemPropertyRow>, RepositoryError> {
@@ -111,7 +132,13 @@ impl<'a> AssetCatalogueItemPropertyRowRepository<'a> {
 
 impl Upsert for AssetCatalogueItemPropertyRow {
     fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        AssetCatalogueItemPropertyRowRepository::new(con).upsert_one(self)
+        let _change_log_id = AssetCatalogueItemPropertyRowRepository::new(con).upsert_one(self)?;
+        Ok(())
+    }
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+        // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
+        let cursor_id = AssetCatalogueItemPropertyRowRepository::new(con).upsert_one(self)?;
+        Ok(Some(cursor_id))
     }
 
     // Test only

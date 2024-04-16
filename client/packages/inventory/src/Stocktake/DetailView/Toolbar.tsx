@@ -23,6 +23,7 @@ import {
   useNotification,
   ArrowRightIcon,
 } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 import { useStocktake } from '../api';
 import { ReduceLinesToZeroConfirmationModal } from './ReduceLinesToZeroModal';
 import { ChangeLocationConfirmationModal } from './ChangeLocationModal';
@@ -158,18 +159,22 @@ export const Toolbar = () => {
             />
           </Box>
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
-            <DropdownMenuItem
-              IconComponent={ArrowRightIcon}
-              onClick={openChangeLocationModal}
-            >
-              {t('button.change-location')}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              IconComponent={RewindIcon}
-              onClick={openReduceToZeroModal}
-            >
-              {t('button.reduce-lines-to-zero')}
-            </DropdownMenuItem>
+            {Environment.FEATURE_INVENTORY_ADJUSTMENTS && (
+              <>
+                <DropdownMenuItem
+                  IconComponent={ArrowRightIcon}
+                  onClick={openChangeLocationModal}
+                >
+                  {t('button.change-location')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  IconComponent={RewindIcon}
+                  onClick={openReduceToZeroModal}
+                >
+                  {t('button.reduce-lines-to-zero')}
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>

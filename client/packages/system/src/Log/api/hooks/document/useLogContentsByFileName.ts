@@ -1,4 +1,4 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@openmsupply-client/common';
 import { useLogApi } from '../utils/useLogApi';
 
 export const useLogContentsByFileName = () => {

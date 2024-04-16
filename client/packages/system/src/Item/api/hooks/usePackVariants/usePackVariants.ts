@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@openmsupply-client/common';
 import { useItemApi } from '../useItemApi';
 
 export const usePackVariants = () => {

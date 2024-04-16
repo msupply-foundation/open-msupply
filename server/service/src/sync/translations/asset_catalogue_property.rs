@@ -19,7 +19,7 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(AssetCataloguePropertyTranslation)
 }
 
-struct AssetCataloguePropertyTranslation;
+pub(crate) struct AssetCataloguePropertyTranslation;
 
 impl SyncTranslation for AssetCataloguePropertyTranslation {
     fn table_name(&self) -> &str {

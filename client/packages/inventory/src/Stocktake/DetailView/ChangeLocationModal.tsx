@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import {
   InputWithLabelRow,
   useTranslation,
-  ConfirmationWithChildrenModal,
+  ConfirmationModalLayout,
+  Grid,
+  DialogButton,
 } from '@openmsupply-client/common';
 import {
   LocationRowFragment,
@@ -26,15 +28,26 @@ export const ChangeLocationConfirmationModal = ({
   const onChangeLocation = useStocktake.line.changeLocation();
 
   return (
-    <ConfirmationWithChildrenModal
+    <ConfirmationModalLayout
       isOpen={isOpen}
       title={t('heading.are-you-sure')}
       message={t('messages.confirm-change-location')}
-      onClose={onCancel}
-      onSave={async () => {
-        await onChangeLocation(location);
-        onCancel();
-      }}
+      buttons={
+        <>
+          <Grid item>
+            <DialogButton variant="cancel" onClick={onCancel} />
+          </Grid>
+          <Grid item>
+            <DialogButton
+              variant="ok"
+              onClick={async () => {
+                await onChangeLocation(location);
+                onCancel();
+              }}
+            />
+          </Grid>
+        </>
+      }
     >
       <InputWithLabelRow
         label={t('label.location')}
@@ -48,6 +61,6 @@ export const ChangeLocationConfirmationModal = ({
           />
         }
       />
-    </ConfirmationWithChildrenModal>
+    </ConfirmationModalLayout>
   );
 };
