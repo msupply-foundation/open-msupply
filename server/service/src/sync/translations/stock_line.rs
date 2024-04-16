@@ -12,7 +12,10 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    utils::{clear_invalid_barcode_id, clear_invalid_location_id},
+    PullTranslateResult, PushTranslateResult, SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -68,27 +71,45 @@ impl SyncTranslation for StockLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
+        let LegacyStockLineRow {
+            ID,
+            store_ID,
+            item_ID,
+            batch,
+            expiry_date,
+            hold,
+            location_ID,
+            pack_size,
+            available,
+            quantity,
+            cost_price,
+            sell_price,
+            note,
+            supplier_id,
+            barcode_id,
+        } = serde_json::from_str::<LegacyStockLineRow>(&sync_record.data)?;
 
+        let barcode_id = clear_invalid_barcode_id(connection, barcode_id)?;
+        let location_id = clear_invalid_location_id(connection, location_ID)?;
         let result = StockLineRow {
-            id: data.ID,
-            store_id: data.store_ID,
-            item_link_id: data.item_ID,
-            location_id: data.location_ID,
-            batch: data.batch,
-            pack_size: data.pack_size,
-            cost_price_per_pack: data.cost_price,
-            sell_price_per_pack: data.sell_price,
-            available_number_of_packs: data.available,
-            total_number_of_packs: data.quantity,
-            expiry_date: data.expiry_date,
-            on_hold: data.hold,
-            note: data.note,
-            supplier_link_id: data.supplier_id,
-            barcode_id: data.barcode_id,
+            id: ID,
+            store_id: store_ID,
+            item_link_id: item_ID,
+            location_id,
+            batch,
+            pack_size,
+            cost_price_per_pack: cost_price,
+            sell_price_per_pack: sell_price,
+            available_number_of_packs: available,
+            total_number_of_packs: quantity,
+            expiry_date,
+            on_hold: hold,
+            note,
+            supplier_link_id: supplier_id,
+            barcode_id,
         };
 
         Ok(PullTranslateResult::upsert(result))
