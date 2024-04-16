@@ -17,6 +17,7 @@ import {
   useStringFilter,
   ArrayUtils,
   useDebounceCallback,
+  AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -107,6 +108,7 @@ export const CreateAssetModal = ({
     pagination,
   });
   const { mutateAsync: save } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
@@ -158,6 +160,23 @@ export const CreateAssetModal = ({
     DEBOUNCE_TIMEOUT
   );
 
+  const onSave = async () => {
+    try {
+      await save(draft);
+      await insertLog({
+        id: FnUtils.generateUUID(),
+        assetId: draft.id,
+        comment: t('label.created'),
+        status: AssetLogStatusInput.Functioning,
+      });
+      invalidateQueries();
+      success(t('messages.cce-created'))();
+      handleClose();
+    } catch (e) {
+      error(t(parseInsertError(e)))();
+    }
+  };
+
   // when the pagination changes, fetch the next page
   useEffect(() => {
     fetchNextPage({ pageParam: pagination });
@@ -175,19 +194,7 @@ export const CreateAssetModal = ({
       height={100}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
       okButton={
-        <DialogButton
-          variant="ok"
-          disabled={isDisabled}
-          onClick={async () => {
-            try {
-              await save(draft);
-              success(t('messages.cce-created'))();
-              handleClose();
-            } catch (e) {
-              error(t(parseInsertError(e)))();
-            }
-          }}
-        />
+        <DialogButton variant="ok" disabled={isDisabled} onClick={onSave} />
       }
     >
       {isLoadingCategories ? (

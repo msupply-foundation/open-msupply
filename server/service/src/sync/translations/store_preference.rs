@@ -7,6 +7,8 @@ use super::{PullTranslateResult, SyncTranslation};
 pub enum LegacyOptionsType {
     #[serde(rename = "store_preferences")]
     StorePreferences,
+    #[serde(other)]
+    Others,
 }
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LegacyPrefRow {
@@ -19,18 +21,22 @@ pub struct LegacyPrefRow {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LegacyPrefData {
+    #[serde(default)] // In case preference is missing, use default
     #[serde(rename = "default_item_packsize_to_one")]
     pub pack_to_one: bool,
+    #[serde(default)]
     #[serde(rename = "shouldAuthoriseResponseRequisition")]
     pub response_requisition_requires_authorisation: bool,
+    #[serde(default)]
     #[serde(rename = "includeRequisitionsInSuppliersRemoteAuthorisationProcesses")]
     pub request_requisition_requires_authorisation: bool,
     #[serde(default)]
-    // In case preference is missing, use default
     #[serde(rename = "omSupplyUsesProgramModule")]
     pub om_program_module: bool,
+    #[serde(default)]
     #[serde(rename = "usesVaccineModule")]
     pub vaccine_module: bool,
+    #[serde(default)]
     #[serde(rename = "can_issue_in_foreign_currency")]
     pub issue_in_foreign_currency: bool,
 }
@@ -62,6 +68,11 @@ impl SyncTranslation for StorePreferenceTranslation {
 
         let r#type = match r#type {
             LegacyOptionsType::StorePreferences => StorePreferenceType::StorePreferences,
+            LegacyOptionsType::Others => {
+                return Ok(PullTranslateResult::Ignored(
+                    "Unsupported pref type".to_string(),
+                ));
+            }
         };
 
         let LegacyPrefData {
