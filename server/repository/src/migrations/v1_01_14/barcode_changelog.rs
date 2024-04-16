@@ -3,7 +3,7 @@ use crate::StorageConnection;
 use diesel::prelude::*;
 
 #[cfg(feature = "postgres")]
-pub(crate) fn migrate(_connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(_connection: &mut StorageConnection) -> anyhow::Result<()> {
     Ok(())
 }
 
@@ -62,7 +62,7 @@ async fn migration_1_01_1_barcode_changelog() {
     let version = super::V1_01_14.version();
 
     // Migrate to version - 1
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_1_01_1_barcode_changelog_{version}"),
         version: Some(previous_version.clone()),
         ..Default::default()
@@ -73,7 +73,7 @@ async fn migration_1_01_1_barcode_changelog() {
     use changelog::dsl as changelog_dsl;
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO item 
         (id, name, code, default_pack_size, type, legacy_record) 
@@ -84,7 +84,7 @@ async fn migration_1_01_1_barcode_changelog() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO barcode 
         (id, gtin, item_id) 
@@ -95,7 +95,7 @@ async fn migration_1_01_1_barcode_changelog() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO barcode 
         (id, gtin, item_id) 
@@ -106,7 +106,7 @@ async fn migration_1_01_1_barcode_changelog() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO barcode 
         (id, gtin, item_id) 
@@ -117,7 +117,7 @@ async fn migration_1_01_1_barcode_changelog() {
     .unwrap();
 
     sql!(
-        &connection,
+        &mut connection,
         r#"
         INSERT INTO barcode 
         (id, gtin, item_id) 
@@ -170,8 +170,8 @@ async fn migration_1_01_1_barcode_changelog() {
     );
 
     // Migrate to this version
-    migrate(&connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&connection), version);
+    migrate(&mut connection, Some(version.clone())).unwrap();
+    assert_eq!(get_database_version(&mut connection), version);
 
     // Check data, barcode_3 should be removed from changelog
     let changelog_record_ids = changelog_dsl::changelog

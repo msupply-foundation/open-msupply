@@ -1,7 +1,7 @@
 use crate::{migrations::sql, StorageConnection};
 
 #[cfg(not(feature = "postgres"))]
-fn migrate_triggers(connection: &StorageConnection) -> anyhow::Result<()> {
+fn migrate_triggers(connection: &mut StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -194,7 +194,7 @@ fn migrate_triggers(connection: &StorageConnection) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     // this migration may have been run, however if the upgrade is from < 1.2.00 then it
     // will have failed, as the clinician table was only added in 1.2, while the migration
     // was added in 1.1.14. Unable to use IF EXISTS in sqlite, so we are catching errors

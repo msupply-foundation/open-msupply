@@ -40,14 +40,14 @@ impl Migration for V1_07_00 {
         Version::from_str("1.7.0")
     }
 
-    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
         sync_log::migrate(connection)?;
         currency::migrate(connection)?;
         store_preference_add_issue_in_foreign_currency::migrate(connection)?;
         invoice_add_currency_fields::migrate(connection)?;
 
         // We don't want merge-migration updates to sync back.
-        run_without_change_log_updates(connection, || {
+        run_without_change_log_updates(connection, |connection| {
             item_add_is_active::migrate(connection)?;
             unit_add_is_active::migrate(connection)?;
             // Item link migrations
@@ -88,7 +88,7 @@ impl Migration for V1_07_00 {
 }
 
 #[cfg(test)]
-fn insert_merge_test_data(connection: &StorageConnection) {
+fn insert_merge_test_data(connection: &mut StorageConnection) {
     use super::sql;
 
     sql!(
@@ -331,27 +331,27 @@ async fn migration_1_07_00_merge() {
     let previous_version = v1_06_00::V1_06_00.version();
     let version = V1_07_00.version();
 
-    let SetupResult { connection, .. } = setup_test(SetupOption {
+    let SetupResult { mut connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}_merge"),
         version: Some(previous_version.clone()),
         ..Default::default()
     })
     .await;
 
-    insert_merge_test_data(&connection);
+    insert_merge_test_data(&mut connection);
 
     let old_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
         .order(stock_on_hand_dsl::item_id.asc())
-        .load(&connection.connection)
+        .load(&mut connection.connection)
         .unwrap();
 
     let old_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
         .order(stock_movement_dsl::id.asc())
-        .load(&connection.connection)
+        .load(&mut connection.connection)
         .unwrap();
 
-    migrate(&connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&connection), version);
+    migrate(&mut connection, Some(version.clone())).unwrap();
+    assert_eq!(get_database_version(&mut connection), version);
 
     let expected_item_links = vec![
         ItemLinkRow {
@@ -373,21 +373,21 @@ async fn migration_1_07_00_merge() {
     ];
     let migration_item_links: Vec<ItemLinkRow> = item_link_dsl::item_link
         .order(item_link_dsl::id)
-        .load(&connection.connection)
+        .load(&mut connection.connection)
         .unwrap();
     assert_eq!(expected_item_links, migration_item_links);
 
     // Tests the view rewrite works correctly and implicitly that the stock_line.item_link_id got populated
     let new_soh: Vec<StockOnHandRow> = stock_on_hand_dsl::stock_on_hand
         .order(stock_on_hand_dsl::item_id.asc())
-        .load(&connection.connection)
+        .load(&mut connection.connection)
         .unwrap();
     assert_eq!(old_soh, new_soh);
 
     // Tests the view rewrites work correctly and implicitly that the invoice_line.item_link_id got populated
     let new_stock_movements: Vec<StockMovementRow> = stock_movement_dsl::stock_movement
         .order(stock_movement_dsl::id.asc())
-        .load(&connection.connection)
+        .load(&mut connection.connection)
         .unwrap();
     assert_eq!(old_stock_movements, new_stock_movements);
 
@@ -443,7 +443,7 @@ async fn migration_1_07_00_merge() {
     ];
     let updated_requisition_lines: Vec<RequisitionLineRow> = requisition_line_dsl::requisition_line
         .order(requisition_line_dsl::id.asc())
-        .load(&connection.connection)
+        .load(&mut connection.connection)
         .unwrap();
 
     assert_eq!(expected_requisition_lines, updated_requisition_lines);

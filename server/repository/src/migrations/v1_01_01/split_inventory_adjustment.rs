@@ -1,10 +1,10 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     // Split INVENTORY_ADJUSTMENT to INVENTORY_REDUCTION and INVENTORY_ADDITION
     if cfg!(feature = "postgres") {
         sql!(
-            &connection,
+            connection,
             r#"
                 ALTER TYPE invoice_type ADD VALUE IF NOT EXISTS 'INVENTORY_REDUCTION';
                 ALTER TYPE invoice_type RENAME VALUE 'INVENTORY_ADJUSTMENT' TO 'INVENTORY_ADDITION';
@@ -13,7 +13,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     } else {
         // For Sqlite need to migrate data
         sql!(
-            &connection,
+            connection,
             r#"
                 UPDATE invoice SET type = 'INVENTORY_ADDITION' WHERE type = 'INVENTORY_ADJUSTMENT';
             "#
@@ -21,7 +21,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     }
 
     sql!(
-        &connection,
+        connection,
         r#" ALTER TABLE stocktake 
                 RENAME COLUMN inventory_adjustment_id TO inventory_addition_id;
 
@@ -36,7 +36,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         "DROP VIEW inventory_adjustment_stock_movement; CREATE VIEW"
     };
     sql!(
-        &connection,
+        connection,
         r#"
                 {create_or_replace_view} inventory_adjustment_stock_movement AS
                 SELECT 
@@ -61,11 +61,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 async fn split_inventory_adjustment() {
     use crate::migrations::*;
     use diesel::{prelude::*, sql_query, sql_types::*};
-    let connection = super::setup_data_migration("split_inventory_adjustment").await;
+    let mut connection = super::setup_data_migration("split_inventory_adjustment").await;
 
     let default = "'name_id', 'store_id', 1, false, 'NEW'";
     execute_sql_with_error(
-        &connection,
+        &mut connection,
         sql_query(format!(
             r#"
             INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, status, created_datetime, type)
@@ -80,7 +80,7 @@ async fn split_inventory_adjustment() {
     .unwrap();
 
     execute_sql_with_error(
-        &connection,
+        &mut connection,
         sql_query((
             r#"
             INSERT INTO stocktake
@@ -94,12 +94,12 @@ async fn split_inventory_adjustment() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&connection), V1_01_01.version());
+    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
 
     // Check can add INVENTORY_REDUCTION
     execute_sql_with_error(
-        &connection,
+        &mut connection,
         sql_query(format!(
             r#"
             INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, status, created_datetime, type)

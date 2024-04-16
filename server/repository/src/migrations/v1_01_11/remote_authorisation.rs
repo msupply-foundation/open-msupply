@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     // POSTGRES
     #[cfg(feature = "postgres")]
     const APPROVAL_STATUS_TYPE: &str = "approval_status_type";

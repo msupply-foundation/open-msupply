@@ -1,7 +1,7 @@
 use crate::migrations::{DATETIME, DOUBLE};
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
     if cfg!(feature = "postgres") {
         sql!(
             connection,

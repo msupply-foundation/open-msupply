@@ -39,7 +39,7 @@ use thiserror::Error;
 
 pub(crate) trait Migration {
     fn version(&self) -> Version;
-    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, _: &mut StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
 }
@@ -63,7 +63,7 @@ pub enum MigrationError {
 
 // TODO: logging
 pub fn migrate(
-    connection: &StorageConnection,
+    connection: &mut StorageConnection,
     to_version: Option<Version>,
 ) -> Result<Version, MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
@@ -102,7 +102,7 @@ pub fn migrate(
     // Rust migrations
     let to_version = to_version.unwrap_or(Version::from_package_json());
 
-    let database_version = get_database_version(&connection);
+    let database_version = get_database_version(connection);
 
     // for `>` see PartialOrd implementation of Version
     if database_version > to_version {
@@ -134,7 +134,7 @@ pub fn migrate(
             ));
         }
 
-        let database_version = get_database_version(&connection);
+        let database_version = get_database_version(connection);
 
         // TODO transaction ?
 
@@ -154,8 +154,8 @@ pub fn migrate(
     Ok(to_version)
 }
 
-fn get_database_version(mut connection: &StorageConnection) -> Version {
-    match KeyValueStoreRepository::new(&mut connection).get_string(KeyValueType::DatabaseVersion) {
+fn get_database_version(connection: &mut StorageConnection) -> Version {
+    match KeyValueStoreRepository::new(connection).get_string(KeyValueType::DatabaseVersion) {
         Ok(Some(version_str)) => Version::from_str(&version_str),
         // Rust migrations start at "1.0.3"
         // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
@@ -165,10 +165,10 @@ fn get_database_version(mut connection: &StorageConnection) -> Version {
 }
 
 fn set_database_version(
-    mut connection: &StorageConnection,
+    connection: &mut StorageConnection,
     new_version: &Version,
 ) -> Result<(), RepositoryError> {
-    KeyValueStoreRepository::new(&mut connection)
+    KeyValueStoreRepository::new(connection)
         .set_string(KeyValueType::DatabaseVersion, Some(new_version.to_string()))
 }
 
@@ -179,7 +179,7 @@ pub(crate) struct SqlError(String, #[source] RepositoryError);
 /// Will try and execute diesel query return SQL error which contains debug version of SQL statements
 #[cfg(test)] // uncomment this when used in queries outside of tests
 pub(crate) fn execute_sql_with_error<'a, Q>(
-    mut connection: &StorageConnection,
+    connection: &mut StorageConnection,
     query: Q,
 ) -> Result<usize, SqlError>
 where
@@ -195,7 +195,7 @@ where
 /// differs to execute_sql_with_error, accepts string query rather then diesel query and
 /// allows for multiple statements to be executed
 pub(crate) fn batch_execute_sql_with_error(
-    mut connection: &StorageConnection,
+    connection: &mut StorageConnection,
     query: &str,
 ) -> Result<(), SqlError> {
     connection
