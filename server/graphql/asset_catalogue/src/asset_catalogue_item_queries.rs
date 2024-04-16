@@ -51,6 +51,7 @@ pub struct AssetCatalogueItemFilterInput {
     pub model: Option<StringFilterInput>,
     pub r#type: Option<StringFilterInput>,
     pub type_id: Option<EqualFilterStringInput>,
+    pub search: Option<StringFilterInput>,
     pub sub_catalogue: Option<StringFilterInput>,
 }
 
@@ -67,6 +68,7 @@ impl From<AssetCatalogueItemFilterInput> for AssetCatalogueItemFilter {
             model: f.model.map(StringFilter::from),
             r#type: f.r#type.map(StringFilter::from),
             type_id: f.type_id.map(EqualFilter::from),
+            search: f.search.map(StringFilter::from),
             sub_catalogue: f.sub_catalogue.map(StringFilter::from),
         }
     }
@@ -128,6 +130,7 @@ impl AssetCatalogueItemFilterInput {
             model,
             r#type,
             type_id,
+            search,
             sub_catalogue,
         } = self;
 
@@ -142,6 +145,7 @@ impl AssetCatalogueItemFilterInput {
             model: model.map(StringFilter::from),
             r#type: r#type.map(StringFilter::from),
             type_id: type_id.map(EqualFilter::from),
+            search: search.map(StringFilter::from),
             sub_catalogue: sub_catalogue.map(StringFilter::from),
         }
     }
