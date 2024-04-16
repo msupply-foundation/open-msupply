@@ -44,7 +44,6 @@ _Pros:_
 
 - Initialisation works with no effort
 - Allows for targeted logic for file syncing (e.g rate limiting in future)
-- Allows for files to be downloaded where they're needed rather than needing to sync everywhere (via std sync process)
 - Straightforward for all reporting. What's in the invoice/requisition/PO/tender/GR is consistent with what the user entered.
 - Straightforward for integrations, no deep explanation needed.
 
