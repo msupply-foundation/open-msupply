@@ -247,7 +247,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
             {draft.properties.map(property => (
               <Row key={property.id} label={property.name}>
                 <BasicTextInput
-                  value={formatPropertyValue(property)}
+                  value={formatPropertyValue(property, t)}
                   disabled
                   fullWidth
                 />
