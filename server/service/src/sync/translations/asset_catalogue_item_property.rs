@@ -1,9 +1,12 @@
 use repository::{
-    asset_catalogue_item_row::{AssetCatalogueItemRow, AssetCatalogueItemRowRepository},
+    asset_catalogue_item_property_row::{
+        AssetCatalogueItemPropertyRow, AssetCatalogueItemPropertyRowRepository,
+    },
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::asset_category::AssetCategoryTranslation;
+use crate::sync::translations::asset_catalogue_item::AssetCatalogueItemTranslation;
+use crate::sync::translations::asset_catalogue_property::AssetCataloguePropertyTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -12,18 +15,21 @@ use super::{
 // Needs to be added to all_translators()
 #[deny(dead_code)]
 pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
-    Box::new(AssetCatalogueItemTranslation)
+    Box::new(AssetCatalogueItemPropertyTranslation)
 }
 
-pub(crate) struct AssetCatalogueItemTranslation;
+struct AssetCatalogueItemPropertyTranslation;
 
-impl SyncTranslation for AssetCatalogueItemTranslation {
+impl SyncTranslation for AssetCatalogueItemPropertyTranslation {
     fn table_name(&self) -> &str {
-        "asset_catalogue_item"
+        "asset_catalogue_item_property"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![AssetCategoryTranslation.table_name()]
+        vec![
+            AssetCatalogueItemTranslation.table_name(),
+            AssetCataloguePropertyTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(
@@ -32,12 +38,12 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         Ok(PullTranslateResult::upsert(serde_json::from_str::<
-            AssetCatalogueItemRow,
+            AssetCatalogueItemPropertyRow,
         >(&sync_record.data)?))
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::AssetCatalogueItem)
+        Some(ChangelogTableName::AssetCatalogueItemProperty)
     }
 
     // Only translating and pulling from central server
@@ -59,10 +65,10 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
         connection: &StorageConnection,
         changelog: &ChangelogRow,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        let row = AssetCatalogueItemRowRepository::new(connection)
+        let row = AssetCatalogueItemPropertyRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
-                "AssetCatalogueItem row ({}) not found",
+                "AssetCatalogueItemProperty row ({}) not found",
                 changelog.record_id
             )))?;
 
@@ -80,12 +86,12 @@ mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all};
 
     #[actix_rt::test]
-    async fn test_asset_catalogue_item_translation() {
-        use crate::sync::test::test_data::asset_catalogue_item as test_data;
-        let translator = AssetCatalogueItemTranslation;
+    async fn test_asset_catalogue_item_property_translation() {
+        use crate::sync::test::test_data::asset_catalogue_item_property as test_data;
+        let translator = AssetCatalogueItemPropertyTranslation;
 
         let (_, connection, _, _) = setup_all(
-            "test_asset_catalogue_item_translation",
+            "test_asset_catalogue_item_property_translation",
             MockDataInserts::none(),
         )
         .await;
