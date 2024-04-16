@@ -39,10 +39,10 @@ This is either:
 - the Inbound Shipment that an Outbound Return was created from
 - the Outbound Shipment that an Inbound Return is related to
 
-When an Inbound Return is generated from Outbound Return, we check for an Inbound Shipment linked (via the `original_shipment_id`) to that Outbound Return. When then check which Outbound Shipment is linked to that Inbound Shipment, and link the Inbound Return with its correct original Outbound Shipment.
+When an Inbound Return is generated from an Outbound Return, we check if that Outbound Return was created from an Inbound Shipment (i.e. does it have an `original_shipment_id`). If that Inbound Shipment has a linked Outbound Shipment, that Outbound Shipment will be set as the original shipment for our generated Inbound Return.
 
-Manually created returns don't have an original Shipment.
+Manually created returns don't have an original shipment.
 
 In the UI, these are shown in the `Related Documents` section on the Return detail page.
 
-Note that mSupply Desktop Outbound Return -> Open mSupply Inbound Return won't have an original shipment. `original_shipment_id` is new in Open mSupply, and isn't populated by mSupply Desktop. Thus, when in Open mSupply, viewing any Inbound Returns received from a customer who is using mSupply Desktop, there won't be any related documents.
+Note that mSupply Desktop Outbound Return -> Open mSupply Inbound Return won't have an original shipment. `original_shipment_id` is new in Open mSupply, and isn't populated by mSupply Desktop. Thus, there won't be any links in the `Related Documents` section when in Open mSupply when viewing the Inbound Return.
