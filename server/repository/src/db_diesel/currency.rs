@@ -20,6 +20,7 @@ pub struct Currency {
 pub struct CurrencyFilter {
     pub id: Option<EqualFilter<String>>,
     pub is_home_currency: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 pub enum CurrencySortField {
@@ -92,6 +93,12 @@ fn create_filtered_query(filter: Option<CurrencyFilter>) -> BoxedLogQuery {
             Some(false) => query.filter(currency_dsl::is_home_currency.eq(false)),
             None => query,
         };
+
+        query = match filter.is_active {
+            Some(true) => query.filter(currency_dsl::is_active.eq(true)),
+            Some(false) => query.filter(currency_dsl::is_active.eq(false)),
+            None => query,
+        };
     }
     query
 }
@@ -112,6 +119,11 @@ impl CurrencyFilter {
 
     pub fn is_home_currency(mut self, filter: bool) -> Self {
         self.is_home_currency = Some(filter);
+        self
+    }
+
+    pub fn is_active(mut self, filter: bool) -> Self {
+        self.is_active = Some(filter);
         self
     }
 }
