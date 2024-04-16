@@ -80,6 +80,7 @@ export const getAssetQueries = (sdk: Sdk) => ({
       const result = await sdk.assetCatalogueItems({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
+        first: 1000, // otherwise the default of 100 is applied and we have 159 currently
       });
 
       const items = result?.assetCatalogueItems;

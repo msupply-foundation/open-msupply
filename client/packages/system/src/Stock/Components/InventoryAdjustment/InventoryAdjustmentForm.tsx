@@ -6,15 +6,12 @@ import {
   NumericTextInput,
   DialogButton,
   useNotification,
+  AdjustmentTypeInput,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment, useInventoryAdjustment } from '../../api';
-import {
-  Adjustment,
-  InventoryAdjustmentReasonSearchInput,
-  usePackVariant,
-} from '../../..';
+import { InventoryAdjustmentReasonSearchInput, usePackVariant } from '../../..';
 import { InventoryAdjustmentDirectionInput } from './InventoryAdjustmentDirectionSearchInput';
-import { StyledInputRow } from '../StyledInputRow';
+import { INPUT_WIDTH, StyledInputRow } from '../StyledInputRow';
 
 interface InventoryAdjustmentFormProps {
   stockLine: StockLineRowFragment;
@@ -34,7 +31,7 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
   );
   const packUnit = asPackVariant(stockLine.packSize);
 
-  const saveDisabled = !draft.direction || draft.adjustBy === 0;
+  const saveDisabled = draft.adjustment === 0;
 
   const save = async () => {
     try {
@@ -56,16 +53,13 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
         />
         <Box display="flex" justifyContent={'end'}>
           <InventoryAdjustmentDirectionInput
-            value={draft.direction}
-            onChange={direction => {
-              if (direction !== undefined) {
-                setDraft({
-                  direction,
-                  reason: null,
-                  adjustBy: 0,
-                  newNumberOfPacks: stockLine.totalNumberOfPacks,
-                });
-              }
+            value={draft.adjustmentType}
+            onChange={adjustmentType => {
+              setDraft({
+                adjustmentType: adjustmentType ?? AdjustmentTypeInput.Addition,
+                reason: null,
+                adjustment: 0,
+              });
             }}
           />
         </Box>
@@ -73,11 +67,12 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
         <StyledInputRow
           label={t('label.reason')}
           Input={
-            <Box display="flex" width={160}>
+            <Box display="flex" width={INPUT_WIDTH}>
               <InventoryAdjustmentReasonSearchInput
                 onChange={reason => setDraft(state => ({ ...state, reason }))}
                 value={draft.reason}
-                adjustment={draft.direction}
+                adjustmentType={draft.adjustmentType}
+                width={INPUT_WIDTH}
               />
             </Box>
           }
@@ -100,21 +95,17 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.adjust-by')}
           Input={
             <NumericTextInput
-              width={160}
+              width={INPUT_WIDTH}
               max={
-                draft.direction === Adjustment.Reduction
+                draft.adjustmentType === AdjustmentTypeInput.Reduction
                   ? stockLine.totalNumberOfPacks
                   : undefined
               }
-              value={draft.adjustBy}
-              onChange={adjustBy =>
+              value={draft.adjustment}
+              onChange={value =>
                 setDraft(state => ({
                   ...state,
-                  adjustBy: adjustBy ?? 0,
-                  newNumberOfPacks:
-                    state.direction === Adjustment.Addition
-                      ? stockLine.totalNumberOfPacks + (adjustBy ?? 0)
-                      : stockLine.totalNumberOfPacks - (adjustBy ?? 0),
+                  adjustment: value ?? 0,
                 }))
               }
             />
@@ -124,9 +115,14 @@ export const InventoryAdjustmentForm: FC<InventoryAdjustmentFormProps> = ({
           label={t('label.new-pack-qty')}
           Input={
             <NumericTextInput
-              width={160}
+              width={INPUT_WIDTH}
               disabled={true}
-              value={draft.newNumberOfPacks}
+              value={
+                stockLine.totalNumberOfPacks +
+                (draft.adjustmentType === AdjustmentTypeInput.Addition
+                  ? draft.adjustment
+                  : -draft.adjustment)
+              }
             />
           }
         />
