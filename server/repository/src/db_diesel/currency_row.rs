@@ -1,5 +1,5 @@
 use super::{currency_row::currency::dsl as currency_dsl, StorageConnection};
-use crate::Upsert;
+use crate::{Delete, Upsert};
 
 use crate::repository_error::RepositoryError;
 
@@ -73,6 +73,24 @@ impl<'a> CurrencyRowRepository<'a> {
             .set(currency_dsl::is_active.eq(false))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CurrencyRowDelete(pub String);
+impl Delete for CurrencyRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        CurrencyRowRepository::new(con).delete(&self.0)
+    }
+
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            CurrencyRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(Some(CurrencyRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
     }
 }
 
