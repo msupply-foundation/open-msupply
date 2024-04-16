@@ -1,8 +1,14 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
 import { Formatter } from '@common/utils';
-import { AssetLogStatusInput, ReasonType, StatusType } from '@common/types';
+import {
+  AssetLogStatusInput,
+  PropertyNodeValueType,
+  ReasonType,
+  StatusType,
+} from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
+import { PropertyValue } from './types';
 
 // the reference data is loaded in migrations so the id here is hardcoded
 export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
@@ -183,4 +189,19 @@ export const importEquipmentToCsv = (
   ]);
 
   return Formatter.csv({ fields, data });
+};
+
+export const formatPropertyValue = (propertyValue: PropertyValue) => {
+  switch (propertyValue.valueType) {
+    case PropertyNodeValueType.Boolean:
+      return propertyValue.valueBool ? 'Yes' : 'No';
+    case PropertyNodeValueType.Float:
+      return propertyValue.valueFloat?.toString();
+    case PropertyNodeValueType.Integer:
+      return propertyValue.valueInt?.toString();
+    case PropertyNodeValueType.String:
+      return propertyValue.valueString;
+    default:
+      return undefined;
+  }
 };
