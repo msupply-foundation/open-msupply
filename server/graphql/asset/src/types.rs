@@ -1,3 +1,5 @@
+use std::vec;
+
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
@@ -8,14 +10,17 @@ use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
 use graphql_core::loader::{
-    AssetCatalogueItemLoader, AssetCategoryLoader, AssetClassLoader, AssetLocationLoader,
-    AssetTypeLoader, StoreByIdLoader, UserLoader,
+    AssetCatalogueItemLoader, AssetCatalogueItemPropertyLoader, AssetCategoryLoader,
+    AssetClassLoader, AssetLocationLoader, AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
 use graphql_core::loader::{AssetStatusLogLoader, SyncFileReferenceLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector, UserNode};
 
+use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
+use repository::asset_catalogue_item_property_row::AssetCatalogueItemPropertyRow;
+use repository::asset_catalogue_property_row::{AssetCataloguePropertyRow, PropertyValueType};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 
@@ -98,6 +103,109 @@ impl AssetConnector {
         AssetConnector {
             total_count: 0,
             nodes: Vec::<AssetNode>::new(),
+        }
+    }
+}
+
+#[derive(PartialEq, Debug)]
+pub struct AssetCatalogueItemPropertyNode {
+    pub value: AssetCatalogueItemPropertyRow,
+    pub property: AssetCataloguePropertyRow,
+}
+
+#[derive(SimpleObject)]
+pub struct AssetCatalogueItemPropertyConnector {
+    nodes: Vec<AssetCatalogueItemPropertyNode>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
+pub enum PropertyNodeValueType {
+    String,
+    Boolean,
+    Integer,
+    Float,
+}
+
+impl PropertyNodeValueType {
+    pub fn from_domain(value_type: &PropertyValueType) -> PropertyNodeValueType {
+        use PropertyValueType::*;
+        match value_type {
+            String => PropertyNodeValueType::String,
+            Boolean => PropertyNodeValueType::Boolean,
+            Integer => PropertyNodeValueType::Integer,
+            Float => PropertyNodeValueType::Float,
+        }
+    }
+}
+
+#[Object]
+impl AssetCatalogueItemPropertyNode {
+    pub async fn id(&self) -> &str {
+        &self.value().id
+    }
+    pub async fn catalogue_item_id(&self) -> &str {
+        &self.value().catalogue_item_id
+    }
+    pub async fn catalogue_property_id(&self) -> &str {
+        &self.value().catalogue_property_id
+    }
+    pub async fn name(&self) -> &str {
+        &self.property().name
+    }
+    pub async fn value_type(&self) -> PropertyNodeValueType {
+        PropertyNodeValueType::from_domain(&self.property().value_type)
+    }
+    pub async fn value_string(&self) -> &Option<String> {
+        &self.value().value_string
+    }
+    pub async fn value_int(&self) -> &Option<i32> {
+        &self.value().value_int
+    }
+    pub async fn value_float(&self) -> &Option<f64> {
+        &self.value().value_float
+    }
+    pub async fn value_bool(&self) -> &Option<bool> {
+        &self.value().value_bool
+    }
+}
+impl AssetCatalogueItemPropertyNode {
+    pub fn from_domain(
+        property_and_value: AssetCatalogueItemPropertyValue,
+    ) -> AssetCatalogueItemPropertyNode {
+        let AssetCatalogueItemPropertyValue { property, value } = property_and_value;
+        AssetCatalogueItemPropertyNode { property, value }
+    }
+
+    pub fn property(&self) -> &AssetCataloguePropertyRow {
+        &self.property
+    }
+
+    pub fn value(&self) -> &AssetCatalogueItemPropertyRow {
+        &self.value
+    }
+}
+
+impl AssetCatalogueItemPropertyConnector {
+    pub fn from_domain(
+        properties_and_values: Vec<AssetCatalogueItemPropertyValue>,
+    ) -> AssetCatalogueItemPropertyConnector {
+        AssetCatalogueItemPropertyConnector {
+            nodes: properties_and_values
+                .into_iter()
+                .map(AssetCatalogueItemPropertyNode::from_domain)
+                .collect(),
+        }
+    }
+
+    pub fn from_vec(
+        properties_and_values: Vec<AssetCatalogueItemPropertyValue>,
+    ) -> AssetCatalogueItemPropertyConnector {
+        AssetCatalogueItemPropertyConnector {
+            nodes: properties_and_values
+                .into_iter()
+                .map(AssetCatalogueItemPropertyNode::from_domain)
+                .collect(),
         }
     }
 }
@@ -191,6 +299,28 @@ impl AssetNode {
         let documents = SyncFileReferenceConnector::from_vec(result_option.unwrap_or(vec![]));
 
         Ok(documents)
+    }
+
+    pub async fn properties(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Vec<AssetCatalogueItemPropertyNode>> {
+        let properties = match &self.row().catalogue_item_id {
+            Some(catalogue_item_id) => {
+                let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemPropertyLoader>>();
+                let result_option = loader.load_one(catalogue_item_id.to_string()).await?;
+
+                result_option
+                    .unwrap_or(Vec::<AssetCatalogueItemPropertyValue>::new())
+                    .iter()
+                    .map(|p| AssetCatalogueItemPropertyNode::from_domain(p.to_owned()))
+                    .into_iter()
+                    .collect()
+            }
+            None => vec![],
+        };
+
+        Ok(properties)
     }
 
     pub async fn asset_category(&self, ctx: &Context<'_>) -> Result<Option<AssetCategoryNode>> {

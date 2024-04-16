@@ -2,6 +2,7 @@ use super::asset_catalogue_property_row::asset_catalogue_property::dsl::*;
 
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
+use strum::Display;
 
 use crate::RepositoryError;
 use crate::StorageConnection;
@@ -9,7 +10,7 @@ use crate::Upsert;
 
 use diesel::prelude::*;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum PropertyValueType {
