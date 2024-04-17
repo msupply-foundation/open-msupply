@@ -148,11 +148,11 @@ struct AllDateValues {
     dates: Vec<(IdAndDate, TableAndFieldName)>,
 }
 pub struct RefreshDatesRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> RefreshDatesRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         RefreshDatesRepository { connection }
     }
 
@@ -243,7 +243,7 @@ impl<'a> RefreshDatesRepository<'a> {
             field_name, table_name
         );
 
-        Ok(sql_query(query).load::<IdAndTimestamp>(&self.connection.connection)?)
+        Ok(sql_query(query).load::<IdAndTimestamp>(self.connection.lock().connection())?)
     }
 
     fn update_timestamps(
@@ -266,7 +266,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 id
             );
 
-            sql_query(&query).execute(&mut self.connection.connection)?;
+            sql_query(&query).execute(self.connection.lock().connection())?;
         }
 
         Ok(())
@@ -282,7 +282,7 @@ impl<'a> RefreshDatesRepository<'a> {
             field_name, table_name
         );
 
-        Ok(sql_query(query).load::<IdAndDate>(&self.connection.connection)?)
+        Ok(sql_query(query).load::<IdAndDate>(self.connection.lock().connection())?)
     }
 
     fn update_dates(
@@ -305,7 +305,7 @@ impl<'a> RefreshDatesRepository<'a> {
                 id
             );
 
-            sql_query(&query).execute(&mut self.connection.connection)?;
+            sql_query(&query).execute(self.connection.lock().connection())?;
         }
 
         Ok(())
@@ -421,7 +421,7 @@ mod tests {
         )
         .await;
 
-        let repo = RefreshDatesRepository::new(&mut connection);
+        let repo = RefreshDatesRepository::new(&connection);
         // Test select timestamp
         let mut result = repo.get_timestamps("invoice", "created_datetime").unwrap();
         result.sort_by(|a, b| a.id.cmp(&b.id));
@@ -602,7 +602,7 @@ mod tests {
         )
         .unwrap();
 
-        let invoice1_result = InvoiceRowRepository::new(&mut connection)
+        let invoice1_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice1().id)
             .unwrap();
 
@@ -617,7 +617,7 @@ mod tests {
             })
         );
 
-        let invoice2_result = InvoiceRowRepository::new(&mut connection)
+        let invoice2_result = InvoiceRowRepository::new(&connection)
             .find_one_by_id(&invoice2().id)
             .unwrap();
 
@@ -638,7 +638,7 @@ mod tests {
             })
         );
 
-        let stock_line1_result = StockLineRowRepository::new(&mut connection)
+        let stock_line1_result = StockLineRowRepository::new(&connection)
             .find_one_by_id(&stock_line1().id)
             .unwrap();
 

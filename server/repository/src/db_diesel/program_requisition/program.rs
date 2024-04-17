@@ -25,33 +25,32 @@ pub enum ProgramSortField {
 pub type ProgramSort = Sort<ProgramSortField>;
 
 pub struct ProgramRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ProgramFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_by_filter(
-        &mut self,
-        filter: ProgramFilter,
-    ) -> Result<Vec<Program>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: ProgramFilter) -> Result<Vec<Program>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(&mut self, filter: ProgramFilter) -> Result<Option<Program>, RepositoryError> {
+    pub fn query_one(&self, filter: ProgramFilter) -> Result<Option<Program>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ProgramFilter>,
         sort: Option<ProgramSort>,
@@ -78,7 +77,7 @@ impl<'a> ProgramRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Program>(&mut self.connection.connection)?;
+        let result = final_query.load::<Program>(self.connection.lock().connection())?;
         Ok(result)
     }
 }

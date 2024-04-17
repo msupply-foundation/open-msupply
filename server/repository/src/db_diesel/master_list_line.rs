@@ -41,23 +41,25 @@ pub enum MasterListLineSortField {
 pub type MasterListLineSort = Sort<MasterListLineSortField>;
 
 pub struct MasterListLineRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> MasterListLineRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         MasterListLineRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<MasterListLineFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter)?;
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: MasterListLineFilter,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
@@ -65,13 +67,13 @@ impl<'a> MasterListLineRepository<'a> {
 
         query = query.order(master_list_line_dsl::id.asc());
 
-        let result = query.load::<MasterListLineJoin>(&mut self.connection.connection)?;
+        let result = query.load::<MasterListLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
         sort: Option<MasterListLineSort>,
@@ -95,7 +97,7 @@ impl<'a> MasterListLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListLineJoin>(&mut self.connection.connection)?;
+            .load::<MasterListLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

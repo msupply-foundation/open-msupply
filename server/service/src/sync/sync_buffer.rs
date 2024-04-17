@@ -11,7 +11,7 @@ pub(crate) struct SyncBuffer<'a> {
 }
 
 impl<'a> SyncBuffer<'a> {
-    pub(crate) fn new(connection: &'a mut StorageConnection) -> SyncBuffer<'a> {
+    pub(crate) fn new(connection: &'a StorageConnection) -> SyncBuffer<'a> {
         SyncBuffer {
             query_repository: SyncBufferRepository::new(connection),
             row_repository: SyncBufferRowRepository::new(connection),

@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -26,10 +26,10 @@ pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> 
 async fn remove_sqlite_check_report() {
     use crate::migrations::*;
     use diesel::prelude::*;
-    let mut connection = super::setup_data_migration("remove_sqlite_check_report").await;
+    let connection = super::setup_data_migration("remove_sqlite_check_report").await;
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
             INSERT INTO report (id, type, context, template, name)
             VALUES 
@@ -41,12 +41,12 @@ async fn remove_sqlite_check_report() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
+    migrate(&connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&connection), V1_01_01.version());
 
     // Make sure check was removed
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO report (id, type, context, name, template) 
         VALUES ('report4', 'not checked', 'not checked', '', '');
@@ -66,7 +66,7 @@ async fn remove_sqlite_check_report() {
     let reports = report_dsl::report
         .select((report_dsl::id, report_dsl::type_, report_dsl::context))
         .order_by(report_dsl::id.asc())
-        .load::<(String, String, String)>(&mut connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

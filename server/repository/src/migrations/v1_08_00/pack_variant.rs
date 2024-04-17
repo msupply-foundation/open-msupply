@@ -1,6 +1,6 @@
 use crate::migrations::*;
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"

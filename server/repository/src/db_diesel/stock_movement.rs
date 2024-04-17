@@ -48,23 +48,23 @@ pub struct StockMovementFilter {
 }
 
 pub struct StockMovementRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StockMovementRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StockMovementRepository { connection }
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: StockMovementFilter,
     ) -> Result<Option<StockMovementRow>, RepositoryError> {
         Ok(self.query(Some(filter))?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<StockMovementFilter>,
     ) -> Result<Vec<StockMovementRow>, RepositoryError> {
         // Query StockMovement
@@ -88,7 +88,7 @@ impl<'a> StockMovementRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<StockMovementRow>(&mut self.connection.connection)?)
+        Ok(query.load::<StockMovementRow>(self.connection.lock().connection())?)
     }
 }
 
@@ -161,7 +161,7 @@ mod test {
             })
         }
 
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "stock_movement_repository",
             MockDataInserts::all(),
             inline_init(|r: &mut MockData| {
@@ -251,7 +251,7 @@ mod test {
         )
         .await;
 
-        let mut repo = StockMovementRepository::new(&mut connection);
+        let repo = StockMovementRepository::new(&connection);
         let mut rows = repo
             .query(Some(StockMovementFilter {
                 store_id: Some(EqualFilter::equal_to(&store().id)),

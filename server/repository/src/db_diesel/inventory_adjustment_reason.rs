@@ -38,31 +38,33 @@ pub enum InventoryAdjustmentReasonSortField {
 pub type InventoryAdjustmentReasonSort = Sort<InventoryAdjustmentReasonSortField>;
 
 pub struct InventoryAdjustmentReasonRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> InventoryAdjustmentReasonRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         InventoryAdjustmentReasonRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         filter: Option<InventoryAdjustmentReasonFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: InventoryAdjustmentReasonFilter,
     ) -> Result<Vec<InventoryAdjustmentReason>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<InventoryAdjustmentReasonFilter>,
         sort: Option<InventoryAdjustmentReasonSort>,
@@ -85,7 +87,7 @@ impl<'a> InventoryAdjustmentReasonRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<InventoryAdjustmentReasonRow>(&mut self.connection.connection)?;
+            .load::<InventoryAdjustmentReasonRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

@@ -22,7 +22,7 @@ use diesel::prelude::*;
 pub type MasterList = MasterListRow;
 
 pub struct MasterListRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -47,19 +47,21 @@ pub enum MasterListSortField {
 pub type MasterListSort = Sort<MasterListSortField>;
 
 impl<'a> MasterListRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         MasterListRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<MasterListFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<MasterListFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: MasterListFilter,
     ) -> Result<Vec<MasterList>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -129,7 +131,7 @@ impl<'a> MasterListRepository<'a> {
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<MasterListFilter>,
         sort: Option<MasterListSort>,
@@ -156,7 +158,7 @@ impl<'a> MasterListRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<MasterListRow>(&mut self.connection.connection)?;
+            .load::<MasterListRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }

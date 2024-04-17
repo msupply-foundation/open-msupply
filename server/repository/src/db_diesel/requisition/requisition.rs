@@ -44,35 +44,37 @@ pub struct Requisition {
 }
 
 pub struct RequisitionRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> RequisitionRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         RequisitionRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<RequisitionFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<RequisitionFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter)?;
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: RequisitionFilter,
     ) -> Result<Vec<Requisition>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: RequisitionFilter,
     ) -> Result<Option<Requisition>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<RequisitionFilter>,
         sort: Option<RequisitionSort>,
@@ -128,7 +130,7 @@ impl<'a> RequisitionRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<RequisitionJoin>(&mut self.connection.connection)?;
+            .load::<RequisitionJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

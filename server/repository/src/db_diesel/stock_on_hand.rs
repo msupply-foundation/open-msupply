@@ -27,23 +27,23 @@ pub struct StockOnHandFilter {
 }
 
 pub struct StockOnHandRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StockOnHandRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StockOnHandRepository { connection }
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: StockOnHandFilter,
     ) -> Result<Option<StockOnHandRow>, RepositoryError> {
         Ok(self.query(Some(filter))?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<StockOnHandFilter>,
     ) -> Result<Vec<StockOnHandRow>, RepositoryError> {
         // Query StockOnHand
@@ -62,7 +62,7 @@ impl<'a> StockOnHandRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<StockOnHandRow>(&mut self.connection.connection)?)
+        Ok(query.load::<StockOnHandRow>(self.connection.lock().connection())?)
     }
 }
 

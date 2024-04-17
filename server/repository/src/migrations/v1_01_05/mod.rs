@@ -26,12 +26,12 @@ async fn migration_1_01_05() {
 
     let version = V1_01_05.version();
 
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&mut connection), version);
+    assert_eq!(get_database_version(&connection), version);
 }

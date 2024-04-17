@@ -35,7 +35,7 @@ impl Migration for V1_00_07 {
         Version::from_str("1.0.7")
     }
 
-    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         use self::activity_log::dsl as activity_log_dsl;
         use self::invoice::dsl as invoice_dsl;
 
@@ -53,7 +53,7 @@ impl Migration for V1_00_07 {
                     .eq("om_admin")
                     .and(activity_log_dsl::type_.eq(ActivityLogType::InvoiceCreated)),
             )
-            .load::<Option<String>>(&mut connection.connection)?;
+            .load::<Option<String>>(connection.lock().connection())?;
 
         for id in invoice_ids {
             let Some(id) = id else {
@@ -63,7 +63,7 @@ impl Migration for V1_00_07 {
             diesel::update(invoice_dsl::invoice)
                 .filter(invoice_dsl::id.eq(id))
                 .set(invoice_dsl::is_system_generated.eq(true))
-                .execute(&mut connection.connection)?;
+                .execute(connection.lock().connection())?;
         }
 
         Ok(())
@@ -84,7 +84,7 @@ async fn migration_1_00_07() {
     let version = V1_00_07.version();
 
     // Migrate to version - 1
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(previous_version.clone()),
         ..Default::default()
@@ -94,7 +94,7 @@ async fn migration_1_00_07() {
     use invoice::dsl as invoice_dsl;
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO name 
         (id, type, is_customer, is_supplier, code, name)
@@ -105,7 +105,7 @@ async fn migration_1_00_07() {
     .unwrap();
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code)
@@ -116,7 +116,7 @@ async fn migration_1_00_07() {
     .unwrap();
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(
             r#"
             INSERT INTO invoice 
@@ -131,7 +131,7 @@ async fn migration_1_00_07() {
     .unwrap();
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(
             (r#"
             INSERT INTO invoice 
@@ -146,7 +146,7 @@ async fn migration_1_00_07() {
     .unwrap();
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(
             (r#"
             INSERT INTO activity_log 
@@ -161,7 +161,7 @@ async fn migration_1_00_07() {
     .unwrap();
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(
             (r#"
             INSERT INTO activity_log 
@@ -176,7 +176,7 @@ async fn migration_1_00_07() {
     .unwrap();
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(
             (r#"
             INSERT INTO activity_log 
@@ -191,14 +191,14 @@ async fn migration_1_00_07() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&mut connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&mut connection), version);
+    migrate(&connection, Some(version.clone())).unwrap();
+    assert_eq!(get_database_version(&connection), version);
 
     // Check data
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::is_system_generated))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, bool)>(&mut connection.connection)
+        .load::<(String, bool)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

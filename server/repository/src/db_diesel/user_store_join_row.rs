@@ -32,49 +32,46 @@ pub struct UserStoreJoinRow {
 }
 
 pub struct UserStoreJoinRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> UserStoreJoinRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         UserStoreJoinRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_store_join_dsl::user_store_join)
             .values(row)
             .on_conflict(user_store_join_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &UserStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_store_join_dsl::user_store_join)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserStoreJoinRow>, RepositoryError> {
         let result = user_store_join_dsl::user_store_join
             .filter(user_store_join_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete_by_user_id(&mut self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             user_store_join_dsl::user_store_join.filter(user_store_join_dsl::user_id.eq(id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

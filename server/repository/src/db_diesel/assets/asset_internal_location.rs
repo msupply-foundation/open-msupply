@@ -43,39 +43,41 @@ impl AssetInternalLocationFilter {
 }
 
 pub struct AssetInternalLocationRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetInternalLocationRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetInternalLocationRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         filter: Option<AssetInternalLocationFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: AssetInternalLocationFilter,
     ) -> Result<Option<AssetInternalLocationRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: AssetInternalLocationFilter,
     ) -> Result<Vec<AssetInternalLocationRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<AssetInternalLocationFilter>,
         sort: Option<AssetInternalLocationSort>,
@@ -102,7 +104,7 @@ impl<'a> AssetInternalLocationRepository<'a> {
         // );
 
         let result =
-            final_query.load::<AssetInternalLocationRow>(&mut self.connection.connection)?;
+            final_query.load::<AssetInternalLocationRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

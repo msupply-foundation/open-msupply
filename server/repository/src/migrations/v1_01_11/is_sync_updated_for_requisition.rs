@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // is_sync_update field, to make sure that records coming through sync don't trigger circular sync
     // (sync integration operation is flagged as is_sync_update = true and is_sync_update = true records are filtered form push queue)
     // this is edge case for remote data (requisition) due to authorisation logic, where ownership is changed to central server while

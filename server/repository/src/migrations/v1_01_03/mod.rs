@@ -8,7 +8,7 @@ impl Migration for V1_01_03 {
         Version::from_str("1.1.3")
     }
 
-    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         use crate::migrations::sql;
 
         sql!(connection, r#"DROP VIEW IF EXISTS item_is_visible;"#)?;
@@ -59,12 +59,12 @@ async fn migration_1_01_03() {
 
     let version = V1_01_03.version();
 
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&mut connection), version);
+    assert_eq!(get_database_version(&connection), version);
 }

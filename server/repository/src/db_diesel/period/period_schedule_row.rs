@@ -20,11 +20,11 @@ pub struct PeriodScheduleRow {
 }
 
 pub struct PeriodScheduleRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> PeriodScheduleRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         PeriodScheduleRowRepository { connection }
     }
 
@@ -35,48 +35,45 @@ impl<'a> PeriodScheduleRowRepository<'a> {
             .on_conflict(period_schedule_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &PeriodScheduleRow) -> Result<(), RepositoryError> {
         diesel::replace_into(period_schedule_dsl::period_schedule)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<PeriodScheduleRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PeriodScheduleRow>, RepositoryError> {
         let result = period_schedule_dsl::period_schedule
             .filter(period_schedule_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_one_by_name(
-        &mut self,
+        &self,
         name: &str,
     ) -> Result<Option<PeriodScheduleRow>, RepositoryError> {
         let result = period_schedule_dsl::period_schedule
             .filter(period_schedule_dsl::name.eq(name))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 }
 
 impl Upsert for PeriodScheduleRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         PeriodScheduleRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             PeriodScheduleRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

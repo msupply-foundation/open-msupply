@@ -67,37 +67,37 @@ pub struct EncounterRow {
 }
 
 pub struct EncounterRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> EncounterRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         EncounterRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &EncounterRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
         diesel::insert_into(encounter::dsl::encounter)
             .values(row)
             .on_conflict(encounter::dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &EncounterRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &EncounterRow) -> Result<(), RepositoryError> {
         diesel::replace_into(encounter::dsl::encounter)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<EncounterRow>, RepositoryError> {
         let result = encounter::dsl::encounter
             .filter(encounter::dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }

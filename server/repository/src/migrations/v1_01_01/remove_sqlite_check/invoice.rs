@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -25,11 +25,11 @@ pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> 
 async fn remove_sqlite_check_invoice() {
     use crate::migrations::*;
     use diesel::prelude::*;
-    let mut connection = super::setup_data_migration("remove_sqlite_check_invoice").await;
+    let connection = super::setup_data_migration("remove_sqlite_check_invoice").await;
 
     let default = "'name_id', 'store_id', 1, false, ''";
     sql!(
-        &mut connection,
+        &connection,
         r#"
             INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, type, status)
             VALUES 
@@ -41,12 +41,12 @@ async fn remove_sqlite_check_invoice() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
+    migrate(&connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&connection), V1_01_01.version());
 
     // Make sure check was removed
     sql!(
-        &mut connection,
+        &connection,
         r#"
             INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, type, status)
             VALUES 
@@ -67,7 +67,7 @@ async fn remove_sqlite_check_invoice() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::type_, invoice_dsl::status))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, String, String)>(&mut connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

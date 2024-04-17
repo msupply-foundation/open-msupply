@@ -39,7 +39,7 @@ use thiserror::Error;
 
 pub(crate) trait Migration {
     fn version(&self) -> Version;
-    fn migrate(&self, _: &mut StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, _: &StorageConnection) -> anyhow::Result<()> {
         Ok(())
     }
 }
@@ -63,7 +63,7 @@ pub enum MigrationError {
 
 // TODO: logging
 pub fn migrate(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     to_version: Option<Version>,
 ) -> Result<Version, MigrationError> {
     let migrations: Vec<Box<dyn Migration>> = vec![
@@ -154,7 +154,7 @@ pub fn migrate(
     Ok(to_version)
 }
 
-fn get_database_version(connection: &mut StorageConnection) -> Version {
+fn get_database_version(connection: &StorageConnection) -> Version {
     match KeyValueStoreRepository::new(connection).get_string(KeyValueType::DatabaseVersion) {
         Ok(Some(version_str)) => Version::from_str(&version_str),
         // Rust migrations start at "1.0.3"
@@ -165,7 +165,7 @@ fn get_database_version(connection: &mut StorageConnection) -> Version {
 }
 
 fn set_database_version(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     new_version: &Version,
 ) -> Result<(), RepositoryError> {
     KeyValueStoreRepository::new(connection)
@@ -179,7 +179,7 @@ pub(crate) struct SqlError(String, #[source] RepositoryError);
 /// Will try and execute diesel query return SQL error which contains debug version of SQL statements
 #[cfg(test)] // uncomment this when used in queries outside of tests
 pub(crate) fn execute_sql_with_error<'a, Q>(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     query: Q,
 ) -> Result<usize, SqlError>
 where
@@ -187,7 +187,7 @@ where
     Q: diesel::query_builder::QueryFragment<crate::DBType>,
 {
     let debug_query = diesel::debug_query::<crate::DBType, _>(&query).to_string();
-    Q::execute(query, &mut connection.connection)
+    Q::execute(query, connection.lock().connection())
         .map_err(|source| SqlError(debug_query, source.into()))
 }
 
@@ -195,11 +195,12 @@ where
 /// differs to execute_sql_with_error, accepts string query rather then diesel query and
 /// allows for multiple statements to be executed
 pub(crate) fn batch_execute_sql_with_error(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     query: &str,
 ) -> Result<(), SqlError> {
     connection
-        .connection
+        .lock()
+        .connection()
         .batch_execute(query)
         .map_err(|source| SqlError(query.to_string(), source.into()))
 }

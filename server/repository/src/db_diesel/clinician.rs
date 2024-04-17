@@ -45,25 +45,27 @@ pub type ClinicianSort = Sort<ClinicianSortField>;
 pub type Clinician = ClinicianRow;
 
 pub struct ClinicianRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ClinicianRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ClinicianRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         store_id: &str,
         filter: Option<ClinicianFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(store_id.to_string(), filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         store_id: &str,
         filter: ClinicianFilter,
     ) -> Result<Vec<Clinician>, RepositoryError> {
@@ -71,7 +73,7 @@ impl<'a> ClinicianRepository<'a> {
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         store_id: &str,
         filter: ClinicianFilter,
     ) -> Result<Option<Clinician>, RepositoryError> {
@@ -79,7 +81,7 @@ impl<'a> ClinicianRepository<'a> {
     }
 
     pub fn query(
-        &mut self,
+        &self,
         store_id: &str,
         pagination: Pagination,
         filter: Option<ClinicianFilter>,
@@ -126,7 +128,7 @@ impl<'a> ClinicianRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<Clinician>(&mut self.connection.connection)?;
+        let result = final_query.load::<Clinician>(self.connection.lock().connection())?;
 
         Ok(result)
     }

@@ -29,28 +29,30 @@ pub enum PeriodScheduleSortField {
 pub type PeriodScheduleSort = Sort<PeriodScheduleSortField>;
 
 pub struct PeriodScheduleRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> PeriodScheduleRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         PeriodScheduleRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<PeriodScheduleFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<PeriodScheduleFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: PeriodScheduleFilter,
     ) -> Result<Vec<PeriodSchedule>, RepositoryError> {
         self.query(Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<PeriodScheduleFilter>,
         sort: Option<PeriodScheduleSort>,
     ) -> Result<Vec<PeriodSchedule>, RepositoryError> {
@@ -66,7 +68,7 @@ impl<'a> PeriodScheduleRepository<'a> {
             }
         };
 
-        let result = query.load::<PeriodScheduleRow>(&mut self.connection.connection)?;
+        let result = query.load::<PeriodScheduleRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }

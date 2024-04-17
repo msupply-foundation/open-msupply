@@ -421,7 +421,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_datetime_milliseconds() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             setup_all("test_datetime_milliseconds", MockDataInserts::none()).await;
 
         #[derive(QueryableByName, Debug, PartialEq)]
@@ -441,7 +441,7 @@ mod test {
             sql_query(query)
                 .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 50).unwrap())
                 .bind::<Timestamp, _>(util::create_datetime(2021, 1, 1, 23, 59, 49).unwrap())
-                .load::<Res>(&mut connection.connection)
+                .load::<Res>(connection.lock().connection())
                 .unwrap()
         );
 
@@ -455,7 +455,7 @@ mod test {
                         .checked_add_signed(Duration::milliseconds(500))
                         .unwrap()
                 )
-                .load::<Res>(&mut connection.connection)
+                .load::<Res>(connection.lock().connection())
                 .unwrap()
         );
     }

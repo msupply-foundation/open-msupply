@@ -4,9 +4,9 @@ use crate::{ChangelogRepository, StorageConnection};
 
 /// For testing, it returns the change_log cursors as if the changelog would have been updated.
 pub(crate) fn run_without_change_log_updates<
-    F: FnOnce(&mut StorageConnection) -> anyhow::Result<()>,
+    F: FnOnce(&StorageConnection) -> anyhow::Result<()>,
 >(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     job: F,
 ) -> anyhow::Result<u64> {
     // Remember the current changelog cursor in order to be able to delete all changelog entries
@@ -27,7 +27,7 @@ async fn check_change_log_update() {
     use crate::{test_db::*, NameRow, NameRowRepository};
 
     // This test allows checking sql syntax
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: "check_change_log_update",
         ..Default::default()
     })
@@ -39,43 +39,43 @@ async fn check_change_log_update() {
     };
 
     // First insert
-    let cursor = ChangelogRepository::new(&mut connection)
+    let cursor = ChangelogRepository::new(&connection)
         .latest_cursor()
         .unwrap();
-    NameRowRepository::new(&mut connection)
+    NameRowRepository::new(&connection)
         .upsert_one(&name_row)
         .unwrap();
     assert!(
         cursor
-            < ChangelogRepository::new(&mut connection)
+            < ChangelogRepository::new(&connection)
                 .latest_cursor()
                 .unwrap()
     );
     // Now update
-    let cursor = ChangelogRepository::new(&mut connection)
+    let cursor = ChangelogRepository::new(&connection)
         .latest_cursor()
         .unwrap();
-    NameRowRepository::new(&mut connection)
+    NameRowRepository::new(&connection)
         .upsert_one(&name_row)
         .unwrap();
     assert!(
         cursor
-            < ChangelogRepository::new(&mut connection)
+            < ChangelogRepository::new(&connection)
                 .latest_cursor()
                 .unwrap()
     );
 
     // Now update with run_without_change_log_updates
-    let cursor = ChangelogRepository::new(&mut connection)
+    let cursor = ChangelogRepository::new(&connection)
         .latest_cursor()
         .unwrap();
-    run_without_change_log_updates(&mut connection, |connection| {
+    run_without_change_log_updates(&connection, |connection| {
         Ok(NameRowRepository::new(connection).upsert_one(&name_row)?)
     })
     .unwrap();
     assert_eq!(
         cursor,
-        ChangelogRepository::new(&mut connection)
+        ChangelogRepository::new(&connection)
             .latest_cursor()
             .unwrap()
     );

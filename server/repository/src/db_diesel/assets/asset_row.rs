@@ -57,11 +57,11 @@ pub struct AssetRow {
 }
 
 pub struct AssetRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetRowRepository { connection }
     }
 
@@ -77,14 +77,14 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&mut self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, asset_row: &AssetRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset)
             .values(asset_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, asset_row: &AssetRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_row)?;
         self.insert_changelog(
             asset_row.id.to_owned(),
@@ -94,7 +94,7 @@ impl<'a> AssetRowRepository<'a> {
     }
 
     fn insert_changelog(
-        &mut self,
+        &self,
         asset_id: String,
         action: ChangelogAction,
         row: Option<AssetRow>,
@@ -106,46 +106,46 @@ impl<'a> AssetRowRepository<'a> {
             store_id: row.map(|r| r.store_id).unwrap_or(None),
             name_link_id: None,
         };
-        ChangelogRepository::new(&mut self.connection).insert(&row)
+        ChangelogRepository::new(&self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetRow>, RepositoryError> {
         let result = asset
             .filter(deleted_datetime.is_null())
-            .load(&mut self.connection.connection);
+            .load(self.connection.lock().connection());
         Ok(result?)
     }
 
-    pub fn find_one_by_id(&mut self, asset_id: &str) -> Result<Option<AssetRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, asset_id: &str) -> Result<Option<AssetRow>, RepositoryError> {
         let result = asset
             .filter(id.eq(asset_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, asset_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, asset_id: &str) -> Result<(), RepositoryError> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         _ = self.insert_changelog(asset_id.to_owned(), ChangelogAction::Delete, None); // TODO: return this and enable delete sync...
         Ok(())
     }
 }
 
 impl Upsert for AssetRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         let _change_log_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 
-    fn upsert(&self, con: &mut StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         let cursor_id = AssetRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             AssetRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

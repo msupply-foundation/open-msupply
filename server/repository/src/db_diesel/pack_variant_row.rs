@@ -44,16 +44,16 @@ pub struct PackVariantRow {
 }
 
 pub struct PackVariantRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> PackVariantRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         PackVariantRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
         diesel::insert_into(pack_variant::dsl::pack_variant)
             .values(row)
             .on_conflict(pack_variant::dsl::id)
@@ -65,20 +65,20 @@ impl<'a> PackVariantRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &PackVariantRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &PackVariantRow) -> Result<(), RepositoryError> {
         diesel::replace_into(pack_variant::dsl::pack_variant)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         variant_id: &str,
     ) -> Result<Option<PackVariantRow>, RepositoryError> {
         let result = pack_variant
             .filter(id.eq(variant_id))
-            .first::<PackVariantRow>(&mut self.connection.connection)
+            .first::<PackVariantRow>(self.connection.lock().connection())
             .optional()?;
 
         Ok(result)
@@ -86,12 +86,12 @@ impl<'a> PackVariantRowRepository<'a> {
 }
 
 impl Upsert for PackVariantRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         PackVariantRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             PackVariantRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

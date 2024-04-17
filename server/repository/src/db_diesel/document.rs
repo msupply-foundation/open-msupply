@@ -224,51 +224,44 @@ fn create_latest_filtered_query(filter: Option<DocumentFilter>) -> BoxedDocument
 }
 
 pub struct DocumentRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> DocumentRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         DocumentRepository { connection }
     }
 
     /// Inserts a document
-    fn _insert(&mut self, doc: &Document) -> Result<(), RepositoryError> {
+    fn _insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(
-        &mut self,
-        id: &str,
-        is_sync_update: bool,
-    ) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(document_is_sync_update::table.find(id))
             .set(document_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
 
-    pub fn insert(&mut self, doc: &Document) -> Result<(), RepositoryError> {
+    pub fn insert(&self, doc: &Document) -> Result<(), RepositoryError> {
         diesel::insert_into(document::dsl::document)
             .values(doc.to_row()?)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         self.toggle_is_sync_update(&doc.id, false)?;
         Ok(())
     }
 
     /// Get a specific document version
-    pub fn find_one_by_id(
-        &mut self,
-        document_id: &str,
-    ) -> Result<Option<Document>, RepositoryError> {
+    pub fn find_one_by_id(&self, document_id: &str) -> Result<Option<Document>, RepositoryError> {
         let row: Option<DocumentJoin> = document::dsl::document
             .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .filter(document::dsl::id.eq(document_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
 
         Ok(match row {
@@ -277,7 +270,7 @@ impl<'a> DocumentRepository<'a> {
         })
     }
 
-    pub fn sync_insert(&mut self, row: &Document) -> Result<(), RepositoryError> {
+    pub fn sync_insert(&self, row: &Document) -> Result<(), RepositoryError> {
         self.insert(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -285,24 +278,26 @@ impl<'a> DocumentRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = document_is_sync_update::table
             .find(id)
             .select(document_is_sync_update::dsl::is_sync_update)
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn count(&mut self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<DocumentFilter>) -> Result<i64, RepositoryError> {
         let query = create_latest_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     /// Get the latest version of some documents
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<DocumentFilter>,
         sort: Option<DocumentSort>,
@@ -337,7 +332,7 @@ impl<'a> DocumentRepository<'a> {
         let rows: Vec<DocumentJoin> = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
@@ -347,7 +342,7 @@ impl<'a> DocumentRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: DocumentFilter,
     ) -> Result<Vec<Document>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -355,7 +350,7 @@ impl<'a> DocumentRepository<'a> {
 
     /// Gets all document versions
     pub fn document_history(
-        &mut self,
+        &self,
         filter: Option<DocumentFilter>,
     ) -> Result<Vec<Document>, RepositoryError> {
         let mut query = document::dsl::document
@@ -382,7 +377,7 @@ impl<'a> DocumentRepository<'a> {
         }
         let rows: Vec<DocumentJoin> = query
             .order(document::dsl::datetime.desc())
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
 
         let mut result = Vec::<Document>::new();
         for row in rows {
@@ -476,7 +471,7 @@ mod test {
 
     #[actix_rt::test]
     async fn document_is_sync_update() {
-        let (_, mut connection, _, _) = setup_all(
+        let (_, connection, _, _) = setup_all(
             "document_is_sync_update",
             MockDataInserts::none().items().units(),
         )
@@ -486,11 +481,11 @@ mod test {
             id: "id".to_string(),
             name: "name".to_string(),
         };
-        ContextRowRepository::new(&mut connection)
+        ContextRowRepository::new(&connection)
             .upsert_one(&context_row)
             .unwrap();
 
-        let mut repo = DocumentRepository::new(&mut connection);
+        let repo = DocumentRepository::new(&connection);
 
         let base_row = DocumentRow {
             data: "{}".to_string(),

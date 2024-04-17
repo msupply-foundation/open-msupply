@@ -102,7 +102,7 @@ pub struct NumberRow {
     pub r#type: String,
 }
 pub struct NumberRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 #[derive(QueryableByName, Queryable, PartialEq, Debug)]
@@ -124,20 +124,20 @@ const NUMBER_INSERT_QUERY: &str =
 const NUMBER_INSERT_QUERY: &str = "INSERT INTO number (id, value, store_id, type) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING value;";
 
 impl<'a> NumberRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         NumberRowRepository { connection }
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<NumberRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<NumberRow>, RepositoryError> {
         let result = number_dsl::number
             .filter(number_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn get_next_number_for_type_and_store(
-        &mut self,
+        &self,
         r#type: &NumberRowType,
         store_id: &str,
         next_number: Option<i64>,
@@ -155,7 +155,7 @@ impl<'a> NumberRowRepository<'a> {
         // );
         let update_result = update_query
             .clone()
-            .get_result::<NextNumber>(&mut self.connection.connection);
+            .get_result::<NextNumber>(self.connection.lock().connection());
 
         match update_result {
             Ok(result) => Ok(result),
@@ -167,14 +167,14 @@ impl<'a> NumberRowRepository<'a> {
                     .bind::<Text, _>(store_id)
                     .bind::<Text, _>(r#type.to_string());
 
-                match insert_query.get_result::<NextNumber>(&mut self.connection.connection) {
+                match insert_query.get_result::<NextNumber>(self.connection.lock().connection()) {
                     Ok(result) => Ok(result),
                     Err(NotFound) => {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
 
                         let result = update_query
-                            .get_result::<NextNumber>(&mut self.connection.connection)?;
+                            .get_result::<NextNumber>(self.connection.lock().connection())?;
                         Ok(result)
                     }
                     Err(e) => Err(RepositoryError::from(e)),
@@ -185,14 +185,14 @@ impl<'a> NumberRowRepository<'a> {
     }
 
     pub fn find_one_by_type_and_store(
-        &mut self,
+        &self,
         r#type: &NumberRowType,
         store_id: &str,
     ) -> Result<Option<NumberRow>, RepositoryError> {
         match number_dsl::number
             .filter(number_dsl::store_id.eq(store_id))
             .filter(number_dsl::type_.eq(r#type.to_string()))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
         {
             Ok(row) => Ok(Some(row)),
             Err(diesel::result::Error::NotFound) => Ok(None),
@@ -207,12 +207,12 @@ impl<'a> NumberRowRepository<'a> {
             .on_conflict(number_dsl::id)
             .do_update()
             .set(number_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, number_row: &NumberRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, number_row: &NumberRow) -> Result<(), RepositoryError> {
         let final_query = diesel::replace_into(number_dsl::number).values(number_row);
 
         // // Debug diesel query
@@ -221,24 +221,24 @@ impl<'a> NumberRowRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
         // );
 
-        final_query.execute(&mut self.connection.connection)?;
+        final_query.execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&mut self, number_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, number_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(number_dsl::number)
             .filter(number_dsl::id.eq(number_id))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_many_by_store_id(
-        &mut self,
+        &self,
         store_ids: &[String],
     ) -> Result<Vec<NumberRow>, RepositoryError> {
         let result = number_dsl::number
             .filter(number_dsl::store_id.eq_any(store_ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }

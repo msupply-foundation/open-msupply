@@ -49,28 +49,30 @@ pub enum TemperatureLogSortField {
 pub type TemperatureLogSort = Sort<TemperatureLogSortField>;
 
 pub struct TemperatureLogRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> TemperatureLogRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         TemperatureLogRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<TemperatureLogFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<TemperatureLogFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: TemperatureLogFilter,
     ) -> Result<Vec<TemperatureLog>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<TemperatureLogFilter>,
         sort: Option<TemperatureLogSort>,
@@ -98,7 +100,7 @@ impl<'a> TemperatureLogRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureLogRow>(&mut self.connection.connection)?;
+            .load::<TemperatureLogRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

@@ -34,7 +34,7 @@ pub struct FormSchemaJson {
 }
 
 pub struct FormSchemaRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 pub(crate) fn schema_from_row(
@@ -78,38 +78,38 @@ fn row_from_schema(schema: &FormSchemaJson) -> Result<FormSchemaRow, RepositoryE
 }
 
 impl<'a> FormSchemaRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         FormSchemaRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::insert_into(form_schema::dsl::form_schema)
             .values(&row)
             .on_conflict(form_schema::dsl::id)
             .do_update()
             .set(&row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, schema: &FormSchemaJson) -> Result<(), RepositoryError> {
         let row = row_from_schema(schema)?;
         diesel::replace_into(form_schema::dsl::form_schema)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         schema_id: &str,
     ) -> Result<Option<FormSchemaJson>, RepositoryError> {
         let row = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq(schema_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         match row {
             Some(row) => Ok(Some(schema_from_row(row)?)),
@@ -117,13 +117,10 @@ impl<'a> FormSchemaRowRepository<'a> {
         }
     }
 
-    pub fn find_many_by_ids(
-        &mut self,
-        ids: &[String],
-    ) -> Result<Vec<FormSchemaJson>, RepositoryError> {
+    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<FormSchemaJson>, RepositoryError> {
         let rows: Vec<FormSchemaRow> = form_schema::dsl::form_schema
             .filter(form_schema::dsl::id.eq_any(ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         let mut result = Vec::<FormSchemaJson>::new();
         for row in rows {
             result.push(schema_from_row(row)?);
@@ -133,12 +130,12 @@ impl<'a> FormSchemaRowRepository<'a> {
 }
 
 impl Upsert for FormSchemaJson {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         FormSchemaRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             FormSchemaRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

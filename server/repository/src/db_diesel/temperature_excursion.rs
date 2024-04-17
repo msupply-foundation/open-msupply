@@ -26,7 +26,7 @@ pub struct TemperatureExcursion {
 /// Excursions are a representation of temperature log
 /// entries which are outside of a configurable range
 pub struct TemperatureExcursionRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 type QueryResult = (
@@ -53,13 +53,13 @@ pub struct TemperatureRow {
 }
 
 impl<'a> TemperatureExcursionRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         TemperatureExcursionRepository { connection }
     }
 
     /// Result is sorted by datetime descending
     pub fn query(
-        &mut self,
+        &self,
         filter: TemperatureLogFilter,
     ) -> Result<Vec<TemperatureRow>, RepositoryError> {
         let mut query = temperature_log_dsl::temperature_log
@@ -99,7 +99,7 @@ impl<'a> TemperatureExcursionRepository<'a> {
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let log_data = query
-            .load::<QueryResult>(&mut self.connection.connection)?
+            .load::<QueryResult>(self.connection.lock().connection())?
             .into_iter()
             .map(TemperatureRow::from)
             .collect::<Vec<TemperatureRow>>();

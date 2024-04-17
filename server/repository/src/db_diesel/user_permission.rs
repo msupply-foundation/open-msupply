@@ -30,36 +30,38 @@ pub enum UserPermissionSortField {
 pub type UserPermissionSort = Sort<UserPermissionSortField>;
 
 pub struct UserPermissionRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> UserPermissionRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         UserPermissionRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<UserPermissionFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<UserPermissionFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: UserPermissionFilter,
     ) -> Result<Vec<UserPermission>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: UserPermissionFilter,
     ) -> Result<Option<UserPermission>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<UserPermissionFilter>,
         sort: Option<UserPermissionSort>,
@@ -86,7 +88,7 @@ impl<'a> UserPermissionRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<UserPermission>(&mut self.connection.connection)?;
+        let result = final_query.load::<UserPermission>(self.connection.lock().connection())?;
         Ok(result)
     }
 }

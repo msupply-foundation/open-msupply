@@ -81,44 +81,44 @@ impl Default for ReportRow {
 }
 
 pub struct ReportRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ReportRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ReportRowRepository { connection }
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReportRow>, RepositoryError> {
         let result = report_dsl::report
             .filter(report_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &ReportRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::insert_into(report_dsl::report)
             .values(row)
             .on_conflict(report_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &ReportRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ReportRow) -> Result<(), RepositoryError> {
         diesel::replace_into(report_dsl::report)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -126,11 +126,11 @@ impl<'a> ReportRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ReportRowDelete(pub String);
 impl Delete for ReportRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ReportRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             ReportRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -139,12 +139,12 @@ impl Delete for ReportRowDelete {
 }
 
 impl Upsert for ReportRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ReportRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ReportRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

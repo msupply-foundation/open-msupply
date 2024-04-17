@@ -309,14 +309,14 @@ mod repository_test {
     async fn test_name_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-name-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         let name_1 = data::name_1();
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&name_1)
             .await
             .unwrap();
-        let loaded_item = NameRowRepository::new(&mut connection)
+        let loaded_item = NameRowRepository::new(&connection)
             .find_one_by_id(name_1.id.as_str())
             .unwrap()
             .unwrap();
@@ -327,22 +327,22 @@ mod repository_test {
     async fn test_store_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
 
-        let mut repo = StoreRowRepository::new(&mut connection);
+        let repo = StoreRowRepository::new(&connection);
         let store_1 = data::store_1();
         repo.insert_one(&store_1).await.unwrap();
         let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap().unwrap();
         assert_eq!(store_1, loaded_item);
     }
 
-    async fn insert_item_and_link(item: &ItemRow, connection: &mut StorageConnection) {
+    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) {
         ItemRowRepository::new(connection)
             .insert_one(item)
             .await
@@ -357,23 +357,23 @@ mod repository_test {
     async fn test_stock_line() {
         let settings = test_db::get_test_db_settings("omsupply-database-item-line-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        insert_item_and_link(&data::item_1(), &mut connection).await;
+        insert_item_and_link(&data::item_1(), &connection).await;
 
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
-        StoreRowRepository::new(&mut connection)
+        StoreRowRepository::new(&connection)
             .insert_one(&data::store_1())
             .await
             .unwrap();
 
         // test insert
         let stock_line = data::stock_line_1();
-        let mut stock_line_repo = StockLineRowRepository::new(&mut connection);
+        let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&stock_line).unwrap();
         let loaded_item = stock_line_repo
             .find_one_by_id(stock_line.id.as_str())
@@ -386,27 +386,27 @@ mod repository_test {
         let settings =
             test_db::get_test_db_settings("omsupply-database-item-line-query-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        insert_item_and_link(&data::item_1(), &mut connection).await;
+        insert_item_and_link(&data::item_1(), &connection).await;
 
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
-        StoreRowRepository::new(&mut connection)
+        StoreRowRepository::new(&connection)
             .insert_one(&data::store_1())
             .await
             .unwrap();
         let stock_line = data::stock_line_1();
-        StockLineRowRepository::new(&mut connection)
+        StockLineRowRepository::new(&connection)
             .upsert_one(&stock_line)
             .unwrap();
 
         // test expiry data filter
         let expiry_date = stock_line.expiry_date.unwrap();
-        let result = StockLineRepository::new(&mut connection)
+        let result = StockLineRepository::new(&connection)
             .query_by_filter(
                 StockLineFilter::new().expiry_date(DateFilter {
                     equal_to: None,
@@ -417,7 +417,7 @@ mod repository_test {
             )
             .unwrap();
         assert_eq!(result.len(), 0);
-        let result = StockLineRepository::new(&mut connection)
+        let result = StockLineRepository::new(&connection)
             .query_by_filter(
                 StockLineFilter::new().expiry_date(DateFilter {
                     equal_to: None,
@@ -428,7 +428,7 @@ mod repository_test {
             )
             .unwrap();
         assert_eq!(result.len(), 1);
-        let result = StockLineRepository::new(&mut connection)
+        let result = StockLineRepository::new(&connection)
             .query_by_filter(
                 StockLineFilter::new().expiry_date(DateFilter {
                     equal_to: None,
@@ -445,9 +445,9 @@ mod repository_test {
     async fn test_master_list_row_repository() {
         let settings = test_db::get_test_db_settings("test_master_list_row_repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let mut repo = MasterListRowRepository::new(&mut connection);
+        let repo = MasterListRowRepository::new(&connection);
 
         let master_list_1 = data::master_list_1();
         repo.upsert_one(&master_list_1).unwrap();
@@ -468,9 +468,9 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_master_list_repository() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
-        let mut repo = MasterListRepository::new(&mut connection);
+        let repo = MasterListRepository::new(&connection);
 
         let id_rows: Vec<String> = repo
             .query_by_filter(
@@ -551,17 +551,17 @@ mod repository_test {
         let settings =
             test_db::get_test_db_settings("omsupply-database-master-list-line-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        insert_item_and_link(&data::item_1(), &mut connection).await;
-        insert_item_and_link(&data::item_2(), &mut connection).await;
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
 
-        MasterListRowRepository::new(&mut connection)
+        MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();
 
-        let mut repo = MasterListLineRowRepository::new(&mut connection);
+        let repo = MasterListLineRowRepository::new(&connection);
         let master_list_line_1 = data::master_list_line_1();
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
@@ -584,22 +584,22 @@ mod repository_test {
         let settings =
             test_db::get_test_db_settings("omsupply-database-master-list-name-join-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
-        MasterListRowRepository::new(&mut connection)
+        MasterListRowRepository::new(&connection)
             .upsert_one(&data::master_list_1())
             .unwrap();
 
         let master_list_name_join_1 = data::master_list_name_join_1();
-        MasterListNameJoinRepository::new(&mut connection)
+        MasterListNameJoinRepository::new(&connection)
             .upsert_one(&master_list_name_join_1)
             .unwrap();
-        let loaded_item = MasterListNameJoinRepository::new(&mut connection)
+        let loaded_item = MasterListNameJoinRepository::new(&connection)
             .find_one_by_id(master_list_name_join_1.id.as_str())
             .await
             .unwrap();
@@ -610,36 +610,36 @@ mod repository_test {
     async fn test_invoice_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-invoice-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
-        StoreRowRepository::new(&mut connection)
+        StoreRowRepository::new(&connection)
             .insert_one(&data::store_1())
             .await
             .unwrap();
-        CurrencyRowRepository::new(&mut connection)
+        CurrencyRowRepository::new(&connection)
             .upsert_one(&currency_a())
             .unwrap();
 
         let item1 = data::invoice_1();
-        InvoiceRowRepository::new(&mut connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&item1)
             .unwrap();
-        let loaded_item = InvoiceRowRepository::new(&mut connection)
+        let loaded_item = InvoiceRowRepository::new(&connection)
             .find_one_by_id(item1.id.as_str())
             .unwrap();
         assert_eq!(item1, loaded_item);
 
         // outbound shipment
         let item1 = data::invoice_2();
-        InvoiceRowRepository::new(&mut connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&item1)
             .unwrap();
-        let mut invoice_repo = InvoiceRepository::new(&mut connection);
+        let invoice_repo = InvoiceRepository::new(&connection);
         let loaded_item = invoice_repo
             .query_by_filter(
                 InvoiceFilter::new()
@@ -663,35 +663,35 @@ mod repository_test {
     async fn test_invoice_line_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-invoice-line-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        insert_item_and_link(&data::item_1(), &mut connection).await;
-        insert_item_and_link(&data::item_2(), &mut connection).await;
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
 
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
-        StoreRowRepository::new(&mut connection)
+        StoreRowRepository::new(&connection)
             .insert_one(&data::store_1())
             .await
             .unwrap();
-        StockLineRowRepository::new(&mut connection)
+        StockLineRowRepository::new(&connection)
             .upsert_one(&data::stock_line_1())
             .unwrap();
-        CurrencyRowRepository::new(&mut connection)
+        CurrencyRowRepository::new(&connection)
             .upsert_one(&currency_a())
             .unwrap();
 
-        InvoiceRowRepository::new(&mut connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&data::invoice_1())
             .unwrap();
-        InvoiceRowRepository::new(&mut connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&data::invoice_2())
             .unwrap();
 
-        let mut repo = InvoiceLineRowRepository::new(&mut connection);
+        let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
@@ -716,54 +716,54 @@ mod repository_test {
         let settings =
             test_db::get_test_db_settings("omsupply-database-invoice-line-query-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
         // setup
-        insert_item_and_link(&data::item_1(), &mut connection).await;
-        insert_item_and_link(&data::item_2(), &mut connection).await;
-        insert_item_and_link(&data::item_service_1(), &mut connection).await;
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+        insert_item_and_link(&data::item_service_1(), &connection).await;
 
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .insert_one(&data::name_1())
             .await
             .unwrap();
-        StoreRowRepository::new(&mut connection)
+        StoreRowRepository::new(&connection)
             .insert_one(&data::store_1())
             .await
             .unwrap();
-        StockLineRowRepository::new(&mut connection)
+        StockLineRowRepository::new(&connection)
             .upsert_one(&data::stock_line_1())
             .unwrap();
-        CurrencyRowRepository::new(&mut connection)
+        CurrencyRowRepository::new(&connection)
             .upsert_one(&currency_a())
             .unwrap();
-        InvoiceRowRepository::new(&mut connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&data::invoice_1())
             .unwrap();
-        InvoiceRowRepository::new(&mut connection)
+        InvoiceRowRepository::new(&connection)
             .upsert_one(&data::invoice_2())
             .unwrap();
 
         let item1 = data::invoice_line_1();
-        InvoiceLineRowRepository::new(&mut connection)
+        InvoiceLineRowRepository::new(&connection)
             .upsert_one(&item1)
             .unwrap();
         let item2 = data::invoice_line_2();
-        InvoiceLineRowRepository::new(&mut connection)
+        InvoiceLineRowRepository::new(&connection)
             .upsert_one(&item2)
             .unwrap();
         let item3 = data::invoice_line_3();
-        InvoiceLineRowRepository::new(&mut connection)
+        InvoiceLineRowRepository::new(&connection)
             .upsert_one(&item3)
             .unwrap();
         let service_item = data::invoice_line_service();
-        InvoiceLineRowRepository::new(&mut connection)
+        InvoiceLineRowRepository::new(&connection)
             .upsert_one(&service_item)
             .unwrap();
 
         // line stats
         let invoice_1_id = data::invoice_1().id;
-        let result = InvoiceLineRepository::new(&mut connection)
+        let result = InvoiceLineRepository::new(&connection)
             .stats(&[invoice_1_id.clone()])
             .unwrap();
         let stats_invoice_1 = result
@@ -789,9 +789,9 @@ mod repository_test {
     async fn test_user_account_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-user-account-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let mut repo = UserAccountRowRepository::new(&mut connection);
+        let repo = UserAccountRowRepository::new(&connection);
         let item1 = data::user_account_1();
         repo.insert_one(&item1).unwrap();
         let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
@@ -806,10 +806,9 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_number() {
-        let (_, mut connection, _, _) =
-            test_db::setup_all("test_number", MockDataInserts::all()).await;
+        let (_, connection, _, _) = test_db::setup_all("test_number", MockDataInserts::all()).await;
 
-        let mut repo = NumberRowRepository::new(&mut connection);
+        let repo = NumberRowRepository::new(&connection);
 
         let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
         let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
@@ -833,13 +832,13 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_master_list_line_repository_filter() {
-        let (_, mut connection, _, _) = test_db::setup_all(
+        let (_, connection, _, _) = test_db::setup_all(
             "test_master_list_line_repository_filter",
             MockDataInserts::all(),
         )
         .await;
 
-        let mut repo = MasterListLineRepository::new(&mut connection);
+        let repo = MasterListLineRepository::new(&connection);
 
         // Test filter by master_list_id
         let lines = repo
@@ -866,23 +865,23 @@ mod repository_test {
     }
     #[actix_rt::test]
     async fn test_requisition_repository() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_requisition_repository", MockDataInserts::all()).await;
 
         // Test insert
         let mut update_test_row = mock_request_draft_requisition();
         update_test_row.comment = Some("unique_comment".to_owned());
-        RequisitionRowRepository::new(&mut connection)
+        RequisitionRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();
 
         // Test delete
-        RequisitionRowRepository::new(&mut connection)
+        RequisitionRowRepository::new(&connection)
             .delete(&mock_request_draft_requisition2().id)
             .unwrap();
 
         // Test query by id
-        let result = RequisitionRepository::new(&mut connection)
+        let result = RequisitionRepository::new(&connection)
             .query_by_filter(
                 RequisitionFilter::new()
                     .id(EqualFilter::equal_to(&mock_request_draft_requisition2().id)),
@@ -893,7 +892,7 @@ mod repository_test {
             r#"select id from requisition where id = '{}'"#,
             mock_request_draft_requisition2().id
         ))
-        .load::<Id>(&mut connection.connection)
+        .load::<Id>(connection.lock().connection())
         .unwrap();
 
         assert_eq!(
@@ -907,7 +906,7 @@ mod repository_test {
         );
 
         // Test query by name
-        let result = RequisitionRepository::new(&mut connection)
+        let result = RequisitionRepository::new(&connection)
             .query_by_filter(RequisitionFilter::new().name(StringFilter::equal_to("name_a")))
             .unwrap();
 
@@ -919,7 +918,7 @@ mod repository_test {
                     where name.name = 'name_a'
                     order by requisition.id asc"#,
         )
-        .load::<Id>(&mut connection.connection)
+        .load::<Id>(connection.lock().connection())
         .unwrap();
 
         assert!(!raw_result.is_empty()); // Sanity check
@@ -934,7 +933,7 @@ mod repository_test {
         );
 
         // Test query by type and comment
-        let result = RequisitionRepository::new(&mut connection)
+        let result = RequisitionRepository::new(&connection)
             .query_by_filter(
                 RequisitionFilter::new()
                     .status(RequisitionRowStatus::Draft.equal_to())
@@ -945,7 +944,7 @@ mod repository_test {
         let raw_result = sql_query(
             r#"select id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
         )
-        .load::<Id>(&mut connection.connection)
+        .load::<Id>(connection.lock().connection())
         .unwrap();
 
         assert!(!raw_result.is_empty()); // Sanity check
@@ -962,23 +961,23 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_requisition_line_repository() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_requisition_line_repository", MockDataInserts::all()).await;
 
         // Test insert
         let mut update_test_row = mock_draft_request_requisition_line();
         update_test_row.requested_quantity = 99;
-        RequisitionLineRowRepository::new(&mut connection)
+        RequisitionLineRowRepository::new(&connection)
             .upsert_one(&update_test_row)
             .unwrap();
 
         // Test delete
-        RequisitionLineRowRepository::new(&mut connection)
+        RequisitionLineRowRepository::new(&connection)
             .delete(&mock_draft_request_requisition_line2().id)
             .unwrap();
 
         // Test query by id
-        let result = RequisitionLineRepository::new(&mut connection)
+        let result = RequisitionLineRepository::new(&connection)
             .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(
                 &mock_draft_request_requisition_line2().id,
             )))
@@ -988,7 +987,7 @@ mod repository_test {
             r#"SELECT id from requisition_line where id = '{}'"#,
             mock_draft_request_requisition_line2().id
         ))
-        .load::<Id>(&mut connection.connection)
+        .load::<Id>(connection.lock().connection())
         .unwrap();
 
         assert!(raw_result.is_empty()); // Record was deleted
@@ -1003,7 +1002,7 @@ mod repository_test {
         );
 
         // Test query by requisition_id and requested_quantity
-        let result = RequisitionLineRepository::new(&mut connection)
+        let result = RequisitionLineRepository::new(&connection)
             .query_by_filter(
                 RequisitionLineFilter::new()
                     .requisition_id(EqualFilter::equal_to(
@@ -1017,7 +1016,7 @@ mod repository_test {
             r#"SELECT id from requisition_line where requisition_id = '{}' and requested_quantity = 99"#,
             mock_draft_request_requisition_line().requisition_id
         ))
-        .load::<Id>(&mut connection.connection)
+        .load::<Id>(connection.lock().connection())
         .unwrap();
 
         assert!(!raw_result.is_empty()); // Sanity check
@@ -1034,10 +1033,10 @@ mod repository_test {
 
     #[actix_rt::test]
     async fn test_key_value_store() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("key_value_store", MockDataInserts::none()).await;
 
-        let mut repo = KeyValueStoreRepository::new(&mut connection);
+        let repo = KeyValueStoreRepository::new(&connection);
 
         // access a non-existing row
         let result = repo
@@ -1160,11 +1159,11 @@ mod repository_test {
         */
         let manager_a = connection_manager.clone();
         let process_a = tokio::spawn(async move {
-            let mut connection = manager_a.connection().unwrap();
+            let connection = manager_a.connection().unwrap();
             let result: Result<(), TransactionError<RepositoryError>> = connection
                 .transaction_sync(|con| {
                     println!("A: transaction started");
-                    let mut repo = ItemRowRepository::new(con);
+                    let repo = ItemRowRepository::new(con);
                     let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("A: read");
                     println!("A: Sleeping for 100ms");
@@ -1188,13 +1187,13 @@ mod repository_test {
         let manager_b = connection_manager.clone();
         let process_b = tokio::spawn(async move {
             //Wait for process a to get a transaction started
-            let mut connection = manager_b.connection().unwrap();
+            let connection = manager_b.connection().unwrap();
             println!("B: Ready to start transaction");
             // println!("Starting transaction in blocking thread...");
             let result: Result<(), TransactionError<RepositoryError>> = connection
                 .transaction_sync(|con| {
                     println!("B: transaction started");
-                    let mut repo = ItemRowRepository::new(con);
+                    let repo = ItemRowRepository::new(con);
                     let _ = repo.find_active_by_id("tx_deadlock_id")?;
                     println!("B: read");
                     repo.upsert_one(&inline_init(|i: &mut ItemRow| {
@@ -1221,8 +1220,8 @@ mod repository_test {
         b.unwrap();
 
         //Verify the database was updated correctly
-        let mut connection = connection_manager.connection().unwrap();
-        let mut repo = ItemRowRepository::new(&mut connection);
+        let connection = connection_manager.connection().unwrap();
+        let repo = ItemRowRepository::new(&connection);
 
         //tx_deadlock_id should now have name:name_b_2
         let tx_deadlock_item = repo
@@ -1243,9 +1242,9 @@ mod repository_test {
     async fn test_activity_log_row_repository() {
         let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
         let connection_manager = test_db::setup(&settings).await;
-        let mut connection = connection_manager.connection().unwrap();
+        let connection = connection_manager.connection().unwrap();
 
-        let mut repo = ActivityLogRowRepository::new(&mut connection);
+        let repo = ActivityLogRowRepository::new(&connection);
 
         let activity_log1 = data::activity_log_1();
         repo.insert_one(&activity_log1).unwrap();

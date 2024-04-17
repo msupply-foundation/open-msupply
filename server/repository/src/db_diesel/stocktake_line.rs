@@ -80,26 +80,28 @@ pub struct StocktakeLine {
 }
 
 pub struct StocktakeLineRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StocktakeLineRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StocktakeLineRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         filter: Option<StocktakeLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
         query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: StocktakeLineFilter,
         store_id: Option<String>,
     ) -> Result<Vec<StocktakeLine>, RepositoryError> {
@@ -109,7 +111,7 @@ impl<'a> StocktakeLineRepository<'a> {
     /// Query stocktake lines
     /// Note `store_id` is only required when filtering by item code or name
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<StocktakeLineFilter>,
         sort: Option<StocktakeLineSort>,
@@ -146,7 +148,7 @@ impl<'a> StocktakeLineRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StocktakeLineJoin>(&mut self.connection.connection)?;
+            .load::<StocktakeLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -192,7 +194,7 @@ fn to_domain((line, (_, item), stock_line, location): StocktakeLineJoin) -> Stoc
 fn apply_item_filter(
     query: BoxedStocktakeLineQuery,
     filter: Option<StocktakeLineFilter>,
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     store_id: String,
 ) -> BoxedStocktakeLineQuery {
     if let Some(f) = filter {

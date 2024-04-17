@@ -31,16 +31,16 @@ impl Default for ReturnReasonRow {
 }
 
 pub struct ReturnReasonRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ReturnReasonRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ReturnReasonRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
         diesel::insert_into(return_reason_dsl::return_reason)
             .values(row)
             .on_conflict(return_reason_dsl::id)
@@ -51,36 +51,36 @@ impl<'a> ReturnReasonRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ReturnReasonRow) -> Result<(), RepositoryError> {
         diesel::replace_into(return_reason_dsl::return_reason)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<ReturnReasonRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ReturnReasonRow>, RepositoryError> {
         let result = return_reason_dsl::return_reason
             .filter(return_reason_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, return_reason_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, return_reason_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(return_reason_dsl::return_reason)
             .filter(return_reason_dsl::id.eq(return_reason_id))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for ReturnReasonRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ReturnReasonRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ReturnReasonRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

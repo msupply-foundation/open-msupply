@@ -49,55 +49,55 @@ pub struct TemperatureBreachConfigRow {
 }
 
 pub struct TemperatureBreachConfigRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> TemperatureBreachConfigRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         TemperatureBreachConfigRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&mut self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach_config_dsl::temperature_breach_config)
             .values(row)
             .on_conflict(temperature_breach_config_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&mut self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         diesel::replace_into(temperature_breach_config_dsl::temperature_breach_config)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachConfigRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         id: &str,
     ) -> Result<Option<TemperatureBreachConfigRow>, RepositoryError> {
         let result = temperature_breach_config_dsl::temperature_breach_config
             .filter(temperature_breach_config_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(
-        &mut self,
+        &self,
         ids: &[String],
     ) -> Result<Vec<TemperatureBreachConfigRow>, RepositoryError> {
         Ok(temperature_breach_config_dsl::temperature_breach_config
             .filter(temperature_breach_config_dsl::id.eq_any(ids))
-            .load(&mut self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 }

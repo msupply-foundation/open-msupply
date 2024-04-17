@@ -60,30 +60,32 @@ type UserAndUserStoreJoin = (
 );
 
 pub struct UserRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> UserRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         UserRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<UserFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<UserFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_by_filter(&mut self, filter: UserFilter) -> Result<Vec<User>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: UserFilter) -> Result<Vec<User>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
-    pub fn query_one(&mut self, filter: UserFilter) -> Result<Option<User>, RepositoryError> {
+    pub fn query_one(&self, filter: UserFilter) -> Result<Option<User>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<UserFilter>,
         sort: Option<UserSort>,
@@ -110,7 +112,8 @@ impl<'a> UserRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<UserAndUserStoreJoin>(&mut self.connection.connection)?;
+        let result =
+            final_query.load::<UserAndUserStoreJoin>(self.connection.lock().connection())?;
         Ok(to_domain(result))
     }
 }

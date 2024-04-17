@@ -61,7 +61,7 @@ impl Default for SyncBufferRow {
 }
 
 pub struct SyncBufferRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 use serde::{Deserialize, Serialize};
@@ -69,12 +69,12 @@ use sync_buffer::dsl as sync_buffer_dsl;
 use util::{inline_init, Defaults};
 
 impl<'a> SyncBufferRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         SyncBufferRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         let statement = diesel::insert_into(sync_buffer_dsl::sync_buffer)
             .values(row)
             .on_conflict(sync_buffer_dsl::record_id)
@@ -84,36 +84,36 @@ impl<'a> SyncBufferRowRepository<'a> {
         // //   Debug diesel query
         // println!("{}", diesel::debug_query::<DBType, _>(&statement).to_string());
 
-        statement.execute(&mut self.connection.connection)?;
+        statement.execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &SyncBufferRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_buffer_dsl::sync_buffer)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_many(&mut self, rows: &Vec<SyncBufferRow>) -> Result<(), RepositoryError> {
+    pub fn upsert_many(&self, rows: &Vec<SyncBufferRow>) -> Result<(), RepositoryError> {
         for row in rows {
             self.upsert_one(row)?
         }
         Ok(())
     }
 
-    pub fn get_all(&mut self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        Ok(sync_buffer_dsl::sync_buffer.load(&mut self.connection.connection)?)
+    pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
+        Ok(sync_buffer_dsl::sync_buffer.load(self.connection.lock().connection())?)
     }
 
     pub fn find_one_by_record_id(
-        &mut self,
+        &self,
         record_id: &str,
     ) -> Result<Option<SyncBufferRow>, RepositoryError> {
         let result = sync_buffer_dsl::sync_buffer
             .filter(sync_buffer_dsl::record_id.eq(record_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -168,28 +168,28 @@ impl SyncBufferAction {
 type SyncBuffer = SyncBufferRow;
 
 pub struct SyncBufferRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> SyncBufferRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         SyncBufferRepository { connection }
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: SyncBufferFilter,
     ) -> Result<Vec<SyncBuffer>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<SyncBufferFilter>,
     ) -> Result<Vec<SyncBuffer>, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        let result = query.load::<SyncBuffer>(&mut self.connection.connection)?;
+        let result = query.load::<SyncBuffer>(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -258,7 +258,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_sync_buffer() {
-        let (_, mut connection, _, _) = test_db::setup_all_with_data(
+        let (_, connection, _, _) = test_db::setup_all_with_data(
             "test_sync_buffer",
             MockDataInserts::none(),
             inline_init(|r: &mut MockData| {
@@ -268,7 +268,7 @@ mod test {
         .await;
 
         assert_eq!(
-            SyncBufferRepository::new(&mut connection)
+            SyncBufferRepository::new(&connection)
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
@@ -279,7 +279,7 @@ mod test {
         );
 
         assert_eq!(
-            SyncBufferRepository::new(&mut connection)
+            SyncBufferRepository::new(&connection)
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))
@@ -290,7 +290,7 @@ mod test {
         );
 
         assert_eq!(
-            SyncBufferRepository::new(&mut connection)
+            SyncBufferRepository::new(&connection)
                 .query_by_filter(
                     SyncBufferFilter::new().action(SyncBufferAction::Delete.equal_to())
                 )
@@ -303,12 +303,12 @@ mod test {
             r
         });
 
-        SyncBufferRowRepository::new(&mut connection)
+        SyncBufferRowRepository::new(&connection)
             .upsert_one(&new_a)
             .unwrap();
 
         assert_eq!(
-            SyncBufferRepository::new(&mut connection)
+            SyncBufferRepository::new(&connection)
                 .query_by_filter(
                     SyncBufferFilter::new()
                         .integration_datetime(DatetimeFilter::is_null(true))

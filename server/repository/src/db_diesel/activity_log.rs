@@ -37,28 +37,30 @@ pub enum ActivityLogSortField {
 pub type ActivityLogSort = Sort<ActivityLogSortField>;
 
 pub struct ActivityLogRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ActivityLogRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ActivityLogRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<ActivityLogFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ActivityLogFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: ActivityLogFilter,
     ) -> Result<Vec<ActivityLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ActivityLogFilter>,
         sort: Option<ActivityLogSort>,
@@ -86,7 +88,7 @@ impl<'a> ActivityLogRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ActivityLogRow>(&mut self.connection.connection)?;
+            .load::<ActivityLogRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

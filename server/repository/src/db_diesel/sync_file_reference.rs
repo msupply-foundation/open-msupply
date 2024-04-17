@@ -36,32 +36,31 @@ pub enum SyncFileReferenceSortField {
 pub type SyncFileReferenceSort = Sort<SyncFileReferenceSortField>;
 
 pub struct SyncFileReferenceRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> SyncFileReferenceRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         SyncFileReferenceRepository { connection }
     }
 
-    pub fn count(
-        &mut self,
-        filter: Option<SyncFileReferenceFilter>,
-    ) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<SyncFileReferenceFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: SyncFileReferenceFilter,
     ) -> Result<Vec<SyncFileReference>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<SyncFileReferenceFilter>,
         sort: Option<SyncFileReferenceSort>,
@@ -84,7 +83,7 @@ impl<'a> SyncFileReferenceRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<SyncFileReferenceRow>(&mut self.connection.connection)?;
+            .load::<SyncFileReferenceRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

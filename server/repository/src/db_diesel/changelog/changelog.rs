@@ -176,13 +176,13 @@ pub struct ChangelogFilter {
 }
 
 pub struct ChangelogRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 type ChangelogJoin = (ChangelogRow, Option<NameLinkRow>);
 
 impl<'a> ChangelogRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ChangelogRepository { connection }
     }
 
@@ -194,7 +194,7 @@ impl<'a> ChangelogRepository<'a> {
     /// * `limit` - Maximum number of entries to be returned
     /// * `filter` - Extra filter to apply on change_logs
     pub fn changelogs(
-        &mut self,
+        &self,
         earliest: u64,
         limit: u32,
         filter: Option<ChangelogFilter>,
@@ -207,7 +207,7 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result: Vec<ChangelogJoin> = query.load(&mut self.connection.connection)?;
+        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
         Ok(result
             .into_iter()
             .map(|(change_log_row, name_link_row)| ChangelogRow {
@@ -224,18 +224,18 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     pub fn count(
-        &mut self,
+        &self,
         earliest: u64,
         filter: Option<ChangelogFilter>,
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_query(earliest, filter)
             .count()
-            .get_result::<i64>(&mut self.connection.connection)?;
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
     pub fn outgoing_sync_records_from_central(
-        &mut self,
+        &self,
         earliest: u64,
         batch_size: u32,
         sync_site_id: i32,
@@ -251,7 +251,7 @@ impl<'a> ChangelogRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result: Vec<ChangelogJoin> = query.load(&mut self.connection.connection)?;
+        let result: Vec<ChangelogJoin> = query.load(self.connection.lock().connection())?;
         Ok(result
             .into_iter()
             .map(|(change_log_row, name_link_row)| ChangelogRow {
@@ -271,46 +271,46 @@ impl<'a> ChangelogRepository<'a> {
     /// This looks up associated records to decide if change log should be sent to the site or not
     /// Update this method when adding new record types to the system
     pub fn count_outgoing_sync_records_from_central(
-        &mut self,
+        &self,
         earliest: u64,
         sync_site_id: i32,
         is_initialized: bool,
     ) -> Result<u64, RepositoryError> {
         let result = create_filtered_outgoing_sync_query(earliest, sync_site_id, is_initialized)
             .count()
-            .get_result::<i64>(&mut self.connection.connection)?;
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(result as u64)
     }
 
     /// Returns latest change log
     /// After initial sync we use this method to get the latest cursor to make sure we don't try to push any records that were synced to this site on initialisation
-    pub fn latest_cursor(&mut self) -> Result<u64, RepositoryError> {
+    pub fn latest_cursor(&self) -> Result<u64, RepositoryError> {
         let result = changelog::table
             .select(diesel::dsl::max(changelog::cursor))
-            .first::<Option<i64>>(&mut self.connection.connection)?;
+            .first::<Option<i64>>(self.connection.lock().connection())?;
         Ok(result.unwrap_or(0) as u64)
     }
 
     // Delete all change logs with cursor greater-equal cursor_ge
-    pub fn delete(&mut self, cursor_ge: i64) -> Result<(), RepositoryError> {
+    pub fn delete(&self, cursor_ge: i64) -> Result<(), RepositoryError> {
         diesel::delete(changelog::dsl::changelog)
             .filter(changelog::dsl::cursor.ge(cursor_ge))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     // Needed for tests, when is_sync_update needs to be reset when records were inserted via
     // PullUpsertRecord (but not through sync)
-    pub fn reset_is_sync_update(&mut self, from_cursor: u64) -> Result<(), RepositoryError> {
+    pub fn reset_is_sync_update(&self, from_cursor: u64) -> Result<(), RepositoryError> {
         diesel::update(changelog::table)
             .set(changelog::is_sync_update.eq(false))
             .filter(changelog::cursor.gt(from_cursor as i64))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn set_source_site_id_and_is_sync_update(
-        &mut self,
+        &self,
         cursor_id: i64,
         source_site_id: Option<i32>,
     ) -> Result<(), RepositoryError> {
@@ -320,7 +320,7 @@ impl<'a> ChangelogRepository<'a> {
                 changelog::is_sync_update.eq(true),
             ))
             .filter(changelog::cursor.eq(cursor_id))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -340,14 +340,14 @@ impl<'a> ChangelogRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn insert(&mut self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
+    pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
         // SQLite docs say this is safe if you don't have different threads sharing a single connection
+        let mut con = self.connection.lock();
         diesel::insert_into(changelog::table)
             .values(row)
-            .execute(&mut self.connection.connection)?;
-        let cursor_id = diesel::select(last_insert_rowid())
-            .get_result::<i64>(&mut self.connection.connection)?;
+            .execute(con.connection())?;
+        let cursor_id = diesel::select(last_insert_rowid()).get_result::<i64>(con.connection())?;
         Ok(cursor_id)
     }
 }

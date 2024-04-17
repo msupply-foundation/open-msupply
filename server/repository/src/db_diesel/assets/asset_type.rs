@@ -46,36 +46,38 @@ impl AssetTypeFilter {
 }
 
 pub struct AssetTypeRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetTypeRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetTypeRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<AssetTypeFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<AssetTypeFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: AssetTypeFilter,
     ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: AssetTypeFilter,
     ) -> Result<Vec<AssetTypeRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<AssetTypeFilter>,
         sort: Option<AssetTypeSort>,
@@ -102,7 +104,7 @@ impl<'a> AssetTypeRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetTypeRow>(&mut self.connection.connection)?;
+        let result = final_query.load::<AssetTypeRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -159,7 +161,7 @@ mod tests {
             id: class_id.clone(),
             name: class_name.clone(),
         };
-        let mut class_row_repo = AssetClassRowRepository::new(&mut storage_connection);
+        let class_row_repo = AssetClassRowRepository::new(&mut storage_connection);
         class_row_repo.insert_one(&class_row).unwrap();
 
         // Create a category
@@ -170,7 +172,7 @@ mod tests {
             name: category_name.clone(),
             class_id: class_id.clone(),
         };
-        let mut category_row_repo = AssetCategoryRowRepository::new(&mut storage_connection);
+        let category_row_repo = AssetCategoryRowRepository::new(&mut storage_connection);
         category_row_repo.insert_one(&category_row).unwrap();
 
         // Create the type

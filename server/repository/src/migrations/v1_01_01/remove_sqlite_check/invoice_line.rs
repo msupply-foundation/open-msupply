@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -21,11 +21,11 @@ pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> 
 async fn remove_sqlite_check_invoice_line() {
     use crate::migrations::*;
     use diesel::prelude::*;
-    let mut connection = super::setup_data_migration("remove_sqlite_check_invoice_line").await;
+    let connection = super::setup_data_migration("remove_sqlite_check_invoice_line").await;
 
     // Pre requisite
     sql!(
-    &mut connection,
+    &connection,
     r#"
         INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, created_datetime, type, status)
         VALUES 
@@ -42,7 +42,7 @@ async fn remove_sqlite_check_invoice_line() {
 
     let default = "'invoice_id', 'item_id', '', '', 0, 0, 0, 0, 1, 1";
     sql!(
-        &mut connection,
+        &connection,
         r#"
             INSERT INTO invoice_line (id, invoice_id, item_id, item_name, item_code, cost_price_per_pack, 
                         sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, type)
@@ -55,12 +55,12 @@ async fn remove_sqlite_check_invoice_line() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
+    migrate(&connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&connection), V1_01_01.version());
 
     // Make sure check was removed
     sql!(
-        &mut connection,
+        &connection,
         r#"
             INSERT INTO invoice_line (id, invoice_id, item_id, item_name, item_code, cost_price_per_pack, 
                         sell_price_per_pack, total_before_tax, total_after_tax, number_of_packs, pack_size, type)
@@ -81,7 +81,7 @@ async fn remove_sqlite_check_invoice_line() {
     let invoice_lines = invoice_line_dsl::invoice_line
         .select((invoice_line_dsl::id, invoice_line_dsl::type_))
         .order_by(invoice_line_dsl::id.asc())
-        .load::<(String, String)>(&mut connection.connection)
+        .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

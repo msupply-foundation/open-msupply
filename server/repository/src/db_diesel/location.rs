@@ -34,30 +34,32 @@ pub enum LocationSortField {
 pub type LocationSort = Sort<LocationSortField>;
 
 pub struct LocationRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> LocationRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         LocationRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<LocationFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<LocationFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M2), check that store_id matches current store
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: LocationFilter,
     ) -> Result<Vec<Location>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<LocationFilter>,
         sort: Option<LocationSort>,
@@ -81,7 +83,7 @@ impl<'a> LocationRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<LocationRow>(&mut self.connection.connection)?;
+            .load::<LocationRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

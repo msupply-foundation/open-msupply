@@ -1,5 +1,3 @@
-use std::ops::DerefMut;
-
 use super::asset_catalogue_item_row::asset_catalogue_item::dsl::*;
 
 use serde::{Deserialize, Serialize};
@@ -41,11 +39,11 @@ pub struct AssetCatalogueItemRow {
 }
 
 pub struct AssetCatalogueItemRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetCatalogueItemRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetCatalogueItemRowRepository { connection }
     }
 
@@ -59,62 +57,62 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_catalogue_item_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
     pub fn upsert_one(
-        &mut self,
+        &self,
         asset_catalogue_item_row: &AssetCatalogueItemRow,
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_catalogue_item)
             .values(asset_catalogue_item_row)
-            .execute(self.connection.connection.deref_mut())?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn insert_one(
-        &mut self,
+        &self,
         asset_catalogue_item_row: &AssetCatalogueItemRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_catalogue_item)
             .values(asset_catalogue_item_row)
-            .execute(self.connection.connection.deref_mut())?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
-        let result = asset_catalogue_item.load(&mut self.connection.connection)?;
+        let result = asset_catalogue_item.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         asset_catalogue_item_id: &str,
     ) -> Result<Option<AssetCatalogueItemRow>, RepositoryError> {
         let result = asset_catalogue_item
             .filter(id.eq(asset_catalogue_item_id))
-            .first(self.connection.connection.deref_mut())
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, asset_catalogue_item_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, asset_catalogue_item_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_catalogue_item)
             .filter(id.eq(asset_catalogue_item_id))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for AssetCatalogueItemRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         AssetCatalogueItemRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             AssetCatalogueItemRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

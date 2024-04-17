@@ -46,11 +46,11 @@ pub struct StorePermissions {
 }
 
 pub struct UserAccountService<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> UserAccountService<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         UserAccountService { connection }
     }
 

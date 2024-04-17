@@ -35,11 +35,11 @@ pub struct LocationMovementRow {
 }
 
 pub struct LocationMovementRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> LocationMovementRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         LocationMovementRowRepository { connection }
     }
 
@@ -50,45 +50,42 @@ impl<'a> LocationMovementRowRepository<'a> {
             .on_conflict(location_movement_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &LocationMovementRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &LocationMovementRow) -> Result<(), RepositoryError> {
         diesel::replace_into(location_movement_dsl::location_movement)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<LocationMovementRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<LocationMovementRow>, RepositoryError> {
         let result = location_movement_dsl::location_movement
             .filter(location_movement_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             location_movement_dsl::location_movement.filter(location_movement_dsl::id.eq(id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for LocationMovementRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         LocationMovementRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             LocationMovementRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
