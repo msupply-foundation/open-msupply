@@ -10,12 +10,11 @@ import {
   Box,
   InsertAssetLogInput,
   StatusType,
-  useAuthContext,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AssetLogPanel } from '../Components';
 import { parseLogStatus } from '../utils';
-import { useAssetData } from 'packages/system/src';
+import { useAssetData } from '@openmsupply-client/system';
 
 const Row = ({
   children,
@@ -47,8 +46,6 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
     [onChange],
     500
   );
-  const authContext = useAuthContext();
-
   const getOption = (label: string, value?: string) => ({
     label,
     value: value ?? label,
@@ -65,9 +62,15 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
     });
 
   const statuses = getOptionsFromEnum(StatusType, parseLogStatus);
-  const { data } = useAssetData.log.listReasons(authContext.storeId);
+  const { data } = useAssetData.log.listReasons(
+    draft.status
+      ? {
+          assetLogStatus: { equalTo: draft.status },
+        }
+      : undefined
+  );
 
-  const filteredReasons =
+  const reasons =
     data?.nodes?.map(value => {
       return {
         label: value.reason,
@@ -93,16 +96,14 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
         </Row>
         <Row label={t('label.reason')}>
           <Autocomplete
-            disabled={filteredReasons.length === 0}
-            options={filteredReasons}
+            disabled={reasons.length === 0}
+            options={reasons}
             width="100%"
             isOptionEqualToValue={option => option?.value === draft.reasonId}
             onChange={(_e, selected) =>
               onChange({ reasonId: selected?.value as string })
             }
-            value={
-              filteredReasons.find(r => r?.value === draft.reasonId) ?? null
-            }
+            value={reasons.find(r => r?.value === draft.reasonId) ?? null}
           />
         </Row>
         <Row label={t('label.observations')}>

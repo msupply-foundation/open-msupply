@@ -74,7 +74,7 @@ const logReasonParsers = {
   },
 };
 
-export const getAssetQueries = (sdk: Sdk) => ({
+export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
   get: {
     byId: async (assetCatalogueItemId: string) => {
       const result = await sdk.assetCatalogueItemById({
@@ -144,13 +144,10 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
       return types;
     },
-    logReasons: async (
-      storeId: string,
-      filter: AssetLogReasonFilterInput | undefined
-    ) => {
+    logReasons: async (filter: AssetLogReasonFilterInput | undefined) => {
       const result = await sdk.assetLogReasons({
         filter,
-        storeId,
+        storeId: currentStoreId,
       });
       return result?.assetLogReasons;
     },

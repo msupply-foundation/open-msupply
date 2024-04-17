@@ -15,6 +15,7 @@ import {
   StatusType,
 } from '@openmsupply-client/common';
 import { useAssetData } from '../api';
+import { getStatusOptions } from '../utils';
 
 type DeleteError = {
   reason: string;
@@ -107,31 +108,7 @@ export const Toolbar: FC<{
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRows]);
 
-  const options = [
-    {
-      label: t('status.decommissioned', { ns: 'coldchain' }),
-      value: StatusType.Decommissioned,
-    },
-    {
-      label: t('status.functioning', { ns: 'coldchain' }),
-      value: StatusType.Functioning,
-    },
-    {
-      label: t('status.functioning-but-needs-attention', {
-        ns: 'coldchain',
-      }),
-      value: StatusType.FunctioningButNeedsAttention,
-    },
-    {
-      label: t('status.not-functioning', { ns: 'coldchain' }),
-      value: StatusType.NotFunctioning,
-    },
-    {
-      label: t('status.not-in-use', { ns: 'coldchain' }),
-      value: StatusType.NotInUse,
-    },
-  ];
-
+  const options = getStatusOptions(t);
   return (
     <AppBarContentPortal
       sx={{

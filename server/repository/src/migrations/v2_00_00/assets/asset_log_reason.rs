@@ -19,6 +19,8 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             connection,
             r#"
                 ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'asset_log_reason';
+                ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'ASSET_LOG_REASON_CREATED';
+                ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'ASSET_LOG_REASON_DELETED';
             "#
         )?;
     }

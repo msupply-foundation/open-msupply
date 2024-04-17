@@ -9,7 +9,6 @@ import {
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
 import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { Status } from '../../Components';
-import { translateReason } from '../../utils';
 import { FileList } from '../../Components';
 
 const Divider = () => (
@@ -124,8 +123,7 @@ const StatusLog = ({
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">
             <Typography sx={{ fontSize: '12px' }}>
-              <b>{t('label.reason')}:</b>{' '}
-              {translateReason(log.reason?.reason, t)}
+              <b>{t('label.reason')}:</b> {log.reason?.reason ?? '-'}
             </Typography>
           </Box>
           <Typography sx={{ fontSize: '12px' }}>
