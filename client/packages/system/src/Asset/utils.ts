@@ -43,21 +43,31 @@ export const importRowToCsv = (
   catalogueItems: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>,
   includeErrors = true,
-  properties: string[] = []
+  properties?: string[]
 ) => {
-  const fields = assetCatalogueItemFields(t).concat(properties);
+  const props =
+    properties ??
+    Object.values(catalogueItems[0]?.properties ?? {}).map(
+      property => property.name
+    );
+  const fields = assetCatalogueItemFields(t).concat(props);
   if (includeErrors) fields.push(t('label.error-message'));
 
-  const data = catalogueItems.map(node => [
-    node.subCatalogue,
-    node.code,
-    node.type,
-    node.manufacturer,
-    node.model,
-    node.class,
-    node.category,
-    node.errorMessage,
-  ]);
+  const data = catalogueItems.map(node => {
+    const row = [
+      node.subCatalogue,
+      node.code,
+      node.type,
+      node.manufacturer,
+      node.model,
+      node.class,
+      node.category,
+    ].concat(
+      Object.values(node?.properties ?? {}).map(property => property.value)
+    );
+    row.push(node.errorMessage);
+    return row;
+  });
 
   return Formatter.csv({ fields, data });
 };
