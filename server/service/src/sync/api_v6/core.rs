@@ -78,6 +78,36 @@ async fn response_or_err_push(
     Ok(result)
 }
 
+async fn response_or_err_site_status(
+    result: Result<Response, reqwest::Error>,
+) -> Result<SiteStatusResponseV6, SyncApiErrorVariantV6> {
+    let response = match result {
+        Ok(result) => result,
+        Err(error) => {
+            if error.is_connect() {
+                return Err(SyncApiErrorVariantV6::ConnectionError(error));
+            } else {
+                return Err(SyncApiErrorVariantV6::Other(error.into()));
+            }
+        }
+    };
+
+    // Not checking for status, expecting 200 only, even if there is error
+    let response_text = response
+        .text()
+        .await
+        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+
+    let result = serde_json::from_str(&response_text).map_err(|source| {
+        ParsingResponseError::ParseError {
+            source,
+            response_text,
+        }
+    })?;
+
+    Ok(result)
+}
+
 impl SyncApiV6 {
     pub fn new(
         url: &str,
@@ -149,6 +179,34 @@ impl SyncApiV6 {
         let error = match response_or_err_push(result).await {
             Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
             Ok(SyncPushResponseV6::Error(error)) => error.into(),
+            Err(error) => error.into(),
+        };
+
+        Err(SyncApiErrorV6 {
+            url,
+            route: route.to_string(),
+            source: error,
+        })
+    }
+
+    pub async fn get_site_status(&self) -> Result<SiteStatusV6, SyncApiErrorV6> {
+        let Self {
+            sync_v5_settings,
+            url,
+        } = self;
+
+        let route = "site_status";
+        let url = url.join(route).unwrap();
+
+        let request = SiteStatusRequestV6 {
+            sync_v5_settings: sync_v5_settings.clone(),
+        };
+
+        let result = Client::new().post(url.clone()).json(&request).send().await;
+
+        let error = match response_or_err_site_status(result).await {
+            Ok(SiteStatusResponseV6::Data(data)) => return Ok(data),
+            Ok(SiteStatusResponseV6::Error(error)) => error.into(),
             Err(error) => error.into(),
         };
 

@@ -1,7 +1,9 @@
+use std::time::{Duration, SystemTime};
+
 use crate::{
     cursor_controller::CursorController,
     sync::{
-        api_v6::{SyncBatchV6, SyncRecordV6},
+        api_v6::{SiteStatusCodeV6, SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
     },
 };
@@ -47,6 +49,14 @@ pub(crate) enum RemotePushErrorV6 {
     GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum WaitForSyncOperationErrorV6 {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiErrorV6),
+    #[error("Timeout was reached")]
+    TimeoutReached,
 }
 
 #[derive(Error, Debug)]
@@ -181,7 +191,37 @@ impl SynchroniserV6 {
 
         Ok(())
     }
+
+    pub(crate) async fn wait_for_sync_operation(
+        &self,
+        poll_period_seconds: u64,
+        timeout_seconds: u64,
+    ) -> Result<(), WaitForSyncOperationErrorV6> {
+        let start = SystemTime::now();
+        let poll_period = Duration::from_secs(poll_period_seconds);
+        let timeout = Duration::from_secs(timeout_seconds);
+        log::info!("Awaiting central server operation...");
+        loop {
+            tokio::time::sleep(poll_period).await;
+
+            let response = self.sync_api_v6.get_site_status().await?;
+
+            if response.code == SiteStatusCodeV6::Idle {
+                log::info!("Central server operation finished");
+                break;
+            }
+
+            let elapsed = start.elapsed().unwrap_or(timeout);
+
+            if elapsed >= timeout {
+                return Err(WaitForSyncOperationErrorV6::TimeoutReached);
+            }
+        }
+
+        Ok(())
+    }
 }
+
 fn insert_one_and_update_cursor(
     connection: &StorageConnection,
     cursor_controller: &CursorController,
