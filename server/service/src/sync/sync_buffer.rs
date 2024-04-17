@@ -138,6 +138,25 @@ mod test {
             r.action = SyncBufferAction::Delete;
         })
     }
+    fn site_1_row_1() -> SyncBufferRow {
+        inline_init(|r: &mut SyncBufferRow| {
+            r.record_id = "1-1".to_string();
+            r.table_name = "list_master".to_string();
+            r.received_datetime = Defaults::naive_date_time();
+            r.action = SyncBufferAction::Delete;
+            r.source_site_id = Some(1);
+        })
+    }
+
+    fn site_1_row_2() -> SyncBufferRow {
+        inline_init(|r: &mut SyncBufferRow| {
+            r.record_id = "1-2".to_string();
+            r.table_name = "list_master_line".to_string();
+            r.received_datetime = Defaults::naive_date_time();
+            r.action = SyncBufferAction::Delete;
+            r.source_site_id = Some(1);
+        })
+    }
 
     #[actix_rt::test]
     async fn test_sync_buffer_service() {
@@ -148,7 +167,16 @@ mod test {
             "test_sync_buffer_service",
             MockDataInserts::none(),
             inline_init(|r: &mut MockData| {
-                r.sync_buffer_rows = vec![row_1(), row_2(), row_3(), row_4(), row_5(), row_6()];
+                r.sync_buffer_rows = vec![
+                    row_1(),
+                    row_2(),
+                    row_3(),
+                    row_4(),
+                    row_5(),
+                    row_6(),
+                    site_1_row_1(),
+                    site_1_row_2(),
+                ];
             }),
         )
         .await;
@@ -229,6 +257,19 @@ mod test {
 
         assert_eq!(result, vec![]);
 
-        // TODO: Test only get for site!
+        // GETS BUFFER ROWS FOR REMOTE SITE
+        let remote_site_id = 1;
+        let in_reverse_referential_order = buffer
+            .get_ordered_sync_buffer_records(
+                repository::SyncBufferAction::Delete,
+                &table_order,
+                Some(remote_site_id),
+            )
+            .unwrap();
+
+        assert_eq!(
+            in_reverse_referential_order,
+            vec![site_1_row_2(), site_1_row_1()]
+        );
     }
 }
