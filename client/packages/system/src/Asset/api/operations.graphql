@@ -18,6 +18,13 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   }
 }
 
+fragment AssetProperty on AssetCataloguePropertyNode {
+  id
+  allowedValues
+  name
+  valueType
+}
+
 query assetCatalogueItems(
   $first: Int
   $offset: Int
@@ -96,10 +103,8 @@ query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
     ... on AssetCataloguePropertyConnector {
       __typename
       nodes {
-        allowedValues
-        name
-        id
-        valueType
+        __typename
+        ...AssetProperty
       }
     }
     ... on NodeError {
