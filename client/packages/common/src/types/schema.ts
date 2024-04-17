@@ -86,6 +86,7 @@ export type ActivityLogNode = {
 
 export enum ActivityLogNodeType {
   AssetCatalogueItemCreated = 'ASSET_CATALOGUE_ITEM_CREATED',
+  AssetCatalogueItemPropertyCreated = 'ASSET_CATALOGUE_ITEM_PROPERTY_CREATED',
   AssetCreated = 'ASSET_CREATED',
   AssetDeleted = 'ASSET_DELETED',
   AssetLogCreated = 'ASSET_LOG_CREATED',
@@ -275,6 +276,17 @@ export type AssetCatalogueItemPropertyNode = {
   catalogueItemId: Scalars['String']['output'];
   cataloguePropertyId: Scalars['String']['output'];
   id: Scalars['String']['output'];
+  valueBool?: Maybe<Scalars['Boolean']['output']>;
+  valueFloat?: Maybe<Scalars['Float']['output']>;
+  valueInt?: Maybe<Scalars['Int']['output']>;
+  valueString?: Maybe<Scalars['String']['output']>;
+};
+
+export type AssetCatalogueItemPropertyValueNode = {
+  __typename: 'AssetCatalogueItemPropertyValueNode';
+  catalogueItemId: Scalars['String']['output'];
+  cataloguePropertyId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
   name: Scalars['String']['output'];
   valueBool?: Maybe<Scalars['Boolean']['output']>;
   valueFloat?: Maybe<Scalars['Float']['output']>;
@@ -303,6 +315,7 @@ export type AssetCatalogueMutations = {
   __typename: 'AssetCatalogueMutations';
   deleteAssetCatalogueItem: DeleteAssetCatalogueItemResponse;
   insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
+  insertAssetCatalogueItemProperty: InsertAssetCatalogueItemPropertyResponse;
 };
 
 
@@ -315,6 +328,34 @@ export type AssetCatalogueMutationsInsertAssetCatalogueItemArgs = {
   input: InsertAssetCatalogueItemInput;
   storeId: Scalars['String']['input'];
 };
+
+
+export type AssetCatalogueMutationsInsertAssetCatalogueItemPropertyArgs = {
+  input: InsertAssetCatalogueItemPropertyInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type AssetCataloguePropertyConnector = {
+  __typename: 'AssetCataloguePropertyConnector';
+  nodes: Array<AssetCataloguePropertyNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetCataloguePropertyFilterInput = {
+  categoryId?: InputMaybe<EqualFilterStringInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type AssetCataloguePropertyNode = {
+  __typename: 'AssetCataloguePropertyNode';
+  allowedValues?: Maybe<Scalars['String']['output']>;
+  categoryId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  valueType: PropertyNodeValueType;
+};
+
+export type AssetCataloguePropertyResponse = AssetCataloguePropertyConnector | NodeError;
 
 export type AssetCategoriesResponse = AssetCategoryConnector;
 
@@ -480,7 +521,7 @@ export type AssetNode = {
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
-  properties: Array<AssetCatalogueItemPropertyNode>;
+  properties: Array<AssetCatalogueItemPropertyValueNode>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
   statusLog?: Maybe<AssetLogNode>;
@@ -1023,7 +1064,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetCatalogueItemPropertyErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1968,6 +2009,27 @@ export type InsertAssetCatalogueItemInput = {
   typeId: Scalars['String']['input'];
 };
 
+export type InsertAssetCatalogueItemPropertyError = {
+  __typename: 'InsertAssetCatalogueItemPropertyError';
+  error: InsertAssetCatalogueItemPropertyErrorInterface;
+};
+
+export type InsertAssetCatalogueItemPropertyErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertAssetCatalogueItemPropertyInput = {
+  catalogueItemId: Scalars['String']['input'];
+  cataloguePropertyId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  valueBool?: InputMaybe<Scalars['Boolean']['input']>;
+  valueFloat?: InputMaybe<Scalars['Float']['input']>;
+  valueInt?: InputMaybe<Scalars['Int']['input']>;
+  valueString?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertAssetCatalogueItemPropertyResponse = AssetCatalogueItemPropertyNode | InsertAssetCatalogueItemPropertyError;
+
 export type InsertAssetCatalogueItemResponse = AssetCatalogueItemNode | InsertAssetCatalogueItemError;
 
 export type InsertAssetError = {
@@ -2590,7 +2652,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetCatalogueItemPropertyErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -3257,6 +3319,7 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
+  deleteAssetCatalogueItem: DeleteAssetCatalogueItemResponse;
   deleteInboundReturn: DeleteInboundReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
@@ -3275,6 +3338,8 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
+  insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
+  insertAssetCatalogueItemProperty: InsertAssetCatalogueItemPropertyResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
   insertContactTrace: InsertContactTraceResponse;
@@ -3444,6 +3509,11 @@ export type MutationsDeleteAssetArgs = {
 };
 
 
+export type MutationsDeleteAssetCatalogueItemArgs = {
+  assetCatalogueItemId: Scalars['String']['input'];
+};
+
+
 export type MutationsDeleteInboundReturnArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -3547,6 +3617,18 @@ export type MutationsInitialiseSiteArgs = {
 
 export type MutationsInsertAssetArgs = {
   input: InsertAssetInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertAssetCatalogueItemArgs = {
+  input: InsertAssetCatalogueItemInput;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type MutationsInsertAssetCatalogueItemPropertyArgs = {
+  input: InsertAssetCatalogueItemPropertyInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -4632,6 +4714,7 @@ export type Queries = {
   apiVersion: Scalars['String']['output'];
   assetCatalogueItem: AssetCatalogueItemResponse;
   assetCatalogueItems: AssetCatalogueItemsResponse;
+  assetCatalogueProperties: AssetCataloguePropertyResponse;
   assetCategories: AssetCategoriesResponse;
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
@@ -4787,6 +4870,11 @@ export type QueriesAssetCatalogueItemsArgs = {
   filter?: InputMaybe<AssetCatalogueItemFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetCatalogueItemSortInput>>;
+};
+
+
+export type QueriesAssetCataloguePropertiesArgs = {
+  filter?: InputMaybe<AssetCataloguePropertyFilterInput>;
 };
 
 
@@ -5316,7 +5404,7 @@ export enum ReasonType {
   Unknown = 'UNKNOWN'
 }
 
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetCatalogueItemPropertyErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };

@@ -47,6 +47,13 @@ export type AssetCategoriesQueryVariables = Types.Exact<{
 
 export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', id: string, name: string, classId: string }> } };
 
+export type AssetCataloguePropertiesQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.AssetCataloguePropertyFilterInput>;
+}>;
+
+
+export type AssetCataloguePropertiesQuery = { __typename: 'Queries', assetCatalogueProperties: { __typename: 'AssetCataloguePropertyConnector', nodes: Array<{ __typename: 'AssetCataloguePropertyNode', allowedValues?: string | null, name: string, id: string, valueType: Types.PropertyNodeValueType }> } | { __typename: 'NodeError' } };
+
 export type InsertAssetCatalogueItemMutationVariables = Types.Exact<{
   input: Types.InsertAssetCatalogueItemInput;
   storeId: Types.Scalars['String']['input'];
@@ -152,6 +159,24 @@ export const AssetCategoriesDocument = gql`
   }
 }
     `;
+export const AssetCataloguePropertiesDocument = gql`
+    query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
+  assetCatalogueProperties(filter: $filter) {
+    ... on AssetCataloguePropertyConnector {
+      __typename
+      nodes {
+        allowedValues
+        name
+        id
+        valueType
+      }
+    }
+    ... on NodeError {
+      __typename
+    }
+  }
+}
+    `;
 export const InsertAssetCatalogueItemDocument = gql`
     mutation insertAssetCatalogueItem($input: InsertAssetCatalogueItemInput!, $storeId: String!) {
   centralServer {
@@ -225,6 +250,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     assetCategories(variables?: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
+    },
+    assetCatalogueProperties(variables?: AssetCataloguePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCataloguePropertiesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetCataloguePropertiesQuery>(AssetCataloguePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueProperties', 'query');
     },
     insertAssetCatalogueItem(variables: InsertAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemMutation>(InsertAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItem', 'mutation');
@@ -318,6 +346,23 @@ export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<As
 export const mockAssetCategoriesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCategoriesQueryVariables>, GraphQLContext<AssetCategoriesQuery>, any>) =>
   graphql.query<AssetCategoriesQuery, AssetCategoriesQueryVariables>(
     'assetCategories',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockAssetCataloguePropertiesQuery((req, res, ctx) => {
+ *   const { filter } = req.variables;
+ *   return res(
+ *     ctx.data({ assetCatalogueProperties })
+ *   )
+ * })
+ */
+export const mockAssetCataloguePropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCataloguePropertiesQueryVariables>, GraphQLContext<AssetCataloguePropertiesQuery>, any>) =>
+  graphql.query<AssetCataloguePropertiesQuery, AssetCataloguePropertiesQueryVariables>(
+    'assetCatalogueProperties',
     resolver
   )
 

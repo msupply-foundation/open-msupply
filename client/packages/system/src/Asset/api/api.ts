@@ -8,6 +8,7 @@ import {
   AssetCategoryFilterInput,
   AssetTypeFilterInput,
   InsertAssetCatalogueItemInput,
+  AssetCataloguePropertyFilterInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -112,6 +113,22 @@ export const getAssetQueries = (sdk: Sdk) => ({
       const types = result?.assetTypes;
 
       return types;
+    },
+    properties: async (
+      filter: AssetCataloguePropertyFilterInput | undefined
+    ) => {
+      const result = await sdk.assetCatalogueProperties({
+        filter,
+      });
+
+      if (
+        result?.assetCatalogueProperties?.__typename ===
+        'AssetCataloguePropertyConnector'
+      ) {
+        return result?.assetCatalogueProperties?.nodes;
+      }
+
+      throw new Error('Unable to fetch properties');
     },
   },
   insert: async (input: AssetCatalogueItemFragment, storeId: string) => {

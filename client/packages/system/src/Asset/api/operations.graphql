@@ -94,6 +94,7 @@ query assetCategories(
 query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
   assetCatalogueProperties(filter: $filter) {
     ... on AssetCataloguePropertyConnector {
+      __typename
       nodes {
         allowedValues
         name

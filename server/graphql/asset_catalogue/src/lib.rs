@@ -4,12 +4,10 @@ use asset_catalogue_property_queries::{
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
 use mutations::{
-    // delete_asset_catalogue_item, insert_asset_catalogue_item,
-    insert_asset_catalogue_item_property,
-    // DeleteAssetCatalogueItemResponse, InsertAssetCatalogueItemInput,
-    InsertAssetCatalogueItemPropertyInput,
-    InsertAssetCatalogueItemPropertyResponse,
-    // InsertAssetCatalogueItemResponse,
+    delete_asset_catalogue_item, insert_asset_catalogue_item, insert_asset_catalogue_item_property,
+    DeleteAssetCatalogueItemResponse, InsertAssetCatalogueItemInput,
+    InsertAssetCatalogueItemPropertyInput, InsertAssetCatalogueItemPropertyResponse,
+    InsertAssetCatalogueItemResponse,
 };
 use types::{
     asset_catalogue_item::{AssetCatalogueItemResponse, AssetCatalogueItemsResponse},
@@ -121,22 +119,22 @@ pub struct AssetCatalogueMutations;
 
 #[Object]
 impl AssetCatalogueMutations {
-    // async fn insert_asset_catalogue_item(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     store_id: String,
-    //     input: InsertAssetCatalogueItemInput,
-    // ) -> Result<InsertAssetCatalogueItemResponse> {
-    //     insert_asset_catalogue_item(ctx, &store_id, input)
-    // }
+    async fn insert_asset_catalogue_item(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertAssetCatalogueItemInput,
+    ) -> Result<InsertAssetCatalogueItemResponse> {
+        insert_asset_catalogue_item(ctx, &store_id, input)
+    }
 
-    // async fn delete_asset_catalogue_item(
-    //     &self,
-    //     ctx: &Context<'_>,
-    //     asset_catalogue_item_id: String,
-    // ) -> Result<DeleteAssetCatalogueItemResponse> {
-    //     delete_asset_catalogue_item(ctx, &asset_catalogue_item_id)
-    // }
+    async fn delete_asset_catalogue_item(
+        &self,
+        ctx: &Context<'_>,
+        asset_catalogue_item_id: String,
+    ) -> Result<DeleteAssetCatalogueItemResponse> {
+        delete_asset_catalogue_item(ctx, &asset_catalogue_item_id)
+    }
 
     async fn insert_asset_catalogue_item_property(
         &self,
