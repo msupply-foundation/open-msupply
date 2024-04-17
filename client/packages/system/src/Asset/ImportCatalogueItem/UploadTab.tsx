@@ -16,8 +16,8 @@ import {
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
-import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
 import { importRowToCsv } from '../utils';
+import { useAssetData, AssetCatalogueItemFragment } from '../api';
 
 interface AssetItemUploadTabProps {
   setAssetItem: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -67,6 +67,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
+  const { data: properties } = useAssetData.utils.properties();
 
   const csvExample = async () => {
     const exampleRows: ImportRow[] = [
@@ -85,7 +86,8 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
     const csv = importRowToCsv(
       exampleRows,
       t,
-      false // exclude errors
+      false, // exclude errors
+      properties ? properties.map(p => p.name) : []
     );
     FileUtils.exportCSV(csv, t('filename.asset-import-example'));
   };

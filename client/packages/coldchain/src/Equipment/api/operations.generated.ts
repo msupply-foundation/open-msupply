@@ -6,7 +6,7 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type AssetRowFragment = { __typename: 'AssetNode', assetNumber?: string | null, id: string, notes?: string | null, serialNumber?: string | null, modifiedDatetime: any, installationDate?: string | null, createdDatetime: any, replacementDate?: string | null, storeId?: string | null, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
-export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber?: string | null, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, documents: { __typename: 'SyncFileReferenceConnector', nodes: Array<{ __typename: 'SyncFileReferenceNode', fileName: string, id: string, mimeType?: string | null }> }, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, properties: Array<{ __typename: 'AssetCatalogueItemPropertyNode', id: string, name: string, valueString?: string | null, valueFloat?: number | null, valueBool?: boolean | null, valueInt?: number | null, valueType: Types.PropertyNodeValueType }>, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null };
+export type AssetFragment = { __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber?: string | null, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, documents: { __typename: 'SyncFileReferenceConnector', nodes: Array<{ __typename: 'SyncFileReferenceNode', fileName: string, id: string, mimeType?: string | null }> }, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, properties: Array<{ __typename: 'AssetCatalogueItemPropertyValueNode', id: string, name: string, valueString?: string | null, valueFloat?: number | null, valueBool?: boolean | null, valueInt?: number | null, valueType: Types.PropertyNodeValueType }>, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null };
 
 export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null, type?: string | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null, documents: { __typename: 'SyncFileReferenceConnector', nodes: Array<{ __typename: 'SyncFileReferenceNode', fileName: string, id: string, mimeType?: string | null }> } };
 
@@ -28,7 +28,7 @@ export type AssetByIdQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber?: string | null, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, documents: { __typename: 'SyncFileReferenceConnector', nodes: Array<{ __typename: 'SyncFileReferenceNode', fileName: string, id: string, mimeType?: string | null }> }, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, properties: Array<{ __typename: 'AssetCatalogueItemPropertyNode', id: string, name: string, valueString?: string | null, valueFloat?: number | null, valueBool?: boolean | null, valueInt?: number | null, valueType: Types.PropertyNodeValueType }>, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null }> } };
+export type AssetByIdQuery = { __typename: 'Queries', assets: { __typename: 'AssetConnector', totalCount: number, nodes: Array<{ __typename: 'AssetNode', catalogueItemId?: string | null, assetNumber?: string | null, createdDatetime: any, id: string, installationDate?: string | null, modifiedDatetime: any, notes?: string | null, replacementDate?: string | null, serialNumber?: string | null, storeId?: string | null, documents: { __typename: 'SyncFileReferenceConnector', nodes: Array<{ __typename: 'SyncFileReferenceNode', fileName: string, id: string, mimeType?: string | null }> }, locations: { __typename: 'LocationConnector', totalCount: number, nodes: Array<{ __typename: 'LocationNode', id: string, code: string, name: string, onHold: boolean }> }, properties: Array<{ __typename: 'AssetCatalogueItemPropertyValueNode', id: string, name: string, valueString?: string | null, valueFloat?: number | null, valueBool?: boolean | null, valueInt?: number | null, valueType: Types.PropertyNodeValueType }>, statusLog?: { __typename: 'AssetLogNode', logDatetime: any, reason?: Types.ReasonType | null, status?: Types.StatusType | null } | null, store?: { __typename: 'StoreNode', id: string, code: string, storeName: string } | null, catalogueItem?: { __typename: 'AssetCatalogueItemNode', manufacturer?: string | null, model: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null }> } };
 
 export type AssetLogsQueryVariables = Types.Exact<{
   filter: Types.AssetLogFilterInput;
@@ -43,6 +43,13 @@ export type LabelPrinterSettingsQueryVariables = Types.Exact<{ [key: string]: ne
 
 
 export type LabelPrinterSettingsQuery = { __typename: 'Queries', labelPrinterSettings?: { __typename: 'LabelPrinterSettingNode', address: string, labelHeight: number, labelWidth: number, port: number } | null };
+
+export type AssetCataloguePropertiesQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.AssetCataloguePropertyFilterInput>;
+}>;
+
+
+export type AssetCataloguePropertiesQuery = { __typename: 'Queries', assetCatalogueProperties: { __typename: 'AssetCataloguePropertyConnector', nodes: Array<{ __typename: 'AssetCataloguePropertyNode', name: string, valueType: Types.PropertyNodeValueType, allowedValues?: string | null, id: string }> } | { __typename: 'NodeError' } };
 
 export type DeleteAssetMutationVariables = Types.Exact<{
   assetId: Types.Scalars['String']['input'];
@@ -75,6 +82,14 @@ export type InsertAssetLogMutationVariables = Types.Exact<{
 
 
 export type InsertAssetLogMutation = { __typename: 'Mutations', insertAssetLog: { __typename: 'AssetLogNode', id: string, assetId: string } | { __typename: 'InsertAssetLogError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } };
+
+export type InsertAssetCatalogueItemPropertyMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertAssetCatalogueItemPropertyInput;
+}>;
+
+
+export type InsertAssetCatalogueItemPropertyMutation = { __typename: 'Mutations', insertAssetCatalogueItemProperty: { __typename: 'AssetCatalogueItemPropertyNode', id: string } | { __typename: 'InsertAssetCatalogueItemPropertyError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } };
 
 export const AssetRowFragmentDoc = gql`
     fragment AssetRow on AssetNode {
@@ -249,6 +264,20 @@ export const LabelPrinterSettingsDocument = gql`
   }
 }
     `;
+export const AssetCataloguePropertiesDocument = gql`
+    query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
+  assetCatalogueProperties(filter: $filter) {
+    ... on AssetCataloguePropertyConnector {
+      nodes {
+        name
+        valueType
+        allowedValues
+        id
+      }
+    }
+  }
+}
+    `;
 export const DeleteAssetDocument = gql`
     mutation deleteAsset($assetId: String!, $storeId: String!) {
   deleteAsset(assetId: $assetId, storeId: $storeId) {
@@ -314,6 +343,21 @@ export const InsertAssetLogDocument = gql`
   }
 }
     `;
+export const InsertAssetCatalogueItemPropertyDocument = gql`
+    mutation insertAssetCatalogueItemProperty($storeId: String!, $input: InsertAssetCatalogueItemPropertyInput!) {
+  insertAssetCatalogueItemProperty(input: $input, storeId: $storeId) {
+    ... on AssetCatalogueItemPropertyNode {
+      id
+    }
+    ... on InsertAssetCatalogueItemPropertyError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -334,6 +378,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     labelPrinterSettings(variables?: LabelPrinterSettingsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LabelPrinterSettingsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<LabelPrinterSettingsQuery>(LabelPrinterSettingsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'labelPrinterSettings', 'query');
     },
+    assetCatalogueProperties(variables?: AssetCataloguePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCataloguePropertiesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetCataloguePropertiesQuery>(AssetCataloguePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueProperties', 'query');
+    },
     deleteAsset(variables: DeleteAssetMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteAssetMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetMutation>(DeleteAssetDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAsset', 'mutation');
     },
@@ -345,6 +392,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertAssetLog(variables: InsertAssetLogMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogMutation>(InsertAssetLogDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLog', 'mutation');
+    },
+    insertAssetCatalogueItemProperty(variables: InsertAssetCatalogueItemPropertyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemPropertyMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemPropertyMutation>(InsertAssetCatalogueItemPropertyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItemProperty', 'mutation');
     }
   };
 }
@@ -421,6 +471,23 @@ export const mockLabelPrinterSettingsQuery = (resolver: ResponseResolver<GraphQL
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockAssetCataloguePropertiesQuery((req, res, ctx) => {
+ *   const { filter } = req.variables;
+ *   return res(
+ *     ctx.data({ assetCatalogueProperties })
+ *   )
+ * })
+ */
+export const mockAssetCataloguePropertiesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCataloguePropertiesQueryVariables>, GraphQLContext<AssetCataloguePropertiesQuery>, any>) =>
+  graphql.query<AssetCataloguePropertiesQuery, AssetCataloguePropertiesQueryVariables>(
+    'assetCatalogueProperties',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockDeleteAssetMutation((req, res, ctx) => {
  *   const { assetId, storeId } = req.variables;
  *   return res(
@@ -482,5 +549,22 @@ export const mockUpdateAssetMutation = (resolver: ResponseResolver<GraphQLReques
 export const mockInsertAssetLogMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogMutationVariables>, GraphQLContext<InsertAssetLogMutation>, any>) =>
   graphql.mutation<InsertAssetLogMutation, InsertAssetLogMutationVariables>(
     'insertAssetLog',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertAssetCatalogueItemPropertyMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ insertAssetCatalogueItemProperty })
+ *   )
+ * })
+ */
+export const mockInsertAssetCatalogueItemPropertyMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetCatalogueItemPropertyMutationVariables>, GraphQLContext<InsertAssetCatalogueItemPropertyMutation>, any>) =>
+  graphql.mutation<InsertAssetCatalogueItemPropertyMutation, InsertAssetCatalogueItemPropertyMutationVariables>(
+    'insertAssetCatalogueItemProperty',
     resolver
   )

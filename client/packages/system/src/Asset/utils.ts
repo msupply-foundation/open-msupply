@@ -42,9 +42,10 @@ export const mapIdNameToOptions = (items: { id: string; name: string }[]) =>
 export const importRowToCsv = (
   catalogueItems: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>,
-  includeErrors = true
+  includeErrors = true,
+  properties: string[] = []
 ) => {
-  const fields = assetCatalogueItemFields(t);
+  const fields = assetCatalogueItemFields(t).concat(properties);
   if (includeErrors) fields.push(t('label.error-message'));
 
   const data = catalogueItems.map(node => [
