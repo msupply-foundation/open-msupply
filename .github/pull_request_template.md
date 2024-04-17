@@ -8,9 +8,24 @@ Fixes #
 
 <!-- Explain the changes you made, and why they're needed. Add a screenshot if you've made any UI changes!  -->
 
-# 🧪 How has/should this change been tested?
+# 🧪 Testing
 
-<!-- Explain how to setup for testing here if it is not already obvious, and how you've tested this PR. -->
+<!-- Explain how to setup for testing here if it is not already obvious, and steps you've taken to test this PR. -->
+
+## Setup
+
+<!-- Explain how to setup for testing here if it is not already obvious. -->
+
+- [ ] _(e.g.)_ Central Sync server with 1 Legacy Desktop remote site and 1 OMS remote site running this PR
+- [ ] _(e.g.)_ This sample datafile:
+
+## Tests
+
+<!-- Explain the steps you'd take to test the changes of this PR manually -->
+
+- [ ] _(e.g.)_ Open a requisition with some lines
+- [ ] _(e.g.)_ Make a couple invoices supplying some amount of those lines
+- [ ] _(e.g.)_ Review that "issued" column is the sum of the amount already issued in invoices for this requisition
 
 ## 💌 Any notes for the reviewer?
 
