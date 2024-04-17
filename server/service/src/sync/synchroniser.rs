@@ -261,9 +261,10 @@ impl Synchroniser {
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
             is_initialised,
+            // Only pass in logger during initialisation
             match is_initialised {
-                true => Some(logger),
-                false => None,
+                false => Some(logger),
+                true => None,
             },
             None,
         )
