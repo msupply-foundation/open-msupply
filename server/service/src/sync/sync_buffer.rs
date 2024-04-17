@@ -139,7 +139,6 @@ mod test {
         })
     }
 
-    // tODO how to run?
     #[actix_rt::test]
     async fn test_sync_buffer_service() {
         let translations = all_translators();
@@ -157,7 +156,7 @@ mod test {
         let buffer = SyncBuffer::new(&connection);
 
         // ORDER/ACTION
-        let in_referencial_order = buffer
+        let in_referential_order = buffer
             .get_ordered_sync_buffer_records(
                 repository::SyncBufferAction::Upsert,
                 &table_order,
@@ -166,11 +165,11 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            in_referencial_order,
+            in_referential_order,
             vec![row_4(), row_3(), row_1(), row_2()]
         );
 
-        let in_reverese_referencial_order = buffer
+        let in_reverse_referential_order = buffer
             .get_ordered_sync_buffer_records(
                 repository::SyncBufferAction::Delete,
                 &table_order,
@@ -178,7 +177,7 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(in_reverese_referencial_order, vec![row_6(), row_5()]);
+        assert_eq!(in_reverse_referential_order, vec![row_6(), row_5()]);
 
         // ERROR
         buffer

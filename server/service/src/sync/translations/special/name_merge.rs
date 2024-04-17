@@ -60,9 +60,7 @@ impl SyncTranslation for NameMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use super::*;
     use repository::{
@@ -117,12 +115,10 @@ mod tests {
         )
         .await;
 
-        let mut logger = SyncLogger::start(&connection).unwrap();
-
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, Some(&mut logger), None)
+        integrate_and_translate_sync_buffer(&connection, true, None, None)
             .await
             .unwrap();
 
@@ -143,7 +139,7 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, true, Some(&mut logger), None)
+        integrate_and_translate_sync_buffer(&connection, true, None, None)
             .await
             .unwrap();
 

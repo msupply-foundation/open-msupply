@@ -152,6 +152,13 @@ impl SynchroniserV6 {
 
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
 
+            log::info!(
+                "Pushing {}/{} records to v6 central server",
+                changelogs.len(),
+                change_logs_total
+            );
+            log::debug!("Records: {:#?}", changelogs);
+
             let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,

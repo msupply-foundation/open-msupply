@@ -198,7 +198,6 @@ impl Synchroniser {
                 let _ = logger.error(&error.into());
             };
 
-            // not sure this is useful... post/push is awaited...
             v6_sync
                 .wait_for_sync_operation(
                     INTEGRATION_POLL_PERIOD_SECONDS,
@@ -262,7 +261,10 @@ impl Synchroniser {
         let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
             &ctx.connection,
             is_initialised,
-            Some(logger),
+            match is_initialised {
+                true => Some(logger),
+                false => None,
+            },
             None,
         )
         .await
@@ -322,8 +324,6 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
 
-        log::info!("Integrating records for site: {:#?}", source_site_id);
-
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
             SyncBufferAction::Upsert,
@@ -342,9 +342,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             .translate_and_integrate_sync_records(
                 upsert_sync_buffer_records.clone(),
                 &translators,
-                // Only pass Some(logger) during initalisation
-                // execute_in_transaction.not().then(|| logger),
-                logger, // TODO: logger now option -- move responsibility for is initialised out!
+                logger,
             )?;
 
         // pass the logger here
