@@ -84,6 +84,13 @@ pub enum SyncPullResponseV6 {
     Error(SyncParsedErrorV6),
 }
 
+#[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SiteStatusResponseV6 {
+    Data(SiteStatusV6),
+    Error(SyncParsedErrorV6),
+}
+
 #[derive(Error, Debug)]
 #[error("Sync api error, url: '{url}', route: '{route}'")]
 pub(crate) struct SyncApiErrorV6 {
@@ -143,4 +150,22 @@ pub struct SyncPullRequestV6 {
 pub struct SyncPushRequestV6 {
     pub(crate) batch: SyncBatchV6,
     pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiteStatusRequestV6 {
+    pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct SiteStatusV6 {
+    pub(crate) code: SiteStatusCodeV6,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SiteStatusCodeV6 {
+    IntegrationInProgress,
+    Idle,
 }

@@ -13,7 +13,9 @@ use super::{
     api::{SyncApiError, SyncApiSettings, SyncApiV5},
     api_v6::SyncApiV6CreatingError,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    central_data_synchroniser_v6::{CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6},
+    central_data_synchroniser_v6::{
+        CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6, WaitForSyncOperationErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -51,6 +53,8 @@ pub(crate) enum SyncError {
     RemotePushError(#[from] RemotePushError),
     #[error("Error while awaiting remote record integration")]
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
+    #[error("Error while awaiting v6 remote record integration")]
+    WaitForIntegrationErrorV6(#[from] WaitForSyncOperationErrorV6),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
     #[error("Error while pulling central v6 records")]
@@ -194,13 +198,13 @@ impl Synchroniser {
                 let _ = logger.error(&error.into());
             };
 
-            // TODO
-            // v6_sync
-            //     .wait_for_sync_operation(
-            //         INTEGRATION_POLL_PERIOD_SECONDS,
-            //         INTEGRATION_TIMEOUT_SECONDS,
-            //     )
-            //     .await?;
+            // not sure this is useful... post/push is awaited...
+            v6_sync
+                .wait_for_sync_operation(
+                    INTEGRATION_POLL_PERIOD_SECONDS,
+                    INTEGRATION_TIMEOUT_SECONDS,
+                )
+                .await?;
         }
         logger.done_step(SyncStep::PushCentralV6)?;
 
