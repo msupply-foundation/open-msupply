@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@openmsupply-client/common';
 import { FileIcon, XCircleIcon } from '@common/icons';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config/src';
 
 type SyncFile = Pick<File, 'name'> & { id?: string };
 
