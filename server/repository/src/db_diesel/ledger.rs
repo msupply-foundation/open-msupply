@@ -46,11 +46,12 @@ pub struct LedgerFilter {
 #[derive(PartialEq, Debug)]
 pub enum LedgerSortField {
     Id,
-    // StockLineId,
-    // Name,
-    // Quantity,
-    // Datetime,
-    // InvoiceType,
+    Datetime,
+    Name,
+    InvoiceType,
+    StockLineId,
+    Quantity,
+    ItemId,
 }
 
 pub type LedgerSort = Sort<LedgerSortField>;
@@ -90,17 +91,29 @@ impl<'a> LedgerRepository<'a> {
             apply_equal_filter!(query, stock_line_id, ledger_dsl::stock_line_id);
         }
 
-        // SORT HERE
         if let Some(sort) = sort {
             match sort.key {
                 LedgerSortField::Id => {
                     apply_sort_no_case!(query, sort, ledger_dsl::id);
-                } // LedgerSortField::StockLineId => {
-                  //     apply_sort_no_case!(query, sort, ledger_dsl::stock_line_id);
-                  // }
-                  // LedgerSortField::Name => {
-                  //     apply_sort_no_case!(query, sort, ledger_dsl::name);
-                  // }
+                }
+                LedgerSortField::Datetime => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::datetime);
+                }
+                LedgerSortField::Name => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::name);
+                }
+                LedgerSortField::InvoiceType => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::invoice_type);
+                }
+                LedgerSortField::StockLineId => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::stock_line_id);
+                }
+                LedgerSortField::Quantity => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::quantity);
+                }
+                LedgerSortField::ItemId => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::item_id);
+                }
             }
         }
 
