@@ -17,6 +17,7 @@ export const useAssetData = {
 
     fields: Document.useAssetFields,
     insert: Document.useAssetItemInsert,
+    insertProperty: Document.useAssetItemPropertyInsert,
     delete: Document.useAssetsDelete,
   },
 

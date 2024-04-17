@@ -71,6 +71,14 @@ export type DeleteAssetCatalogueItemMutationVariables = Types.Exact<{
 
 export type DeleteAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', deleteAssetCatalogueItem: { __typename: 'DeleteAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } } } };
 
+export type InsertAssetCatalogueItemPropertyMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertAssetCatalogueItemPropertyInput;
+}>;
+
+
+export type InsertAssetCatalogueItemPropertyMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', insertAssetCatalogueItemProperty: { __typename: 'AssetCatalogueItemPropertyNode', id: string } | { __typename: 'InsertAssetCatalogueItemPropertyError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } } } };
+
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
   assetCategoryId
@@ -224,9 +232,30 @@ export const DeleteAssetCatalogueItemDocument = gql`
     assetCatalogue {
       deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
         ... on DeleteResponse {
+          __typename
           id
         }
         ... on DeleteAssetCatalogueItemError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    `;
+export const InsertAssetCatalogueItemPropertyDocument = gql`
+    mutation insertAssetCatalogueItemProperty($storeId: String!, $input: InsertAssetCatalogueItemPropertyInput!) {
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItemProperty(input: $input, storeId: $storeId) {
+        ... on AssetCatalogueItemPropertyNode {
+          __typename
+          id
+        }
+        ... on InsertAssetCatalogueItemPropertyError {
+          __typename
           error {
             description
           }
@@ -267,6 +296,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     deleteAssetCatalogueItem(variables: DeleteAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteAssetCatalogueItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetCatalogueItemMutation>(DeleteAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAssetCatalogueItem', 'mutation');
+    },
+    insertAssetCatalogueItemProperty(variables: InsertAssetCatalogueItemPropertyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemPropertyMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemPropertyMutation>(InsertAssetCatalogueItemPropertyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItemProperty', 'mutation');
     }
   };
 }
@@ -405,5 +437,22 @@ export const mockInsertAssetCatalogueItemMutation = (resolver: ResponseResolver<
 export const mockDeleteAssetCatalogueItemMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteAssetCatalogueItemMutationVariables>, GraphQLContext<DeleteAssetCatalogueItemMutation>, any>) =>
   graphql.mutation<DeleteAssetCatalogueItemMutation, DeleteAssetCatalogueItemMutationVariables>(
     'deleteAssetCatalogueItem',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertAssetCatalogueItemPropertyMutation((req, res, ctx) => {
+ *   const { storeId, input } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockInsertAssetCatalogueItemPropertyMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetCatalogueItemPropertyMutationVariables>, GraphQLContext<InsertAssetCatalogueItemPropertyMutation>, any>) =>
+  graphql.mutation<InsertAssetCatalogueItemPropertyMutation, InsertAssetCatalogueItemPropertyMutationVariables>(
+    'insertAssetCatalogueItemProperty',
     resolver
   )

@@ -22,7 +22,7 @@ import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
-import { AssetPropertyFragment } from '../api';
+import { AssetProperty } from '../api/api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -48,10 +48,7 @@ export type ImportRow = {
   type: string;
   typeId?: string;
   errorMessage?: string;
-  properties: Record<
-    string,
-    Omit<AssetPropertyFragment, '__typename'> & { value: string }
-  >;
+  properties: Record<string, AssetProperty>;
 };
 
 export type LineNumber = {
@@ -101,8 +98,11 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
   const { data: assetTypes, isLoading: isLoadingTypes } =
     useAssetData.utils.types();
 
-  const { mutateAsync: insertAssetCatalogueItem } =
+  const { insertAssetCatalogueItem, invalidateQueries } =
     useAssetData.document.insert();
+
+  const { insertAssetCatalogueItemProperty } =
+    useAssetData.document.insertProperty();
 
   const [bufferedAssetItem, setBufferedAssetItem] = useState<ImportRow[]>(
     () => []
@@ -173,26 +173,38 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
       while (remainingRecords.length) {
         await Promise.all(
           remainingRecords.splice(0, 10).map(async asset => {
-            const result = await insertAssetCatalogueItem(
-              toInsertAssetItemInput(asset)
-              // TODO: insert properties here
-            ).catch(err => {
-              if (!err) {
-                err = { message: t('messages.unknown-error') };
-              }
-              importErrorRows.push({
-                ...asset,
-                errorMessage: err.message,
+            await insertAssetCatalogueItem(toInsertAssetItemInput(asset))
+              .then(async result => {
+                // Map structured Errors
+                if (result?.__typename === 'InsertAssetCatalogueItemError') {
+                  const errorMessage = mapStructuredErrors(result);
+                  importErrorRows.push({
+                    ...asset,
+                    errorMessage: errorMessage,
+                  });
+                  return;
+                }
+
+                await Promise.all(
+                  Object.values(asset.properties).map(async property => {
+                    await insertAssetCatalogueItemProperty({
+                      catalogueItemId: result.id,
+                      property,
+                    });
+                  })
+                );
+
+                invalidateQueries();
+              })
+              .catch(err => {
+                if (!err) {
+                  err = { message: t('messages.unknown-error') };
+                }
+                importErrorRows.push({
+                  ...asset,
+                  errorMessage: err.message,
+                });
               });
-            });
-            // Map structured Errors
-            if (result?.__typename === 'InsertAssetCatalogueItemError') {
-              const errorMessage = mapStructuredErrors(result);
-              importErrorRows.push({
-                ...asset,
-                errorMessage: errorMessage,
-              });
-            }
           })
         ).then(() => {
           // Update Progress Bar

@@ -3319,7 +3319,6 @@ export type Mutations = {
    */
   createRequisitionShipment: CreateRequisitionShipmentResponse;
   deleteAsset: DeleteAssetResponse;
-  deleteAssetCatalogueItem: DeleteAssetCatalogueItemResponse;
   deleteInboundReturn: DeleteInboundReturnResponse;
   deleteInboundShipment: DeleteInboundShipmentResponse;
   deleteInboundShipmentLine: DeleteInboundShipmentLineResponse;
@@ -3338,8 +3337,6 @@ export type Mutations = {
   deleteStocktakeLine: DeleteStocktakeLineResponse;
   initialiseSite: InitialiseSiteResponse;
   insertAsset: InsertAssetResponse;
-  insertAssetCatalogueItem: InsertAssetCatalogueItemResponse;
-  insertAssetCatalogueItemProperty: InsertAssetCatalogueItemPropertyResponse;
   insertAssetLog: InsertAssetLogResponse;
   insertBarcode: InsertBarcodeResponse;
   insertContactTrace: InsertContactTraceResponse;
@@ -3509,11 +3506,6 @@ export type MutationsDeleteAssetArgs = {
 };
 
 
-export type MutationsDeleteAssetCatalogueItemArgs = {
-  assetCatalogueItemId: Scalars['String']['input'];
-};
-
-
 export type MutationsDeleteInboundReturnArgs = {
   id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
@@ -3617,18 +3609,6 @@ export type MutationsInitialiseSiteArgs = {
 
 export type MutationsInsertAssetArgs = {
   input: InsertAssetInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsInsertAssetCatalogueItemArgs = {
-  input: InsertAssetCatalogueItemInput;
-  storeId: Scalars['String']['input'];
-};
-
-
-export type MutationsInsertAssetCatalogueItemPropertyArgs = {
-  input: InsertAssetCatalogueItemPropertyInput;
   storeId: Scalars['String']['input'];
 };
 
