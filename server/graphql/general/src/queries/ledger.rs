@@ -28,8 +28,8 @@ pub enum LedgerSortFieldInput {
 pub struct LedgerSortInput {
     /// Sort query result by `key`
     key: LedgerSortFieldInput,
-    /// Sort query result is sorted descending or ascending (if not provided the default is
-    /// ascending)
+    /// Sort query result is sorted descending or ascending (if not provided the
+    /// default is ascending)
     desc: Option<bool>,
 }
 
@@ -69,11 +69,11 @@ impl LedgerNode {
     pub async fn invoice_type(&self) -> InvoiceNodeType {
         InvoiceNodeType::from_domain(&self.ledger.invoice_type)
     }
-    pub async fn inventory_adjustment_reason(&self) -> &Option<String> {
+    pub async fn reason(&self) -> &Option<String> {
+        if self.ledger.return_reason.is_some() {
+            return &self.ledger.return_reason;
+        }
         &self.ledger.inventory_adjustment_reason
-    }
-    pub async fn return_reason(&self) -> &Option<String> {
-        &self.ledger.return_reason
     }
 }
 
