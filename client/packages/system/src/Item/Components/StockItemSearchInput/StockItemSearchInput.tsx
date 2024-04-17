@@ -7,6 +7,8 @@ import {
   defaultOptionMapper,
   ArrayUtils,
   useDebounceCallback,
+  usePagination,
+  useStringFilter,
 } from '@openmsupply-client/common';
 import {
   ItemStockOnHandFragment,
@@ -15,7 +17,6 @@ import {
 } from '../../api';
 import { itemFilterOptions, StockItemSearchInputProps } from '../../utils';
 import { getItemOptionRenderer } from '../ItemOptionRenderer';
-import { useItemFilter, usePagination } from './hooks';
 
 const DEBOUNCE_TIMEOUT = 300;
 
@@ -30,7 +31,7 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 }) => {
   const [items, setItems] = useState<ItemStockOnHandFragment[]>([]);
   const { pagination, onPageChange } = usePagination();
-  const { filter, onFilter } = useItemFilter();
+  const { filter, onFilter } = useStringFilter('name');
 
   const { data, isLoading } = useItemStockOnHand({
     pagination,
@@ -44,7 +45,6 @@ export const StockItemSearchInput: FC<StockItemSearchInputProps> = ({
 
   const t = useTranslation();
   const formatNumber = useFormatNumber();
-
   const selectControl = useToggle();
 
   const options = useMemo(

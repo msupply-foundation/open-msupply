@@ -135,6 +135,15 @@ impl SyncTranslation for InvoiceLineTranslation {
             inventory_adjustment_reason_id,
             foreign_currency_price_before_tax,
         } = serde_json::from_str::<LegacyTransLineRow>(&sync_record.data)?;
+        let inventory_adjustment_reason_id =
+            inventory_adjustment_reason_id.and_then(|inventory_adjustment_reason_id| {
+                if inventory_adjustment_reason_id == "0" {
+                    // This is not a valid optionID
+                    None
+                } else {
+                    Some(inventory_adjustment_reason_id)
+                }
+            });
 
         let line_type = to_invoice_line_type(&r#type).ok_or(anyhow::Error::msg(format!(
             "Unsupported trans_line type: {:?}",

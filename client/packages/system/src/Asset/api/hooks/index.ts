@@ -11,6 +11,7 @@ export const useAssetData = {
 
   document: {
     get: Document.useAsset,
+    infiniteList: Document.useInfiniteAssets,
     list: Document.useAssets,
     listAll: Document.useAssetsAll,
 
