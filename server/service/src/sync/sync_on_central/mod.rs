@@ -183,14 +183,12 @@ pub async fn get_site_status(
         .await
         .map_err(Error::from)?;
 
-    match is_integrating(response.site_id) {
-        true => Ok(SiteStatusV6 {
-            code: SiteStatusCodeV6::IntegrationInProgress,
-        }),
-        false => Ok(SiteStatusV6 {
-            code: SiteStatusCodeV6::Idle,
-        }),
-    }
+    let code = match is_integrating(response.site_id) {
+        true => SiteStatusCodeV6::IntegrationInProgress,
+        false => SiteStatusCodeV6::Idle,
+    };
+
+    Ok(SiteStatusV6 { code })
 }
 
 fn is_integrating(site_id: i32) -> bool {
