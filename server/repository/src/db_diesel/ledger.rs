@@ -1,4 +1,7 @@
-use crate::{diesel_macros::apply_equal_filter, EqualFilter, InvoiceRowType, RepositoryError};
+use crate::{
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    EqualFilter, InvoiceRowType, RepositoryError, Sort,
+};
 
 use super::{ledger::ledger::dsl as ledger_dsl, StorageConnection};
 
@@ -10,11 +13,14 @@ table! {
     ledger (id) {
         id -> Text,
         stock_line_id -> Text,
+        name -> Text,
         item_id -> Text,
         store_id -> Text,
         quantity -> BigInt,
         datetime -> Timestamp,
         invoice_type -> crate::db_diesel::invoice_row::InvoiceRowTypeMapping,
+        inventory_adjustment_reason -> Nullable<Text>,
+        return_reason ->  Nullable<Text>,
     }
 }
 
@@ -22,17 +28,32 @@ table! {
 pub struct LedgerRow {
     pub id: String,
     pub stock_line_id: String,
+    pub name: String,
     pub item_id: String,
     pub store_id: String,
     pub quantity: i64,
     pub datetime: NaiveDateTime,
     pub invoice_type: InvoiceRowType,
+    pub inventory_adjustment_reason: Option<String>,
+    pub return_reason: Option<String>,
 }
 
 #[derive(Clone, Default)]
 pub struct LedgerFilter {
     pub stock_line_id: Option<EqualFilter<String>>,
 }
+
+#[derive(PartialEq, Debug)]
+pub enum LedgerSortField {
+    Id,
+    // StockLineId,
+    // Name,
+    // Quantity,
+    // Datetime,
+    // InvoiceType,
+}
+
+pub type LedgerSort = Sort<LedgerSortField>;
 
 impl LedgerFilter {
     pub fn new() -> Self {
@@ -54,7 +75,11 @@ impl<'a> LedgerRepository<'a> {
         LedgerRepository { connection }
     }
 
-    pub fn query(&self, filter: Option<LedgerFilter>) -> Result<Vec<LedgerRow>, RepositoryError> {
+    pub fn query(
+        &self,
+        filter: Option<LedgerFilter>,
+        sort: Option<LedgerSort>,
+    ) -> Result<Vec<LedgerRow>, RepositoryError> {
         let mut query = ledger_dsl::ledger.into_boxed();
 
         query = query.filter(ledger_dsl::datetime.is_not_null());
@@ -66,6 +91,18 @@ impl<'a> LedgerRepository<'a> {
         }
 
         // SORT HERE
+        if let Some(sort) = sort {
+            match sort.key {
+                LedgerSortField::Id => {
+                    apply_sort_no_case!(query, sort, ledger_dsl::id);
+                } // LedgerSortField::StockLineId => {
+                  //     apply_sort_no_case!(query, sort, ledger_dsl::stock_line_id);
+                  // }
+                  // LedgerSortField::Name => {
+                  //     apply_sort_no_case!(query, sort, ledger_dsl::name);
+                  // }
+            }
+        }
 
         let final_query = query;
 
@@ -99,7 +136,11 @@ mod tests {
         let repo = LedgerRepository::new(&storage_connection);
         let filter =
             LedgerFilter::new().stock_line_id(EqualFilter::equal_to(&mock_stock_line_a().id));
+        let sort = LedgerSort {
+            key: LedgerSortField::Id,
+            desc: Some(false),
+        };
         // Check deserialization (into rust types)
-        assert!(matches!(repo.query(Some(filter)), Ok(_)));
+        assert!(matches!(repo.query(Some(filter), Some(sort)), Ok(_)));
     }
 }
