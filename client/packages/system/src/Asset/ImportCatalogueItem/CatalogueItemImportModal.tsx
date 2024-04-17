@@ -22,6 +22,7 @@ import {
   AssetCatalogueItemFragment,
   useAssetData,
 } from '@openmsupply-client/system';
+import { AssetPropertyFragment } from '../api';
 
 interface AssetItemImportModalProps {
   isOpen: boolean;
@@ -47,6 +48,10 @@ export type ImportRow = {
   type: string;
   typeId?: string;
   errorMessage?: string;
+  properties: Record<
+    string,
+    Omit<AssetPropertyFragment, '__typename'> & { value: string }
+  >;
 };
 
 export type LineNumber = {
@@ -170,6 +175,7 @@ export const AssetCatalogueItemImportModal: FC<AssetItemImportModalProps> = ({
           remainingRecords.splice(0, 10).map(async asset => {
             const result = await insertAssetCatalogueItem(
               toInsertAssetItemInput(asset)
+              // TODO: insert properties here
             ).catch(err => {
               if (!err) {
                 err = { message: t('messages.unknown-error') };

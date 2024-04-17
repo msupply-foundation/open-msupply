@@ -6,6 +6,8 @@ import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
 export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
+export type AssetPropertyFragment = { __typename: 'AssetCataloguePropertyNode', id: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType };
+
 export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -52,7 +54,7 @@ export type AssetCataloguePropertiesQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetCataloguePropertiesQuery = { __typename: 'Queries', assetCatalogueProperties: { __typename: 'AssetCataloguePropertyConnector', nodes: Array<{ __typename: 'AssetCataloguePropertyNode', allowedValues?: string | null, name: string, id: string, valueType: Types.PropertyNodeValueType }> } | { __typename: 'NodeError' } };
+export type AssetCataloguePropertiesQuery = { __typename: 'Queries', assetCatalogueProperties: { __typename: 'AssetCataloguePropertyConnector', nodes: Array<{ __typename: 'AssetCataloguePropertyNode', id: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType }> } | { __typename: 'NodeError' } };
 
 export type InsertAssetCatalogueItemMutationVariables = Types.Exact<{
   input: Types.InsertAssetCatalogueItemInput;
@@ -88,6 +90,14 @@ export const AssetCatalogueItemFragmentDoc = gql`
   assetType {
     name
   }
+}
+    `;
+export const AssetPropertyFragmentDoc = gql`
+    fragment AssetProperty on AssetCataloguePropertyNode {
+  id
+  allowedValues
+  name
+  valueType
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
@@ -165,10 +175,8 @@ export const AssetCataloguePropertiesDocument = gql`
     ... on AssetCataloguePropertyConnector {
       __typename
       nodes {
-        allowedValues
-        name
-        id
-        valueType
+        __typename
+        ...AssetProperty
       }
     }
     ... on NodeError {
@@ -176,7 +184,7 @@ export const AssetCataloguePropertiesDocument = gql`
     }
   }
 }
-    `;
+    ${AssetPropertyFragmentDoc}`;
 export const InsertAssetCatalogueItemDocument = gql`
     mutation insertAssetCatalogueItem($input: InsertAssetCatalogueItemInput!, $storeId: String!) {
   centralServer {

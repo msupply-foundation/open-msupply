@@ -81,6 +81,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
         manufacturer: 'Some Manufacturer',
         model: 'Some Model',
         errorMessage: '',
+        properties: {},
       },
     ];
     const csv = importRowToCsv(
@@ -131,7 +132,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
     let hasErrors = false;
 
     csvRows.map((row, _index) => {
-      const importRow = {} as ImportRow;
+      const importRow = { properties: {} } as ImportRow;
       const rowErrors: string[] = [];
       importRow.id = FnUtils.generateUUID();
       const subCatalogue = getCell(row, AssetColumn.SUB_CATALOGUE);
@@ -236,7 +237,47 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       } else {
         importRow.model = model;
       }
+      properties?.forEach(property => {
+        const value = row[property.name];
 
+        if (!!value?.trim()) {
+          if (!!property.allowedValues) {
+            if (!property.allowedValues.includes(value)) {
+              rowErrors.push(
+                t('error.invalid-field-value', {
+                  field: property.name,
+                  value: value,
+                })
+              );
+              return;
+            }
+          }
+          switch (property.valueType) {
+            case 'INTEGER':
+            case 'FLOAT':
+              if (Number.isNaN(Number(value))) {
+                rowErrors.push(
+                  t('error.invalid-field-value', {
+                    field: property.name,
+                    value: value,
+                  })
+                );
+                return;
+              }
+              break;
+            case 'BOOLEAN':
+              const isTrue =
+                value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+              importRow.properties[property.id] = {
+                ...property,
+                value: isTrue ? 'true' : 'false',
+              };
+              return;
+            default:
+              importRow.properties[property.id] = { ...property, value };
+          }
+        }
+      });
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);
