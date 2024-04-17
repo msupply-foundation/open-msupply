@@ -6,11 +6,7 @@ Fixes #
 
 # 👩🏻‍💻 What does this PR do?
 
-<!--
-Explain the changes you made, and why they're needed. Add a screenshot if you've made any UI changes!
-Is there a high risk/complicated change the reviewer should focus on? If there are any general areas
-of the codebase your changes might have have touched or could cause side effects to, mention them here.
--->
+<!-- Explain the changes you made, and why they're needed. Add a screenshot if you've made any UI changes!  -->
 
 # 🧪 Testing
 
@@ -30,6 +26,10 @@ of the codebase your changes might have have touched or could cause side effects
 - [ ] _(e.g.)_ Open a requisition with some lines
 - [ ] _(e.g.)_ Make a couple invoices supplying some amount of those lines
 - [ ] _(e.g.)_ Review that "issued" column is the sum of the amount already issued in invoices for this requisition
+
+## 💌 Any notes for the reviewer?
+
+<!-- eg. Do you have any specific questions for the reviewer? Is there a high risk/complicated change they should focus on? If there are any general areas of the codebase your changes might have have touched or could cause side effects to, mention them here.-->
 
 # 📃 Documentation
 
