@@ -46,7 +46,7 @@ pub async fn pull(
         .await
         .map_err(Error::from)?;
 
-    // todo how to check this works
+    // Site should retry if we are currently integrating records for this site
     if is_integrating(response.site_id) {
         return Err(Error::IntegrationInProgress);
     }
@@ -120,6 +120,7 @@ pub async fn push(
         .await
         .map_err(Error::from)?;
 
+    // Site should retry if we are currently integrating records for this site
     if is_integrating(response.site_id) {
         return Err(Error::IntegrationInProgress);
     }
@@ -155,7 +156,11 @@ pub async fn push(
             .await
             // TODO map to IntegrationError once implemented
             // .map_err(Error::IntegrationError)?;
-            .map_err(|_| Error::OtherServerError("Error integrating records".to_string()))?;
+            .map_err(|e| {
+                Error::OtherServerError(
+                    "Error integrating records: ".to_string() + e.to_string().as_str(),
+                )
+            })?;
 
         set_integrating(response.site_id, false);
     }

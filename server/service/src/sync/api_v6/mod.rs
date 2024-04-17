@@ -36,7 +36,6 @@ pub enum SyncParsedErrorV6 {
     ParsingSyncRecordError(String),
     #[error("Integration in progress")]
     IntegrationInProgress,
-    // TODO how to serialize anyhow::Error??
     // #[error("Error while integrating records")]
     // IntegrationError(anyhow::Error),
 }
