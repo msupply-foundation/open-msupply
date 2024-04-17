@@ -46,6 +46,11 @@ pub async fn pull(
         .await
         .map_err(Error::from)?;
 
+    // todo how to check this works
+    if is_integrating(response.site_id) {
+        return Err(Error::IntegrationInProgress);
+    }
+
     let ctx = service_provider.basic_context()?;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
@@ -114,6 +119,10 @@ pub async fn push(
         .get_site_info()
         .await
         .map_err(Error::from)?;
+
+    if is_integrating(response.site_id) {
+        return Err(Error::IntegrationInProgress);
+    }
 
     log::info!(
         "Receiving {}/{} records from site {}",

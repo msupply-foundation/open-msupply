@@ -34,6 +34,8 @@ pub enum SyncParsedErrorV6 {
     NotACentralServer,
     #[error("Could not parse record to sync buffer row: {0}")]
     ParsingSyncRecordError(String),
+    #[error("Integration in progress")]
+    IntegrationInProgress,
     // TODO how to serialize anyhow::Error??
     // #[error("Error while integrating records")]
     // IntegrationError(anyhow::Error),
