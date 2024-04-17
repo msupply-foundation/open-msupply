@@ -19,9 +19,9 @@ export const Footer: React.FC = () => {
   const t = useTranslation('app');
   const { currentLanguageName } = useIntlUtils();
   const PaddedCell = styled(Box)({ display: 'flex' });
-  const iconStyles = { color: 'gray.main', height: '16px', width: '16px' };
+  const iconStyles = { color: 'inherit', height: '16px', width: '16px' };
   const textStyles = {
-    color: 'gray.main',
+    color: 'inherit',
     fontSize: '12px',
     marginInlineStart: '8px',
   };
