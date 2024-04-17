@@ -78,7 +78,6 @@ const processProperties = (
               value: value,
             })
           );
-          return;
         }
       }
       switch (property.valueType) {
@@ -91,7 +90,6 @@ const processProperties = (
                 value: value,
               })
             );
-            return;
           }
           break;
         case 'BOOLEAN':
@@ -101,7 +99,7 @@ const processProperties = (
             ...property,
             value: isTrue ? 'true' : 'false',
           };
-          return;
+          break;
         default:
           importRow.properties[property.id] = { ...property, value };
       }
