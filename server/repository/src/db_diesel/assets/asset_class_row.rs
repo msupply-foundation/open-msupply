@@ -25,71 +25,71 @@ pub struct AssetClassRow {
 }
 
 pub struct AssetClassRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetClassRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetClassRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_class)
             .values(asset_class_row)
             .on_conflict(id)
             .do_update()
             .set(asset_class_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_class)
             .values(asset_class_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn insert_one(&mut self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&self, asset_class_row: &AssetClassRow) -> Result<(), RepositoryError> {
         diesel::insert_into(asset_class)
             .values(asset_class_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetClassRow>, RepositoryError> {
-        let result = asset_class.load(&mut self.connection.connection);
+        let result = asset_class.load(self.connection.lock().connection());
         Ok(result?)
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         asset_class_id: &str,
     ) -> Result<Option<AssetClassRow>, RepositoryError> {
         let result = asset_class
             .filter(id.eq(asset_class_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, asset_class_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, asset_class_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_class)
             .filter(id.eq(asset_class_id))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for AssetClassRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         AssetClassRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             AssetClassRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

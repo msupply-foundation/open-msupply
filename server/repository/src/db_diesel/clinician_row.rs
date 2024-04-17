@@ -53,7 +53,7 @@ allow_tables_to_appear_in_same_query!(clinician, clinician_link);
 allow_tables_to_appear_in_same_query!(clinician, name_link);
 
 fn insert_or_ignore_clinician_link(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     row: &ClinicianRow,
 ) -> Result<(), RepositoryError> {
     let clinician_link_row = ClinicianLinkRow {
@@ -67,11 +67,11 @@ fn insert_or_ignore_clinician_link(
 }
 
 pub struct ClinicianRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ClinicianRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ClinicianRowRepository { connection }
     }
 
@@ -82,55 +82,51 @@ impl<'a> ClinicianRowRepository<'a> {
             .on_conflict(clinician::dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&mut self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician::dsl::clinician)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_clinician_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(
-        &mut self,
-        id: &str,
-        is_sync_update: bool,
-    ) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(clinician_is_sync_update::table.find(id))
             .set(clinician_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
 
     pub fn find_one_by_id_option(
-        &mut self,
+        &self,
         row_id: &str,
     ) -> Result<Option<ClinicianRow>, RepositoryError> {
         let result = clinician::dsl::clinician
             .filter(clinician::dsl::id.eq(row_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
 
-    pub fn delete(&mut self, row_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(clinician::dsl::clinician.filter(clinician::dsl::id.eq(row_id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn sync_upsert_one(&mut self, row: &ClinicianRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&self, row: &ClinicianRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_clinician_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
@@ -139,11 +135,11 @@ impl<'a> ClinicianRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = clinician_is_sync_update::table
             .find(id)
             .select(clinician_is_sync_update::dsl::is_sync_update)
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -152,12 +148,12 @@ impl<'a> ClinicianRowRepository<'a> {
 pub struct ClinicianRowDelete(pub String);
 
 impl Upsert for ClinicianRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ClinicianRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ClinicianRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
@@ -173,13 +169,13 @@ mod test {
 
     #[actix_rt::test]
     async fn clinician_is_sync_update() {
-        let (_, mut connection, _, _) = setup_all(
+        let (_, connection, _, _) = setup_all(
             "clinician_is_sync_update",
             MockDataInserts::none().items().units(),
         )
         .await;
 
-        let mut repo = ClinicianRowRepository::new(&mut connection);
+        let repo = ClinicianRowRepository::new(&connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = ClinicianRow {

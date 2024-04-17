@@ -31,11 +31,11 @@ pub struct PeriodRow {
 allow_tables_to_appear_in_same_query!(period, name_link);
 
 pub struct PeriodRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> PeriodRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         PeriodRowRepository { connection }
     }
 
@@ -46,44 +46,44 @@ impl<'a> PeriodRowRepository<'a> {
             .on_conflict(period_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &PeriodRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &PeriodRow) -> Result<(), RepositoryError> {
         diesel::replace_into(period_dsl::period)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PeriodRow>, RepositoryError> {
         let result = period_dsl::period
             .filter(period_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_program_schedule_ids(
-        &mut self,
+        &self,
         period_schedule_ids: Vec<&str>,
     ) -> Result<Vec<PeriodRow>, RepositoryError> {
         let result = period_dsl::period
             .filter(period_dsl::period_schedule_id.eq_any(period_schedule_ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }
 
 impl Upsert for PeriodRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         PeriodRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             PeriodRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

@@ -36,17 +36,17 @@ pub struct SyncFileReferenceRow {
 }
 
 pub struct SyncFileReferenceRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> SyncFileReferenceRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         SyncFileReferenceRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
     fn _upsert_one(
-        &mut self,
+        &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(sync_file_reference)
@@ -54,23 +54,23 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(sync_file_reference_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
     fn _upsert_one(
-        &mut self,
+        &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(sync_file_reference)
             .values(sync_file_reference_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn upsert_one(
-        &mut self,
+        &self,
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
@@ -81,7 +81,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     }
 
     fn insert_changelog(
-        &mut self,
+        &self,
         sync_file_reference_id: String,
         action: ChangelogAction,
     ) -> Result<i64, RepositoryError> {
@@ -93,43 +93,43 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
             name_link_id: None,
         };
 
-        ChangelogRepository::new(&mut self.connection).insert(&row)
+        ChangelogRepository::new(&self.connection).insert(&row)
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         sync_file_reference_id: &str,
     ) -> Result<Option<SyncFileReferenceRow>, RepositoryError> {
         let result = sync_file_reference
             .filter(id.eq(sync_file_reference_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, sync_file_reference_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, sync_file_reference_id: &str) -> Result<(), RepositoryError> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         self.insert_changelog(sync_file_reference_id.to_owned(), ChangelogAction::Delete)?;
         Ok(())
     }
 }
 
 impl Upsert for SyncFileReferenceRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         let _change_log_id = SyncFileReferenceRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 
-    fn upsert(&self, con: &mut StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
         let cursor_id = SyncFileReferenceRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             SyncFileReferenceRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

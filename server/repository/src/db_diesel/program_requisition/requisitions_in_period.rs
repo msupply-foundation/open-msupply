@@ -56,18 +56,18 @@ impl Default for RequisitionsInPeriod {
 }
 
 pub struct RequisitionsInPeriodRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 use self::requisitions_in_period::dsl as requisitions_in_period_dsl;
 
 impl<'a> RequisitionsInPeriodRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         RequisitionsInPeriodRepository { connection }
     }
 
     pub fn query(
-        &mut self,
+        &self,
         RequisitionsInPeriodFilter {
             program_id,
             period_id,
@@ -90,7 +90,7 @@ impl<'a> RequisitionsInPeriodRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        let result = query.load::<RequisitionsInPeriod>(&mut self.connection.connection)?;
+        let result = query.load::<RequisitionsInPeriod>(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -259,7 +259,7 @@ mod test {
             ..Default::default()
         };
 
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "requisitions_in_period_repository",
             MockDataInserts::none().names().stores().period_schedules(),
             MockData {
@@ -285,7 +285,7 @@ mod test {
         )
         .await;
 
-        let mut repo = RequisitionsInPeriodRepository::new(&mut connection);
+        let repo = RequisitionsInPeriodRepository::new(&connection);
 
         // TEST query for first program in first store, and all periods
         let mut filter = RequisitionsInPeriodFilter::new()

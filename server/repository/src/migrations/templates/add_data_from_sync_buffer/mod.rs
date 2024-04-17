@@ -45,7 +45,7 @@ impl Migration for V1_00_08 {
         Version::from_str("1.0.8")
     }
 
-    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         use self::store::dsl as store_dsl;
         use self::sync_buffer::dsl as sync_buffer_dsl;
 
@@ -64,7 +64,7 @@ impl Migration for V1_00_08 {
                     .eq(SyncBufferAction::Upsert)
                     .and(sync_buffer_dsl::table_name.eq("store")),
             )
-            .load::<(String, String)>(&mut connection.connection)?;
+            .load::<(String, String)>(connection.lock().connection())?;
 
         for (id, data) in sync_buffer_rows {
             let legacy_row = serde_json::from_str::<LegacyStoreRow>(&data)
@@ -73,7 +73,7 @@ impl Migration for V1_00_08 {
             diesel::update(store_dsl::store)
                 .filter(store_dsl::id.eq(id))
                 .set(store_dsl::disabled.eq(legacy_row.disabled))
-                .execute(&mut connection.connection)?;
+                .execute(connection.lock().connection())?;
         }
 
         Ok(())
@@ -95,7 +95,7 @@ async fn migration_1_00_08() {
     let version = V1_00_08.version();
 
     // Migrate to version - 1
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(previous_version.clone()),
         ..Default::default()
@@ -103,7 +103,7 @@ async fn migration_1_00_08() {
     .await;
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO name 
         (id, type, is_customer, is_supplier, code, name)
@@ -114,7 +114,7 @@ async fn migration_1_00_08() {
     .unwrap();
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code)
@@ -125,7 +125,7 @@ async fn migration_1_00_08() {
     .unwrap();
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code)
@@ -136,7 +136,7 @@ async fn migration_1_00_08() {
     .unwrap();
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code) 
@@ -190,7 +190,7 @@ async fn migration_1_00_08() {
     }"#;
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(format!(
             r#"
             INSERT INTO sync_buffer 
@@ -205,7 +205,7 @@ async fn migration_1_00_08() {
 
     // Simplified sync_buffer.data
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(
             r#"
             INSERT INTO sync_buffer 
@@ -220,8 +220,8 @@ async fn migration_1_00_08() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&mut connection, Some(version.clone())).unwrap();
-    assert_eq!(get_database_version(&mut connection), version);
+    migrate(&connection, Some(version.clone())).unwrap();
+    assert_eq!(get_database_version(&connection), version);
 
     use self::store::dsl as store_dsl;
 
@@ -229,7 +229,7 @@ async fn migration_1_00_08() {
     let stores = store_dsl::store
         .select((store_dsl::id, store_dsl::disabled))
         .order_by(store_dsl::id.asc())
-        .load::<(String, bool)>(&mut connection.connection)
+        .load::<(String, bool)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

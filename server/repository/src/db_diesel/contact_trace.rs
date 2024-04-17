@@ -108,29 +108,31 @@ fn create_filtered_query(filter: Option<ContactTraceFilter>) -> BoxedProgramQuer
 }
 
 pub struct ContactTraceRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ContactTraceRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ContactTraceRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<ContactTraceFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ContactTraceFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: ContactTraceFilter,
     ) -> Result<Vec<ContactTrace>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ContactTraceFilter>,
         sort: Option<ContactTraceSort>,
@@ -178,7 +180,7 @@ impl<'a> ContactTraceRepository<'a> {
         //    diesel::debug_query::<DBType, _>(&final_query).to_string()
         //);
         let result = final_query
-            .load::<ContactTraceJoin>(&mut self.connection.connection)?
+            .load::<ContactTraceJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(|row| ContactTrace {
                 contact_trace: row.0,

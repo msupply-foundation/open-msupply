@@ -31,11 +31,11 @@ allow_tables_to_appear_in_same_query!(master_list, item_link);
 allow_tables_to_appear_in_same_query!(master_list, name_link);
 
 pub struct MasterListRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> MasterListRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         MasterListRowRepository { connection }
     }
 
@@ -46,43 +46,43 @@ impl<'a> MasterListRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &MasterListRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         master_list_id: &str,
     ) -> Result<Option<MasterListRow>, RepositoryError> {
         let result = master_list
             .filter(id.eq(master_list_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, master_list_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, master_list_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list.filter(id.eq(master_list_id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for MasterListRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         MasterListRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             MasterListRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

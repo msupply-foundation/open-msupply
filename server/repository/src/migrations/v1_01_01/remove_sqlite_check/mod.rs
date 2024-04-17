@@ -7,7 +7,7 @@ mod stocktake;
 
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // First remove views
     sql!(
         connection,
@@ -133,7 +133,7 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
     };
 
     // Migrate to version - 1
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: name,
         version: Some(V1_00_08.version()),
         ..Default::default()
@@ -141,7 +141,7 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
     .await;
     // Common data
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO name 
         (id, type, is_customer, is_supplier, code, name) 
@@ -152,7 +152,7 @@ async fn setup_data_migration(name: &str) -> StorageConnection {
     .unwrap();
 
     sql!(
-        &mut connection,
+        &connection,
         r#"
         INSERT INTO store 
         (id, name_id, site_id, code) 

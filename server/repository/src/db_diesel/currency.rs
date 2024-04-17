@@ -31,28 +31,30 @@ pub enum CurrencySortField {
 pub type CurrencySort = Sort<CurrencySortField>;
 
 pub struct CurrencyRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> CurrencyRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         CurrencyRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<CurrencyFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<CurrencyFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: CurrencyFilter,
     ) -> Result<Vec<Currency>, RepositoryError> {
         self.query(Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<CurrencyFilter>,
         sort: Option<CurrencySort>,
     ) -> Result<Vec<Currency>, RepositoryError> {
@@ -73,7 +75,7 @@ impl<'a> CurrencyRepository<'a> {
             query = query.order(currency_dsl::code.asc())
         }
 
-        let result = query.load::<CurrencyRow>(&mut self.connection.connection)?;
+        let result = query.load::<CurrencyRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

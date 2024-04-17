@@ -24,42 +24,44 @@ pub struct RequisitionLine {
 }
 
 pub struct RequisitionLineRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> RequisitionLineRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         RequisitionLineRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter)?;
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: RequisitionLineFilter,
     ) -> Result<Option<RequisitionLine>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: RequisitionLineFilter,
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
         self.query(Some(filter))
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<RequisitionLineFilter>,
     ) -> Result<Vec<RequisitionLine>, RepositoryError> {
         let mut query = create_filtered_query(filter)?;
 
         query = query.order(requisition_line_dsl::id.asc());
 
-        let result = query.load::<RequisitionLineJoin>(&mut self.connection.connection)?;
+        let result = query.load::<RequisitionLineJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()

@@ -9,7 +9,7 @@ impl Migration for V1_03_00 {
         Version::from_str("1.3.0")
     }
 
-    fn migrate(&self, connection: &mut StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         user::migrate(connection)?;
         Ok(())
     }
@@ -24,12 +24,12 @@ async fn migration_1_03_00() {
     let version = V1_03_00.version();
 
     // This test allows checking sql syntax
-    let SetupResult { mut connection, .. } = setup_test(SetupOption {
+    let SetupResult { connection, .. } = setup_test(SetupOption {
         db_name: &format!("migration_{version}"),
         version: Some(version.clone()),
         ..Default::default()
     })
     .await;
 
-    assert_eq!(get_database_version(&mut connection), version);
+    assert_eq!(get_database_version(&connection), version);
 }

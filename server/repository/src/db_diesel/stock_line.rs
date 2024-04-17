@@ -68,16 +68,16 @@ type StockLineJoin = (
     Option<BarcodeRow>,
 );
 pub struct StockLineRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StockLineRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StockLineRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         filter: Option<StockLineFilter>,
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
@@ -85,15 +85,17 @@ impl<'a> StockLineRepository<'a> {
         query = apply_item_filter(
             query,
             filter,
-            &mut self.connection,
+            &self.connection,
             store_id.unwrap_or_default(),
         );
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: StockLineFilter,
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
@@ -101,7 +103,7 @@ impl<'a> StockLineRepository<'a> {
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<StockLineFilter>,
         sort: Option<StockLineSort>,
@@ -152,7 +154,7 @@ impl<'a> StockLineRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<StockLineJoin>(&mut self.connection.connection)?;
+        let result = final_query.load::<StockLineJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -225,7 +227,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
 fn apply_item_filter(
     query: BoxedStockLineQuery,
     filter: Option<StockLineFilter>,
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     store_id: String,
 ) -> BoxedStockLineQuery {
     if let Some(f) = filter {
@@ -376,7 +378,7 @@ mod test {
             })
         }
 
-        let (_, mut connection, _, _) = test_db::setup_all_with_data(
+        let (_, connection, _, _) = test_db::setup_all_with_data(
             "test_stock_line_sort",
             MockDataInserts::none().stores().items().names().units(),
             inline_init(|r: &mut MockData| {
@@ -386,7 +388,7 @@ mod test {
         )
         .await;
 
-        let mut repo = StockLineRepository::new(&mut connection);
+        let repo = StockLineRepository::new(&connection);
         // Asc by expiry date
         let sort = StockLineSort {
             key: StockLineSortField::ExpiryDate,
@@ -443,7 +445,7 @@ mod test {
             })
         }
 
-        let (_, mut connection, _, _) = test_db::setup_all_with_data(
+        let (_, connection, _, _) = test_db::setup_all_with_data(
             "test_stock_line_is_available",
             MockDataInserts::none().stores().items().names().units(),
             inline_init(|r: &mut MockData| {
@@ -452,7 +454,7 @@ mod test {
         )
         .await;
 
-        let mut repo = StockLineRepository::new(&mut connection);
+        let repo = StockLineRepository::new(&connection);
 
         // Stock not available
         assert_eq!(

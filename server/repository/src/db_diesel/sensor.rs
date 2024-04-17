@@ -36,28 +36,27 @@ pub enum SensorSortField {
 pub type SensorSort = Sort<SensorSortField>;
 
 pub struct SensorRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> SensorRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         SensorRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<SensorFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<SensorFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_by_filter(
-        &mut self,
-        filter: SensorFilter,
-    ) -> Result<Vec<Sensor>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: SensorFilter) -> Result<Vec<Sensor>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<SensorFilter>,
         sort: Option<SensorSort>,
@@ -82,7 +81,7 @@ impl<'a> SensorRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<SensorRow>(&mut self.connection.connection)?;
+            .load::<SensorRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

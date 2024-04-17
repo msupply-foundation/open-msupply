@@ -95,55 +95,52 @@ pub struct UserPermissionRow {
 }
 
 pub struct UserPermissionRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> UserPermissionRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         UserPermissionRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_permission_dsl::user_permission)
             .values(row)
             .on_conflict(user_permission_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &UserPermissionRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_permission_dsl::user_permission)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<UserPermissionRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
         let result = user_permission_dsl::user_permission
             .filter(user_permission_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete_by_user_id(&mut self, user_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete_by_user_id(&self, user_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             user_permission_dsl::user_permission.filter(user_permission_dsl::user_id.eq(user_id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&mut self, id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(user_permission_dsl::user_permission.filter(user_permission_dsl::id.eq(id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -151,11 +148,11 @@ impl<'a> UserPermissionRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct UserPermissionRowDelete(pub String);
 impl Delete for UserPermissionRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         UserPermissionRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             UserPermissionRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -164,12 +161,12 @@ impl Delete for UserPermissionRowDelete {
 }
 
 impl Upsert for UserPermissionRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         UserPermissionRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             UserPermissionRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

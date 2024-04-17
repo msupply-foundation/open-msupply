@@ -154,11 +154,11 @@ pub struct NameRow {
 }
 
 pub struct NameRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 fn insert_or_ignore_name_link(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     name_row: &NameRow,
 ) -> Result<(), RepositoryError> {
     let name_link_row = NameLinkRow {
@@ -170,88 +170,85 @@ fn insert_or_ignore_name_link(
 }
 
 impl<'a> NameRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         NameRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    fn _upsert_one(&mut self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
             .on_conflict(id)
             .do_update()
             .set(name_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&mut self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::replace_into(name)
             .values(name_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     fn toggle_is_sync_update(
-        &mut self,
+        &self,
         name_id: &str,
         is_sync_update: bool,
     ) -> Result<(), RepositoryError> {
         diesel::update(name_is_sync_update::table.find(name_id))
             .set(name_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, row: &NameRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    pub fn delete(&mut self, name_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name.filter(id.eq(name_id))).execute(&mut self.connection.connection)?;
+    pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(name.filter(id.eq(name_id))).execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub async fn insert_one(&mut self, name_row: &NameRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, name_row: &NameRow) -> Result<(), RepositoryError> {
         diesel::insert_into(name)
             .values(name_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         insert_or_ignore_name_link(self.connection, name_row)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, name_id: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq(name_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn find_one_by_code(
-        &mut self,
-        name_code: &str,
-    ) -> Result<Option<NameRow>, RepositoryError> {
+    pub fn find_one_by_code(&self, name_code: &str) -> Result<Option<NameRow>, RepositoryError> {
         let result = name
             .filter(code.eq(name_code))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<NameRow>, RepositoryError> {
         let result = name
             .filter(id.eq_any(ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
-    pub fn sync_upsert_one(&mut self, row: &NameRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&self, row: &NameRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         insert_or_ignore_name_link(self.connection, row)?;
         self.toggle_is_sync_update(&row.id, true)?;
@@ -260,14 +257,11 @@ impl<'a> NameRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(
-        &mut self,
-        name_id: &str,
-    ) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&self, name_id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = name_is_sync_update::table
             .find(name_id)
             .select(name_is_sync_update::dsl::is_sync_update)
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -277,11 +271,11 @@ impl<'a> NameRowRepository<'a> {
 pub struct NameRowDelete(pub String);
 // TODO soft delete
 impl Delete for NameRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         NameRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             NameRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -290,12 +284,12 @@ impl Delete for NameRowDelete {
 }
 
 impl Upsert for NameRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         NameRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             NameRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -311,13 +305,13 @@ mod test {
 
     #[actix_rt::test]
     async fn name_is_sync_update() {
-        let (_, mut connection, _, _) = setup_all(
+        let (_, connection, _, _) = setup_all(
             "name_is_sync_update",
             MockDataInserts::none().items().units(),
         )
         .await;
 
-        let mut repo = NameRowRepository::new(&mut connection);
+        let repo = NameRowRepository::new(&connection);
 
         // Two rows, to make sure is_sync_update update only affects one row
         let row = NameRow {

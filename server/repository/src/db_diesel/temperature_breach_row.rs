@@ -67,66 +67,66 @@ pub struct TemperatureBreachRow {
 }
 
 pub struct TemperatureBreachRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> TemperatureBreachRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         TemperatureBreachRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn _upsert_one(&mut self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
         diesel::insert_into(temperature_breach_dsl::temperature_breach)
             .values(row)
             .on_conflict(temperature_breach_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&mut self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
         diesel::replace_into(temperature_breach_dsl::temperature_breach)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &TemperatureBreachRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         id: &str,
     ) -> Result<Option<TemperatureBreachRow>, RepositoryError> {
         let result = temperature_breach_dsl::temperature_breach
             .filter(temperature_breach_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(
-        &mut self,
+        &self,
         ids: &[String],
     ) -> Result<Vec<TemperatureBreachRow>, RepositoryError> {
         Ok(temperature_breach_dsl::temperature_breach
             .filter(temperature_breach_dsl::id.eq_any(ids))
-            .load(&mut self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for TemperatureBreachRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         TemperatureBreachRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             TemperatureBreachRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

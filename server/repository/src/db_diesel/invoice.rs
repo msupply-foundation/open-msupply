@@ -78,7 +78,7 @@ pub enum InvoiceSortField {
 pub type InvoiceSort = Sort<InvoiceSortField>;
 
 pub struct InvoiceRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 type InvoiceJoin = (
@@ -89,31 +89,30 @@ type InvoiceJoin = (
 );
 
 impl<'a> InvoiceRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         InvoiceRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<InvoiceFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<InvoiceFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_by_filter(
-        &mut self,
-        filter: InvoiceFilter,
-    ) -> Result<Vec<Invoice>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: InvoiceFilter) -> Result<Vec<Invoice>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
-    pub fn query_one(&mut self, filter: InvoiceFilter) -> Result<Option<Invoice>, RepositoryError> {
+    pub fn query_one(&self, filter: InvoiceFilter) -> Result<Option<Invoice>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     /// Gets all invoices
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<InvoiceFilter>,
         sort: Option<InvoiceSort>,
@@ -169,18 +168,18 @@ impl<'a> InvoiceRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<InvoiceJoin>(&mut self.connection.connection)?;
+            .load::<InvoiceJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
 
-    pub fn find_one_by_id(&mut self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
         Ok(invoice_dsl::invoice
             .filter(invoice_dsl::id.eq(record_id))
             .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
             .inner_join(store_dsl::store)
             .left_join(clinician_link_dsl::clinician_link.inner_join(clinician_dsl::clinician))
-            .first::<InvoiceJoin>(&mut self.connection.connection)?)
+            .first::<InvoiceJoin>(self.connection.lock().connection())?)
     }
 }
 
@@ -458,9 +457,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_invoice_query_sort() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
-        let mut repo = InvoiceRepository::new(&mut connection);
+        let repo = InvoiceRepository::new(&connection);
 
         let mut invoices = repo.query(Pagination::new(), None, None).unwrap();
 

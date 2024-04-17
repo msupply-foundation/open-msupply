@@ -33,71 +33,67 @@ pub struct ClinicianStoreJoinRow {
 }
 
 pub struct ClinicianStoreJoinRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ClinicianStoreJoinRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ClinicianStoreJoinRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    fn _upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
             .on_conflict(clinician_store_join::dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    fn _upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    fn _upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician_store_join::dsl::clinician_store_join)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
-    pub fn upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(
-        &mut self,
-        id: &str,
-        is_sync_update: bool,
-    ) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(clinician_store_join_is_sync_update::table.find(id))
             .set(clinician_store_join_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
 
     pub fn find_one_by_id_option(
-        &mut self,
+        &self,
         row_id: &str,
     ) -> Result<Option<ClinicianStoreJoinRow>, RepositoryError> {
         let result = clinician_store_join::dsl::clinician_store_join
             .filter(clinician_store_join::dsl::id.eq(row_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
 
-    pub fn delete(&mut self, row_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, row_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             clinician_store_join::dsl::clinician_store_join
                 .filter(clinician_store_join::dsl::id.eq(row_id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn sync_upsert_one(&mut self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&self, row: &ClinicianStoreJoinRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -105,11 +101,11 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = clinician_store_join_is_sync_update::table
             .find(id)
             .select(clinician_store_join_is_sync_update::dsl::is_sync_update)
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -118,12 +114,12 @@ impl<'a> ClinicianStoreJoinRowRepository<'a> {
 pub struct ClinicianStoreJoinRowDelete(pub String);
 
 impl Upsert for ClinicianStoreJoinRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ClinicianStoreJoinRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ClinicianStoreJoinRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
@@ -148,7 +144,7 @@ mod test {
             ..Default::default()
         };
 
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "clinician_store_join_is_sync_update",
             MockDataInserts::none()
                 .items()
@@ -163,7 +159,7 @@ mod test {
         )
         .await;
 
-        let mut repo = ClinicianStoreJoinRowRepository::new(&mut connection);
+        let repo = ClinicianStoreJoinRowRepository::new(&connection);
 
         let base_row = ClinicianStoreJoinRow {
             clinician_link_id: clinician.id,

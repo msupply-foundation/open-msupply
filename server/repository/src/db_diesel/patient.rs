@@ -66,26 +66,28 @@ pub enum PatientSortField {
 pub type PatientSort = Sort<PatientSortField>;
 
 pub struct PatientRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> PatientRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         PatientRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         filter: Option<PatientFilter>,
         allowed_ctx: Option<&[String]>,
     ) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter, allowed_ctx);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: PatientFilter,
         allowed_ctx: Option<&[String]>,
     ) -> Result<Vec<Patient>, RepositoryError> {
@@ -93,7 +95,7 @@ impl<'a> PatientRepository<'a> {
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: PatientFilter,
         allowed_ctx: Option<&[String]>,
     ) -> Result<Option<Patient>, RepositoryError> {
@@ -101,7 +103,7 @@ impl<'a> PatientRepository<'a> {
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<PatientFilter>,
         sort: Option<PatientSort>,
@@ -151,7 +153,7 @@ impl<'a> PatientRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<NameRow>(&mut self.connection.connection)?;
+        let result = final_query.load::<NameRow>(self.connection.lock().connection())?;
 
         Ok(result)
     }
@@ -358,14 +360,14 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_patient_query() {
-        let (_, mut connection, _, _) = test_db::setup_all(
+        let (_, connection, _, _) = test_db::setup_all(
             "patient_query",
             MockDataInserts::none().names().stores().name_store_joins(),
         )
         .await;
 
         // Make sure we don't return names that are not patients
-        let result = PatientRepository::new(&mut connection)
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("code2")),
                 None,
@@ -379,11 +381,11 @@ mod tests {
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
 
-        let result = PatientRepository::new(&mut connection)
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().id(EqualFilter::equal_to("patient_1")),
                 None,
@@ -394,7 +396,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_patient_identifier_query() {
-        let (_, mut connection, _, _) = test_db::setup_all(
+        let (_, connection, _, _) = test_db::setup_all(
             "patient_identifier_query",
             MockDataInserts::none()
                 .units()
@@ -417,7 +419,7 @@ mod tests {
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
 
@@ -445,18 +447,18 @@ mod tests {
             row.code = "code333".to_string();
             row.national_health_number = Some("patient_c_nhn".to_string());
         });
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row_a)
             .unwrap();
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row_b)
             .unwrap();
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row_c)
             .unwrap();
 
         // Test identifier search
-        ProgramEnrolmentRowRepository::new(&mut connection)
+        ProgramEnrolmentRowRepository::new(&connection)
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
@@ -469,7 +471,7 @@ mod tests {
             })
             .unwrap();
 
-        let mut repo = PatientRepository::new(&mut connection);
+        let repo = PatientRepository::new(&connection);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("codePatient")),
@@ -538,7 +540,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_patient_program_enrolment_id_allowed_ctx() {
-        let (_, mut connection, _, _) = test_db::setup_all(
+        let (_, connection, _, _) = test_db::setup_all(
             "test_patient_program_enrolment_id_allowed_ctx",
             MockDataInserts::none()
                 .units()
@@ -559,12 +561,12 @@ mod tests {
             row.code = "codePatient".to_string();
             row.national_health_number = Some("nhnPatient".to_string());
         });
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
 
         // Searching by program enrolment id requires correct context access
-        ProgramEnrolmentRowRepository::new(&mut connection)
+        ProgramEnrolmentRowRepository::new(&connection)
             .upsert_one(&ProgramEnrolmentRow {
                 id: util::uuid::uuid(),
                 document_name: "doc_name".to_string(),
@@ -576,7 +578,7 @@ mod tests {
                 status: Some("Active".to_string()),
             })
             .unwrap();
-        let mut repo = PatientRepository::new(&mut connection);
+        let repo = PatientRepository::new(&connection);
         let result = repo
             .query_by_filter(
                 PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
@@ -595,19 +597,19 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_name_date_of_death() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_name_date_of_death", MockDataInserts::none()).await;
 
         let patient_row = inline_init(|row: &mut NameRow| {
             row.id = "patient_1".to_string();
             row.r#type = NameType::Patient;
         });
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
 
         // Query if patient is still alive if date of death is not set
-        let result = PatientRepository::new(&mut connection)
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
                     NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
@@ -623,11 +625,11 @@ mod tests {
             row.r#type = NameType::Patient;
             row.date_of_death = Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap())
         });
-        NameRowRepository::new(&mut connection)
+        NameRowRepository::new(&connection)
             .upsert_one(&patient_row)
             .unwrap();
         // Query if patient is not alive after date_of_death
-        let result = PatientRepository::new(&mut connection)
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
                     NaiveDate::from_ymd_opt(2023, 9, 22).unwrap(),
@@ -637,7 +639,7 @@ mod tests {
             .unwrap();
         assert_eq!(result.len(), 0);
         // Query if patient is still alive before date_of_death
-        let result = PatientRepository::new(&mut connection)
+        let result = PatientRepository::new(&connection)
             .query_by_filter(
                 PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
                     NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),

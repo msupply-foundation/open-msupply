@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     sql!(
         connection,
         r#"
@@ -26,10 +26,10 @@ pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> 
 async fn remove_sqlite_check_requisition() {
     use crate::migrations::*;
     use diesel::prelude::*;
-    let mut connection = super::setup_data_migration("remove_sqlite_check_requisition").await;
+    let connection = super::setup_data_migration("remove_sqlite_check_requisition").await;
 
     let default = "1, 'store_id', 'name_id', 1, 1, ''";
-    sql!(&mut connection,
+    sql!(&connection,
     r#"
         INSERT INTO requisition
         (id, requisition_number, store_id, name_id, max_months_of_stock, min_months_of_stock, created_datetime, type, status)
@@ -41,11 +41,11 @@ async fn remove_sqlite_check_requisition() {
     )
    .unwrap();
     // Migrate to this version
-    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
+    migrate(&connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&connection), V1_01_01.version());
 
     // Make sure check was removed
-    sql!(&mut connection,
+    sql!(&connection,
     r#"
         INSERT INTO requisition
         (id, requisition_number, store_id, name_id, max_months_of_stock, min_months_of_stock, created_datetime, type, status)
@@ -69,7 +69,7 @@ async fn remove_sqlite_check_requisition() {
             requisition_dsl::status,
         ))
         .order_by(requisition_dsl::id.asc())
-        .load::<(String, String, String)>(&mut connection.connection)
+        .load::<(String, String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

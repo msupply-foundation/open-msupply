@@ -193,7 +193,7 @@ mod tests {
         let sql = debug_query::<Sqlite, _>(&query).to_string();
         assert_eq!(
             sql,
-            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` WHERE coalesce(`item`.`expiry_date`, ?) = ? -- binds: [9999-12-31, 2023-12-31]"#
+            r#"SELECT `item`.`id`, `item`.`name`, `item`.`expiry_date` FROM `item` WHERE (coalesce(`item`.`expiry_date`, ?) = ?) -- binds: [9999-12-31, 2023-12-31]"#
         );
     }
 }

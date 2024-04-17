@@ -18,19 +18,19 @@ pub struct TemperatureChartRow {
 allow_tables_to_appear_in_same_query!(temperature_log, temperature_chart);
 
 pub struct TemperatureChartRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 type QueryResult = (String, f64, String, String);
 
 impl<'a> TemperatureChartRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         TemperatureChartRepository { connection }
     }
 
     /// Result is sorted by sensor and then by datetime
     pub fn query(
-        &mut self,
+        &self,
         intervals: Vec<Interval>,
         temperature_log_filter: Option<TemperatureLogFilter>,
     ) -> Result<Vec<TemperatureChartRow>, RepositoryError> {
@@ -64,7 +64,7 @@ impl<'a> TemperatureChartRepository<'a> {
         // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
 
         let chart_data = query
-            .load::<QueryResult>(&mut self.connection.connection)?
+            .load::<QueryResult>(self.connection.lock().connection())?
             .into_iter()
             .map(TemperatureChartRow::from)
             .collect::<Result<_, _>>()?;
@@ -219,7 +219,7 @@ mod test {
         // it's important to shuffle before inserting to test this
         temperature_logs.shuffle(&mut thread_rng());
 
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "temperature_charts",
             MockDataInserts::none(),
             MockData {
@@ -234,7 +234,7 @@ mod test {
         )
         .await;
 
-        let mut repo = TemperatureChartRepository::new(&mut connection);
+        let repo = TemperatureChartRepository::new(&connection);
 
         // Just date filter
         let mut result = repo.query(intervals.clone(), None).unwrap();

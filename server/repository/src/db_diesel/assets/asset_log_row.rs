@@ -116,11 +116,11 @@ pub struct AssetLogRow {
 }
 
 pub struct AssetLogRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetLogRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetLogRowRepository { connection }
     }
 
@@ -136,14 +136,14 @@ impl<'a> AssetLogRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&mut self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_log)
             .values(asset_log_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
+    pub fn upsert_one(&self, asset_log_row: &AssetLogRow) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_row)?;
         // Return the changelog id
         self.insert_changelog(
@@ -154,7 +154,7 @@ impl<'a> AssetLogRowRepository<'a> {
     }
 
     fn insert_changelog(
-        &mut self,
+        &self,
         asset_log_id: String,
         action: ChangelogAction,
         row: Option<AssetLogRow>,
@@ -178,40 +178,40 @@ impl<'a> AssetLogRowRepository<'a> {
             name_link_id: None,
         };
 
-        ChangelogRepository::new(&mut self.connection).insert(&row)
+        ChangelogRepository::new(&self.connection).insert(&row)
     }
 
     pub fn find_all(&mut self) -> Result<Vec<AssetLogRow>, RepositoryError> {
-        let result = asset_log.load(&mut self.connection.connection);
+        let result = asset_log.load(self.connection.lock().connection());
         Ok(result?)
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         asset_log_id: &str,
     ) -> Result<Option<AssetLogRow>, RepositoryError> {
         let result = asset_log
             .filter(id.eq(asset_log_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 }
 
 impl Upsert for AssetLogRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         let _change_log_id = AssetLogRowRepository::new(con).upsert_one(self)?;
         Ok(())
     }
 
-    fn upsert(&self, con: &mut StorageConnection) -> Result<Option<i64>, RepositoryError> {
+    fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
         // We'll return the later changelog id, as that's the one that will be marked as coming from this site...
         let cursor_id = AssetLogRowRepository::new(con).upsert_one(self)?;
         Ok(Some(cursor_id))
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             AssetLogRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

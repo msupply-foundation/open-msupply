@@ -11,7 +11,7 @@ use std::collections::HashMap;
 static PROGRESS_STEP_LEN: usize = 100;
 
 pub(crate) struct TranslationAndIntegration<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
     sync_buffer: &'a SyncBuffer<'a>,
 }
 
@@ -26,7 +26,7 @@ pub struct TranslationAndIntegrationResults(HashMap<TableName, TranslationAndInt
 
 impl<'a> TranslationAndIntegration<'a> {
     pub(crate) fn new(
-        connection: &'a mut StorageConnection,
+        connection: &'a StorageConnection,
         sync_buffer: &'a SyncBuffer,
     ) -> TranslationAndIntegration<'a> {
         TranslationAndIntegration {
@@ -174,7 +174,7 @@ impl<'a> TranslationAndIntegration<'a> {
 }
 
 impl IntegrationOperation {
-    fn integrate(&self, connection: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn integrate(&self, connection: &StorageConnection) -> Result<(), RepositoryError> {
         match self {
             IntegrationOperation::Upsert(upsert, source_site_id) => {
                 let cursor_id = upsert.upsert(connection)?;
@@ -195,11 +195,11 @@ impl IntegrationOperation {
 }
 
 pub(crate) fn integrate(
-    connection: &mut StorageConnection,
+    connection: &StorageConnection,
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-    let start_nested_transaction = { connection.transaction_level.get() > 0 };
+    let start_nested_transaction = { connection.transaction_level() > 0 };
 
     for integration_record in integration_records.iter() {
         // Integrate every record in a sub transaction. This is mainly for Postgres where the
@@ -240,7 +240,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
-        let (_, mut connection, _, _) = test_db::setup_all(
+        let (_, connection, _, _) = test_db::setup_all(
             "test_fall_through_inner_transaction",
             MockDataInserts::none(),
         )
@@ -279,13 +279,13 @@ mod test {
 
         // Record should exist
         assert_matches!(
-            UnitRowRepository::new(&mut connection).find_one_by_id_option("unit"),
+            UnitRowRepository::new(&connection).find_one_by_id_option("unit"),
             Ok(Some(_))
         );
 
         // Record should not exist
         assert_matches!(
-            ItemRowRepository::new(&mut connection).find_active_by_id("item"),
+            ItemRowRepository::new(&connection).find_active_by_id("item"),
             Ok(None)
         );
     }

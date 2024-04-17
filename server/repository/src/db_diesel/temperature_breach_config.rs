@@ -36,31 +36,33 @@ pub enum TemperatureBreachConfigSortField {
 pub type TemperatureBreachConfigSort = Sort<TemperatureBreachConfigSortField>;
 
 pub struct TemperatureBreachConfigRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> TemperatureBreachConfigRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         TemperatureBreachConfigRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         filter: Option<TemperatureBreachConfigFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: TemperatureBreachConfigFilter,
     ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<TemperatureBreachConfigFilter>,
         sort: Option<TemperatureBreachConfigSort>,
@@ -86,7 +88,7 @@ impl<'a> TemperatureBreachConfigRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<TemperatureBreachConfigRow>(&mut self.connection.connection)?;
+            .load::<TemperatureBreachConfigRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

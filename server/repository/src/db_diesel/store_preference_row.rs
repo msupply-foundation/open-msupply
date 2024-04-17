@@ -65,62 +65,59 @@ impl Default for StorePreferenceRow {
 }
 
 pub struct StorePreferenceRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StorePreferenceRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StorePreferenceRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(store_preference_dsl::store_preference)
             .values(row)
             .on_conflict(store_preference_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &StorePreferenceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(store_preference_dsl::store_preference)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<StorePreferenceRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional();
         result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(
-        &mut self,
+        &self,
         ids: &[String],
     ) -> Result<Vec<StorePreferenceRow>, RepositoryError> {
         let result = store_preference_dsl::store_preference
             .filter(store_preference_dsl::id.eq_any(ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 }
 
 impl Upsert for StorePreferenceRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         StorePreferenceRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             StorePreferenceRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

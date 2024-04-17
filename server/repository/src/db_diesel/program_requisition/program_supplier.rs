@@ -28,16 +28,16 @@ pub struct ProgramSupplierFilter {
 }
 
 pub struct ProgramSupplierRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramSupplierRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramSupplierRepository { connection }
     }
 
     pub fn query(
-        &mut self,
+        &self,
         store_id: &str,
         ProgramSupplierFilter {
             program_id: program_id_filter,
@@ -86,7 +86,7 @@ impl<'a> ProgramSupplierRepository<'a> {
                 .nullable()
                 .assume_not_null(),
         ));
-        let result = query.load::<ProgramSupplierJoin>(&mut self.connection.connection)?;
+        let result = query.load::<ProgramSupplierJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()
@@ -236,7 +236,7 @@ mod test {
             ..Default::default()
         };
 
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "program_supplier_repository",
             MockDataInserts::none(),
             MockData {
@@ -264,7 +264,7 @@ mod test {
             program2.id.clone(),
         ]));
 
-        let result = ProgramSupplierRepository::new(&mut connection).query(&store3.id, filter);
+        let result = ProgramSupplierRepository::new(&connection).query(&store3.id, filter);
 
         assert_eq!(result, Ok(Vec::new()));
 
@@ -275,11 +275,11 @@ mod test {
             program2.id.clone(),
         ]));
 
-        MasterListNameJoinRepository::new(&mut connection)
+        MasterListNameJoinRepository::new(&connection)
             .upsert_one(&master_list_name_join2)
             .unwrap();
 
-        let result = ProgramSupplierRepository::new(&mut connection).query(&store3.id, filter);
+        let result = ProgramSupplierRepository::new(&connection).query(&store3.id, filter);
 
         assert_eq!(
             result,
@@ -300,11 +300,11 @@ mod test {
             program2.id.clone(),
         ]));
 
-        NameStoreJoinRepository::new(&mut connection)
+        NameStoreJoinRepository::new(&connection)
             .upsert_one(&name_store_join3)
             .unwrap();
 
-        let mut result = ProgramSupplierRepository::new(&mut connection)
+        let mut result = ProgramSupplierRepository::new(&connection)
             .query(&store3.id, filter)
             .unwrap();
         result.sort_by(|a, b| a.supplier.name_row.id.cmp(&b.supplier.name_row.id));

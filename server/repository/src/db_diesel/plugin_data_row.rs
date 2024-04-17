@@ -39,18 +39,18 @@ pub struct PluginDataRow {
 }
 
 pub struct PluginDataRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> PluginDataRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         PluginDataRowRepository { connection }
     }
 
-    pub fn insert_one(&mut self, row: &PluginDataRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::insert_into(plugin_data::table)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -66,17 +66,17 @@ impl<'a> PluginDataRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &PluginDataRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &PluginDataRow) -> Result<(), RepositoryError> {
         diesel::replace_into(plugin_data::table)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<PluginDataRow>, RepositoryError> {
         let result: Option<PluginDataRow> = plugin_data::table
             .filter(plugin_data::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
 
         Ok(result)

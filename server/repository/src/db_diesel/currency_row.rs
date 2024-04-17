@@ -28,58 +28,58 @@ pub struct CurrencyRow {
 }
 
 pub struct CurrencyRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> CurrencyRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         CurrencyRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &CurrencyRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::insert_into(currency_dsl::currency)
             .values(row)
             .on_conflict(currency_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &CurrencyRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &CurrencyRow) -> Result<(), RepositoryError> {
         diesel::replace_into(currency_dsl::currency)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         currency_id: &str,
     ) -> Result<Option<CurrencyRow>, RepositoryError> {
         let result = currency_dsl::currency
             .filter(currency_dsl::id.eq(currency_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, currency_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, currency_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for CurrencyRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         CurrencyRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             CurrencyRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

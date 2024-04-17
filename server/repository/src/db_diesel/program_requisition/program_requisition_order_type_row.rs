@@ -33,11 +33,11 @@ pub struct ProgramRequisitionOrderTypeRow {
 }
 
 pub struct ProgramRequisitionOrderTypeRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramRequisitionOrderTypeRowRepository { connection }
     }
 
@@ -48,49 +48,46 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
             .on_conflict(program_requisition_order_type_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
-        &mut self,
-        row: &ProgramRequisitionOrderTypeRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ProgramRequisitionOrderTypeRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_requisition_order_type_dsl::program_requisition_order_type)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         id: &str,
     ) -> Result<Option<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_program_requisition_settings_ids(
-        &mut self,
+        &self,
         ids: &[String],
     ) -> Result<Vec<ProgramRequisitionOrderTypeRow>, RepositoryError> {
         let result = program_requisition_order_type_dsl::program_requisition_order_type
             .filter(program_requisition_order_type_dsl::program_requisition_settings_id.eq_any(ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
 
         Ok(result)
     }
 
-    pub fn delete(&mut self, order_type_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, order_type_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             program_requisition_order_type_dsl::program_requisition_order_type
                 .filter(program_requisition_order_type_dsl::id.eq(order_type_id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -98,11 +95,11 @@ impl<'a> ProgramRequisitionOrderTypeRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct ProgramRequisitionOrderTypeRowDelete(pub String);
 impl Delete for ProgramRequisitionOrderTypeRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -111,12 +108,12 @@ impl Delete for ProgramRequisitionOrderTypeRowDelete {
 }
 
 impl Upsert for ProgramRequisitionOrderTypeRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ProgramRequisitionOrderTypeRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ProgramRequisitionOrderTypeRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

@@ -49,23 +49,23 @@ pub struct ConsumptionFilter {
 }
 
 pub struct ConsumptionRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ConsumptionRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ConsumptionRepository { connection }
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: ConsumptionFilter,
     ) -> Result<Option<ConsumptionRow>, RepositoryError> {
         Ok(self.query(Some(filter))?.pop())
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<ConsumptionFilter>,
     ) -> Result<Vec<ConsumptionRow>, RepositoryError> {
         // Query Consumption
@@ -89,7 +89,7 @@ impl<'a> ConsumptionRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&query).to_string()
         // );
 
-        Ok(query.load::<ConsumptionRow>(&mut self.connection.connection)?)
+        Ok(query.load::<ConsumptionRow>(self.connection.lock().connection())?)
     }
 }
 

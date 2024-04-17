@@ -135,23 +135,25 @@ fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery
 }
 
 pub struct StocktakeRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StocktakeRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StocktakeRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<StocktakeFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<StocktakeFilter>) -> Result<i64, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: StocktakeFilter,
     ) -> Result<Vec<Stocktake>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
@@ -159,7 +161,7 @@ impl<'a> StocktakeRepository<'a> {
 
     /// Gets all invoices
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<StocktakeFilter>,
         sort: Option<StocktakeSort>,
@@ -195,18 +197,15 @@ impl<'a> StocktakeRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<Stocktake>(&mut self.connection.connection)?;
+            .load::<Stocktake>(self.connection.lock().connection())?;
 
         Ok(result)
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        record_id: &str,
-    ) -> Result<Option<Stocktake>, RepositoryError> {
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
         Ok(stocktake_dsl::stocktake
             .filter(stocktake_dsl::id.eq(record_id))
-            .first::<Stocktake>(&mut self.connection.connection)
+            .first::<Stocktake>(self.connection.lock().connection())
             .optional()?)
     }
 }

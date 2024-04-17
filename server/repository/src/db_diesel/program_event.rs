@@ -151,29 +151,31 @@ fn create_filtered_query(filter: Option<ProgramEventFilter>) -> BoxedProgramEven
 }
 
 pub struct ProgramEventRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramEventRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramEventRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<ProgramEventFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ProgramEventFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: ProgramEventFilter,
     ) -> Result<Vec<ProgramEvent>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ProgramEventFilter>,
         sort: Option<ProgramEventSort>,
@@ -212,7 +214,7 @@ impl<'a> ProgramEventRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEventJoin>(&mut self.connection.connection)?
+            .load::<ProgramEventJoin>(self.connection.lock().connection())?
             .into_iter()
             .map(|it| ProgramEvent {
                 program_event_row: it.0,
@@ -223,7 +225,7 @@ impl<'a> ProgramEventRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&mut self, filter: ProgramEventFilter) -> Result<(), RepositoryError> {
+    pub fn delete(&self, filter: ProgramEventFilter) -> Result<(), RepositoryError> {
         let mut query = diesel::delete(program_event_dsl::program_event).into_boxed();
         if let Some(patient_id) = &filter.patient_id {
             let mut sub_query = name_link_dsl::name_link.into_boxed();
@@ -234,7 +236,7 @@ impl<'a> ProgramEventRepository<'a> {
             );
         }
         query = apply_program_event_filters!(query, Some(filter));
-
+        query.execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -252,10 +254,9 @@ mod test {
 
     #[actix_rt::test]
     async fn program_event_delete() {
-        let (_, mut connection, _, _) =
-            setup_all("program_event_delete", MockDataInserts::all()).await;
+        let (_, connection, _, _) = setup_all("program_event_delete", MockDataInserts::all()).await;
 
-        let mut row_repo = ProgramEventRowRepository::new(&mut connection);
+        let row_repo = ProgramEventRowRepository::new(&connection);
         row_repo
             .upsert_one(&ProgramEventRow {
                 id: "event1".to_string(),
@@ -285,7 +286,7 @@ mod test {
             })
             .unwrap();
 
-        let mut repo = ProgramEventRepository::new(&mut connection);
+        let repo = ProgramEventRepository::new(&connection);
         assert_eq!(repo.query(Pagination::all(), None, None).unwrap().len(), 2);
 
         // test deleting by patient id

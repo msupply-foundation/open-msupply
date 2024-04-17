@@ -1,6 +1,6 @@
 use crate::{migrations::sql, StorageConnection};
 
-pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> {
+pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
     // Split INVENTORY_ADJUSTMENT to INVENTORY_REDUCTION and INVENTORY_ADDITION
     if cfg!(feature = "postgres") {
         sql!(
@@ -61,11 +61,11 @@ pub(crate) fn migrate(connection: &mut StorageConnection) -> anyhow::Result<()> 
 async fn split_inventory_adjustment() {
     use crate::migrations::*;
     use diesel::{prelude::*, sql_query, sql_types::*};
-    let mut connection = super::setup_data_migration("split_inventory_adjustment").await;
+    let connection = super::setup_data_migration("split_inventory_adjustment").await;
 
     let default = "'name_id', 'store_id', 1, false, 'NEW'";
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(format!(
             r#"
             INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, status, created_datetime, type)
@@ -80,7 +80,7 @@ async fn split_inventory_adjustment() {
     .unwrap();
 
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query((
             r#"
             INSERT INTO stocktake
@@ -94,12 +94,12 @@ async fn split_inventory_adjustment() {
     .unwrap();
 
     // Migrate to this version
-    migrate(&mut connection, Some(V1_01_01.version())).unwrap();
-    assert_eq!(get_database_version(&mut connection), V1_01_01.version());
+    migrate(&connection, Some(V1_01_01.version())).unwrap();
+    assert_eq!(get_database_version(&connection), V1_01_01.version());
 
     // Check can add INVENTORY_REDUCTION
     execute_sql_with_error(
-        &mut connection,
+        &connection,
         sql_query(format!(
             r#"
             INSERT INTO invoice (id, name_id, store_id, invoice_number, on_hold, status, created_datetime, type)
@@ -122,7 +122,7 @@ async fn split_inventory_adjustment() {
     let invoices = invoice_dsl::invoice
         .select((invoice_dsl::id, invoice_dsl::type_))
         .order_by(invoice_dsl::id.asc())
-        .load::<(String, String)>(&mut connection.connection)
+        .load::<(String, String)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(
@@ -151,7 +151,7 @@ async fn split_inventory_adjustment() {
             stocktake_dsl::inventory_reduction_id,
         ))
         .order_by(stocktake_dsl::id.asc())
-        .load::<(String, Option<String>, Option<String>)>(&mut connection.connection)
+        .load::<(String, Option<String>, Option<String>)>(connection.lock().connection())
         .unwrap();
 
     assert_eq!(

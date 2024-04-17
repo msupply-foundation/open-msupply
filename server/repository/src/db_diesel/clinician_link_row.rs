@@ -30,115 +30,109 @@ pub struct ClinicianLinkRow {
 }
 
 pub struct ClinicianLinkRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ClinicianLinkRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ClinicianLinkRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(
-        &mut self,
-        clinician_link_row: &ClinicianLinkRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, clinician_link_row: &ClinicianLinkRow) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
             .on_conflict(clinician_link::id)
             .do_update()
             .set(clinician_link_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(
-        &mut self,
-        clinician_link_row: &ClinicianLinkRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, clinician_link_row: &ClinicianLinkRow) -> Result<(), RepositoryError> {
         diesel::replace_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(feature = "postgres")]
     pub fn insert_one_or_ignore(
-        &mut self,
+        &self,
         clinician_link_row: &ClinicianLinkRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
             .on_conflict(clinician_link::id)
             .do_nothing()
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
     pub fn insert_one_or_ignore(
-        &mut self,
+        &self,
         clinician_link_row: &ClinicianLinkRow,
     ) -> Result<(), RepositoryError> {
         diesel::insert_or_ignore_into(clinician_link_dsl::clinician_link)
             .values(clinician_link_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn find_all(&mut self) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
-        let result = clinician_link_dsl::clinician_link.load(&mut self.connection.connection);
+        let result = clinician_link_dsl::clinician_link.load(self.connection.lock().connection());
         Ok(result?)
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         clinician_link_id: &str,
     ) -> Result<Option<ClinicianLinkRow>, RepositoryError> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::id.eq(clinician_link_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     pub fn find_many_by_id(
-        &mut self,
+        &self,
         clinician_link_ids: &[String],
     ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::id.eq_any(clinician_link_ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_many_by_clinician_id(
-        &mut self,
+        &self,
         clinician_id: &str,
     ) -> Result<Vec<ClinicianLinkRow>, RepositoryError> {
         let result = clinician_link_dsl::clinician_link
             .filter(clinician_link::clinician_id.eq(clinician_id))
-            .load::<ClinicianLinkRow>(&mut self.connection.connection)?;
+            .load::<ClinicianLinkRow>(self.connection.lock().connection())?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, clinician_link_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, clinician_link_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             clinician_link_dsl::clinician_link.filter(clinician_link::id.eq(clinician_link_id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for ClinicianLinkRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         ClinicianLinkRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             ClinicianLinkRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

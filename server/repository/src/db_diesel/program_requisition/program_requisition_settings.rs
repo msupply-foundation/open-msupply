@@ -29,16 +29,16 @@ pub struct ProgramRequisitionSettingsFilter {
 }
 
 pub struct ProgramRequisitionSettingsRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramRequisitionSettingsRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramRequisitionSettingsRepository { connection }
     }
 
     pub fn query(
-        &mut self,
+        &self,
         filter: Option<ProgramRequisitionSettingsFilter>,
     ) -> Result<Vec<ProgramRequisitionSettings>, RepositoryError> {
         let mut query = program_requisition_settings_dsl::program_requisition_settings
@@ -75,7 +75,7 @@ impl<'a> ProgramRequisitionSettingsRepository<'a> {
         // );
 
         let result =
-            query.load::<ProgramRequisitionSettingsJoin>(&mut self.connection.connection)?;
+            query.load::<ProgramRequisitionSettingsJoin>(self.connection.lock().connection())?;
 
         Ok(result
             .into_iter()
@@ -156,7 +156,7 @@ mod test {
             name_tag_id: name_tag1.id.clone(),
             period_schedule_id: mock_period_schedule_1().id,
         };
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "program_requisition_settings_repository",
             MockDataInserts::none()
                 .names()
@@ -176,7 +176,7 @@ mod test {
         )
         .await;
 
-        let mut repo = ProgramRequisitionSettingsRepository::new(&mut connection);
+        let repo = ProgramRequisitionSettingsRepository::new(&connection);
 
         // TEST that program_requisition_settings can be queried by name_tag belonging to a store
         let result = repo.query(Some(ProgramRequisitionSettingsFilter::new().name_tag(

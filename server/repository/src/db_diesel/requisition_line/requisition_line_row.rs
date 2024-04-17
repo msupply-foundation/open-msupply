@@ -56,11 +56,11 @@ pub struct RequisitionLineRow {
 }
 
 pub struct RequisitionLineRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> RequisitionLineRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         RequisitionLineRowRepository { connection }
     }
 
@@ -71,57 +71,50 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .on_conflict(requisition_line_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&mut self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(requisition_line_dsl::requisition_line)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    fn toggle_is_sync_update(
-        &mut self,
-        id: &str,
-        is_sync_update: bool,
-    ) -> Result<(), RepositoryError> {
+    fn toggle_is_sync_update(&self, id: &str, is_sync_update: bool) -> Result<(), RepositoryError> {
         diesel::update(requisition_line_is_sync_update::table.find(id))
             .set(requisition_line_is_sync_update::dsl::is_sync_update.eq(is_sync_update))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, false)?;
         Ok(())
     }
 
-    pub fn delete(&mut self, requisition_line_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, requisition_line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
             requisition_line_dsl::requisition_line
                 .filter(requisition_line_dsl::id.eq(requisition_line_id)),
         )
-        .execute(&mut self.connection.connection)?;
+        .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<RequisitionLineRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionLineRow>, RepositoryError> {
         let result = requisition_line_dsl::requisition_line
             .filter(requisition_line_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn sync_upsert_one(&mut self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
+    pub fn sync_upsert_one(&self, row: &RequisitionLineRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         self.toggle_is_sync_update(&row.id, true)?;
 
@@ -129,11 +122,11 @@ impl<'a> RequisitionLineRowRepository<'a> {
     }
 
     #[cfg(test)]
-    fn find_is_sync_update_by_id(&mut self, id: &str) -> Result<Option<bool>, RepositoryError> {
+    fn find_is_sync_update_by_id(&self, id: &str) -> Result<Option<bool>, RepositoryError> {
         let result = requisition_line_is_sync_update::table
             .find(id)
             .select(requisition_line_is_sync_update::dsl::is_sync_update)
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -142,11 +135,11 @@ impl<'a> RequisitionLineRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct RequisitionLineRowDelete(pub String);
 impl Delete for RequisitionLineRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         RequisitionLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             RequisitionLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
@@ -155,12 +148,12 @@ impl Delete for RequisitionLineRowDelete {
 }
 
 impl Upsert for RequisitionLineRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         RequisitionLineRowRepository::new(con).sync_upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             RequisitionLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -179,7 +172,7 @@ mod test {
 
     #[actix_rt::test]
     async fn requisition_line_is_sync_update() {
-        let (_, mut connection, _, _) = setup_all_with_data(
+        let (_, connection, _, _) = setup_all_with_data(
             "requisition_line",
             MockDataInserts::none().names().stores().units().items(),
             MockData {
@@ -189,7 +182,7 @@ mod test {
         )
         .await;
 
-        let mut repo = RequisitionLineRowRepository::new(&mut connection);
+        let repo = RequisitionLineRowRepository::new(&connection);
 
         let row = mock_request_draft_requisition_all_fields().lines[0].clone();
         let row2 = mock_request_draft_requisition_all_fields().lines[1].clone();

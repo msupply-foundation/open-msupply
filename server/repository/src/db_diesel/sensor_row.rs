@@ -81,11 +81,11 @@ impl Default for SensorRow {
     }
 }
 pub struct SensorRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> SensorRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         SensorRowRepository { connection }
     }
 
@@ -101,40 +101,40 @@ impl<'a> SensorRowRepository<'a> {
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn _upsert_one(&mut self, row: &SensorRow) -> Result<(), RepositoryError> {
+    pub fn _upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
         diesel::replace_into(sensor_dsl::sensor)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn upsert_one(&mut self, row: &SensorRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &SensorRow) -> Result<(), RepositoryError> {
         self._upsert_one(row)?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SensorRow>, RepositoryError> {
         let result = sensor_dsl::sensor
             .filter(sensor_dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<SensorRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<SensorRow>, RepositoryError> {
         Ok(sensor_dsl::sensor
             .filter(sensor_dsl::id.eq_any(ids))
-            .load(&mut self.connection.connection)?)
+            .load(self.connection.lock().connection())?)
     }
 }
 
 impl Upsert for SensorRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         SensorRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             SensorRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))

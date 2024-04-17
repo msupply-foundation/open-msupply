@@ -40,36 +40,38 @@ impl AssetClassFilter {
 }
 
 pub struct AssetClassRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> AssetClassRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         AssetClassRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<AssetClassFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<AssetClassFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         filter: AssetClassFilter,
     ) -> Result<Option<AssetClassRow>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: AssetClassFilter,
     ) -> Result<Vec<AssetClassRow>, RepositoryError> {
         self.query(Pagination::all(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<AssetClassFilter>,
         sort: Option<AssetClassSort>,
@@ -96,7 +98,7 @@ impl<'a> AssetClassRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<AssetClassRow>(&mut self.connection.connection)?;
+        let result = final_query.load::<AssetClassRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

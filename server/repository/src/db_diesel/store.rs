@@ -76,29 +76,31 @@ impl StoreFilter {
 }
 
 pub struct StoreRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> StoreRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         StoreRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<StoreFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
-    pub fn query_one(&mut self, filter: StoreFilter) -> Result<Option<Store>, RepositoryError> {
+    pub fn query_one(&self, filter: StoreFilter) -> Result<Option<Store>, RepositoryError> {
         Ok(self.query_by_filter(filter)?.pop())
     }
 
-    pub fn query_by_filter(&mut self, filter: StoreFilter) -> Result<Vec<Store>, RepositoryError> {
+    pub fn query_by_filter(&self, filter: StoreFilter) -> Result<Vec<Store>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<StoreFilter>,
         sort: Option<StoreSort>,
@@ -123,7 +125,7 @@ impl<'a> StoreRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<StoreJoin>(&mut self.connection.connection)?;
+            .load::<StoreJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

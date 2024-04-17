@@ -94,26 +94,28 @@ impl ItemFilter {
 type ItemAndUnit = (ItemRow, Option<UnitRow>);
 
 pub struct ItemRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ItemRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ItemRepository { connection }
     }
 
     pub fn count(
-        &mut self,
+        &self,
         store_id: String,
         filter: Option<ItemFilter>,
     ) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(store_id, filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_one(
-        &mut self,
+        &self,
         store_id: Option<String>,
         filter: ItemFilter,
     ) -> Result<Option<Item>, RepositoryError> {
@@ -121,7 +123,7 @@ impl<'a> ItemRepository<'a> {
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: ItemFilter,
         store_id: Option<String>,
     ) -> Result<Vec<Item>, RepositoryError> {
@@ -129,7 +131,7 @@ impl<'a> ItemRepository<'a> {
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ItemFilter>,
         sort: Option<ItemSort>,
@@ -163,7 +165,7 @@ impl<'a> ItemRepository<'a> {
         //     diesel::debug_query::<DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<ItemAndUnit>(&mut self.connection.connection)?;
+        let result = final_query.load::<ItemAndUnit>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -306,7 +308,7 @@ mod tests {
         }
 
         let default_page_size = usize::try_from(DEFAULT_PAGINATION_LIMIT).unwrap();
-        let mut item_query_repository = ItemRepository::new(&mut storage_connection);
+        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         // Test
         // .count()
@@ -385,7 +387,7 @@ mod tests {
                 .full_master_list(),
         )
         .await;
-        let mut item_query_repository = ItemRepository::new(&mut storage_connection);
+        let item_query_repository = ItemRepository::new(&mut storage_connection);
 
         // test any id filter:
         let results = item_query_repository
@@ -624,9 +626,9 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_item_query_sort() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_item_query_sort", MockDataInserts::all()).await;
-        let mut repo = ItemRepository::new(&mut connection);
+        let repo = ItemRepository::new(&connection);
 
         let mut items = repo.query(Pagination::new(), None, None, None).unwrap();
 

@@ -42,8 +42,8 @@ pub(crate) async fn setup_with_version(
     let (connection_manager, collection) = if db_path.starts_with("file:") {
         // memory mode
         let connection_manager = create_db(db_settings, version.clone());
-        let mut connection = connection_manager.connection().unwrap();
-        let collection = insert_all_mock_data(&mut connection, inserts).await;
+        let connection = connection_manager.connection().unwrap();
+        let collection = insert_all_mock_data(&connection, inserts).await;
         (connection_manager, collection)
     } else {
         // cache db template
@@ -88,9 +88,9 @@ pub(crate) async fn setup_with_version(
         let template_settings = get_test_db_settings(&template_name);
         if !Path::new(&template_settings.database_name).exists() {
             let connection_manager = create_db(&template_settings, version.clone());
-            let mut connection = connection_manager.connection().unwrap();
+            let connection = connection_manager.connection().unwrap();
             if cache_all_mock_data {
-                insert_all_mock_data(&mut connection, inserts.clone()).await;
+                insert_all_mock_data(&connection, inserts.clone()).await;
             }
         }
         drop(guard);
@@ -107,8 +107,8 @@ pub(crate) async fn setup_with_version(
 
         let connection_manager = connection_manager(db_settings);
         let collection = if !cache_all_mock_data {
-            let mut connection = connection_manager.connection().unwrap();
-            insert_all_mock_data(&mut connection, inserts).await
+            let connection = connection_manager.connection().unwrap();
+            insert_all_mock_data(&connection, inserts).await
         } else {
             all_mock_data()
         };
@@ -147,11 +147,11 @@ fn create_db(db_settings: &DatabaseSettings, version: Option<Version>) -> Storag
     }
 
     let connection_manager = connection_manager(db_settings);
-    let mut connection = connection_manager
+    let connection = connection_manager
         .connection()
         .expect("Failed to connect to database");
 
-    migrate(&mut connection, version).unwrap();
+    migrate(&connection, version).unwrap();
 
     connection_manager
 }

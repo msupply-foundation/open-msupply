@@ -29,68 +29,68 @@ pub struct MasterListLineRow {
 }
 
 pub struct MasterListLineRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> MasterListLineRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         MasterListLineRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::insert_into(master_list_line)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &MasterListLineRow) -> Result<(), RepositoryError> {
         diesel::replace_into(master_list_line)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub async fn find_one_by_id(
-        &mut self,
+        &self,
         line_id: &str,
     ) -> Result<MasterListLineRow, RepositoryError> {
         let result = master_list_line
             .filter(id.eq(line_id))
-            .first(&mut self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_one_by_id_option(
-        &mut self,
+        &self,
         line_id: &str,
     ) -> Result<Option<MasterListLineRow>, RepositoryError> {
         let result = master_list_line
             .filter(id.eq(line_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn delete(&mut self, line_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, line_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(master_list_line.filter(id.eq(line_id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
 
 impl Upsert for MasterListLineRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         MasterListLineRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             MasterListLineRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))
@@ -101,11 +101,11 @@ impl Upsert for MasterListLineRow {
 #[derive(Debug, Clone)]
 pub struct MasterListLineRowDelete(pub String);
 impl Delete for MasterListLineRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         MasterListLineRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             MasterListLineRowRepository::new(con).find_one_by_id_option(&self.0),
             Ok(None)

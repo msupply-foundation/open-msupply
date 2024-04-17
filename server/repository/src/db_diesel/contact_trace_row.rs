@@ -127,37 +127,37 @@ impl ContactTraceRow {
 }
 
 pub struct ContactTraceRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ContactTraceRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ContactTraceRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
             .on_conflict(contact_trace::dsl::id)
             .do_update()
             .set(row.to_raw())
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub async fn insert_one(&mut self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
+    pub async fn insert_one(&self, row: &ContactTraceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(contact_trace::dsl::contact_trace)
             .values(row.to_raw())
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
@@ -181,7 +181,7 @@ mod tests {
     // This trivial looking test has been added to test name_id -> name_link_id changes
     #[actix_rt::test]
     async fn test_contact_trace_name_links() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             test_db::setup_all("test_contact_trace_name_links", MockDataInserts::all()).await;
 
         let patient_link = mock_merged_patient_name_link();
@@ -204,7 +204,7 @@ mod tests {
             store_id: Some(mock_store_a().id),
             relationship: Some("rel".to_string()),
         };
-        ContactTraceRowRepository::new(&mut connection)
+        ContactTraceRowRepository::new(&connection)
             .upsert_one(&row)
             .unwrap();
 
@@ -212,7 +212,7 @@ mod tests {
         let mut expected = row;
         expected.patient_id = patient_link.name_id.clone();
         expected.contact_patient_id = Some(patient_link.name_id.clone());
-        let contact_trace = ContactTraceRepository::new(&mut connection)
+        let contact_trace = ContactTraceRepository::new(&connection)
             .query(Pagination::all(), None, None)
             .unwrap()
             .pop()

@@ -52,47 +52,47 @@ pub struct UserAccountRow {
 }
 
 pub struct UserAccountRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> UserAccountRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         UserAccountRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account_dsl::user_account)
             .values(row)
             .on_conflict(user_account_dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &UserAccountRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::replace_into(user_account_dsl::user_account)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn insert_one(&mut self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
+    pub fn insert_one(&self, user_account_row: &UserAccountRow) -> Result<(), RepositoryError> {
         diesel::insert_into(user_account_dsl::user_account)
             .values(user_account_row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     pub fn find_one_by_id(
-        &mut self,
+        &self,
         account_id: &str,
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq(account_id))
-            .first(&mut self.connection.connection);
+            .first(self.connection.lock().connection());
         match result {
             Ok(row) => Ok(Some(row)),
             Err(err) => match err {
@@ -103,12 +103,12 @@ impl<'a> UserAccountRowRepository<'a> {
     }
 
     pub fn find_one_by_user_name(
-        &mut self,
+        &self,
         username: &str,
     ) -> Result<Option<UserAccountRow>, RepositoryError> {
         let result: Result<UserAccountRow, diesel::result::Error> = user_account_dsl::user_account
             .filter(lower(user_account_dsl::username).eq(lower(username)))
-            .first(&mut self.connection.connection);
+            .first(self.connection.lock().connection());
 
         match result {
             Ok(row) => Ok(Some(row)),
@@ -119,31 +119,28 @@ impl<'a> UserAccountRowRepository<'a> {
         }
     }
 
-    pub fn find_many_by_id(
-        &mut self,
-        ids: &[String],
-    ) -> Result<Vec<UserAccountRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account_dsl::user_account
             .filter(user_account_dsl::id.eq_any(ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
-    pub fn delete_by_id(&mut self, id: &str) -> Result<usize, RepositoryError> {
+    pub fn delete_by_id(&self, id: &str) -> Result<usize, RepositoryError> {
         let result = diesel::delete(user_account_dsl::user_account)
             .filter(user_account_dsl::id.eq(id))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(result)
     }
 }
 
 impl Upsert for UserAccountRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         UserAccountRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             UserAccountRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
@@ -162,10 +159,10 @@ mod test {
 
     #[actix_rt::test]
     async fn user_row_language_enum() {
-        let (_, mut connection, _, _) =
+        let (_, connection, _, _) =
             setup_all("user_row_language_enum", MockDataInserts::none()).await;
 
-        let mut repo = UserAccountRowRepository::new(&mut connection);
+        let repo = UserAccountRowRepository::new(&connection);
         // Try upsert all variants of Language, confirm that diesel enums match postgres
         for variant in Language::iter() {
             let id = format!("{:?}", variant);

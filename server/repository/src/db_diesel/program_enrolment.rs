@@ -107,32 +107,31 @@ type BoxedProgramEnrolmentQuery = IntoBoxed<
 >;
 
 pub struct ProgramEnrolmentRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramEnrolmentRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramEnrolmentRepository { connection }
     }
 
-    pub fn count(
-        &mut self,
-        filter: Option<ProgramEnrolmentFilter>,
-    ) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ProgramEnrolmentFilter>) -> Result<i64, RepositoryError> {
         let query = Self::create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: ProgramEnrolmentFilter,
     ) -> Result<Vec<ProgramEnrolment>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ProgramEnrolmentFilter>,
         sort: Option<ProgramEnrolmentSort>,
@@ -164,7 +163,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ProgramEnrolmentJoin>(&mut self.connection.connection)?;
+            .load::<ProgramEnrolmentJoin>(self.connection.lock().connection())?;
         let result = result
             .into_iter()
             .map(|(row, program_row, (_, patient_row))| ProgramEnrolment {
@@ -219,7 +218,7 @@ impl<'a> ProgramEnrolmentRepository<'a> {
     }
 
     pub fn find_one_by_program_id_and_patient(
-        &mut self,
+        &self,
         program_id: &str,
         patient_id: &str,
     ) -> Result<Option<ProgramEnrolment>, RepositoryError> {

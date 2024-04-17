@@ -151,74 +151,74 @@ impl Default for InvoiceRow {
 }
 
 pub struct InvoiceRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> InvoiceRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         InvoiceRowRepository { connection }
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &InvoiceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
         diesel::insert_into(invoice)
             .values(row)
             .on_conflict(id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &InvoiceRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &InvoiceRow) -> Result<(), RepositoryError> {
         diesel::replace_into(invoice)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn delete(&mut self, invoice_id: &str) -> Result<(), RepositoryError> {
+    pub fn delete(&self, invoice_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(invoice.filter(id.eq(invoice_id)))
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
-    pub fn find_one_by_id(&mut self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
+    pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
-            .first(&mut self.connection.connection);
+            .first(self.connection.lock().connection());
         result.map_err(RepositoryError::from)
     }
 
     // TODO replace find_one_by_id with this one
     pub fn find_one_by_id_option(
-        &mut self,
+        &self,
         invoice_id: &str,
     ) -> Result<Option<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
-    pub fn find_many_by_id(&mut self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq_any(ids))
-            .load(&mut self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 
     pub fn find_max_invoice_number(
-        &mut self,
+        &self,
         r#type: InvoiceRowType,
         store: &str,
     ) -> Result<Option<i64>, RepositoryError> {
         let result = invoice
             .filter(type_.eq(r#type).and(store_id.eq(store)))
             .select(max(invoice_number))
-            .first(&mut self.connection.connection)?;
+            .first(self.connection.lock().connection())?;
         Ok(result)
     }
 }
@@ -226,11 +226,11 @@ impl<'a> InvoiceRowRepository<'a> {
 #[derive(Debug, Clone)]
 pub struct InvoiceRowDelete(pub String);
 impl Delete for InvoiceRowDelete {
-    fn delete(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         InvoiceRowRepository::new(con).delete(&self.0)
     }
     // Test only
-    fn assert_deleted(&self, con: &mut StorageConnection) {
+    fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
             InvoiceRowRepository::new(con).find_one_by_id_option(&self.0),
             Ok(None)
@@ -239,12 +239,12 @@ impl Delete for InvoiceRowDelete {
 }
 
 impl Upsert for InvoiceRow {
-    fn upsert_sync(&self, con: &mut StorageConnection) -> Result<(), RepositoryError> {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
         InvoiceRowRepository::new(con).upsert_one(self)
     }
 
     // Test only
-    fn assert_upserted(&self, con: &mut StorageConnection) {
+    fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
             InvoiceRowRepository::new(con).find_one_by_id_option(&self.id),
             Ok(Some(self.clone()))

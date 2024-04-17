@@ -26,29 +26,31 @@ pub struct FormSchemaFilter {
 pub type FormSchemaSort = Sort<FormSchemaSortField>;
 
 pub struct FormSchemaRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> FormSchemaRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         FormSchemaRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<FormSchemaFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<FormSchemaFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
 
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: FormSchemaFilter,
     ) -> Result<Vec<FormSchema>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<FormSchemaFilter>,
         sort: Option<FormSchemaSort>,
@@ -68,7 +70,7 @@ impl<'a> FormSchemaRepository<'a> {
         let rows = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<FormSchemaRow>(&mut self.connection.connection)?;
+            .load::<FormSchemaRow>(self.connection.lock().connection())?;
 
         let mut result = Vec::<FormSchemaJson>::new();
         for row in rows {

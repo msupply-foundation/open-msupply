@@ -32,28 +32,30 @@ pub enum ReturnReasonSortField {
 pub type ReturnReasonSort = Sort<ReturnReasonSortField>;
 
 pub struct ReturnReasonRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ReturnReasonRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ReturnReasonRepository { connection }
     }
 
-    pub fn count(&mut self, filter: Option<ReturnReasonFilter>) -> Result<i64, RepositoryError> {
+    pub fn count(&self, filter: Option<ReturnReasonFilter>) -> Result<i64, RepositoryError> {
         let query = create_filtered_query(filter);
-        Ok(query.count().get_result(&mut self.connection.connection)?)
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
     }
 
     pub fn query_by_filter(
-        &mut self,
+        &self,
         filter: ReturnReasonFilter,
     ) -> Result<Vec<ReturnReason>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 
     pub fn query(
-        &mut self,
+        &self,
         pagination: Pagination,
         filter: Option<ReturnReasonFilter>,
         sort: Option<ReturnReasonSort>,
@@ -73,7 +75,7 @@ impl<'a> ReturnReasonRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<ReturnReasonRow>(&mut self.connection.connection)?;
+            .load::<ReturnReasonRow>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }

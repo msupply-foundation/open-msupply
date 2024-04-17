@@ -48,41 +48,38 @@ pub struct ProgramEnrolmentRow {
 }
 
 pub struct ProgramEnrolmentRowRepository<'a> {
-    connection: &'a mut StorageConnection,
+    connection: &'a StorageConnection,
 }
 
 impl<'a> ProgramEnrolmentRowRepository<'a> {
-    pub fn new(connection: &'a mut StorageConnection) -> Self {
+    pub fn new(connection: &'a StorageConnection) -> Self {
         ProgramEnrolmentRowRepository { connection }
     }
 
-    pub fn find_one_by_id(
-        &mut self,
-        id: &str,
-    ) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<ProgramEnrolmentRow>, RepositoryError> {
         let result = program_enrolment::dsl::program_enrolment
             .filter(program_enrolment::dsl::id.eq(id))
-            .first(&mut self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
 
     #[cfg(feature = "postgres")]
-    pub fn upsert_one(&mut self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::insert_into(program_enrolment::dsl::program_enrolment)
             .values(row)
             .on_conflict(program_enrolment::dsl::id)
             .do_update()
             .set(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
     #[cfg(not(feature = "postgres"))]
-    pub fn upsert_one(&mut self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, row: &ProgramEnrolmentRow) -> Result<(), RepositoryError> {
         diesel::replace_into(program_enrolment::dsl::program_enrolment)
             .values(row)
-            .execute(&mut self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }
