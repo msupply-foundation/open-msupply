@@ -71,50 +71,66 @@ export const parseLogStatus = (
 
 export const importEquipmentToCsvWithErrors = (
   assets: Partial<ImportRow & LineNumber>[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  isCentralServer: boolean
 ) => {
-  const fields: string[] = [
-    t('label.asset-number'),
-    t('label.catalogue-item-code'),
-    t('label.asset-notes'),
-    t('label.serial'),
-    t('label.installation-date'),
-    t('label.line-number'),
-    t('label.error-message'),
-  ];
+  const fields: string[] = [];
+  fields.push(t('label.asset-number'));
+  fields.push(t('label.catalogue-item-code'));
 
-  const data = assets.map(node => [
-    node.assetNumber,
-    node.catalogueItemCode,
-    node.notes,
-    node.serialNumber,
-    node.installationDate,
-    node.lineNumber,
-    node.errorMessage,
-  ]);
+  if (isCentralServer) {
+    fields.push(t('label.store'));
+  }
 
+  fields.push(t('label.asset-notes'));
+  fields.push(t('label.serial'));
+  fields.push(t('label.installation-date'));
+  fields.push(t('label.line-number'));
+  fields.push(t('label.error-message'));
+
+  const data = assets.map(node => {
+    const mapped: (string | number | null | undefined)[] = [
+      node.assetNumber,
+      node.catalogueItemCode,
+    ];
+    if (isCentralServer) mapped.push(node.store?.code);
+    mapped.push(node.notes);
+    mapped.push(node.serialNumber);
+    mapped.push(node.installationDate);
+    mapped.push(node.lineNumber);
+    mapped.push(node.errorMessage);
+    return mapped;
+  });
   return Formatter.csv({ fields, data });
 };
 
 export const importEquipmentToCsv = (
   assets: Partial<ImportRow>[],
-  t: TypedTFunction<LocaleKey>
+  t: TypedTFunction<LocaleKey>,
+  isCentralServer: boolean = false
 ) => {
   const fields: string[] = [
     t('label.asset-number'),
     t('label.catalogue-item-code'),
-    t('label.asset-notes'),
-    t('label.serial'),
-    t('label.installation-date'),
   ];
+  if (isCentralServer) {
+    fields.push(t('label.store'));
+  }
+  fields.push(t('label.asset-notes'));
+  fields.push(t('label.serial'));
+  fields.push(t('label.installation-date'));
 
-  const data = assets.map(node => [
-    node.assetNumber,
-    node.catalogueItemCode,
-    node.notes,
-    node.serialNumber,
-    node.installationDate,
-  ]);
+  const data = assets.map(node => {
+    const row = [
+      node.assetNumber,
+      node.catalogueItemCode,
+      node.notes,
+      node.serialNumber,
+      node.installationDate,
+    ];
+    if (isCentralServer) row.push(node.store?.code);
+    return row;
+  });
 
   return Formatter.csv({ fields, data });
 };
