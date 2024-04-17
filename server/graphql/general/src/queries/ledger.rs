@@ -45,19 +45,35 @@ pub struct LedgerNode {
 
 #[Object]
 impl LedgerNode {
-    pub async fn quantity(&self) -> &i64 {
-        &self.ledger.quantity
-    }
-
-    pub async fn name(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.ledger.datetime, Utc)
-    }
-
-    pub async fn invoice_type(&self) -> InvoiceNodeType {
-        InvoiceNodeType::from_domain(&self.ledger.invoice_type)
+    pub async fn id(&self) -> &String {
+        &self.ledger.id
     }
     pub async fn stock_line_id(&self) -> &String {
         &self.ledger.stock_line_id
+    }
+    pub async fn item_id(&self) -> &String {
+        &self.ledger.item_id
+    }
+    pub async fn store_id(&self) -> &String {
+        &self.ledger.store_id
+    }
+    pub async fn datetime(&self) -> DateTime<Utc> {
+        DateTime::<Utc>::from_naive_utc_and_offset(self.ledger.datetime, Utc)
+    }
+    pub async fn name(&self) -> &String {
+        &self.ledger.name
+    }
+    pub async fn quantity(&self) -> &i64 {
+        &self.ledger.quantity
+    }
+    pub async fn invoice_type(&self) -> InvoiceNodeType {
+        InvoiceNodeType::from_domain(&self.ledger.invoice_type)
+    }
+    pub async fn inventory_adjustment_reason(&self) -> &Option<String> {
+        &self.ledger.inventory_adjustment_reason
+    }
+    pub async fn return_reason(&self) -> &Option<String> {
+        &self.ledger.return_reason
     }
 }
 
