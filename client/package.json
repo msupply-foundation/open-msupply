@@ -5,6 +5,7 @@
   "sideEffects": false,
   "private": true,
   "scripts": {
+    "start-local-features": "yarn start-local -- -- --env $1",
     "start-local": "lerna run --scope @openmsupply-client/* --parallel start-local",
     "start-remote": "lerna run --scope @openmsupply-client/* --parallel start-remote",
     "start": "yarn start-remote",
