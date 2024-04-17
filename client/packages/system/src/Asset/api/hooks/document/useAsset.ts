@@ -1,5 +1,4 @@
-import { useParams } from '@openmsupply-client/common';
-import { useQuery } from 'react-query';
+import { useParams, useQuery } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssetId = () => {
