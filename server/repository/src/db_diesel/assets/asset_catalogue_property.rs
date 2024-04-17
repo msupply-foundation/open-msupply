@@ -14,13 +14,13 @@ pub struct AssetCataloguePropertyFilter {
     pub category_id: Option<EqualFilter<String>>,
 }
 
-pub struct AssetCatalogueItemPropertyRepository<'a> {
+pub struct AssetCataloguePropertyRepository<'a> {
     connection: &'a StorageConnection,
 }
 
-impl<'a> AssetCatalogueItemPropertyRepository<'a> {
+impl<'a> AssetCataloguePropertyRepository<'a> {
     pub fn new(connection: &'a StorageConnection) -> Self {
-        AssetCatalogueItemPropertyRepository { connection }
+        AssetCataloguePropertyRepository { connection }
     }
 
     pub fn query(
