@@ -148,7 +148,6 @@ pub struct Mutations(
     pub CentralServerMutations,
     pub AssetMutations,
     pub AssetLogMutations,
-    pub AssetCatalogueMutations,
     pub InventoryAdjustmentMutations,
 );
 
@@ -173,7 +172,6 @@ impl Mutations {
             CentralServerMutations,
             AssetMutations,
             AssetLogMutations,
-            AssetCatalogueMutations,
             InventoryAdjustmentMutations,
         )
     }

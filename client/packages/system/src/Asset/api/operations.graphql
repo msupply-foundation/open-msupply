@@ -153,9 +153,32 @@ mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
     assetCatalogue {
       deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
         ... on DeleteResponse {
+          __typename
           id
         }
         ... on DeleteAssetCatalogueItemError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation insertAssetCatalogueItemProperty(
+  $storeId: String!
+  $input: InsertAssetCatalogueItemPropertyInput!
+) {
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItemProperty(input: $input, storeId: $storeId) {
+        ... on AssetCatalogueItemPropertyNode {
+          __typename
+          id
+        }
+        ... on InsertAssetCatalogueItemPropertyError {
+          __typename
           error {
             description
           }

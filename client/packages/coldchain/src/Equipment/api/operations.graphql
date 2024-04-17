@@ -175,19 +175,6 @@ query labelPrinterSettings {
   }
 }
 
-query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
-  assetCatalogueProperties(filter: $filter) {
-    ... on AssetCataloguePropertyConnector {
-      nodes {
-        name
-        valueType
-        allowedValues
-        id
-      }
-    }
-  }
-}
-
 mutation deleteAsset($assetId: String!, $storeId: String!) {
   deleteAsset(assetId: $assetId, storeId: $storeId) {
     ... on DeleteResponse {
@@ -241,23 +228,6 @@ mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
       assetId
     }
     ... on InsertAssetLogError {
-      __typename
-      error {
-        description
-      }
-    }
-  }
-}
-
-mutation insertAssetCatalogueItemProperty(
-  $storeId: String!
-  $input: InsertAssetCatalogueItemPropertyInput!
-) {
-  insertAssetCatalogueItemProperty(input: $input, storeId: $storeId) {
-    ... on AssetCatalogueItemPropertyNode {
-      id
-    }
-    ... on InsertAssetCatalogueItemPropertyError {
       __typename
       error {
         description
