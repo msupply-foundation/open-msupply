@@ -8,7 +8,7 @@ use graphql_core::{
 
 use graphql_types::types::InvoiceNodeType;
 use repository::{
-    ledger::{LedgerFilter, LedgerRow},
+    ledger::{LedgerFilter, LedgerRow, LedgerSort, LedgerSortField},
     EqualFilter,
 };
 
@@ -18,23 +18,20 @@ use service::{
     ListResult,
 };
 
-// #[derive(Enum, Copy, Clone, PartialEq, Eq)]
-// #[graphql(remote = "repository::LedgerSortField")]
-// #[graphql(rename_ledgers = "camelCase")]
-// pub enum LedgerSortFieldInput {
-//     Name,
-//     Code,
-//     Type,
-// }
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum LedgerSortFieldInput {
+    Id,
+}
 
-// #[derive(InputObject)]
-// pub struct LedgerSortInput {
-//     /// Sort query result by `key`
-//     key: LedgerSortFieldInput,
-//     /// Sort query result is sorted descending or ascending (if not provided the default is
-//     /// ascending)
-//     desc: Option<bool>,
-// }
+#[derive(InputObject)]
+pub struct LedgerSortInput {
+    /// Sort query result by `key`
+    key: LedgerSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
 
 #[derive(InputObject, Clone)]
 pub struct LedgerFilterInput {
@@ -59,6 +56,9 @@ impl LedgerNode {
     pub async fn invoice_type(&self) -> InvoiceNodeType {
         InvoiceNodeType::from_domain(&self.ledger.invoice_type)
     }
+    pub async fn stock_line_id(&self) -> &String {
+        &self.ledger.stock_line_id
+    }
 }
 
 #[derive(SimpleObject)]
@@ -77,7 +77,7 @@ pub fn ledger(
     store_id: String,
     // page: Option<PaginationInput>,
     filter: Option<LedgerFilterInput>,
-    // sort: Option<Vec<LedgerortInput>>,
+    sort: Option<Vec<LedgerSortInput>>,
 ) -> Result<LedgerResponse> {
     validate_auth(
         ctx,
@@ -94,8 +94,8 @@ pub fn ledger(
         // page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
         // Currently only one sort option is supported, use the first from the list.
-        // sort.and_then(|mut sort_list| sort_list.pop())
-        //     .map(|sort| sort.to_domain()),
+        sort.and_then(|mut sort_list| sort_list.pop())
+            .map(|sort| sort.to_domain()),
         // &store_id,
     )
     .map_err(StandardGraphqlError::from_list_error)?;
@@ -127,19 +127,20 @@ impl LedgerFilterInput {
     }
 }
 
-// impl LedgerSortInput {
-//     pub fn to_domain(self) -> LedgerSort {
-//         use LedgerSortField as to;
-//         use LedgerSortFieldInput as from;
-//         let key = match self.key {
-//             from::Name => to::Name,
-//             from::Code => to::Code,
-//             from::Type => to::Type,
-//         };
+impl LedgerSortInput {
+    pub fn to_domain(self) -> LedgerSort {
+        use LedgerSortField as to;
+        use LedgerSortFieldInput as from;
+        let key = match self.key {
+            from::Id => to::Id,
+            // from::Name => to::Name,
+            // from::Code => to::Code,
+            // from::Type => to::Type,
+        };
 
-//         LedgerSort {
-//             key,
-//             desc: self.desc,
-//         }
-//     }
-// }
+        LedgerSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
