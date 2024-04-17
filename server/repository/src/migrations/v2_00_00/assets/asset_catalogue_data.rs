@@ -21,20 +21,20 @@ INSERT INTO asset_category (id, name, asset_class_id) VALUES ('02cbea92-d5bf-483
     sql!(
         connection,
         r#"
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('99906787-bd32-4ec2-bd2d-ba5547622bb0', 'Cold box - long range', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('bbab79fe-8112-4f90-aabc-726f88a15410', 'Cold box - short range', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('c9017d0b-ce3c-40f1-9986-e4afe0185ddd', 'Combined ice-lined refrigerator / freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('0e58c7e6-e603-4513-a088-79fe9f08e22f', 'Combined refrigerator / freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('710194ce-8c6c-47ab-b7fe-13ba8cf091f6', 'Freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('05d9a49a-4d94-4e00-9728-2549ad323544', 'Ultralow freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('4d7302b8-e47b-42fd-ac5e-4645376aa349', 'Ice-lined refrigerator', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('f2f2756e-0c15-49fd-bb01-3f45886e4870', 'Long-term passive storage device', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('fd79171f-5da8-4801-b299-9426f34310a8', 'Refrigerator', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'Solar direct drive combined refrigerator / freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('525b614e-f9f5-4866-9553-24bad2b7b826', 'Solar direct drive freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('d4434727-dc35-437d-a5fa-739a491381b7', 'Solar direct drive refrigerator', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'Vaccine carrier', '02cbea92-d5bf-4832-863b-c04e093a7760');
-INSERT INTO asset_type (id, name, asset_category_id) VALUES ('ad3405e1-ef3f-4159-b693-0e7d5fa6a814', 'Vaccine carrier - freeze-free', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');       "#,
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('99906787-bd32-4ec2-bd2d-ba5547622bb0', 'Cold box - long range', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('bbab79fe-8112-4f90-aabc-726f88a15410', 'Cold box - short range', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('c9017d0b-ce3c-40f1-9986-e4afe0185ddd', 'Combined ice-lined refrigerator / freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('0e58c7e6-e603-4513-a088-79fe9f08e22f', 'Combined refrigerator / freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('710194ce-8c6c-47ab-b7fe-13ba8cf091f6', 'Freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('05d9a49a-4d94-4e00-9728-2549ad323544', 'Ultralow freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('4d7302b8-e47b-42fd-ac5e-4645376aa349', 'Ice-lined refrigerator', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('f2f2756e-0c15-49fd-bb01-3f45886e4870', 'Long-term passive storage device', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('fd79171f-5da8-4801-b299-9426f34310a8', 'Refrigerator', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('8b32f63b-28ac-4c31-94dc-55ddb5aa131a', 'Solar direct drive combined refrigerator / freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('525b614e-f9f5-4866-9553-24bad2b7b826', 'Solar direct drive freezer', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('d4434727-dc35-437d-a5fa-739a491381b7', 'Solar direct drive refrigerator', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('0b7ac91d-6cfa-49bb-bac2-35e7cb31564b', 'Vaccine carrier', '02cbea92-d5bf-4832-863b-c04e093a7760');
+INSERT INTO asset_catalogue_type (id, name, asset_category_id) VALUES ('ad3405e1-ef3f-4159-b693-0e7d5fa6a814', 'Vaccine carrier - freeze-free', 'b7eea921-5a14-44cc-b5e0-ea59f2e9cb8d');       "#,
     )?;
 
     // Asset Catalogue Items (PQS)

@@ -12,7 +12,7 @@ use crate::{
 };
 
 use crate::asset_category_row::asset_category::dsl as asset_category_dsl;
-use crate::asset_type_row::asset_type::dsl as asset_type_dsl;
+use crate::asset_type_row::asset_catalogue_type::dsl as asset_type_dsl;
 
 use crate::{repository_error::RepositoryError, DBType, EqualFilter, Pagination, Sort};
 use diesel::prelude::*;
@@ -131,7 +131,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
 
         // or filter need to be applied before and filters
         if search.is_some() {
-            let mut sub_query = asset_type_dsl::asset_type
+            let mut sub_query = asset_type_dsl::asset_catalogue_type
                 .select(asset_type_dsl::id)
                 .into_boxed();
             apply_string_filter!(sub_query, search.clone(), asset_type_dsl::name);
@@ -172,7 +172,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
         }
 
         if let Some(r#type_filter) = r#type {
-            let mut sub_query = asset_type_dsl::asset_type
+            let mut sub_query = asset_type_dsl::asset_catalogue_type
                 .select(asset_type_dsl::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(r#type_filter), asset_type_dsl::name);
