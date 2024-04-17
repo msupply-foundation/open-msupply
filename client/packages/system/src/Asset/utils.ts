@@ -2,7 +2,7 @@ import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetCatalogueItemFragment } from './api';
 import { Formatter } from '@common/utils';
 import { ImportRow, LineNumber } from './ImportCatalogueItem';
-import { StatusType } from '@common/types';
+import { AssetLogStatusInput, StatusType } from '@common/types';
 
 function assetCatalogueItemFields(t: TypedTFunction<LocaleKey>) {
   return [
@@ -56,6 +56,29 @@ export const parseStatus = (
   }
 };
 
+const parseInputStatus = (
+  status: AssetLogStatusInput,
+  t: TypedTFunction<LocaleKey>
+) => {
+  switch (status) {
+    case AssetLogStatusInput.Decommissioned: {
+      return t('status.decommissioned', { ns: 'coldchain' });
+    }
+    case AssetLogStatusInput.Functioning: {
+      return t('status.functioning', { ns: 'coldchain' });
+    }
+    case AssetLogStatusInput.FunctioningButNeedsAttention: {
+      return t('status.functioning-but-needs-attention', { ns: 'coldchain' });
+    }
+    case AssetLogStatusInput.NotFunctioning: {
+      return t('status.not-functioning', { ns: 'coldchain' });
+    }
+    case AssetLogStatusInput.NotInUse: {
+      return t('status.not-in-use', { ns: 'coldchain' });
+    }
+  }
+};
+
 export const mapIdNameToOptions = (items: { id: string; name: string }[]) =>
   items.map(item => ({
     label: item.name,
@@ -82,4 +105,18 @@ export const importRowToCsv = (
   ]);
 
   return Formatter.csv({ fields, data });
+};
+
+export const getStatusInputOptions = (t: TypedTFunction<LocaleKey>) => {
+  return Object.values(AssetLogStatusInput).map(status => ({
+    label: parseInputStatus(status, t),
+    value: status,
+  }));
+};
+
+export const getStatusOptions = (t: TypedTFunction<LocaleKey>) => {
+  return Object.values(StatusType).map(status => ({
+    label: parseStatus(status, t),
+    value: status,
+  }));
 };

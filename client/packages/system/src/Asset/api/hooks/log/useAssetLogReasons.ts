@@ -1,7 +1,11 @@
-import { useQuery, useUrlQueryParams } from '@openmsupply-client/common';
+import {
+  FilterByWithBoolean,
+  useQuery,
+  useUrlQueryParams,
+} from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
-export const useAssetLogReasons = (storeId?: string | undefined) => {
+export const useAssetLogReasons = (filter?: FilterByWithBoolean) => {
   const { queryParams } = useUrlQueryParams({
     filters: [
       { key: 'id' },
@@ -10,9 +14,10 @@ export const useAssetLogReasons = (storeId?: string | undefined) => {
     ],
   });
 
-  const id = storeId ?? '';
+  const filterBy = filter ?? queryParams.filterBy ?? undefined;
   const api = useAssetApi();
-  return useQuery(api.keys.logReasons(queryParams), () =>
-    api.get.logReasons(id, queryParams.filterBy ?? undefined)
+
+  return useQuery(api.keys.logReasonsList({ ...queryParams, filterBy }), () =>
+    api.get.logReasons(filterBy)
   );
 };

@@ -12,7 +12,7 @@ export const useAssetLogReasonInsert = () => {
   return useMutation(
     async (log: InsertAssetLogReasonInput) => api.insertLogReason(log),
     {
-      onSettled: () => queryClient.invalidateQueries(api.keys.base()),
+      onSettled: () => queryClient.invalidateQueries(api.keys.logReasons()),
       onError: e => {
         console.error(e);
       },

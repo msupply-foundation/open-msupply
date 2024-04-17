@@ -15,6 +15,7 @@ import {
   AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import { useAssetData } from '../../api';
+import { getStatusInputOptions } from '../../utils';
 
 type AssetLogStatus = {
   label: string;
@@ -119,30 +120,7 @@ export const LogReasonCreateModal: FC<LogReasonCreateModalProps> = ({
               }
               width="150px"
               popperMinWidth={150}
-              options={[
-                {
-                  label: t('status.decommissioned', { ns: 'coldchain' }),
-                  value: AssetLogStatusInput.Decommissioned,
-                },
-                {
-                  label: t('status.functioning', { ns: 'coldchain' }),
-                  value: AssetLogStatusInput.Functioning,
-                },
-                {
-                  label: t('status.functioning-but-needs-attention', {
-                    ns: 'coldchain',
-                  }),
-                  value: AssetLogStatusInput.FunctioningButNeedsAttention,
-                },
-                {
-                  label: t('status.not-functioning', { ns: 'coldchain' }),
-                  value: AssetLogStatusInput.NotFunctioning,
-                },
-                {
-                  label: t('status.not-in-use', { ns: 'coldchain' }),
-                  value: AssetLogStatusInput.NotInUse,
-                },
-              ]}
+              options={getStatusInputOptions(t)}
               onChange={updateStatus}
             />
           </Box>

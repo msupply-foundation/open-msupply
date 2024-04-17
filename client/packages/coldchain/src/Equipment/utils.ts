@@ -69,18 +69,6 @@ export const parseLogStatus = (
   }
 };
 
-export const translateReason = (
-  reason: string | null | undefined,
-  _t: TypedTFunction<LocaleKey>
-) => {
-  const defaultValue = '-';
-  if (reason === null || reason === undefined) return defaultValue;
-
-  const parsed = reason;
-
-  return parsed === undefined ? defaultValue : parsed;
-};
-
 export const importEquipmentToCsvWithErrors = (
   assets: Partial<ImportRow & LineNumber>[],
   t: TypedTFunction<LocaleKey>

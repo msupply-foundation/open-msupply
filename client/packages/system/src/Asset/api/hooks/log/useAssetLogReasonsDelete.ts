@@ -6,6 +6,6 @@ export const useAssetLogReasonsDelete = () => {
   const queryClient = useQueryClient();
 
   return useMutation(api.deleteLogReason, {
-    onSuccess: () => queryClient.invalidateQueries(api.keys.base()),
+    onSuccess: () => queryClient.invalidateQueries(api.keys.logReasons()),
   });
 };

@@ -12,10 +12,11 @@ import {
   ButtonWithIcon,
   UploadIcon,
   ToggleState,
-  InfoIcon,
   useIsCentralServerApi,
   RouteBuilder,
   useNavigate,
+  BaseButton,
+  EditIcon,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { useAssetData } from '../api';
@@ -69,9 +70,8 @@ export const AppBarButtonsComponent = ({
           {t('button.export')}
         </LoadingButton>
         {isCentralServer && (
-          <LoadingButton
-            isLoading={false}
-            startIcon={<InfoIcon />}
+          <BaseButton
+            startIcon={<EditIcon />}
             variant="outlined"
             onClick={() => {
               navigate(path);
@@ -79,7 +79,7 @@ export const AppBarButtonsComponent = ({
             disabled={EnvUtils.platform === Platform.Android}
           >
             {t('button.manage-asset-log-reasons')}
-          </LoadingButton>
+          </BaseButton>
         )}
       </Grid>
     </AppBarButtonsPortal>
