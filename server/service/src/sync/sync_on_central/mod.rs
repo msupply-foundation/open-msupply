@@ -154,8 +154,6 @@ pub async fn push(
 
         integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(response.site_id))
             .await
-            // TODO map to IntegrationError once implemented
-            // .map_err(Error::IntegrationError)?;
             .map_err(|e| {
                 Error::OtherServerError(
                     "Error integrating records: ".to_string() + e.to_string().as_str(),

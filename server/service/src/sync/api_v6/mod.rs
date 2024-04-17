@@ -36,8 +36,6 @@ pub enum SyncParsedErrorV6 {
     ParsingSyncRecordError(String),
     #[error("Integration in progress")]
     IntegrationInProgress,
-    // #[error("Error while integrating records")]
-    // IntegrationError(anyhow::Error),
 }
 
 impl From<SyncApiError> for SyncParsedErrorV6 {
