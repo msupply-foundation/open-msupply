@@ -91,6 +91,22 @@ query assetCategories(
   }
 }
 
+query assetCatalogueProperties($filter: AssetCataloguePropertyFilterInput) {
+  assetCatalogueProperties(filter: $filter) {
+    ... on AssetCataloguePropertyConnector {
+      nodes {
+        allowedValues
+        name
+        id
+        valueType
+      }
+    }
+    ... on NodeError {
+      __typename
+    }
+  }
+}
+
 mutation insertAssetCatalogueItem(
   $input: InsertAssetCatalogueItemInput!
   $storeId: String!
