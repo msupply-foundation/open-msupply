@@ -1,10 +1,11 @@
+use repository::sync_file_reference_row::SyncFileReferenceRow;
+use reqwest::Response;
 use std::io::Error;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
-
 use util::uuid::uuid;
-
 #[derive(Debug, PartialEq)]
 pub struct StaticFile {
     pub id: String,
@@ -14,6 +15,7 @@ pub struct StaticFile {
 
 const STATIC_FILE_DIR: &str = "static_files";
 
+#[derive(Clone)]
 pub enum StaticFileCategory {
     Temporary,
     SyncFile(String, String), // Files to be synced (Table Name, Record Id)
@@ -35,6 +37,8 @@ impl StaticFileCategory {
 /// by id within a certain time frame.
 ///
 /// Old files are deleted automatically.
+
+#[derive(Debug, Clone)]
 pub struct StaticFileService {
     pub dir: PathBuf,
     /// Time [s] for how long static files are kept before they are discarded
@@ -72,8 +76,12 @@ impl StaticFileService {
         &self,
         file_name: &str,
         category: &StaticFileCategory,
+        file_id: Option<String>,
     ) -> anyhow::Result<StaticFile> {
-        let id = uuid();
+        let id = match file_id {
+            Some(file_id) => file_id,
+            None => uuid(),
+        };
 
         let dir = self.dir.join(category.to_path_buf());
 
@@ -114,6 +122,7 @@ impl StaticFileService {
     ) -> anyhow::Result<Option<StaticFile>> {
         let dir = self.dir.join(category.to_path_buf());
         std::fs::create_dir_all(&dir)?;
+
         // clean up the static file directory
         match category {
             StaticFileCategory::Temporary => {
@@ -134,6 +143,34 @@ impl StaticFileService {
             name: original_file_name,
             path: file_path.to_string_lossy().to_string(),
         }))
+    }
+
+    pub async fn download_file_in_chunks(
+        &self,
+        sync_file: &SyncFileReferenceRow,
+        mut download_response: Response,
+    ) -> anyhow::Result<StaticFile> {
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
+
+        let file =
+            self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
+        let mut file_handle = tokio::fs::File::create(&file.path).await?;
+
+        loop {
+            log::info!("Downloading chunk");
+            let Some(bytes) = download_response.chunk().await? else {
+                break;
+            };
+
+            tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
+        }
+
+        Ok(StaticFile {
+            id: sync_file.id.clone(),
+            name: sync_file.file_name.clone(),
+            path: file.path.to_string(),
+        })
     }
 }
 
