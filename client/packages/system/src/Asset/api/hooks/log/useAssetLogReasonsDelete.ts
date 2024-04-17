@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from 'packages/common/src';
+import { useMutation, useQueryClient } from '@openmsupply-client/common/src';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssetLogReasonsDelete = () => {
