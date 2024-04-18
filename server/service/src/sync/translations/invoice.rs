@@ -58,6 +58,7 @@ pub enum LegacyTransactStatus {
     Cn,
     /// finalised
     #[serde(rename = "fn")]
+    #[serde(alias = "FN")]
     Fn,
     /// Bucket to catch all other variants
     /// E.g. "wp" (web processed), "wp" (web finalised),
@@ -262,9 +263,11 @@ impl SyncTranslation for InvoiceTranslation {
             "Unsupported invoice type: {:?} for {:?} mode",
             data._type, data.mode
         )))?;
-        let invoice_status = invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(
-            format!("Unsupported invoice type: {:?}", data._type),
-        ))?;
+        let invoice_status =
+            invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(format!(
+                "Unsupported invoice status: {:?} (type: {:?})",
+                data.status, data._type
+            )))?;
         let mapping = map_legacy(&invoice_type, &data);
 
         let currency_id = match data.currency_id {

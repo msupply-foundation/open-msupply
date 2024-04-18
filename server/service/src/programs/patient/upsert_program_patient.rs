@@ -49,7 +49,7 @@ pub fn upsert_program_patient(
             let (patient, registry) = validate(ctx, service_provider, &input)?;
             let patient_id = patient.id.clone();
             let doc = generate(user_id, &patient, registry, input)?;
-            let doc_timestamp = doc.datetime.clone();
+            let doc_timestamp = doc.datetime;
 
             // Update the name first because the doc is referring the name id
             if is_latest_doc(&ctx.connection, &doc.name, doc.datetime)
@@ -66,7 +66,7 @@ pub fn upsert_program_patient(
 
             service_provider
                 .document_service
-                .update_document(ctx, doc, &vec![PATIENT_TYPE.to_string()])
+                .update_document(ctx, doc, &[PATIENT_TYPE.to_string()])
                 .map_err(|err| match err {
                     DocumentInsertError::NotAllowedToMutateDocument => {
                         UpdateProgramPatientError::InternalError(
@@ -99,7 +99,7 @@ pub fn upsert_program_patient(
                     None,
                     None,
                 )
-                .map_err(|err| UpdateProgramPatientError::DatabaseError(err))?
+                .map_err(UpdateProgramPatientError::DatabaseError)?
                 .rows
                 .pop()
                 .ok_or(UpdateProgramPatientError::InternalError(
@@ -125,7 +125,7 @@ fn generate(
 ) -> Result<RawDocument, RepositoryError> {
     Ok(RawDocument {
         name: main_patient_doc_name(&patient.id),
-        parents: input.parent.map(|p| vec![p]).unwrap_or(vec![]),
+        parents: input.parent.map(|p| vec![p]).unwrap_or_default(),
         author: user_id.to_string(),
         datetime: Utc::now(),
         r#type: PATIENT_TYPE.to_string(),

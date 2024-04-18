@@ -137,3 +137,24 @@ mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
     }
   }
 }
+
+mutation createInventoryAdjustment(
+  $input: CreateInventoryAdjustmentInput!
+  $storeId: String!
+) {
+  createInventoryAdjustment(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+  }
+}
+
+mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
+  insertStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
+    }
+  }
+}

@@ -65,6 +65,22 @@ export type InsertRepackMutationVariables = Types.Exact<{
 
 export type InsertRepackMutation = { __typename: 'Mutations', insertRepack: { __typename: 'InsertRepackError', error: { __typename: 'CannotHaveFractionalPack', description: string } | { __typename: 'StockLineReducedBelowZero', description: string } } | { __typename: 'InvoiceNode', id: string } };
 
+export type CreateInventoryAdjustmentMutationVariables = Types.Exact<{
+  input: Types.CreateInventoryAdjustmentInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type CreateInventoryAdjustmentMutation = { __typename: 'Mutations', createInventoryAdjustment: { __typename: 'CreateInventoryAdjustmentError' } | { __typename: 'InvoiceNode', id: string } };
+
+export type InsertStockLineMutationVariables = Types.Exact<{
+  input: Types.InsertStockLineInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsertStockLineMutation = { __typename: 'Mutations', insertStockLine: { __typename: 'InsertStockLineError' } | { __typename: 'StockLineNode', availableNumberOfPacks: number, batch?: string | null, costPricePerPack: number, expiryDate?: string | null, id: string, itemId: string, locationId?: string | null, locationName?: string | null, onHold: boolean, packSize: number, sellPricePerPack: number, storeId: string, totalNumberOfPacks: number, supplierName?: string | null, barcode?: string | null, location?: { __typename: 'LocationNode', id: string, name: string, onHold: boolean, code: string } | null, item: { __typename: 'ItemNode', code: string, name: string, unitName?: string | null } } };
+
 export const StockLineRowFragmentDoc = gql`
     fragment StockLineRow on StockLineNode {
   availableNumberOfPacks
@@ -208,6 +224,26 @@ export const InsertRepackDocument = gql`
   }
 }
     ${InvoiceRowFragmentDoc}`;
+export const CreateInventoryAdjustmentDocument = gql`
+    mutation createInventoryAdjustment($input: CreateInventoryAdjustmentInput!, $storeId: String!) {
+  createInventoryAdjustment(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+  }
+}
+    ${InvoiceRowFragmentDoc}`;
+export const InsertStockLineDocument = gql`
+    mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
+  insertStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
+    }
+  }
+}
+    ${StockLineRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -233,6 +269,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertRepack(variables: InsertRepackMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertRepackMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertRepackMutation>(InsertRepackDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertRepack', 'mutation');
+    },
+    createInventoryAdjustment(variables: CreateInventoryAdjustmentMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CreateInventoryAdjustmentMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CreateInventoryAdjustmentMutation>(CreateInventoryAdjustmentDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'createInventoryAdjustment', 'mutation');
+    },
+    insertStockLine(variables: InsertStockLineMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertStockLineMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertStockLineMutation>(InsertStockLineDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertStockLine', 'mutation');
     }
   };
 }
@@ -337,5 +379,39 @@ export const mockRepacksByStockLineQuery = (resolver: ResponseResolver<GraphQLRe
 export const mockInsertRepackMutation = (resolver: ResponseResolver<GraphQLRequest<InsertRepackMutationVariables>, GraphQLContext<InsertRepackMutation>, any>) =>
   graphql.mutation<InsertRepackMutation, InsertRepackMutationVariables>(
     'insertRepack',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockCreateInventoryAdjustmentMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ createInventoryAdjustment })
+ *   )
+ * })
+ */
+export const mockCreateInventoryAdjustmentMutation = (resolver: ResponseResolver<GraphQLRequest<CreateInventoryAdjustmentMutationVariables>, GraphQLContext<CreateInventoryAdjustmentMutation>, any>) =>
+  graphql.mutation<CreateInventoryAdjustmentMutation, CreateInventoryAdjustmentMutationVariables>(
+    'createInventoryAdjustment',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertStockLineMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ insertStockLine })
+ *   )
+ * })
+ */
+export const mockInsertStockLineMutation = (resolver: ResponseResolver<GraphQLRequest<InsertStockLineMutationVariables>, GraphQLContext<InsertStockLineMutation>, any>) =>
+  graphql.mutation<InsertStockLineMutation, InsertStockLineMutationVariables>(
+    'insertStockLine',
     resolver
   )

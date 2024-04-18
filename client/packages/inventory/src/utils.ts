@@ -55,7 +55,7 @@ export const stocktakesToCsv = (
     t('label.status'),
     t('heading.description'),
     t('label.comment'),
-    t('label.entered'),
+    t('label.created'),
     t('label.date'),
   ];
 

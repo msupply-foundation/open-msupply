@@ -18,10 +18,18 @@ import {
   Alert,
   useIsGrouped,
   useUrlQuery,
+  RewindIcon,
+  useEditModal,
+  useNotification,
+  ArrowRightIcon,
 } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 import { useStocktake } from '../api';
+import { ReduceLinesToZeroConfirmationModal } from './ReduceLinesToZeroModal';
+import { ChangeLocationConfirmationModal } from './ChangeLocationModal';
 
 export const Toolbar = () => {
+  const { info } = useNotification();
   const { isGrouped, toggleIsGrouped } = useIsGrouped('stocktake');
   const [localIsGrouped, setLocalIsGrouped] = React.useState(isGrouped);
   const isDisabled = useStocktake.utils.isDisabled();
@@ -30,6 +38,7 @@ export const Toolbar = () => {
     useStocktake.document.fields(['isLocked', 'description', 'stocktakeDate']);
   const onDelete = useStocktake.line.deleteSelected();
   const [descriptionBuffer, setDescriptionBuffer] = useBufferState(description);
+
   const infoMessage = isLocked
     ? t('messages.on-hold-stock-take')
     : t('messages.finalised-stock-take');
@@ -47,6 +56,33 @@ export const Toolbar = () => {
   const setItemFilter = (itemFilter: string) =>
     updateQuery({ itemCodeOrName: itemFilter });
 
+  const reduceModal = useEditModal();
+  const changeLocationModal = useEditModal();
+
+  const selectedRows = useStocktake.utils.selectedRows();
+
+  const checkSelected = () => {
+    if (!selectedRows.length) {
+      const selectRowsSnack = info(t('messages.no-lines-selected'));
+      selectRowsSnack();
+      return;
+    }
+    if (isDisabled) {
+      const isLockedSnack = info(t('error.is-locked'));
+      isLockedSnack();
+      return;
+    }
+    return true;
+  };
+
+  const openReduceToZeroModal = () => {
+    if (checkSelected()) reduceModal.onOpen();
+  };
+
+  const openChangeLocationModal = () => {
+    if (checkSelected()) changeLocationModal.onOpen();
+  };
+
   return (
     <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
       <Grid
@@ -56,6 +92,18 @@ export const Toolbar = () => {
         flex={1}
         alignItems="flex-end"
       >
+        {reduceModal.isOpen && (
+          <ReduceLinesToZeroConfirmationModal
+            isOpen={reduceModal.isOpen}
+            onCancel={reduceModal.onClose}
+          />
+        )}
+        {changeLocationModal.isOpen && (
+          <ChangeLocationConfirmationModal
+            isOpen={changeLocationModal.isOpen}
+            onCancel={changeLocationModal.onClose}
+          />
+        )}
         <Grid item display="flex" flex={1} flexDirection="column" gap={1}>
           <InputWithLabelRow
             label={t('heading.description')}
@@ -87,7 +135,6 @@ export const Toolbar = () => {
           />
           {isDisabled && <Alert severity="info">{infoMessage}</Alert>}
         </Grid>
-
         <Grid
           item
           display="flex"
@@ -112,6 +159,22 @@ export const Toolbar = () => {
             />
           </Box>
           <DropdownMenu disabled={isDisabled} label={t('label.actions')}>
+            {Environment.FEATURE_INVENTORY_ADJUSTMENTS && (
+              <>
+                <DropdownMenuItem
+                  IconComponent={ArrowRightIcon}
+                  onClick={openChangeLocationModal}
+                >
+                  {t('button.change-location')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  IconComponent={RewindIcon}
+                  onClick={openReduceToZeroModal}
+                >
+                  {t('button.reduce-lines-to-zero')}
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
             </DropdownMenuItem>
