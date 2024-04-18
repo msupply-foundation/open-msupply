@@ -80,5 +80,6 @@
   "label.packs-to-repack": "Número de paquetes a reempacar",
   "messages.no-repack-detail": "Selecciona una línea para ver los detalles de un reempaque o haz clic en \"Nuevo\" para crear un nuevo reempaque",
   "messages.repack-log-info": "Reempacado desde la línea de stock",
-  "title.repack-details": "Detalles de reempaque"
+  "title.repack-details": "Detalles de reempaque",
+  "messages.confirm-delete-stocktake": "Esto eliminará permanentemente la toma de Inventario #{{number}}"
 }

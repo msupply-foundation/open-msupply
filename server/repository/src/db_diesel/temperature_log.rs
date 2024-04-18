@@ -148,7 +148,6 @@ impl<'a> TemperatureLogRepository<'a> {
                     .select(location_dsl::id.nullable());
                 query = query.filter(temperature_log_dsl::location_id.eq_any(location_ids));
             }
-
             if temperature_breach.is_some() {
                 let temperature_breach_ids =
                     TemperatureBreachRepository::create_filtered_query(temperature_breach)

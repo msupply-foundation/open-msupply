@@ -4,9 +4,10 @@ use diesel::r2d2::{ConnectionManager, Pool};
 use log::info;
 use serde;
 
-//WAIT up to 5 SECONDS for lock in SQLITE (https://www.sqlite.org/c3ref/busy_timeout.html)
+// Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
+// A locked DB results in the "SQLite database is locked" error.
 #[cfg(not(feature = "postgres"))]
-const SQLITE_LOCKWAIT_MS: u32 = 5000;
+const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 const SQLITE_WAL_PRAGMA: &str = "PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;";

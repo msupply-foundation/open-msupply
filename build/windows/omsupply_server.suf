@@ -802,7 +802,7 @@ end
 </Screen>
 <Screen>
 <Type>170</Type>
-<Name>omSupply Configuration</Name>
+<Name>Open mSupply Configuration</Name>
 <BannerStyle>2</BannerStyle>
 <TemplateName>Custom</TemplateName>
 <OverrideProjTheme>0</OverrideProjTheme>
@@ -909,13 +909,13 @@ end
 <ScreenH>362</ScreenH>
 </StyleData>
 <CustomCtrlList>
-<CustomCtrlInfo Left="27" Top="85" Width="150" Height="18" ID="211"/>
-<CustomCtrlInfo Left="179" Top="85" Width="82" Height="18" ID="821"/>
-<CustomCtrlInfo Left="27" Top="151" Width="150" Height="18" ID="212"/>
-<CustomCtrlInfo Left="27" Top="180" Width="95" Height="19" ID="604"/>
-<CustomCtrlInfo Left="27" Top="202" Width="95" Height="19" ID="605"/>
+<CustomCtrlInfo Left="27" Top="85" Width="173" Height="18" ID="211"/>
+<CustomCtrlInfo Left="200" Top="85" Width="82" Height="18" ID="821"/>
+<CustomCtrlInfo Left="27" Top="151" Width="167" Height="18" ID="212"/>
+<CustomCtrlInfo Left="200" Top="149" Width="95" Height="19" ID="604"/>
+<CustomCtrlInfo Left="200" Top="174" Width="95" Height="19" ID="605"/>
 <CustomCtrlInfo Left="27" Top="118" Width="150" Height="18" ID="213"/>
-<CustomCtrlInfo Left="179" Top="117" Width="200" Height="18" ID="824"/>
+<CustomCtrlInfo Left="200" Top="117" Width="200" Height="18" ID="824"/>
 </CustomCtrlList>
 <Events>
 <Event>
@@ -1158,23 +1158,23 @@ end
 </Language>
 <Messages>
 <IDS_WINDOW_TITLE>%window_title%</IDS_WINDOW_TITLE>
-<IDS_HEADER_TEXT>omSupply Configuration</IDS_HEADER_TEXT>
-<IDS_SUBHEADER_TEXT>Settings required in order to configure the omSupply.</IDS_SUBHEADER_TEXT>
+<IDS_HEADER_TEXT>Open mSupply Configuration</IDS_HEADER_TEXT>
+<IDS_SUBHEADER_TEXT>Settings required in order to configure the Open mSupply.</IDS_SUBHEADER_TEXT>
 <IDS_CTRL_BUTTON_NEXT>&amp;Next &gt;</IDS_CTRL_BUTTON_NEXT>
 <IDS_CTRL_BUTTON_BACK>&lt; &amp;Back</IDS_CTRL_BUTTON_BACK>
 <IDS_CTRL_BUTTON_CANCEL>&amp;Cancel</IDS_CTRL_BUTTON_CANCEL>
 <IDS_CTRL_BUTTON_HELP>&amp;Help</IDS_CTRL_BUTTON_HELP>
 <IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
-<IDS_CTRL_STATICTEXT_LABEL_01>OmSupply server port number:</IDS_CTRL_STATICTEXT_LABEL_01>
+<IDS_CTRL_STATICTEXT_LABEL_01>Open mSupply server port number:</IDS_CTRL_STATICTEXT_LABEL_01>
 <IDS_CTRL_EDIT_01>8000</IDS_CTRL_EDIT_01>
 <IDS_CTRL_EDIT_MASK_01/>
 <IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_01>
-<IDS_CTRL_STATICTEXT_LABEL_02>Setup omSupply server with:</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_02>Setup Open mSupply server with:</IDS_CTRL_STATICTEXT_LABEL_02>
 <IDS_CTRL_RADIO_BUTTON_01>Sqlite</IDS_CTRL_RADIO_BUTTON_01>
 <IDS_CTRL_RADIO_BUTTON_02>PostgresSQL</IDS_CTRL_RADIO_BUTTON_02>
-<IDS_CTRL_STATICTEXT_LABEL_03>OmSupply database:</IDS_CTRL_STATICTEXT_LABEL_03>
-<IDS_CTRL_EDIT_04>omsupply-database</IDS_CTRL_EDIT_04>
+<IDS_CTRL_STATICTEXT_LABEL_03>Open mSupply database:</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_EDIT_04>open-msupply-database</IDS_CTRL_EDIT_04>
 <IDS_CTRL_EDIT_MASK_04/>
 <IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04> </IDS_CTRL_EDIT_MASK_PLACE_HOLDER_04>
 </Messages>
@@ -4067,7 +4067,7 @@ g_HandleSystemReboot();
 <Name>On Startup</Name>
 <Args/>
 <Script>-- Set window title
-local sWindowTitle = "omSupply Server Setup";
+local sWindowTitle = "Open mSupply Server Setup";
 local omSupplyServerPath = "";
 
 -- Check if the omSupply Server has been already installed on this machine
@@ -4077,7 +4077,7 @@ end
 
 hasOmsupplyInstalled = File.DoesExist(omSupplyServerPath);
 if hasOmsupplyInstalled then
-	sWindowTitle = "omSupply Server Upgrader Setup";
+	sWindowTitle = "Open mSupply Server Upgrader Setup";
 end
 
 SessionVar.Set("%window_title%", sWindowTitle);
@@ -4339,7 +4339,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Server</Value>
+<Value>Open mSupply Server</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -4432,7 +4432,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Server_replace with version.exe</Filename>
+<Filename>Open_mSupply_Server_replace with version.exe</Filename>
 <OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>

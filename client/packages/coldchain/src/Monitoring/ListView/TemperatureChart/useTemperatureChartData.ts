@@ -1,19 +1,26 @@
 import { useTheme } from '@common/styles';
-import { useTemperatureLog } from '../../api';
 import { DateUtils } from '@common/intl';
-import { NumUtils } from '@common/utils';
-import { Log, Sensor } from './types';
+import { Sensor } from './types';
 import { useUrlQueryParams } from '@common/hooks';
+import {
+  TemperatureChartFragment,
+  useTemperatureChart,
+} from '../../api/TemperatureChart';
+import { TemperatureLogFilterInput } from '@common/types';
 
 const MAX_DATA_POINTS = 30;
 const BREACH_RANGE = 2;
+const BREACH_MIN = 2;
+const BREACH_MAX = 8;
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
-  const { filter, queryParams } = useUrlQueryParams({
-    initialSort: { key: 'datetime', dir: 'desc' },
+  const { filter } = useUrlQueryParams({
     filters: [
-      { key: 'datetime', condition: 'between' },
+      {
+        key: 'datetime',
+        condition: 'between',
+      },
       {
         key: 'sensor.name',
       },
@@ -27,97 +34,80 @@ export const useTemperatureChartData = () => {
     ],
   });
 
-  const { data, isLoading } = useTemperatureLog.document.list(queryParams);
-  const sensors: Sensor[] = [];
-  const logs: Log[] = [];
-  let minTemperature = 2;
-  let maxTemperature = 8;
+  // passing the datetime filters as well as the to/from datetimes
+  // will result in no data
+  const { datetime, ...filterBy } =
+    filter?.filterBy as TemperatureLogFilterInput;
 
-  data?.nodes?.forEach(
-    ({ datetime, temperature, sensor, temperatureBreach }) => {
-      if (!sensor) return;
-      let sensorIndex = sensors.findIndex(s => s.id === sensor.id);
-      if (sensorIndex === -1) {
-        sensors.push({
-          colour:
-            theme.palette.chart.lines[
-              sensors.length % theme.palette.chart.lines.length
-            ],
-          id: sensor.id,
-          name: sensor.name,
-          logs: [],
-        });
-        sensorIndex = sensors.length - 1;
+  let fromDatetime = DateUtils.startOfToday().toISOString();
+  let toDatetime = DateUtils.endOfDay(new Date()).toISOString();
+
+  if (!!datetime && typeof datetime === 'object') {
+    const hasAfterOrEqualTo =
+      'afterOrEqualTo' in datetime && !!datetime['afterOrEqualTo'];
+
+    if (hasAfterOrEqualTo) fromDatetime = String(datetime['afterOrEqualTo']);
+
+    if ('beforeOrEqualTo' in datetime && !!datetime['beforeOrEqualTo']) {
+      toDatetime = String(datetime['beforeOrEqualTo']);
+
+      // the 'from' date needs to be before the 'to' date
+      // if this isn't the case, and if 'from' is not set,
+      // then set to a day prior to the 'to' date
+      if (fromDatetime >= toDatetime && !hasAfterOrEqualTo) {
+        fromDatetime = DateUtils.addDays(
+          new Date(toDatetime),
+          -1
+        ).toISOString();
       }
-
-      const date = DateUtils.getDateOrNull(datetime);
-      if (date === null) return;
-
-      logs.push({
-        date: date.getTime(),
-        sensorId: sensor.id,
-        temperature,
-        breach: temperatureBreach ? { row: temperatureBreach, sensor } : null,
-      });
-      minTemperature = Math.min(minTemperature, temperature);
-      maxTemperature = Math.max(maxTemperature, temperature);
     }
-  );
-  const numOfDataPoints = Math.min(MAX_DATA_POINTS, logs.length);
-  // the fromDate & toDate will come from filters
-  // until that is implemented, we will use the first and last log dates
-  const sortedLogs = logs.sort((a, b) => a.date - b.date);
-  const fromDate = sortedLogs[0]?.date ?? new Date().getTime();
-  const toDate =
-    sortedLogs[sortedLogs.length - 1]?.date ?? new Date().getTime();
+  }
 
-  const chartDuration = toDate - fromDate;
-  const periodDuration = chartDuration / numOfDataPoints;
-
-  sensors.forEach(sensor => {
-    sensor.logs = Array.from({
-      length: numOfDataPoints,
-    }).map((_, i) => {
-      const periodStart = new Date(fromDate + periodDuration * i).getTime();
-      const periodEnd = new Date(fromDate + periodDuration * (i + 1)).getTime();
-      const logsInPeriod = logs.filter(
-        l =>
-          l.date >= periodStart &&
-          l.date <= periodEnd &&
-          l.sensorId === sensor.id
-      );
-      const breach = logsInPeriod.filter(l => !!l.breach)[0]?.breach || null;
-
-      return {
-        date: periodStart,
-        breach,
-        sensorId: sensor.id,
-        temperature: logsInPeriod.length
-          ? NumUtils.round(
-              logsInPeriod.reduce((sum, l) => sum + (l.temperature ?? 0), 0) /
-                logsInPeriod.length,
-              2
-            )
-          : null,
-      };
-    });
+  const { data, isLoading } = useTemperatureChart.document.chart({
+    filterBy,
+    numberOfDataPoints: MAX_DATA_POINTS,
+    fromDatetime,
+    toDatetime,
   });
 
-  // creating the full range of datetimes, otherwise it isn't showing full width
-  const breachConfig = {
-    cold: Array.from({
-      length: numOfDataPoints,
-    }).map((_, i) => ({
-      date: new Date(fromDate + periodDuration * i),
-      temperature: 2,
-    })),
-    hot: Array.from({
-      length: numOfDataPoints,
-    }).map((_, i) => ({
-      date: new Date(fromDate + periodDuration * i),
-      temperature: 8,
-    })),
-  };
+  let minTemperature = BREACH_MIN;
+  let maxTemperature = BREACH_MAX;
+
+  const sensors: Sensor[] =
+    data?.sensors?.map(({ points, sensor }, index) => {
+      const id = sensor?.id ?? '';
+      const name = sensor?.name ?? '';
+      const colour =
+        theme.palette.chart.lines[index % theme.palette.chart.lines.length];
+
+      return {
+        colour,
+        id,
+        name,
+        logs: points.map(({ midPoint, temperature, breachIds }) => {
+          if (temperature) {
+            minTemperature = Math.min(minTemperature, temperature);
+            maxTemperature = Math.max(maxTemperature, temperature);
+          }
+          const breach = !!breachIds?.length
+            ? {
+                sensor: { id, name },
+                ids: breachIds,
+              }
+            : null;
+
+          return {
+            breach,
+            date: DateUtils.getDateOrNull(midPoint)?.getTime() ?? 0,
+            sensorId: id,
+            temperature: temperature ?? null,
+          };
+        }),
+      };
+    }) ?? [];
+
+  const breachConfig = generateBreachConfig(data);
+
   const yAxisDomain: [number, number] = [
     minTemperature - BREACH_RANGE,
     maxTemperature + BREACH_RANGE,
@@ -125,10 +115,32 @@ export const useTemperatureChartData = () => {
 
   return {
     filter,
-    hasData: logs.length > 0,
+    hasData: !!data?.sensors && data?.sensors?.length > 0,
     isLoading,
     sensors,
     breachConfig,
     yAxisDomain,
+  };
+};
+
+const generateBreachConfig = (data?: TemperatureChartFragment) => {
+  if (!data || !data.sensors || data.sensors.length === 0)
+    return { cold: [], hot: [] };
+
+  const sensor = data.sensors[0];
+
+  if (!sensor || !sensor.points || sensor.points.length === 0)
+    return { cold: [], hot: [] };
+
+  // creating the full range of datetimes, otherwise it isn't showing full width
+  return {
+    cold: sensor.points.map(({ midPoint }) => ({
+      date: new Date(midPoint),
+      temperature: BREACH_MIN,
+    })),
+    hot: sensor.points.map(({ midPoint }) => ({
+      date: new Date(midPoint),
+      temperature: BREACH_MAX,
+    })),
   };
 };

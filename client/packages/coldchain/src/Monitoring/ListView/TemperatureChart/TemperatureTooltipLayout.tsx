@@ -40,7 +40,10 @@ export const TemperatureTooltipLayout = ({
         .filter(entry => entry !== null)
         .map(entry => (
           <Box display="flex" key={entry?.id} gap={2}>
-            <Typography sx={{ color: entry?.color, flex: 1 }} component="div">
+            <Typography
+              sx={{ color: entry?.color, flex: 1, textAlign: 'left' }}
+              component="div"
+            >
               {entry?.name}
             </Typography>
             <Typography

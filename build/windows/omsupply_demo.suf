@@ -2199,10 +2199,10 @@ end
 <IDS_CTRL_STATICTEXT_TOPINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_BOTTOMINSTRUCTIONS/>
 <IDS_CTRL_STATICTEXT_LABEL_01>Installation Successful</IDS_CTRL_STATICTEXT_LABEL_01>
-<IDS_CTRL_STATICTEXT_LABEL_02>The omSupply Server v1.0.0-IS22-windows-instalers-test6 installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
-<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for trying the omSupply server demo!</IDS_CTRL_STATICTEXT_LABEL_03>
+<IDS_CTRL_STATICTEXT_LABEL_02>The Open mSupply Server v1.0.0-IS22-windows-instalers-test6 installation is complete.</IDS_CTRL_STATICTEXT_LABEL_02>
+<IDS_CTRL_STATICTEXT_LABEL_03>Thank you for trying the Open mSupply server demo!</IDS_CTRL_STATICTEXT_LABEL_03>
 <IDS_CTRL_STATICTEXT_LABEL_04>Please click Finish to exit this installer.</IDS_CTRL_STATICTEXT_LABEL_04>
-<IDS_CTRL_CHECK_BOX_01>Launch omSupply</IDS_CTRL_CHECK_BOX_01>
+<IDS_CTRL_CHECK_BOX_01>Launch Open mSupply</IDS_CTRL_CHECK_BOX_01>
 </Messages>
 </SUF70Messages>
 </Languages>
@@ -3417,7 +3417,7 @@ g_HandleSystemReboot();
 <SUF7SessionVars>
 <SessionVar>
 <Name>%ProductName%</Name>
-<Value>omSupply Server Demo</Value>
+<Value>Open mSupply Server Demo</Value>
 <Type>1</Type>
 </SessionVar>
 <SessionVar>
@@ -3470,7 +3470,7 @@ g_HandleSystemReboot();
 <PostBuildProg/>
 <PostBuildCmdLine/>
 <PostBuildWait>0</PostBuildWait>
-<Filename>omSupply_Demo_replace with version.exe</Filename>
+<Filename>Open_mSupply_Demo_replace with version.exe</Filename>
 <OutputFolder>.*</OutputFolder>
 <SegmentSizeMode>0</SegmentSizeMode>
 <CustomSegSize>0</CustomSegSize>
