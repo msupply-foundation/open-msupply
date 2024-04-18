@@ -1,7 +1,7 @@
-import { useQuery } from '@openmsupply-client/common';
+import { LedgerSortFieldInput, useQuery } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../../..';
 import { LEDGER } from './keys';
-// import { useStockGraphQL } from '../useStockGraphQL';
+import { useStockGraphQL } from '../useStockGraphQL';
 
 // TO-DO:Replace with auto-gen type from graphql codegen
 export interface LedgerLine {
@@ -16,44 +16,23 @@ export interface LedgerLine {
 }
 
 export function useStockLedger(stockLine: StockLineRowFragment) {
-  //   const { stockApi, storeId } = useStockGraphQL();
+  const { stockApi, storeId } = useStockGraphQL();
 
   const queryKey = [LEDGER, stockLine.id];
-  const queryFn = async () => {
-    // TO-DO: Replace with real query
-    const exampleResult = [
-      {
-        id: 'AAAA',
-        itemId: '042B38856AB04B318FDBAEABADE932C1',
-        storeId: '7F9C518F2EBE4D96A84CE25D4D2D6131',
-        quantity: 100,
-        datetime: new Date('2023-08-29 21:01:23.923744'),
-        name: 'Tamaki Store',
-        type: 'INBOUND_SHIPMENT',
-        reason: null,
-      },
-      {
-        id: 'BBBB',
-        itemId: 'BBBB',
-        storeId: 'BBBB',
-        quantity: -546,
-        datetime: new Date('2023-06-01 03:51:56.532995'),
-        name: 'Inventory Adjustments',
-        type: 'INVENTORY_REDUCTION',
-        reason: 'Lost',
-      },
-      {
-        id: 'CCCC',
-        itemId: 'CCCC',
-        storeId: 'CCCC',
-        quantity: 100,
-        datetime: new Date('2023-06-01 03:51:56.532995'),
-        name: 'Inventory Adjustments',
-        type: 'INVENTORY_ADDITION',
-        reason: 'Found',
-      },
-    ] as LedgerLine[];
-    return exampleResult;
+  const queryFn = async (): Promise<{
+    nodes: LedgerLine[];
+    totalCount: number;
+  }> => {
+    const filter = { stockLineId: { equalTo: stockLine.id } };
+
+    const query = await stockApi.ledger({
+      storeId,
+      key: LedgerSortFieldInput.Datetime,
+      desc: true,
+      filter,
+    });
+    const { nodes, totalCount } = query?.ledger;
+    return { nodes, totalCount };
   };
 
   const query = useQuery({ queryKey, queryFn });

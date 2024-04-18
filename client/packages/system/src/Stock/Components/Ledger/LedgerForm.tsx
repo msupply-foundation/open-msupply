@@ -19,13 +19,15 @@ export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
   const { data, isLoading, isError } = useStockLedger(stockLine);
   const { columns } = useLedgerColumns();
 
+  console.log('data', data);
+
   return (
     <Box display="flex" sx={{ maxHeight: 300, overflowY: 'auto' }}>
       <TableProvider createStore={createTableStore}>
         <DataTable
           id="stockline-ledger"
           columns={columns}
-          data={data as any}
+          data={data?.nodes as any}
           isLoading={isLoading}
           isError={isError}
           noDataMessage={t('messages.no-ledger')}
