@@ -117,10 +117,12 @@ const getSteps = (
   }
 
   if (isOperational) {
+    steps.push(getStep('sync-status.push-v6', syncStatus?.pushV6));
     steps.push(getStep('sync-status.push', syncStatus?.push));
   }
 
   steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
+  steps.push(getStep('sync-status.pull-central-v6', syncStatus?.pullV6));
   steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
   steps.push(getStep('sync-status.integrate', syncStatus?.integration));
 
