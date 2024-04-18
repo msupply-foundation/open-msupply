@@ -27,7 +27,7 @@ export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
   });
 
   return (
-    <Box display="flex" sx={{ maxHeight: 300, overflowY: 'auto' }}>
+    <Box display="flex" sx={{ overflowY: 'auto' }}>
       <TableProvider createStore={createTableStore}>
         <DataTable
           id="stockline-ledger"
