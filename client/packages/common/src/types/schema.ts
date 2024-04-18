@@ -3022,6 +3022,51 @@ export enum LanguageType {
   Tetum = 'TETUM'
 }
 
+export type LedgerConnector = {
+  __typename: 'LedgerConnector';
+  nodes: Array<LedgerNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type LedgerFilterInput = {
+  stockLineId?: InputMaybe<EqualFilterStringInput>;
+};
+
+export type LedgerNode = {
+  __typename: 'LedgerNode';
+  datetime: Scalars['DateTime']['output'];
+  id: Scalars['String']['output'];
+  invoiceType: InvoiceNodeType;
+  itemId: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  quantity: Scalars['Int']['output'];
+  reason?: Maybe<Scalars['String']['output']>;
+  stockLineId: Scalars['String']['output'];
+  storeId: Scalars['String']['output'];
+};
+
+export type LedgerResponse = LedgerConnector;
+
+export enum LedgerSortFieldInput {
+  Datetime = 'datetime',
+  Id = 'id',
+  InvoiceType = 'invoiceType',
+  ItemId = 'itemId',
+  Name = 'name',
+  Quantity = 'quantity',
+  StockLineId = 'stockLineId'
+}
+
+export type LedgerSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the
+   * default is ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: LedgerSortFieldInput;
+};
+
 export type LinkPatientPatientToStoreError = {
   __typename: 'LinkPatientPatientToStoreError';
   error: LinkPatientPatientToStoreErrorInterface;
@@ -4667,6 +4712,7 @@ export type Queries = {
   labelPrinterSettings?: Maybe<LabelPrinterSettingNode>;
   lastSuccessfulUserSync: UpdateUserNode;
   latestSyncStatus?: Maybe<FullSyncStatusNode>;
+  ledger: LedgerResponse;
   /** Query omSupply "locations" entries */
   locations: LocationsResponse;
   logContents: LogNode;
@@ -4989,6 +5035,13 @@ export type QueriesItemsArgs = {
   filter?: InputMaybe<ItemFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<ItemSortInput>>;
+  storeId: Scalars['String']['input'];
+};
+
+
+export type QueriesLedgerArgs = {
+  filter?: InputMaybe<LedgerFilterInput>;
+  sort?: InputMaybe<Array<LedgerSortInput>>;
   storeId: Scalars['String']['input'];
 };
 

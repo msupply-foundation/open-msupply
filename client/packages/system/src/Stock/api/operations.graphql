@@ -86,6 +86,37 @@ query stockLine($id: String!, $storeId: String!) {
   }
 }
 
+query ledger(
+  $key: LedgerSortFieldInput!
+  $desc: Boolean
+  $filter: LedgerFilterInput
+  $storeId: String!
+) {
+  ledger(
+    storeId: $storeId
+    filter: $filter
+    # page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on LedgerConnector {
+      __typename
+      nodes {
+        __typename
+        datetime
+        id
+        invoiceType
+        itemId
+        name
+        quantity
+        reason
+        stockLineId
+        storeId
+      }
+      totalCount
+    }
+  }
+}
+
 mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
   updateStockLine(input: $input, storeId: $storeId) {
     ... on StockLineNode {
