@@ -41,6 +41,11 @@ pub(crate) enum SyncStepProgress {
     Integrate,
 }
 
+enum SyncApiErrorVariant {
+    V5(SyncApiErrorVariantV5),
+    V6(SyncApiErrorVariantV6),
+}
+
 pub struct SyncLogger<'a> {
     sync_log_repo: SyncLogRowRepository<'a>,
     row: SyncLogRow,
@@ -298,9 +303,9 @@ impl<'a> SyncLogger<'a> {
 impl SyncLogError {
     /// Map SyncError to SyncLogError, to be queried later and translated in front end
     fn from_sync_error(sync_error: &SyncError) -> Self {
-        let sync_api_error = match &sync_error {
+        match &sync_error {
             SyncError::SyncApiV6CreatingError(SyncApiV6CreatingError::CannotParseSyncUrl(_, _)) => {
-                return Self::new(SyncLogRowErrorCode::CentralV6NotConfigured, sync_error)
+                Self::new(SyncLogRowErrorCode::CentralV6NotConfigured, sync_error)
             }
 
             // Sync Api Error
@@ -315,7 +320,24 @@ impl SyncLogError {
             )
             | SyncError::RemotePushError(RemotePushError::SyncApiError(error))
             | SyncError::WaitForIntegrationError(WaitForSyncOperationError::SyncApiError(error)) => {
-                error
+                // WHYYYY HOWWW
+                // return Self::from_sync_api_error(
+                //     SyncApiErrorVariant::V5(error.source),
+                //     sync_error,
+                // );
+
+                match &error.source {
+                    SyncApiErrorVariantV5::ParsedError { source, .. } => {
+                        match v5_to_sync_log_error_code(&source.code) {
+                            Some(code) => Self::new(code, sync_error),
+                            None => Self::message_only(sync_error),
+                        }
+                    }
+                    SyncApiErrorVariantV5::ConnectionError { .. } => {
+                        Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
+                    }
+                    _ => Self::message_only(sync_error),
+                }
             }
 
             // SyncApiErrorV6
@@ -323,37 +345,44 @@ impl SyncLogError {
             | SyncError::RemotePushErrorV6(RemotePushErrorV6::SyncApiError(error))
             | SyncError::WaitForIntegrationErrorV6(WaitForSyncOperationErrorV6::SyncApiError(
                 error,
+                // )) => Self::from_sync_api_error(SyncApiErrorVariant::V6(error.source), sync_error),
             )) => match &error.source {
-                SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::LegacyServerError(error)) => {
-                    match v5_to_sync_log_error_code(&error.code) {
-                        Some(code) => return Self::new(code, sync_error),
-                        None => return Self::message_only(sync_error),
-                    }
-                }
-                // Map any connection errors
+                SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::LegacyServerError(
+                    source,
+                )) => match v5_to_sync_log_error_code(&source.code) {
+                    Some(code) => Self::new(code, sync_error),
+                    None => Self::message_only(sync_error),
+                },
                 SyncApiErrorVariantV6::ConnectionError(_) => {
-                    return Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
+                    Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
                 }
-                // Internal errors
-                _ => return Self::message_only(sync_error),
+                _ => Self::message_only(sync_error),
             },
 
             // Integration timeout reached
             SyncError::WaitForIntegrationError(_) | SyncError::WaitForIntegrationErrorV6(_) => {
-                return Self::new(SyncLogRowErrorCode::IntegrationTimeoutReached, sync_error)
+                Self::new(SyncLogRowErrorCode::IntegrationTimeoutReached, sync_error)
             }
 
             // Internal errors
-            _ => return Self::message_only(sync_error),
-        };
+            _ => Self::message_only(sync_error),
+        }
+    }
 
-        let sync_v5_error_code = match &sync_api_error.source {
-            // Map SyncErrorCodeV5 to
-            SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
-            // Important to map connection error
-            SyncApiErrorVariantV5::ConnectionError { .. } => {
+    fn from_sync_api_error(variant: SyncApiErrorVariant, sync_error: &SyncError) -> Self {
+        let sync_v5_error_code = match &variant {
+            // V5 parsing error, pull out error code
+            SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ParsedError { source, .. })
+            | SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::LegacyServerError(source),
+            )) => &source.code,
+
+            // map connection errors
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
+            | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
                 return Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
             }
+
             // Internal errors
             _ => return Self::message_only(sync_error),
         };
