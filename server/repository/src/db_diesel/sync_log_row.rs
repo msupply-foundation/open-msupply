@@ -19,6 +19,7 @@ pub enum SyncLogRowErrorCode {
     SiteAuthTimeout,
     IntegrationTimeoutReached,
     ApiVersionIncompatible,
+    CentralV6NotConfigured,
 }
 
 table! {

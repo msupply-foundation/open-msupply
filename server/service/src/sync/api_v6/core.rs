@@ -12,7 +12,7 @@ pub(crate) struct SyncApiV6 {
 
 #[derive(Error, Debug)]
 pub enum SyncApiV6CreatingError {
-    #[error("Cannot parse url while creating SyncApiV5 instance url: '{0}'")]
+    #[error("Cannot parse url while creating SyncApiV6 instance url: '{0}'")]
     CannotParseSyncUrl(String, #[source] ParseError),
     #[error("Error while creating SyncApiV6 instance")]
     Other(#[source] anyhow::Error),
