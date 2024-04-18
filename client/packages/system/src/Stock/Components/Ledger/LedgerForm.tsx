@@ -1,14 +1,15 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import {
   useTranslation,
   Box,
   TableProvider,
   createTableStore,
   DataTable,
+  SortBy,
 } from '@openmsupply-client/common';
-import { StockLineRowFragment } from '../../api';
+import { LedgerRowFragment, StockLineRowFragment } from '../../api';
 import { useStockLedger } from '../../api/hooks/useStockLedger';
-import { useLedgerColumns } from './useLedgerColumns';
+import { ColumnKey, useLedgerColumns } from './useLedgerColumns';
 
 interface LedgerFormProps {
   stockLine: StockLineRowFragment;
@@ -16,10 +17,14 @@ interface LedgerFormProps {
 export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
   const t = useTranslation('inventory');
 
-  const { data, isLoading, isError } = useStockLedger(stockLine);
-  const { columns } = useLedgerColumns();
-
-  console.log('data', data);
+  const [sortBy, setSortBy] = useState<SortBy<LedgerRowFragment>>({
+    key: ColumnKey.DateTime,
+    direction: 'desc',
+  });
+  const { data, isLoading, isError } = useStockLedger(stockLine, sortBy);
+  const { columns } = useLedgerColumns(sortBy, (key, direction) => {
+    setSortBy({ key, direction });
+  });
 
   return (
     <Box display="flex" sx={{ maxHeight: 300, overflowY: 'auto' }}>
@@ -27,7 +32,7 @@ export const LedgerForm: FC<LedgerFormProps> = ({ stockLine }) => {
         <DataTable
           id="stockline-ledger"
           columns={columns}
-          data={data?.nodes as any}
+          data={data?.nodes}
           isLoading={isLoading}
           isError={isError}
           noDataMessage={t('messages.no-ledger')}

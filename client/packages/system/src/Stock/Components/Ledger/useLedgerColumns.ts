@@ -1,10 +1,11 @@
 import {
   ColumnFormat,
+  SortBy,
   useColumns,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
-import { LedgerLine } from '../../api/hooks/useStockLedger';
+import { LedgerRowFragment } from '../../api';
 
 type MovementType =
   | 'INBOUND_SHIPMENT'
@@ -15,40 +16,74 @@ type MovementType =
   | 'INVENTORY_ADDITION'
   | 'INVENTORY_REDUCTION';
 
-export const useLedgerColumns = () => {
+export enum ColumnKey {
+  'DateTime' = 'datetime',
+  'Time' = 'time',
+  'Name' = 'name',
+  'Quantity' = 'quantity',
+  'Type' = 'type',
+  'Reason' = 'reason',
+}
+
+export const useLedgerColumns = (
+  sortBy: SortBy<LedgerRowFragment>,
+  updateSort: (sort: string, dir: 'asc' | 'desc') => void
+) => {
   const t = useTranslation('app');
   const { localisedTime } = useFormatDateTime();
 
-  const columns = useColumns<LedgerLine>([
+  const columns = useColumns<LedgerRowFragment>(
+    [
+      {
+        key: ColumnKey.DateTime,
+        label: 'label.date',
+        format: ColumnFormat.Date,
+        sortable: true,
+      },
+      {
+        key: ColumnKey.Time,
+        label: 'label.time',
+        accessor: ({ rowData }) => localisedTime(rowData.datetime),
+        sortable: false,
+      },
+      {
+        key: ColumnKey.Name,
+        label: 'label.name',
+        sortable: true,
+      },
+      {
+        key: ColumnKey.Quantity,
+        label: 'label.quantity',
+        sortable: true,
+      },
+      {
+        key: ColumnKey.Type,
+        label: 'label.type',
+        accessor: ({ rowData }) =>
+          t(getLocalisationKey(rowData.invoiceType as MovementType)),
+        sortable: true,
+      },
+      {
+        key: ColumnKey.Reason,
+        label: 'label.reason',
+        sortable: false,
+      },
+    ],
     {
-      key: 'datetime',
-      label: 'label.date',
-      format: ColumnFormat.Date,
+      sortBy,
+      onChangeSortBy: sort => {
+        updateSort(
+          sort,
+          sort === sortBy.key
+            ? sortBy.direction === 'asc'
+              ? 'desc'
+              : 'asc'
+            : 'desc'
+        );
+      },
     },
-    {
-      key: 'time',
-      label: 'label.time',
-      accessor: ({ rowData }) => localisedTime(rowData.datetime),
-    },
-    {
-      key: 'name',
-      label: 'label.name',
-    },
-    {
-      key: 'quantity',
-      label: 'label.quantity',
-    },
-    {
-      key: 'type',
-      label: 'label.type',
-      accessor: ({ rowData }) =>
-        t(getLocalisationKey(rowData.type as MovementType)),
-    },
-    {
-      key: 'reason',
-      label: 'label.reason',
-    },
-  ]);
+    [sortBy]
+  );
 
   return { columns };
 };

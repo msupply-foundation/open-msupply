@@ -48,6 +48,18 @@ fragment InvoiceRow on InvoiceNode {
   id
 }
 
+fragment LedgerRow on LedgerNode {
+  datetime
+  id
+  invoiceType
+  itemId
+  name
+  quantity
+  reason
+  stockLineId
+  storeId
+}
+
 query stockLines(
   $first: Int
   $offset: Int
@@ -102,15 +114,7 @@ query ledger(
       __typename
       nodes {
         __typename
-        datetime
-        id
-        invoiceType
-        itemId
-        name
-        quantity
-        reason
-        stockLineId
-        storeId
+        ...LedgerRow
       }
       totalCount
     }

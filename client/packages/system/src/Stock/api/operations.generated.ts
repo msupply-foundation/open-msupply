@@ -13,6 +13,8 @@ export type RepackFragment = { __typename: 'RepackNode', id: string, datetime: s
 
 export type InvoiceRowFragment = { __typename: 'InvoiceNode', id: string };
 
+export type LedgerRowFragment = { __typename: 'LedgerNode', datetime: string, id: string, invoiceType: Types.InvoiceNodeType, itemId: string, name: string, quantity: number, reason?: string | null, stockLineId: string, storeId: string };
+
 export type StockLinesQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -145,6 +147,19 @@ export const InvoiceRowFragmentDoc = gql`
   id
 }
     `;
+export const LedgerRowFragmentDoc = gql`
+    fragment LedgerRow on LedgerNode {
+  datetime
+  id
+  invoiceType
+  itemId
+  name
+  quantity
+  reason
+  stockLineId
+  storeId
+}
+    `;
 export const StockLinesDocument = gql`
     query stockLines($first: Int, $offset: Int, $key: StockLineSortFieldInput!, $desc: Boolean, $filter: StockLineFilterInput, $storeId: String!) {
   stockLines(
@@ -185,21 +200,13 @@ export const LedgerDocument = gql`
       __typename
       nodes {
         __typename
-        datetime
-        id
-        invoiceType
-        itemId
-        name
-        quantity
-        reason
-        stockLineId
-        storeId
+        ...LedgerRow
       }
       totalCount
     }
   }
 }
-    `;
+    ${LedgerRowFragmentDoc}`;
 export const UpdateStockLineDocument = gql`
     mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
   updateStockLine(input: $input, storeId: $storeId) {
