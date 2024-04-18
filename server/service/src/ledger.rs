@@ -15,15 +15,15 @@ pub fn get_ledger(
     // pagination: Option<PaginationOption>,
     filter: Option<LedgerFilter>,
     sort: Option<LedgerSort>,
-    // store_id: &str,
 ) -> Result<ListResult<LedgerRow>, ListError> {
     // let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let connection = connection_manager.connection()?;
     let repository = LedgerRepository::new(&connection);
 
     let rows = repository.query(
-        /*pagination,*/ filter.clone(),
-        sort, /*  Some(store_id.to_owned())*/
+        // pagination,
+        filter.clone(),
+        sort,
     )?;
     Ok(ListResult {
         count: usize_to_u32(rows.len()),
