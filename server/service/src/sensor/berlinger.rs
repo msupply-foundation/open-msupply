@@ -430,9 +430,9 @@ fn integrate_sensor_data(
         sensor_add_log_if_new(connection, &sensor_row, &temperature_sensor_log)?;
     }
 
-    // Add consequitive then cumulative breaches, order is important because breach and log association
-    // is priorities for consequitive breach i.e. if log is in both cumulative and consequitive breach
-    // the breach id would be from consequitive
+    // Add consecutive then cumulative breaches, order is important because breach and log association
+    // is priorities for consecutive breach i.e. if log is in both cumulative and consecutive breach
+    // the breach id would be from consecutive
     for temperature_sensor_breach in sort_breaches_by_type(temperature_sensor_breaches) {
         // Look up matching config from the USB data and snapshot it as part of the breach
         if let Some(temperature_sensor_config) = temperature_sensor_configs
@@ -463,7 +463,7 @@ fn integrate_sensor_data(
     Ok(result)
 }
 
-// First of all consequitive and then cumulative
+// First of all consecutive and then cumulative
 fn breach_sort_weight(breach: &TemperatureBreachRowType) -> u8 {
     use TemperatureBreachRowType::*;
     match breach {
@@ -471,6 +471,7 @@ fn breach_sort_weight(breach: &TemperatureBreachRowType) -> u8 {
         HotConsecutive => 2,
         ColdCumulative => 3,
         HotCumulative => 4,
+        Excursion => 5,
     }
 }
 
@@ -526,12 +527,12 @@ mod test {
             ((10, 15, 01), 10.0, "hotcumulative"),
             ((10, 30, 01), 8.1, "hotcumulative"),
             ((10, 45, 01), 3.0, "normal"),
-            ((11, 01, 02), 8.5, "hotconsequitive"),
-            ((11, 15, 01), 8.6, "hotconsequitive"),
-            ((11, 30, 01), 8.2, "hotconsequitive"),
-            ((11, 45, 01), 8.9, "hotconsequitive"),
-            ((12, 01, 01), 8.1, "hotconsequitive"),
-            ((12, 15, 01), 8.9, "hotconsequitive"),
+            ((11, 01, 02), 8.5, "hotconsecutive"),
+            ((11, 15, 01), 8.6, "hotconsecutive"),
+            ((11, 30, 01), 8.2, "hotconsecutive"),
+            ((11, 45, 01), 8.9, "hotconsecutive"),
+            ((12, 01, 01), 8.1, "hotconsecutive"),
+            ((12, 15, 01), 8.9, "hotconsecutive"),
             ((12, 30, 01), 10.0, "hotcumulative"),
             ((12, 45, 01), 11.0, "hotcumulative"),
             ((13, 01, 01), 9.0, "hotcumulative"),
@@ -546,9 +547,9 @@ mod test {
             ((14, 15, 01), 7.0, "normal"),
             ((14, 30, 01), 9.0, "s2-hotcumulative"),
             ((14, 45, 01), 1.5, "s2-coldcumulative"),
-            ((15, 01, 01), 1.1, "s2-coldconsequitive"),
-            ((15, 15, 01), 0.5, "s2-coldconsequitive"),
-            ((15, 30, 01), -3.0, "s2-coldconsequitive"),
+            ((15, 01, 01), 1.1, "s2-coldconsecutive"),
+            ((15, 15, 01), 0.5, "s2-coldconsecutive"),
+            ((15, 30, 01), -3.0, "s2-coldconsecutive"),
             ((15, 45, 01), 0.0, "s2-coldcumulative"),
             ((16, 01, 01), -2.5, "s2-coldcumulative"),
             ((16, 15, 01), 3.0, "normal"),
@@ -731,7 +732,7 @@ mod test {
                     base_date.and_hms_opt(*h, *mi, *s),
                     *t,
                     match *desc {
-                        "hotconsequitive" => Some(s1_breaches[0].id.clone()),
+                        "hotconsecutive" => Some(s1_breaches[0].id.clone()),
                         "hotcumulative" => Some(s1_breaches[1].id.clone()),
                         _ => None,
                     }
@@ -801,7 +802,7 @@ mod test {
                     end_datetime: base_date.and_hms_opt(15, 30, 01),
                     ..s2_breaches[0].clone()
                 },
-                s1_breaches[0].clone(), // Hot consequitive didn't change
+                s1_breaches[0].clone(), // Hot consecutive didn't change
                 TemperatureBreachRow {
                     duration_milliseconds: ((2 * 60) + 15 + 1) * 60 * 1000,
                     r#type: TemperatureBreachRowType::ColdCumulative,
@@ -853,9 +854,9 @@ mod test {
                     base_date.and_hms_opt(*h, *mi, *s),
                     *t,
                     match *desc {
-                        "hotconsequitive" => Some(s2_breaches[1].id.clone()),
+                        "hotconsecutive" => Some(s2_breaches[1].id.clone()),
                         "hotcumulative" | "s2-hotcumulative" => Some(s2_breaches[3].id.clone()),
-                        "s2-coldconsequitive" => Some(s2_breaches[0].id.clone()),
+                        "s2-coldconsecutive" => Some(s2_breaches[0].id.clone()),
                         "s2-coldcumulative" => Some(s2_breaches[2].id.clone()),
                         _ => None,
                     }
