@@ -64,6 +64,7 @@
   "error.unable-to-connect": "Unable to connect to server {{server}}",
   "error.unable-to-save-settings": "Unable to save settings",
   "error.unknown-sync-error": "Unknown sync error",
+  "error.v6-server-not-configured": "V6 central server not configured",
   "heading.password": "Password",
   "heading.server-error": "Server Error",
   "heading.username": "Username",

@@ -6122,6 +6122,7 @@ export type SyncErrorNode = {
 
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
+  CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
   ConnectionError = 'CONNECTION_ERROR',
   HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
   IncorrectPassword = 'INCORRECT_PASSWORD',
