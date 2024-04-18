@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useTheme } from '@common/styles';
 import { DateUtils } from '@common/intl';
 import { Sensor } from './types';
@@ -6,12 +7,54 @@ import {
   TemperatureChartFragment,
   useTemperatureChart,
 } from '../../api/TemperatureChart';
-import { TemperatureLogFilterInput } from '@common/types';
+import {
+  DatetimeFilterInput,
+  InputMaybe,
+  TemperatureLogFilterInput,
+} from '@common/types';
 
 const MAX_DATA_POINTS = 30;
 const BREACH_RANGE = 2;
 const BREACH_MIN = 2;
 const BREACH_MAX = 8;
+
+const useFilterDates = (
+  filterDatetime: InputMaybe<DatetimeFilterInput> | undefined
+) => {
+  const now = DateUtils.setMilliseconds(new Date(), 0);
+  let fromDatetime = DateUtils.addDays(now, -1).toISOString();
+  let toDatetime = now.toISOString();
+
+  if (!!filterDatetime && typeof filterDatetime === 'object') {
+    const hasAfterOrEqualTo =
+      'afterOrEqualTo' in filterDatetime && !!filterDatetime['afterOrEqualTo'];
+
+    if (hasAfterOrEqualTo)
+      fromDatetime = String(filterDatetime['afterOrEqualTo']);
+
+    if (
+      'beforeOrEqualTo' in filterDatetime &&
+      !!filterDatetime['beforeOrEqualTo']
+    ) {
+      toDatetime = String(filterDatetime['beforeOrEqualTo']);
+
+      // the 'from' date needs to be before the 'to' date
+      // if this isn't the case, and if 'from' is not set,
+      // then set to a day prior to the 'to' date
+      if (fromDatetime >= toDatetime && !hasAfterOrEqualTo) {
+        fromDatetime = DateUtils.addDays(
+          new Date(toDatetime),
+          -1
+        ).toISOString();
+      }
+    }
+  }
+
+  return useMemo(
+    () => ({ fromDatetime, toDatetime }),
+    [fromDatetime, toDatetime]
+  );
+};
 
 export const useTemperatureChartData = () => {
   const theme = useTheme();
@@ -25,7 +68,7 @@ export const useTemperatureChartData = () => {
         key: 'sensor.name',
       },
       {
-        key: 'location.name',
+        key: 'location.code',
       },
       {
         key: 'temperatureBreach.type',
@@ -38,30 +81,7 @@ export const useTemperatureChartData = () => {
   // will result in no data
   const { datetime, ...filterBy } =
     filter?.filterBy as TemperatureLogFilterInput;
-
-  let fromDatetime = DateUtils.startOfToday().toISOString();
-  let toDatetime = DateUtils.endOfDay(new Date()).toISOString();
-
-  if (!!datetime && typeof datetime === 'object') {
-    const hasAfterOrEqualTo =
-      'afterOrEqualTo' in datetime && !!datetime['afterOrEqualTo'];
-
-    if (hasAfterOrEqualTo) fromDatetime = String(datetime['afterOrEqualTo']);
-
-    if ('beforeOrEqualTo' in datetime && !!datetime['beforeOrEqualTo']) {
-      toDatetime = String(datetime['beforeOrEqualTo']);
-
-      // the 'from' date needs to be before the 'to' date
-      // if this isn't the case, and if 'from' is not set,
-      // then set to a day prior to the 'to' date
-      if (fromDatetime >= toDatetime && !hasAfterOrEqualTo) {
-        fromDatetime = DateUtils.addDays(
-          new Date(toDatetime),
-          -1
-        ).toISOString();
-      }
-    }
-  }
+  const { fromDatetime, toDatetime } = useFilterDates(datetime);
 
   const { data, isLoading } = useTemperatureChart.document.chart({
     filterBy,

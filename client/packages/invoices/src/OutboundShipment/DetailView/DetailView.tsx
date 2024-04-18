@@ -11,8 +11,9 @@ import {
   createQueryParamsStore,
   DetailTabs,
   ModalMode,
+  useNotification,
 } from '@openmsupply-client/common';
-import { toItemRow, LogList } from '@openmsupply-client/system';
+import { toItemRow, ActivityLogList } from '@openmsupply-client/system';
 import { ContentArea } from './ContentArea';
 import { StockOutItem } from '../../types';
 import { Toolbar } from './Toolbar';
@@ -24,11 +25,23 @@ import { AppRoute } from '@openmsupply-client/config';
 import { Draft } from '../..';
 import { StockOutLineFragment } from '../../StockOut';
 import { OutboundLineEdit } from './OutboundLineEdit';
+import { InboundReturnEditModal } from '../../Returns';
+import { canReturnOutboundLines } from '../../utils';
 
 export const DetailView: FC = () => {
+  const { info } = useNotification();
   const isDisabled = useOutbound.utils.isDisabled();
   const { entity, mode, onOpen, onClose, isOpen, setMode } =
     useEditModal<Draft>();
+  const {
+    onOpen: onOpenReturns,
+    onClose: onCloseReturns,
+    isOpen: returnsIsOpen,
+    entity: outboundShipmentLineIds,
+    mode: returnModalMode,
+    setMode: setReturnMode,
+  } = useEditModal<string[]>();
+
   const { data, isLoading } = useOutbound.document.get();
   const t = useTranslation('distribution');
   const navigate = useNavigate();
@@ -41,6 +54,19 @@ export const DetailView: FC = () => {
   const onAddItem = (draft?: Draft) => {
     onOpen(draft);
     setMode(ModalMode.Create);
+  };
+
+  const onReturn = async (selectedIds: string[]) => {
+    if (!data || !canReturnOutboundLines(data)) {
+      const cantReturnSnack = info(t('messages.cant-return-shipment'));
+      cantReturnSnack();
+    } else if (!selectedIds.length) {
+      const selectLinesSnack = info(t('messages.select-rows-to-return'));
+      selectLinesSnack();
+    } else {
+      onOpenReturns(selectedIds);
+      setReturnMode(ModalMode.Create);
+    }
   };
 
   if (isLoading) return <DetailViewSkeleton hasGroupBy={true} hasHold={true} />;
@@ -56,7 +82,7 @@ export const DetailView: FC = () => {
       value: 'Details',
     },
     {
-      Component: <LogList recordId={data?.id ?? ''} />,
+      Component: <ActivityLogList recordId={data?.id ?? ''} />,
       value: 'Log',
     },
   ];
@@ -86,7 +112,19 @@ export const DetailView: FC = () => {
             />
           )}
 
-          <Toolbar />
+          {returnsIsOpen && (
+            <InboundReturnEditModal
+              isOpen={returnsIsOpen}
+              onClose={onCloseReturns}
+              outboundShipmentLineIds={outboundShipmentLineIds || []}
+              customerId={data.otherPartyId}
+              modalMode={returnModalMode}
+              outboundShipmentId={data.id}
+              isNewReturn
+            />
+          )}
+
+          <Toolbar onReturnLines={onReturn} />
           <DetailTabs tabs={tabs} />
           <Footer />
           <SidePanel />

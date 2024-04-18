@@ -1,8 +1,16 @@
 use std::collections::HashMap;
 
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use super::string_or_vec::string_or_vec;
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+pub struct SQLQuery {
+    pub name: String,
+    pub query_sqlite: String,
+    pub query_postgres: String,
+}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct GraphQlQuery {
@@ -18,52 +26,6 @@ pub struct PrintReportSort {
     pub key: String,
     /// Whether to sort in descending order
     pub desc: Option<bool>,
-}
-
-impl GraphQlQuery {
-    /// Create query variables for the query
-    pub fn query_variables(
-        &self,
-        store_id: &str,
-        data_id: Option<String>,
-        arguments: Option<Value>,
-        sort: Option<PrintReportSort>,
-    ) -> Value {
-        let mut variables = match &self.variables {
-            Some(variables) => {
-                if matches!(variables, Value::Object(_)) {
-                    variables.clone()
-                } else {
-                    // ensure variables are an object
-                    serde_json::json!({})
-                }
-            }
-            None => serde_json::json!({}),
-        };
-
-        if let Some(data_id) = data_id {
-            variables["dataId"] = Value::String(data_id);
-        }
-        // allow the arguments to overwrite the dataId but not the storeId (to reduce the attack
-        // vector)
-        if let Some(Value::Object(arguments)) = arguments {
-            for (key, value) in arguments {
-                variables[key] = value;
-            }
-        };
-
-        if let Some(sort) = sort {
-            variables["sort"] = serde_json::json!({
-                "key": sort.key,
-                "desc": sort.desc
-            });
-        }
-
-        variables["storeId"] = Value::String(store_id.to_string());
-        variables["now"] = Value::String(Utc::now().to_rfc3339());
-
-        variables
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -102,6 +64,7 @@ pub enum ReportDefinitionEntry {
     GraphGLQuery(GraphQlQuery),
     /// Use default predefined query
     DefaultQuery(DefaultQuery),
+    SQLQuery(SQLQuery),
     Resource(serde_json::Value),
     /// Entry reference to another report definition
     Ref(ReportRef),
@@ -113,7 +76,8 @@ pub struct ReportDefinitionIndex {
     pub template: Option<String>,
     pub header: Option<String>,
     pub footer: Option<String>,
-    pub query: Option<String>,
+    #[serde(deserialize_with = "string_or_vec")]
+    pub query: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -184,7 +148,7 @@ mod report_dsl_test {
                     template: Some("template.html".to_string()),
                     header: None,
                     footer: Some("local_footer.html".to_string()),
-                    query: Some("query".to_string()),
+                    query: vec!["query".to_string()],
                 },
                 entries: HashMap::from([
                     (

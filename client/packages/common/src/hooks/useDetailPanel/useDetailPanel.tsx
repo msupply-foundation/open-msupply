@@ -42,7 +42,7 @@ interface DetailPanel {
   close: () => void;
 }
 export const useDetailPanel = (): DetailPanel => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { isOpen, open, close } = useDetailPanelStore();
   const OpenButton = isOpen ? null : (
     <ButtonWithIcon

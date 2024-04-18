@@ -2,9 +2,7 @@ use repository::{FormSchemaJson, StorageConnection, SyncBufferRow};
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
+use super::{PullTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize)]
@@ -16,27 +14,27 @@ pub struct LegacyFormSchemaRow {
     ui_schema: Value,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::FORM_SCHEMA
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(FormSchemaTranslation)
 }
 
-pub(crate) struct FormSchemaTranslation {}
+pub(super) struct FormSchemaTranslation;
 impl SyncTranslation for FormSchemaTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::FORM_SCHEMA,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &str {
+        "form_schema"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyFormSchemaRow {
             id,
             r#type,
@@ -51,8 +49,6 @@ impl SyncTranslation for FormSchemaTranslation {
             ui_schema,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::FormSchema(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 }

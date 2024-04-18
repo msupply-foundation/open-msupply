@@ -123,15 +123,15 @@ export const CreateStocktakeButton: React.FC<{
 
   const masterLists =
     masterListData?.nodes?.map(list => ({
-      label: `${list.name} (${list.lines?.totalCount} ${t('label.item', {
-        count: list.lines?.totalCount,
+      label: `${list.name} (${list?.linesCount} ${t('label.item', {
+        count: list.linesCount ?? undefined,
       })})`,
       value: list.id,
     })) || [];
 
   const locations =
     locationData?.nodes.map(location => ({
-      label: location.name,
+      label: location.code,
       value: location.id,
     })) || [];
 

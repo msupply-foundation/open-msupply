@@ -25,7 +25,7 @@ impl ResponseRequisitionCounts {
         let service = &service_provider.requisition_count_service;
         let count = service
             .new_response_requisition_count(&service_ctx, &self.store_id)
-            .map_err(|err| StandardGraphqlError::from(err))?;
+            .map_err(StandardGraphqlError::from)?;
 
         Ok(count)
     }
@@ -39,7 +39,7 @@ impl RequestRequisitionCounts {
         let service = &service_provider.requisition_count_service;
         let count = service
             .draft_request_requisition_count(&service_ctx, &self.store_id)
-            .map_err(|err| StandardGraphqlError::from(err))?;
+            .map_err(StandardGraphqlError::from)?;
 
         Ok(count)
     }

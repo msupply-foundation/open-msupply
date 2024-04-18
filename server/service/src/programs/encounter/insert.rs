@@ -8,14 +8,14 @@ use repository::{
 use crate::{
     document::{document_service::DocumentInsertError, is_latest_doc, raw_document::RawDocument},
     programs::{
-        patient::patient_doc_name_with_id,
-        update_program_document::{update_program_events, UpdateProgramDocumentError},
+        patient::patient_doc_name_with_id, update_program_document::UpdateProgramDocumentError,
     },
     service_provider::{ServiceContext, ServiceProvider},
 };
 
 use super::{
-    encounter_updated::update_encounter_row,
+    encounter_schema::EncounterStatus,
+    encounter_updated::update_encounter_row_and_events,
     validate_misc::{
         validate_clinician_exists, validate_encounter_schema, ValidatedSchemaEncounter,
     },
@@ -54,7 +54,13 @@ pub fn insert_encounter(
             let (encounter, program_enrolment, clinician) = validate(ctx, &input)?;
             let patient_id = input.patient_id.clone();
             let event_datetime = input.event_datetime;
-            let doc = generate(user_id, input, event_datetime, &program_enrolment.1)?;
+            let doc = generate(
+                user_id,
+                input,
+                event_datetime,
+                &program_enrolment.program_row,
+                &encounter,
+            )?;
             let encounter_start_datetime = encounter.start_datetime;
 
             let document = service_provider
@@ -84,21 +90,15 @@ pub fn insert_encounter(
             if is_latest_doc(&ctx.connection, &document.name, document.datetime)
                 .map_err(InsertEncounterError::DatabaseError)?
             {
-                update_encounter_row(
+                update_encounter_row_and_events(
                     &ctx.connection,
                     &patient_id,
                     &document,
                     encounter,
                     clinician.map(|c| c.id),
-                    program_enrolment.1,
-                )?;
-
-                update_program_events(
-                    &ctx.connection,
-                    &patient_id,
+                    program_enrolment.program_row,
                     encounter_start_datetime,
                     None,
-                    &document,
                     Some(&allowed_ctx),
                 )
                 .map_err(|err| match err {
@@ -128,8 +128,20 @@ fn generate(
     input: InsertEncounter,
     event_datetime: DateTime<Utc>,
     program_row: &ProgramRow,
+    encounter: &ValidatedSchemaEncounter,
 ) -> Result<RawDocument, RepositoryError> {
     let encounter_name = Utc::now().to_rfc3339();
+    let status = encounter
+        .encounter
+        .status
+        .as_ref()
+        .and_then(|status| {
+            if status == &EncounterStatus::Deleted {
+                return Some(DocumentStatus::Deleted);
+            }
+            None
+        })
+        .unwrap_or(DocumentStatus::Active);
     Ok(RawDocument {
         name: patient_doc_name_with_id(&input.patient_id, &input.r#type, &encounter_name),
         parents: vec![],
@@ -138,7 +150,7 @@ fn generate(
         r#type: input.r#type.clone(),
         data: input.data,
         form_schema_id: Some(input.schema_id),
-        status: DocumentStatus::Active,
+        status,
         owner_name_id: Some(input.patient_id),
         context_id: program_row.context_id.clone(),
     })
@@ -185,7 +197,9 @@ fn validate(
     let Some(encounter_registry) = validate_encounter_registry(ctx, &input.r#type)? else {
         return Err(InsertEncounterError::InvalidEncounterType);
     };
-    let Some(program_enrolment) =  validate_patient_program_exists(ctx, &input.patient_id, encounter_registry)? else {
+    let Some(program_enrolment) =
+        validate_patient_program_exists(ctx, &input.patient_id, encounter_registry)?
+    else {
         return Err(InsertEncounterError::PatientIsNotEnrolled);
     };
 
@@ -197,8 +211,7 @@ fn validate(
         .encounter
         .clinician
         .as_ref()
-        .map(|c| c.id.clone())
-        .flatten()
+        .and_then(|c| c.id.clone())
     {
         let clinician_row = validate_clinician_exists(&ctx.connection, &clinician_id)?;
         if clinician_row.is_none() {

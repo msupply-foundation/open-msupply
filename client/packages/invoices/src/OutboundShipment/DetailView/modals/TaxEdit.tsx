@@ -1,22 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useTranslation,
-  NonNegativeNumberInputModal,
+  InputModal,
   IconButton,
   EditIcon,
   useToggle,
-  NumUtils,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 
 interface TaxEditProps {
   tax: number;
-  update: (newTax: number) => Promise<unknown>;
+  update: (newTax: number) => void;
   disabled?: boolean;
 }
 
 export const TaxEdit = ({ disabled = false, tax, update }: TaxEditProps) => {
   const modalController = useToggle();
   const t = useTranslation('distribution');
+  const [val, setVal] = useState<number | undefined>(tax);
 
   return (
     <>
@@ -28,12 +29,18 @@ export const TaxEdit = ({ disabled = false, tax, update }: TaxEditProps) => {
       />
       {/* Unmount when closing to reset state */}
       {modalController.isOn && (
-        <NonNegativeNumberInputModal
-          max={100}
+        <InputModal
           isOpen={modalController.isOn}
           onClose={modalController.toggleOff}
-          onChange={value => update(NumUtils.round(value, 2))}
-          initialValue={NumUtils.round(tax, 2)}
+          Input={
+            <NumericTextInput
+              decimalLimit={2}
+              max={100}
+              value={val ?? 0}
+              onChange={setVal}
+            />
+          }
+          onChange={() => update(val ?? 0)}
           title={t('heading.edit-tax-rate')}
         />
       )}

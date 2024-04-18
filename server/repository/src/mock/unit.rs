@@ -6,6 +6,7 @@ pub fn item_query_test2_unit() -> UnitRow {
         description: Some("description_item_query_test2".to_owned()),
         name: "name_item_query_test2".to_owned(),
         index: 1,
+        is_active: true,
     }
 }
 

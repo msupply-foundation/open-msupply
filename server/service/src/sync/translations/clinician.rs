@@ -5,11 +5,9 @@ use repository::{
     StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::{
-    api::RemoteSyncRecordV5, sync_serde::empty_str_as_option_string, translations::LegacyTableName,
-};
+use crate::sync::sync_serde::empty_str_as_option_string;
 
-use super::{IntegrationRecords, PullDependency, PullUpsertRecord, SyncTranslation};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyClinicianRow {
@@ -43,30 +41,31 @@ pub struct LegacyClinicianRow {
     pub is_active: bool,
 }
 
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::CLINICIAN
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Clinician
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ClinicianTranslation)
 }
 
-pub(crate) struct ClinicianTranslation {}
+pub(super) struct ClinicianTranslation;
 impl SyncTranslation for ClinicianTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::CLINICIAN,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &str {
+        "clinician"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Clinician)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyClinicianRow {
             id,
             code,
@@ -100,20 +99,14 @@ impl SyncTranslation for ClinicianTranslation {
             },
             is_active,
         };
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Clinician(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let ClinicianRow {
             id,
             code,
@@ -135,10 +128,7 @@ impl SyncTranslation for ClinicianTranslation {
             )))?;
 
         let is_female = gender
-            .map(|gender| match gender {
-                Gender::Female => true,
-                _ => false,
-            })
+            .map(|gender| matches!(gender, Gender::Female))
             .unwrap_or(false);
 
         let legacy_row = LegacyClinicianRow {
@@ -155,26 +145,20 @@ impl SyncTranslation for ClinicianTranslation {
             is_female,
             is_active,
         };
-
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LegacyTableName::CLINICIAN,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
-    fn try_translate_push_delete(
+    // TODO should not be deleting clinicians
+    // TODO soft delete
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog).then(|| {
-            vec![RemoteSyncRecordV5::new_delete(
-                changelog,
-                LegacyTableName::CLINICIAN,
-            )]
-        });
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }

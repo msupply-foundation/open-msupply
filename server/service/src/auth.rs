@@ -49,6 +49,7 @@ pub enum Resource {
     // items
     QueryItems,
     MutateItems,
+    MutateItemNamesCodesAndUnits,
     // stock
     StockCount,
     QueryStockLine,
@@ -57,6 +58,8 @@ pub enum Resource {
     // stocktake
     QueryStocktake,
     MutateStocktake,
+    // inventory adjustment
+    MutateInventoryAdjustment,
     // requisition
     QueryRequisition,
     MutateRequisition,
@@ -74,9 +77,15 @@ pub enum Resource {
     MutateOutboundShipment,
     // inbound shipment
     MutateInboundShipment,
+    // outbound return
+    MutateOutboundReturn,
+    // inbound return
+    MutateInboundReturn,
+    // prescription
     MutatePrescription,
     // reporting
     Report,
+    ReportDev,
     QueryLog,
     // view/edit server setting
     ServerAdmin,
@@ -105,6 +114,10 @@ pub enum Resource {
     QueryInventoryAdjustmentReasons,
     QueryStorePreferences,
     ColdChainApi,
+    // assets
+    MutateAsset,
+    MutateAssetCatalogueItem,
+    QueryAsset,
 }
 
 fn all_permissions() -> HashMap<Resource, PermissionDSL> {
@@ -186,6 +199,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::ItemMutate),
         ]),
     );
+    map.insert(
+        Resource::MutateItemNamesCodesAndUnits,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::ItemNamesCodesAndUnitsMutate),
+        ]),
+    );
 
     // stock
     map.insert(
@@ -207,6 +227,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::StockLineMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInventoryAdjustment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InventoryAdjustmentMutate),
         ]),
     );
     map.insert(
@@ -297,6 +324,8 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::OutboundShipmentQuery),
             PermissionDSL::HasPermission(Permission::InboundShipmentQuery),
             PermissionDSL::HasPermission(Permission::PrescriptionQuery),
+            PermissionDSL::HasPermission(Permission::OutboundReturnQuery),
+            PermissionDSL::HasPermission(Permission::InboundReturnQuery),
         ]),
     );
     map.insert(
@@ -323,6 +352,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
             PermissionDSL::HasPermission(Permission::InboundShipmentMutate),
         ]),
     );
+    // outbound return
+    map.insert(
+        Resource::MutateOutboundReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::OutboundReturnMutate),
+        ]),
+    );
+    // inbound return
+    map.insert(
+        Resource::MutateInboundReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(Permission::InboundReturnMutate),
+        ]),
+    );
     // prescription
     map.insert(
         Resource::MutatePrescription,
@@ -338,6 +383,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(Permission::Report),
+        ]),
+    );
+    // report development
+    map.insert(
+        Resource::ReportDev,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            // SQL reports can do raw queries, i.e. you need to be server admin
+            PermissionDSL::HasPermission(Permission::ServerAdmin),
         ]),
     );
 
@@ -458,6 +512,19 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::HasStoreAccess,
     );
 
+    map.insert(
+        Resource::MutateAsset,
+        PermissionDSL::HasPermission(Permission::AssetMutate),
+    );
+    map.insert(
+        Resource::MutateAssetCatalogueItem,
+        PermissionDSL::HasPermission(Permission::AssetCatalogueItemMutate),
+    );
+    map.insert(
+        Resource::QueryAsset,
+        PermissionDSL::HasPermission(Permission::AssetQuery),
+    );
+
     map
 }
 
@@ -542,7 +609,7 @@ pub fn validate_auth(
         }
     };
     let user_id = claims.sub.to_owned();
-    return Ok(ValidatedUserAuth { user_id, claims });
+    Ok(ValidatedUserAuth { user_id, claims })
 }
 
 pub struct ValidatedUser {
@@ -584,24 +651,21 @@ fn validate_resource_permissions(
 
     Ok(match required_permissions {
         PermissionDSL::HasPermission(permission) => {
-            if user_permissions
-                .into_iter()
-                .any(|p| &p.permission == permission)
-            {
+            if user_permissions.iter().any(|p| &p.permission == permission) {
                 return Ok(());
             }
             return Err(format!("Missing permission: {:?}", permission));
         }
         PermissionDSL::HasDynamicPermission(permission) => {
             let user_permissions = user_permissions
-                .into_iter()
+                .iter()
                 .filter(|p| &p.permission == permission)
                 .collect::<Vec<_>>();
             if user_permissions.is_empty() {
                 return Err(format!("Missing permission: {:?}", permission));
             }
             let mut contexts = user_permissions
-                .into_iter()
+                .iter()
                 .filter_map(|p| p.context_id.clone())
                 .collect::<Vec<_>>();
 
@@ -623,7 +687,7 @@ fn validate_resource_permissions(
                 None => return Err("Store id not specified in request".to_string()),
             };
             if user_permissions
-                .into_iter()
+                .iter()
                 .any(|p| p.permission == Permission::StoreAccess)
             {
                 return Ok(());
@@ -647,13 +711,15 @@ fn validate_resource_permissions(
         PermissionDSL::Any(children) => {
             let mut found_any = false;
             for child in children {
-                if let Ok(_) = validate_resource_permissions(
+                if validate_resource_permissions(
                     user_id,
                     user_permissions,
                     resource_request,
                     child,
                     dynamic_permissions,
-                ) {
+                )
+                .is_ok()
+                {
                     found_any = true;
                     // We could stop iterating children here but we want to collect all
                     // HasDynamicPermission instances that are valid in this Any list.
@@ -705,7 +771,7 @@ impl AuthServiceTrait for AuthService {
         if let Some(store_id) = &resource_request.store_id {
             permission_filter = permission_filter.store_id(EqualFilter::equal_to(store_id));
         }
-        let mut user_permissions = UserPermissionRepository::new(&connection).query(
+        let mut user_permissions = UserPermissionRepository::new(connection).query(
             Pagination::all(),
             Some(permission_filter),
             None,
@@ -715,8 +781,7 @@ impl AuthServiceTrait for AuthService {
         // permissions.
         if user_permissions
             .iter()
-            .find(|item| item.permission == Permission::PatientQuery)
-            .is_some()
+            .any(|item| item.permission == Permission::PatientQuery)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
@@ -728,8 +793,7 @@ impl AuthServiceTrait for AuthService {
         }
         if user_permissions
             .iter()
-            .find(|item| item.permission == Permission::PatientMutate)
-            .is_some()
+            .any(|item| item.permission == Permission::PatientMutate)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
@@ -755,7 +819,7 @@ impl AuthServiceTrait for AuthService {
         match validate_resource_permissions(
             &validated_auth.user_id,
             &user_permissions,
-            &resource_request,
+            resource_request,
             required_permissions,
             &mut dynamic_permissions,
         ) {
@@ -1045,14 +1109,11 @@ mod permission_validation_test {
     use std::sync::{Arc, RwLock};
 
     use super::*;
-    use crate::{
-        auth_data::AuthData, service_provider::ServiceProvider, token_bucket::TokenBucket,
-    };
+    use crate::{service_provider::ServiceProvider, token_bucket::TokenBucket};
     use repository::{
         mock::{mock_user_account_a, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        NameRow, Permission, StoreRow, UserAccountRow, UserPermissionRow,
-        UserPermissionRowRepository,
+        NameRow, StoreRow, UserAccountRow, UserPermissionRowRepository,
     };
     use util::inline_init;
 

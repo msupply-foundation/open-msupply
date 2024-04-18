@@ -11,7 +11,7 @@ pub fn check_store_exists(
     connection: &StorageConnection,
     store_id: &str,
 ) -> Result<bool, RepositoryError> {
-    Ok(StoreRowRepository::new(&connection)
+    Ok(StoreRowRepository::new(connection)
         .find_one_by_id(store_id)?
         .is_some())
 }

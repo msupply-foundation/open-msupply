@@ -19,7 +19,7 @@ pub fn check_location_code_is_unique(
                     .store_id(EqualFilter::equal_to("store_a")),
             )?;
 
-            Ok(locations.len() == 0)
+            Ok(locations.is_empty())
         }
     }
 }
@@ -28,5 +28,5 @@ pub fn check_location_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<LocationRow>, RepositoryError> {
-    Ok(LocationRowRepository::new(connection).find_one_by_id(id)?)
+    LocationRowRepository::new(connection).find_one_by_id(id)
 }

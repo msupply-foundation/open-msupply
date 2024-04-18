@@ -163,7 +163,7 @@ impl<'a> TemperatureLogRepository<'a> {
 
 type BoxedTemperatureLogQuery = temperature_log::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
+fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
     TemperatureLog {
         temperature_log_row,
     }
@@ -171,7 +171,7 @@ pub fn to_domain(temperature_log_row: TemperatureLogRow) -> TemperatureLog {
 
 impl TemperatureLogFilter {
     pub fn new() -> TemperatureLogFilter {
-        Default::default()
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

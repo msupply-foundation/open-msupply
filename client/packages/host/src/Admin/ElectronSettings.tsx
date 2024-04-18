@@ -13,6 +13,7 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { Setting } from './Setting';
+import { SettingsSubHeading } from './SettingsSection';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const omsBarcode = require('./omsupply-barcode.gif');
@@ -65,7 +66,7 @@ const Scanner = ({ scanner }: { scanner: BarcodeScanner | null }) => {
 
 export const ElectronSettings = () => {
   const { electronNativeAPI } = window;
-  const t = useTranslation('common');
+  const t = useTranslation('app');
   const [scanner, setScanner] = useState<BarcodeScanner | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const { error, success } = useNotification();
@@ -114,12 +115,9 @@ export const ElectronSettings = () => {
 
   return (
     <>
-      <Typography variant="h5" color="primary" style={{ paddingBottom: 25 }}>
-        {t('heading.barcode-scanners')}
-      </Typography>
-
+      <SettingsSubHeading title={t('heading.barcode-scanners')} />
       <Setting
-        title={'Scanner Type'}
+        title={t('settings.scanner-type')}
         component={
           <Box display="flex" justifyContent="flex-end" alignItems="center">
             <Switch

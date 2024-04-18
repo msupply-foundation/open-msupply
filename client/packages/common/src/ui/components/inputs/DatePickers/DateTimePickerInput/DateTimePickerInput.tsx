@@ -3,7 +3,7 @@ import { DateTimePicker, DateTimePickerProps } from '@mui/x-date-pickers';
 import { BasicTextInput } from '../../TextInput/BasicTextInput';
 import { useAppTheme } from '@common/styles';
 import { StandardTextFieldProps, TextFieldProps } from '@mui/material';
-import { DateUtils, useTranslation } from '@common/intl';
+import { DateUtils, useIntlUtils, useTranslation } from '@common/intl';
 import { getFormattedDateError } from '../BaseDatePickerInput';
 
 const TextField = (params: TextFieldProps) => {
@@ -22,6 +22,7 @@ export const DateTimePickerInput: FC<
     onChange: (value: Date | null) => void;
     onError?: (validationError: string, date?: Date | null) => void;
     textFieldProps?: TextFieldProps;
+    showTime?: boolean;
   }
 > = ({
   error,
@@ -30,15 +31,18 @@ export const DateTimePickerInput: FC<
   width,
   label,
   textFieldProps,
-  format = 'dd/MM/yyyy HH:mm',
   minDate,
   maxDate,
+  showTime,
   ...props
 }) => {
   const theme = useAppTheme();
   const [internalError, setInternalError] = useState<string | null>(null);
   const [isInitialEntry, setIsInitialEntry] = useState(true);
-  const t = useTranslation('common');
+  const t = useTranslation();
+  const { getLocale } = useIntlUtils();
+  const dateParseOptions = { locale: getLocale() };
+  const format = props.format ?? showTime ? 'P p' : 'P';
 
   // Max/Min should be restricted by the UI, but it's not restricting TIME input
   // (only Date component). So this function will enforce the max/min after
@@ -109,7 +113,9 @@ export const DateTimePickerInput: FC<
           error: !isInitialEntry && (!!error || !!internalError),
           helperText: !isInitialEntry ? error ?? internalError ?? '' : '',
           onBlur: e => {
-            handleDateInput(DateUtils.getDateOrNull(e.target.value, format));
+            handleDateInput(
+              DateUtils.getDateOrNull(e.target.value, format, dateParseOptions)
+            );
             setIsInitialEntry(false);
           },
           label,
@@ -123,10 +129,15 @@ export const DateTimePickerInput: FC<
           },
         },
       }}
+      views={
+        showTime
+          ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+          : ['year', 'month', 'day']
+      }
       minDate={minDate}
       maxDate={maxDate}
       {...props}
-      value={DateUtils.getDateOrNull(props.value)}
+      value={props.value}
     />
   );
 };

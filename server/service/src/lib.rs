@@ -9,11 +9,17 @@ use std::convert::TryInto;
 pub mod activity_log;
 pub mod apis;
 pub mod app_data;
+
+pub mod asset;
 pub mod auth;
 pub mod auth_data;
 pub mod barcode;
+pub mod catalogue;
 pub mod clinician;
+pub mod cold_chain;
 mod common_stock;
+pub mod currency;
+pub mod cursor_controller;
 pub mod dashboard;
 pub mod display_settings_service;
 pub mod document;
@@ -22,6 +28,7 @@ pub mod invoice;
 pub mod invoice_line;
 pub mod item;
 pub mod item_stats;
+pub mod label_printer_settings_service;
 pub mod location;
 pub mod log_service;
 pub mod login;
@@ -29,15 +36,18 @@ pub mod master_list;
 pub mod missing_program;
 pub mod name;
 pub mod number;
+pub mod pack_variant;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;
+pub mod print;
 pub mod processors;
 pub mod programs;
 pub mod repack;
 pub mod report;
 pub mod requisition;
 pub mod requisition_line;
+pub mod return_reason;
 pub mod sensor;
 pub mod service_provider;
 pub mod settings;
@@ -50,9 +60,8 @@ pub mod store;
 pub mod store_preference;
 pub mod sync;
 pub mod system_user;
-pub mod temperature_breach;
 pub mod temperature_chart;
-pub mod temperature_log;
+pub mod temperature_excursion;
 pub mod token;
 pub mod token_bucket;
 pub mod user_account;
@@ -150,7 +159,7 @@ impl<'a> BatchMutationsProcessor<'a> {
         let mut has_errors = false;
         let mut result = vec![];
 
-        for input in inputs.unwrap_or(vec![]) {
+        for input in inputs.unwrap_or_default() {
             let mutation_result = mutation(self.ctx, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {
@@ -174,7 +183,7 @@ impl<'a> BatchMutationsProcessor<'a> {
         let mut has_errors = false;
         let mut result = vec![];
 
-        for input in inputs.unwrap_or(vec![]) {
+        for input in inputs.unwrap_or_default() {
             let mutation_result = mutation(self.ctx, input.clone());
             has_errors = has_errors || mutation_result.is_err();
             result.push(InputWithResult {
@@ -242,6 +251,10 @@ pub fn i32_to_u32(num: i32) -> u32 {
     num.try_into().unwrap_or(0)
 }
 
+pub fn i64_to_u64(num: i64) -> u64 {
+    num.try_into().unwrap_or(0)
+}
+
 pub fn i64_to_u32(num: i64) -> u32 {
     num.try_into().unwrap_or(0)
 }
@@ -251,6 +264,10 @@ pub fn usize_to_u32(num: usize) -> u32 {
 }
 
 pub fn u32_to_i32(num: u32) -> i32 {
+    num.try_into().unwrap_or(0)
+}
+
+pub fn usize_to_u64(num: usize) -> u64 {
     num.try_into().unwrap_or(0)
 }
 
@@ -269,8 +286,11 @@ fn check_location_exists(
     store_id: &str,
     location_input: &Option<NullableUpdate<String>>,
 ) -> Result<bool, RepositoryError> {
-    let Some(NullableUpdate{ value: Some(location_id) }) = location_input else {
-        return Ok(true)
+    let Some(NullableUpdate {
+        value: Some(location_id),
+    }) = location_input
+    else {
+        return Ok(true);
     };
     let count = LocationRepository::new(connection).count(Some(
         LocationFilter::new()

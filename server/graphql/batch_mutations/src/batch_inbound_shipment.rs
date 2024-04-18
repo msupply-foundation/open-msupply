@@ -6,7 +6,6 @@ use graphql_invoice_line::mutations::inbound_shipment_line;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::inbound_shipment::*;
-use service::invoice::inbound_shipment::{BatchInboundShipment, BatchInboundShipmentResult};
 
 use crate::to_standard_error;
 use crate::VecOrNone;
@@ -51,6 +50,7 @@ type ServiceResult = BatchInboundShipmentResult;
     name = "DeleteInboundShipmentServiceLineResponseWithId",
     params(inbound_shipment_line::service_line::delete::DeleteResponse)
 ))]
+
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
     pub response: T,
@@ -126,7 +126,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         .invoice_service
         .batch_inbound_shipment(&service_context, input.to_domain())?;
 
-    Ok(BatchResponse::from_domain(response)?)
+    BatchResponse::from_domain(response)
 }
 
 impl BatchInput {
@@ -370,7 +370,7 @@ fn map_delete_service_lines(
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::MockDataInserts, InvoiceLine, RepositoryError, StorageConnectionManager,
@@ -425,7 +425,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_batch_inbound_shipment() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             BatchMutations,
             "test_graphql_batch_inbound_shipment",

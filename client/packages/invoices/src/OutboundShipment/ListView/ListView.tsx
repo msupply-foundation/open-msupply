@@ -12,6 +12,7 @@ import {
   NothingHere,
   useToggle,
   useUrlQueryParams,
+  TooltipTextCell,
 } from '@openmsupply-client/common';
 import { getStatusTranslator, isOutboundDisabled } from '../../utils';
 import { Toolbar } from './Toolbar';
@@ -24,7 +25,7 @@ const useDisableOutboundRows = (rows?: OutboundRowFragment[]) => {
   useEffect(() => {
     const disabledRows = rows?.filter(isOutboundDisabled).map(({ id }) => id);
     if (disabledRows) setDisabledRows(disabledRows);
-  }, [rows]);
+  }, [rows, setDisabledRows]);
 };
 
 const OutboundShipmentListViewComponent: FC = () => {
@@ -69,8 +70,14 @@ const OutboundShipmentListViewComponent: FC = () => {
         description: 'description.customer-reference',
         key: 'theirReference',
         label: 'label.reference',
+        Cell: TooltipTextCell,
       },
-      ['comment'],
+      [
+        'comment',
+        {
+          Cell: TooltipTextCell,
+        },
+      ],
       [
         'totalAfterTax',
         {

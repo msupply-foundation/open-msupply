@@ -181,10 +181,10 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
-        mock::{mock_location_1, mock_stock_line_a, MockDataInserts},
+        mock::{mock_item_a, mock_location_1, mock_stock_line_a, MockDataInserts},
         StocktakeLine, StocktakeLineRow, StorageConnectionManager,
     };
     use serde_json::json;
@@ -222,7 +222,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_line_insert() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             StocktakeLineMutations,
             "omsupply-database-gql-stocktake_line_insert",
@@ -283,7 +283,7 @@ mod test {
                     snapshot_number_of_packs: 10.0,
                     counted_number_of_packs: Some(20.0),
                     comment: Some("comment".to_string()),
-                    item_id: "item id".to_string(),
+                    item_link_id: "item id".to_string(),
                     batch: Some("batch".to_string()),
                     expiry_date: Some(NaiveDate::from_ymd_opt(2023, 1, 22).unwrap()),
                     pack_size: Some(10),
@@ -294,7 +294,7 @@ mod test {
                 },
                 stock_line: Some(mock_stock_line_a()),
                 location: Some(mock_location_1()),
-                item: None,
+                item: mock_item_a(),
             })
         }));
 

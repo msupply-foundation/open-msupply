@@ -12,12 +12,12 @@ export {
 } from 'kbar';
 
 export {
+  useInfiniteQuery,
   useMutation,
   useQueryClient,
   useQuery,
   UseQueryResult,
   QueryClient,
-  QueryClientProvider,
 } from 'react-query';
 
 export {

@@ -22,7 +22,7 @@ fn extract_field(path: &Vec<String>, data: &Value) -> Value {
 pub fn extract_fields(fields: &[String], data: &Value) -> Vec<Value> {
     let field_paths: Vec<Vec<String>> = fields
         .iter()
-        .map(|s| s.split(".").map(|p| p.to_string()).collect::<Vec<String>>())
+        .map(|s| s.split('.').map(|p| p.to_string()).collect::<Vec<String>>())
         .collect();
 
     let field_values = field_paths
@@ -79,7 +79,7 @@ mod document_service_test {
     #[test]
     fn test_fields_extraction() {
         let result = extract_fields(
-            &vec!["value".to_string(), "value2".to_string()],
+            &["value".to_string(), "value2".to_string()],
             &serde_json::json!({
               "value": "value",
               "value2": 45
@@ -91,7 +91,7 @@ mod document_service_test {
         );
 
         let result = extract_fields(
-            &vec![
+            &[
                 "obj1.obj2.value".to_string(),
                 "obj1.unvalid.value".to_string(),
             ],

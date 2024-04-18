@@ -4,6 +4,7 @@ use super::{
 };
 
 use crate::{
+    asset_internal_location_row::asset_internal_location::dsl as asset_internal_location_dsl,
     diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
     StringFilter,
 };
@@ -16,13 +17,14 @@ pub struct Location {
     pub location_row: LocationRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct LocationFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
     pub on_hold: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
+    pub assigned_to_asset: Option<bool>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -97,6 +99,19 @@ impl<'a> LocationRepository<'a> {
             if let Some(value) = filter.on_hold {
                 query = query.filter(location_dsl::on_hold.eq(value));
             }
+            if let Some(value) = filter.assigned_to_asset {
+                let sub_query = asset_internal_location_dsl::asset_internal_location
+                    .select(asset_internal_location_dsl::location_id);
+
+                match value {
+                    true => {
+                        query = query.filter(location_dsl::id.eq_any(sub_query));
+                    }
+                    false => {
+                        query = query.filter(location_dsl::id.ne_all(sub_query));
+                    }
+                }
+            }
 
             apply_equal_filter!(query, filter.store_id, location_dsl::store_id);
         }
@@ -107,19 +122,13 @@ impl<'a> LocationRepository<'a> {
 
 type BoxedLocationQuery = location::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(location_row: LocationRow) -> Location {
+fn to_domain(location_row: LocationRow) -> Location {
     Location { location_row }
 }
 
 impl LocationFilter {
     pub fn new() -> LocationFilter {
-        LocationFilter {
-            id: None,
-            name: None,
-            code: None,
-            on_hold: None,
-            store_id: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -139,6 +148,11 @@ impl LocationFilter {
 
     pub fn on_hold(mut self, filter: bool) -> Self {
         self.on_hold = Some(filter);
+        self
+    }
+
+    pub fn assigned_to_asset(mut self, filter: bool) -> Self {
+        self.assigned_to_asset = Some(filter);
         self
     }
 

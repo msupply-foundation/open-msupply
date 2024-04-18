@@ -1,17 +1,17 @@
 use super::{
-    master_list_name_join::master_list_name_join::dsl::*, master_list_row::master_list,
-    name_row::name, StorageConnection,
+    item_link_row::item_link, master_list_name_join::master_list_name_join::dsl::*,
+    master_list_row::master_list, name_link_row::name_link, StorageConnection,
 };
 
 use crate::repository_error::RepositoryError;
-
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 table! {
     master_list_name_join (id) {
         id -> Text,
         master_list_id -> Text,
-        name_id -> Text,
+        name_link_id -> Text,
     }
 }
 
@@ -20,11 +20,13 @@ table! {
 pub struct MasterListNameJoinRow {
     pub id: String,
     pub master_list_id: String,
-    pub name_id: String,
+    pub name_link_id: String,
 }
 
 joinable!(master_list_name_join -> master_list (master_list_id));
-joinable!(master_list_name_join -> name (name_id));
+joinable!(master_list_name_join -> name_link (name_link_id));
+allow_tables_to_appear_in_same_query!(master_list_name_join, item_link);
+allow_tables_to_appear_in_same_query!(master_list_name_join, name_link);
 
 pub struct MasterListNameJoinRepository<'a> {
     connection: &'a StorageConnection,
@@ -79,5 +81,34 @@ impl<'a> MasterListNameJoinRepository<'a> {
         diesel::delete(master_list_name_join.filter(id.eq(record_id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct MasterListNameJoinRowDelete(pub String);
+impl Delete for MasterListNameJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        MasterListNameJoinRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for MasterListNameJoinRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        MasterListNameJoinRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

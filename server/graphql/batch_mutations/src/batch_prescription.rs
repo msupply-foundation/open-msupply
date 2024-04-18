@@ -6,7 +6,6 @@ use graphql_invoice_line::mutations::prescription_line;
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 use service::invoice::prescription::*;
-use service::invoice::prescription::{BatchPrescription, BatchPrescriptionResult};
 
 use crate::{to_standard_error, VecOrNone};
 
@@ -93,7 +92,7 @@ pub fn batch(ctx: &Context<'_>, store_id: &str, input: BatchInput) -> Result<Bat
         .invoice_service
         .batch_prescription(&service_context, input.to_domain())?;
 
-    Ok(BatchResponse::from_domain(response)?)
+    BatchResponse::from_domain(response)
 }
 
 impl BatchInput {
@@ -255,7 +254,7 @@ fn map_delete_lines(responses: DeleteLinesResult) -> Result<DeleteLinesResponse>
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::MockDataInserts, InvoiceLine, RepositoryError, StorageConnectionManager,
@@ -309,7 +308,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_batch_perscription() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             BatchMutations,
             "test_graphql_batch_perscription",

@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 use chrono::{Duration, NaiveDateTime};
 use diesel::prelude::*;
@@ -99,16 +99,17 @@ async fn migration_1_00_06() {
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO invoice 
             (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
             ('invoice1_id', 'store_id', 'name_id', 1, 'INBOUND_SHIPMENT', 'NEW', false, $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(
-            NaiveDate::from_ymd_opt(2011, 10, 09)
+            NaiveDate::from_ymd_opt(2011, 10, 9)
                 .unwrap()
                 .and_hms_opt(10, 10, 10)
                 .unwrap(),
@@ -118,18 +119,19 @@ async fn migration_1_00_06() {
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO invoice 
             (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
             ('invoice2_id', 'store_id', 'name_id', 2, 'INBOUND_SHIPMENT', 'NEW', false, $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(
-            NaiveDate::from_ymd_opt(2022, 01, 03)
+            NaiveDate::from_ymd_opt(2022, 1, 3)
                 .unwrap()
-                .and_hms_opt(01, 02, 03)
+                .and_hms_opt(1, 2, 3)
                 .unwrap(),
         ),
     )
@@ -158,9 +160,9 @@ async fn migration_1_00_06() {
             ),
             (
                 "invoice2_id".to_string(),
-                NaiveDate::from_ymd_opt(2022, 01, 04)
+                NaiveDate::from_ymd_opt(2022, 1, 4)
                     .unwrap()
-                    .and_hms_opt(01, 02, 03)
+                    .and_hms_opt(1, 2, 3)
                     .unwrap()
             )
         ]

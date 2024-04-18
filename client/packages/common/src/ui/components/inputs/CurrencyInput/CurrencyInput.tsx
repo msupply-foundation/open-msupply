@@ -40,9 +40,10 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
   value,
   ...restOfProps
 }) => {
-  const { c, options, language } = useCurrency();
-  const prefix = language !== 'fr' ? options.symbol : '';
-  const suffix = language === 'fr' ? options.symbol : '';
+  const { c, options } = useCurrency();
+  const isSymbolLast = options.pattern.endsWith('!');
+  const prefix = !isSymbolLast ? options.symbol : '';
+  const suffix = isSymbolLast ? options.symbol : '';
   const valueAsNumber = Number.isNaN(value) ? 0 : Number(value);
 
   return (
@@ -64,7 +65,7 @@ export const CurrencyInput: FC<CurrencyInputProps> = ({
       groupSeparator={options.separator}
       decimalsLimit={options.precision}
       allowDecimals={allowDecimals}
-      fixedDecimalLength={allowDecimals ? options.precision : undefined}
+      decimalScale={allowDecimals ? options.precision : undefined}
       {...restOfProps}
     />
   );

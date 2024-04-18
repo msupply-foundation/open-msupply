@@ -1,6 +1,6 @@
-use async_graphql::{self, dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
+use async_graphql::{dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result};
 use chrono::{DateTime, NaiveDate, Utc};
-use repository::{unknown_user, StocktakeRow, StocktakeStatus};
+use repository::{StocktakeRow, StocktakeStatus};
 use serde::Serialize;
 
 use graphql_core::{
@@ -32,16 +32,15 @@ impl StocktakeNode {
         &self.stocktake.store_id
     }
 
-    /// User that created stocktake, if user is not found in system default unknown user is returned
-    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
         let user = loader
             .load_one(self.stocktake.user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(UserNode::from_domain(user))
+        Ok(user)
     }
 
     pub async fn stocktake_number(&self) -> i64 {
@@ -65,7 +64,7 @@ impl StocktakeNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.stocktake.created_datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.stocktake.created_datetime, Utc)
     }
 
     pub async fn stocktake_date(&self) -> &Option<NaiveDate> {
@@ -75,7 +74,7 @@ impl StocktakeNode {
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
         self.stocktake
             .finalised_datetime
-            .map(|dt| DateTime::<Utc>::from_utc(dt, Utc))
+            .map(|dt| DateTime::<Utc>::from_naive_utc_and_offset(dt, Utc))
     }
 
     pub async fn inventory_addition_id(&self) -> &Option<String> {
@@ -158,10 +157,10 @@ impl StocktakeNodeStatus {
 mod test {
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        unknown_user, StocktakeRow,
+        StocktakeRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -173,7 +172,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_stocktake_user_loader",
@@ -203,11 +202,6 @@ mod test {
             "testQueryUserExists": {
                 "user": {
                     "userId": mock_user_account_a().id
-                }
-            },
-            "testQueryUserDoesNotExist": {
-                "user": {
-                    "userId": unknown_user().user_row.id
                 }
             },
         }

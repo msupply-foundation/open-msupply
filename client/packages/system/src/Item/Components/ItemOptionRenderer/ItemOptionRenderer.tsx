@@ -1,15 +1,15 @@
 import React from 'react';
-import { ItemRowWithStatsFragment, ItemStockOnHandFragment } from '../../api';
 import { ItemOption } from '../../utils';
 import { Tooltip } from '@common/components';
+import { ItemStockOnHandFragment } from '../../api';
 
 export const getItemOptionRenderer =
   (label: string, formatNumber: (value: number) => string) =>
   (
     props: React.HTMLAttributes<HTMLLIElement>,
-    item: ItemStockOnHandFragment | ItemRowWithStatsFragment
+    item: ItemStockOnHandFragment
   ) => (
-    <Tooltip title={`${item.code} ${item.name}`}>
+    <Tooltip title={`${item.code} ${item.name}`} key={item.id}>
       <ItemOption {...props} key={item.code}>
         <span
           style={{

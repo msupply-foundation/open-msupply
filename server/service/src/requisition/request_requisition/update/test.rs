@@ -4,7 +4,7 @@ mod test_update {
     use repository::{
         mock::{
             mock_draft_request_requisition_for_update_test,
-            mock_draft_response_requisition_for_update_test, mock_name_store_c,
+            mock_full_draft_response_requisition_for_update_test, mock_name_store_c,
             mock_request_draft_requisition_calculation_test, mock_request_program_requisition,
             mock_sent_request_requisition, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
@@ -40,7 +40,7 @@ mod test_update {
         fn not_a_supplier_join() -> NameStoreJoinRow {
             inline_init(|r: &mut NameStoreJoinRow| {
                 r.id = "not_a_supplier_join".to_string();
-                r.name_id = not_a_supplier().id;
+                r.name_link_id = not_a_supplier().id;
                 r.store_id = mock_store_a().id;
                 r.name_is_supplier = false;
             })
@@ -89,7 +89,9 @@ mod test_update {
             service.update_request_requisition(
                 &context,
                 inline_init(|r: &mut UpdateRequestRequisition| {
-                    r.id = mock_draft_response_requisition_for_update_test().id;
+                    r.id = mock_full_draft_response_requisition_for_update_test()
+                        .requisition
+                        .id;
                 }),
             ),
             Err(ServiceError::NotARequestRequisition)
@@ -181,7 +183,7 @@ mod test_update {
                     max_months_of_stock: None,
                     min_months_of_stock: None,
                     other_party_id: Some(mock_name_store_c().id),
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap()),
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap()),
                 },
             )
             .unwrap();
@@ -200,8 +202,8 @@ mod test_update {
                 u.status = RequisitionRowStatus::Sent;
                 u.their_reference = Some("new their_reference".to_owned());
                 u.comment = Some("new comment".to_owned());
-                u.name_id = mock_name_store_c().id;
-                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap());
+                u.name_link_id = mock_name_store_c().id;
+                u.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap());
                 u
             })
         );

@@ -10,9 +10,8 @@ use graphql_core::simple_generic_errors::{
 use graphql_core::standard_graphql_error::{list_error_to_gql_err, validate_auth};
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{StocktakeNode, StocktakeNodeStatus};
-use repository::StocktakeFilter;
+use repository::StocktakeSortField;
 use repository::*;
-use repository::{StocktakeSort, StocktakeSortField};
 use service::auth::Resource;
 use service::auth::ResourceAccessRequest;
 
@@ -233,7 +232,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::PaginationOption;
     use repository::{
         mock::{mock_stocktake_a, MockDataInserts},
@@ -286,7 +285,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktakes_query() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             StocktakeQueries,
             EmptyMutation,
             "omsupply-database-gql-stocktakes_query",
@@ -384,7 +383,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_query() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             StocktakeQueries,
             EmptyMutation,
             "omsupply-database-gql-stocktake_query",
@@ -414,7 +413,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_by_number_query() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             StocktakeQueries,
             EmptyMutation,
             "omsupply-database-gql-stocktake_by_number_query",

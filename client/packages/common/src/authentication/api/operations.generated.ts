@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean } };
+export type UserStoreNodeFragment = { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } };
 
 export type AuthTokenQueryVariables = Types.Exact<{
   username: Types.Scalars['String']['input'];
@@ -12,12 +12,17 @@ export type AuthTokenQueryVariables = Types.Exact<{
 }>;
 
 
-export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'InvalidCredentials', description: string } } };
+export type AuthTokenQuery = { __typename: 'Queries', authToken: { __typename: 'AuthToken', token: string } | { __typename: 'AuthTokenError', error: { __typename: 'AccountBlocked', description: string, timeoutRemaining: number } | { __typename: 'InvalidCredentials', description: string } } };
 
 export type MeQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, firstName?: string | null, lastName?: string | null, phoneNumber?: string | null, jobTitle?: string | null, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean } }> } } };
+export type MeQuery = { __typename: 'Queries', me: { __typename: 'UserNode', email?: string | null, language: Types.LanguageType, username: string, userId: string, firstName?: string | null, lastName?: string | null, phoneNumber?: string | null, jobTitle?: string | null, defaultStore?: { __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } } | null, stores: { __typename: 'UserStoreConnector', totalCount: number, nodes: Array<{ __typename: 'UserStoreNode', code: string, id: string, name: string, storeMode: Types.StoreModeNodeType, createdDate?: string | null, homeCurrencyCode?: string | null, preferences: { __typename: 'StorePreferenceNode', id: string, responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, omProgramModule: boolean, vaccineModule: boolean, issueInForeignCurrency: boolean } }> } } };
+
+export type IsCentralServerQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type IsCentralServerQuery = { __typename: 'Queries', isCentralServer: boolean };
 
 export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -51,7 +56,10 @@ export const UserStoreNodeFragmentDoc = gql`
     packToOne
     omProgramModule
     vaccineModule
+    issueInForeignCurrency
   }
+  createdDate
+  homeCurrencyCode
 }
     `;
 export const AuthTokenDocument = gql`
@@ -63,6 +71,11 @@ export const AuthTokenDocument = gql`
         ... on InvalidCredentials {
           __typename
           description
+        }
+        ... on AccountBlocked {
+          __typename
+          description
+          timeoutRemaining
         }
         description
       }
@@ -101,6 +114,11 @@ export const MeDocument = gql`
   }
 }
     ${UserStoreNodeFragmentDoc}`;
+export const IsCentralServerDocument = gql`
+    query isCentralServer {
+  isCentralServer
+}
+    `;
 export const RefreshTokenDocument = gql`
     query refreshToken {
   refreshToken {
@@ -184,6 +202,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     me(variables?: MeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<MeQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<MeQuery>(MeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'me', 'query');
     },
+    isCentralServer(variables?: IsCentralServerQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<IsCentralServerQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<IsCentralServerQuery>(IsCentralServerDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'isCentralServer', 'query');
+    },
     refreshToken(variables?: RefreshTokenQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RefreshTokenQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<RefreshTokenQuery>(RefreshTokenDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'refreshToken', 'query');
     },
@@ -227,6 +248,22 @@ export const mockAuthTokenQuery = (resolver: ResponseResolver<GraphQLRequest<Aut
 export const mockMeQuery = (resolver: ResponseResolver<GraphQLRequest<MeQueryVariables>, GraphQLContext<MeQuery>, any>) =>
   graphql.query<MeQuery, MeQueryVariables>(
     'me',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockIsCentralServerQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ isCentralServer })
+ *   )
+ * })
+ */
+export const mockIsCentralServerQuery = (resolver: ResponseResolver<GraphQLRequest<IsCentralServerQueryVariables>, GraphQLContext<IsCentralServerQuery>, any>) =>
+  graphql.query<IsCentralServerQuery, IsCentralServerQueryVariables>(
+    'isCentralServer',
     resolver
   )
 

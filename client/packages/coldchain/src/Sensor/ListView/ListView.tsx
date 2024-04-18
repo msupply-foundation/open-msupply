@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect } from 'react';
 import {
   DataTable,
   useColumns,
@@ -9,11 +9,12 @@ import {
   useUrlQueryParams,
   Formatter,
   useEditModal,
+  useUrlQuery,
+  SensorNodeType,
 } from '@openmsupply-client/common';
 import { useSensor, SensorFragment } from '../api';
 import { SensorEditModal } from '../Components';
-import { BreachTypeCell } from '../../common';
-import { AppBarButtons } from './AppBarButtons';
+import { BreachTypeCell, useFormatTemperature } from '../../common';
 
 export const SensorListView: FC = () => {
   const {
@@ -26,19 +27,23 @@ export const SensorListView: FC = () => {
   const { data, isError, isLoading } = useSensor.document.list();
   const pagination = { page, first, offset };
   const t = useTranslation('coldchain');
+  const { urlQuery, updateQuery } = useUrlQuery();
+  const formatTemperature = useFormatTemperature();
 
   const columns = useColumns<SensorFragment>(
     [
-      ['name'],
+      ['name', { width: 200 }],
       {
         key: 'cce',
         label: 'label.cce',
         sortable: false,
+        accessor: ({ rowData }) =>
+          rowData.assets?.nodes?.map(asset => asset.assetNumber).join(', '),
       },
       {
-        key: 'locationName',
+        key: 'location',
         label: 'label.location',
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
         sortable: false,
       },
       {
@@ -52,9 +57,7 @@ export const SensorListView: FC = () => {
         accessor: ({ rowData }) => {
           const batteryLevel = rowData.batteryLevel;
 
-          return batteryLevel
-            ? `${batteryLevel}%`
-            : t('messages.not-initialised');
+          return batteryLevel ? `${batteryLevel}%` : '-';
         },
         sortable: false,
       },
@@ -62,9 +65,11 @@ export const SensorListView: FC = () => {
         key: 'lastReading',
         label: 'label.last-reading',
         accessor: ({ rowData }) => {
-          return `${rowData.latestTemperatureLog?.nodes[0]?.temperature}${t(
-            'label.temperature-unit'
-          )}`;
+          return !!rowData.latestTemperatureLog?.nodes[0]?.temperature
+            ? `${formatTemperature(
+                rowData.latestTemperatureLog?.nodes[0]?.temperature
+              )}`
+            : '-';
         },
         sortable: false,
       },
@@ -83,7 +88,9 @@ export const SensorListView: FC = () => {
         key: 'type',
         label: 'label.sensor-type',
         accessor: ({ rowData }) => {
-          return Formatter.enumCase(rowData?.type);
+          return rowData?.type === SensorNodeType.BlueMaestro
+            ? t('label.rtmd')
+            : Formatter.enumCase(rowData?.type);
         },
         sortable: false,
       },
@@ -102,9 +109,22 @@ export const SensorListView: FC = () => {
 
   const { isOpen, entity, onClose, onOpen } = useEditModal<SensorFragment>();
 
+  // this will open the edit modal, if the `edit` query parameter is set
+  // to a valid sensor ID. On opening, the query param is removed to
+  // prevent a loop which would happen if a sensor was edited
+  useEffect(() => {
+    const sensorId = (urlQuery['edit'] as string) ?? '';
+    if (sensorId) {
+      const sensor = data?.nodes?.find(s => s.id === sensorId);
+      if (sensor) {
+        updateQuery({ edit: '' });
+        onOpen(sensor);
+      }
+    }
+  }, [data?.nodes]);
+
   return (
     <>
-      <AppBarButtons />
       {isOpen && entity && (
         <SensorEditModal isOpen={isOpen} onClose={onClose} sensor={entity} />
       )}

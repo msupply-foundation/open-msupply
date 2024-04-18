@@ -22,9 +22,13 @@ To see it in action, check out the [demo server](https://demo-open.msupply.org/)
 
 `yarn start` (using demo server as API)
 
-`yarn start-local` (using localhost:8000 as API)
+`yarn start-local` (using localhost:8000 as API - ensure you have already gone through the `server` setup instructions)
 
-`cd packages/host && yarn start -- --env API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
+`yarn start -- -- --env API_HOST='http://localhost:8001'` (using custom API url, see [config.ts for more info](./packages/config/src/config.ts))
+
+- If there are feature flags in use, they are set as environment variables. For example:
+
+`yarn start-local-features FEATURE_INVENTORY_ADJUSTMENTS=true`
 
 - Bundle for production:
 

@@ -1,7 +1,9 @@
 use super::{
     barcode_row::{barcode, barcode::dsl as barcode_dsl},
+    item_link_row::{item_link, item_link::dsl as item_link_dsl},
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
+    name_link_row::{name_link, name_link::dsl as name_link_dsl},
     name_row::{name, name::dsl as name_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
     DBType, LocationRow, StockLineRow, StorageConnection,
@@ -14,8 +16,8 @@ use crate::{
     },
     location::{LocationFilter, LocationRepository},
     repository_error::RepositoryError,
-    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemRepository, ItemRow, NameRow, Pagination,
-    Sort, StringFilter,
+    BarcodeRow, DateFilter, EqualFilter, ItemFilter, ItemLinkRow, ItemRepository, ItemRow,
+    NameLinkRow, NameRow, Pagination, Sort, StringFilter,
 };
 
 use diesel::{
@@ -28,7 +30,7 @@ pub struct StockLine {
     pub stock_line_row: StockLineRow,
     pub item_row: ItemRow,
     pub location_row: Option<LocationRow>,
-    pub name_row: Option<NameRow>,
+    pub supplier_name_row: Option<NameRow>,
     pub barcode_row: Option<BarcodeRow>,
 }
 
@@ -40,9 +42,10 @@ pub enum StockLineSortField {
     Batch,
     PackSize,
     SupplierName,
+    LocationCode,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct StockLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_code_or_name: Option<StringFilter>,
@@ -59,9 +62,9 @@ pub type StockLineSort = Sort<StockLineSortField>;
 
 type StockLineJoin = (
     StockLineRow,
-    ItemRow,
+    (ItemLinkRow, ItemRow),
     Option<LocationRow>,
-    Option<NameRow>,
+    Option<(NameLinkRow, NameRow)>,
     Option<BarcodeRow>,
 );
 pub struct StockLineRepository<'a> {
@@ -79,12 +82,7 @@ impl<'a> StockLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<i64, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         Ok(query.count().get_result(&self.connection.connection)?)
     }
@@ -105,12 +103,7 @@ impl<'a> StockLineRepository<'a> {
         store_id: Option<String>,
     ) -> Result<Vec<StockLine>, RepositoryError> {
         let mut query = create_filtered_query(filter.clone());
-        query = apply_item_filter(
-            query,
-            filter,
-            &self.connection,
-            store_id.unwrap_or_default(),
-        );
+        query = apply_item_filter(query, filter, self.connection, store_id.unwrap_or_default());
 
         if let Some(sort) = sort {
             match sort.key {
@@ -136,6 +129,9 @@ impl<'a> StockLineRepository<'a> {
                 StockLineSortField::SupplierName => {
                     apply_sort_no_case!(query, sort, name_dsl::name_);
                 }
+                StockLineSortField::LocationCode => {
+                    apply_sort_no_case!(query, sort, location_dsl::code);
+                }
             }
         } else {
             query = query.order(stock_line_dsl::id.asc())
@@ -160,7 +156,13 @@ impl<'a> StockLineRepository<'a> {
 type BoxedStockLineQuery = IntoBoxed<
     'static,
     LeftJoin<
-        LeftJoin<LeftJoin<InnerJoin<stock_line::table, item::table>, location::table>, name::table>,
+        LeftJoin<
+            LeftJoin<
+                InnerJoin<stock_line::table, InnerJoin<item_link::table, item::table>>,
+                location::table,
+            >,
+            InnerJoin<name_link::table, name::table>,
+        >,
         barcode::table,
     >,
     DBType,
@@ -168,9 +170,9 @@ type BoxedStockLineQuery = IntoBoxed<
 
 fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery {
     let mut query = stock_line_dsl::stock_line
-        .inner_join(item_dsl::item)
+        .inner_join(item_link_dsl::item_link.inner_join(item_dsl::item))
         .left_join(location_dsl::location)
-        .left_join(name_dsl::name)
+        .left_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .left_join(barcode_dsl::barcode)
         .into_boxed();
 
@@ -188,7 +190,7 @@ fn create_filtered_query(filter: Option<StockLineFilter>) -> BoxedStockLineQuery
         } = f;
 
         apply_equal_filter!(query, id, stock_line_dsl::id);
-        apply_equal_filter!(query, item_id, stock_line_dsl::item_id);
+        apply_equal_filter!(query, item_id, item::id);
         apply_equal_filter!(query, location_id, stock_line_dsl::location_id);
         apply_date_filter!(query, expiry_date, stock_line_dsl::expiry_date);
         apply_equal_filter!(query, store_id, stock_line_dsl::store_id);
@@ -226,42 +228,33 @@ fn apply_item_filter(
             let mut item_filter = ItemFilter::new();
             item_filter.code_or_name = Some(item_code_or_name.clone());
             item_filter.is_visible = Some(true);
+            item_filter.is_active = Some(true);
             let items = ItemRepository::new(connection)
                 .query_by_filter(item_filter, Some(store_id))
-                .unwrap();
+                .unwrap_or_default(); // if there is a database issue, allow the filter to fail silently
             let item_ids: Vec<String> = items.into_iter().map(|item| item.item_row.id).collect();
 
-            return query.filter(stock_line_dsl::item_id.eq_any(item_ids));
+            return query.filter(item::id.eq_any(item_ids));
         }
     }
     query
 }
 
-pub fn to_domain(
-    (stock_line_row, item_row, location_row, name_row, barcode_row): StockLineJoin,
+fn to_domain(
+    (stock_line_row, (_, item_row), location_row, name_link_join, barcode_row): StockLineJoin,
 ) -> StockLine {
     StockLine {
         stock_line_row,
         item_row,
         location_row,
-        name_row,
+        supplier_name_row: name_link_join.map(|(_, name_row)| name_row),
         barcode_row,
     }
 }
 
 impl StockLineFilter {
     pub fn new() -> StockLineFilter {
-        StockLineFilter {
-            expiry_date: None,
-            id: None,
-            is_available: None,
-            item_code_or_name: None,
-            item_id: None,
-            location_id: None,
-            store_id: None,
-            has_packs_in_store: None,
-            location: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -317,7 +310,7 @@ impl StockLine {
     }
 
     pub fn supplier_name(&self) -> Option<&str> {
-        self.name_row
+        self.supplier_name_row
             .as_ref()
             .map(|name_row| name_row.name.as_str())
     }
@@ -355,8 +348,8 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "line1".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                r.item_link_id = mock_item_a().id;
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
             })
         }
         // expiry two
@@ -364,8 +357,8 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "line2".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 02, 01).unwrap());
+                r.item_link_id = mock_item_a().id;
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap());
             })
         }
         // expiry one (expiry null)
@@ -373,7 +366,7 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "line3".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
+                r.item_link_id = mock_item_a().id;
                 r.expiry_date = None;
             })
         }
@@ -428,8 +421,8 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "line1".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                r.item_link_id = mock_item_a().id;
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
                 r.available_number_of_packs = 0.0;
             })
         }
@@ -439,8 +432,8 @@ mod test {
             inline_init(|r: &mut StockLineRow| {
                 r.id = "line2".to_string();
                 r.store_id = mock_store_a().id;
-                r.item_id = mock_item_a().id;
-                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 02, 01).unwrap());
+                r.item_link_id = mock_item_a().id;
+                r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 2, 1).unwrap());
                 r.available_number_of_packs = 1.0;
             })
         }

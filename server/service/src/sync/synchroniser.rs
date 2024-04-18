@@ -2,15 +2,21 @@ use crate::{
     service_provider::{ServiceContext, ServiceProvider},
     sync::sync_status::logger::SyncStep,
 };
-use log::{info, warn};
+use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
+
+use std::ops::Not;
 use std::sync::Arc;
 use thiserror::Error;
-use util::format_error;
+use util::{format_error, is_central_server};
 
 use super::{
     api::SyncApiV5,
+    api_v6::SyncApiV6,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
+    central_data_synchroniser_v6::{
+        CentralDataSynchroniserV6, CentralPullErrorV6, RemotePushErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -23,12 +29,13 @@ use super::{
 };
 
 const INTEGRATION_POLL_PERIOD_SECONDS: u64 = 1;
-const INTEGRATION_TIMEOUT_SECONDS: u64 = 15;
+const INTEGRATION_TIMEOUT_SECONDS: u64 = 30;
 
 pub struct Synchroniser {
     settings: SyncSettings,
     service_provider: Arc<ServiceProvider>,
     central: CentralDataSynchroniser,
+    central_v6: CentralDataSynchroniserV6,
     remote: RemoteDataSynchroniser,
 }
 
@@ -46,6 +53,10 @@ pub(crate) enum SyncError {
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
+    #[error("Error while pulling central v6 records")]
+    CentralPullErrorV6(#[from] CentralPullErrorV6),
+    #[error("Error while pushing remote v6 records")]
+    RemotePushErrorV6(#[from] RemotePushErrorV6),
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
@@ -98,7 +109,9 @@ impl Synchroniser {
         service_provider: Arc<ServiceProvider>,
         sync_version: u32,
     ) -> anyhow::Result<Self> {
-        let sync_api_v5 = SyncApiV5::new(&settings, &service_provider, sync_version)?;
+        let sync_v5_settings = SyncApiV5::new_settings(&settings, &service_provider, sync_version)?;
+        let sync_api_v5 = SyncApiV5::new(sync_v5_settings.clone())?;
+        let sync_api_v6 = SyncApiV6::new(sync_v5_settings)?;
         Ok(Synchroniser {
             remote: RemoteDataSynchroniser {
                 sync_api_v5: sync_api_v5.clone(),
@@ -106,6 +119,7 @@ impl Synchroniser {
             settings,
             service_provider,
             central: CentralDataSynchroniser { sync_api_v5 },
+            central_v6: CentralDataSynchroniserV6 { sync_api_v6 },
         })
     }
 
@@ -153,7 +167,26 @@ impl Synchroniser {
         logger.done_step(SyncStep::PrepareInitial)?;
 
         // First push before pulling, this avoids records being pulled from central server
-        // and overwritting existing records waiting to be pulled
+        // and overwriting existing records waiting to be pulled
+
+        // We'll push records to open-mSupply first, then push to Legacy mSupply
+
+        // PUSH V6
+        logger.start_step(SyncStep::PushCentralV6)?;
+        if is_initialised && !is_central_server() {
+            let result = self
+                .central_v6
+                .push(&ctx.connection, batch_size.remote_push, logger)
+                .await;
+
+            if let Err(error) = result {
+                // Log but ignore error for now, to allow omSupply to run without omSupply server
+                // TODO : Fix at some point!
+                log::info!("{}", format_error(&error));
+                let _ = logger.error(&error.into());
+            };
+        }
+        logger.done_step(SyncStep::PushCentralV6)?;
 
         // PUSH
         // Only push if initialised (site data was initialised on central and successfully pulled)
@@ -183,16 +216,36 @@ impl Synchroniser {
         self.remote
             .pull(&ctx.connection, batch_size.remote_pull, logger)
             .await?;
+
         logger.done_step(SyncStep::PullRemote)?;
+
+        // PULL V6
+        if !is_central_server() {
+            logger.start_step(SyncStep::PullCentralV6)?;
+            if let Err(error) = self
+                .central_v6
+                .pull(&ctx.connection, 20, is_initialised, logger)
+                .await
+            {
+                // Log but ignore error for now, to allow omSupply to run without omSupply server
+                // TODO : Fix at some point!
+                log::info!("{}", format_error(&error));
+                let _ = logger.error(&error.into());
+            }
+            logger.done_step(SyncStep::PullCentralV6)?;
+        }
 
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
-        //
-        let (upserts, deletes) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised)
+
+        let (upserts, deletes, merges) =
+            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
+                .await
                 .map_err(SyncError::IntegrationError)?;
-        info!("Upsert Integration result: {:?}", upserts);
-        info!("Delete Integration result: {:?}", deletes);
+        warn!("Upsert Integration result: {:?}", upserts);
+        warn!("Delete Integration result: {:?}", deletes);
+        warn!("Merge Integration result: {:?}", merges);
+
         logger.done_step(SyncStep::Integrate)?;
 
         if !is_initialised {
@@ -210,10 +263,12 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub fn integrate_and_translate_sync_buffer(
+pub async fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
     is_initialised: bool,
+    logger: &mut SyncLogger<'a>,
 ) -> anyhow::Result<(
+    TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
 )> {
@@ -230,6 +285,7 @@ pub fn integrate_and_translate_sync_buffer(
         (
             TranslationAndIntegrationResults,
             TranslationAndIntegrationResults,
+            TranslationAndIntegrationResults,
         ),
         RepositoryError,
     > {
@@ -241,16 +297,40 @@ pub fn integrate_and_translate_sync_buffer(
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
-        let upsert_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(upsert_sync_buffer_records, &translators)?;
-
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
             sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
-        let delete_integration_result = translation_and_integration
-            .translate_and_integrate_sync_records(delete_sync_buffer_records, &translators)?;
 
-        Ok((upsert_integration_result, delete_integration_result))
+        let upsert_integration_result = translation_and_integration
+            .translate_and_integrate_sync_records(
+                upsert_sync_buffer_records.clone(),
+                &translators,
+                // Only pass Some(logger) during initalisation
+                is_initialised.not().then(|| logger),
+            )?;
+
+        // pass the logger here
+        let delete_integration_result = translation_and_integration
+            .translate_and_integrate_sync_records(
+                delete_sync_buffer_records.clone(),
+                &translators,
+                None,
+            )?;
+
+        let merge_sync_buffer_records =
+            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+        let merge_integration_result: TranslationAndIntegrationResults =
+            translation_and_integration.translate_and_integrate_sync_records(
+                merge_sync_buffer_records,
+                &translators,
+                None,
+            )?;
+
+        Ok((
+            upsert_integration_result,
+            delete_integration_result,
+            merge_integration_result,
+        ))
     };
 
     let result = if is_initialised {

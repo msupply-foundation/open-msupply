@@ -1,6 +1,6 @@
 use super::{OutError, UpdateRequestRequisition};
 use crate::{
-    requisition::common::check_requisition_exists,
+    requisition::common::check_requisition_row_exists,
     validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors},
 };
 use repository::{
@@ -13,7 +13,7 @@ pub fn validate(
     store_id: &str,
     input: &UpdateRequestRequisition,
 ) -> Result<(RequisitionRow, bool), OutError> {
-    let requisition_row = check_requisition_exists(connection, &input.id)?
+    let requisition_row = check_requisition_row_exists(connection, &input.id)?
         .ok_or(OutError::RequisitionDoesNotExist)?;
     let status_changed = input.status.is_some();
 

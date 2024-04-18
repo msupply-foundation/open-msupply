@@ -4,7 +4,7 @@ import { withJsonFormsControlProps, useJsonForms } from '@jsonforms/react';
 import {
   useDebounceCallback,
   DateUtils,
-  PositiveNumberInput,
+  NumericTextInput,
   useFormatDateTime,
   useTranslation,
   FormLabel,
@@ -76,7 +76,9 @@ const getEndOfSupply = (
 const UIComponent = (props: ControlProps) => {
   const { data, handleChange, label, path, uischema } = props;
   const [localData, setLocalData] = useState<number | undefined>(data);
-  const [remainingQuantity, setRemainingQuantity] = useState(0);
+  const [remainingQuantity, setRemainingQuantity] = useState<
+    number | undefined
+  >(undefined);
   const [baseTime, setBaseTime] = useState<string | undefined>();
   const { errors, options } = useZodOptionsValidation(
     Options,
@@ -96,7 +98,7 @@ const UIComponent = (props: ControlProps) => {
       core.data,
       options?.remainingQuantityField ?? ''
     );
-    setRemainingQuantity(remainingQuantity ?? 0);
+    setRemainingQuantity(remainingQuantity);
   }, [core?.data, options]);
 
   const onChange = useDebounceCallback(
@@ -122,13 +124,13 @@ const UIComponent = (props: ControlProps) => {
       if (options.quantityPrescribedField) {
         handleChange(
           options.quantityPrescribedField,
-          remainingQuantity + value
+          (remainingQuantity ?? 0) + value
         );
       }
       if (options.endOfSupplyField) {
         const scheduleStartTime =
           value > 0
-            ? getEndOfSupply(baseTime, remainingQuantity, value, options)
+            ? getEndOfSupply(baseTime, remainingQuantity ?? 0, value, options)
             : undefined;
         handleChange(
           options.endOfSupplyField,
@@ -140,14 +142,18 @@ const UIComponent = (props: ControlProps) => {
   );
   const error = !!errors;
 
-  const endOfSupplySec = baseTime
-    ? getEndOfSupply(
-        baseTime,
-        remainingQuantity,
-        localData ?? 0,
-        options
-      ).getTime() / 1000
-    : undefined;
+  // Only show end of supply if either remainingQuantity or pillsDispensed have been entered
+  const endOfSupplyString =
+    baseTime && (localData !== undefined || remainingQuantity !== undefined)
+      ? dateFormat.localisedDate(
+          getEndOfSupply(
+            baseTime,
+            remainingQuantity ?? 0,
+            localData ?? 0,
+            options
+          ).getTime() / 1000
+        )
+      : 'N/A';
 
   if (!props.visible) {
     return null;
@@ -160,9 +166,7 @@ const UIComponent = (props: ControlProps) => {
         labelWidthPercentage={FORM_LABEL_WIDTH}
         inputAlignment={'start'}
         Input={
-          <PositiveNumberInput
-            min={0}
-            type="number"
+          <NumericTextInput
             InputProps={{
               sx: { '& .MuiInput-input': { textAlign: 'right' } },
             }}
@@ -173,7 +177,7 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled || baseTime === undefined}
             error={error}
             helperText={errors}
-            value={localData ?? ''}
+            value={localData}
           />
         }
       />
@@ -188,9 +192,7 @@ const UIComponent = (props: ControlProps) => {
         inputAlignment={'start'}
         Input={
           <Box flexBasis="100%" display="flex" alignItems="center" gap={2}>
-            <PositiveNumberInput
-              min={0}
-              type="number"
+            <NumericTextInput
               InputProps={{
                 sx: { '& .MuiInput-input': { textAlign: 'right' } },
               }}
@@ -203,7 +205,7 @@ const UIComponent = (props: ControlProps) => {
               disabled={true}
               error={error}
               helperText={errors}
-              value={remainingQuantity + (localData ?? 0)}
+              value={(remainingQuantity ?? 0) + (localData ?? 0)}
             />
 
             <Box
@@ -215,11 +217,7 @@ const UIComponent = (props: ControlProps) => {
                 {t('label.end-of-supply')}:
               </FormLabel>
             </Box>
-            <FormLabel>
-              {endOfSupplySec
-                ? `${dateFormat.localisedDate(endOfSupplySec)}`
-                : ''}
-            </FormLabel>
+            <FormLabel>{endOfSupplyString}</FormLabel>
           </Box>
         }
       />

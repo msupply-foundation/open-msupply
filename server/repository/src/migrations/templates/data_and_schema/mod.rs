@@ -1,4 +1,4 @@
-use crate::{migrations::*, StorageConnection};
+use crate::migrations::*;
 
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
@@ -117,70 +117,75 @@ async fn migration_1_00_07() {
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
+        sql_query(
             r#"
             INSERT INTO invoice 
             (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
             ('invoice1_id', 'store_id', 'name_id', 1, 'INBOUND_SHIPMENT', 'NEW', false, $1);
         "#
-        ))
+            .to_string(),
+        )
         .bind::<Timestamp, _>(Defaults::naive_date_time()),
     )
     .unwrap();
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO invoice 
             (id, store_id, name_id, invoice_number, type, status, on_hold, created_datetime) 
             VALUES 
             ('invoice2_id', 'store_id', 'name_id', 2, 'INBOUND_SHIPMENT', 'NEW', false, $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(Defaults::naive_date_time()),
     )
     .unwrap();
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO activity_log 
             (id, user_id, record_id, type, datetime) 
             VALUES 
             ('log1', 'om_admin', 'invoice2_id', 'INVOICE_DELETED', $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(Defaults::naive_date_time()),
     )
     .unwrap();
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO activity_log 
             (id, user_id, record_id, type, datetime) 
             VALUES 
             ('log2', 'some_user', 'invoice2_id', 'INVOICE_CREATED', $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(Defaults::naive_date_time()),
     )
     .unwrap();
 
     execute_sql_with_error(
         &connection,
-        sql_query(format!(
-            r#"
+        sql_query(
+            (r#"
             INSERT INTO activity_log 
             (id, user_id, record_id, type, datetime) 
             VALUES 
             ('log3', 'om_admin', 'invoice1_id', 'INVOICE_CREATED', $1);
-        "#
-        ))
+        "#)
+            .to_string(),
+        )
         .bind::<Timestamp, _>(Defaults::naive_date_time()),
     )
     .unwrap();

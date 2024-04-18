@@ -1,6 +1,13 @@
 use util::inline_init;
 
-use crate::{ItemRow, ItemRowType as ItemType};
+use crate::{ItemLinkRow, ItemRow, ItemRowType as ItemType};
+
+pub fn mock_item_link_from_item(item: &ItemRow) -> ItemLinkRow {
+    inline_init(|r: &mut ItemLinkRow| {
+        r.id = item.id.clone();
+        r.item_id = item.id.clone();
+    })
+}
 
 pub fn mock_item_a() -> ItemRow {
     inline_init(|r: &mut ItemRow| {
@@ -58,6 +65,17 @@ pub fn mock_item_f() -> ItemRow {
     })
 }
 
+pub fn mock_item_g() -> ItemRow {
+    let id = "item_g".to_string();
+    inline_init(|r: &mut ItemRow| {
+        r.id = id.clone();
+        r.name = id.clone();
+        r.code = id.clone();
+        r.r#type = ItemType::Stock;
+        r.default_pack_size = 1;
+    })
+}
+
 pub fn item_query_test1() -> ItemRow {
     inline_init(|r: &mut ItemRow| {
         r.id = String::from("item_query_test1");
@@ -104,6 +122,7 @@ pub fn mock_items() -> Vec<ItemRow> {
         mock_item_d(),
         mock_item_e(),
         mock_item_f(),
+        mock_item_g(),
         item_query_test1(),
         item_query_test2(),
         mock_item_service_item(),

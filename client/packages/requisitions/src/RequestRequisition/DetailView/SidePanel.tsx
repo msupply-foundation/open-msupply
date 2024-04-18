@@ -21,6 +21,7 @@ import {
   DeleteIcon,
   RequisitionNodeStatus,
   useDeleteConfirmation,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { useRequest } from '../api';
 import { AppRoute } from '@openmsupply-client/config';
@@ -35,7 +36,7 @@ const AdditionalInfoSection: FC = () => {
       'user',
     ]);
   const [bufferedColor, setBufferedColor] = useBufferState(colour);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const { localisedDate } = useFormatDateTime();
 
   return (
@@ -47,7 +48,7 @@ const AdditionalInfoSection: FC = () => {
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
         <PanelRow>
-          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelLabel>{t('label.created')}</PanelLabel>
           <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
         <PanelRow>
@@ -138,14 +139,20 @@ const RelatedDocumentsSection: FC = () => {
 
 export const SidePanel: FC = () => {
   const t = useTranslation('replenishment');
+  const navigate = useNavigate();
+  const { success } = useNotification();
   const { mutateAsync } = useRequest.document.delete();
   const { data } = useRequest.document.get();
-  const { success } = useNotification();
   const canDelete = data?.status === RequisitionNodeStatus.Draft;
 
   const deleteAction = async () => {
     if (!data) return;
     await mutateAsync([data]);
+    navigate(
+      RouteBuilder.create(AppRoute.Replenishment)
+        .addPart(AppRoute.InternalOrder)
+        .build()
+    );
   };
 
   const copyToClipboard = () => {

@@ -20,7 +20,6 @@ import {
   useProgramEnrolments,
 } from '@openmsupply-client/programs';
 import { usePatient } from '../../api';
-import { getStatusTranslation } from '../utils';
 import { createQueryParamsStore, useQueryParamsStore } from '@common/hooks';
 import { ChipTableCell } from '@openmsupply-client/system';
 
@@ -79,7 +78,6 @@ const ProgramListComponent: FC = () => {
       {
         key: 'status',
         label: 'label.program-status',
-        accessor: row => t(getStatusTranslation(row.rowData?.status)),
       },
       {
         key: 'enrolmentDatetime',

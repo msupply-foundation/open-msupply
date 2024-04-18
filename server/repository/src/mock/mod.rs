@@ -1,9 +1,13 @@
 use std::{collections::HashMap, ops::Index, vec};
 
 mod activity_log;
+pub mod asset;
+pub mod asset_log;
 mod barcode;
+mod clinician;
 pub mod common;
 mod context;
+mod currency;
 mod document;
 mod document_registry;
 mod form_schema;
@@ -17,6 +21,7 @@ mod name;
 mod name_store_join;
 mod name_tag;
 mod number;
+mod pack_variant;
 mod period_and_period_schedule;
 mod program;
 mod program_order_types;
@@ -27,6 +32,7 @@ mod stocktake;
 mod stocktake_line;
 mod store;
 mod temperature_breach;
+mod temperature_breach_config;
 mod temperature_log;
 mod test_invoice_count_service;
 mod test_invoice_loaders;
@@ -48,9 +54,13 @@ mod test_unallocated_line;
 mod unit;
 mod user_account;
 
+pub use asset::*;
+pub use asset_log::*;
 pub use barcode::*;
+pub use clinician::*;
 use common::*;
 pub use context::*;
+pub use currency::*;
 pub use document::*;
 pub use document_registry::*;
 pub use form_schema::*;
@@ -64,6 +74,7 @@ pub use name::*;
 pub use name_store_join::*;
 pub use name_tag::*;
 pub use number::*;
+pub use pack_variant::*;
 pub use period_and_period_schedule::*;
 pub use program::*;
 pub use program_order_types::*;
@@ -74,6 +85,7 @@ pub use stocktake::*;
 pub use stocktake_line::*;
 pub use store::*;
 pub use temperature_breach::*;
+pub use temperature_breach_config::*;
 pub use temperature_log::*;
 pub use test_invoice_count_service::*;
 pub use test_invoice_loaders::*;
@@ -93,22 +105,29 @@ pub use test_unallocated_line::*;
 pub use user_account::*;
 
 use crate::{
+    assets::{
+        asset_log_row::{AssetLogRow, AssetLogRowRepository},
+        asset_row::{AssetRow, AssetRowRepository},
+    },
     ActivityLogRow, ActivityLogRowRepository, BarcodeRow, BarcodeRowRepository, ClinicianRow,
     ClinicianRowRepository, ClinicianStoreJoinRow, ClinicianStoreJoinRowRepository, ContextRow,
-    ContextRowRepository, Document, DocumentRegistryRow, DocumentRegistryRowRepository,
-    DocumentRepository, FormSchema, FormSchemaRowRepository, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonRowRepository, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    ItemRow, KeyValueStoreRepository, KeyValueStoreRow, LocationRow, LocationRowRepository,
-    MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow, MasterListRowRepository,
-    NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository, NumberRow,
-    NumberRowRepository, PeriodRow, PeriodRowRepository, PeriodScheduleRow,
-    PeriodScheduleRowRepository, PluginDataRow, PluginDataRowRepository,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
-    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowRepository, ProgramRow,
-    ProgramRowRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
+    ContextRowRepository, CurrencyRow, Document, DocumentRegistryRow,
+    DocumentRegistryRowRepository, DocumentRepository, FormSchema, FormSchemaRowRepository,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowRepository, InvoiceLineRow,
+    InvoiceLineRowRepository, InvoiceRow, ItemLinkRowRepository, ItemRow, KeyValueStoreRepository,
+    KeyValueStoreRow, LocationRow, LocationRowRepository, MasterListNameJoinRepository,
+    MasterListNameJoinRow, MasterListRow, MasterListRowRepository, NameLinkRow,
+    NameLinkRowRepository, NameTagJoinRepository, NameTagJoinRow, NameTagRow, NameTagRowRepository,
+    NumberRow, NumberRowRepository, PackVariantRow, PackVariantRowRepository, PeriodRow,
+    PeriodRowRepository, PeriodScheduleRow, PeriodScheduleRowRepository, PluginDataRow,
+    PluginDataRowRepository, ProgramRequisitionOrderTypeRow,
+    ProgramRequisitionOrderTypeRowRepository, ProgramRequisitionSettingsRow,
+    ProgramRequisitionSettingsRowRepository, ProgramRow, ProgramRowRepository, RequisitionLineRow,
+    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, ReturnReasonRow,
+    ReturnReasonRowRepository, SensorRow, SensorRowRepository, StockLineRowRepository,
     StocktakeLineRowRepository, StocktakeRowRepository, SyncBufferRow, SyncBufferRowRepository,
-    SyncLogRow, SyncLogRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
+    SyncLogRow, SyncLogRowRepository, TemperatureBreachConfigRow,
+    TemperatureBreachConfigRowRepository, TemperatureBreachRow, TemperatureBreachRowRepository,
     TemperatureLogRow, TemperatureLogRowRepository, UserAccountRow, UserAccountRowRepository,
     UserPermissionRow, UserPermissionRowRepository, UserStoreJoinRow, UserStoreJoinRowRepository,
 };
@@ -127,14 +146,17 @@ pub struct MockData {
     pub user_store_joins: Vec<UserStoreJoinRow>,
     pub user_permissions: Vec<UserPermissionRow>,
     pub names: Vec<NameRow>,
+    pub name_links: Vec<NameLinkRow>,
     pub period_schedules: Vec<PeriodScheduleRow>,
     pub periods: Vec<PeriodRow>,
     pub stores: Vec<StoreRow>,
     pub units: Vec<UnitRow>,
+    pub currencies: Vec<CurrencyRow>,
     pub items: Vec<ItemRow>,
     pub locations: Vec<LocationRow>,
     pub sensors: Vec<SensorRow>,
     pub temperature_breaches: Vec<TemperatureBreachRow>,
+    pub temperature_breach_configs: Vec<TemperatureBreachConfigRow>,
     pub temperature_logs: Vec<TemperatureLogRow>,
     pub name_store_joins: Vec<NameStoreJoinRow>,
     pub full_requisitions: Vec<FullMockRequisition>,
@@ -160,6 +182,7 @@ pub struct MockData {
     pub name_tags: Vec<NameTagRow>,
     pub name_tag_joins: Vec<NameTagJoinRow>,
     pub inventory_adjustment_reasons: Vec<InventoryAdjustmentReasonRow>,
+    pub return_reasons: Vec<ReturnReasonRow>,
     pub program_requisition_settings: Vec<ProgramRequisitionSettingsRow>,
     pub programs: Vec<ProgramRow>,
     pub program_order_types: Vec<ProgramRequisitionOrderTypeRow>,
@@ -167,7 +190,10 @@ pub struct MockData {
     pub clinicians: Vec<ClinicianRow>,
     pub clinician_store_joins: Vec<ClinicianStoreJoinRow>,
     pub contexts: Vec<ContextRow>,
+    pub pack_variants: Vec<PackVariantRow>,
     pub plugin_data: Vec<PluginDataRow>,
+    pub assets: Vec<AssetRow>,
+    pub asset_logs: Vec<AssetLogRow>,
 }
 
 impl MockData {
@@ -194,10 +220,12 @@ pub struct MockDataInserts {
     pub periods: bool,
     pub stores: bool,
     pub units: bool,
+    pub currencies: bool,
     pub items: bool,
     pub locations: bool,
     pub sensors: bool,
     pub temperature_breaches: bool,
+    pub temperature_breach_configs: bool,
     pub temperature_logs: bool,
     pub name_store_joins: bool,
     pub full_requisitions: bool,
@@ -220,6 +248,7 @@ pub struct MockDataInserts {
     pub activity_logs: bool,
     pub sync_logs: bool,
     pub inventory_adjustment_reasons: bool,
+    pub return_reasons: bool,
     pub barcodes: bool,
     pub programs: bool,
     pub program_requisition_settings: bool,
@@ -227,7 +256,10 @@ pub struct MockDataInserts {
     pub clinicians: bool,
     pub clinician_store_joins: bool,
     pub contexts: bool,
+    pub pack_variants: bool,
     pub plugin_data: bool,
+    pub assets: bool,
+    pub asset_logs: bool,
 }
 
 impl MockDataInserts {
@@ -243,10 +275,12 @@ impl MockDataInserts {
             periods: true,
             stores: true,
             units: true,
+            currencies: true,
             items: true,
             locations: true,
             sensors: true,
             temperature_breaches: true,
+            temperature_breach_configs: true,
             temperature_logs: true,
             name_store_joins: true,
             full_requisitions: true,
@@ -269,6 +303,7 @@ impl MockDataInserts {
             activity_logs: true,
             sync_logs: true,
             inventory_adjustment_reasons: true,
+            return_reasons: true,
             barcodes: true,
             programs: true,
             program_requisition_settings: true,
@@ -276,7 +311,10 @@ impl MockDataInserts {
             clinicians: true,
             clinician_store_joins: true,
             contexts: true,
+            pack_variants: true,
             plugin_data: true,
+            assets: true,
+            asset_logs: true,
         }
     }
 
@@ -330,12 +368,18 @@ impl MockDataInserts {
     }
 
     pub fn stores(mut self) -> Self {
+        self.names = true;
         self.stores = true;
         self
     }
 
     pub fn units(mut self) -> Self {
         self.units = true;
+        self
+    }
+
+    pub fn currencies(mut self) -> Self {
+        self.currencies = true;
         self
     }
 
@@ -359,6 +403,11 @@ impl MockDataInserts {
         self
     }
 
+    pub fn temperature_breach_configs(mut self) -> Self {
+        self.temperature_breach_configs = true;
+        self
+    }
+
     pub fn temperature_logs(mut self) -> Self {
         self.temperature_logs = true;
         self
@@ -371,6 +420,11 @@ impl MockDataInserts {
 
     pub fn invoices(mut self) -> Self {
         self.invoices = true;
+        self
+    }
+
+    pub fn requisitions(mut self) -> Self {
+        self.requisitions = true;
         self
     }
 
@@ -428,6 +482,10 @@ impl MockDataInserts {
         self.inventory_adjustment_reasons = true;
         self
     }
+    pub fn return_reasons(mut self) -> Self {
+        self.return_reasons = true;
+        self
+    }
 
     pub fn barcodes(mut self) -> Self {
         self.barcodes = true;
@@ -474,8 +532,29 @@ impl MockDataInserts {
         self
     }
 
+    pub fn pack_variants(mut self) -> Self {
+        self.pack_variants = true;
+        self
+    }
+
     pub fn plugin_data(mut self) -> Self {
         self.plugin_data = true;
+        self
+    }
+
+    pub fn assets(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
+        self
+    }
+
+    pub fn asset_logs(mut self) -> Self {
+        self.names = true;
+        self.stores = true;
+        self.assets = true;
+        self.user_accounts = true;
+        self.asset_logs = true;
         self
     }
 }
@@ -519,16 +598,19 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             user_store_joins: mock_user_store_joins(),
             user_permissions: mock_user_permissions(),
             names: mock_names(),
+            name_links: mock_name_links(),
             name_tags: mock_name_tags(),
             period_schedules: mock_period_schedules(),
             periods: mock_periods(),
             stores: mock_stores(),
+            currencies: mock_currencies(),
             units: mock_units(),
             items: mock_items(),
             locations: mock_locations(),
             sensors: mock_sensors(),
             temperature_logs: mock_temperature_logs(),
             temperature_breaches: mock_temperature_breaches(),
+            temperature_breach_configs: mock_temperature_breach_configs(),
             name_store_joins: mock_name_store_joins(),
             invoices: mock_invoices(),
             stock_lines: mock_stock_lines(),
@@ -547,6 +629,10 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
             program_order_types: mock_program_order_types(),
             name_tag_joins: mock_name_tag_joins(),
             contexts: mock_contexts(),
+            pack_variants: mock_pack_variants(),
+            clinicians: mock_clinicians(),
+            assets: mock_assets(),
+            asset_logs: mock_asset_logs(),
             ..Default::default()
         },
     );
@@ -554,6 +640,7 @@ pub(crate) fn all_mock_data() -> MockDataCollection {
         "test_invoice_count_service_data",
         test_invoice_count_service_data(),
     );
+
     data.insert(
         "test_outbound_shipment_update_data",
         test_outbound_shipment_update_data(),
@@ -613,120 +700,143 @@ pub fn insert_mock_data(
 ) -> MockDataCollection {
     for (_, mock_data) in &mock_data.data {
         if inserts.names {
-            let repo = NameRowRepository::new(connection);
+            let name_repo = NameRowRepository::new(connection);
             for row in &mock_data.names {
-                repo.upsert_one(&row).unwrap();
+                name_repo.upsert_one(row).unwrap();
+            }
+            let name_link_repo = NameLinkRowRepository::new(connection);
+            for row in &mock_data.name_links {
+                name_link_repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.name_tags {
             let repo = NameTagRowRepository::new(connection);
             for row in &mock_data.name_tags {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.period_schedules {
             let repo = PeriodScheduleRowRepository::new(connection);
             for row in &mock_data.period_schedules {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.periods {
             let repo = PeriodRowRepository::new(connection);
             for row in &mock_data.periods {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.stores {
             let repo = StoreRowRepository::new(connection);
             for row in &mock_data.stores {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.user_accounts {
             let repo = UserAccountRowRepository::new(connection);
             for row in &mock_data.user_accounts {
-                repo.insert_one(&row).unwrap();
+                repo.insert_one(row).unwrap();
             }
         }
 
         if inserts.user_store_joins {
             let repo = UserStoreJoinRowRepository::new(connection);
             for row in &mock_data.user_store_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.contexts {
             let repo = ContextRowRepository::new(connection);
             for row in &mock_data.contexts {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.user_permissions {
             let repo = UserPermissionRowRepository::new(connection);
             for row in &mock_data.user_permissions {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.units {
             let repo = UnitRowRepository::new(connection);
             for row in &mock_data.units {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.currencies {
+            let repo = crate::CurrencyRowRepository::new(connection);
+            for row in &mock_data.currencies {
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.items {
-            let repo = ItemRowRepository::new(connection);
+            let item_repo = ItemRowRepository::new(connection);
+            let item_link_repo = ItemLinkRowRepository::new(connection);
+
             for row in &mock_data.items {
-                repo.upsert_one(&row).unwrap();
+                item_repo.upsert_one(row).unwrap();
+                item_link_repo
+                    .upsert_one(&mock_item_link_from_item(row))
+                    .unwrap();
             }
         }
 
         if inserts.locations {
             let repo = LocationRowRepository::new(connection);
             for row in &mock_data.locations {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.sensors {
             let repo = SensorRowRepository::new(connection);
             for row in &mock_data.sensors {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.temperature_breaches {
             let repo = TemperatureBreachRowRepository::new(connection);
             for row in &mock_data.temperature_breaches {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.temperature_breach_configs {
+            let repo = TemperatureBreachConfigRowRepository::new(connection);
+            for row in &mock_data.temperature_breach_configs {
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.temperature_logs {
             let repo = TemperatureLogRowRepository::new(connection);
             for row in &mock_data.temperature_logs {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.name_store_joins {
             let repo = NameStoreJoinRepository::new(connection);
             for row in &mock_data.name_store_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.full_requisitions {
             for row in mock_data.full_requisitions.iter() {
-                insert_full_mock_requisition(&row, connection)
+                insert_full_mock_requisition(row, connection)
             }
         }
 
@@ -747,21 +857,21 @@ pub fn insert_mock_data(
         if inserts.invoices {
             let repo = InvoiceRowRepository::new(connection);
             for row in &mock_data.invoices {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.stock_lines {
             let repo = StockLineRowRepository::new(connection);
             for row in &mock_data.stock_lines {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.invoice_lines {
             let repo = InvoiceLineRowRepository::new(connection);
             for row in &mock_data.invoice_lines {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -779,18 +889,18 @@ pub fn insert_mock_data(
 
         for row in &mock_data.master_lists {
             let repo = MasterListRowRepository::new(connection);
-            repo.upsert_one(&row).unwrap();
+            repo.upsert_one(row).unwrap();
         }
 
         for row in &mock_data.master_list_name_joins {
             let repo = MasterListNameJoinRepository::new(connection);
-            repo.upsert_one(&row).unwrap();
+            repo.upsert_one(row).unwrap();
         }
 
         if inserts.numbers {
             let repo = NumberRowRepository::new(connection);
             for row in &mock_data.numbers {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -818,7 +928,7 @@ pub fn insert_mock_data(
         if inserts.key_value_store_rows {
             let repo = KeyValueStoreRepository::new(connection);
             for row in &mock_data.key_value_store_rows {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
@@ -863,6 +973,12 @@ pub fn insert_mock_data(
                 repo.upsert_one(row).unwrap();
             }
         }
+        if inserts.return_reasons {
+            for row in &mock_data.return_reasons {
+                let repo = ReturnReasonRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
 
         if inserts.programs {
             for row in &mock_data.programs {
@@ -895,28 +1011,49 @@ pub fn insert_mock_data(
         if inserts.name_tag_joins {
             let repo = NameTagJoinRepository::new(connection);
             for row in &mock_data.name_tag_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.clinicians {
             let repo = ClinicianRowRepository::new(connection);
             for row in &mock_data.clinicians {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.clinician_store_joins {
             let repo = ClinicianStoreJoinRowRepository::new(connection);
             for row in &mock_data.clinician_store_joins {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.pack_variants {
+            let repo = PackVariantRowRepository::new(connection);
+            for row in &mock_data.pack_variants {
+                repo.upsert_one(row).unwrap();
             }
         }
 
         if inserts.plugin_data {
             let repo = PluginDataRowRepository::new(connection);
             for row in &mock_data.plugin_data {
-                repo.upsert_one(&row).unwrap();
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.assets {
+            for row in &mock_data.assets {
+                let repo = AssetRowRepository::new(connection);
+                repo.upsert_one(row).unwrap();
+            }
+        }
+
+        if inserts.asset_logs {
+            let repo = AssetLogRowRepository::new(connection);
+            for row in &mock_data.asset_logs {
+                repo.upsert_one(row).unwrap();
             }
         }
     }
@@ -928,6 +1065,7 @@ impl MockData {
         let MockData {
             mut user_accounts,
             mut names,
+            mut name_links,
             mut name_tags,
             mut period_schedules,
             mut periods,
@@ -937,6 +1075,7 @@ impl MockData {
             mut locations,
             mut sensors,
             mut temperature_breaches,
+            mut temperature_breach_configs,
             mut temperature_logs,
             mut name_store_joins,
             mut full_requisitions,
@@ -960,6 +1099,7 @@ impl MockData {
             mut activity_logs,
             mut sync_logs,
             mut inventory_adjustment_reasons,
+            mut return_reasons,
             mut name_tag_joins,
             mut program_requisition_settings,
             mut programs,
@@ -970,11 +1110,16 @@ impl MockData {
             mut clinicians,
             mut clinician_store_joins,
             mut contexts,
+            mut pack_variants,
+            mut assets,
+            mut asset_logs,
             plugin_data: _,
+            mut currencies,
         } = other;
 
         self.user_accounts.append(&mut user_accounts);
         self.names.append(&mut names);
+        self.name_links.append(&mut name_links);
         self.name_tags.append(&mut name_tags);
         self.period_schedules.append(&mut period_schedules);
         self.periods.append(&mut periods);
@@ -985,6 +1130,8 @@ impl MockData {
         self.sensors.append(&mut sensors);
         self.temperature_logs.append(&mut temperature_logs);
         self.temperature_breaches.append(&mut temperature_breaches);
+        self.temperature_breach_configs
+            .append(&mut temperature_breach_configs);
         self.full_requisitions.append(&mut full_requisitions);
         self.invoices.append(&mut invoices);
         self.invoice_lines.append(&mut invoice_lines);
@@ -1005,6 +1152,7 @@ impl MockData {
         self.sync_logs.append(&mut sync_logs);
         self.inventory_adjustment_reasons
             .append(&mut inventory_adjustment_reasons);
+        self.return_reasons.append(&mut return_reasons);
         self.name_tag_joins.append(&mut name_tag_joins);
         self.program_requisition_settings
             .append(&mut program_requisition_settings);
@@ -1018,6 +1166,10 @@ impl MockData {
         self.clinician_store_joins
             .append(&mut clinician_store_joins);
         self.contexts.append(&mut contexts);
+        self.pack_variants.append(&mut pack_variants);
+        self.currencies.append(&mut currencies);
+        self.assets.append(&mut assets);
+        self.asset_logs.append(&mut asset_logs);
 
         self
     }

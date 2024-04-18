@@ -9,10 +9,17 @@ import { FnUtils } from '@common/utils';
 export const useDebouncedValueCallback = <T extends (...args: any[]) => any>(
   callback: T,
   depsArray: DependencyList,
-  wait = 500
+  wait = 500,
+  callbackDepsArray: DependencyList = []
 ): ((...args: Parameters<T>) => Promise<ReturnType<T>>) => {
-  const memoizedCallback = useCallback(FnUtils.debounce(callback, wait), []);
-  const debounced = useCallback(memoizedCallback, depsArray);
+  const memoizedCallback = useCallback(
+    FnUtils.debounce(callback, wait),
+    callbackDepsArray
+  );
+  const debounced = useCallback(memoizedCallback, [
+    ...depsArray,
+    memoizedCallback,
+  ]);
 
   return debounced;
 };

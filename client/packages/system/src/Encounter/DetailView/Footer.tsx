@@ -4,7 +4,7 @@ import {
   useTranslation,
   AppFooterPortal,
   ButtonWithIcon,
-  CheckIcon,
+  SaveIcon,
   XCircleIcon,
   useNavigate,
   Typography,
@@ -14,6 +14,7 @@ import {
   useDialog,
   StatusCrumbs,
   EncounterNodeStatus,
+  LoadingButton,
 } from '@openmsupply-client/common';
 import {
   DocumentHistory,
@@ -24,6 +25,7 @@ import { encounterStatusTranslation } from '../utils';
 interface FooterProps {
   documentName?: string;
   isDisabled: boolean;
+  isSaving: boolean;
   onCancel: () => void;
   onSave: () => void;
   encounter?: EncounterFragment;
@@ -32,7 +34,7 @@ interface FooterProps {
 const EncounterStatusCrumbs: FC<{ encounter: EncounterFragment }> = ({
   encounter,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   // TODO StatusCrumbs shows "Order History" in the logs pop up -> make this configurable
   return (
     <StatusCrumbs
@@ -62,11 +64,12 @@ const EncounterStatusCrumbs: FC<{ encounter: EncounterFragment }> = ({
 export const Footer: FC<FooterProps> = ({
   documentName,
   isDisabled,
+  isSaving,
   onCancel,
   onSave,
   encounter,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const navigate = useNavigate();
   const { Modal, showDialog, hideDialog } = useDialog();
   return (
@@ -104,14 +107,17 @@ export const Footer: FC<FooterProps> = ({
               }}
               label={t('button.cancel')}
             />
-            <ButtonWithIcon
-              variant="outlined"
+            <LoadingButton
               color="secondary"
-              Icon={<CheckIcon />}
+              loadingStyle={{ iconColor: 'secondary.main' }}
+              variant="outlined"
+              disabled={isDisabled || isSaving}
+              isLoading={isSaving}
               onClick={onSave}
-              label={t('button.save')}
-              disabled={isDisabled}
-            />
+              startIcon={<SaveIcon />}
+            >
+              {t('button.save')}
+            </LoadingButton>
           </Box>
 
           <Modal

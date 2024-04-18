@@ -5,7 +5,7 @@ use repository::{
 
 use crate::{
     invoice::{check_invoice_exists, check_store},
-    invoice_line::validate::check_line_exists_option,
+    invoice_line::validate::check_line_row_exists_option,
     service_provider::ServiceContext,
 };
 
@@ -33,7 +33,7 @@ pub fn delete_outbound_shipment_unallocated_line(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
-            match InvoiceLineRowRepository::new(&connection).delete(&input.id) {
+            match InvoiceLineRowRepository::new(connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }
@@ -48,7 +48,7 @@ fn validate(
     input: &DeleteOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLineRow, OutError> {
     let invoice_line =
-        check_line_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
+        check_line_row_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
 
     if invoice_line.r#type != InvoiceLineRowType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);

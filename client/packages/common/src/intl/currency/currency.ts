@@ -1,16 +1,20 @@
 import currency from 'currency.js';
-import { useIntlUtils } from '../utils';
+import { useAuthContext } from '../../authentication';
+import { MAX_FRACTION_DIGITS, useIntlUtils } from '../utils';
 
 const trimCents = (centsString: string) => {
-  const trimmed = Number(`.${centsString}`);
+  const number = Number(`.${centsString}`);
 
   // If the result is an empty string, return .00
-  if (!trimmed) {
+  if (!number) {
     return '00';
   }
 
+  const trimmed = new Intl.NumberFormat('en', {
+    maximumFractionDigits: MAX_FRACTION_DIGITS,
+  }).format(number);
   // Trimmed is some number with just one decimal place.
-  if (String(trimmed).length < 4) {
+  if (trimmed.length < 4) {
     return `${String(trimmed)[2]}0`;
   }
 
@@ -67,75 +71,153 @@ export const format: currency.Format = (
   return replacePattern.replace('!', symbol).replace('#', moneyString);
 };
 
-const currencyOptions = {
-  en: {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  fr: {
-    symbol: '€',
-    separator: '.',
-    decimal: ',',
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
-  'fr-DJ': {
-    symbol: 'DJF',
-    separator: '.',
-    decimal: ',',
-    precision: 2,
-    pattern: '# !',
-    negativePattern: '-# !',
-    format,
-  },
-  ar: {
-    symbol: 'ر.ق.',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  es: {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
-  tet: {
-    symbol: '$',
-    separator: ',',
-    decimal: '.',
-    precision: 2,
-    pattern: '!#',
-    negativePattern: '-!#',
-    format,
-  },
+// Gets the canonical characters for number separator and decimal from
+// Intl.NumberFormat. This is not always obvious (the " " used in French
+// formatting, for example, is actual a "NARROW NO-BREAK SPACE" (CharCode 8239)
+// even though it looks like a regular space (CharCode 32)), so for consistency
+// this should be the source of truth.
+const getSeparatorAndDecimal = (locale: string) => {
+  const parts = new Intl.NumberFormat(locale).formatToParts(1000.1);
+  const separator = parts.find(({ type }) => type === 'group')?.value ?? ',';
+  const decimal = parts.find(({ type }) => type === 'decimal')?.value ?? '.';
+  return { separator, decimal };
 };
 
-export const useCurrency = (dp?: number) => {
+const getPatterns = (locale: string) => {
+  switch (locale) {
+    case 'fr-DJ':
+    case 'fr':
+    case 'ru':
+      return { pattern: '# !', negativePattern: '-# !' };
+    default:
+      return { pattern: '!#', negativePattern: '-!#' };
+  }
+};
+
+export type Currencies =
+  | 'USD'
+  | 'EUR'
+  | 'NZD'
+  | 'DJF'
+  | 'QAR'
+  | 'RUB'
+  | 'SSP'
+  | 'PGK'
+  | 'COP'
+  | 'SBD';
+
+export const currencyOptions = (locale: string, code?: Currencies) => {
+  switch (code) {
+    case 'EUR':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '€',
+        precision: 2,
+        format,
+      };
+    case 'DJF':
+      return {
+        // eslint-disable-next-line no-irregular-whitespace
+        // separator: " " decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'DJF',
+        precision: 0,
+        format,
+      };
+    case 'QAR':
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'ر.ق.',
+        precision: 2,
+        format,
+      };
+    case 'RUB':
+      return {
+        // separator: "." decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '₽',
+        precision: 2,
+        format,
+      };
+    case 'SSP': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'SSP',
+        precision: 2,
+        format,
+      };
+    }
+    case 'PGK': {
+      return {
+        // separator: "." decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'K',
+        precision: 2,
+        format,
+      };
+    }
+    case 'COP': {
+      return {
+        // separator: "." decimal = ","
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '$',
+        precision: 2,
+        format,
+      };
+    }
+    case 'SBD': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: 'SI$',
+        precision: 2,
+        format,
+      };
+    }
+    case 'USD':
+    case 'NZD':
+    default:
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        ...getPatterns(locale),
+        symbol: '$',
+        precision: 2,
+        format,
+      };
+  }
+};
+
+export const useCurrency = (code?: Currencies) => {
+  const { store } = useAuthContext();
   const { currentLanguage: language } = useIntlUtils();
-  const options = currencyOptions[language];
-  const precision = dp ?? options.precision;
+  const currencyCode = code ? code : (store?.homeCurrencyCode as Currencies);
+
+  const options = currencyOptions(language, currencyCode);
   return {
-    c: (value: currency.Any) => currency(value, { ...options, precision }),
+    c: (value: currency.Any, precision?: number) =>
+      currency(value, {
+        ...options,
+        precision: precision ?? options.precision,
+      }),
     options,
-    language,
+    currencyCode,
   };
 };
 
-export const useFormatCurrency = (dp?: number) => {
-  const { c } = useCurrency(dp);
+export const useFormatCurrency = (code?: Currencies) => {
+  const { c } = useCurrency(code);
   return (value: currency.Any) => c(value).format();
 };

@@ -144,9 +144,7 @@ fn create_filtered_query(filter: Option<TemperatureBreachConfigFilter>) -> Boxed
     query
 }
 
-pub fn to_domain(
-    temperature_breach_config_row: TemperatureBreachConfigRow,
-) -> TemperatureBreachConfig {
+fn to_domain(temperature_breach_config_row: TemperatureBreachConfigRow) -> TemperatureBreachConfig {
     TemperatureBreachConfig {
         temperature_breach_config_row,
     }
@@ -154,7 +152,7 @@ pub fn to_domain(
 
 impl TemperatureBreachConfigFilter {
     pub fn new() -> TemperatureBreachConfigFilter {
-        Default::default()
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

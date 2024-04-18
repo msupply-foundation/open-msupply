@@ -1,22 +1,22 @@
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, ReactNode } from 'react';
 import {
   BaseButton,
   Box,
   RouteBuilder,
   TemperatureBreachSortFieldInput,
+  TemperatureLogSortFieldInput,
   Typography,
   useMatch,
   useNavigate,
   useUrlQuery,
 } from '@openmsupply-client/common';
-import { useFormatDateTime, useTranslation } from '@common/intl';
+import { LocaleKey, useFormatDateTime, useTranslation } from '@common/intl';
 import { CircleAlertIcon } from '@common/icons';
 import { alpha, useTheme } from '@common/styles';
 import { AppRoute } from '@openmsupply-client/config';
-import {
-  TemperatureBreachFragment,
-  useTemperatureBreach,
-} from './Monitoring/api/TemperatureBreach';
+import { useTemperatureNotification } from './Monitoring/api';
+import { TemperatureNotificationBreachFragment } from './Monitoring/api';
+import { TemperatureExcursionFragment } from './Monitoring/api/TemperatureNotification/operations.generated';
 
 const Text: React.FC<PropsWithChildren> = ({ children }) => (
   <Typography
@@ -32,13 +32,55 @@ const Text: React.FC<PropsWithChildren> = ({ children }) => (
   </Typography>
 );
 
+const TotalCount = ({
+  count,
+  message,
+}: {
+  count: number;
+  message: LocaleKey;
+}) => {
+  const t = useTranslation('coldchain');
+
+  if (count < 2) return undefined;
+
+  return (
+    <Typography
+      component="div"
+      sx={{
+        fontSize: '12px',
+        display: 'flex',
+        alignContent: 'center',
+        flexWrap: 'wrap',
+        marginLeft: 2,
+        padding: '0 8px',
+        color: 'gray.main',
+        fontWeight: 500,
+      }}
+    >
+      {t(message, {
+        count,
+      })}
+    </Typography>
+  );
+};
+
 const Separator = () => (
   <Text>
     <Typography paddingX={0.5}>|</Typography>
   </Text>
 );
 
-const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
+const DetailButton = ({
+  notification,
+  queryParameters,
+  tab,
+}: {
+  notification:
+    | TemperatureNotificationBreachFragment
+    | TemperatureExcursionFragment;
+  queryParameters: any;
+  tab: string;
+}) => {
   const t = useTranslation('coldchain');
   const navigate = useNavigate();
   const { urlQuery } = useUrlQuery();
@@ -47,7 +89,7 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
     RouteBuilder.create(AppRoute.Coldchain).addWildCard().build()
   );
 
-  if (isColdchain && currentTab === t('label.breaches')) return null;
+  if (isColdchain && currentTab === tab) return null;
 
   return (
     <BaseButton
@@ -57,12 +99,9 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
         navigate(
           RouteBuilder.create(AppRoute.Coldchain)
             .addPart(AppRoute.Monitoring)
-            .addQuery({ tab: t('label.breaches') })
-            .addQuery({
-              sort: TemperatureBreachSortFieldInput.StartDatetime,
-            })
-            .addQuery({ unacknowledged: true })
-            .addQuery({ 'sensor.name': breach.sensor?.name ?? '' })
+            .addQuery({ tab })
+            .addQuery(queryParameters)
+            .addQuery({ 'sensor.name': notification.sensor?.name ?? '' })
             .build()
         )
       }
@@ -71,36 +110,51 @@ const DetailButton = ({ breach }: { breach: TemperatureBreachFragment }) => {
     </BaseButton>
   );
 };
-const Location = ({ breach }: { breach: TemperatureBreachFragment }) => {
+const Location = ({
+  notification,
+}: {
+  notification:
+    | TemperatureNotificationBreachFragment
+    | TemperatureExcursionFragment;
+}) => {
   const t = useTranslation('coldchain');
 
-  if (!breach?.location?.name) return null;
+  if (!notification?.location?.name) return null;
   return (
     <>
       <Separator />
-      {!!breach?.location?.name && (
+      {!!notification?.location?.name && (
         <Text>
-          {t('message.location')}
-          <b style={{ paddingLeft: 4 }}>{breach.location.name}</b>
+          {t('messages.location')}
+          <b style={{ paddingLeft: 4 }}>{notification.location.name}</b>
         </Text>
       )}
     </>
   );
 };
 
-export const ColdchainNotification = () => {
+type NotificationProps = {
+  message: LocaleKey;
+  totalCount: number;
+  totalCountMessage: LocaleKey;
+  notification?:
+    | TemperatureNotificationBreachFragment
+    | TemperatureExcursionFragment;
+  detailButton: ReactNode;
+};
+
+const Notification = ({
+  detailButton,
+  message,
+  totalCount,
+  totalCountMessage,
+  notification,
+}: NotificationProps) => {
   const theme = useTheme();
   const t = useTranslation('coldchain');
-  const { data: breaches } = useTemperatureBreach.document.notifications({
-    first: 1,
-    offset: 0,
-    sortBy: { key: 'startDatetime', direction: 'desc', isDesc: true },
-    filterBy: { unacknowledged: true },
-  });
   const { localisedDistanceToNow } = useFormatDateTime();
-  const breach = breaches?.nodes?.[0];
 
-  if (!breach) return null;
+  if (!notification) return null;
 
   return (
     <Box
@@ -134,27 +188,29 @@ export const ColdchainNotification = () => {
       </Box>
       <Text>
         <b>
-          {t('message.notification-breach-detected', {
-            time: localisedDistanceToNow(breach.startDatetime),
+          {t(message, {
+            time: localisedDistanceToNow(notification.startDatetime),
           })}
         </b>
       </Text>
       <Separator />
-      {!!breach.maxOrMinTemperature && (
+      {!!notification.maxOrMinTemperature && (
         <>
           <Text>
-            {t('message.last-temperature', {
-              temperature: breach.maxOrMinTemperature,
+            {t('messages.last-temperature', {
+              temperature: notification.maxOrMinTemperature,
             })}
           </Text>
           <Separator />
         </>
       )}
       <Text>
-        {t('message.device')}
-        <b style={{ paddingLeft: 4 }}>{breach.sensor?.name}</b>
+        {t('messages.device')}
+        <b style={{ paddingLeft: 4 }}>{notification.sensor?.name}</b>
       </Text>
-      <Location breach={breach} />
+      <Location notification={notification} />
+      <TotalCount message={totalCountMessage} count={totalCount} />
+
       <Box
         sx={{
           justifyContent: 'flex-end',
@@ -164,8 +220,70 @@ export const ColdchainNotification = () => {
           height: '32px',
         }}
       >
-        <DetailButton breach={breach} />
+        {detailButton}
       </Box>
+    </Box>
+  );
+};
+
+export const ColdchainNotification = () => {
+  const t = useTranslation('coldchain');
+  const { data: notifications } = useTemperatureNotification.document.list({
+    first: 1,
+    offset: 0,
+  });
+
+  if (
+    !notifications?.breaches?.totalCount &&
+    !notifications?.excursions?.totalCount
+  )
+    return null;
+
+  const breach = notifications?.breaches?.nodes?.[0];
+  const excursion = notifications?.excursions?.nodes?.[0];
+  const breachButton = !!breach ? (
+    <DetailButton
+      notification={breach}
+      tab={t('label.breaches')}
+      queryParameters={{
+        sort: TemperatureBreachSortFieldInput.StartDatetime,
+        unacknowledged: true,
+      }}
+    />
+  ) : null;
+  const excursionButton = !!excursion ? (
+    <DetailButton
+      notification={excursion}
+      tab={t('label.log')}
+      queryParameters={{
+        sort: TemperatureLogSortFieldInput.Datetime,
+        datetime: '_',
+        dir: 'desc',
+      }}
+    />
+  ) : null;
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Notification
+        message="messages.notification-breach-detected"
+        totalCountMessage="messages.total-breaches"
+        notification={notifications?.breaches?.nodes?.[0]}
+        totalCount={notifications?.breaches?.totalCount ?? 0}
+        detailButton={breachButton}
+      />
+      <Notification
+        message="messages.notification-excursion-detected"
+        totalCountMessage="messages.total-excursions"
+        notification={notifications?.excursions?.nodes?.[0]}
+        totalCount={notifications?.excursions?.totalCount ?? 0}
+        detailButton={excursionButton}
+      />
     </Box>
   );
 };

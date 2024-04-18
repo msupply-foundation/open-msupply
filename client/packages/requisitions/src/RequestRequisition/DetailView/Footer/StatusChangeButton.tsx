@@ -10,6 +10,7 @@ import {
   useAuthContext,
   UserPermission,
   Tooltip,
+  useIntlUtils,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -75,6 +76,7 @@ const useStatusChangeButton = () => {
   const { success, error } = useNotification();
   const t = useTranslation('replenishment');
   const { user } = useAuthContext();
+  const { getLocalisedFullName } = useIntlUtils();
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
@@ -91,12 +93,12 @@ const useStatusChangeButton = () => {
       return comment;
     }
 
-    // TODO: change to `getLocalisedFullName` when the programs feature is merged
-    const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+    const name =
+      getLocalisedFullName(user?.firstName, user?.lastName) || user?.name;
     const job = !!user?.jobTitle ? ` (${user?.jobTitle})` : '';
 
     return `${comment ? comment + '\n' : ''}${t('template.requisition-sent', {
-      name: name || user?.name,
+      name,
       job,
       phone: user?.phoneNumber ?? '-',
       email: user?.email ?? '-',

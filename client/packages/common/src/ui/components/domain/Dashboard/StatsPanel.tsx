@@ -26,7 +26,7 @@ const Statistic: FC<Stat> = ({ label, value, link }) => {
     <Grid container alignItems="center" sx={{ marginTop: 1 }}>
       <Grid
         item
-        sx={{ minWidth: '30px', display: 'flex', justifyContent: 'flex-end' }}
+        sx={{ minWidth: '43px', display: 'flex', justifyContent: 'flex-end' }}
       >
         {value ? (
           <Typography

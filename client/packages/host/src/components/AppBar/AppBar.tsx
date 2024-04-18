@@ -43,9 +43,7 @@ export const AppBar: React.FC = () => {
             <Box style={{ marginInlineEnd: 5 }}>
               <SectionIcon />
             </Box>
-
             <Breadcrumbs />
-
             <AppBarButtons />
           </Toolbar>
         )}

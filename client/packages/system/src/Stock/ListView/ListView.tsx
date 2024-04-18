@@ -21,6 +21,7 @@ import {
 import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 
 const StockListComponent: FC = () => {
@@ -34,7 +35,7 @@ const StockListComponent: FC = () => {
     filters: [
       { key: 'itemCodeOrName' },
       {
-        key: 'location.name',
+        key: 'location.code',
       },
       {
         key: 'expiryDate',
@@ -86,39 +87,58 @@ const StockListComponent: FC = () => {
       key: 'edit',
       label: 'label.repack',
       Cell: EditStockLineCell,
-      maxWidth: 75,
+      width: 75,
       sortable: false,
       align: ColumnAlign.Center,
     },
-    ['itemCode', { accessor: ({ rowData }) => rowData.item.code }],
+    [
+      'itemCode',
+      {
+        accessor: ({ rowData }) => rowData.item.code,
+        Cell: TooltipTextCell,
+        width: 100,
+      },
+    ],
     [
       'itemName',
       {
         accessor: ({ rowData }) => rowData.item.name,
         Cell: TooltipTextCell,
-        maxWidth: 350,
+        width: 350,
       },
     ],
-    'batch',
+    ['batch', { Cell: TooltipTextCell, width: 100 }],
     [
       'expiryDate',
       {
         accessor: ({ rowData }) => DateUtils.getDateOrNull(rowData.expiryDate),
+        width: 110,
       },
     ],
-    ['locationName', { sortable: false }],
     [
-      'itemUnit',
+      'location',
       {
-        accessor: ({ rowData }) => rowData.item.unitName,
-        sortable: false,
+        Cell: TooltipTextCell,
+        width: 100,
+        accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    'packSize',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: getPackVariantCell({
+        getItemId: r => r.itemId,
+        getPackSizes: r => [r.packSize],
+        getUnitName: r => r.item.unitName || null,
+      }),
+      width: 130,
+    },
     [
       'numberOfPacks',
       {
         accessor: ({ rowData }) => rowData.totalNumberOfPacks,
+        Cell: TooltipTextCell,
         width: 150,
       },
     ],
@@ -130,6 +150,7 @@ const StockListComponent: FC = () => {
         label: 'label.soh',
         description: 'description.soh',
         sortable: false,
+        Cell: TooltipTextCell,
         width: 125,
       },
     ],
@@ -138,6 +159,8 @@ const StockListComponent: FC = () => {
       label: 'label.supplier',
       accessor: ({ rowData }) =>
         rowData.supplierName ? rowData.supplierName : t('message.no-supplier'),
+      Cell: TooltipTextCell,
+      width: 190,
     },
     ...pluginColumns,
   ];
@@ -156,6 +179,10 @@ const StockListComponent: FC = () => {
 
   const repackModalController = useToggle();
 
+  const stockLine = entity
+    ? data?.nodes.find(({ id }) => id === entity.id)
+    : undefined;
+
   return (
     <>
       {repackModalController.isOn && (
@@ -165,11 +192,11 @@ const StockListComponent: FC = () => {
           stockLine={data?.nodes.find(({ id }) => id === repackId) ?? null}
         />
       )}
-      {isOpen && entity && (
+      {isOpen && stockLine && (
         <StockLineEditModal
           isOpen={isOpen}
           onClose={onClose}
-          stockLine={entity}
+          stockLine={stockLine}
         />
       )}
       <Toolbar filter={filter} />

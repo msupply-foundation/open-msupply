@@ -86,8 +86,9 @@ export const PrescriptionLineEditTable: React.FC<
     packSizeController
   );
   const onEditStockLine = (key: string, value: number, packSize: number) => {
-    onChange(key, value, packSize);
-    if (placeholderRow && shouldUpdatePlaceholder(value, placeholderRow)) {
+    const num = Number.isNaN(value) ? 0 : value;
+    onChange(key, num, packSize);
+    if (placeholderRow && shouldUpdatePlaceholder(num, placeholderRow)) {
       // if a stock line has been allocated
       // and the placeholder row is a generated one,
       // remove the placeholder row
@@ -117,6 +118,7 @@ export const PrescriptionLineEditTable: React.FC<
       <Divider margin={10} />
       <Box
         style={{
+          maxHeight: 300,
           display: 'flex',
           flexDirection: 'column',
           overflowX: 'hidden',

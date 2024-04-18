@@ -26,13 +26,12 @@ impl Loader<String> for StocktakeLineByStocktakeIdLoader {
         let all_lines = repo.query_by_filter(
             StocktakeLineFilter::new()
                 .stocktake_id(EqualFilter::equal_any(stocktake_ids.to_owned())),
+            None,
         )?;
 
         let mut map: HashMap<String, Vec<StocktakeLine>> = HashMap::new();
         for line in all_lines {
-            let list = map
-                .entry(line.line.stocktake_id.clone())
-                .or_insert_with(|| Vec::<StocktakeLine>::new());
+            let list = map.entry(line.line.stocktake_id.clone()).or_default();
             list.push(line);
         }
         Ok(map)

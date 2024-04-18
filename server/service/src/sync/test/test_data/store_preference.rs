@@ -1,10 +1,9 @@
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
-};
+use crate::sync::test::TestSyncIncomingRecord;
 use repository::{StorePreferenceRow, StorePreferenceType};
 
-const STORE_PREFERENCE_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "pref";
+
+const STORE_PREFERENCE_1: (&str, &str) = (
     "store_preference",
     r#"{
     "ID": "store_preference",
@@ -19,7 +18,7 @@ const STORE_PREFERENCE_1: (&'static str, &'static str) = (
         "can_enter_total_distribution_quantities": false,
         "round_up_distribute_quantities": false,
         "can_pack_items_into_multiple_boxes": false,
-        "can_issue_in_foreign_currency": false,
+        "can_issue_in_foreign_currency": true,
         "edit_sell_price_on_customer_invoice_lines": false,
         "purchase_order_must_be_authorised": false,
         "finalise_customer_invoices_automatically": false,
@@ -70,7 +69,7 @@ const STORE_PREFERENCE_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const STORE_PREFERENCE_2: (&'static str, &'static str) = (
+const STORE_PREFERENCE_2: (&str, &str) = (
     "store_preference_2",
     r#"{
     "ID": "store_preference_2",
@@ -135,12 +134,12 @@ const STORE_PREFERENCE_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::STORE_PREFERENCE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             STORE_PREFERENCE_1,
-            PullUpsertRecord::StorePreference(StorePreferenceRow {
+            StorePreferenceRow {
                 id: "store_a".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: true,
@@ -148,12 +147,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 request_requisition_requires_authorisation: false,
                 om_program_module: true,
                 vaccine_module: false,
-            }),
+                issue_in_foreign_currency: true,
+            },
         ),
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::STORE_PREFERENCE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             STORE_PREFERENCE_2,
-            PullUpsertRecord::StorePreference(StorePreferenceRow {
+            StorePreferenceRow {
                 id: "store_b".to_string(),
                 r#type: StorePreferenceType::StorePreferences,
                 pack_to_one: false,
@@ -162,7 +162,8 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                 // This one is missing, should default to false
                 om_program_module: false,
                 vaccine_module: true,
-            }),
+                issue_in_foreign_currency: false,
+            },
         ),
     ]
 }
