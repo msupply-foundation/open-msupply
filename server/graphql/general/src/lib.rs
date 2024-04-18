@@ -1,15 +1,18 @@
 mod mutations;
 mod queries;
 mod sync_api_error;
+pub mod types;
 
 pub use self::queries::sync_status::*;
 use self::queries::*;
 
-use chrono::{DateTime, Utc};
 use graphql_core::pagination::PaginationInput;
+use util::is_central_server;
 
 use crate::store_preference::store_preferences;
-use graphql_types::types::{StorePreferenceNode, TemperatureLogFilterInput};
+use graphql_types::types::{
+    CurrenciesResponse, CurrencyFilterInput, CurrencySortInput, StorePreferenceNode,
+};
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
     common::SyncSettingsInput,
@@ -17,12 +20,17 @@ use mutations::{
         update_display_settings, DisplaySettingsInput, UpdateDisplaySettingsResponse,
     },
     initialise_site::{initialise_site, InitialiseSiteResponse},
+    label_printer_settings::{
+        update_label_printer_settings, LabelPrinterSettingsInput,
+        UpdateLabelPrinterSettingsResponse,
+    },
     log::{update_log_level, LogLevelInput, UpsertLogLevelResponse},
     manual_sync::manual_sync,
     sync_settings::{update_sync_settings, UpdateSyncSettingsResponse},
     update_user,
 };
 use queries::{
+    currency::currencies,
     display_settings::{display_settings, DisplaySettingsHash, DisplaySettingsNode},
     initialisation_status::{initialisation_status, InitialisationStatusNode},
     requisition_line_chart::{ConsumptionOptionsInput, StockEvolutionOptionsInput},
@@ -64,6 +72,10 @@ impl GeneralQueries {
         me(ctx)
     }
 
+    pub async fn is_central_server(&self) -> bool {
+        is_central_server()
+    }
+
     /// Query omSupply "name" entries
     pub async fn names(
         &self,
@@ -103,6 +115,19 @@ impl GeneralQueries {
         sort: Option<Vec<MasterListSortInput>>,
     ) -> Result<MasterListsResponse> {
         master_lists(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn master_list_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        master_list_id: String,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<MasterListLineFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<MasterListLineSortInput>>,
+    ) -> Result<MasterListLinesResponse> {
+        master_list_lines(ctx, store_id, master_list_id, page, filter, sort)
     }
 
     /// Query omSupply "item" entries
@@ -277,23 +302,60 @@ impl GeneralQueries {
         get_plugins(ctx)
     }
 
-    pub async fn temperature_chart(
+    pub async fn currencies(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Filter option")] filter: Option<CurrencyFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<CurrencySortInput>>,
+    ) -> Result<CurrenciesResponse> {
+        currencies(ctx, filter, sort)
+    }
+
+    pub async fn database_settings(&self, ctx: &Context<'_>) -> Result<DatabaseSettingsNode> {
+        database_settings(ctx)
+    }
+
+    /// Generates new outbound return lines in memory, based on either stock line ids, or an item id.
+    /// Optionally includes existing outbound return lines for a specific item in a return.
+    /// Provides an friendly shape to edit these lines before calling the insert/update mutations.
+    pub async fn generate_outbound_return_lines(
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Must be before toDatetime")] from_datetime: DateTime<Utc>,
-        #[graphql(desc = "Must be after fromDatetime")] to_datetime: DateTime<Utc>,
-        #[graphql(desc = "Minimum 3 and maximum 100")] number_of_data_points: i32,
-        filter: Option<TemperatureLogFilterInput>,
-    ) -> Result<TemperatureChartResponse> {
-        temperature_chart(
-            ctx,
-            store_id,
-            from_datetime,
-            to_datetime,
-            number_of_data_points,
-            filter,
-        )
+        input: GenerateOutboundReturnLinesInput,
+    ) -> Result<GenerateOutboundReturnLinesResponse> {
+        generate_outbound_return_lines(ctx, store_id, input)
+    }
+
+    pub async fn return_reasons(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Pagination option (first and offset)")] page: Option<PaginationInput>,
+        #[graphql(desc = "Filter option")] filter: Option<ReturnReasonFilterInput>,
+        #[graphql(desc = "Sort options (only first sort input is evaluated for this endpoint)")]
+        sort: Option<Vec<ReturnReasonSortInput>>,
+    ) -> Result<ReturnReasonResponse> {
+        return_reasons(&ctx, page, filter, sort)
+    }
+
+    /// Generates new inbound return lines in memory, based on outbound return line ids.
+    /// Optionally includes existing inbound return lines for a specific item in a return.
+    /// Provides an friendly shape to edit these lines before calling the insert/update mutations.
+    pub async fn generate_inbound_return_lines(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: GenerateInboundReturnLinesInput,
+    ) -> Result<GenerateInboundReturnLinesResponse> {
+        generate_inbound_return_lines(&ctx, store_id, input)
+    }
+
+    pub async fn label_printer_settings(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LabelPrinterSettingNode>> {
+        label_printer_settings(ctx)
     }
 }
 
@@ -352,6 +414,14 @@ impl GeneralMutations {
     pub async fn update_user(&self, ctx: &Context<'_>) -> Result<update_user::UpdateResponse> {
         update_user::update_user(ctx).await
     }
+
+    pub async fn update_label_printer_settings(
+        &self,
+        ctx: &Context<'_>,
+        input: LabelPrinterSettingsInput,
+    ) -> Result<UpdateLabelPrinterSettingsResponse> {
+        update_label_printer_settings(ctx, input)
+    }
 }
 
 /// Auth is not checked during initialisation stage
@@ -394,14 +464,6 @@ impl InitialisationMutations {
 
     pub async fn manual_sync(&self, ctx: &Context<'_>) -> Result<String> {
         manual_sync(ctx, false)
-    }
-}
-
-pub struct MasterListNotFoundForThisStore;
-#[Object]
-impl MasterListNotFoundForThisStore {
-    pub async fn description(&self) -> &'static str {
-        "Master list not found (might not be visible to this store)"
     }
 }
 

@@ -83,7 +83,7 @@ export const parseResult = (content?: string): ScanResult => {
 export const BarcodeScannerProvider: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const { error } = useNotification();
   const { electronNativeAPI } = window;

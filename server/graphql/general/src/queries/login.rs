@@ -2,9 +2,9 @@ use async_graphql::*;
 use chrono::Utc;
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
 
-use reqwest::header::SET_COOKIE;
+use actix_web::http::header::SET_COOKIE;
 use service::{
-    login::{LoginError, LoginInput, LoginService},
+    login::{LoginError, LoginFailure, LoginInput, LoginService},
     token::TokenPair,
 };
 
@@ -26,8 +26,23 @@ impl AuthToken {
 pub struct InvalidCredentials;
 #[Object]
 impl InvalidCredentials {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Invalid credentials"
+    }
+}
+
+pub struct AccountBlocked {
+    pub timeout_remaining: u64,
+}
+
+#[Object]
+impl AccountBlocked {
+    pub async fn timeout_remaining(&self) -> u64 {
+        self.timeout_remaining
+    }
+
+    pub async fn description(&self) -> &str {
+        "Account is blocked until the lockout period has expired"
     }
 }
 
@@ -35,6 +50,7 @@ impl InvalidCredentials {
 #[graphql(field(name = "description", type = "&str"))]
 pub enum AuthTokenErrorInterface {
     InvalidCredentials(InvalidCredentials),
+    AccountBlocked(AccountBlocked),
 }
 
 #[derive(SimpleObject)]
@@ -75,9 +91,16 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
             let graphql_error = match error {
-                LoginError::LoginFailure => {
+                LoginError::LoginFailure(LoginFailure::InvalidCredentials) => {
                     return Ok(AuthTokenResponse::Error(AuthTokenError {
                         error: AuthTokenErrorInterface::InvalidCredentials(InvalidCredentials),
+                    }))
+                }
+                LoginError::LoginFailure(LoginFailure::AccountBlocked(timeout_remaining)) => {
+                    return Ok(AuthTokenResponse::Error(AuthTokenError {
+                        error: AuthTokenErrorInterface::AccountBlocked(AccountBlocked {
+                            timeout_remaining,
+                        }),
                     }))
                 }
                 LoginError::FailedToGenerateToken(_) => {
@@ -102,7 +125,7 @@ pub async fn login(ctx: &Context<'_>, username: &str, password: &str) -> Result<
 
     let now = Utc::now().timestamp() as usize;
     set_refresh_token_cookie(
-        &ctx,
+        ctx,
         &pair.refresh,
         pair.refresh_expiry_date - now,
         auth_data.no_ssl,

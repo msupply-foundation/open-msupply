@@ -52,6 +52,7 @@
   "cmdk.goto-master-lists": "Aller à : Listes Maîtresses",
   "button.login": "Connexion",
   "error.login": "Nom d'utilisateur ou mot de passe invalide",
+  "error.account-blocked": "Le compte est bloqué jusqu'à l'expiration de la période de verrouillage",
   "select-store": "Sélectionner un dépôt",
   "select-report": "Sélectionner un modèle",
   "login.store-changed": "Bienvenue dans le dépôt {{store}}",

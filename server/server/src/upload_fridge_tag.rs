@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
     post,
@@ -15,7 +17,7 @@ use service::{
 };
 use util::prepare_file_dir;
 
-const TEMP_FRIDGETAG_FILE_DIR: &'static str = "fridge_tag";
+const TEMP_FRIDGETAG_FILE_DIR: &str = "fridge_tag";
 
 pub fn config_upload_fridge_tag(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);
@@ -48,6 +50,25 @@ async fn upload(
     }
 }
 
+fn move_file(from: &Path, to: &Path) -> std::io::Result<()> {
+    // First try to move file on same device. If this fails it might be because `from` and `to` are
+    // on different mount points. In this case the file needs to be copied and deleted manually.
+    let Err(_) = std::fs::rename(from, to) else {
+        return Ok(());
+    };
+
+    // The matching error kind is CrossesDevices but is currently unstable. In the future this
+    // should work:
+    //
+    // match err.kind() {
+    //     std::io::ErrorKind::CrossesDevices => {}
+    //     _ => return Err(err),
+    // };
+    std::fs::copy(from, to)?;
+    std::fs::remove_file(from)?;
+    Ok(())
+}
+
 fn upload_fridge_tag(
     mut form: UploadForm,
     url_params: UrlParams,
@@ -65,12 +86,11 @@ fn upload_fridge_tag(
 
     let new_file_path = dir.join(file_name);
 
-    // Move file
-    std::fs::rename(file.file.path(), &new_file_path)?;
+    move_file(file.file.path(), &new_file_path)?;
 
     ctx.connection
         .transaction_sync(|con| {
-            read_sensor(&con, &url_params.store_id, new_file_path)
+            read_sensor(con, &url_params.store_id, new_file_path)
                 .context("Error while integrating sensor data")
         })
         .map_err(|error| error.to_inner_error())

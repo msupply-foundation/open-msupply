@@ -15,10 +15,11 @@ use repository::{
     DateFilter, DatetimeFilter, EqualFilter, ProgramRow, StringFilter,
 };
 
-use crate::types::{EqualFilterGenderInput, GenderInput, GenderType, ProgramNode};
+use crate::types::{EqualFilterGenderInput, GenderInput, GenderType};
 
 use super::{
     document::DocumentNode, patient::PatientNode, program_enrolment::ProgramEnrolmentNode,
+    program_node::ProgramNode,
 };
 
 pub struct ContactTraceNode {
@@ -189,8 +190,8 @@ impl ContactTraceNode {
 
     pub async fn contact_patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
         let Some(ref contact_patient_id) = self.trace_row().contact_patient_id else {
-          return Ok(None)
-      };
+            return Ok(None);
+        };
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
 
         let result = loader
@@ -234,7 +235,7 @@ impl ContactTraceNode {
     }
 
     pub async fn datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.trace_row().datetime, Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.trace_row().datetime, Utc)
     }
 
     /// The encounter document
@@ -269,11 +270,11 @@ impl ContactTraceNode {
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
-        self.trace_row().date_of_birth.clone()
+        self.trace_row().date_of_birth
     }
 
     pub async fn age(&self) -> Option<i64> {
-        self.trace_row().date_of_birth.clone().map(|dob| {
+        self.trace_row().date_of_birth.map(|dob| {
             let diff = Local::now().naive_utc().date().signed_duration_since(dob);
             diff.num_days() / 365
         })

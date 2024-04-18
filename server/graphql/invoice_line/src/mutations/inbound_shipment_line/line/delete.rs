@@ -105,6 +105,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
+        ServiceError::LineUsedInStocktake => InternalError(formatted_error),
     };
 
     Err(graphql_error.extend())
@@ -114,7 +115,7 @@ fn map_error(error: ServiceError) -> Result<DeleteErrorInterface> {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{mock::MockDataInserts, RepositoryError, StorageConnectionManager};
     use serde_json::json;
@@ -165,7 +166,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_delete_inbound_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_delete_inbound_line_errors",
@@ -323,7 +324,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_delete_inbound_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_delete_inbound_line",

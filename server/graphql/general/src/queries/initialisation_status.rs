@@ -1,5 +1,5 @@
+use async_graphql::Enum;
 pub use async_graphql::*;
-use async_graphql::{Context, Enum};
 use graphql_core::ContextExt;
 use service::sync::sync_status::status::InitialisationStatus;
 

@@ -1,6 +1,6 @@
 use super::StockLineConnector;
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use async_graphql::{dataloader::DataLoader, Context};
 use graphql_core::generic_filters::{EqualFilterStringInput, StringFilterInput};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{loader::StockLineByLocationIdLoader, ContextExt};
@@ -31,6 +31,7 @@ pub struct LocationFilterInput {
     pub name: Option<StringFilterInput>,
     pub code: Option<StringFilterInput>,
     pub on_hold: Option<bool>,
+    pub assigned_to_asset: Option<bool>,
     pub id: Option<EqualFilterStringInput>,
 }
 
@@ -42,6 +43,7 @@ impl From<LocationFilterInput> for LocationFilter {
             id: f.id.map(EqualFilter::from),
             store_id: None,
             on_hold: f.on_hold,
+            assigned_to_asset: f.assigned_to_asset,
         }
     }
 }

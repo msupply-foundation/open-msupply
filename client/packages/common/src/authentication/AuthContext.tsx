@@ -103,7 +103,7 @@ const { Provider } = AuthContext;
 export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
   const authCookie = getAuthCookie();
   const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
-  const [error, setError] = useLocalStorage('/auth/error');
+  const [error, setError] = useLocalStorage('/error/auth');
   const storeId = cookie?.store?.id ?? '';
   const {
     login,

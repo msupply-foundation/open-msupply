@@ -2,7 +2,6 @@ use crate::db_diesel::{DBBackendConnection, StorageConnectionManager};
 use diesel::connection::SimpleConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
 use log::info;
-use serde;
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
@@ -19,6 +18,7 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    pub database_path: Option<String>,
     /// SQL run once at startup. For example, to run pragma statements
     pub init_sql: Option<String>,
 }
@@ -43,17 +43,46 @@ impl DatabaseSettings {
     pub fn full_init_sql(&self) -> Option<String> {
         self.init_sql.clone()
     }
+
+    pub fn database_path(&self) -> String {
+        self.database_name.clone()
+    }
 }
 
 // feature sqlite
 #[cfg(all(not(feature = "postgres"), not(feature = "memory")))]
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        self.database_name.clone()
+        use std::path::Path;
+        if self.database_name.ends_with(".sqlite") {
+            // just use DB if name ends in .sqlite
+            self.database_name.clone()
+        } else {
+            // first check if database exists on disk. If it does, we will use db filename as is without appending .sqlite
+            // Note, using `try_exists()` because we want to be able to store the sqlite file on a different partition or disc.
+            // If the disc is a network drive and the drive is temporarily offline it might happen that exists() returns false but doesn't
+            // say that there was a network error (not 100% if this really is how exists() work but try_exists seems safer). Then if the drive
+            // goes online, creating a new database will run as normal and return two files. This might result in data loss if
+            // data from the old file hasn't been synced yet. There are a number of feasible cases where this might occur, for example when mSupply
+            // automatically starts after a machine boots up a network drive might also be in the process of being mounted.
+            let exists = Path::new(&self.database_name.clone())
+                .try_exists()
+                .expect("Can't check existence of database file");
+            match exists {
+                true => self.database_name.clone(),
+                false => format!("{}.sqlite", self.database_name.clone()),
+            }
+        }
     }
 
-    pub fn connection_string_without_db(&self) -> String {
-        self.connection_string()
+    pub fn database_path(&self) -> String {
+        match &self.database_path {
+            Some(path) => {
+                std::fs::create_dir_all(path).expect("failed to create database dir");
+                format!("{}/{}", path, self.connection_string())
+            }
+            None => self.connection_string(),
+        }
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
@@ -70,10 +99,6 @@ impl DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
         format!("file:{}?mode=memory&cache=shared", self.database_name)
-    }
-
-    pub fn connection_string_without_db(&self) -> String {
-        self.connection_string()
     }
 
     pub fn full_init_sql(&self) -> Option<String> {
@@ -152,9 +177,9 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
 // feature sqlite
 #[cfg(not(feature = "postgres"))]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
-    info!("Connecting to database '{}'", settings.database_name);
+    info!("Connecting to database '{}'", settings.database_path());
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
+        ConnectionManager::<DBBackendConnection>::new(settings.database_path());
     let pool = Pool::builder()
         .connection_customizer(Box::new(SqliteConnectionOptions {
             busy_timeout_ms: Some(SQLITE_LOCKWAIT_MS),
@@ -177,6 +202,7 @@ mod database_setting_test {
             host: "".to_string(),
             database_name: "".to_string(),
             init_sql,
+            database_path: None,
         }
     }
 
@@ -199,7 +225,7 @@ mod database_setting_test {
             Some(expected_init_sql)
         );
 
-        //Ensure sqlite WAL is enabled if init_sql is missing a trailing semicoln
+        //Ensure sqlite WAL is enabled if init_sql is missing a trailing semicolon
         let init_sql_missing_semi_colon = "PRAGMA temp_store_directory = '{}'";
         let expected_init_sql = format!("{};{}", init_sql_missing_semi_colon, SQLITE_WAL_PRAGMA);
         assert_eq!(

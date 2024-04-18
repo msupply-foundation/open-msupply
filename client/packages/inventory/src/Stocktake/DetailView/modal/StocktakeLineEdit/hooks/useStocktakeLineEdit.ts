@@ -1,16 +1,13 @@
 import {
   RecordPatch,
   ArrayUtils,
-  useTranslation,
-  noOtherVariants,
   getErrorMessage,
 } from '@openmsupply-client/common';
-import { ItemRowFragment } from '@openmsupply-client/system';
+import { ItemRowFragment, usePackVariant } from '@openmsupply-client/system';
 import { StocktakeLineFragment, useStocktake } from './../../../../api';
 import { DraftStocktakeLine, DraftLine } from '../utils';
 import { useNextItem } from './useNextItem';
 import { useDraftStocktakeLines } from './useDraftStocktakeLines';
-import { useStocktakeLineErrorContext } from '../../../../context/stocktakeLineError';
 interface useStocktakeLineEditController {
   draftLines: DraftStocktakeLine[];
   update: (patch: RecordPatch<StocktakeLineFragment>) => void;
@@ -23,13 +20,16 @@ interface useStocktakeLineEditController {
 export const useStocktakeLineEdit = (
   item: ItemRowFragment | null
 ): useStocktakeLineEditController => {
-  const t = useTranslation('inventory');
   const { id } = useStocktake.document.fields('id');
-  const nextItem = useNextItem(item?.id);
+  const { items } = useStocktake.line.rows();
+  const filteredItems = items.filter(item => item.item?.id === item?.id);
+  const nextItem = useNextItem(filteredItems, item?.id);
   const [draftLines, setDraftLines] = useDraftStocktakeLines(item);
-  const { mutateAsync: upsertLines, isLoading: isSaving } =
+  const { variantsControl } = usePackVariant(String(item?.id), null);
+  const { saveAndMapStructuredErrors: upsertLines, isLoading: isSaving } =
     useStocktake.line.save();
-  const errorsContext = useStocktakeLineErrorContext();
+
+  const defaultPackSize = variantsControl?.activeVariant?.packSize || 1;
 
   const update = (patch: RecordPatch<DraftStocktakeLine>) =>
     setDraftLines(lines =>
@@ -39,59 +39,9 @@ export const useStocktakeLineEdit = (
       })
     );
 
-  const mapStructuredErrors = (
-    result: Awaited<ReturnType<typeof upsertLines>>
-  ) => {
-    const insertResults = result.batchStocktake?.insertStocktakeLines || [];
-    const updateResults = result.batchStocktake?.updateStocktakeLines || [];
-
-    const errorMessagesMap: { [key: string]: string } = {};
-
-    for (const { response, id } of [...insertResults, ...updateResults]) {
-      // First unset error
-      errorsContext.unsetError(id);
-      // No error
-      if (response.__typename === 'StocktakeLineNode') continue;
-
-      const { error } = response;
-      // Common error for all lines
-      if (error.__typename === 'CannotEditStocktake') {
-        errorMessagesMap[error.__typename] = t('error.not-editable');
-        continue;
-      }
-      // Line specific errors
-      switch (error.__typename) {
-        case 'AdjustmentReasonNotProvided':
-          errorMessagesMap[error.__typename] = t('error.provide-reason');
-          break;
-        case 'AdjustmentReasonNotValid':
-          errorMessagesMap[error.__typename] = t('error.provide-valid-reason');
-          break;
-        case 'StockLineReducedBelowZero':
-          errorMessagesMap[error.__typename] = t(
-            'error.stocktake-has-stock-reduced-below-zero'
-          );
-          break;
-
-        default:
-          noOtherVariants(error);
-      }
-
-      errorsContext.setError(id, error);
-    }
-
-    const errorMessages = Object.values(errorMessagesMap);
-    return {
-      errorMessages: errorMessages.length === 0 ? undefined : errorMessages,
-    };
-  };
-
   const save = async () => {
-    let result;
     try {
-      result = await upsertLines(draftLines);
-
-      return mapStructuredErrors(result);
+      return await upsertLines(draftLines);
     } catch (e) {
       return { errorMessages: [getErrorMessage(e)] };
     }
@@ -99,7 +49,10 @@ export const useStocktakeLineEdit = (
 
   const addLine = () => {
     if (item) {
-      setDraftLines(lines => [DraftLine.fromItem(id, item), ...lines]);
+      setDraftLines(lines => [
+        DraftLine.fromItem(id, item, defaultPackSize),
+        ...lines,
+      ]);
     }
   };
 

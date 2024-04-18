@@ -57,7 +57,7 @@ export const Toolbar: FC<{
           onChange={onFilterChange}
         />
       </Box>
-      <DropdownMenu label={t('label.select')}>
+      <DropdownMenu label={t('label.actions')}>
         <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
           {t('button.delete-lines')}
         </DropdownMenuItem>

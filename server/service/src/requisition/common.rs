@@ -2,14 +2,26 @@ use repository::{
     requisition_row::RequisitionRow, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
-use repository::{EqualFilter, RequisitionRowApprovalStatus};
+use repository::{
+    EqualFilter, Requisition, RequisitionFilter, RequisitionRepository,
+    RequisitionRowApprovalStatus,
+};
 use util::inline_edit;
 
-pub fn check_requisition_exists(
+pub fn check_requisition_row_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<RequisitionRow>, RepositoryError> {
     RequisitionRowRepository::new(connection).find_one_by_id(id)
+}
+
+pub fn check_requisition_exists(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<Requisition>, RepositoryError> {
+    Ok(RequisitionRepository::new(connection)
+        .query_by_filter(RequisitionFilter::new().id(EqualFilter::equal_to(id)))?
+        .pop())
 }
 
 pub fn get_lines_for_requisition(

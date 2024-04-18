@@ -3,11 +3,13 @@ import {
   Column,
   ColumnAlign,
   ExpiryDateCell,
-  PositiveNumberCell,
+  LocationCell,
+  NumberCell,
   useColumns,
 } from '@openmsupply-client/common';
 import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
+import { getPackVariantCell } from '@openmsupply-client/system';
 
 export const usePrescriptionLineEditColumns = ({
   onChange,
@@ -32,23 +34,23 @@ export const usePrescriptionLineEditColumns = ({
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          accessor: ({ rowData }) => rowData.location?.name,
-          width: 70,
+          accessor: ({ rowData }) => rowData.location?.code,
+          width: 100,
+          Cell: LocationCell,
         },
       ],
-      ['packSize', { width: 90 }],
       {
         label: 'label.on-hold',
         key: 'onHold',
         Cell: CheckCell,
         accessor: ({ rowData }) => rowData.stockLine?.onHold,
         align: ColumnAlign.Center,
-        width: 80,
+        width: 70,
       },
       {
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         label: 'label.in-store',
         key: 'totalNumberOfPacks',
         align: ColumnAlign.Right,
@@ -56,12 +58,23 @@ export const usePrescriptionLineEditColumns = ({
         accessor: ({ rowData }) => rowData.stockLine?.totalNumberOfPacks,
       },
       {
-        Cell: PositiveNumberCell,
+        Cell: NumberCell,
         label: 'label.available-packs',
         key: 'availableNumberOfPacks',
         align: ColumnAlign.Right,
         width: 85,
         accessor: ({ rowData }) => rowData.stockLine?.availableNumberOfPacks,
+      },
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: getPackVariantCell({
+          getItemId: row => row?.item?.id,
+          getPackSizes: row => [row.packSize ?? 1],
+          getUnitName: row => row?.item.unitName ?? null,
+        }),
+        width: 130,
       },
       [
         'unitQuantity',
@@ -95,9 +108,9 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] =>
     'batch',
     'expiryDate',
     [
-      'locationName',
+      'location',
       {
-        accessor: ({ rowData }) => rowData.location?.name,
+        accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
     [

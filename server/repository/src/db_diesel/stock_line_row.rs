@@ -1,9 +1,9 @@
 use super::{
-    item_row::item, location_row::location, name_row::name,
+    item_link_row::item_link, location_row::location, name_link_row::name_link,
     stock_line_row::stock_line::dsl as stock_line_dsl, store_row::store, StorageConnection,
 };
 
-use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError};
+use crate::{db_diesel::barcode_row::barcode, repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -12,7 +12,7 @@ use chrono::NaiveDate;
 table! {
     stock_line (id) {
         id -> Text,
-        item_id -> Text,
+        item_link_id -> Text,
         store_id -> Text,
         location_id -> Nullable<Text>,
         batch -> Nullable<Text>,
@@ -24,23 +24,25 @@ table! {
         expiry_date -> Nullable<Date>,
         on_hold -> Bool,
         note -> Nullable<Text>,
-        supplier_id -> Nullable<Text>,
+        supplier_link_id -> Nullable<Text>,
         barcode_id -> Nullable<Text>,
     }
 }
 
-joinable!(stock_line -> item (item_id));
+joinable!(stock_line -> item_link (item_link_id));
 joinable!(stock_line -> store (store_id));
 joinable!(stock_line -> location (location_id));
-joinable!(stock_line -> name (supplier_id));
+joinable!(stock_line -> name_link (supplier_link_id));
 joinable!(stock_line -> barcode (barcode_id));
+allow_tables_to_appear_in_same_query!(stock_line, item_link);
+allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stock_line"]
 pub struct StockLineRow {
     pub id: String,
-    pub item_id: String,
+    pub item_link_id: String,
     pub store_id: String,
     pub location_id: Option<String>,
     pub batch: Option<String>,
@@ -52,7 +54,7 @@ pub struct StockLineRow {
     pub expiry_date: Option<NaiveDate>,
     pub on_hold: bool,
     pub note: Option<String>,
-    pub supplier_id: Option<String>,
+    pub supplier_link_id: Option<String>,
     pub barcode_id: Option<String>,
 }
 
@@ -110,5 +112,42 @@ impl<'a> StockLineRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+
+    pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
+        stock_line_dsl::stock_line
+            .filter(stock_line_dsl::store_id.eq(store_id))
+            .load::<StockLineRow>(&self.connection.connection)
+            .map_err(RepositoryError::from)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StockLineRowDelete(pub String);
+// For tests only
+impl Delete for StockLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StockLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StockLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StockLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

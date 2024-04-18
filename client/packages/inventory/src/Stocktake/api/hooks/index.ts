@@ -16,16 +16,16 @@ export const useStocktake = {
     fields: Document.useStocktakeFields,
   },
   line: {
-    stocktakeItems: Lines.useStocktakeItems,
-    stocktakeLines: Lines.useStocktakeLines,
     rows: Lines.useStocktakeRows,
-
     delete: Lines.useStocktakeDeleteLines,
     deleteSelected: Lines.useStocktakeDeleteSelectedLines,
+    zeroQuantities: Lines.useZeroStocktakeLines,
+    changeLocation: Lines.useChangeLinesLocation,
     save: Lines.useSaveStocktakeLines,
   },
   utils: {
     api: Utils.useStocktakeApi,
     isDisabled: Utils.useIsStocktakeDisabled,
+    selectedRows: Utils.useSelectedRows,
   },
 };

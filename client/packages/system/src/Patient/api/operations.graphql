@@ -198,3 +198,33 @@ mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
     }
   }
 }
+
+query latestPatientEncounter(
+  $storeId: String!
+  $patientId: String!
+  $encounterType: String
+) {
+  encounters(
+    storeId: $storeId
+    filter: {
+      patientId: { equalTo: $patientId }
+      type: { equalTo: $encounterType }
+    }
+    sort: { key: startDatetime, desc: true }
+    page: { first: 1 }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        id
+        type
+        startDatetime
+        suggestedNextEncounter {
+          startDatetime
+          label
+        }
+      }
+      totalCount
+    }
+  }
+}

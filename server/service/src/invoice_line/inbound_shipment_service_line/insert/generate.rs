@@ -1,10 +1,11 @@
-use repository::{InvoiceLineRow, InvoiceLineRowType, ItemRow};
+use repository::{InvoiceLineRow, InvoiceLineRowType, ItemRow, RepositoryError, StorageConnection};
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
-use super::{InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError};
+use super::InsertInboundShipmentServiceLine;
 
 pub fn generate(
+    connection: &StorageConnection,
     InsertInboundShipmentServiceLine {
         id,
         invoice_id,
@@ -15,7 +16,9 @@ pub fn generate(
         note,
     }: InsertInboundShipmentServiceLine,
     item: ItemRow,
-) -> Result<InvoiceLineRow, InsertInboundShipmentServiceLineError> {
+    currency_id: Option<String>,
+    currency_rate: &f64,
+) -> Result<InvoiceLineRow, RepositoryError> {
     Ok(InvoiceLineRow {
         id,
         invoice_id,
@@ -24,9 +27,15 @@ pub fn generate(
         tax,
         note,
         item_code: item.code,
-        item_id: item.id,
+        item_link_id: item.id,
         item_name: name.unwrap_or(item.name),
         r#type: InvoiceLineRowType::Service,
+        foreign_currency_price_before_tax: calculate_foreign_currency_total(
+            connection,
+            total_before_tax,
+            currency_id,
+            currency_rate,
+        )?,
         // Default
         stock_line_id: None,
         location_id: None,
@@ -37,5 +46,6 @@ pub fn generate(
         sell_price_per_pack: 0.0,
         number_of_packs: 0.0,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
     })
 }

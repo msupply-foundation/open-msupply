@@ -25,7 +25,7 @@ pub fn create_patient_name_store_join(
         let name_store_join_repo = NameStoreJoinRepository::new(con);
         name_store_join_repo.upsert_one(&NameStoreJoinRow {
             id: uuid(),
-            name_id: name_id.to_string(),
+            name_link_id: name_id.to_string(),
             store_id: store_id.to_string(),
             name_is_customer: true,
             name_is_supplier: false,
@@ -79,7 +79,7 @@ pub(crate) fn patient_to_name_row(
         contacts: _,
         extension: _,
     } = patient;
-    let contact = contact_details.as_ref().and_then(|it| it.get(0));
+    let contact = contact_details.as_ref().and_then(|it| it.first());
     let date_of_birth = match date_of_birth {
         Some(date_of_birth) => Some(NaiveDate::from_str(&date_of_birth).map_err(|err| {
             UpdateProgramPatientError::InternalError(format!(
@@ -139,11 +139,12 @@ pub(crate) fn patient_to_name_row(
         is_donor: existing_name.map(|n| n.is_donor).unwrap_or(false),
         on_hold: existing_name.map(|n| n.on_hold).unwrap_or(false),
         created_datetime: existing_name
-            .and_then(|n| n.created_datetime.clone())
+            .and_then(|n| n.created_datetime)
             .or(Some(update_timestamp.naive_utc())), // assume there is no earlier doc version
         is_deceased: patient.is_deceased.unwrap_or(false),
         date_of_death,
         national_health_number: code_2,
+        custom_data_string: None,
     })
 }
 
@@ -155,8 +156,8 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
     let doc_contact_details = document_data
         .contact_details
         .as_ref()
-        .and_then(|c| c.get(0).map(|c| c.clone()))
-        .unwrap_or(ContactDetails::default());
+        .and_then(|c| c.first().map(|c| c.clone()))
+        .unwrap_or_default();
     let draft_contact_details = ContactDetails {
         address_1: patient.address1.clone(),
         address_2: patient.address2.clone(),
@@ -190,7 +191,7 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
     } = document_data;
     SchemaPatient {
         id: patient.id.clone(),
-        code: if patient.code == "" {
+        code: if patient.code.is_empty() {
             code
         } else {
             Some(patient.code.clone())
@@ -227,8 +228,8 @@ pub fn patient_draft_document(patient: &Patient, document_data: SchemaPatient) -
             .date_of_death
             .map(|date| date.format("%Y-%m-%d").to_string()),
 
-        middle_name: middle_name,
-        date_of_birth_is_estimated: date_of_birth_is_estimated,
+        middle_name,
+        date_of_birth_is_estimated,
         is_deceased: Some(patient.is_deceased || is_deceased.unwrap_or(false)),
         notes,
         passport_number,
@@ -467,6 +468,7 @@ mod test {
             is_deceased: true,
             national_health_number: Some("new nhn".to_string()),
             date_of_death: Some(NaiveDate::from_ymd_opt(2001, 1, 2).unwrap()),
+            custom_data_string: None,
         };
         let updated_patient = patient_draft_document(&name_row_update, patient.clone());
         // Check that 2nd contact_details entry is not affected by the name_row change

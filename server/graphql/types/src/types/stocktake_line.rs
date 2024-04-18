@@ -50,10 +50,7 @@ impl StocktakeLineNode {
         let location_option: Option<repository::location::Location> =
             loader.load_one(location_id.clone()).await.ok().flatten();
 
-        match location_option {
-            Some(location) => Some(LocationNode::from_domain(location)),
-            None => None,
-        }
+        location_option.map(LocationNode::from_domain)
     }
 
     pub async fn comment(&self) -> Option<String> {
@@ -69,17 +66,17 @@ impl StocktakeLineNode {
     }
 
     pub async fn item_id(&self) -> &str {
-        &self.line.line.item_id
+        &self.line.item.id
     }
 
     pub async fn item(&self, ctx: &Context<'_>) -> Result<ItemNode> {
         let loader = ctx.get_loader::<DataLoader<ItemLoader>>();
-        let item_option = loader.load_one(self.line.line.item_id.clone()).await?;
+        let item_option = loader.load_one(self.line.item.id.clone()).await?;
 
         item_option.map(ItemNode::from_domain).ok_or(
             StandardGraphqlError::InternalError(format!(
                 "Cannot find item_id {} for stocktake line id {}",
-                self.line.line.item_id, self.line.line.id
+                self.line.item.id, self.line.line.id
             ))
             .extend(),
         )

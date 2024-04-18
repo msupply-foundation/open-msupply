@@ -9,7 +9,6 @@ import {
   DateTimePicker,
   DateTimePickerProps,
   DateUtils,
-  DatePickerInput,
 } from '@openmsupply-client/common';
 import { FORM_LABEL_WIDTH } from '../styleConstants';
 import { z } from 'zod';
@@ -37,9 +36,14 @@ const TextField = (params: TextFieldProps) => {
 };
 
 const DateTimePickerInput: FC<
-  Omit<DateTimePickerProps<Date>, 'renderInput'> & { error: string }
-> = props => (
+  Omit<DateTimePickerProps<Date>, 'renderInput'> & {
+    error: string;
+    showTime?: boolean;
+    onError?: (validationError: string) => void;
+  }
+> = ({ showTime, onError, ...props }) => (
   <DateTimePicker
+    format={showTime ? 'P p' : 'P'}
     disabled={props.disabled}
     slots={{ textField: TextField }}
     slotProps={{
@@ -51,6 +55,12 @@ const DateTimePickerInput: FC<
           : undefined,
       },
     }}
+    onError={onError}
+    views={
+      showTime
+        ? ['year', 'month', 'day', 'hours', 'minutes', 'seconds']
+        : ['year', 'month', 'day']
+    }
     {...props}
   />
 );
@@ -75,7 +85,7 @@ const UIComponent = (props: ControlProps) => {
 
   const dateOnly = options?.dateOnly ?? false;
 
-  const inputFormat = !dateOnly ? 'dd/MM/yyyy hh:mm' : 'dd/MM/yyyy';
+  const inputFormat = !dateOnly ? 'P p' : 'P';
 
   const onChange = (e: Date | null) => {
     if (!e) return;
@@ -90,7 +100,7 @@ const UIComponent = (props: ControlProps) => {
   };
 
   const sharedComponentProps = {
-    value: DateUtils.getDateOrNull(data),
+    value: DateUtils.getDateOrNull(data, inputFormat),
     onChange: (e: Date | null) => onChange(e),
     inputFormat,
     readOnly: !!props.uischema.options?.['readonly'],
@@ -115,9 +125,11 @@ const UIComponent = (props: ControlProps) => {
             {...sharedComponentProps}
           />
         ) : (
-          <DatePickerInput
+          <DateTimePickerInput
             {...sharedComponentProps}
-            onError={validationError => setCustomError(validationError)}
+            onError={validationError =>
+              setCustomError(validationError ?? undefined)
+            }
           />
         )
       }

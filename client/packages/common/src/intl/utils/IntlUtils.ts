@@ -1,10 +1,36 @@
-import React from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { EnvUtils } from '@common/utils';
 import { LanguageType } from '../../types/schema';
 import { LocalStorage } from '../../localStorage';
 import { IntlContext } from '../context';
 
-export const useIntl = () => React.useContext(IntlContext);
+// importing individually to reduce bundle size
+// the date-fns methods are tree shaking correctly
+// but the locales are not. when adding, please add as below
+import enGB from 'date-fns/locale/en-GB';
+import enUS from 'date-fns/locale/en-US';
+import fr from 'date-fns/locale/fr';
+import ar from 'date-fns/locale/ar';
+import es from 'date-fns/locale/es';
+import ru from 'date-fns/locale/ru';
+
+// Map locale string (from i18n) to locale object (from date-fns)
+const getLocaleObj = { fr, ar, es, ru };
+
+export const getLocale = (language: SupportedLocales) => {
+  switch (language) {
+    case 'en':
+      return navigator.language === 'en-US' ? enUS : enGB;
+    case 'tet':
+      return enGB;
+    case 'fr-DJ':
+      return fr;
+    default:
+      return getLocaleObj[language];
+  }
+};
+
+export const useIntl = () => useContext(IntlContext);
 
 const languageOptions = [
   { label: 'عربي', value: 'ar' },
@@ -12,6 +38,7 @@ const languageOptions = [
   { label: 'Français (Djibouti)', value: 'fr-DJ' },
   { label: 'English', value: 'en' },
   { label: 'Español', value: 'es' },
+  { label: 'Русский', value: 'ru' },
   { label: 'Tetum', value: 'tet' },
 ];
 
@@ -21,6 +48,7 @@ const locales = [
   'es' as const,
   'fr' as const,
   'fr-DJ' as const,
+  'ru' as const,
   'tet' as const,
 ] as const;
 
@@ -32,14 +60,19 @@ type StringOrEmpty = string | null | undefined;
 
 export const useIntlUtils = () => {
   const { i18n } = useIntl();
-  const { language } = i18n;
+  const { language: i18nLanguage } = i18n;
+  const [language, setLanguage] = useState<string>(i18nLanguage);
 
-  const changeLanguage = (languageCode?: string) => {
-    if (!languageCode) return;
-    if (!locales.some(locale => languageCode === locale)) return;
+  const changeLanguage = useCallback(
+    (languageCode?: string) => {
+      if (!languageCode) return;
+      if (!locales.some(locale => languageCode === locale)) return;
 
-    i18n.changeLanguage(languageCode);
-  };
+      i18n.changeLanguage(languageCode);
+      setLanguage(languageCode);
+    },
+    [i18n]
+  );
 
   const isRtl = rtlLocales.includes(language);
 
@@ -65,23 +98,11 @@ export const useIntlUtils = () => {
     option => option.value === language
   )?.label;
 
-  const getLocaleCode = (language: LanguageType) => parseLanguage(language);
-
-  const getUserLocale = (username: string) => {
-    const locales = LocalStorage.getItem('/localisation/locale');
-    return !!locales ? locales[username] : undefined;
-  };
-
-  const setUserLocale = (username: string, locale: SupportedLocales) => {
-    const locales = LocalStorage.getItem('/localisation/locale') ?? {};
-    locales[username] = locale;
-    LocalStorage.setItem('/localisation/locale', locales);
-  };
-
-  const getLocalisedFullName = (
-    firstName: StringOrEmpty,
-    lastName: StringOrEmpty
-  ) => getFullName(language, firstName, lastName);
+  const getLocalisedFullName = useCallback(
+    (firstName: StringOrEmpty, lastName: StringOrEmpty) =>
+      getFullName(language, firstName, lastName),
+    [language]
+  );
 
   return {
     currentLanguage,
@@ -90,10 +111,24 @@ export const useIntlUtils = () => {
     languageOptions,
     changeLanguage,
     getLocaleCode,
+    getLocale: () => getLocale(currentLanguage),
     getUserLocale,
     setUserLocale,
     getLocalisedFullName,
   };
+};
+
+const getLocaleCode = (language: LanguageType) => parseLanguage(language);
+
+const getUserLocale = (username: string) => {
+  const locales = LocalStorage.getItem('/localisation/locale');
+  return !!locales ? locales[username] : undefined;
+};
+
+const setUserLocale = (username: string, locale: SupportedLocales) => {
+  const locales = LocalStorage.getItem('/localisation/locale') ?? {};
+  locales[username] = locale;
+  LocalStorage.setItem('/localisation/locale', locales);
 };
 
 const parseLanguage = (language?: string) => {

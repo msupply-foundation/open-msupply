@@ -19,7 +19,7 @@ use service::{
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     sync::{
-        settings::SyncSettings, sync_status::logger::SyncLogger,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
@@ -32,7 +32,7 @@ use std::{
 };
 use util::inline_init;
 
-const DATA_EXPORT_FOLDER: &'static str = "data";
+const DATA_EXPORT_FOLDER: &str = "data";
 
 /// omSupply remote server cli
 #[derive(clap::Parser)]
@@ -114,6 +114,7 @@ async fn initialise_from_central(
 
     let connection_manager = get_storage_connection_manager(&settings.database);
     let app_data_folder = settings
+        .clone()
         .server
         .base_dir
         .ok_or(anyhow!("based dir not set in yaml configurations"))?;
@@ -123,6 +124,7 @@ async fn initialise_from_central(
     ));
 
     let sync_settings = settings
+        .clone()
         .sync
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
@@ -143,11 +145,14 @@ async fn initialise_from_central(
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
-    let (_, sync_driver) = SynchroniserDriver::init();
+
+    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
+    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
+    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
     sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
-    for user in users.split(",") {
+    for user in users.split(',') {
         let user = user.split(':').collect::<Vec<&str>>();
         let input = LoginInput {
             username: user[0].to_string(),
@@ -183,11 +188,11 @@ async fn main() -> anyhow::Result<()> {
             let schema =
                 OperationalSchema::build(Queries::new(), Mutations::new(), EmptySubscription)
                     .finish();
-            fs::write("schema.graphql", &schema.sdl())?;
+            fs::write("schema.graphql", schema.sdl())?;
             info!("Schema exported in schema.graphql");
         }
         Action::InitialiseDatabase => {
-            info!("Reseting database");
+            info!("Resetting database");
             test_db::setup(&settings.database).await;
             info!("Finished database reset");
         }
@@ -208,7 +213,7 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Syncing users");
             let mut synced_user_info_rows = Vec::new();
-            for user in users.split(",") {
+            for user in users.split(',') {
                 let user = user.split(':').collect::<Vec<&str>>();
                 let input = LoginInput {
                     username: user[0].to_string(),
@@ -219,7 +224,7 @@ async fn main() -> anyhow::Result<()> {
                     input.clone(),
                     LoginService::fetch_user_from_central(&input)
                         .await
-                        .expect(&format!("Cannot find user {:?}", input)),
+                        .unwrap_or_else(|_| panic!("Cannot find user {:?}", input)),
                 ));
             }
 
@@ -241,11 +246,11 @@ async fn main() -> anyhow::Result<()> {
 
             info!("Saving export");
             let (folder, export_file, users_file) = export_paths(&name);
-            if let Err(_) = fs::create_dir(&folder) {
+            if fs::create_dir(&folder).is_err() {
                 info!("Export directory already exists, replacing {:#?}", folder)
             };
-            fs::write(&export_file, data_string)?;
-            fs::write(&users_file, users)?;
+            fs::write(export_file, data_string)?;
+            fs::write(users_file, users)?;
             info!("Export saved in {}", folder.to_str().unwrap());
         }
         Action::InitialiseFromExport { name, refresh } => {
@@ -284,7 +289,8 @@ async fn main() -> anyhow::Result<()> {
                 .collect();
             buffer_repo.upsert_many(&buffer_rows)?;
 
-            integrate_and_translate_sync_buffer(&ctx.connection, false)?;
+            let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+            integrate_and_translate_sync_buffer(&ctx.connection, false, &mut logger).await?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {

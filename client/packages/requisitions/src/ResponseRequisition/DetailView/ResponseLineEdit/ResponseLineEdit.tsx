@@ -11,6 +11,7 @@ import { useResponse, ResponseLineFragment } from '../../api';
 import { useDraftRequisitionLine, useNextResponseLine } from './hooks';
 import { RequestStoreStats } from '../ReponseStats/RequestStoreStats';
 import { ResponseStoreStats } from '../ReponseStats/ResponseStoreStats';
+import { usePackVariant } from '@openmsupply-client/system';
 
 interface ResponseLineEditProps {
   isOpen: boolean;
@@ -30,18 +31,31 @@ export const ResponseLineEdit = ({
     useDraftRequisitionLine(currentLine);
   const { next, hasNext } = useNextResponseLine(currentLine);
   const { data } = useResponse.line.stats(draft?.id);
+  const {
+    numberOfPacksToTotalQuantity,
+    numberOfPacksFromQuantity,
+    variantsControl,
+  } = usePackVariant(draft.itemId, draft.item.unitName ?? null);
 
   const tabs = [
     {
       Component: (
         <ResponseStoreStats
-          stockOnHand={data?.responseStoreStats.stockOnHand || 0}
-          incomingStock={data?.responseStoreStats.incomingStock || 0}
-          stockOnOrder={data?.responseStoreStats.stockOnOrder || 0}
-          requestedQuantity={data?.responseStoreStats.requestedQuantity || 0}
-          otherRequestedQuantity={
+          stockOnHand={numberOfPacksFromQuantity(
+            data?.responseStoreStats.stockOnHand || 0
+          )}
+          incomingStock={numberOfPacksFromQuantity(
+            data?.responseStoreStats.incomingStock || 0
+          )}
+          stockOnOrder={numberOfPacksFromQuantity(
+            data?.responseStoreStats.stockOnOrder || 0
+          )}
+          requestedQuantity={numberOfPacksFromQuantity(
+            data?.responseStoreStats.requestedQuantity || 0
+          )}
+          otherRequestedQuantity={numberOfPacksFromQuantity(
             data?.responseStoreStats.otherRequestedQuantity || 0
-          }
+          )}
         />
       ),
       value: 'label.my-store',
@@ -49,12 +63,18 @@ export const ResponseLineEdit = ({
     {
       Component: (
         <RequestStoreStats
-          maxMonthsOfStock={data?.requestStoreStats.maxMonthsOfStock || 0}
-          suggestedQuantity={data?.requestStoreStats.suggestedQuantity || 0}
-          availableStockOnHand={data?.requestStoreStats.stockOnHand || 0}
-          averageMonthlyConsumption={
+          maxMonthsOfStock={numberOfPacksFromQuantity(
+            data?.requestStoreStats.maxMonthsOfStock || 0
+          )}
+          suggestedQuantity={numberOfPacksFromQuantity(
+            data?.requestStoreStats.suggestedQuantity || 0
+          )}
+          availableStockOnHand={numberOfPacksFromQuantity(
+            data?.requestStoreStats.stockOnHand || 0
+          )}
+          averageMonthlyConsumption={numberOfPacksFromQuantity(
             data?.requestStoreStats.averageMonthlyConsumption || 0
-          }
+          )}
         />
       ),
       value: 'label.customer',
@@ -96,6 +116,9 @@ export const ResponseLineEdit = ({
             draftLine={draft}
             update={update}
             disabled={isDisabled}
+            variantsControl={variantsControl}
+            numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+            numberOfPacksToTotalQuantity={numberOfPacksToTotalQuantity}
           />
           <ModalTabs
             tabs={tabs}

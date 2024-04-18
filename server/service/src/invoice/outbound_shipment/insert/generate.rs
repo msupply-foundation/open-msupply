@@ -1,6 +1,6 @@
 use chrono::Utc;
 
-use repository::Name;
+use repository::{CurrencyFilter, CurrencyRepository, Name};
 use repository::{
     InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
 };
@@ -17,11 +17,15 @@ pub fn generate(
     other_party: Name,
 ) -> Result<InvoiceRow, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
 
     let result = InvoiceRow {
         id: input.id,
         user_id: Some(user_id.to_string()),
-        name_id: input.other_party_id,
+        name_link_id: input.other_party_id,
         r#type: InvoiceRowType::OutboundShipment,
         comment: input.comment,
         their_reference: input.their_reference,
@@ -33,6 +37,8 @@ pub fn generate(
         on_hold: input.on_hold.unwrap_or(false),
         colour: input.colour,
         // Default
+        currency_id: Some(currency.currency_row.id),
+        currency_rate: 1.0,
         tax: None,
         transport_reference: None,
         allocated_datetime: None,
@@ -42,7 +48,8 @@ pub fn generate(
         verified_datetime: None,
         linked_invoice_id: None,
         requisition_id: None,
-        clinician_id: None,
+        clinician_link_id: None,
+        original_shipment_id: None,
     };
 
     Ok(result)

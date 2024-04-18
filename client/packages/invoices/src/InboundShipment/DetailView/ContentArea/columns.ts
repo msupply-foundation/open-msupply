@@ -5,13 +5,13 @@ import {
   useColumns,
   Column,
   ArrayUtils,
-  useCurrency,
   useUrlQueryParams,
   ColumnAlign,
-  PositiveNumberCell,
   TooltipTextCell,
-  useTranslation,
+  useColumnUtils,
+  CurrencyCell,
 } from '@openmsupply-client/common';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
@@ -24,10 +24,9 @@ export const useInboundShipmentColumns = () => {
     updateSortQuery,
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
-  const { c } = useCurrency();
   const getSellPrice = (row: InboundLineFragment) =>
-    isInboundPlaceholderRow(row) ? '' : c(row.sellPricePerPack).format();
-  const t = useTranslation();
+    isInboundPlaceholderRow(row) ? 0 : row.sellPricePerPack;
+  const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -55,222 +54,111 @@ export const useInboundShipmentColumns = () => {
       [
         'itemCode',
         {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const items = lines.map(({ item }) => item);
-              return ArrayUtils.ifTheSameElseDefault(items, 'code', '');
-            } else {
-              return rowData.item.code;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const items = lines.map(({ item }) => item);
-              return ArrayUtils.ifTheSameElseDefault(items, 'code', '');
-            } else {
-              return rowData.item.code;
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'code'] },
+              { path: ['item', 'code'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'code'] },
+              { path: ['item', 'code'], default: '' },
+            ]),
         },
       ],
       [
         'itemName',
         {
           Cell: TooltipTextCell,
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const items = lines.map(({ item }) => item);
-              return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
-            } else {
-              return rowData.item.name;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const items = lines.map(({ item }) => item);
-              return ArrayUtils.ifTheSameElseDefault(items, 'name', '');
-            } else {
-              return rowData.item.name;
-            }
-          },
-        },
-      ],
-      [
-        'itemUnit',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              return row.lines[0]?.item.unitName ?? '';
-            } else {
-              return row.item.unitName ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const items = rowData.lines.map(({ item }) => item);
-              return (
-                ArrayUtils.ifTheSameElseDefault(items, 'unitName', '') ?? ''
-              );
-            } else {
-              return rowData.item.unitName ?? '';
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'item', 'name'] },
+              { path: ['item', 'name'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'item', 'name'] },
+              { path: ['item', 'name'], default: '' },
+            ]),
         },
       ],
       [
         'batch',
         {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'batch',
-                t('multiple')
-              );
-            } else {
-              return rowData.batch;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return (
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'batch',
-                  t('multiple')
-                ) ?? ''
-              );
-            } else {
-              return rowData.batch ?? '';
-            }
-          },
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [{ path: ['batch'] }]),
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [{ path: ['batch'], default: '' }]),
         },
       ],
       [
         'expiryDate',
         {
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const expiryDate = ArrayUtils.ifTheSameElseDefault(
-                lines,
-                'expiryDate',
-                t('multiple')
-              );
-
-              return expiryDate;
-            } else {
-              return rowData.expiryDate;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              const expiryDate =
-                ArrayUtils.ifTheSameElseDefault(
-                  lines,
-                  'expiryDate',
-                  t('multiple')
-                ) ?? '';
-
-              return expiryDate;
-            } else {
-              return rowData.expiryDate ?? '';
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'expiryDate'] },
+              { path: ['expiryDate'], default: '' },
+            ]),
         },
       ],
       [
-        'locationName',
+        'location',
         {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const locations = row.lines.flatMap(({ location }) =>
-                !!location ? [location] : []
-              );
-              if (locations.length !== 0) {
-                return ArrayUtils.ifTheSameElseDefault(
-                  locations,
-                  'name',
-                  t('multiple')
-                );
-              } else {
-                return '';
-              }
-            } else {
-              return row.location?.name ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const locations = rowData.lines.flatMap(({ location }) =>
-                !!location ? [location] : []
-              );
-
-              if (locations.length !== 0) {
-                return ArrayUtils.ifTheSameElseDefault(
-                  locations,
-                  'name',
-                  t('multiple')
-                );
-              }
-            } else {
-              return rowData.location?.name ?? '';
-            }
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'location', 'code'] },
+              { path: ['location', 'code'], default: '' },
+            ]),
         },
       ],
+
       {
-        label: 'label.sell',
-        key: 'sellPricePerPack',
-        align: ColumnAlign.Right,
-        width: 120,
-        accessor: ({ rowData }) => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return ArrayUtils.ifTheSameElseDefault(
-              lines.map(line => ({ sell: getSellPrice(line) })),
-              'sell',
-              ''
-            );
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
-        getSortValue: rowData => {
-          if ('lines' in rowData) {
-            const { lines } = rowData;
-            return c(
-              ArrayUtils.ifTheSameElseDefault(lines, 'sellPricePerPack', '')
-            ).format();
-          } else {
-            return getSellPrice(rowData);
-          }
-        },
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: getPackVariantCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row?.packSize ?? 1];
+          },
+          getUnitName: row => {
+            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+        width: 130,
       },
       [
-        'packSize',
+        'numberOfPacks',
         {
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
-              return rowData.packSize ?? '';
+              return rowData.numberOfPacks;
             }
           },
           getSortValue: rowData => {
             if ('lines' in rowData) {
               const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
+              return ArrayUtils.getSum(lines, 'numberOfPacks');
             } else {
-              return rowData.packSize ?? '';
+              return rowData.numberOfPacks;
             }
           },
         },
@@ -296,28 +184,37 @@ export const useInboundShipmentColumns = () => {
           },
         },
       ],
-      [
-        'numberOfPacks',
-        {
-          Cell: PositiveNumberCell,
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getSum(lines, 'numberOfPacks');
-            } else {
-              return rowData.numberOfPacks;
-            }
-          },
-          getSortValue: rowData => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.getSum(lines, 'numberOfPacks');
-            } else {
-              return rowData.numberOfPacks;
-            }
-          },
+      {
+        label: 'label.sell',
+        key: 'sellPricePerPack',
+        align: ColumnAlign.Right,
+        width: 120,
+        Cell: CurrencyCell,
+        accessor: ({ rowData }) => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines.map(line => ({ sell: getSellPrice(line) })),
+              'sell',
+              ''
+            );
+          } else {
+            return getSellPrice(rowData);
+          }
         },
-      ],
+        getSortValue: rowData => {
+          if ('lines' in rowData) {
+            const { lines } = rowData;
+            return ArrayUtils.ifTheSameElseDefault(
+              lines,
+              'sellPricePerPack',
+              ''
+            );
+          } else {
+            return getSellPrice(rowData);
+          }
+        },
+      },
       getRowExpandColumn(),
       GenericColumnKey.Selection,
     ],
@@ -329,11 +226,21 @@ export const useInboundShipmentColumns = () => {
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
-  useColumns([
+  useColumns<InboundLineFragment>([
     'batch',
     'expiryDate',
-    'locationName',
+    'location',
+    {
+      key: 'packUnit',
+      label: 'label.pack',
+      sortable: false,
+      Cell: getPackVariantCell({
+        getItemId: row => row?.item?.id,
+        getPackSizes: row => [row?.packSize ?? 1],
+        getUnitName: row => row?.item?.unitName ?? null,
+      }),
+      width: 130,
+    },
     'numberOfPacks',
-    'packSize',
     'costPricePerPack',
   ]);

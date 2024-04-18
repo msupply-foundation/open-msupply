@@ -1,6 +1,6 @@
 use crate::{
     invoice::{check_invoice_exists, check_store},
-    invoice_line::{query::get_invoice_line, validate::check_line_exists_option},
+    invoice_line::{query::get_invoice_line, validate::check_line_row_exists_option},
     service_provider::ServiceContext,
 };
 use repository::{
@@ -34,10 +34,10 @@ pub fn update_outbound_shipment_unallocated_line(
         .transaction_sync(|connection| {
             let line_row = validate(connection, &ctx.store_id, &input)?;
             let updated_line = generate(input, line_row)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&updated_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&updated_line)?;
 
             get_invoice_line(ctx, &updated_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::UpdatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -50,7 +50,7 @@ fn validate(
     input: &UpdateOutboundShipmentUnallocatedLine,
 ) -> Result<InvoiceLineRow, OutError> {
     let invoice_line =
-        check_line_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
+        check_line_row_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
 
     if invoice_line.r#type != InvoiceLineRowType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
@@ -163,7 +163,7 @@ mod test_update {
         let service = service_provider.invoice_line_service;
 
         let mut line_to_update = mock_unallocated_line();
-        // Succesfull update
+        // Successful update
         let result = service
             .update_outbound_shipment_unallocated_line(
                 &context,

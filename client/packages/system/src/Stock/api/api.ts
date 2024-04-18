@@ -27,6 +27,8 @@ const stockLineParsers = {
         return StockLineSortFieldInput.SupplierName;
       case 'numberOfPacks':
         return StockLineSortFieldInput.NumberOfPacks;
+      case 'location':
+        return StockLineSortFieldInput.LocationCode;
       case 'expiryDate':
       default: {
         return StockLineSortFieldInput.ExpiryDate;

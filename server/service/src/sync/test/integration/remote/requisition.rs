@@ -2,12 +2,12 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use repository::{
     requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    RequisitionLineRow, RequisitionRow,
+    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
 };
 use serde_json::json;
 use util::{inline_edit, uuid::uuid};
@@ -24,7 +24,7 @@ impl SyncRecordTester for RequisitionRecordTester {
             store_id: store_id.to_string(),
             user_id: None,
             requisition_number: 456,
-            name_id: uuid(),
+            name_link_id: uuid(),
             r#type: RequisitionRowType::Request,
             status: RequisitionRowStatus::Draft,
             created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)
@@ -49,7 +49,7 @@ impl SyncRecordTester for RequisitionRecordTester {
         let requisition_line_row_1 = RequisitionLineRow {
             id: uuid(),
             requisition_id: requisition_row_1.id.clone(),
-            item_id: uuid(),
+            item_link_id: uuid(),
             requested_quantity: 50,
             suggested_quantity: 10,
             supply_quantity: 5,
@@ -81,22 +81,22 @@ impl SyncRecordTester for RequisitionRecordTester {
         result.push(TestStepData {
             central_upsert: json!({
                 "item": [{
-                    "ID": requisition_line_row_1.item_id,
+                    "ID": requisition_line_row_1.item_link_id,
                     "type_of": "general"
                 }],
                 "name": [{
-                    "ID": base_requisition_row.name_id,
+                    "ID": base_requisition_row.name_link_id,
                     "type": "store"
                 }],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Requisition(requisition_row_1.clone()),
-                PullUpsertRecord::Requisition(requisition_row_2.clone()),
-                PullUpsertRecord::Requisition(requisition_row_3),
-                PullUpsertRecord::Requisition(requisition_row_4),
-                PullUpsertRecord::RequisitionLine(requisition_line_row_1.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(requisition_row_1.clone()),
+                IntegrationOperation::upsert(requisition_row_2.clone()),
+                IntegrationOperation::upsert(requisition_row_3),
+                IntegrationOperation::upsert(requisition_row_4),
+                IntegrationOperation::upsert(requisition_line_row_1.clone()),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -139,13 +139,12 @@ impl SyncRecordTester for RequisitionRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Requisition(requisition_row_1.clone()),
-                PullUpsertRecord::Requisition(requisition_row_2.clone()),
-                PullUpsertRecord::RequisitionLine(requisition_line_row_1.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(requisition_row_1.clone()),
+                IntegrationOperation::upsert(requisition_row_2.clone()),
+                IntegrationOperation::upsert(requisition_line_row_1.clone()),
+            ],
+            ..Default::default()
         });
         // STEP 3 - delete
         let requisition_row_2 = inline_edit(&requisition_row_2, |mut d| {
@@ -153,21 +152,14 @@ impl SyncRecordTester for RequisitionRecordTester {
             d
         });
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upsert(PullUpsertRecord::Requisition(
-                requisition_row_2,
-            ))
-            .join(IntegrationRecords::from_deletes(vec![
-                PullDeleteRecord {
-                    id: requisition_line_row_1.id.clone(),
-                    table: PullDeleteRecordTable::RequisitionLine,
-                },
-                PullDeleteRecord {
-                    id: requisition_row_1.id.clone(),
-                    table: PullDeleteRecordTable::Requisition,
-                },
-            ])),
+            integration_records: vec![
+                IntegrationOperation::upsert(requisition_row_2),
+                IntegrationOperation::delete(RequisitionLineRowDelete(
+                    requisition_line_row_1.id.clone(),
+                )),
+                IntegrationOperation::delete(RequisitionRowDelete(requisition_row_1.id.clone())),
+            ],
+            ..Default::default()
         });
         result
     }

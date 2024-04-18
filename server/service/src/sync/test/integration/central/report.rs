@@ -2,9 +2,9 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
-use repository::{ReportContext, ReportRow, ReportType};
+use repository::{ReportContext, ReportRow, ReportRowDelete, ReportType};
 use serde_json::json;
 use util::{inline_init, uuid::uuid};
 
@@ -68,23 +68,22 @@ impl SyncRecordTester for ReportTester {
             central_upsert: json!({
                 "report": [report_json1,report_json2,report_json3,report_json4],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Report(report_row1.clone()),
-                PullUpsertRecord::Report(report_row2),
-                PullUpsertRecord::Report(report_row3),
-                PullUpsertRecord::Report(report_row4),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(report_row1.clone()),
+                IntegrationOperation::upsert(report_row2),
+                IntegrationOperation::upsert(report_row3),
+                IntegrationOperation::upsert(report_row4),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - deletes
         result.push(TestStepData {
-            central_upsert: json!({}),
             central_delete: json!({ "report": [report_row1.id] }),
-            integration_records: IntegrationRecords::from_deletes(vec![PullDeleteRecord {
-                id: report_row1.id,
-                table: PullDeleteRecordTable::Report,
-            }]),
+            integration_records: vec![IntegrationOperation::delete(ReportRowDelete(
+                report_row1.id,
+            ))],
+            ..Default::default()
         });
         result
     }

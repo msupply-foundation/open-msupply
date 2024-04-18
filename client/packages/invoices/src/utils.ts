@@ -11,10 +11,15 @@ import {
   Formatter,
   TypedTFunction,
 } from '@openmsupply-client/common';
-import { OutboundRowFragment } from './OutboundShipment/api';
+import { OutboundFragment, OutboundRowFragment } from './OutboundShipment/api';
 import { InboundLineFragment } from './InboundShipment/api';
 import { DraftStockOutLine, InboundItem } from './types';
 import { PrescriptionRowFragment } from './Prescriptions/api';
+import {
+  InboundReturnFragment,
+  InboundReturnRowFragment,
+  OutboundReturnRowFragment,
+} from './Returns';
 
 export const outboundStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.New,
@@ -51,6 +56,27 @@ export const prescriptionStatuses: InvoiceNodeStatus[] = [
   InvoiceNodeStatus.Verified,
 ];
 
+export const outboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
+export const inboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Picked,
+  InvoiceNodeStatus.Shipped,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+export const manualInboundReturnStatuses: InvoiceNodeStatus[] = [
+  InvoiceNodeStatus.New,
+  InvoiceNodeStatus.Delivered,
+  InvoiceNodeStatus.Verified,
+];
+
 const statusTranslation: Record<InvoiceNodeStatus, LocaleKey> = {
   ALLOCATED: 'label.allocated',
   PICKED: 'label.picked',
@@ -74,10 +100,30 @@ export const getNextOutboundStatus = (
   return nextStatus ?? null;
 };
 
+export const getNextOutboundReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = outboundReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = outboundReturnStatuses[currentStatusIdx + 1];
+  return nextStatus ?? null;
+};
+
 export const getNextInboundStatus = (
   currentStatus: InvoiceNodeStatus
 ): InvoiceNodeStatus | null => {
   const nextStatus = nextStatusMap[currentStatus];
+  return nextStatus ?? null;
+};
+
+export const getNextInboundReturnStatus = (
+  currentStatus: InvoiceNodeStatus
+): InvoiceNodeStatus | null => {
+  const currentStatusIdx = inboundReturnStatuses.findIndex(
+    status => currentStatus === status
+  );
+  const nextStatus = inboundReturnStatuses[currentStatusIdx + 1];
   return nextStatus ?? null;
 };
 
@@ -120,7 +166,9 @@ export const getStatusTranslator =
     );
   };
 
-export const isOutboundDisabled = (outbound: OutboundRowFragment): boolean => {
+export const isOutboundDisabled = (
+  outbound: OutboundRowFragment | OutboundReturnRowFragment
+): boolean => {
   return (
     outbound.status === InvoiceNodeStatus.Shipped ||
     outbound.status === InvoiceNodeStatus.Verified ||
@@ -137,6 +185,17 @@ export const isInboundDisabled = (inbound: InboundRowFragment): boolean => {
         inbound.status === InvoiceNodeStatus.Verified;
 };
 
+export const isInboundReturnDisabled = (
+  inboundReturn: InboundReturnRowFragment
+): boolean => {
+  const isManuallyCreated = !inboundReturn.linkedShipment?.id;
+  return isManuallyCreated
+    ? inboundReturn.status === InvoiceNodeStatus.Verified
+    : inboundReturn.status === InvoiceNodeStatus.Picked ||
+        inboundReturn.status === InvoiceNodeStatus.Shipped ||
+        inboundReturn.status === InvoiceNodeStatus.Verified;
+};
+
 export const isPrescriptionDisabled = (
   prescription: PrescriptionRowFragment
 ): boolean => {
@@ -144,7 +203,7 @@ export const isPrescriptionDisabled = (
 };
 
 export const isInboundListItemDisabled = (
-  inbound: InboundRowFragment
+  inbound: InboundRowFragment | InboundReturnRowFragment
 ): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
@@ -157,7 +216,7 @@ export const isInboundPlaceholderRow = (row: InboundLineFragment): boolean =>
   row.type === InvoiceLineNodeType.StockIn && row.numberOfPacks === 0;
 
 export const isInboundStatusChangeDisabled = (
-  inbound: InboundFragment
+  inbound: InboundFragment | InboundReturnFragment
 ): boolean => {
   if (inbound.onHold) return true;
 
@@ -192,15 +251,33 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
+export const canDeleteInvoice = (
+  invoice: OutboundRowFragment | OutboundReturnRowFragment
+): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
-  invoice.status === InvoiceNodeStatus.Allocated;
+  invoice.status === InvoiceNodeStatus.Allocated ||
+  invoice.status === InvoiceNodeStatus.Picked;
+
+export const canDeleteOutboundReturn = (
+  outboundReturn: OutboundReturnRowFragment
+): boolean =>
+  outboundReturn.status === InvoiceNodeStatus.New ||
+  outboundReturn.status === InvoiceNodeStatus.Picked;
 
 export const canDeletePrescription = (
   invoice: PrescriptionRowFragment
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Picked;
+
+export const canReturnInboundLines = (inbound: InboundFragment): boolean =>
+  inbound.status === InvoiceNodeStatus.Delivered ||
+  inbound.status === InvoiceNodeStatus.Verified;
+
+export const canReturnOutboundLines = (outbound: OutboundFragment): boolean =>
+  outbound.status === InvoiceNodeStatus.Shipped ||
+  outbound.status === InvoiceNodeStatus.Delivered ||
+  outbound.status === InvoiceNodeStatus.Verified;
 
 export const isA = {
   stockOutLine: (line: { type: InvoiceLineNodeType }) =>
@@ -227,7 +304,7 @@ export const outboundsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.reference'),
     t('label.comment'),
     t('label.total'),
@@ -246,6 +323,52 @@ export const outboundsToCsv = (
   return Formatter.csv({ fields, data });
 };
 
+export const outboundReturnsToCsv = (
+  returns: OutboundReturnRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.created'),
+  ];
+
+  const data = returns.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    Formatter.csvDateTimeString(node.createdDatetime),
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
+export const inboundReturnsToCsv = (
+  returns: InboundReturnRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    'id',
+    t('label.name'),
+    t('label.status'),
+    t('label.invoice-number'),
+    t('label.created'),
+    t('label.confirmed'),
+  ];
+
+  const data = returns.map(node => [
+    node.id,
+    node.otherPartyName,
+    node.status,
+    node.invoiceNumber,
+    Formatter.csvDateTimeString(node.createdDatetime),
+    Formatter.csvDateTimeString(node.deliveredDatetime),
+  ]);
+  return Formatter.csv({ fields, data });
+};
+
 export const inboundsToCsv = (
   invoices: InboundRowFragment[],
   t: TypedTFunction<LocaleKey>
@@ -255,7 +378,7 @@ export const inboundsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.confirmed'),
     t('label.comment'),
     t('label.total'),
@@ -283,7 +406,7 @@ export const prescriptionToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.comment'),
   ];
 
@@ -300,3 +423,24 @@ export const prescriptionToCsv = (
 
 export const getPackQuantityCellId = (batch?: string | null) =>
   `pack_quantity_${batch}`;
+
+// Returns the ID of the next *distinct* item from a collection of lines -- i.e.
+// the next line that is for a different item
+export const getNextItemId = (
+  lines: { itemId: string }[],
+  currentItemId: string | null
+) => {
+  if (!lines || !currentItemId) return undefined;
+
+  const items = ArrayUtils.uniqBy(lines, line => line.itemId);
+
+  const currentItemIndex = items.findIndex(
+    line => line.itemId === currentItemId
+  );
+  if (currentItemIndex === -1) return;
+
+  const nextItemIndex = items.findIndex(
+    (line, index) => index > currentItemIndex && line.itemId !== currentItemId
+  );
+  return nextItemIndex === -1 ? undefined : items[nextItemIndex]?.itemId;
+};

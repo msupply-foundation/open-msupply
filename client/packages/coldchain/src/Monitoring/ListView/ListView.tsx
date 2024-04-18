@@ -8,6 +8,7 @@ import {
 } from '@openmsupply-client/common';
 import { TemperatureBreachList } from './TemperatureBreach';
 import { TemperatureChart } from './TemperatureChart';
+import { AppBarButtons } from './AppBarButtons';
 
 export const ListView: FC = () => {
   const t = useTranslation('coldchain');
@@ -39,5 +40,10 @@ export const ListView: FC = () => {
     },
   ];
 
-  return <DetailTabs tabs={tabs} />;
+  return (
+    <>
+      <AppBarButtons />
+      <DetailTabs tabs={tabs} />
+    </>
+  );
 };

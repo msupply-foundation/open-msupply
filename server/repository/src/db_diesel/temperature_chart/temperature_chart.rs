@@ -4,7 +4,7 @@ use crate::{
 };
 use diesel::prelude::*;
 
-use super::temperature_chart_row::{Interval, *};
+use super::temperature_chart_row::*;
 
 pub struct TemperatureChartRepository<'a> {
     connection: &'a StorageConnection,
@@ -71,10 +71,7 @@ impl TemperatureChartRow {
             interval_id,
             average_temperature,
             sensor_id,
-            breach_ids: breach_ids_with_nulls
-                .into_iter()
-                .filter_map(|id_or_none| id_or_none)
-                .collect(),
+            breach_ids: breach_ids_with_nulls.into_iter().flatten().collect(),
         })
     }
 }
@@ -87,7 +84,7 @@ mod test {
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         EqualFilter, LocationRow, NameRow, SensorFilter, SensorRow, StoreRow, TemperatureBreachRow,
-        TemperatureChartRepository, TemperatureChartRow, TemperatureLogRow,
+        TemperatureLogRow,
     };
 
     use rand::{seq::SliceRandom, thread_rng};
@@ -144,20 +141,20 @@ mod test {
         let intervals = vec![
             Interval {
                 // P1
-                from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
+                from_datetime: create_datetime(2021, 1, 1, 23, 59, 50).unwrap(),
+                to_datetime: create_datetime(2021, 1, 1, 23, 59, 56).unwrap(),
                 interval_id: "interval1".to_string(),
             },
             Interval {
                 // P2
-                from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
-                to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
+                from_datetime: create_datetime(2021, 1, 1, 23, 59, 56).unwrap(),
+                to_datetime: create_datetime(2021, 1, 2, 00, 00, 2).unwrap(),
                 interval_id: "interval2".to_string(),
             },
             Interval {
                 // P3
-                from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
-                to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
+                from_datetime: create_datetime(2021, 1, 2, 00, 00, 2).unwrap(),
+                to_datetime: create_datetime(2021, 1, 2, 00, 00, 8).unwrap(),
                 interval_id: "interval3".to_string(),
             },
         ];
@@ -172,19 +169,19 @@ mod test {
 
         // Sensor 1 (S1)
         let mut temperature_logs: Vec<TemperatureLogRow> = vec![
-            ((2021, 01, 01), (23, 59, 49), 100.0, s1, None, None), // Not in period
-            ((2021, 01, 01), (23, 59, 50), 10.0, s1, None, b1),    // (P1-S1 no location, breach1)
-            ((2021, 01, 01), (23, 59, 55), 5.0, s1, None, b2),     // (P1-S1 no location, breach2)
-            ((2021, 01, 01), (23, 59, 56), 1.0, s1, l1, None),     // (P2-S1-L1)
-            ((2021, 01, 02), (00, 00, 03), 0.0, s1, None, None),   // (P3-S1-L1)
-            ((2021, 01, 02), (00, 00, 07), 5.0, s1, None, None),   // (P3-S1 no location)
-            ((2021, 01, 02), (00, 00, 08), 100.0, s1, None, None), // Not in range
-            ((2021, 01, 01), (23, 59, 49), 100.0, s2, None, None), // Not in period
-            ((2021, 01, 01), (23, 59, 50), -10.0, s2, l1, None),   // (P1-S2-L1)
-            ((2021, 01, 01), (23, 59, 55), -5.0, s2, l1, None),    // (P1-S2-L1)
+            ((2021, 1, 1), (23, 59, 49), 100.0, s1, None, None), // Not in period
+            ((2021, 1, 1), (23, 59, 50), 10.0, s1, None, b1),    // (P1-S1 no location, breach1)
+            ((2021, 1, 1), (23, 59, 55), 5.0, s1, None, b2),     // (P1-S1 no location, breach2)
+            ((2021, 1, 1), (23, 59, 56), 1.0, s1, l1, None),     // (P2-S1-L1)
+            ((2021, 1, 2), (00, 00, 3), 0.0, s1, None, None),    // (P3-S1-L1)
+            ((2021, 1, 2), (00, 00, 7), 5.0, s1, None, None),    // (P3-S1 no location)
+            ((2021, 1, 2), (00, 00, 8), 100.0, s1, None, None),  // Not in range
+            ((2021, 1, 1), (23, 59, 49), 100.0, s2, None, None), // Not in period
+            ((2021, 1, 1), (23, 59, 50), -10.0, s2, l1, None),   // (P1-S2-L1)
+            ((2021, 1, 1), (23, 59, 55), -5.0, s2, l1, None),    // (P1-S2-L1)
             // (P2-S2) - No data
-            ((2021, 01, 02), (00, 00, 03), 3.0, s2, None, None), // (P3-S2 no location)
-            ((2021, 01, 02), (00, 00, 08), 100.0, s2, None, None), // Not in range
+            ((2021, 1, 2), (00, 00, 3), 3.0, s2, None, None), // (P3-S2 no location)
+            ((2021, 1, 2), (00, 00, 8), 100.0, s2, None, None), // Not in range
         ]
         .into_iter()
         .map(
@@ -196,12 +193,11 @@ mod test {
                 datetime: create_datetime(date.0, date.1, date.2, time.0, time.1, time.2).unwrap(),
                 location_id: location.map(ToString::to_string),
                 temperature_breach_id: breach.map(ToString::to_string),
-                ..Default::default()
             },
         )
         .collect();
 
-        // This repository should return rows orderd by sensor
+        // This repository should return rows ordered by sensor
         // it's important to shuffle before inserting to test this
         temperature_logs.shuffle(&mut thread_rng());
 
@@ -212,7 +208,7 @@ mod test {
                 stores: vec![store],
                 names: vec![name],
                 sensors: vec![sensor1.clone(), sensor2.clone()],
-                temperature_logs: temperature_logs,
+                temperature_logs,
                 locations: vec![location.clone()],
                 temperature_breaches: vec![breach1.clone(), breach2.clone()],
                 ..Default::default()

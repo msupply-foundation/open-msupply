@@ -14,7 +14,7 @@ use crate::{
 
 use diesel::{dsl::IntoBoxed, prelude::*};
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StocktakeFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -31,19 +31,7 @@ pub struct StocktakeFilter {
 
 impl StocktakeFilter {
     pub fn new() -> StocktakeFilter {
-        StocktakeFilter {
-            id: None,
-            store_id: None,
-            user_id: None,
-            stocktake_number: None,
-            comment: None,
-            description: None,
-            status: None,
-            created_datetime: None,
-            stocktake_date: None,
-            finalised_datetime: None,
-            is_locked: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -118,7 +106,7 @@ pub type StocktakeSort = Sort<StocktakeSortField>;
 
 type BoxedStocktakeQuery = IntoBoxed<'static, stocktake::table, DBType>;
 
-fn create_filtered_query<'a>(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
+fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
     let mut query = stocktake_dsl::stocktake.into_boxed();
 
     if let Some(f) = filter {

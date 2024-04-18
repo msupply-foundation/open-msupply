@@ -3,12 +3,13 @@ import {
   DataTable,
   useTranslation,
   Box,
-  useIsGrouped,
   MiniTable,
   createQueryParamsStore,
   NothingHere,
   useRowStyle,
   placeholderRowStyle,
+  useUrlQueryParams,
+  BasicSpinner,
 } from '@openmsupply-client/common';
 import { useStocktakeColumns, useExpansionColumns } from './columns';
 import { StocktakeLineFragment, useStocktake } from '../../api';
@@ -37,10 +38,10 @@ const Expando = ({
 };
 
 interface ContentAreaProps {
+  onAddItem: () => void;
   onRowClick:
     | null
     | ((item: StocktakeSummaryItem | StocktakeLineFragment) => void);
-  onAddItem: () => void;
 }
 
 const isUncounted = (line: StocktakeLineFragment): boolean =>
@@ -89,15 +90,22 @@ export const ContentArea: FC<ContentAreaProps> = ({
   onRowClick,
 }) => {
   const t = useTranslation('inventory');
-  const { isGrouped } = useIsGrouped('stocktake');
-  const { rows, onChangeSortBy, sortBy } = useStocktake.line.rows(isGrouped);
+  const {
+    updateSortQuery: onChangeSortBy,
+    updatePaginationQuery,
+    queryParams: { page, first, offset, sortBy },
+  } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
+  const { isDisabled, isLoading, rows, totalLineCount } =
+    useStocktake.line.rows();
   const columns = useStocktakeColumns({ onChangeSortBy, sortBy });
-  const isDisabled = useStocktake.utils.isDisabled();
+  const pagination = { page, first, offset };
 
   useHighlightUncountedRows(rows);
 
-  return (
-    <Box flexDirection="column" flex={1}>
+  return isLoading ? (
+    <BasicSpinner />
+  ) : (
+    <Box flexDirection="column" flex={1} display="flex">
       <DataTable<StocktakeSummaryItem | StocktakeLineFragment>
         onRowClick={onRowClick}
         ExpandContent={Expando}
@@ -112,6 +120,9 @@ export const ContentArea: FC<ContentAreaProps> = ({
             buttonText={t('button.add-item')}
           />
         }
+        enableColumnSelection
+        pagination={{ ...pagination, total: totalLineCount }}
+        onChangePage={updatePaginationQuery}
       />
     </Box>
   );

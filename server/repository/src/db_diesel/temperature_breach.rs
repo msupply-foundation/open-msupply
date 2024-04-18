@@ -22,7 +22,7 @@ pub struct TemperatureBreach {
     pub temperature_breach_row: TemperatureBreachRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
@@ -145,7 +145,7 @@ impl<'a> TemperatureBreachRepository<'a> {
 
 type BoxedTemperatureBreachQuery = temperature_breach::BoxedQuery<'static, DBType>;
 
-pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
+fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
     }
@@ -153,17 +153,8 @@ pub fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBre
 
 impl TemperatureBreachFilter {
     pub fn new() -> TemperatureBreachFilter {
-        TemperatureBreachFilter {
-            id: None,
-            store_id: None,
-            unacknowledged: None,
-            start_datetime: None,
-            end_datetime: None,
-            r#type: None,
-            sensor: None,
-            location: None,
+        Self::default()
         }
-    }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);

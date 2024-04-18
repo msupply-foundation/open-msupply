@@ -3,7 +3,10 @@ use chrono::{DateTime, NaiveDate, Utc};
 use dataloader::DataLoader;
 use repository::{Gender, Name, NameRow, NameType};
 
-use graphql_core::{loader::StoreByIdLoader, simple_generic_errors::NodeError, ContextExt};
+use graphql_core::{
+    loader::StoreByIdLoader, simple_generic_errors::NodeError,
+    standard_graphql_error::StandardGraphqlError, ContextExt,
+};
 use serde::Serialize;
 
 use super::StoreNode;
@@ -222,11 +225,17 @@ impl NameNode {
     pub async fn created_datetime(&self) -> Option<DateTime<Utc>> {
         self.row()
             .created_datetime
-            .map(|datetime| DateTime::<Utc>::from_utc(datetime, Utc))
+            .map(|datetime| DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc))
     }
 
     pub async fn date_of_birth(&self) -> Option<NaiveDate> {
         self.row().date_of_birth
+    }
+
+    pub async fn custom_data(&self) -> Result<Option<serde_json::Value>> {
+        self.name
+            .custom_data()
+            .map_err(|err| StandardGraphqlError::from_error(&err))
     }
 }
 
@@ -253,9 +262,8 @@ impl NameNode {
 
 #[cfg(test)]
 mod test {
-    use async_graphql::{EmptyMutation, Object};
-    use chrono::NaiveDate;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use async_graphql::Object;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
     use util::inline_init;
@@ -267,7 +275,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphq_test_name_node_details",
@@ -298,12 +306,13 @@ mod test {
                             r.address1 = Some("address1".to_string());
                             r.address2 = Some("address2".to_string());
                             r.created_datetime = Some(
-                                NaiveDate::from_ymd_opt(2022, 05, 18)
+                                NaiveDate::from_ymd_opt(2022, 5, 18)
                                     .unwrap()
-                                    .and_hms_opt(12, 07, 12)
+                                    .and_hms_opt(12, 7, 12)
                                     .unwrap(),
                             );
-                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 05, 15).unwrap());
+                            r.date_of_birth = Some(NaiveDate::from_ymd_opt(1995, 5, 15).unwrap());
+                            r.custom_data_string = Some(r#"{"check": "check"}"#.to_string());
                         }),
                         name_store_join_row: None,
                         store_row: None,
@@ -333,6 +342,9 @@ mod test {
                 "address2": "address2",
                 "createdDatetime": "2022-05-18T12:07:12+00:00",
                 "dateOfBirth": "1995-05-15",
+                "customData": {
+                    "check": "check"
+                }
             }
         }
         );
@@ -359,6 +371,7 @@ mod test {
                createdDatetime
                isOnHold
                dateOfBirth
+               customData
             }
         }
         "#;

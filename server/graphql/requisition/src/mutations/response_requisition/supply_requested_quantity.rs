@@ -109,11 +109,12 @@ mod test {
     use crate::RequisitionMutations;
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
-            mock_request_draft_requisition, mock_sent_request_requisition_line, MockDataInserts,
+            mock_item_a, mock_request_draft_requisition, mock_sent_request_requisition_line,
+            MockDataInserts,
         },
         RequisitionLine, StorageConnectionManager,
     };
@@ -164,7 +165,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_supply_requested_quantity_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_supply_requested_quantity_structured_errors",
@@ -251,7 +252,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_supply_requested_quantity_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_supply_requested_quantity_success",
@@ -282,6 +283,7 @@ mod test {
             Ok(vec![RequisitionLine {
                 requisition_line_row: mock_sent_request_requisition_line(),
                 requisition_row: mock_request_draft_requisition(),
+                item_row: mock_item_a(),
             }])
         }));
 

@@ -116,6 +116,30 @@ query stocktakeByNumber($stocktakeNumber: Int!, $storeId: String!) {
   }
 }
 
+query stocktakeLines(
+  $stocktakeId: String!
+  $storeId: String!
+  $page: PaginationInput
+  $sort: [StocktakeLineSortInput!]
+  $filter: StocktakeLineFilterInput
+) {
+  stocktakeLines(
+    stocktakeId: $stocktakeId
+    storeId: $storeId
+    page: $page
+    sort: $sort
+    filter: $filter
+  ) {
+    ... on StocktakeLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StocktakeLine
+      }
+    }
+  }
+}
+
 fragment StockLineReducedBelowZeroError on StockLineReducedBelowZero {
   __typename
   stockLine {

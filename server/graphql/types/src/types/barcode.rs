@@ -29,7 +29,10 @@ impl BarcodeNode {
     }
 
     pub async fn manufacturer_id(&self) -> Option<String> {
-        self.row().manufacturer_id.clone()
+        self.barcode
+            .manufacturer_name_row
+            .as_ref()
+            .map(|it| it.id.clone())
     }
 
     pub async fn pack_size(&self) -> Option<i32> {
@@ -82,8 +85,8 @@ impl BarcodeConnector {
 
 #[cfg(test)]
 mod test {
-    use async_graphql::{EmptyMutation, Object};
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use async_graphql::Object;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
     use serde_json::json;
     use util::inline_init;
@@ -95,7 +98,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphq_test_barcode_node_details",
@@ -116,6 +119,7 @@ mod test {
                                 r.pack_size = Some(1);
                             })
                         },
+                        manufacturer_name_row: None,
                     },
                 }
             }

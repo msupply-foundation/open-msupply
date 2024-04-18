@@ -4,7 +4,7 @@ mod test_update {
     use repository::EqualFilter;
     use repository::{
         mock::{
-            mock_draft_response_requisition_for_update_test, mock_finalised_response_requisition,
+            mock_finalised_response_requisition, mock_new_response_requisition_for_update_test,
             mock_new_response_requisition_test, mock_sent_request_requisition, MockDataInserts,
         },
         test_db::setup_all,
@@ -70,7 +70,7 @@ mod test_update {
             service.create_requisition_shipment(
                 &context,
                 CreateRequisitionShipment {
-                    response_requisition_id: mock_draft_response_requisition_for_update_test().id,
+                    response_requisition_id: mock_new_response_requisition_for_update_test().id,
                 },
             ),
             Err(ServiceError::NotThisStoreRequisition)
@@ -116,7 +116,11 @@ mod test_update {
             )
             .unwrap();
 
-        invoice_lines.sort_by(|a, b| a.invoice_line_row.item_id.cmp(&b.invoice_line_row.item_id));
+        invoice_lines.sort_by(|a, b| {
+            a.invoice_line_row
+                .item_link_id
+                .cmp(&b.invoice_line_row.item_link_id)
+        });
 
         assert_eq!(invoice_lines.len(), 2);
 
@@ -170,7 +174,11 @@ mod test_update {
             )
             .unwrap();
 
-        invoice_lines.sort_by(|a, b| a.invoice_line_row.item_id.cmp(&b.invoice_line_row.item_id));
+        invoice_lines.sort_by(|a, b| {
+            a.invoice_line_row
+                .item_link_id
+                .cmp(&b.invoice_line_row.item_link_id)
+        });
 
         assert_eq!(invoice_lines.len(), 1);
 

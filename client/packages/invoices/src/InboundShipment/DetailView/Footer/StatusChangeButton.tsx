@@ -49,8 +49,8 @@ const getStatusOptions = (
     },
   ];
 
-  if (currentStatus === InvoiceNodeStatus.New) {
-    // When the status is new, delivered and verified are available to
+  if (currentStatus === InvoiceNodeStatus.Shipped) {
+    // When the status is shipped, delivered and verified are available to
     // select.
     options[3].isDisabled = false;
     options[4].isDisabled = false;
@@ -94,6 +94,7 @@ const getManualStatusOptions = (
     // When the status is new, delivered and verified are available to
     // select.
     options[1].isDisabled = false;
+    options[2].isDisabled = false;
   }
 
   // When the status is delivered, only verified is available to select.
@@ -135,7 +136,7 @@ const useStatusChangeButton = () => {
       isManuallyCreated
         ? getManualStatusOptions(status, getButtonLabel(t))
         : getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
+    [isManuallyCreated, status, t]
   );
 
   const [selectedOption, setSelectedOption] =
@@ -155,11 +156,15 @@ const useStatusChangeButton = () => {
 
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
-    message: t('messages.confirm-inbound-status-as', {
+    message: `${t('messages.confirm-inbound-status-as', {
       status: selectedOption?.value
         ? getStatusTranslation(selectedOption?.value)
         : '',
-    }),
+    })}\n${
+      status === InvoiceNodeStatus.New
+        ? t('messages.confirm-changing-from-new')
+        : ''
+    }`,
     onConfirm: onConfirmStatusChange,
   });
 

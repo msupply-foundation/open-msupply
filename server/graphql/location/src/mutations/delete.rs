@@ -100,7 +100,7 @@ pub struct LocationInUse {
 
 #[Object]
 impl LocationInUse {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Location in use"
     }
 
@@ -117,7 +117,7 @@ impl LocationInUse {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -164,7 +164,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_delete_location_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             LocationMutations,
             "test_graphql_delete_location_errors",
@@ -244,11 +244,11 @@ mod test {
           }
         "#;
 
-        pub fn successfull_invoice_line() -> InvoiceLine {
+        pub fn successful_invoice_line() -> InvoiceLine {
             InvoiceLine {
                 invoice_line_row: mock_outbound_shipment_a_invoice_lines()[0].clone(),
                 invoice_row: mock_outbound_shipment_a(),
-                item_row_option: Some(mock_item_a()),
+                item_row: mock_item_a(),
                 location_row_option: None,
                 stock_line_option: None,
             }
@@ -260,15 +260,15 @@ mod test {
                     stock_line_row: mock_stock_line_a(),
                     item_row: mock_item_a(),
                     location_row: None,
-                    name_row: None,
+                    supplier_name_row: None,
                     barcode_row: None,
                 }],
-                invoice_lines: vec![successfull_invoice_line()],
+                invoice_lines: vec![successful_invoice_line()],
             }))
         }));
 
         // let invoice_line_ids = stock_lines.iter();
-        let out_line = successfull_invoice_line();
+        let out_line = successful_invoice_line();
         let expected = json!({
             "deleteLocation": {
               "error": {
@@ -295,7 +295,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_delete_location_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             LocationMutations,
             "test_graphql_delete_location_success",

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface UrlQueryObject {
@@ -51,49 +52,45 @@ interface useUrlQueryProps {
   skipParse?: string[];
 }
 
-export const useUrlQuery = ({ skipParse = [] }: useUrlQueryProps = {}) => {
+export const useUrlQuery = ({ skipParse }: useUrlQueryProps = {}) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  return useMemo(() => {
+    const updateQuery = (values: UrlQueryObject, overwrite = false) => {
+      // We use this rather than searchParams as this function uses a stale
+      // version of searchParams (closure from when the hook was first called)
+      const urlSearchParams = new URLSearchParams(window.location.search);
 
-  const updateQuery = (values: UrlQueryObject, overwrite = false) => {
-    // We use this rather than searchParams as this function uses a stale
-    // version of searchParams (closure from when the hook was first called)
-    const urlSearchParams = new URLSearchParams(window.location.search);
+      const newQueryObject = overwrite
+        ? {}
+        : Object.fromEntries(urlSearchParams.entries());
 
-    const newQueryObject = overwrite
-      ? {}
-      : Object.fromEntries(urlSearchParams.entries());
+      Object.entries(values).forEach(([key, value]) => {
+        if (!value) delete newQueryObject[key];
+        else {
+          if (typeof value === 'object' && ('from' in value || 'to' in value)) {
+            const range = parseRangeString(newQueryObject[key]) as RangeObject<
+              string | number
+            >;
+            const { from, to } = value;
+            if (from !== undefined) range.from = from;
+            if (to !== undefined) range.to = to;
 
-    Object.entries(values).forEach(([key, value]) => {
-      if (!value) delete newQueryObject[key];
-      else if (key === 'tab') {
-        newQueryObject[key] = String(value);
-        Object.entries(newQueryObject).forEach(([k, v]) => {
-          if (v !== value) delete newQueryObject[k];
-        });
-      } else {
-        if (typeof value === 'object' && ('from' in value || 'to' in value)) {
-          const range = parseRangeString(newQueryObject[key]) as RangeObject<
-            string | number
-          >;
-          const { from, to } = value;
-          if (from !== undefined) range.from = from;
-          if (to !== undefined) range.to = to;
+            const rangeString = stringifyRange(range);
+            if (rangeString === '') delete newQueryObject[key];
+            else newQueryObject[key] = rangeString;
+          } else newQueryObject[key] = String(value);
+        }
+      });
 
-          const rangeString = stringifyRange(range);
-          if (rangeString === '') delete newQueryObject[key];
-          else newQueryObject[key] = rangeString;
-        } else newQueryObject[key] = String(value);
-      }
-    });
+      setSearchParams(newQueryObject, { replace: true });
+    };
 
-    setSearchParams(newQueryObject, { replace: true });
-  };
-
-  return {
-    urlQuery: parseSearchParams(searchParams, skipParse),
-    updateQuery,
-    parseRangeString,
-  };
+    return {
+      urlQuery: parseSearchParams(searchParams, skipParse ?? []),
+      updateQuery,
+      parseRangeString,
+    };
+  }, [searchParams, skipParse, setSearchParams]);
 };
 
 // Coerces url params to appropriate type

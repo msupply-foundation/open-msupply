@@ -32,7 +32,7 @@ impl Loader<String> for InvoiceLineByInvoiceIdLoader {
         for line in invoice_lines {
             let list = map
                 .entry(line.invoice_line_row.invoice_id.clone())
-                .or_insert_with(|| Vec::<InvoiceLine>::new());
+                .or_default();
             list.push(line);
         }
         Ok(map)
@@ -71,11 +71,8 @@ impl Loader<RequisitionAndItemId> for InvoiceLineForRequisitionLine {
         for line in invoice_lines {
             if let Some(requisition_id) = &line.invoice_row.requisition_id {
                 let list = map
-                    .entry(RequisitionAndItemId::new(
-                        &requisition_id,
-                        &line.invoice_line_row.item_id,
-                    ))
-                    .or_insert_with(|| Vec::<InvoiceLine>::new());
+                    .entry(RequisitionAndItemId::new(requisition_id, &line.item_row.id))
+                    .or_insert_with(Vec::<InvoiceLine>::new);
                 list.push(line);
             }
         }

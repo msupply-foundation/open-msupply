@@ -7,7 +7,7 @@ use crate::{activity_log::system_activity_log_entry, number::next_number};
 
 use super::{Operation, ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str =
+const DESCRIPTION: &str =
     "Allocate an invoice_number to an inbound shipments if they have an invoice_number of -1";
 
 pub(crate) struct AssignInvoiceNumberProcessor;
@@ -20,7 +20,7 @@ impl ShipmentTransferProcessor for AssignInvoiceNumberProcessor {
     /// Inbound shipment will be created when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Outbound shipment
+    /// 2. Source invoice is either Outbound Shipment or Outbound Return
     /// 3. Source outbound shipment is either Shipped or Picked
     ///    (outbound shipment can also be Draft or Allocated, but we only want to generate transfer when it's Shipped or picked, as per
     ///     ./doc/omSupply_shipment_transfer_workflow.png)
@@ -35,17 +35,19 @@ impl ShipmentTransferProcessor for AssignInvoiceNumberProcessor {
         record_for_processing: &ShipmentTransferProcessorRecord,
     ) -> Result<Option<String>, RepositoryError> {
         // Check can execute
-        let (outbound_shipment, linked_shipment, _request_requisition) =
-            match &record_for_processing.operation {
-                Operation::Upsert {
-                    shipment: outbound_shipment,
-                    linked_shipment,
-                    linked_shipment_requisition: request_requisition,
-                } => (outbound_shipment, linked_shipment, request_requisition),
-                _ => return Ok(None),
-            };
+        let (outbound_shipment, linked_shipment) = match &record_for_processing.operation {
+            Operation::Upsert {
+                shipment: outbound_shipment,
+                linked_shipment,
+                ..
+            } => (outbound_shipment, linked_shipment),
+            _ => return Ok(None),
+        };
         // 2.
-        if outbound_shipment.invoice_row.r#type != InvoiceRowType::OutboundShipment {
+        if !matches!(
+            outbound_shipment.invoice_row.r#type,
+            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+        ) {
             return Ok(None);
         }
         // 3.

@@ -36,7 +36,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
         low_stock_threshold: i32,
     ) -> Result<ItemCounts, RepositoryError> {
         let visible_items = ItemRepository::new(&ctx.connection).query_by_filter(
-            ItemFilter::new().is_visible(true),
+            ItemFilter::new().is_visible(true).is_active(true),
             Some(store_id.to_owned()),
         )?;
 
@@ -50,24 +50,20 @@ impl ItemCountServiceTrait for ItemServiceCount {
 
         let no_stock = item_stats
             .iter()
-            .filter(|i| i.available_stock_on_hand <= 0)
+            .filter(|i| i.available_stock_on_hand == 0)
             .count() as i64;
 
         let low_stock = item_stats
             .iter()
-            .filter_map(|i| {
-                (i.available_stock_on_hand > 0)
-                    .then(|| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
-            })
+            .filter(|&i| (i.available_stock_on_hand > 0))
+            .map(|i| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock < low_stock_threshold as f64)
             .count() as i64;
 
         let more_than_six_months_stock = item_stats
             .iter()
-            .filter_map(|i| {
-                (i.available_stock_on_hand > 0)
-                    .then(|| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
-            })
+            .filter(|&i| (i.available_stock_on_hand > 0))
+            .map(|i| i.available_stock_on_hand as f64 / i.average_monthly_consumption)
             .filter(|months_of_stock| *months_of_stock > 6.0)
             .count() as i64;
 
@@ -84,7 +80,7 @@ impl ItemCountServiceTrait for ItemServiceCount {
 mod item_count_service_test {
     use chrono::{Duration, Utc};
     use repository::{
-        mock::{common::FullMockMasterList, mock_store_b, MockData, MockDataInserts},
+        mock::{common::FullMockMasterList, currency_a, mock_store_b, MockData, MockDataInserts},
         InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow,
         InvoiceRowRepository, InvoiceRowType, ItemRow, ItemRowType, MasterListLineRow,
         MasterListNameJoinRow, MasterListRow, StockLineRow, StockLineRowRepository,
@@ -142,22 +138,22 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -223,22 +219,22 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -246,7 +242,7 @@ mod item_count_service_test {
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line1".to_string(),
-                        item_id: "item1".to_string(),
+                        item_link_id: "item1".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 5.0,
                         pack_size: 1,
@@ -254,7 +250,7 @@ mod item_count_service_test {
                     },
                     StockLineRow {
                         id: "stock_line2".to_string(),
-                        item_id: "item2".to_string(),
+                        item_link_id: "item2".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 0.0,
                         pack_size: 1,
@@ -293,7 +289,7 @@ mod item_count_service_test {
         stock_line_repository
             .upsert_one(&StockLineRow {
                 id: "stock_line3".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 available_number_of_packs: 0.0,
                 store_id: mock_store_b().id,
                 ..StockLineRow::default()
@@ -302,7 +298,7 @@ mod item_count_service_test {
         stock_line_repository
             .upsert_one(&StockLineRow {
                 id: "stock_line4".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 available_number_of_packs: 0.0,
                 store_id: mock_store_b().id,
                 ..StockLineRow::default()
@@ -311,7 +307,7 @@ mod item_count_service_test {
         stock_line_repository
             .upsert_one(&StockLineRow {
                 id: "stock_line5".to_string(),
-                item_id: "item1".to_string(),
+                item_link_id: "item1".to_string(),
                 available_number_of_packs: 0.0,
                 store_id: mock_store_b().id,
                 ..StockLineRow::default()
@@ -331,7 +327,7 @@ mod item_count_service_test {
             service_context, ..
         } = setup_all_with_data_and_service_provider(
             "omsupply-database-low-stock-items-count",
-            MockDataInserts::none().stores().names(),
+            MockDataInserts::none().stores().names().currencies(),
             MockData {
                 items: vec![
                     ItemRow {
@@ -371,22 +367,22 @@ mod item_count_service_test {
                     joins: vec![MasterListNameJoinRow {
                         id: "join1".to_string(),
                         master_list_id: "list1".to_string(),
-                        name_id: mock_store_b().name_id,
+                        name_link_id: mock_store_b().name_id,
                     }],
                     lines: vec![
                         MasterListLineRow {
                             id: "listline1".to_string(),
-                            item_id: "item1".to_string(),
+                            item_link_id: "item1".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline2".to_string(),
-                            item_id: "item2".to_string(),
+                            item_link_id: "item2".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                         MasterListLineRow {
                             id: "listline3".to_string(),
-                            item_id: "item3".to_string(),
+                            item_link_id: "item3".to_string(),
                             master_list_id: "list1".to_string(),
                         },
                     ],
@@ -394,7 +390,7 @@ mod item_count_service_test {
                 stock_lines: vec![
                     StockLineRow {
                         id: "stock_line1".to_string(),
-                        item_id: "item1".to_string(),
+                        item_link_id: "item1".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 5.0,
                         pack_size: 1,
@@ -402,7 +398,7 @@ mod item_count_service_test {
                     },
                     StockLineRow {
                         id: "stock_line2".to_string(),
-                        item_id: "item2".to_string(),
+                        item_link_id: "item2".to_string(),
                         store_id: mock_store_b().id,
                         available_number_of_packs: 40.0,
                         pack_size: 1,
@@ -411,17 +407,18 @@ mod item_count_service_test {
                 ],
                 invoices: vec![InvoiceRow {
                     id: "invoice1".to_string(),
-                    name_id: "name_store_a".to_string(),
+                    name_link_id: "name_store_a".to_string(),
                     name_store_id: Some("store_a".to_string()),
                     store_id: mock_store_b().id,
                     picked_datetime: Some(Utc::now().naive_utc() - Duration::days(10)),
                     r#type: InvoiceRowType::OutboundShipment,
+                    currency_id: Some(currency_a().id),
                     ..InvoiceRow::default()
                 }],
                 invoice_lines: vec![InvoiceLineRow {
                     id: "invoice_line1".to_string(),
                     invoice_id: "invoice1".to_string(),
-                    item_id: "item2".to_string(),
+                    item_link_id: "item2".to_string(),
                     number_of_packs: 5.0,
                     pack_size: 1,
                     r#type: InvoiceLineRowType::StockOut,
@@ -445,7 +442,7 @@ mod item_count_service_test {
         invoice_repository
             .upsert_one(&inline_init(|r: &mut InvoiceRow| {
                 r.id = "invoice2".to_string();
-                r.name_id = "name_store_a".to_string();
+                r.name_link_id = "name_store_a".to_string();
                 r.name_store_id = Some("store_a".to_string());
                 r.store_id = "store_b".to_string();
                 r.picked_datetime = Some(Utc::now().naive_utc() - Duration::days(10));
@@ -457,7 +454,7 @@ mod item_count_service_test {
             .upsert_one(&inline_init(|r: &mut InvoiceLineRow| {
                 r.id = "invoice_line_row_2".to_string();
                 r.invoice_id = "invoice2".to_string();
-                r.item_id = "item1".to_string();
+                r.item_link_id = "item1".to_string();
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
                 r.r#type = InvoiceLineRowType::StockOut;

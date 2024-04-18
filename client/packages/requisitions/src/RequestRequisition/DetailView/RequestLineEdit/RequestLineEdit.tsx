@@ -8,7 +8,10 @@ import {
   Box,
   useKeyboardHeightAdjustment,
 } from '@openmsupply-client/common';
-import { ItemRowWithStatsFragment } from '@openmsupply-client/system';
+import {
+  ItemRowWithStatsFragment,
+  usePackVariant,
+} from '@openmsupply-client/system';
 import { RequestLineEditForm } from './RequestLineEditForm';
 import { useRequest } from '../../api';
 import { useNextRequestLine, useDraftRequisitionLine } from './hooks';
@@ -43,6 +46,12 @@ export const RequestLineEdit = ({
 
   const nextDisabled = (!hasNext && mode === ModalMode.Update) || !currentItem;
   const height = useKeyboardHeightAdjustment(600);
+
+  const {
+    variantsControl,
+    numberOfPacksFromQuantity,
+    numberOfPacksToTotalQuantity,
+  } = usePackVariant(item?.id ?? '', item?.name ?? null);
 
   const deletePreviousLine = () => {
     if (previousItemLineId && !isDisabled) deleteLine(previousItemLineId);
@@ -109,14 +118,21 @@ export const RequestLineEdit = ({
             disabled={mode === ModalMode.Update || disabled}
             onChangeItem={onChangeItem}
             item={currentItem}
+            variantsControl={variantsControl}
+            numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+            numberOfPacksToTotalQuantity={numberOfPacksToTotalQuantity}
           />
           {!!draft && (
             <StockDistribution
-              availableStockOnHand={draft?.itemStats?.availableStockOnHand}
-              averageMonthlyConsumption={
+              availableStockOnHand={numberOfPacksFromQuantity(
+                draft?.itemStats?.availableStockOnHand
+              )}
+              averageMonthlyConsumption={numberOfPacksFromQuantity(
                 draft?.itemStats?.averageMonthlyConsumption
-              }
-              suggestedQuantity={draft?.suggestedQuantity}
+              )}
+              suggestedQuantity={numberOfPacksFromQuantity(
+                draft?.suggestedQuantity
+              )}
             />
           )}
           <Box
@@ -128,8 +144,14 @@ export const RequestLineEdit = ({
               <Box display="flex" height={289} />
             ) : (
               <>
-                <ConsumptionHistory id={draft?.id || ''} />
-                <StockEvolution id={draft?.id || ''} />
+                <ConsumptionHistory
+                  id={draft?.id || ''}
+                  numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+                />
+                <StockEvolution
+                  id={draft?.id || ''}
+                  numberOfPacksFromQuantity={numberOfPacksFromQuantity}
+                />
               </>
             )}
           </Box>

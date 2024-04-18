@@ -221,8 +221,8 @@ mod tests {
             StockEvolutionPoints {
                 historic_points: vec![
                     NaiveDate::from_ymd_opt(2020, 12, 31).unwrap(),
-                    NaiveDate::from_ymd_opt(2021, 01, 01).unwrap(),
-                    NaiveDate::from_ymd_opt(2021, 01, 2).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
+                    NaiveDate::from_ymd_opt(2021, 1, 2).unwrap(),
                 ],
                 projected_points: vec![
                     NaiveDate::from_ymd_opt(2021, 1, 3).unwrap(),

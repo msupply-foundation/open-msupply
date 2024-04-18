@@ -30,6 +30,7 @@
   "error.connection-error": "Não foi possível se conectar ao servidor",
   "error.invalid-url": "url Inválida",
   "error.login": "Nome de usuário ou senha inválidos",
+  "error.account-blocked": "A conta está bloqueada até que o período de bloqueio tenha expirado",
   "error.server-failed-to-start": "Erro! O servidor falhou ao iniciar",
   "error.site-auth-timeout": "O tempo de autenticação expirou, por favor tente novamente mais tarde",
   "error.site-incorrect-hardware-id": "ID do equipamento incorreta",

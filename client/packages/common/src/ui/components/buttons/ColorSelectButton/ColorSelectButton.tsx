@@ -18,7 +18,7 @@ export const ColorSelectButton: FC<ColorSelectButtonProps> = ({
   disabled = false,
 }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
-  const t = useTranslation('common');
+  const t = useTranslation();
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };

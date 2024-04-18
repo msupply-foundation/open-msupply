@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useCallback, useState } from 'react';
 import {
   and,
   Categorization,
@@ -161,7 +161,7 @@ const ErrorStringComponent: FC<{
   category: Category;
   errorPaths: string[];
 }> = ({ category, errorPaths }) => {
-  const t = useTranslation('common');
+  const t = useTranslation();
 
   if (errorPaths.length === 0) {
     return null;
@@ -225,7 +225,10 @@ const UIComponent: FC<LayoutProps & AjvProps> = ({
     cells,
   };
 
-  const onClose = () => setActiveCategory(undefined);
+  const onClose = useCallback(
+    () => setActiveCategory(undefined),
+    [setActiveCategory]
+  );
 
   return (
     <Grid

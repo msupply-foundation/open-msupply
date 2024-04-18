@@ -21,7 +21,7 @@ pub struct InventoryAdjustmentReason {
     pub inventory_adjustment_reason_row: InventoryAdjustmentReasonRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct InventoryAdjustmentReasonFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<InventoryAdjustmentReasonType>>,
@@ -109,7 +109,7 @@ fn create_filtered_query(
     query
 }
 
-pub fn to_domain(
+fn to_domain(
     inventory_adjustment_reason_row: InventoryAdjustmentReasonRow,
 ) -> InventoryAdjustmentReason {
     InventoryAdjustmentReason {
@@ -119,11 +119,7 @@ pub fn to_domain(
 
 impl InventoryAdjustmentReasonFilter {
     pub fn new() -> InventoryAdjustmentReasonFilter {
-        InventoryAdjustmentReasonFilter {
-            id: None,
-            r#type: None,
-            is_active: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

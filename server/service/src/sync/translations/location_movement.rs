@@ -6,24 +6,15 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{
         date_option_to_isostring, empty_str_as_option_string, naive_time, zero_date_as_option,
     },
+    translations::{
+        location::LocationTranslation, stock_line::StockLineTranslation, store::StoreTranslation,
+    },
 };
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::LOCATION_MOVEMENT;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::LocationMovement
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize)]
 pub struct LegacyLocationMovementRow {
@@ -49,29 +40,35 @@ pub struct LegacyLocationMovementRow {
     #[serde(deserialize_with = "naive_time")]
     pub exit_time: NaiveTime,
 }
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(LocationMovementTranslation)
+}
 
-pub(crate) struct LocationMovementTranslation {}
+pub(super) struct LocationMovementTranslation;
 impl SyncTranslation for LocationMovementTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::LOCATION_MOVEMENT,
-            dependencies: vec![
-                LegacyTableName::STORE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::ITEM_LINE,
-            ],
-        }
+    fn table_name(&self) -> &str {
+        "location_movement"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            StoreTranslation.table_name(),
+            LocationTranslation.table_name(),
+            StockLineTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::LocationMovement)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyLocationMovementRow {
             id,
             store_id,
@@ -92,20 +89,14 @@ impl SyncTranslation for LocationMovementTranslation {
             exit_datetime: exit_date.map(|exit_date| NaiveDateTime::new(exit_date, exit_time)),
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::LocationMovement(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let LocationMovementRow {
             id,
             store_id,
@@ -122,7 +113,7 @@ impl SyncTranslation for LocationMovementTranslation {
 
         let legacy_row = LegacyLocationMovementRow {
             id: id.clone(),
-            store_id: store_id,
+            store_id,
             stock_line_id,
             location_id,
             enter_date: enter_datetime.map(|datetime| datetime.date()),
@@ -135,11 +126,11 @@ impl SyncTranslation for LocationMovementTranslation {
                 .unwrap_or(NaiveTime::from_hms_opt(0, 0, 0).unwrap()),
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -160,8 +151,9 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

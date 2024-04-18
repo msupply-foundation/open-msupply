@@ -1,4 +1,6 @@
 import { Formatter } from './formatters';
+import { addMilliseconds } from 'date-fns';
+import { getTimezoneOffset } from 'date-fns-tz';
 
 describe('Formatter', () => {
   it('is defined', () => {
@@ -48,13 +50,22 @@ describe('Formatter', () => {
   });
 
   it('naiveDateTime', () => {
+    const timeZone = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const localalisedStartOfDay = new Date('1984/3/13');
+    const utcStartOfDay = addMilliseconds(
+      localalisedStartOfDay,
+      getTimezoneOffset(timeZone, localalisedStartOfDay)
+    );
+    expect(Formatter.toIsoString(utcStartOfDay)).toBe(
+      '1984-03-13T00:00:00.000Z'
+    );
+    const localisedNewDate = new Date('1984/3/13 11:12:13');
+    const utcNewDate = addMilliseconds(
+      localisedNewDate,
+      getTimezoneOffset(timeZone, localisedNewDate)
+    );
+    expect(Formatter.toIsoString(utcNewDate)).toBe('1984-03-13T11:12:13.000Z');
     expect(Formatter.toIsoString(null)).toBe(null);
-    expect(Formatter.toIsoString(new Date('1984/3/13'))).toBe(
-      '1984-03-12T12:00:00.000Z'
-    );
-    expect(Formatter.toIsoString(new Date('1984/3/13 11:12:13'))).toBe(
-      '1984-03-12T23:12:13.000Z'
-    );
   });
 
   it('tax', () => {

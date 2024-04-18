@@ -2,7 +2,6 @@ use super::{stock_on_hand::stock_on_hand::dsl as stock_on_hand_dsl, StorageConne
 
 use crate::{diesel_macros::apply_equal_filter, EqualFilter, RepositoryError};
 use diesel::prelude::*;
-use diesel::{QueryDsl, RunQueryDsl};
 
 table! {
     stock_on_hand (id) {

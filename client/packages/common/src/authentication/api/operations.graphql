@@ -10,7 +10,10 @@ fragment UserStoreNode on UserStoreNode {
     packToOne
     omProgramModule
     vaccineModule
+    issueInForeignCurrency
   }
+  createdDate
+  homeCurrencyCode
 }
 
 query authToken($username: String!, $password: String!) {
@@ -21,6 +24,11 @@ query authToken($username: String!, $password: String!) {
         ... on InvalidCredentials {
           __typename
           description
+        }
+        ... on AccountBlocked {
+          __typename
+          description
+          timeoutRemaining
         }
         description
       }
@@ -56,6 +64,10 @@ query me {
       jobTitle
     }
   }
+}
+
+query isCentralServer {
+  isCentralServer
 }
 
 query refreshToken {

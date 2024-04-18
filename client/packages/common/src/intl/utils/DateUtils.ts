@@ -1,9 +1,10 @@
-import { SupportedLocales, useIntlUtils } from '@common/intl';
+import { getLocale, useIntlUtils } from '@common/intl';
 import {
   addMinutes,
   addDays,
   addMonths,
   addYears,
+  addHours,
   isValid,
   differenceInDays,
   differenceInMonths,
@@ -17,6 +18,7 @@ import {
   isAfter,
   isBefore,
   isEqual,
+  isSameDay,
   format,
   parse,
   parseISO,
@@ -32,18 +34,10 @@ import {
   formatRFC3339,
   previousMonday,
   endOfWeek,
+  setMilliseconds,
+  addMilliseconds,
 } from 'date-fns';
-// importing individually to reduce bundle size
-// the date-fns methods are tree shaking correctly
-// but the locales are not. when adding, please add as below
-import enGB from 'date-fns/locale/en-GB';
-import enUS from 'date-fns/locale/en-US';
-import fr from 'date-fns/locale/fr';
-import ar from 'date-fns/locale/ar';
-import es from 'date-fns/locale/es';
-
-// Map locale string (from i18n) to locale object (from date-fns)
-const getLocaleObj = { fr, ar, es };
+import { getTimezoneOffset } from 'date-fns-tz';
 
 export const MINIMUM_EXPIRY_MONTHS = 3;
 
@@ -89,18 +83,20 @@ export const DateUtils = {
   differenceInMinutes,
   addMinutes,
   addDays,
+  addHours,
   addMonths,
   addYears,
   addCurrentTime,
   getDateOrNull: (
     date?: Date | string | null,
-    format?: string
+    format?: string,
+    options?: Parameters<typeof parse>[3]
   ): Date | null => {
     if (!date) return null;
     if (date instanceof Date) return date;
     const maybeDate =
       format && typeof date === 'string'
-        ? parse(date, format, new Date())
+        ? parse(date, format, new Date(), options)
         : new Date(date);
     return isValid(maybeDate) ? maybeDate : null;
   },
@@ -123,6 +119,7 @@ export const DateUtils = {
     expiryDate: Date,
     threshold = MINIMUM_EXPIRY_MONTHS
   ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
+  isSameDay,
   isThisWeek,
   isToday,
   isThisMonth,
@@ -141,6 +138,7 @@ export const DateUtils = {
   startOfYear,
   previousMonday,
   endOfWeek,
+  setMilliseconds,
 
   /** Number of milliseconds in one second, i.e. SECOND = 1000*/
   SECOND,
@@ -150,19 +148,6 @@ export const DateUtils = {
   HOUR,
   /** Number of milliseconds in one day */
   DAY,
-};
-
-const getLocale = (language: SupportedLocales) => {
-  switch (language) {
-    case 'en':
-      return navigator.language === 'en-US' ? enUS : enGB;
-    case 'tet':
-      return enGB;
-    case 'fr-DJ':
-      return fr;
-    default:
-      return getLocaleObj[language];
-  }
 };
 
 export const useFormatDateTime = () => {
@@ -216,6 +201,37 @@ export const useFormatDateTime = () => {
       : '';
   };
 
+  /**
+   * While getDateOrNull is naive to the timezone, the timezone will still change.
+   * When converting from the assumed naive zone of GMT to the local timezone, the
+   * dateTime will be wrong if the timezone is behind GMT.
+   * For example: for a user in -10 timezone, a date of 24-02-2024 will become
+   * 2024-02-23T13:00:00.000Z when rendered for mui datepicker.
+   * This function acts in the same way as getDateOrNull, but will create a datetime
+   * of start of day local time rather than start of day GMT by subtracting the local
+   * timezone offset.
+   * You can use this function anytime you need a datetime for mui date picker to
+   * be created from a date only string. This includes date of birth, date of death
+   * or any other date which is time and timezone agnostic.
+   */
+  const getLocalDate = (
+    date?: Date | string | null,
+    format?: string,
+    options?: Parameters<typeof parse>[3]
+  ): Date | null => {
+    // tz passed as props options for testing purposes
+    const tz =
+      options?.locale?.code ??
+      new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
+    const offset = UTCDateWithoutTime
+      ? getTimezoneOffset(tz, UTCDateWithoutTime)
+      : 0;
+    return UTCDateWithoutTime
+      ? addMilliseconds(UTCDateWithoutTime, -offset)
+      : null;
+  };
+
   return {
     urlQueryDate,
     urlQueryDateTime,
@@ -228,5 +244,6 @@ export const useFormatDateTime = () => {
     localisedDistanceToNow,
     localisedTime,
     relativeDateTime,
+    getLocalDate,
   };
 };

@@ -32,8 +32,8 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
             {
               type: 'text',
               name: t('label.location'),
-              urlParameter: 'location.name',
-              placeholder: t('placeholder.search-by-location-name'),
+              urlParameter: 'location.code',
+              placeholder: t('placeholder.search-by-location-code'),
             },
             {
               type: 'group',
@@ -44,7 +44,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                   name: t('label.from-datetime'),
                   urlParameter: 'datetime',
                   range: 'from',
-                  maxDate: new Date(),
+                  maxDate: DateUtils.addMinutes(new Date(), -30),
                   isDefault: true,
                 },
                 {
@@ -52,7 +52,7 @@ export const Toolbar: FC<{ filter: FilterController }> = () => {
                   name: t('label.to-datetime'),
                   urlParameter: 'datetime',
                   range: 'to',
-                  maxDate: DateUtils.endOfDay(new Date()),
+                  maxDate: new Date(),
                   isDefault: true,
                 },
               ],

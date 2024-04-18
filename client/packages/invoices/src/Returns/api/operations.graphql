@@ -1,0 +1,404 @@
+fragment OutboundReturnRow on InvoiceNode {
+  __typename
+  id
+  otherPartyName
+  status
+  invoiceNumber
+  colour
+  onHold
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
+  comment
+  theirReference
+}
+
+fragment InboundReturnRow on InvoiceNode {
+  __typename
+  id
+  otherPartyName
+  status
+  invoiceNumber
+  colour
+  createdDatetime
+  deliveredDatetime
+  comment
+  theirReference
+  linkedShipment {
+    __typename
+    id
+  }
+}
+
+fragment OutboundReturn on InvoiceNode {
+  __typename
+  id
+  status
+  invoiceNumber
+  colour
+  onHold
+  comment
+
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
+
+  otherPartyName
+  otherPartyId
+  otherPartyStore {
+    code
+  }
+
+  user {
+    __typename
+    username
+    email
+  }
+
+  theirReference
+  transportReference
+
+  originalShipment {
+    invoiceNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
+}
+
+fragment InboundReturn on InvoiceNode {
+  __typename
+  id
+  status
+  invoiceNumber
+  colour
+  onHold
+  comment
+
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  verifiedDatetime
+
+  otherPartyId
+  otherPartyName
+  otherPartyStore {
+    code
+  }
+
+  user {
+    __typename
+    username
+    email
+  }
+
+  linkedShipment {
+    __typename
+    id
+  }
+  theirReference
+  transportReference
+
+  originalShipment {
+    __typename
+    invoiceNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
+}
+
+fragment OutboundReturnLine on InvoiceLineNode {
+  id
+  itemCode
+  itemName
+  itemId
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  sellPricePerPack
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    defaultPackSize
+  }
+}
+
+fragment InboundReturnLine on InvoiceLineNode {
+  id
+  itemId
+  itemCode
+  itemName
+  batch
+  expiryDate
+  numberOfPacks
+  packSize
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    defaultPackSize
+  }
+}
+
+query outboundReturns(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      nodes {
+        ...OutboundReturnRow
+      }
+      totalCount
+    }
+  }
+}
+query inboundReturns(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      nodes {
+        ...InboundReturnRow
+      }
+      totalCount
+    }
+  }
+}
+
+fragment GenerateOutboundReturnLine on OutboundReturnLineNode {
+  availableNumberOfPacks
+  batch
+  expiryDate
+  id
+  numberOfPacksToReturn
+  packSize
+  stockLineId
+  note
+  reasonId
+  itemName
+  itemCode
+  item {
+    id
+    unitName
+  }
+}
+
+query generateOutboundReturnLines(
+  $input: GenerateOutboundReturnLinesInput!
+  $storeId: String!
+) {
+  generateOutboundReturnLines(input: $input, storeId: $storeId) {
+    ... on OutboundReturnLineConnector {
+      nodes {
+        ...GenerateOutboundReturnLine
+      }
+    }
+  }
+}
+
+fragment GenerateInboundReturnLine on InboundReturnLineNode {
+  batch
+  expiryDate
+  id
+  packSize
+  stockLineId
+  numberOfPacksReturned
+  numberOfPacksIssued
+  note
+  reasonId
+  itemName
+  itemCode
+  item {
+    id
+    unitName
+    code
+    name
+  }
+}
+
+query generateInboundReturnLines(
+  $input: GenerateInboundReturnLinesInput!
+  $storeId: String!
+) {
+  generateInboundReturnLines(input: $input, storeId: $storeId) {
+    ... on GeneratedInboundReturnLineConnector {
+      nodes {
+        ...GenerateInboundReturnLine
+      }
+    }
+  }
+}
+
+query outboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: OUTBOUND_RETURN
+  ) {
+    ... on InvoiceNode {
+      __typename
+      ...OutboundReturn
+      lines {
+        nodes {
+          ...OutboundReturnLine
+        }
+      }
+    }
+  }
+}
+query inboundReturnByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: INBOUND_RETURN
+  ) {
+    ... on InvoiceNode {
+      __typename
+      ...InboundReturn
+      lines {
+        nodes {
+          ...InboundReturnLine
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+mutation insertOutboundReturn($storeId: String!, $input: OutboundReturnInput!) {
+  insertOutboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+
+    ... on InsertOutboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+mutation updateOutboundReturn(
+  $storeId: String!
+  $input: UpdateOutboundReturnInput!
+) {
+  updateOutboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation updateOutboundReturnLines(
+  $storeId: String!
+  $input: UpdateOutboundReturnLinesInput!
+) {
+  updateOutboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertInboundReturn($storeId: String!, $input: InboundReturnInput!) {
+  insertInboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+
+    ... on InsertInboundReturnError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation deleteOutboundReturn($storeId: String!, $id: String!) {
+  deleteOutboundReturn(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
+
+mutation updateInboundReturn(
+  $storeId: String!
+  $input: UpdateInboundReturnInput!
+) {
+  updateInboundReturn(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateInboundReturnLines(
+  $storeId: String!
+  $input: UpdateInboundReturnLinesInput!
+) {
+  updateInboundReturnLines(storeId: $storeId, input: $input) {
+    ... on InvoiceNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation deleteInboundReturn($storeId: String!, $id: String!) {
+  deleteInboundReturn(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+  }
+}

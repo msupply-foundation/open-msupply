@@ -23,7 +23,7 @@ import {
   Repack,
   ReportRowFragment,
   ReportSelector,
-  useLog,
+  useActivityLog,
   useReport,
   useStock,
 } from '@openmsupply-client/system';
@@ -77,7 +77,9 @@ export const RepackModal: FC<RepackModalControlProps> = ({
   const { data, isError, isLoading } = useStock.repack.list(
     stockLine?.id ?? ''
   );
-  const { data: logData } = useLog.document.listByRecord(stockLine?.id ?? '');
+  const { data: logData } = useActivityLog.document.listByRecord(
+    stockLine?.id ?? ''
+  );
 
   const { draft, onChange, onInsert } = useDraftRepack(defaultRepack);
   const { columns } = useRepackColumns();
@@ -135,7 +137,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       okButton={
         <DialogButton
           variant="save"
-          disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
+          disabled={!draft?.newPackSize || !draft?.numberOfPacks}
           onClick={async () => {
             try {
               const result = await onInsert();

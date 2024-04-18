@@ -3,7 +3,7 @@ import { ColumnAlign, ColumnFormat } from '../columns/types';
 import { Formatter } from '@common/utils';
 import { RecordWithId } from '@common/types';
 import { ColumnDefinition } from '../columns/types';
-import { PositiveNumberCell } from '../components';
+import { CurrencyCell, NumberCell, TooltipTextCell } from '../components';
 
 const createColumn = <T extends RecordWithId>(
   column: ColumnDefinition<T>
@@ -33,7 +33,7 @@ export type ColumnKey =
   | 'costPricePerPack'
   | 'sellPricePerPack'
   | 'sellPricePerUnit'
-  | 'locationName'
+  | 'location'
   | 'unitQuantity'
   | 'numberOfPacks'
   | 'otherPartyName'
@@ -45,7 +45,19 @@ export type ColumnKey =
   | 'requestedQuantity'
   | 'supplyQuantity'
   | 'stockOnHand'
-  | 'theirReference';
+  | 'theirReference'
+  | 'returnReason'
+  | 'availableNumberOfPacks'
+  | 'numberOfPacksToReturn'
+  | 'numberOfPacksReturned';
+
+export const getColumnLookupWithOverrides = <T extends RecordWithId>(
+  columnKey: ColumnKey,
+  overrides: Partial<ColumnDefinition<T>>
+): ColumnDefinition<T> => ({
+  ...getColumnLookup<T>()[columnKey],
+  ...overrides,
+});
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -64,14 +76,14 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Integer,
     align: ColumnAlign.Right,
     description: 'description.pack-quantity',
-    label: 'label.pack-quantity',
+    label: 'label.num-packs',
     width: 100,
-    Cell: PositiveNumberCell,
+    Cell: NumberCell,
   },
   expiryDate: {
     key: 'expiryDate',
     label: 'label.expiry',
-    width: 100,
+    width: 110,
     formatter: dateString => {
       if (dateString === '[multiple]') return '[multiple]';
       return dateString
@@ -83,7 +95,8 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   itemCode: {
     key: 'itemCode',
     label: 'label.code',
-    width: 100,
+    width: 125,
+    Cell: TooltipTextCell,
   },
   itemName: {
     key: 'itemName',
@@ -120,39 +133,40 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   status: {
     label: 'label.status',
     key: 'status',
-    width: 75,
+    width: 110,
   },
   createdDatetime: {
     description: 'description.entered',
-    label: 'label.entered',
+    label: 'label.created',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
   },
   stocktakeDate: {
     label: 'label.date',
     key: 'stocktakeDate',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
   },
   allocatedDatetime: {
     label: 'label.confirmed',
     key: 'allocatedDatetime',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
     sortable: false,
   },
   deliveredDatetime: {
     label: 'label.delivered',
     key: 'deliveredDatetime',
     format: ColumnFormat.Date,
-    width: 100,
+    width: 130,
   },
   totalAfterTax: {
     description: 'description.total',
     label: 'label.total',
     key: 'totalAfterTax',
     width: 100,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
     align: ColumnAlign.Right,
     sortable: false,
@@ -172,6 +186,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.code',
     key: 'code',
     width: 20,
+    Cell: TooltipTextCell,
   },
   packSize: {
     label: 'label.pack-size',
@@ -181,7 +196,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   quantity: {
     description: 'description.pack-quantity',
-    label: 'label.pack-quantity',
+    label: 'label.num-packs',
     key: 'quantity',
     width: 100,
     align: ColumnAlign.Right,
@@ -190,12 +205,14 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.batch',
     key: 'batch',
     width: 100,
+    Cell: TooltipTextCell,
   },
   costPricePerPack: {
     label: 'label.cost',
     key: 'costPricePerPack',
     width: 50,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   sellPricePerPack: {
@@ -203,6 +220,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerPack',
     width: 120,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   sellPricePerUnit: {
@@ -210,12 +228,13 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'sellPricePerUnit',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
-  locationName: {
+  location: {
     label: 'label.location',
-    key: 'locationName',
-    width: 75,
+    key: 'location',
+    width: 90,
   },
   unitQuantity: {
     description: 'description.unit-quantity',
@@ -227,13 +246,14 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   itemUnit: {
     label: 'label.unit',
     key: 'unit',
-    width: 75,
+    width: 125,
   },
   lineTotal: {
     label: 'label.line-total',
     key: 'lineTotal',
     width: 100,
     align: ColumnAlign.Right,
+    Cell: CurrencyCell,
     format: ColumnFormat.Currency,
   },
   requestedQuantity: {
@@ -260,6 +280,29 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.reference',
     key: 'theirReference',
     width: 100,
+  },
+  numberOfPacksToReturn: {
+    label: 'label.quantity-to-return',
+    key: 'numberOfPacksToReturn',
+    width: 125,
+    align: ColumnAlign.Right,
+  },
+  numberOfPacksReturned: {
+    label: 'label.quantity-returned',
+    key: 'numberOfPacksReturned',
+    width: 125,
+    align: ColumnAlign.Right,
+  },
+  availableNumberOfPacks: {
+    label: 'label.available-quantity-for-return',
+    key: 'availableNumberOfPacks',
+    width: 125,
+    align: ColumnAlign.Right,
+  },
+  returnReason: {
+    label: 'label.reason',
+    key: 'returnReason',
+    width: 200,
   },
 });
 
@@ -325,6 +368,13 @@ export class ColumnDefinitionSetBuilder<T extends RecordWithId> {
         usingColumnKey ? maybeColumnOptions : columnKeyOrColumnDefinition
       ),
     };
+
+    // when setting only the width, the column width is not fixed
+    // setting a min & max though, will fix the column width
+    if (!!options.width) {
+      if (!options.minWidth) options.minWidth = options.width;
+      if (!options.maxWidth) options.maxWidth = options.width;
+    }
 
     const key = usingColumnKey ? columnKeyOrColumnDefinition : options.key;
 

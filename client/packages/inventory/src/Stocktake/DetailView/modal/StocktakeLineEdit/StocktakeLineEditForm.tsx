@@ -10,22 +10,24 @@ import {
 import {
   StockItemSearchInput,
   ItemRowFragment,
+  ItemStockOnHandFragment,
 } from '@openmsupply-client/system';
-import { useStocktake } from '../../../api';
+import { StocktakeSummaryItem } from '../../../../types';
 
 interface StocktakeLineEditProps {
   item: ItemRowFragment | null;
+  items: StocktakeSummaryItem[];
   mode: ModalMode | null;
-  onChangeItem: (item: ItemRowFragment | null) => void;
+  onChangeItem: (item: ItemStockOnHandFragment | null) => void;
 }
 
 export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
   item,
+  items,
   mode,
   onChangeItem,
 }) => {
   const t = useTranslation('inventory');
-  const { items } = useStocktake.line.rows();
   const disabled = mode === ModalMode.Update;
 
   return (
@@ -49,7 +51,7 @@ export const StocktakeLineEditForm: FC<StocktakeLineEditProps> = ({
       </ModalRow>
       {item && (
         <ModalRow margin={3}>
-          <ModalLabel label={t('label.unit')} justifyContent="flex-end" />
+          <ModalLabel label={t('label.unit')} />
           <BasicTextInput
             disabled
             sx={{ width: 150 }}

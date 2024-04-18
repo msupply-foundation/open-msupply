@@ -4,48 +4,70 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type ActivityLogRowFragment = { __typename: 'ActivityLogNode', id: string, datetime: string, to?: string | null, from?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null };
+export type LogLevelRowFragment = { __typename: 'LogLevelNode', level: Types.LogLevelEnum };
 
-export type ActivityLogsQueryVariables = Types.Exact<{
-  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
-  sort?: Types.InputMaybe<Types.ActivityLogSortInput>;
-  filter?: Types.InputMaybe<Types.ActivityLogFilterInput>;
+export type LogRowFragment = { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null };
+
+export type LogLevelQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type LogLevelQuery = { __typename: 'Queries', logLevel: { __typename: 'LogLevelNode', level: Types.LogLevelEnum } };
+
+export type LogFileNamesQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type LogFileNamesQuery = { __typename: 'Queries', logFileNames: { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null } };
+
+export type LogContentsByFileNameQueryVariables = Types.Exact<{
+  fileName: Types.Scalars['String']['input'];
 }>;
 
 
-export type ActivityLogsQuery = { __typename: 'Queries', activityLogs: { __typename: 'ActivityLogConnector', totalCount: number, nodes: Array<{ __typename: 'ActivityLogNode', id: string, datetime: string, to?: string | null, from?: string | null, recordId?: string | null, storeId?: string | null, type: Types.ActivityLogNodeType, user?: { __typename: 'UserNode', username: string } | null }> } };
+export type LogContentsByFileNameQuery = { __typename: 'Queries', logContents: { __typename: 'LogNode', fileContent?: Array<string> | null, fileNames?: Array<string> | null } };
 
-export const ActivityLogRowFragmentDoc = gql`
-    fragment ActivityLogRow on ActivityLogNode {
-  id
-  datetime
-  to
-  from
-  recordId
-  storeId
-  type
-  user {
-    username
-  }
+export const LogLevelRowFragmentDoc = gql`
+    fragment LogLevelRow on LogLevelNode {
+  __typename
+  level
 }
     `;
-export const ActivityLogsDocument = gql`
-    query activityLogs($first: Int, $offset: Int, $sort: ActivityLogSortInput, $filter: ActivityLogFilterInput) {
-  activityLogs(
-    filter: $filter
-    page: {first: $first, offset: $offset}
-    sort: $sort
-  ) {
-    ... on ActivityLogConnector {
-      nodes {
-        ...ActivityLogRow
-      }
-      totalCount
+export const LogRowFragmentDoc = gql`
+    fragment LogRow on LogNode {
+  __typename
+  fileContent
+  fileNames
+}
+    `;
+export const LogLevelDocument = gql`
+    query logLevel {
+  logLevel {
+    __typename
+    ... on LogLevelNode {
+      ...LogLevelRow
     }
   }
 }
-    ${ActivityLogRowFragmentDoc}`;
+    ${LogLevelRowFragmentDoc}`;
+export const LogFileNamesDocument = gql`
+    query logFileNames {
+  logFileNames {
+    __typename
+    ... on LogNode {
+      ...LogRow
+    }
+  }
+}
+    ${LogRowFragmentDoc}`;
+export const LogContentsByFileNameDocument = gql`
+    query logContentsByFileName($fileName: String!) {
+  logContents(fileName: $fileName) {
+    __typename
+    ... on LogNode {
+      ...LogRow
+    }
+  }
+}
+    ${LogRowFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -54,8 +76,14 @@ const defaultWrapper: SdkFunctionWrapper = (action, _operationName, _operationTy
 
 export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = defaultWrapper) {
   return {
-    activityLogs(variables?: ActivityLogsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ActivityLogsQuery> {
-      return withWrapper((wrappedRequestHeaders) => client.request<ActivityLogsQuery>(ActivityLogsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'activityLogs', 'query');
+    logLevel(variables?: LogLevelQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LogLevelQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LogLevelQuery>(LogLevelDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logLevel', 'query');
+    },
+    logFileNames(variables?: LogFileNamesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LogFileNamesQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LogFileNamesQuery>(LogFileNamesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logFileNames', 'query');
+    },
+    logContentsByFileName(variables: LogContentsByFileNameQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LogContentsByFileNameQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LogContentsByFileNameQuery>(LogContentsByFileNameDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'logContentsByFileName', 'query');
     }
   };
 }
@@ -65,15 +93,47 @@ export type Sdk = ReturnType<typeof getSdk>;
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
- * mockActivityLogsQuery((req, res, ctx) => {
- *   const { first, offset, sort, filter } = req.variables;
+ * mockLogLevelQuery((req, res, ctx) => {
  *   return res(
- *     ctx.data({ activityLogs })
+ *     ctx.data({ logLevel })
  *   )
  * })
  */
-export const mockActivityLogsQuery = (resolver: ResponseResolver<GraphQLRequest<ActivityLogsQueryVariables>, GraphQLContext<ActivityLogsQuery>, any>) =>
-  graphql.query<ActivityLogsQuery, ActivityLogsQueryVariables>(
-    'activityLogs',
+export const mockLogLevelQuery = (resolver: ResponseResolver<GraphQLRequest<LogLevelQueryVariables>, GraphQLContext<LogLevelQuery>, any>) =>
+  graphql.query<LogLevelQuery, LogLevelQueryVariables>(
+    'logLevel',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLogFileNamesQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ logFileNames })
+ *   )
+ * })
+ */
+export const mockLogFileNamesQuery = (resolver: ResponseResolver<GraphQLRequest<LogFileNamesQueryVariables>, GraphQLContext<LogFileNamesQuery>, any>) =>
+  graphql.query<LogFileNamesQuery, LogFileNamesQueryVariables>(
+    'logFileNames',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLogContentsByFileNameQuery((req, res, ctx) => {
+ *   const { fileName } = req.variables;
+ *   return res(
+ *     ctx.data({ logContents })
+ *   )
+ * })
+ */
+export const mockLogContentsByFileNameQuery = (resolver: ResponseResolver<GraphQLRequest<LogContentsByFileNameQueryVariables>, GraphQLContext<LogContentsByFileNameQuery>, any>) =>
+  graphql.query<LogContentsByFileNameQuery, LogContentsByFileNameQueryVariables>(
+    'logContentsByFileName',
     resolver
   )

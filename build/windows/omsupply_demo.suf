@@ -2294,7 +2294,7 @@ end
 <OverwriteCtrlPanel>1</OverwriteCtrlPanel>
 <OverwriteSC>1</OverwriteSC>
 <CreateCPEntry>1</CreateCPEntry>
-<RegKeyName>%ProductName%%ProductVer%</RegKeyName>
+<RegKeyName>%ProductName%</RegKeyName>
 <CPDesc>%ProductName%</CPDesc>
 <UseCustomCPIcon>0</UseCustomCPIcon>
 <CustCPIconFN/>

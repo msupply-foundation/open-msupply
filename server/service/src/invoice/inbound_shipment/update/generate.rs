@@ -10,7 +10,7 @@ use repository::{
 };
 use util::uuid::uuid;
 
-use crate::invoice::common::calculate_total_after_tax;
+use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
 use super::{UpdateInboundShipment, UpdateInboundShipmentError, UpdateInboundShipmentStatus};
 
@@ -25,6 +25,7 @@ pub(crate) struct GenerateResult {
     pub(crate) empty_lines_to_trim: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_tax_for_lines: Option<Vec<InvoiceLineRow>>,
+    pub(crate) update_currency_for_lines: Option<Vec<InvoiceLineRow>>,
 }
 
 pub(crate) fn generate(
@@ -51,13 +52,16 @@ pub(crate) fn generate(
         .unwrap_or(update_invoice.tax);
 
     if let Some(status) = patch.status.clone() {
-        update_invoice.status = status.full_status().into()
+        update_invoice.status = status.full_status()
     }
 
     if let Some(other_party) = other_party_option {
         update_invoice.name_store_id = other_party.store_id().map(|id| id.to_string());
-        update_invoice.name_id = other_party.name_row.id;
+        update_invoice.name_link_id = other_party.name_row.id;
     }
+
+    update_invoice.currency_id = patch.currency_id.or(update_invoice.currency_id);
+    update_invoice.currency_rate = patch.currency_rate.unwrap_or(update_invoice.currency_rate);
 
     let batches_to_update = if should_create_batches {
         Some(generate_lines_and_stock_lines(
@@ -65,7 +69,9 @@ pub(crate) fn generate(
             &update_invoice.store_id,
             &update_invoice.id,
             update_invoice.tax,
-            &update_invoice.name_id,
+            &update_invoice.name_link_id,
+            update_invoice.currency_id.clone(),
+            &update_invoice.currency_rate,
         )?)
     } else {
         None
@@ -74,9 +80,12 @@ pub(crate) fn generate(
     let location_movements = if let Some(batches) = &batches_to_update {
         let generate_movement = batches
             .iter()
-            .filter_map(|batch| match batch.line.location_id {
-                Some(_) => Some(generate_location_movements(store_id.to_owned(), batch)),
-                None => None,
+            .filter_map(|batch| {
+                batch
+                    .line
+                    .location_id
+                    .clone()
+                    .map(|_| generate_location_movements(store_id.to_owned(), batch))
             })
             .collect();
 
@@ -95,12 +104,24 @@ pub(crate) fn generate(
         None
     };
 
+    let update_currency_for_lines = if patch.currency_rate.is_some() {
+        Some(generate_currency_update_for_lines(
+            connection,
+            &update_invoice.id,
+            update_invoice.currency_id.clone(),
+            &update_invoice.currency_rate,
+        )?)
+    } else {
+        None
+    };
+
     Ok(GenerateResult {
         batches_to_update,
         empty_lines_to_trim: empty_lines_to_trim(connection, &existing_invoice, &patch.status)?,
         update_invoice,
         location_movements,
         update_tax_for_lines,
+        update_currency_for_lines,
     })
 }
 
@@ -110,7 +131,7 @@ pub fn should_create_batches(invoice: &InvoiceRow, patch: &UpdateInboundShipment
         let new_invoice_status_index = new_invoice_status.index();
 
         new_invoice_status_index >= InvoiceRowStatus::Delivered.index()
-            && invoice_status_index < new_invoice_status_index
+            && invoice_status_index < InvoiceRowStatus::Delivered.index()
     } else {
         false
     }
@@ -133,6 +154,33 @@ fn generate_tax_update_for_lines(
         invoice_line_row.tax = tax;
         invoice_line_row.total_after_tax =
             calculate_total_after_tax(invoice_line_row.total_before_tax, tax);
+        result.push(invoice_line_row);
+    }
+
+    Ok(result)
+}
+
+fn generate_currency_update_for_lines(
+    connection: &StorageConnection,
+    invoice_id: &str,
+    currency_id: Option<String>,
+    currency_rate: &f64,
+) -> Result<Vec<InvoiceLineRow>, UpdateInboundShipmentError> {
+    let invoice_lines = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new()
+            .invoice_id(EqualFilter::equal_to(invoice_id))
+            .r#type(InvoiceLineRowType::StockIn.equal_to()),
+    )?;
+
+    let mut result = Vec::new();
+    for invoice_line in invoice_lines {
+        let mut invoice_line_row = invoice_line.invoice_line_row;
+        invoice_line_row.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            invoice_line_row.total_before_tax,
+            currency_id.clone(),
+            currency_rate,
+        )?;
         result.push(invoice_line_row);
     }
 
@@ -174,13 +222,13 @@ fn empty_lines_to_trim(
     }
 
     let invoice_line_rows = lines.into_iter().map(|l| l.invoice_line_row).collect();
-    return Ok(Some(invoice_line_rows));
+    Ok(Some(invoice_line_rows))
 }
 
 fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipment) {
     if let Some(new_invoice_status) = patch.full_status() {
         let current_datetime = Utc::now().naive_utc();
-        let invoice_status_index = InvoiceRowStatus::from(invoice.status.clone()).index();
+        let invoice_status_index = invoice.status.clone().index();
         let new_invoice_status_index = new_invoice_status.index();
 
         let is_status_update = |status: InvoiceRowStatus| {
@@ -189,7 +237,7 @@ fn set_new_status_datetime(invoice: &mut InvoiceRow, patch: &UpdateInboundShipme
         };
 
         if is_status_update(InvoiceRowStatus::Delivered) {
-            invoice.delivered_datetime = Some(current_datetime.clone());
+            invoice.delivered_datetime = Some(current_datetime);
         }
 
         if is_status_update(InvoiceRowStatus::Verified) {
@@ -204,6 +252,8 @@ pub fn generate_lines_and_stock_lines(
     id: &str,
     tax: Option<f64>,
     supplier_id: &str,
+    currency_id: Option<String>,
+    currency_rate: &f64,
 ) -> Result<Vec<LineAndStockLine>, UpdateInboundShipmentError> {
     let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(id)?;
     let mut result = Vec::new();
@@ -216,11 +266,17 @@ pub fn generate_lines_and_stock_lines(
             line.tax = tax;
             line.total_after_tax = calculate_total_after_tax(line.total_before_tax, tax);
         }
+        line.foreign_currency_price_before_tax = calculate_foreign_currency_total(
+            connection,
+            line.total_before_tax,
+            currency_id.clone(),
+            currency_rate,
+        )?;
 
         let InvoiceLineRow {
             id: _,
             invoice_id: _,
-            item_id,
+            item_link_id,
             item_name: _,
             item_code: _,
             stock_line_id: _,
@@ -237,12 +293,14 @@ pub fn generate_lines_and_stock_lines(
             number_of_packs,
             note,
             inventory_adjustment_reason_id: _,
+            return_reason_id: _,
+            foreign_currency_price_before_tax: _,
         }: InvoiceLineRow = invoice_lines;
 
         if number_of_packs > 0.0 {
             let stock_line = StockLineRow {
                 id: stock_line_id,
-                item_id,
+                item_link_id,
                 store_id: store_id.to_string(),
                 location_id,
                 batch,
@@ -254,7 +312,7 @@ pub fn generate_lines_and_stock_lines(
                 expiry_date,
                 on_hold: false,
                 note,
-                supplier_id: Some(supplier_id.to_string()),
+                supplier_link_id: Some(supplier_id.to_string()),
                 barcode_id: None,
             };
             result.push(LineAndStockLine { line, stock_line });

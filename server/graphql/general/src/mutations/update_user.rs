@@ -7,18 +7,19 @@ use graphql_core::{
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
-    login::{FetchUserError, LoginError},
+    login::{FetchUserError, LoginError, LoginFailure},
     sync::sync_user::SyncUser,
 };
 
 pub struct UpdateUserNode {
-    pub last_successful_sync: NaiveDateTime,
+    pub last_successful_sync: Option<NaiveDateTime>,
 }
 
 #[Object]
 impl UpdateUserNode {
-    pub async fn last_successful_sync(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_utc(self.last_successful_sync, Utc)
+    pub async fn last_successful_sync(&self) -> Option<DateTime<Utc>> {
+        self.last_successful_sync
+            .map(|time| DateTime::<Utc>::from_naive_utc_and_offset(time, Utc))
     }
 }
 
@@ -40,7 +41,7 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
     let service_provider = ctx.service_provider();
     let auth_data = ctx.get_auth_data();
 
-    let user = match SyncUser::update_user(&service_provider, auth_data, &user.user_id).await {
+    let user = match SyncUser::update_user(service_provider, auth_data, &user.user_id).await {
         Ok(user) => user,
         Err(error) => {
             let formatted_error = format!("{:#?}", error);
@@ -50,7 +51,8 @@ pub async fn update_user(ctx: &Context<'_>) -> Result<UpdateResponse> {
                 }
                 LoginError::FetchUserError(_)
                 | LoginError::UpdateUserError(_)
-                | LoginError::LoginFailure
+                | LoginError::LoginFailure(LoginFailure::InvalidCredentials)
+                | LoginError::LoginFailure(LoginFailure::AccountBlocked(_))
                 | LoginError::InternalError(_)
                 | LoginError::DatabaseError(_)
                 | LoginError::FailedToGenerateToken(_) => {

@@ -143,32 +143,76 @@ pub fn mock_form_schema_simplified_enrolment() -> FormSchema {
                 "programEnrolmentId": {
                   "description": "Patient's program id",
                   "type": "string"
-                },
-                "status": {
-                  "$ref": "#/definitions/ProgramEnrolmentStatus",
-                  "description": "Current status of the program enrolment"
                 }
               },
               "required": [
-                "enrolmentDatetime",
-                "status"
+                "enrolmentDatetime"
               ],
               "type": "object"
-            },
-            "ProgramEnrolmentStatus": {
-              "enum": [
-                "ACTIVE",
-                "OPTED_OUT",
-                "TRANSFERRED_OUT",
-                "PAUSED"
-              ],
-              "type": "string"
-            },
+            }
           },
           "type": "object",
           "allOf": [
             {
               "$ref": "#/definitions/ProgramEnrolment"
+            }
+          ]
+        }),
+        ui_schema: json!({}),
+    }
+}
+
+pub fn mock_form_schema_simplified_encounter() -> FormSchema {
+    FormSchema {
+        id: "simplified_encounter_form_schema".to_string(),
+        r#type: "JsonForms".to_string(),
+        json_schema: json!({
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "definitions": {
+            "Encounter": {
+              "properties": {
+                "createdDatetime": {
+                  "description": "Date time when the encounter was made, e.g. when an clinician schedule the encounter.",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "endDatetime": {
+                  "description": "Encounter end date and time",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "extension": {
+                  "type": "object"
+                },
+                "startDatetime": {
+                  "description": "Encounter start date and time",
+                  "format": "date-time",
+                  "type": "string"
+                },
+                "status": {
+                  "$ref": "#/definitions/EncounterStatus"
+                }
+              },
+              "required": [
+                "createdDatetime",
+                "startDatetime"
+              ],
+              "type": "object"
+            },
+            "EncounterStatus": {
+              "enum": [
+                "PENDING",
+                "VISITED",
+                "CANCELLED",
+                "DELETED"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Encounter"
             }
           ]
         }),
@@ -182,5 +226,6 @@ pub fn mock_form_schemas() -> Vec<FormSchema> {
         mock_form_schema_simple(),
         mock_form_schema_simplified_patient(),
         mock_form_schema_simplified_enrolment(),
+        mock_form_schema_simplified_encounter(),
     ]
 }
