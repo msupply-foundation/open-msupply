@@ -40,7 +40,7 @@ mod query {
                     id: id.clone(),
                     store_id: Some(mock_store_a().id),
                     notes: Some("test_note".to_string()),
-                    asset_number: "test_asset_number".to_string(),
+                    asset_number: Some("test_asset_number".to_string()),
                     serial_number: Some("test_serial_number".to_string()),
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()), // 'GKS Healthsol LLP', 'FFVC 44SR'
                     installation_date: None,
@@ -59,7 +59,7 @@ mod query {
                     id: id2.clone(),
                     store_id: Some(mock_store_a().id),
                     notes: None,
-                    asset_number: "test_asset_number_2".to_string(),
+                    asset_number: Some("test_asset_number_2".to_string()),
                     serial_number: None,
                     catalogue_item_id: Some("189ef51c-d232-4da7-b090-ca3a53d31f58".to_string()),
                     installation_date: None,
@@ -166,19 +166,16 @@ mod query {
 
         // 7. Check fail on trying to add locations which are already assigned to other assets
 
-        assert_eq!(
-            service
-                .update_asset(
-                    &ctx,
-                    UpdateAsset {
-                        id: id2.clone(),
-                        location_ids: Some(location_ids_to_add.clone()),
-                        ..Default::default()
-                    },
-                )
-                .is_err(),
-            true
-        );
+        assert!(service
+            .update_asset(
+                &ctx,
+                UpdateAsset {
+                    id: id2.clone(),
+                    location_ids: Some(location_ids_to_add.clone()),
+                    ..Default::default()
+                },
+            )
+            .is_err());
         // 8. Check that adding a new location array which includes locations already assigned won't prompt error
 
         let location_ids_to_add = vec![

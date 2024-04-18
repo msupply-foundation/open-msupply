@@ -137,7 +137,7 @@ export const RepackModal: FC<RepackModalControlProps> = ({
       okButton={
         <DialogButton
           variant="save"
-          disabled={draft?.newPackSize === 0 || draft?.numberOfPacks === 0}
+          disabled={!draft?.newPackSize || !draft?.numberOfPacks}
           onClick={async () => {
             try {
               const result = await onInsert();

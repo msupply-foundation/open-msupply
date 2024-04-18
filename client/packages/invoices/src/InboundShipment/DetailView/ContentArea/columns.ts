@@ -11,7 +11,7 @@ import {
   useColumnUtils,
   CurrencyCell,
 } from '@openmsupply-client/common';
-import { PackVariantCell } from '@openmsupply-client/system';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
 import { isInboundPlaceholderRow } from '../../../utils';
@@ -126,7 +126,7 @@ export const useInboundShipmentColumns = () => {
         key: 'packUnit',
         label: 'label.pack',
         sortable: false,
-        Cell: PackVariantCell({
+        Cell: getPackVariantCell({
           getItemId: row => {
             if ('lines' in row) return '';
             else return row?.item?.id;
@@ -136,7 +136,7 @@ export const useInboundShipmentColumns = () => {
             else return [row?.packSize ?? 1];
           },
           getUnitName: row => {
-            if ('lines' in row) return null;
+            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
             else return row?.item?.unitName ?? null;
           },
         }),
@@ -234,7 +234,7 @@ export const useExpansionColumns = (): Column<InboundLineFragment>[] =>
       key: 'packUnit',
       label: 'label.pack',
       sortable: false,
-      Cell: PackVariantCell({
+      Cell: getPackVariantCell({
         getItemId: row => row?.item?.id,
         getPackSizes: row => [row?.packSize ?? 1],
         getUnitName: row => row?.item?.unitName ?? null,

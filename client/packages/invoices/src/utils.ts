@@ -203,7 +203,7 @@ export const isPrescriptionDisabled = (
 };
 
 export const isInboundListItemDisabled = (
-  inbound: InboundRowFragment
+  inbound: InboundRowFragment | InboundReturnRowFragment
 ): boolean => {
   const isManuallyCreated = !inbound.linkedShipment?.id;
   return isManuallyCreated
@@ -304,7 +304,7 @@ export const outboundsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.reference'),
     t('label.comment'),
     t('label.total'),
@@ -332,7 +332,7 @@ export const outboundReturnsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
   ];
 
   const data = returns.map(node => [
@@ -354,7 +354,7 @@ export const inboundReturnsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.confirmed'),
   ];
 
@@ -378,7 +378,7 @@ export const inboundsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.confirmed'),
     t('label.comment'),
     t('label.total'),
@@ -406,7 +406,7 @@ export const prescriptionToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.comment'),
   ];
 
@@ -431,13 +431,16 @@ export const getNextItemId = (
   currentItemId: string | null
 ) => {
   if (!lines || !currentItemId) return undefined;
-  const currentItemIndex = lines.findIndex(
+
+  const items = ArrayUtils.uniqBy(lines, line => line.itemId);
+
+  const currentItemIndex = items.findIndex(
     line => line.itemId === currentItemId
   );
   if (currentItemIndex === -1) return;
 
-  const nextItemIndex = lines.findIndex(
+  const nextItemIndex = items.findIndex(
     (line, index) => index > currentItemIndex && line.itemId !== currentItemId
   );
-  return nextItemIndex === -1 ? undefined : lines[nextItemIndex]?.itemId;
+  return nextItemIndex === -1 ? undefined : items[nextItemIndex]?.itemId;
 };

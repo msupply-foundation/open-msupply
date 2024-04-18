@@ -9,6 +9,7 @@ const ASSET_CATALOGUE_ITEM1: (&str, &str) = (
     "0dda9346-b79f-4f0f-a375-ae778240043a",
     r#"{
         "id": "0dda9346-b79f-4f0f-a375-ae778240043a",
+        "sub_catalogue": "Non PQS",
         "name": "Asset Catalogue Item 1",
         "class_id": "32608ef9-dce5-41a7-b3e9-92b0fe086c7e",
         "category_id": "035d2847-1eec-4595-a161-b7cfefc17381",
@@ -22,6 +23,7 @@ const ASSET_CATALOGUE_ITEM1: (&str, &str) = (
 fn asset_catalogue_item1() -> AssetCatalogueItemRow {
     AssetCatalogueItemRow {
         id: ASSET_CATALOGUE_ITEM1.0.to_string(),
+        sub_catalogue: "Non PQS".to_string(),
         class_id: "32608ef9-dce5-41a7-b3e9-92b0fe086c7e".to_string(),
         category_id: "035d2847-1eec-4595-a161-b7cfefc17381".to_string(),
         code: "A1".to_string(),

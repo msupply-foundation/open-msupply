@@ -3,6 +3,7 @@ package org.openmsupply.client;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.net.http.SslCertificate;
@@ -28,6 +29,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.List;
+import java.util.Objects;
 
 class CertWebViewClient extends ExtendedWebViewClient {
     public static final String TAG = "CertWebViewClient";
@@ -193,14 +196,29 @@ class CertWebViewClient extends ExtendedWebViewClient {
     }
 
 
+    // reloading a page ( javascript: navigate(0) or window.location.reload() )
+    // will not only reload, but will open the URL in a browser tab
+    // for local URLs we don't want this to happen!
     @Override
     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-        // reloading a page ( javascript: navigate(0) or window.location.reload() )
-        // will not only reload, but will open the URL in a browser tab
-        // for local URLs we don't want this to happen!
+        // define top level URL paths which should not be opened in the current WebView
+        String[] externalPaths = {"sync_files"};
         Uri url = request.getUrl();
         try {
             if (url.toString().startsWith(nativeApi.getServerUrl())) {
+                List<String> segments = url.getPathSegments();
+                if (segments.size() == 0) return false;
+                String firstSegment = segments.get(0);
+
+                for (String path: externalPaths) {
+                    if (Objects.equals(firstSegment, path)) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndNormalize(url);
+                        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        bridge.getActivity().startActivity(intent);
+                        return true;
+                    }
+                }
                 return false;
             }
         }

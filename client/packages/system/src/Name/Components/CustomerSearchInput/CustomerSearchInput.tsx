@@ -41,6 +41,7 @@ export const CustomerSearchInput: FC<NameSearchInputProps> = ({
       popperMinWidth={width}
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
       getOptionDisabled={option => option.isOnHold}
+      sx={{ minWidth: width }}
     />
   );
 };

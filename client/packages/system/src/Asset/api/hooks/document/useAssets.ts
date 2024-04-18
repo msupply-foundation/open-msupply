@@ -10,6 +10,7 @@ export const useAssets = (categoryId?: string) => {
       { key: 'categoryId', condition: 'equalTo' },
       // { key: 'classId', condition: 'equalTo' },
       { key: 'typeId', condition: 'equalTo' },
+      { key: 'subCatalogue' },
     ],
   });
   const api = useAssetApi();

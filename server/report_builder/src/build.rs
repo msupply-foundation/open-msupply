@@ -47,40 +47,50 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
 fn extract_sql_entry(
     args: &BuildArgs,
     files: &mut HashMap<String, PathBuf>,
-) -> Result<Option<(String, SQLQuery)>> {
-    match (&args.query_sqlite, &args.query_postgres) {
-        (None, None) => Ok(None),
-        (Some(query_sqlite), Some(query_postgres)) => {
+) -> Result<Vec<SQLQuery>> {
+    let Some(sql_queries) = &args.query_sql else {
+        return Ok(vec![]);
+    };
+    let result: Result<Vec<_>> = sql_queries
+        .iter()
+        .map(|query| {
+            let common_query = format!("{query}.sql");
+            if let Some(file_path) = files.remove(&common_query) {
+                let query_sql = fs::read_to_string(file_path).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to load query file: {}", err))
+                })?;
+                return Ok(SQLQuery {
+                    name: query.clone(),
+                    query_sqlite: query_sql.clone(),
+                    query_postgres: query_sql.clone(),
+                });
+            }
+            let query_sqlite = format!("{query}.sqlite.sql");
             let file_path = files
-                .remove(query_sqlite)
-                .ok_or(anyhow::Error::msg("Sqlite query file does not exist"))?;
+                .remove(&query_sqlite)
+                .ok_or(anyhow::Error::msg(format!(
+                    "Sqlite query file ({query_sqlite}) does not exist"
+                )))?;
             let query_sqlite_sql = fs::read_to_string(file_path).map_err(|err| {
                 anyhow::Error::msg(format!("Failed to load Sqlite query file: {}", err))
             })?;
-            let query_postgres_sql = if query_postgres == query_sqlite {
-                query_sqlite_sql.clone()
-            } else {
-                let file_path = files
-                    .remove(query_postgres)
-                    .ok_or(anyhow::Error::msg("Postgres query file does not exist"))?;
-                fs::read_to_string(file_path).map_err(|err| {
-                    anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
-                })?
-            };
-            Ok(Some((
-                // Use the Sqlite file name for reference...
-                query_sqlite.clone(),
-                SQLQuery {
-                    query_sqlite: query_sqlite_sql,
-                    query_postgres: query_postgres_sql,
-                },
-            )))
-        }
-        (None, Some(_)) => Err(anyhow::Error::msg("Sqlite query must be specified as well")),
-        (Some(_), None) => Err(anyhow::Error::msg(
-            "Postgres query must be specified as well",
-        )),
-    }
+            let query_postgres = format!("{query}.postgres.sql");
+            let file_path = files
+                .remove(&query_postgres)
+                .ok_or(anyhow::Error::msg(format!(
+                    "Postgres query file ({query_postgres}) does not exist"
+                )))?;
+            let query_postgres_sql = fs::read_to_string(file_path).map_err(|err| {
+                anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
+            })?;
+            return Ok(SQLQuery {
+                name: query.clone(),
+                query_sqlite: query_sqlite_sql.clone(),
+                query_postgres: query_postgres_sql.clone(),
+            });
+        })
+        .collect();
+    result
 }
 
 fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
@@ -88,7 +98,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
         template: Some(args.template.clone()),
         header: None,
         footer: None,
-        query: None,
+        query: vec![],
     };
     let mut entries: HashMap<String, ReportDefinitionEntry> = HashMap::new();
 
@@ -141,13 +151,25 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     }
 
     // query
+    let query_specified = args.query_gql.is_some()
+        || args.query_default.is_some()
+        || !args
+            .query_sql
+            .as_ref()
+            .map(|it| it.is_empty())
+            .unwrap_or(false);
+    if !query_specified {
+        return Err(anyhow::Error::msg(
+            "No query specified, e.g. --query-gql or --query-default or --query-sql",
+        ));
+    }
     if let Some(query_gql) = &args.query_gql {
         let file_path = files
             .remove(query_gql)
             .ok_or(anyhow::Error::msg("GraphQl query file does not exist"))?;
         let query = fs::read_to_string(file_path)
             .map_err(|err| anyhow::Error::msg(format!("Failed to load GQL query file: {}", err)))?;
-        index.query = Some(query_gql.clone());
+        index.query.push(query_gql.clone());
         entries.insert(
             query_gql.clone(),
             ReportDefinitionEntry::GraphGLQuery(GraphQlQuery {
@@ -155,19 +177,19 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
                 variables: None,
             }),
         );
-    } else if let Some((query, sql_query)) = extract_sql_entry(args, &mut files)? {
-        index.query = Some(query.clone());
-        entries.insert(query, ReportDefinitionEntry::SQLQuery(sql_query));
     } else if let Some(query_default) = &args.query_default {
-        index.query = Some("query_default".to_string());
+        index.query.push("query_default".to_string());
         entries.insert(
             "query_default".to_string(),
             ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
-    } else {
-        return Err(anyhow::Error::msg(
-            "No query specified, e.g. --query-gql or --query-default",
-        ));
+    }
+    for sql_query in extract_sql_entry(&args, &mut files)? {
+        index.query.push(sql_query.name.clone());
+        entries.insert(
+            sql_query.name.clone(),
+            ReportDefinitionEntry::SQLQuery(sql_query),
+        );
     }
 
     // resources: try to use remaining files as resources

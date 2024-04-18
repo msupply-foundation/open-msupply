@@ -86,7 +86,7 @@ export function Autocomplete<T>({
         disableUnderline: false,
         ...props.InputProps,
       }}
-      sx={{ width }}
+      sx={{ minWidth: width }}
     />
   );
   const defaultGetOptionLabel = (option: T): string => {

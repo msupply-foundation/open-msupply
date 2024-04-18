@@ -5,7 +5,9 @@ use super::asset_catalogue_item_row::{
 
 use crate::{
     asset_class_row::asset_class::dsl as asset_class_dsl,
-    diesel_macros::{apply_equal_filter, apply_sort_no_case, apply_string_filter},
+    diesel_macros::{
+        apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    },
     StorageConnection, StringFilter,
 };
 
@@ -27,6 +29,8 @@ pub struct AssetCatalogueItemFilter {
     pub model: Option<StringFilter>,
     pub r#type: Option<StringFilter>,
     pub type_id: Option<EqualFilter<String>>,
+    pub search: Option<StringFilter>,
+    pub sub_catalogue: Option<StringFilter>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -72,7 +76,7 @@ impl<'a> AssetCatalogueItemRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 AssetCatalogueItemSortField::Catalogue => {
-                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::id)
+                    apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::sub_catalogue)
                 }
                 AssetCatalogueItemSortField::Code => {
                     apply_sort_no_case!(query, sort, asset_catalogue_item_dsl::code)
@@ -121,12 +125,36 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             class_id,
             r#type,
             type_id,
+            search,
+            sub_catalogue,
         } = f;
+
+        // or filter need to be applied before and filters
+        if search.is_some() {
+            let mut sub_query = asset_type_dsl::asset_type
+                .select(asset_type_dsl::id)
+                .into_boxed();
+            apply_string_filter!(sub_query, search.clone(), asset_type_dsl::name);
+
+            query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(sub_query));
+            apply_string_or_filter!(query, search.clone(), asset_catalogue_item_dsl::code);
+            apply_string_or_filter!(
+                query,
+                search.clone(),
+                asset_catalogue_item_dsl::manufacturer
+            );
+            apply_string_or_filter!(query, search, asset_catalogue_item_dsl::model);
+        }
 
         apply_equal_filter!(query, id, asset_catalogue_item_dsl::id);
         apply_string_filter!(query, code, asset_catalogue_item_dsl::code);
         apply_string_filter!(query, manufacturer, asset_catalogue_item_dsl::manufacturer);
         apply_string_filter!(query, model, asset_catalogue_item_dsl::model);
+        apply_string_filter!(
+            query,
+            sub_catalogue,
+            asset_catalogue_item_dsl::sub_catalogue
+        );
         apply_equal_filter!(
             query,
             category_id,
@@ -150,6 +178,7 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             apply_string_filter!(sub_query, Some(r#type_filter), asset_type_dsl::name);
             query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(sub_query));
         }
+
         if let Some(category_filter) = category {
             let mut sub_query = asset_category_dsl::asset_category
                 .select(asset_category_dsl::id)
@@ -213,6 +242,11 @@ impl AssetCatalogueItemFilter {
 
     pub fn type_id(mut self, filter: EqualFilter<String>) -> Self {
         self.type_id = Some(filter);
+        self
+    }
+
+    pub fn sub_catalogue(mut self, filter: StringFilter) -> Self {
+        self.sub_catalogue = Some(filter);
         self
     }
 }

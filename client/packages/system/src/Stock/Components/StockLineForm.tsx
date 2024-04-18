@@ -5,10 +5,8 @@ import {
   DateUtils,
   Formatter,
   TextWithLabelRow,
-  InputWithLabelRow,
   BasicTextInput,
   CurrencyInput,
-  InputWithLabelRowProps,
   ExpiryDateInput,
   useTranslation,
   Box,
@@ -19,34 +17,24 @@ import {
   useNotification,
   Tooltip,
   useDebounceCallback,
+  NumericTextInput,
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { usePackVariant } from '../..';
+import { PackVariantInput, usePackVariant } from '../..';
+import { StyledInputRow } from './StyledInputRow';
 
-const StyledInputRow = ({ label, Input }: InputWithLabelRowProps) => (
-  <InputWithLabelRow
-    label={label}
-    Input={Input}
-    labelProps={{ sx: { textAlign: 'end' } }}
-    labelWidth="100px"
-    sx={{
-      justifyContent: 'space-between',
-      '.MuiFormControl-root > .MuiInput-root, > input': {
-        maxWidth: '160px',
-      },
-    }}
-  />
-);
 interface StockLineFormProps {
   draft: StockLineRowFragment;
   onUpdate: (patch: Partial<StockLineRowFragment>) => void;
   plugins?: JSX.Element[];
+  packEditable?: boolean;
 }
 export const StockLineForm: FC<StockLineFormProps> = ({
   draft,
   onUpdate,
   plugins,
+  packEditable,
 }) => {
   const t = useTranslation('inventory');
   const { error } = useNotification();
@@ -56,6 +44,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     ? draft.supplierName
     : t('message.no-supplier');
   const location = draft?.location ?? null;
+
   const { asPackVariant } = usePackVariant(
     draft.itemId,
     draft.item.unitName ?? null
@@ -103,8 +92,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
       flex={1}
       container
       paddingTop={2}
-      paddingBottom={2}
+      paddingBottom={1}
       width="100%"
+      flexWrap="nowrap"
     >
       <Grid
         container
@@ -114,16 +104,23 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        <TextWithLabelRow
+        <StyledInputRow
           label={t('label.num-packs')}
-          text={String(draft.totalNumberOfPacks)}
-          textProps={{ textAlign: 'end' }}
+          Input={
+            <NumericTextInput
+              autoFocus
+              disabled={!packEditable}
+              width={160}
+              value={draft.totalNumberOfPacks}
+              onChange={totalNumberOfPacks => onUpdate({ totalNumberOfPacks })}
+            />
+          }
         />
         <StyledInputRow
           label={t('label.cost-price')}
           Input={
             <CurrencyInput
-              autoFocus
+              autoFocus={!packEditable}
               defaultValue={draft.costPricePerPack}
               onChangeNumber={costPricePerPack =>
                 debouncedUpdate({ costPricePerPack })
@@ -172,11 +169,26 @@ export const StockLineForm: FC<StockLineFormProps> = ({
         flexDirection="column"
         gap={1}
       >
-        <TextWithLabelRow
-          label={t('label.pack')}
-          text={String(packUnit)}
-          textProps={{ textAlign: 'end' }}
-        />
+        {packEditable ? (
+          <StyledInputRow
+            label={t('label.pack')}
+            Input={
+              <PackVariantInput
+                isDisabled={!packEditable}
+                packSize={draft.packSize}
+                itemId={draft.itemId}
+                unitName={draft.item.unitName ?? null}
+                onChange={packSize => onUpdate({ packSize })}
+              />
+            }
+          />
+        ) : (
+          <TextWithLabelRow
+            label={t('label.pack')}
+            text={String(packUnit)}
+            textProps={{ textAlign: 'end' }}
+          />
+        )}
         <StyledInputRow
           label={t('label.on-hold')}
           Input={
