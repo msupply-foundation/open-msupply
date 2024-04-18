@@ -41,6 +41,7 @@ export const ClinicianSearchInput: FC<ClinicianSearchInputProps> = ({
           },
         })
       )}
+      sx={{ minWidth: width }}
     />
   );
 };

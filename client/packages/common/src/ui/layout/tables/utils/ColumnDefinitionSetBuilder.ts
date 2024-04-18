@@ -137,7 +137,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   createdDatetime: {
     description: 'description.entered',
-    label: 'label.entered',
+    label: 'label.created',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
     width: 130,

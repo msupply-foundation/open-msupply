@@ -2,7 +2,12 @@ import React, { FC, useEffect, useState } from 'react';
 import { EquipmentReviewTab } from './ReviewTab';
 import { EquipmentUploadTab } from './UploadTab';
 import { EquipmentImportTab } from './ImportTab';
-import { useDialog, useNotification } from '@common/hooks';
+import {
+  QueryParamsProvider,
+  createQueryParamsStore,
+  useDialog,
+  useNotification,
+} from '@common/hooks';
 import {
   DialogButton,
   TabContext,
@@ -12,12 +17,16 @@ import {
   Alert,
   ClickableStepper,
   FileUtils,
+  AssetLogStatusInput,
+  FnUtils,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { useTranslation } from '@common/intl';
 import { useAssets } from '../api';
 import { importEquipmentToCsvWithErrors } from '../utils';
 import {
   AssetCatalogueItemFragment,
+  StoreRowFragment,
   useAssetData,
 } from '@openmsupply-client/system';
 import { DraftAsset } from '../types';
@@ -41,6 +50,7 @@ export type ImportRow = {
   id: string;
   notes: string;
   errorMessage: string;
+  store: StoreRowFragment | null | undefined;
 };
 
 export type LineNumber = {
@@ -62,6 +72,9 @@ export const toInsertEquipmentInput = (
   installationDate: row.installationDate,
   id: row.id,
   notes: row.notes,
+  store: row.store
+    ? { ...row.store, __typename: 'StoreNode', storeName: '' }
+    : null,
 });
 
 export const toExportEquipment = (
@@ -76,6 +89,7 @@ export const toExportEquipment = (
   notes: row.notes,
   lineNumber: index + 2,
   errorMessage: row.errorMessage,
+  store: row.store,
 });
 
 export const toUpdateEquipmentInput = (
@@ -111,8 +125,9 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
     fetchAsync,
     isLoading,
   } = useAssetData.document.listAll();
-
   const { mutateAsync: insertAssets } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
+  const isCentralServer = useIsCentralServerApi();
 
   const [bufferedEquipment, setBufferedEquipment] = useState<ImportRow[]>(
     () => []
@@ -124,39 +139,47 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
 
   const csvExport = async () => {
     const csv = importEquipmentToCsvWithErrors(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       bufferedEquipment.map((row: ImportRow, index: number) =>
         toExportEquipment(row, index)
       ),
-      t
+      t,
+      isCentralServer
     );
     FileUtils.exportCSV(csv, t('filename.cce-failed-uploads'));
     success(t('success'))();
+  };
+  const importErrorRows: ImportRow[] = [];
+  const insertAsset = async (row: ImportRow) => {
+    try {
+      await insertAssets(toInsertEquipmentInput(row, catalogueItemData?.nodes));
+      await insertLog({
+        id: FnUtils.generateUUID(),
+        assetId: row.id,
+        comment: t('label.created'),
+        status: AssetLogStatusInput.Functioning,
+      });
+    } catch (e) {
+      const errorMessage = (e as Error).message ?? t('messages.unknown-error');
+
+      importErrorRows.push({
+        ...row,
+        errorMessage,
+      });
+    }
   };
 
   const importAction = async () => {
     onChangeTab(Tabs.Import);
     const numberImportRecords = bufferedEquipment?.length ?? 0;
     if (bufferedEquipment && numberImportRecords > 0) {
-      const importErrorRows: ImportRow[] = [];
-      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurency
+      importErrorRows.length = 0;
+      // Import count can be quite large, we break this into blocks of 100 to avoid too much concurrency
       const remainingRecords = bufferedEquipment;
       while (remainingRecords.length) {
         await Promise.all(
-          remainingRecords.splice(0, 100).map(async asset => {
-            await insertAssets(
-              toInsertEquipmentInput(asset, catalogueItemData?.nodes)
-            ).catch(err => {
-              if (!err) {
-                err = { message: t('messages.unknown-error') };
-              }
-              importErrorRows.push({
-                ...asset,
-                errorMessage: err.message,
-              });
-            });
-          })
+          remainingRecords.splice(0, 100).map(insertAsset)
         ).then(() => {
+          invalidateQueries();
           // Update Progress Bar
           const percentComplete =
             100 - (remainingRecords.length / numberImportRecords) * 100.0;
@@ -237,9 +260,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         <DialogButton
           variant="next"
           disabled={importNotReady}
-          onClick={() => {
-            importAction();
-          }}
+          onClick={importAction}
         />
       }
       cancelButton={
@@ -257,9 +278,7 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
         <DialogButton
           variant="export"
           disabled={exportNotReady}
-          onClick={async () => {
-            csvExport();
-          }}
+          onClick={csvExport}
         />
       }
       title={t('label.import-cce')}
@@ -279,15 +298,21 @@ export const EquipmentImportModal: FC<EquipmentImportModalProps> = ({
               <Box flex={1} flexBasis="40%"></Box>
               <Box flex={1} flexBasis="60%"></Box>
             </Grid>
-            <EquipmentUploadTab
-              tab={Tabs.Upload}
-              catalogueItemData={catalogueItemData?.nodes}
-              setEquipment={setBufferedEquipment}
-              setErrorMessage={setErrorMessage}
-              onUploadComplete={() => {
-                changeTab(Tabs.Review);
-              }}
-            />
+            <QueryParamsProvider
+              createStore={createQueryParamsStore<StoreRowFragment>({
+                initialSortBy: { key: 'code' },
+              })}
+            >
+              <EquipmentUploadTab
+                tab={Tabs.Upload}
+                catalogueItemData={catalogueItemData?.nodes}
+                setEquipment={setBufferedEquipment}
+                setErrorMessage={setErrorMessage}
+                onUploadComplete={() => {
+                  changeTab(Tabs.Review);
+                }}
+              />
+            </QueryParamsProvider>
             <EquipmentReviewTab
               tab={Tabs.Review}
               uploadedRows={bufferedEquipment}
