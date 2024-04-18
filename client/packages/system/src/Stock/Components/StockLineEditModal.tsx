@@ -101,10 +101,14 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       Component: <ActivityLogList recordId={draft?.id ?? ''} />,
       value: 'label.log',
     },
-    {
-      Component: <LedgerForm stockLine={draft} />,
-      value: 'label.ledger',
-    },
+    ...(Environment.FEATURE_INVENTORY_ADJUSTMENTS
+      ? [
+          {
+            Component: <LedgerForm stockLine={draft} />,
+            value: 'label.ledger',
+          },
+        ]
+      : []),
   ];
 
   const onChange = () => setHasChanged(true);
@@ -122,8 +126,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
 
   return (
     <Modal
-      width={700}
-      height={575}
+      sx={{ maxWidth: 'unset', minWidth: 700, minHeight: 575 }}
       slideAnimation={false}
       title={t('title.stock-line-details')}
       okButton={

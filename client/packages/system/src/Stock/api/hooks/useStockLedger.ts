@@ -1,34 +1,31 @@
-import { LedgerSortFieldInput, useQuery } from '@openmsupply-client/common';
+import {
+  LedgerSortFieldInput,
+  SortBy,
+  useQuery,
+} from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../../..';
-import { LEDGER } from './keys';
+import { STOCK_LINE } from './keys';
 import { useStockGraphQL } from '../useStockGraphQL';
+import { LedgerRowFragment } from '../operations.generated';
+import { ColumnKey } from '../../Components/Ledger/useLedgerColumns';
 
-// TO-DO:Replace with auto-gen type from graphql codegen
-export interface LedgerLine {
-  id: string;
-  itemId: string;
-  storeId: string;
-  quantity: number;
-  datetime: Date;
-  name: string;
-  type: string;
-  reason: string | null;
-}
-
-export function useStockLedger(stockLine: StockLineRowFragment) {
+export function useStockLedger(
+  stockLine: StockLineRowFragment,
+  sortBy: SortBy<LedgerRowFragment>
+) {
   const { stockApi, storeId } = useStockGraphQL();
 
-  const queryKey = [LEDGER, stockLine.id];
+  const queryKey = [STOCK_LINE, stockLine.id, sortBy];
   const queryFn = async (): Promise<{
-    nodes: LedgerLine[];
+    nodes: LedgerRowFragment[];
     totalCount: number;
   }> => {
     const filter = { stockLineId: { equalTo: stockLine.id } };
 
     const query = await stockApi.ledger({
       storeId,
-      key: LedgerSortFieldInput.Datetime,
-      desc: true,
+      key: getSortKey(sortBy.key),
+      desc: sortBy.direction === 'desc',
       filter,
     });
     const { nodes, totalCount } = query?.ledger;
@@ -38,3 +35,18 @@ export function useStockLedger(stockLine: StockLineRowFragment) {
   const query = useQuery({ queryKey, queryFn });
   return query;
 }
+
+const getSortKey = (sortBy: string): LedgerSortFieldInput => {
+  switch (sortBy) {
+    case ColumnKey.DateTime:
+      return LedgerSortFieldInput.Datetime;
+    case ColumnKey.Name:
+      return LedgerSortFieldInput.Name;
+    case ColumnKey.Quantity:
+      return LedgerSortFieldInput.Quantity;
+    case ColumnKey.Type:
+      return LedgerSortFieldInput.InvoiceType;
+    default:
+      return LedgerSortFieldInput.StockLineId;
+  }
+};
