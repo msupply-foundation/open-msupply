@@ -1,20 +1,13 @@
 import {
   ColumnFormat,
+  InvoiceNodeType,
+  LocaleKey,
   SortBy,
   useColumns,
   useFormatDateTime,
   useTranslation,
 } from '@openmsupply-client/common';
 import { LedgerRowFragment } from '../../api';
-
-type MovementType =
-  | 'INBOUND_SHIPMENT'
-  | 'OUTBOUND_SHIPMENT'
-  | 'INBOUND_RETURN'
-  | 'OUTBOUND_RETURN'
-  | 'PRESCRIPTION'
-  | 'INVENTORY_ADDITION'
-  | 'INVENTORY_REDUCTION';
 
 export enum ColumnKey {
   'DateTime' = 'datetime',
@@ -59,8 +52,7 @@ export const useLedgerColumns = (
       {
         key: ColumnKey.Type,
         label: 'label.type',
-        accessor: ({ rowData }) =>
-          t(getLocalisationKey(rowData.invoiceType as MovementType)),
+        accessor: ({ rowData }) => t(getLocalisationKey(rowData.invoiceType)),
         sortable: true,
       },
       {
@@ -88,21 +80,25 @@ export const useLedgerColumns = (
   return { columns };
 };
 
-const getLocalisationKey = (type: MovementType) => {
+const getLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
   switch (type) {
-    case 'INBOUND_SHIPMENT':
+    case InvoiceNodeType.InboundShipment:
       return 'inbound-shipment';
-    case 'OUTBOUND_SHIPMENT':
+    case InvoiceNodeType.OutboundShipment:
       return 'outbound-shipment';
-    case 'INBOUND_RETURN':
+    case InvoiceNodeType.InboundReturn:
       return 'inbound-return';
-    case 'OUTBOUND_RETURN':
+    case InvoiceNodeType.OutboundReturn:
       return 'outbound-return';
-    case 'PRESCRIPTION':
+    case InvoiceNodeType.Prescription:
       return 'prescription';
-    case 'INVENTORY_ADDITION':
+    case InvoiceNodeType.InventoryAddition:
       return 'inventory-addition';
-    case 'INVENTORY_REDUCTION':
+    case InvoiceNodeType.InventoryReduction:
       return 'inventory-reduction';
+    // Repack shouldn't show up in ledger, but included here for exhaustive
+    // matching
+    case InvoiceNodeType.Repack:
+      return 'label.repack';
   }
 };
