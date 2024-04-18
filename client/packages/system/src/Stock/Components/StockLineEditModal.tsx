@@ -12,6 +12,7 @@ import {
   usePluginElements,
   PluginEventListener,
 } from '@openmsupply-client/common';
+import { Environment } from '@openmsupply-client/config';
 import { StockLineRowFragment, useStock } from '../api';
 import { ActivityLogList } from '../../ActivityLog';
 import { StockLineForm } from './StockLineForm';
@@ -37,6 +38,10 @@ const useDraftStockLine = (
 ): UseDraftStockLineControl => {
   const [stockLine, setStockLine] = useState<StockLineRowFragment>({ ...seed });
   const { mutate, isLoading } = useStock.line.update();
+
+  useEffect(() => {
+    setStockLine(seed);
+  }, [seed]);
 
   const onUpdate = (patch: Partial<StockLineRowFragment>) => {
     const newStockLine = { ...stockLine, ...patch };
@@ -82,12 +87,16 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       ),
       value: 'label.details',
     },
-    {
-      Component: (
-        <InventoryAdjustmentForm stockLine={draft} onUpdate={onUpdate} />
-      ),
-      value: 'label.adjust',
-    },
+    ...(Environment.FEATURE_INVENTORY_ADJUSTMENTS
+      ? [
+          {
+            Component: (
+              <InventoryAdjustmentForm stockLine={draft} onUpdate={onUpdate} />
+            ),
+            value: 'label.adjust',
+          },
+        ]
+      : []),
     {
       Component: <ActivityLogList recordId={draft?.id ?? ''} />,
       value: 'label.log',

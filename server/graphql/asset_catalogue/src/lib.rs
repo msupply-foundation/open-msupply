@@ -1,5 +1,9 @@
 use async_graphql::*;
 use graphql_core::pagination::PaginationInput;
+use mutations::{
+    delete_asset_catalogue_item, insert_asset_catalogue_item, DeleteAssetCatalogueItemResponse,
+    InsertAssetCatalogueItemInput, InsertAssetCatalogueItemResponse,
+};
 use types::{
     asset_catalogue_item::{AssetCatalogueItemResponse, AssetCatalogueItemsResponse},
     asset_category::{AssetCategoriesResponse, AssetCategoryResponse},
@@ -15,6 +19,7 @@ pub mod asset_class_queries;
 use crate::asset_class_queries::*;
 pub mod asset_type_queries;
 use crate::asset_type_queries::*;
+pub mod mutations;
 pub mod types;
 
 #[derive(Default, Clone)]
@@ -91,5 +96,28 @@ impl AssetCatalogueQueries {
 
     pub async fn asset_type(&self, ctx: &Context<'_>, id: String) -> Result<AssetTypeResponse> {
         asset_type(ctx, id)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct AssetCatalogueMutations;
+
+#[Object]
+impl AssetCatalogueMutations {
+    async fn insert_asset_catalogue_item(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertAssetCatalogueItemInput,
+    ) -> Result<InsertAssetCatalogueItemResponse> {
+        insert_asset_catalogue_item(ctx, &store_id, input)
+    }
+
+    async fn delete_asset_catalogue_item(
+        &self,
+        ctx: &Context<'_>,
+        asset_catalogue_item_id: String,
+    ) -> Result<DeleteAssetCatalogueItemResponse> {
+        delete_asset_catalogue_item(ctx, &asset_catalogue_item_id)
     }
 }

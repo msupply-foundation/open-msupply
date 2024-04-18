@@ -7,6 +7,7 @@ import {
   AssetTypeSortFieldInput,
   AssetCategoryFilterInput,
   AssetTypeFilterInput,
+  InsertAssetCatalogueItemInput,
 } from '@openmsupply-client/common';
 import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
 
@@ -28,6 +29,18 @@ const itemParsers = {
 
     return fields[sortBy.key] ?? AssetCatalogueItemSortFieldInput.Manufacturer;
   },
+  toInsert: (
+    input: AssetCatalogueItemFragment
+  ): InsertAssetCatalogueItemInput => ({
+    id: input.id ?? '',
+    subCatalogue: input.subCatalogue,
+    code: input.code ?? '',
+    manufacturer: input.manufacturer,
+    model: input.model ?? '',
+    classId: input.assetClassId,
+    categoryId: input.assetCategoryId,
+    typeId: input.assetTypeId,
+  }),
 };
 
 export const getAssetQueries = (sdk: Sdk) => ({
@@ -67,6 +80,7 @@ export const getAssetQueries = (sdk: Sdk) => ({
       const result = await sdk.assetCatalogueItems({
         key: itemParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
+        first: 1000, // otherwise the default of 100 is applied and we have 159 currently
       });
 
       const items = result?.assetCatalogueItems;
@@ -99,5 +113,28 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
       return types;
     },
+  },
+  insert: async (input: AssetCatalogueItemFragment, storeId: string) => {
+    const result = await sdk.insertAssetCatalogueItem({
+      input: itemParsers.toInsert(input),
+      storeId,
+    });
+    const insertAssetCatalogueItem =
+      result.centralServer.assetCatalogue.insertAssetCatalogueItem;
+
+    return insertAssetCatalogueItem;
+  },
+  delete: async (id: string) => {
+    const result = await sdk.deleteAssetCatalogueItem({
+      assetCatalogueItemId: id,
+    });
+    const deleteAssetCatalogueItem =
+      result.centralServer.assetCatalogue.deleteAssetCatalogueItem;
+
+    if (deleteAssetCatalogueItem?.__typename === 'DeleteResponse') {
+      return deleteAssetCatalogueItem.id;
+    }
+
+    throw new Error('Could not delete asset catalogue item');
   },
 });

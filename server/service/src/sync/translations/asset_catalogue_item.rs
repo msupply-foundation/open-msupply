@@ -4,8 +4,6 @@ use repository::{
 };
 
 use crate::sync::translations::asset_category::AssetCategoryTranslation;
-use crate::sync::translations::asset_class::AssetClassTranslation;
-use crate::sync::translations::asset_type::AssetTypeTranslation;
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -17,7 +15,7 @@ pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
     Box::new(AssetCatalogueItemTranslation)
 }
 
-struct AssetCatalogueItemTranslation;
+pub(crate) struct AssetCatalogueItemTranslation;
 
 impl SyncTranslation for AssetCatalogueItemTranslation {
     fn table_name(&self) -> &str {
@@ -25,11 +23,7 @@ impl SyncTranslation for AssetCatalogueItemTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
-        vec![
-            AssetClassTranslation.table_name(),
-            AssetCategoryTranslation.table_name(),
-            AssetTypeTranslation.table_name(),
-        ]
+        vec![AssetCategoryTranslation.table_name()]
     }
 
     fn try_translate_from_upsert_sync_record(

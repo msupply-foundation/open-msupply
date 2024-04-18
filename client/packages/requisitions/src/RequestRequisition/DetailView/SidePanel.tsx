@@ -48,7 +48,7 @@ const AdditionalInfoSection: FC = () => {
           {user?.email ? <InfoTooltipIcon title={user?.email} /> : null}
         </PanelRow>
         <PanelRow>
-          <PanelLabel>{t('label.entered')}</PanelLabel>
+          <PanelLabel>{t('label.created')}</PanelLabel>
           <PanelField>{localisedDate(createdDatetime)}</PanelField>
         </PanelRow>
         <PanelRow>
