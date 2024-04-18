@@ -4,6 +4,7 @@
   "error.no-sensors": "No sensors found",
   "error.no-temperature-logs": "No temperature logs found",
   "error.fetch-notifications": "Unable to display cold chain notifications",
+  "error.unable-to-load-breach": "Error loading breach",
   "heading.breach": "Breach",
   "heading.chart": "Temperature by Sensor",
   "label.acknowledged": "Acknowledged",

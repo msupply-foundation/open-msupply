@@ -143,7 +143,7 @@ impl TemperatureChartNode {
                 StandardGraphqlError::from_str("Index for from_datetime must exist"),
             )?;
 
-            // Sensor points array is already populated with base data (all intervals with empty temeprature and breachids)
+            // Sensor points array is already populated with base data (all intervals with empty temperature and breach ids)
 
             if let Some(sensor) = sensors.last_mut() {
                 let point =
