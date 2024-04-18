@@ -29,6 +29,7 @@ pub enum Variant {
     InvalidUrl,
     Unknown,
     ApiVersionIncompatible,
+    CentralV6NotConfigured,
 }
 
 impl SyncErrorNode {
@@ -120,6 +121,7 @@ impl SyncErrorNode {
             from::ConnectionError => to::ConnectionError,
             from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
             from::ApiVersionIncompatible => to::ApiVersionIncompatible,
+            from::CentralV6NotConfigured => to::CentralV6NotConfigured,
         };
 
         Self::from_variant(variant, message)
