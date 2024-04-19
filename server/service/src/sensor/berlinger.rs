@@ -383,7 +383,7 @@ pub fn read_sensor(
 
     let temperature_sensor_unmapped =
         temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
-    let mut temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
+    let temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
 
     Ok(integrate_sensor_data(
         connection,
@@ -397,7 +397,7 @@ fn integrate_sensor_data(
     store_id: &str,
     temperature_sensor: temperature_sensor::Sensor,
 ) -> anyhow::Result<ReadSensor, ReadSensorError> {
-    sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
+    let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
@@ -421,9 +421,9 @@ fn integrate_sensor_data(
     let temperature_sensor_logs = temperature_sensor.logs.unwrap_or_default();
 
     let result = ReadSensor {
+        new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
-        new_sensor_id,
     };
 
     for temperature_sensor_log in temperature_sensor_logs {
