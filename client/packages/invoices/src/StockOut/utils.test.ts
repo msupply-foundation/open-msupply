@@ -3,7 +3,11 @@ import {
   FnUtils,
   InvoiceLineNodeType,
 } from '@openmsupply-client/common';
-import { allocateQuantities, createDraftStockOutLine, createStockOutPlaceholderRow } from './utils';
+import {
+  allocateQuantities,
+  createDraftStockOutLine,
+  createStockOutPlaceholderRow,
+} from './utils';
 import { DraftStockOutLine } from '../types';
 
 type TestLineParams = {
@@ -34,6 +38,7 @@ const createTestLine = ({
       totalAfterTax: 0,
       totalBeforeTax: 0,
       sellPricePerPack: 0,
+      itemName: '',
       item: {
         id: itemId,
         code: '',
