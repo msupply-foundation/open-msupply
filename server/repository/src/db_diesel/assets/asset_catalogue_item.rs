@@ -136,7 +136,8 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
                 .into_boxed();
             apply_string_filter!(sub_query, search.clone(), asset_type_dsl::name);
 
-            query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(sub_query));
+            query =
+                query.filter(asset_catalogue_item_dsl::asset_catalogue_type_id.eq_any(sub_query));
             apply_string_or_filter!(query, search.clone(), asset_catalogue_item_dsl::code);
             apply_string_or_filter!(
                 query,
@@ -161,7 +162,11 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
             asset_catalogue_item_dsl::asset_category_id
         );
         apply_equal_filter!(query, class_id, asset_catalogue_item_dsl::asset_class_id);
-        apply_equal_filter!(query, type_id, asset_catalogue_item_dsl::asset_type_id);
+        apply_equal_filter!(
+            query,
+            type_id,
+            asset_catalogue_item_dsl::asset_catalogue_type_id
+        );
 
         if let Some(class_filter) = class {
             let mut sub_query = asset_class_dsl::asset_class
@@ -176,7 +181,8 @@ fn create_filtered_query(filter: Option<AssetCatalogueItemFilter>) -> BoxedAsset
                 .select(asset_type_dsl::id)
                 .into_boxed();
             apply_string_filter!(sub_query, Some(r#type_filter), asset_type_dsl::name);
-            query = query.filter(asset_catalogue_item_dsl::asset_type_id.eq_any(sub_query));
+            query =
+                query.filter(asset_catalogue_item_dsl::asset_catalogue_type_id.eq_any(sub_query));
         }
 
         if let Some(category_filter) = category {
