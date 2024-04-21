@@ -123,17 +123,17 @@ fn generate(
         Some(_) => generate_lines_with_stock(connection, store_id, &id)?,
         None => Vec::new(),
     };
-    // let expiring_items_lines = match expiring_within_days {
-    //     Some(_) => {
-    //         generate_lines_expiring_soon(connection, store_id, &id, &expiring_within_days.unwrap())?
-    //     }
-    //     None => Vec::new(),
-    // };
+    let expiring_items_lines = match expires_before {
+        Some(_) => {
+            generate_lines_expiring_soon(connection, store_id, &id, &expires_before.unwrap())?
+        }
+        None => Vec::new(),
+    };
     let lines = [
         master_list_lines,
         location_lines,
         items_have_stock_lines,
-        // expiring_items_lines,
+        expiring_items_lines,
     ]
     .concat();
 
@@ -371,12 +371,12 @@ fn generate_lines_expiring_soon(
     connection: &StorageConnection,
     store_id: &str,
     stocktake_id: &str,
-    days: &i32,
+    date: &NaiveDate,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let stock_lines = StockLineRepository::new(&connection).query_by_filter(
         StockLineFilter::new()
             .store_id(EqualFilter::equal_to(store_id))
-            .has_packs_in_store(true),
+            .expiry_date(DateFilter::before_or_equal_to(date.clone())),
         Some(store_id.to_string()),
     )?;
 
