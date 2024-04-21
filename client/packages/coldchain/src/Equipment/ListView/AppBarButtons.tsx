@@ -13,7 +13,7 @@ import {
   PlusCircleIcon,
   ToggleState,
   UploadIcon,
-  useDisabledNotification,
+  useDisabledNotificationToast,
   useAuthContext,
   UserPermission,
 } from '@openmsupply-client/common';
@@ -32,15 +32,14 @@ export const AppBarButtonsComponent = ({
   const t = useTranslation('coldchain');
   const { fetchAsync, isLoading } = useAssets.document.listAll();
   const { userHasPermission } = useAuthContext();
-  const { show, DisabledNotification } = useDisabledNotification({
-    title: t('auth.permission-denied'),
-    message: t('error.no-asset-create-permission'),
-  });
+  const showDisabledNotification = useDisabledNotificationToast(
+    t('error.no-asset-create-permission')
+  );
 
-  const onAdd = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const onAdd = () => {
     if (userHasPermission(UserPermission.AssetMutate))
       modalController.toggleOn();
-    else show(e);
+    else showDisabledNotification();
   };
   const csvExport = async () => {
     const data = await fetchAsync();
@@ -78,7 +77,6 @@ export const AppBarButtonsComponent = ({
           {t('button.export')}
         </LoadingButton>
       </Grid>
-      <DisabledNotification />
     </AppBarButtonsPortal>
   );
 };
