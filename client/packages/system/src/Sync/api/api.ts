@@ -75,6 +75,7 @@ export function mapSyncError(
     [SyncErrorVariant.InvalidUrl]: 'error.invalid-url',
     [SyncErrorVariant.ApiVersionIncompatible]: 'error.sync-api-incompatible',
     [SyncErrorVariant.CentralV6NotConfigured]: 'error.v6-server-not-configured',
+    [SyncErrorVariant.IntegrationError]: 'error.internal-error',
     [SyncErrorVariant.Unknown]: defaultKey || 'error.unknown-sync-error',
   };
 

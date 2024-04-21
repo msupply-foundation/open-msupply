@@ -6126,6 +6126,7 @@ export enum SyncErrorVariant {
   ConnectionError = 'CONNECTION_ERROR',
   HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
   IncorrectPassword = 'INCORRECT_PASSWORD',
+  IntegrationError = 'INTEGRATION_ERROR',
   IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
   InvalidUrl = 'INVALID_URL',
   SiteAuthTimeout = 'SITE_AUTH_TIMEOUT',

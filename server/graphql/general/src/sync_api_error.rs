@@ -30,6 +30,7 @@ pub enum Variant {
     Unknown,
     ApiVersionIncompatible,
     CentralV6NotConfigured,
+    IntegrationError,
 }
 
 impl SyncErrorNode {
@@ -122,6 +123,7 @@ impl SyncErrorNode {
             from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
             from::ApiVersionIncompatible => to::ApiVersionIncompatible,
             from::CentralV6NotConfigured => to::CentralV6NotConfigured,
+            from::IntegrationError => to::IntegrationError,
         };
 
         Self::from_variant(variant, message)

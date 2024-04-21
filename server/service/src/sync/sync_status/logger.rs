@@ -338,6 +338,11 @@ impl SyncLogError {
                 Self::new(SyncLogRowErrorCode::IntegrationTimeoutReached, sync_error)
             }
 
+            // Error during integration
+            SyncError::IntegrationError(_) => {
+                Self::new(SyncLogRowErrorCode::IntegrationError, sync_error)
+            }
+
             // Internal errors
             _ => Self::message_only(sync_error),
         }
