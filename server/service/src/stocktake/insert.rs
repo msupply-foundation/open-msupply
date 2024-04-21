@@ -125,7 +125,7 @@ fn generate(
     };
     let expiring_items_lines = match expires_before {
         Some(_) => {
-            generate_lines_expiring_soon(connection, store_id, &id, &expires_before.unwrap())?
+            generate_lines_expiring_before(connection, store_id, &id, &expires_before.unwrap())?
         }
         None => Vec::new(),
     };
@@ -367,7 +367,7 @@ pub fn generate_lines_with_stock(
     Ok(result)
 }
 
-fn generate_lines_expiring_soon(
+fn generate_lines_expiring_before(
     connection: &StorageConnection,
     store_id: &str,
     stocktake_id: &str,

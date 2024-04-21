@@ -79,7 +79,7 @@
   "messages.confirm-reduce-lines-to-zero": "This will reduce the quantity of all selected stock lines to 0",
   "placeholder.enter-an-item-code-or-name": "Enter item code or name",
   "messages.confirm-save-stock-line": "Do you want to save the changes to this stock line? All changes will be logged and can be reviewed later from this screen.",
-  "messages.create-stocktake-1": "You can create a stocktake based on items currently assigned to a location, items that you currently have in stock, items assigned to a master list, or items expiring within a certain number of days.",
+  "messages.create-stocktake-1": "You can create a stocktake based on items currently assigned to a location, items that you currently have in stock, items assigned to a master list, or items expiring before a particular date.",
   "messages.create-stocktake-2": "To create an empty stocktake, simply click OK to continue.",
   "messages.deleted-locations_one": "Deleted {{count}} location",
   "messages.deleted-locations_few": "Deleted {{count}} locations",
