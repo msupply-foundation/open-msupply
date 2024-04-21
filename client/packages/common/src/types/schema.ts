@@ -2526,6 +2526,7 @@ export type InsertStockLineLineResponse = InsertStockLineError | StockLineNode;
 export type InsertStocktakeInput = {
   comment?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  expiresBefore?: InputMaybe<Scalars['NaiveDate']['input']>;
   id: Scalars['String']['input'];
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   itemsHaveStock?: InputMaybe<Scalars['Boolean']['input']>;
