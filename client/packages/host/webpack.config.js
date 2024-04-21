@@ -144,6 +144,7 @@ module.exports = env => {
     plugins: [
       new ReactRefreshWebpackPlugin(),
       new webpack.DefinePlugin({
+        FEATURE_INVENTORY_ADJUSTMENTS: env.FEATURE_INVENTORY_ADJUSTMENTS,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
       }),
@@ -156,6 +157,7 @@ module.exports = env => {
         patterns: [
           { from: './public/mockServiceWorker.js', to: 'mockServiceWorker.js' },
           { from: './public/medical-icons.css', to: 'medical-icons.css' },
+          { from: './public/game', to: 'game' },
           {
             context: path.resolve(
               __dirname,

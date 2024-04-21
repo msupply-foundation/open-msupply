@@ -32,6 +32,7 @@ pub enum ActivityLogNodeType {
     InvoiceStatusShipped,
     InvoiceStatusDelivered,
     InvoiceStatusVerified,
+    InventoryAdjustment,
     StocktakeCreated,
     StocktakeDeleted,
     StocktakeStatusFinalised,
@@ -57,6 +58,7 @@ pub enum ActivityLogNodeType {
     AssetUpdated,
     AssetDeleted,
     AssetLogCreated,
+    AssetCatalogueItemCreated,
     QuantityForLineHasBeenSetToZero,
 }
 
@@ -144,6 +146,7 @@ impl ActivityLogNodeType {
             from::InvoiceStatusShipped => to::InvoiceStatusShipped,
             from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
             from::InvoiceStatusVerified => to::InvoiceStatusVerified,
+            from::InventoryAdjustment => to::InventoryAdjustment,
             from::StocktakeCreated => to::StocktakeCreated,
             from::StocktakeDeleted => to::StocktakeDeleted,
             from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
@@ -170,6 +173,7 @@ impl ActivityLogNodeType {
             from::AssetUpdated => to::AssetUpdated,
             from::AssetDeleted => to::AssetDeleted,
             from::AssetLogCreated => to::AssetLogCreated,
+            from::AssetCatalogueItemCreated => to::AssetCatalogueItemCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
         }
     }
@@ -187,6 +191,7 @@ impl ActivityLogNodeType {
             from::InvoiceStatusShipped => to::InvoiceStatusShipped,
             from::InvoiceStatusDelivered => to::InvoiceStatusDelivered,
             from::InvoiceStatusVerified => to::InvoiceStatusVerified,
+            from::InventoryAdjustment => to::InventoryAdjustment,
             from::StocktakeCreated => to::StocktakeCreated,
             from::StocktakeDeleted => to::StocktakeDeleted,
             from::StocktakeStatusFinalised => to::StocktakeStatusFinalised,
@@ -213,6 +218,7 @@ impl ActivityLogNodeType {
             from::AssetUpdated => to::AssetUpdated,
             from::AssetDeleted => to::AssetDeleted,
             from::AssetLogCreated => to::AssetLogCreated,
+            from::AssetCatalogueItemCreated => to::AssetCatalogueItemCreated,
             from::QuantityForLineHasBeenSetToZero => to::QuantityForLineHasBeenSetToZero,
         }
     }

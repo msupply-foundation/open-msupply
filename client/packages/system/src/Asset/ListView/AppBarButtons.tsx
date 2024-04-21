@@ -9,11 +9,20 @@ import {
   LoadingButton,
   EnvUtils,
   Platform,
+  ButtonWithIcon,
+  UploadIcon,
+  ToggleState,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { useAssetData } from '../api';
-import { assetCategoryListItemsToCsv } from '../utils';
+import { assetCatalogueItemsListToCsv } from '../utils';
 
-export const AppBarButtonsComponent = () => {
+export const AppBarButtonsComponent = ({
+  importModalController,
+}: {
+  importModalController: ToggleState;
+}) => {
+  const isCentralServer = useIsCentralServerApi();
   const { success, error } = useNotification();
   const t = useTranslation(['catalogue']);
   const { fetchAsync, isLoading } = useAssetData.document.listAll();
@@ -25,7 +34,7 @@ export const AppBarButtonsComponent = () => {
       return;
     }
 
-    const csv = assetCategoryListItemsToCsv(data.nodes, t);
+    const csv = assetCatalogueItemsListToCsv(data.nodes, t);
     FileUtils.exportCSV(csv, t('filename.asset-categories'));
     success(t('success'))();
   };
@@ -33,6 +42,13 @@ export const AppBarButtonsComponent = () => {
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
+        {isCentralServer && (
+          <ButtonWithIcon
+            Icon={<UploadIcon />}
+            label={t('button.import')}
+            onClick={importModalController.toggleOn}
+          />
+        )}
         <LoadingButton
           startIcon={<DownloadIcon />}
           isLoading={isLoading}

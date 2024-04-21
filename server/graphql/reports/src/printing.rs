@@ -84,11 +84,18 @@ pub async fn print_report(
             }))
         }
     };
-    let query = resolved_report.query.clone();
+
     // fetch data required for the report
-    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone(), sort)
-        .await
-        .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
+    let result = fetch_data(
+        ctx,
+        &resolved_report.queries,
+        &store_id,
+        data_id,
+        arguments.clone(),
+        sort,
+    )
+    .await
+    .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
     let report_data = match result {
         FetchResult::Data(data) => data,
         FetchResult::Error(errors) => {
@@ -154,12 +161,18 @@ pub async fn print_report_definition(
             }))
         }
     };
-    let query = resolved_report.query.clone();
 
     // fetch data required for the report
-    let result = fetch_data(ctx, query, &store_id, data_id, arguments.clone(), None)
-        .await
-        .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
+    let result = fetch_data(
+        ctx,
+        &resolved_report.queries,
+        &store_id,
+        data_id,
+        arguments.clone(),
+        None,
+    )
+    .await
+    .map_err(|err| StandardGraphqlError::InternalError(format!("{:#?}", err)).extend())?;
     let report_data = match result {
         FetchResult::Data(data) => data,
         FetchResult::Error(errors) => {
@@ -199,9 +212,9 @@ enum FetchResult {
 /// * `query_variables` Some variables that came with the query
 fn query_variables(
     store_id: &str,
-    data_id: Option<String>,
-    arguments: Option<serde_json::Value>,
-    sort: Option<PrintReportSort>,
+    data_id: &Option<String>,
+    arguments: &Option<serde_json::Value>,
+    sort: &Option<PrintReportSort>,
     query_variables: &Option<serde_json::Value>,
 ) -> serde_json::Map<String, serde_json::Value> {
     let mut variables = match query_variables {
@@ -217,13 +230,16 @@ fn query_variables(
     };
 
     if let Some(data_id) = data_id {
-        variables.insert("dataId".to_string(), serde_json::Value::String(data_id));
+        variables.insert(
+            "dataId".to_string(),
+            serde_json::Value::String(data_id.clone()),
+        );
     }
     // allow the arguments to overwrite the dataId but not the storeId (to reduce the attack
     // vector)
     if let Some(serde_json::Value::Object(arguments)) = arguments {
         for (key, value) in arguments {
-            variables[&key] = value;
+            variables.insert(key.clone(), value.clone());
         }
     };
 
@@ -251,58 +267,81 @@ fn query_variables(
 
 async fn fetch_data(
     ctx: &Context<'_>,
-    query: ResolvedReportQuery,
+    queries: &Vec<ResolvedReportQuery>,
     store_id: &str,
     data_id: Option<String>,
     arguments: Option<serde_json::Value>,
     sort: Option<PrintReportSort>,
 ) -> anyhow::Result<FetchResult> {
-    match query {
-        ResolvedReportQuery::SQLQuery(sql) => {
-            let variables = query_variables(store_id, data_id, arguments, sort, &None);
-            fetch_sql_data(ctx, sql, variables)
-        }
-        ResolvedReportQuery::GraphQlQuery(gql) => {
-            let variables = query_variables(store_id, data_id, arguments, sort, &gql.variables);
-            fetch_graphq_data(ctx, gql, variables).await
-        }
+    let graphql_query: Vec<_> = queries
+        .iter()
+        .filter(|query| matches!(query, ResolvedReportQuery::GraphQlQuery(_)))
+        .collect();
+    if graphql_query.len() > 1 {
+        return Err(anyhow::Error::msg("Only one GraphQL query supported"));
     }
+    let mut data = if let Some(ResolvedReportQuery::GraphQlQuery(gql)) = graphql_query.get(0) {
+        let variables = query_variables(store_id, &data_id, &arguments, &sort, &gql.variables);
+        let result = fetch_graphq_data(ctx, gql, variables).await?;
+        match result {
+            FetchResult::Data(serde_json::Value::Object(data)) => data,
+            FetchResult::Error(_) => return Ok(result),
+            _ => {
+                return Err(anyhow::Error::msg(
+                    "Unexpected GraphQL response type (object expected)",
+                ))
+            }
+        }
+    } else {
+        serde_json::Map::new()
+    };
+
+    for sql in queries.iter().filter_map(|query| match query {
+        ResolvedReportQuery::SQLQuery(sql) => Some(sql),
+        ResolvedReportQuery::GraphQlQuery(_) => None,
+    }) {
+        let variables = query_variables(store_id, &data_id, &arguments, &sort, &None);
+        let result = fetch_sql_data(ctx, sql, variables)?;
+        data.insert(sql.name.clone(), result);
+    }
+
+    Ok(FetchResult::Data(serde_json::Value::Object(data)))
 }
 
 #[cfg(not(feature = "postgres"))]
 fn fetch_sql_data(
     ctx: &Context<'_>,
-    query: SQLQuery,
+    query: &SQLQuery,
     variables: serde_json::Map<String, serde_json::Value>,
-) -> anyhow::Result<FetchResult> {
+) -> anyhow::Result<serde_json::Value> {
     let data = query_json(
         &ctx.get_settings().database,
         &query.query_sqlite,
         &variables,
     )?;
-    Ok(FetchResult::Data(serde_json::Value::Array(data)))
+    Ok(serde_json::Value::Array(data))
 }
 
 #[cfg(feature = "postgres")]
 fn fetch_sql_data(
     ctx: &Context<'_>,
-    query: SQLQuery,
+    query: &SQLQuery,
     variables: serde_json::Map<String, serde_json::Value>,
-) -> anyhow::Result<FetchResult> {
+) -> anyhow::Result<serde_json::Value> {
     let connection = ctx.get_connection_manager().connection()?;
     let data = query_json(&connection, &query.query_postgres, &variables)?;
-    Ok(FetchResult::Data(serde_json::Value::Array(data)))
+    Ok(serde_json::Value::Array(data))
 }
 
 async fn fetch_graphq_data(
     ctx: &Context<'_>,
-    query: GraphQlQuery,
+    query: &GraphQlQuery,
     variables: serde_json::Map<String, serde_json::Value>,
 ) -> anyhow::Result<FetchResult> {
     let variables = serde_json::from_value(serde_json::Value::Object(variables))?;
     let user_data = ctx.data_unchecked::<RequestUserData>().clone();
     let self_requester = ctx.self_request().unwrap();
-    let request = Request::new(query.query).variables(variables);
+    let request = Request::new(query.query.clone()).variables(variables);
     let response = self_requester.call(request, user_data).await;
     if !response.errors.is_empty() {
         return Ok(FetchResult::Error(serde_json::to_value(&response.errors)?));
@@ -327,6 +366,9 @@ fn map_error(error: ReportError) -> Result<PrintReportErrorInterface> {
         ReportError::QueryError(_) => StandardGraphqlError::InternalError(formatted_error),
         ReportError::DocGenerationError(_) => StandardGraphqlError::InternalError(formatted_error),
         ReportError::HTMLToPDFError(_) => StandardGraphqlError::InternalError(formatted_error),
+        ReportError::MultipleGraphqlQueriesNotAllowed => {
+            StandardGraphqlError::BadUserInput(formatted_error)
+        }
     };
 
     Err(graphql_error.extend())

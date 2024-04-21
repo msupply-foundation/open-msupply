@@ -1,3 +1,9 @@
+use crate::service_provider::ServiceContext;
+
+use self::delete::{delete_asset_catalogue_item, DeleteAssetCatalogueItemError};
+use self::insert::{
+    insert_asset_catalogue_item, InsertAssetCatalogueItem, InsertAssetCatalogueItemError,
+};
 use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
 use self::query_category::{get_asset_categories, get_asset_category};
 use self::query_class::{get_asset_class, get_asset_classes};
@@ -19,6 +25,8 @@ use repository::{
     PaginationOption, StorageConnection,
 };
 
+pub mod delete;
+pub mod insert;
 pub mod query_catalogue_item;
 pub mod query_category;
 pub mod query_class;
@@ -94,6 +102,22 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         id: String,
     ) -> Result<Option<AssetTypeRow>, RepositoryError> {
         get_asset_type(connection, id)
+    }
+
+    fn insert_asset_catalogue_item(
+        &self,
+        ctx: &ServiceContext,
+        item: InsertAssetCatalogueItem,
+    ) -> Result<AssetCatalogueItemRow, InsertAssetCatalogueItemError> {
+        insert_asset_catalogue_item(ctx, item)
+    }
+
+    fn delete_asset_catalogue_item(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<String, DeleteAssetCatalogueItemError> {
+        delete_asset_catalogue_item(ctx, id)
     }
 }
 

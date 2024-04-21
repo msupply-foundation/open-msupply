@@ -386,7 +386,7 @@ const TRANS_LINE_OM_UNSET_TAX_FIELDS: (&str, &str) = (
         "manufacturer_ID": "",
         "medicine_administrator_ID": "",
         "note": "every FOUR to SIX hours when necessary ",
-        "optionID": "",
+        "optionID": "0",
         "order_lines_ID": "",
         "pack_inners_in_outer": 0,
         "pack_size": 5,

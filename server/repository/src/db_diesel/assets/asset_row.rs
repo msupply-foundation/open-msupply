@@ -104,7 +104,7 @@ impl<'a> AssetRowRepository<'a> {
             record_id: asset_id,
             row_action: action,
             store_id: row.map(|r| r.store_id).unwrap_or(None),
-            name_link_id: None,
+            ..Default::default()
         };
         ChangelogRepository::new(&self.connection).insert(&row)
     }

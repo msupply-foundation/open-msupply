@@ -52,6 +52,7 @@ pub fn query_json(
     for (i, param) in used_params.iter().enumerate() {
         sql = sql.replace(&param.0, &format!("${}", i + 1));
     }
+
     // Create the string containing all the parameter values
     let param_values = used_params
         .iter()
@@ -125,7 +126,7 @@ pub fn query_json(
         let Some(param) = statement.parameter_name(p) else {
             continue;
         };
-        // remove trailing ":"
+        // remove trailing "$"
         let param_name = &param[1..];
         let Some(param) = parameters.get(param_name) else {
             return Err(RepositoryError::DBError {

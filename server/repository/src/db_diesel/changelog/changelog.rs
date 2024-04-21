@@ -48,9 +48,10 @@ sql_function!(
     fn last_insert_rowid() -> BigInt
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ChangelogAction {
+    #[default]
     Upsert,
     Delete,
 }
@@ -86,6 +87,8 @@ pub enum ChangelogTableName {
     AssetCategory,
     AssetType,
     AssetCatalogueItem,
+    AssetCatalogueItemProperty,
+    AssetCatalogueProperty,
     #[default]
     SyncFileReference,
     Asset,
@@ -136,11 +139,13 @@ impl ChangelogTableName {
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Insertable)]
+#[derive(Debug, PartialEq, Insertable, Default)]
 #[diesel(table_name = changelog)]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,

@@ -1,5 +1,6 @@
 import React, { FC } from 'react';
 import {
+  AdjustmentTypeInput,
   Autocomplete,
   BasicTextInput,
   Box,
@@ -12,12 +13,6 @@ import {
   InventoryAdjustmentReasonRowFragment,
 } from '../api';
 
-export enum Adjustment {
-  Reduction,
-  Addition,
-  None,
-}
-
 interface InventoryAdjustmentReasonSearchInputProps {
   value: InventoryAdjustmentReasonRowFragment | null;
   width?: number | string;
@@ -25,30 +20,38 @@ interface InventoryAdjustmentReasonSearchInputProps {
     inventoryAdjustmentReason: InventoryAdjustmentReasonRowFragment | null
   ) => void;
   autoFocus?: boolean;
-  adjustment: Adjustment;
+  adjustmentType: AdjustmentTypeInput;
   isError?: boolean;
+  isDisabled?: boolean;
 }
 
 export const InventoryAdjustmentReasonSearchInput: FC<
   InventoryAdjustmentReasonSearchInputProps
-> = ({ value, width, onChange, autoFocus = false, adjustment, isError }) => {
+> = ({
+  value,
+  width,
+  onChange,
+  autoFocus = false,
+  adjustmentType,
+  isError,
+  isDisabled,
+}) => {
   const { data, isLoading } =
     useInventoryAdjustmentReason.document.listAllActive();
-  const isRequired = data?.totalCount !== 0;
-  const isDisabled = adjustment === Adjustment.None || !isRequired;
   const reasonFilter = (reason: InventoryAdjustmentReasonRowFragment) => {
-    if (adjustment === Adjustment.None) return false;
-    if (adjustment === Adjustment.Addition)
+    if (adjustmentType === AdjustmentTypeInput.Addition)
       return reason.type === InventoryAdjustmentReasonNodeType.Positive;
     return reason.type === InventoryAdjustmentReasonNodeType.Negative;
   };
   const reasons = (data?.nodes ?? []).filter(reasonFilter);
 
+  const isRequired = reasons.length !== 0;
+
   return (
     <Box display="flex" flexDirection="row" width={120}>
       <Autocomplete
         autoFocus={autoFocus}
-        disabled={isDisabled}
+        disabled={isDisabled || !isRequired}
         width={`${width}px`}
         clearable={false}
         value={
@@ -72,7 +75,7 @@ export const InventoryAdjustmentReasonSearchInput: FC<
               style: props.disabled ? { paddingLeft: 0 } : {},
               ...props.InputProps,
             }}
-            sx={{ width }}
+            sx={{ minWidth: width }}
             error={isError}
             required={isRequired}
           />
