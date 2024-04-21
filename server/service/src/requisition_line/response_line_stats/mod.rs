@@ -1,5 +1,5 @@
 use crate::service_provider::ServiceContext;
-use repository::{RepositoryError, RequisitionLine, RequisitionRowType, StorageConnection};
+use repository::{RepositoryError, RequisitionLine, RequisitionType, StorageConnection};
 
 mod response_line_stats;
 pub use self::response_line_stats::{
@@ -50,7 +50,7 @@ fn validate(
         return Err(OutError::RequisitionLineDoesNotBelongToCurrentStore);
     }
 
-    if requisition_line.requisition_row.r#type != RequisitionRowType::Response {
+    if requisition_line.requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
     }
 
@@ -74,7 +74,7 @@ mod test {
             mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        RequisitionLineRow, RequisitionRow, RequisitionRowStatus,
+        RequisitionLineRow, RequisitionRow, RequisitionStatus,
     };
     use util::inline_init;
 
@@ -126,8 +126,8 @@ mod test {
             r.requisition_number = 1;
             r.store_id = mock_store_a().id;
             r.name_link_id = "name_a".to_string();
-            r.r#type = RequisitionRowType::Response;
-            r.status = RequisitionRowStatus::New;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 3.0;
         })
@@ -160,8 +160,8 @@ mod test {
             r.requisition_number = 3;
             r.store_id = mock_store_a().id;
             r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionRowType::Response;
-            r.status = RequisitionRowStatus::New;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::New;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 6.0;
         })
@@ -182,8 +182,8 @@ mod test {
             r.requisition_number = 4;
             r.store_id = mock_store_a().id;
             r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionRowType::Request;
-            r.status = RequisitionRowStatus::Sent;
+            r.r#type = RequisitionType::Request;
+            r.status = RequisitionStatus::Sent;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 5.0;
         })
@@ -204,8 +204,8 @@ mod test {
             r.requisition_number = 4;
             r.store_id = mock_store_a().id;
             r.name_link_id = "name_b".to_string();
-            r.r#type = RequisitionRowType::Request;
-            r.status = RequisitionRowStatus::New;
+            r.r#type = RequisitionType::Request;
+            r.status = RequisitionStatus::New;
             r.created_datetime = Utc::now().naive_utc();
             r.max_months_of_stock = 5.0;
         })

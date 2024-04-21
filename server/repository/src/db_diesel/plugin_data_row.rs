@@ -61,7 +61,7 @@ impl<'a> PluginDataRowRepository<'a> {
             .on_conflict(plugin_data::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

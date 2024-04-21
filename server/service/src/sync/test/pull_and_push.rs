@@ -13,7 +13,7 @@ use crate::sync::{
 };
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
-    test_db, ChangelogRepository, KeyValueStoreRow, KeyValueType, SyncBufferRow,
+    test_db, ChangelogRepository, KeyType, KeyValueStoreRow, SyncBufferRow,
     SyncBufferRowRepository,
 };
 use util::inline_init;
@@ -36,7 +36,7 @@ async fn test_sync_pull_and_push() {
         MockDataInserts::all(),
         inline_init(|r: &mut MockData| {
             r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                r.id = KeyValueType::SettingsSyncSiteId;
+                r.id = KeyType::SettingsSyncSiteId;
                 // This is needed for invoice line, since we check if it belongs to current site in translator
                 r.value_int = Some(mock_store_b().site_id);
             })]

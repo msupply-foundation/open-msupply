@@ -1,6 +1,6 @@
 use async_graphql::*;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
-use repository::SyncLogRowErrorCode;
+use repository::SyncApiErrorCode;
 use service::sync::{
     api::{SyncApiError, SyncApiErrorVariantV5, SyncApiV5CreatingError, SyncErrorCodeV5},
     site_info::RequestAndSetSiteInfoError,
@@ -109,7 +109,7 @@ impl SyncErrorNode {
             Some(code) => code,
         };
 
-        use SyncLogRowErrorCode as from;
+        use SyncApiErrorCode as from;
         use Variant as to;
         let variant = match code {
             from::SiteNameNotFound => to::SiteNameNotFound,
@@ -187,7 +187,7 @@ mod test {
                     "from_sync_log_error_connection" => {
                         SyncErrorNode::from_sync_log_error(SyncLogError {
                             message: "n/a".to_string(),
-                            code: Some(SyncLogRowErrorCode::ConnectionError),
+                            code: Some(SyncApiErrorCode::ConnectionError),
                         })
                     }
                     "from_sync_log_error_unknown" => {

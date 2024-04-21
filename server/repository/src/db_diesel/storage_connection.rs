@@ -7,6 +7,7 @@ use crate::repository_error::RepositoryError;
 use diesel::{
     connection::{AnsiTransactionManager, SimpleConnection, TransactionManager},
     r2d2::{ConnectionManager, Pool},
+    Connection,
 };
 use log::error;
 
@@ -144,11 +145,19 @@ impl StorageConnection {
             // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
             let mut guard = self.inner.lock().unwrap();
             let con: &mut DBBackendConnection = &mut guard.connection;
+            let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
+                diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
+                diesel::connection::TransactionManagerStatus::InError => panic!("TEST"),
+            };
             AnsiTransactionManager::begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
         } else {
             let mut guard = self.inner.lock().unwrap();
             let con: &mut DBBackendConnection = &mut guard.connection;
-            AnsiTransactionManager::begin_transaction_sql(con, "BEGIN")
+            let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
+                diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
+                diesel::connection::TransactionManagerStatus::InError => panic!("TEST2"),
+            };
+            AnsiTransactionManager::begin_transaction(con)
         }
         .map_err(|e| map_begin_transaction_error(e, current_level))?;
 

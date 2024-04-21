@@ -4,10 +4,10 @@ use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
 use crate::ChangeLogInsertRow;
-use crate::ChangelogAction;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
 use crate::RepositoryError;
+use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
@@ -36,11 +36,11 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
-#[table_name = "asset_catalogue_property"]
-#[changeset_options(treat_none_as_null = "true")]
+#[diesel(table_name = asset_catalogue_property)]
+#[diesel(treat_none_as_null = true)]
 pub struct AssetCataloguePropertyRow {
     pub id: String,
-    #[column_name = "asset_category_id"]
+    #[diesel(column_name = asset_category_id)]
     pub category_id: String,
     pub name: String,
     pub value_type: PropertyValueType,
@@ -78,7 +78,7 @@ impl<'a> AssetCataloguePropertyRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_catalogue_property_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -89,7 +89,7 @@ impl<'a> AssetCataloguePropertyRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_catalogue_property)
             .values(asset_catalogue_property_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -100,14 +100,14 @@ impl<'a> AssetCataloguePropertyRowRepository<'a> {
         self._upsert_one(asset_catalogue_property_row)?;
         self.insert_changelog(
             asset_catalogue_property_row.id.to_owned(),
-            ChangelogAction::Upsert,
+            RowActionType::Upsert,
         )
     }
 
     fn insert_changelog(
         &self,
         asset_catalogue_property_row: String,
-        action: ChangelogAction,
+        action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetCatalogueProperty,
@@ -121,7 +121,7 @@ impl<'a> AssetCataloguePropertyRowRepository<'a> {
     }
 
     pub fn find_all(&self) -> Result<Vec<AssetCataloguePropertyRow>, RepositoryError> {
-        let result = asset_catalogue_property.load(&self.connection.connection)?;
+        let result = asset_catalogue_property.load(self.connection.lock().connection())?;
         Ok(result)
     }
 
@@ -131,7 +131,7 @@ impl<'a> AssetCataloguePropertyRowRepository<'a> {
     ) -> Result<Option<AssetCataloguePropertyRow>, RepositoryError> {
         let result = asset_catalogue_property
             .filter(id.eq(asset_catalogue_property_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -139,7 +139,7 @@ impl<'a> AssetCataloguePropertyRowRepository<'a> {
     pub fn delete(&self, asset_catalogue_property_id: &str) -> Result<(), RepositoryError> {
         diesel::delete(asset_catalogue_property)
             .filter(id.eq(asset_catalogue_property_id))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 }

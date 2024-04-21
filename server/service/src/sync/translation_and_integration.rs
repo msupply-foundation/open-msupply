@@ -50,11 +50,11 @@ impl<'a> TranslationAndIntegration<'a> {
             let source_site_id = sync_record.source_site_id.clone();
 
             let mut translation_result = match sync_record.action {
-                SyncBufferAction::Upsert => translator
+                SyncAction::Upsert => translator
                     .try_translate_from_upsert_sync_record(self.connection, sync_record)?,
-                SyncBufferAction::Delete => translator
+                SyncAction::Delete => translator
                     .try_translate_from_delete_sync_record(self.connection, sync_record)?,
-                SyncBufferAction::Merge => {
+                SyncAction::Merge => {
                     translator.try_translate_from_merge_sync_record(self.connection, sync_record)?
                 }
             };

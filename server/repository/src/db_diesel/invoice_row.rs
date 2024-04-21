@@ -23,8 +23,8 @@ table! {
         store_id -> Text,
         user_id -> Nullable<Text>,
         invoice_number -> BigInt,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_row::InvoiceRowTypeMapping,
-        status -> crate::db_diesel::invoice_row::InvoiceRowStatusMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_row::InvoiceTypeMapping,
+        status -> crate::db_diesel::invoice_row::InvoiceStatusMapping,
         on_hold -> Bool,
         comment -> Nullable<Text>,
         their_reference -> Nullable<Text>,
@@ -57,11 +57,11 @@ allow_tables_to_appear_in_same_query!(invoice, name_link);
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InvoiceRowType {
+pub enum InvoiceType {
     OutboundShipment,
     InboundShipment,
     Prescription,
-    // Initially we had single inventory adjustment InvoiceRowType, this was changed to two separate types
+    // Initially we had single inventory adjustment InvoiceType, this was changed to two separate types
     // central server may have old inventory adjustment type, thus map it to inventory additions
     #[serde(alias = "INVENTORY_ADJUSTMENT")]
     InventoryAddition,
@@ -74,7 +74,7 @@ pub enum InvoiceRowType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InvoiceRowStatus {
+pub enum InvoiceStatus {
     New,
     Allocated,
     Picked,
@@ -94,8 +94,8 @@ pub struct InvoiceRow {
     pub user_id: Option<String>,
     pub invoice_number: i64,
     #[diesel(column_name = type_)]
-    pub r#type: InvoiceRowType,
-    pub status: InvoiceRowStatus,
+    pub r#type: InvoiceType,
+    pub status: InvoiceStatus,
     pub on_hold: bool,
     pub comment: Option<String>,
     pub their_reference: Option<String>,
@@ -120,8 +120,8 @@ impl Default for InvoiceRow {
     fn default() -> Self {
         Self {
             created_datetime: Defaults::naive_date_time(),
-            r#type: InvoiceRowType::InboundShipment,
-            status: InvoiceRowStatus::New,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
             // Defaults
             id: Default::default(),
             user_id: Default::default(),
@@ -212,7 +212,7 @@ impl<'a> InvoiceRowRepository<'a> {
 
     pub fn find_max_invoice_number(
         &self,
-        r#type: InvoiceRowType,
+        r#type: InvoiceType,
         store: &str,
     ) -> Result<Option<i64>, RepositoryError> {
         let result = invoice

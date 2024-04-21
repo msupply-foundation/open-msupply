@@ -8,7 +8,7 @@ use crate::{
     service_provider::ServiceContext,
 };
 use repository::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionStatus, RequisitionType},
     ActivityLogType, EqualFilter, RepositoryError, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionRowRepository, StorageConnection,
 };
@@ -94,11 +94,11 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.status != RequisitionRowStatus::Draft {
+    if requisition_row.status != RequisitionStatus::Draft {
         return Err(OutError::CannotEditRequisition);
     }
 
-    if requisition_row.r#type != RequisitionRowType::Request {
+    if requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
     }
     // Note that lines are not deleted when an invoice is deleted, due to issues with batch deletes.

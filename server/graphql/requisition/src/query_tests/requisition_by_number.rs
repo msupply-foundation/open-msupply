@@ -3,7 +3,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::{mock_name_a, mock_request_draft_requisition, MockDataInserts},
-        requisition_row::RequisitionRowType,
+        requisition_row::RequisitionType,
         RepositoryError, Requisition, StorageConnectionManager,
     };
     use serde_json::json;
@@ -16,9 +16,8 @@ mod test {
 
     use crate::RequisitionQueries;
 
-    type GetRequisitionByNumber = dyn Fn(u32, RequisitionRowType) -> Result<Option<Requisition>, RepositoryError>
-        + Sync
-        + Send;
+    type GetRequisitionByNumber =
+        dyn Fn(u32, RequisitionType) -> Result<Option<Requisition>, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<GetRequisitionByNumber>);
 
@@ -28,7 +27,7 @@ mod test {
             _: &ServiceContext,
             _: &str,
             requisition_number: u32,
-            r#type: RequisitionRowType,
+            r#type: RequisitionType,
         ) -> Result<Option<Requisition>, RepositoryError> {
             self.0(requisition_number, r#type)
         }

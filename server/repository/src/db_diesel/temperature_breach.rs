@@ -4,7 +4,7 @@ use super::{
     temperature_breach_row::{
         temperature_breach, temperature_breach::dsl as temperature_breach_dsl,
     },
-    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachRowType,
+    DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachType,
 };
 use diesel::prelude::*;
 use util::inline_init;
@@ -26,7 +26,7 @@ pub struct TemperatureBreach {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
+    pub r#type: Option<EqualFilter<TemperatureBreachType>>,
     pub store_id: Option<EqualFilter<String>>,
     pub start_datetime: Option<DatetimeFilter>,
     pub end_datetime: Option<DatetimeFilter>,
@@ -35,8 +35,8 @@ pub struct TemperatureBreachFilter {
     pub location: Option<LocationFilter>,
 }
 
-impl EqualFilter<TemperatureBreachRowType> {
-    pub fn equal_to_breach_type(value: &TemperatureBreachRowType) -> Self {
+impl EqualFilter<TemperatureBreachType> {
+    pub fn equal_to_breach_type(value: &TemperatureBreachType) -> Self {
         inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
     }
 }
@@ -154,7 +154,7 @@ impl<'a> TemperatureBreachRepository<'a> {
 
 type BoxedTemperatureBreachQuery = temperature_breach::BoxedQuery<'static, DBType>;
 
-impl TemperatureBreachRowType {
+impl TemperatureBreachType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -204,7 +204,7 @@ impl TemperatureBreachFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachType>) -> Self {
         self.r#type = Some(filter);
         self
     }

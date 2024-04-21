@@ -1,6 +1,4 @@
-use repository::{
-    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowType,
-};
+use repository::{EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType};
 use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
 use util::uuid::uuid;
 
@@ -14,7 +12,7 @@ pub(crate) fn generate_inbound_shipment_lines(
             .invoice_id(EqualFilter::equal_to(&source_invoice.invoice_row.id))
             // In mSupply you can finalise customer invoice with placeholder lines, we should remove them
             // when duplicating lines from outbound shipment to inbound shipment
-            .r#type(InvoiceLineRowType::UnallocatedStock.not_equal_to()),
+            .r#type(InvoiceLineType::UnallocatedStock.not_equal_to()),
     )?;
 
     let inbound_lines = outbound_lines
@@ -61,8 +59,8 @@ pub(crate) fn generate_inbound_shipment_lines(
                         * (1.0 + tax.unwrap_or(0.0) / 100.0),
                     cost_price_per_pack,
                     r#type: match r#type {
-                        InvoiceLineRowType::Service => InvoiceLineRowType::Service,
-                        _ => InvoiceLineRowType::StockIn,
+                        InvoiceLineType::Service => InvoiceLineType::Service,
+                        _ => InvoiceLineType::StockIn,
                     },
                     number_of_packs,
                     note,

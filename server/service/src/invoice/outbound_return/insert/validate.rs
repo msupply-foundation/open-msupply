@@ -1,4 +1,4 @@
-use repository::{InvoiceRow, InvoiceRowStatus, InvoiceRowType, Name, StorageConnection};
+use repository::{InvoiceRow, InvoiceStatus, InvoiceType, Name, StorageConnection};
 
 use crate::invoice::{
     check_invoice_does_not_exists, check_invoice_exists, check_invoice_type, check_store,
@@ -26,7 +26,7 @@ pub fn validate(
         if !check_store(&inbound_shipment, store_id) {
             return Err(InboundShipmentDoesNotBelongToCurrentStore);
         }
-        if !check_invoice_type(&inbound_shipment, InvoiceRowType::InboundShipment) {
+        if !check_invoice_type(&inbound_shipment, InvoiceType::InboundShipment) {
             return Err(OriginalInvoiceNotAnInboundShipment);
         }
         if !check_inbound_shipment_is_returnable(&inbound_shipment) {
@@ -52,7 +52,7 @@ pub fn validate(
 
 fn check_inbound_shipment_is_returnable(inbound_shipment: &InvoiceRow) -> bool {
     match inbound_shipment.status {
-        InvoiceRowStatus::Delivered | InvoiceRowStatus::Verified => true,
+        InvoiceStatus::Delivered | InvoiceStatus::Verified => true,
         _ => false,
     }
 }

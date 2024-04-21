@@ -2,7 +2,7 @@ use crate::sync::{
     sync_serde::empty_str_as_option_string, translations::form_schema::FormSchemaTranslation,
 };
 use repository::{
-    ReportContext, ReportRow, ReportRowDelete, ReportType, StorageConnection, SyncBufferRow,
+    ContextType, ReportRow, ReportRowDelete, ReportType, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -96,13 +96,13 @@ impl SyncTranslation for ReportTranslation {
             LegacyReportEditor::Others => return Ok(PullTranslateResult::NotMatched),
         };
         let context = match context {
-            LegacyReportContext::CustomerInvoice => ReportContext::OutboundShipment,
-            LegacyReportContext::SupplierInvoice => ReportContext::InboundShipment,
-            LegacyReportContext::Requisition => ReportContext::Requisition,
-            LegacyReportContext::Stocktake => ReportContext::Stocktake,
-            LegacyReportContext::Patient => ReportContext::Patient,
-            LegacyReportContext::Dispensary => ReportContext::Dispensary,
-            LegacyReportContext::Repack => ReportContext::Repack,
+            LegacyReportContext::CustomerInvoice => ContextType::OutboundShipment,
+            LegacyReportContext::SupplierInvoice => ContextType::InboundShipment,
+            LegacyReportContext::Requisition => ContextType::Requisition,
+            LegacyReportContext::Stocktake => ContextType::Stocktake,
+            LegacyReportContext::Patient => ContextType::Patient,
+            LegacyReportContext::Dispensary => ContextType::Dispensary,
+            LegacyReportContext::Repack => ContextType::Repack,
             LegacyReportContext::Others => {
                 return Ok(PullTranslateResult::Ignored(
                     "Unknown report context".to_string(),

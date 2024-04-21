@@ -96,7 +96,7 @@ impl<'a> SensorRowRepository<'a> {
             .on_conflict(sensor_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

@@ -1,6 +1,5 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, RepositoryError,
-    StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, RepositoryError, StorageConnection,
 };
 
 use crate::{
@@ -50,7 +49,7 @@ fn validate(
     let invoice_line =
         check_line_row_exists_option(connection, &input.id)?.ok_or(OutError::LineDoesNotExist)?;
 
-    if invoice_line.r#type != InvoiceLineRowType::UnallocatedStock {
+    if invoice_line.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
     }
 

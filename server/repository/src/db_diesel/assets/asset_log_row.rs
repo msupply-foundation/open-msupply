@@ -2,11 +2,11 @@ use super::asset_log_row::asset_log::dsl::*;
 
 use crate::asset_row::AssetRowRepository;
 use crate::ChangeLogInsertRow;
-use crate::ChangelogAction;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
 use crate::EqualFilter;
 use crate::RepositoryError;
+use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
@@ -131,7 +131,7 @@ impl<'a> AssetLogRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_log_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -148,7 +148,7 @@ impl<'a> AssetLogRowRepository<'a> {
         // Return the changelog id
         self.insert_changelog(
             asset_log_row.id.to_owned(),
-            ChangelogAction::Upsert,
+            RowActionType::Upsert,
             Some(asset_log_row.clone()),
         )
     }
@@ -156,7 +156,7 @@ impl<'a> AssetLogRowRepository<'a> {
     fn insert_changelog(
         &self,
         asset_log_id: String,
-        action: ChangelogAction,
+        action: RowActionType,
         row: Option<AssetLogRow>,
     ) -> Result<i64, RepositoryError> {
         let store_id = match &row {

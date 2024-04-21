@@ -99,6 +99,13 @@ macro_rules! temperature_chart_column {
                 self.eq(__diesel_internal_rhs)
             }
         }
+
+        #[cfg(feature = "postgres")]
+        impl AppearsInFromClause<diesel::query_builder::Only<super::table>> for $column_name {
+            type Count = Once;
+        }
+        #[cfg(feature = "postgres")]
+        impl SelectableExpression<diesel::query_builder::Only<super::table>> for $column_name {}
     };
 }
 
@@ -253,6 +260,15 @@ pub mod temperature_chart {
 
     impl AppearsInFromClause<table> for NoFromClause {
         type Count = Never;
+    }
+
+    #[cfg(feature = "postgres")]
+    impl AppearsInFromClause<diesel::query_builder::Only<table>> for table {
+        type Count = Once;
+    }
+    #[cfg(feature = "postgres")]
+    impl AppearsInFromClause<table> for diesel::query_builder::Only<table> {
+        type Count = Once;
     }
 
     #[doc = r" Contains all of the columns of this table"]

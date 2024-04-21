@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use repository::{
-    EqualFilter, Pagination, Permission, RepositoryError, UserPermissionFilter,
+    EqualFilter, Pagination, PermissionType, RepositoryError, UserPermissionFilter,
     UserPermissionRepository, UserPermissionRow,
 };
 use util::{constants::PATIENT_CONTEXT_ID, uuid::uuid};
@@ -15,10 +15,10 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub enum PermissionDSL {
-    HasPermission(Permission),
+    HasPermission(PermissionType),
     /// The matching permission context for the Permission will be extracted and added to the user's
     /// capabilities.
-    HasDynamicPermission(Permission),
+    HasDynamicPermission(PermissionType),
     NoPermissionRequired,
     HasStoreAccess,
     And(Vec<PermissionDSL>),
@@ -127,7 +127,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     map.insert(Resource::RouteMe, PermissionDSL::NoPermissionRequired);
     map.insert(
         Resource::ServerAdmin,
-        PermissionDSL::HasPermission(Permission::ServerAdmin),
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
     );
 
     // name
@@ -139,7 +139,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateLocation,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::LocationMutate),
+            PermissionDSL::HasPermission(PermissionType::LocationMutate),
         ]),
     );
 
@@ -148,14 +148,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QuerySensor,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorQuery),
+            PermissionDSL::HasPermission(PermissionType::SensorQuery),
         ]),
     );
     map.insert(
         Resource::MutateSensor,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorMutate),
+            PermissionDSL::HasPermission(PermissionType::SensorMutate),
         ]),
     );
 
@@ -164,7 +164,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryTemperatureBreach,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorQuery),
+            PermissionDSL::HasPermission(PermissionType::SensorQuery),
         ]),
     );
 
@@ -172,7 +172,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateTemperatureBreach,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorMutate),
+            PermissionDSL::HasPermission(PermissionType::SensorMutate),
         ]),
     );
 
@@ -181,7 +181,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryTemperatureLog,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::SensorQuery),
+            PermissionDSL::HasPermission(PermissionType::SensorQuery),
         ]),
     );
 
@@ -196,14 +196,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateItems,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::ItemMutate),
+            PermissionDSL::HasPermission(PermissionType::ItemMutate),
         ]),
     );
     map.insert(
         Resource::MutateItemNamesCodesAndUnits,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::ItemNamesCodesAndUnitsMutate),
+            PermissionDSL::HasPermission(PermissionType::ItemNamesCodesAndUnitsMutate),
         ]),
     );
 
@@ -212,35 +212,35 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::StockCount,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StockLineQuery),
+            PermissionDSL::HasPermission(PermissionType::StockLineQuery),
         ]),
     );
     map.insert(
         Resource::QueryStockLine,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StockLineQuery),
+            PermissionDSL::HasPermission(PermissionType::StockLineQuery),
         ]),
     );
     map.insert(
         Resource::MutateStockLine,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StockLineMutate),
+            PermissionDSL::HasPermission(PermissionType::StockLineMutate),
         ]),
     );
     map.insert(
         Resource::MutateInventoryAdjustment,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::InventoryAdjustmentMutate),
+            PermissionDSL::HasPermission(PermissionType::InventoryAdjustmentMutate),
         ]),
     );
     map.insert(
         Resource::CreateRepack,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::CreateRepack),
+            PermissionDSL::HasPermission(PermissionType::CreateRepack),
         ]),
     );
     // stocktake
@@ -248,14 +248,14 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryStocktake,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StocktakeQuery),
+            PermissionDSL::HasPermission(PermissionType::StocktakeQuery),
         ]),
     );
     map.insert(
         Resource::MutateStocktake,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]),
     );
     // stock take line
@@ -263,21 +263,21 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::InsertStocktakeLine,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]),
     );
     map.insert(
         Resource::UpdateStocktakeLine,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]),
     );
     map.insert(
         Resource::DeleteStocktakeLine,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]),
     );
     // requisition
@@ -285,35 +285,35 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryRequisition,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::RequisitionQuery),
+            PermissionDSL::HasPermission(PermissionType::RequisitionQuery),
         ]),
     );
     map.insert(
         Resource::MutateRequisition,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::RequisitionMutate),
+            PermissionDSL::HasPermission(PermissionType::RequisitionMutate),
         ]),
     );
     map.insert(
         Resource::RequisitionChart,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::RequisitionQuery),
+            PermissionDSL::HasPermission(PermissionType::RequisitionQuery),
         ]),
     );
     map.insert(
         Resource::RequisitionStats,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::RequisitionQuery),
+            PermissionDSL::HasPermission(PermissionType::RequisitionQuery),
         ]),
     );
     map.insert(
         Resource::RequisitionSend,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::RequisitionSend),
+            PermissionDSL::HasPermission(PermissionType::RequisitionSend),
         ]),
     );
     // invoice
@@ -321,19 +321,19 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryInvoice,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::OutboundShipmentQuery),
-            PermissionDSL::HasPermission(Permission::InboundShipmentQuery),
-            PermissionDSL::HasPermission(Permission::PrescriptionQuery),
-            PermissionDSL::HasPermission(Permission::OutboundReturnQuery),
-            PermissionDSL::HasPermission(Permission::InboundReturnQuery),
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
+            PermissionDSL::HasPermission(PermissionType::OutboundReturnQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundReturnQuery),
         ]),
     );
     map.insert(
         Resource::InvoiceCount,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::OutboundShipmentQuery),
-            PermissionDSL::HasPermission(Permission::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
         ]),
     );
     // outbound shipment
@@ -341,7 +341,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateOutboundShipment,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::OutboundShipmentMutate),
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentMutate),
         ]),
     );
     // inbound shipment
@@ -349,7 +349,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateInboundShipment,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::InboundShipmentMutate),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentMutate),
         ]),
     );
     // outbound return
@@ -357,7 +357,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateOutboundReturn,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::OutboundReturnMutate),
+            PermissionDSL::HasPermission(PermissionType::OutboundReturnMutate),
         ]),
     );
     // inbound return
@@ -365,7 +365,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutateInboundReturn,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::InboundReturnMutate),
+            PermissionDSL::HasPermission(PermissionType::InboundReturnMutate),
         ]),
     );
     // prescription
@@ -373,7 +373,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::MutatePrescription,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::PrescriptionMutate),
+            PermissionDSL::HasPermission(PermissionType::PrescriptionMutate),
         ]),
     );
 
@@ -382,7 +382,7 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::Report,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::Report),
+            PermissionDSL::HasPermission(PermissionType::Report),
         ]),
     );
     // report development
@@ -391,13 +391,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             // SQL reports can do raw queries, i.e. you need to be server admin
-            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
         ]),
     );
 
     map.insert(
         Resource::QueryLog,
-        PermissionDSL::HasPermission(Permission::LogQuery),
+        PermissionDSL::HasPermission(PermissionType::LogQuery),
     );
 
     map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);
@@ -405,22 +405,22 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
     // TODO add permissions from central
     map.insert(
         Resource::QueryDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+        PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
     );
     map.insert(
         Resource::MutateDocument,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+        PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
     );
     map.insert(
         Resource::QueryDocumentRegistry,
         PermissionDSL::And(vec![
-            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
             PermissionDSL::HasStoreAccess,
         ]),
     );
     map.insert(
         Resource::MutateDocumentRegistry,
-        PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+        PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
     );
     map.insert(
         Resource::QueryJsonSchema,
@@ -436,66 +436,66 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         Resource::QueryPatient,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::PatientQuery),
-            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+            PermissionDSL::HasPermission(PermissionType::PatientQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::MutatePatient,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasPermission(Permission::PatientMutate),
+            PermissionDSL::HasPermission(PermissionType::PatientMutate),
             // permission to read the related doc types when reading the mutated patient
-            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::QueryContactTrace,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::DocumentQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
         ]),
     );
     map.insert(
         Resource::MutateProgram,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
         ]),
     );
     map.insert(
         Resource::MutateEncounter,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
         ]),
     );
     map.insert(
         Resource::MutateContactTrace,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::DocumentMutate),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
         ]),
     );
     map.insert(
         Resource::ColdChainApi,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
-            PermissionDSL::HasDynamicPermission(Permission::ColdChainApi),
+            PermissionDSL::HasDynamicPermission(PermissionType::ColdChainApi),
         ]),
     );
 
@@ -514,15 +514,15 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
 
     map.insert(
         Resource::MutateAsset,
-        PermissionDSL::HasPermission(Permission::AssetMutate),
+        PermissionDSL::HasPermission(PermissionType::AssetMutate),
     );
     map.insert(
         Resource::MutateAssetCatalogueItem,
-        PermissionDSL::HasPermission(Permission::AssetCatalogueItemMutate),
+        PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
     );
     map.insert(
         Resource::QueryAsset,
-        PermissionDSL::HasPermission(Permission::AssetQuery),
+        PermissionDSL::HasPermission(PermissionType::AssetQuery),
     );
 
     map
@@ -688,7 +688,7 @@ fn validate_resource_permissions(
             };
             if user_permissions
                 .iter()
-                .any(|p| p.permission == Permission::StoreAccess)
+                .any(|p| p.permission == PermissionType::StoreAccess)
             {
                 return Ok(());
             }
@@ -781,25 +781,25 @@ impl AuthServiceTrait for AuthService {
         // permissions.
         if user_permissions
             .iter()
-            .any(|item| item.permission == Permission::PatientQuery)
+            .any(|item| item.permission == PermissionType::PatientQuery)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
                 user_id: context.user_id.clone(),
                 store_id: Some(context.store_id.clone()),
-                permission: Permission::DocumentQuery,
+                permission: PermissionType::DocumentQuery,
                 context_id: Some(PATIENT_CONTEXT_ID.to_string()),
             })
         }
         if user_permissions
             .iter()
-            .any(|item| item.permission == Permission::PatientMutate)
+            .any(|item| item.permission == PermissionType::PatientMutate)
         {
             user_permissions.push(UserPermissionRow {
                 id: uuid(),
                 user_id: context.user_id.clone(),
                 store_id: Some(context.store_id.clone()),
-                permission: Permission::DocumentMutate,
+                permission: PermissionType::DocumentMutate,
                 context_id: Some(PATIENT_CONTEXT_ID.to_string()),
             })
         }
@@ -855,7 +855,7 @@ impl From<RepositoryError> for AuthError {
 
 #[cfg(test)]
 mod validate_resource_permissions_test {
-    use repository::{Permission, UserPermissionRow};
+    use repository::{PermissionType, UserPermissionRow};
 
     use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
 
@@ -869,7 +869,7 @@ mod validate_resource_permissions_test {
             resource: Resource::MutateLocation,
             store_id: Some(store_id.to_string()),
         };
-        let required_permissions = PermissionDSL::HasPermission(Permission::ServerAdmin);
+        let required_permissions = PermissionDSL::HasPermission(PermissionType::ServerAdmin);
 
         //Ensure validation fails if user has no permissions
         let validation_result = validate_resource_permissions(
@@ -885,7 +885,7 @@ mod validate_resource_permissions_test {
         let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
             id: "dummy_id".to_string(),
             user_id: user_id.to_string(),
-            permission: Permission::ServerAdmin,
+            permission: PermissionType::ServerAdmin,
             store_id: None,
             context_id: None,
         }];
@@ -899,8 +899,9 @@ mod validate_resource_permissions_test {
         assert!(validation_result.is_ok());
 
         //Test DSL user has 1 out of any 1 permission - any(1 perm)
-        let required_permissions =
-            PermissionDSL::Any(vec![PermissionDSL::HasPermission(Permission::ServerAdmin)]);
+        let required_permissions = PermissionDSL::Any(vec![PermissionDSL::HasPermission(
+            PermissionType::ServerAdmin,
+        )]);
         let validation_result = validate_resource_permissions(
             user_id,
             &user_permissions,
@@ -912,8 +913,8 @@ mod validate_resource_permissions_test {
 
         //Test DSL user has 1 out of any 2 permissions - any(2 perm)
         let required_permissions = PermissionDSL::Any(vec![
-            PermissionDSL::HasPermission(Permission::ServerAdmin),
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]);
         let validation_result = validate_resource_permissions(
             user_id,
@@ -926,7 +927,7 @@ mod validate_resource_permissions_test {
 
         //Test DSL user has 0 out of any 1 permission - any(1 perm)
         let required_permissions = PermissionDSL::Any(vec![PermissionDSL::HasPermission(
-            Permission::StocktakeMutate,
+            PermissionType::StocktakeMutate,
         )]);
         let validation_result = validate_resource_permissions(
             user_id,
@@ -941,13 +942,13 @@ mod validate_resource_permissions_test {
         let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
             id: "dummy_id2".to_string(),
             user_id: user_id.to_string(),
-            permission: Permission::StocktakeMutate,
+            permission: PermissionType::StocktakeMutate,
             store_id: Some(store_id.to_string()),
             context_id: None,
         }];
         let required_permissions = PermissionDSL::And(vec![
-            PermissionDSL::HasPermission(Permission::ServerAdmin),
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]);
         let validation_result = validate_resource_permissions(
             user_id,
@@ -963,21 +964,21 @@ mod validate_resource_permissions_test {
             UserPermissionRow {
                 id: "dummy_id1".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::ServerAdmin,
+                permission: PermissionType::ServerAdmin,
                 store_id: None,
                 context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::StocktakeMutate,
+                permission: PermissionType::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
                 context_id: None,
             },
         ];
         let required_permissions = PermissionDSL::And(vec![
-            PermissionDSL::HasPermission(Permission::ServerAdmin),
-            PermissionDSL::HasPermission(Permission::StocktakeMutate),
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
         ]);
         let validation_result = validate_resource_permissions(
             user_id,
@@ -990,9 +991,9 @@ mod validate_resource_permissions_test {
 
         //Test DSL user has Any(1,And(1,2))
         let required_permissions = PermissionDSL::Any(vec![
-            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
             PermissionDSL::And(vec![
-                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
                 PermissionDSL::HasStoreAccess,
             ]),
         ]);
@@ -1000,14 +1001,14 @@ mod validate_resource_permissions_test {
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::StocktakeMutate,
+                permission: PermissionType::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
                 context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::StoreAccess,
+                permission: PermissionType::StoreAccess,
                 store_id: Some(store_id.to_string()),
                 context_id: None,
             },
@@ -1022,16 +1023,16 @@ mod validate_resource_permissions_test {
         assert!(validation_result.is_ok());
 
         let required_permissions = PermissionDSL::Any(vec![
-            PermissionDSL::HasPermission(Permission::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
             PermissionDSL::And(vec![
-                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
                 PermissionDSL::HasStoreAccess,
             ]),
         ]);
         let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
             id: "dummy_id2".to_string(),
             user_id: user_id.to_string(),
-            permission: Permission::ServerAdmin,
+            permission: PermissionType::ServerAdmin,
             store_id: None,
             context_id: None,
         }];
@@ -1048,22 +1049,22 @@ mod validate_resource_permissions_test {
         let required_permissions = PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::Any(vec![
-                PermissionDSL::HasPermission(Permission::ServerAdmin),
-                PermissionDSL::HasPermission(Permission::StocktakeMutate),
+                PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+                PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
             ]),
         ]);
         let user_permissions: Vec<UserPermissionRow> = vec![
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::StocktakeMutate,
+                permission: PermissionType::StocktakeMutate,
                 store_id: Some(store_id.to_string()),
                 context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::StoreAccess,
+                permission: PermissionType::StoreAccess,
                 store_id: Some(store_id.to_string()),
                 context_id: None,
             },
@@ -1081,14 +1082,14 @@ mod validate_resource_permissions_test {
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::ServerAdmin,
+                permission: PermissionType::ServerAdmin,
                 store_id: None,
                 context_id: None,
             },
             UserPermissionRow {
                 id: "dummy_id2".to_string(),
                 user_id: user_id.to_string(),
-                permission: Permission::StoreAccess,
+                permission: PermissionType::StoreAccess,
                 store_id: Some(store_id.to_string()),
                 context_id: None,
             },
@@ -1166,7 +1167,7 @@ mod permission_validation_test {
             Resource::QueryStocktake,
             PermissionDSL::And(vec![
                 PermissionDSL::HasStoreAccess,
-                PermissionDSL::HasPermission(Permission::StocktakeQuery),
+                PermissionDSL::HasPermission(PermissionType::StocktakeQuery),
             ]),
         );
 
@@ -1189,7 +1190,7 @@ mod permission_validation_test {
                 id: "permission1".to_string(),
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
-                permission: Permission::InboundShipmentMutate,
+                permission: PermissionType::InboundShipmentMutate,
                 context_id: None,
             })
             .unwrap();
@@ -1211,7 +1212,7 @@ mod permission_validation_test {
                 id: "permission1".to_string(),
                 user_id: mock_user_account_a().id,
                 store_id: Some("store_a".to_string()),
-                permission: Permission::StocktakeQuery,
+                permission: PermissionType::StocktakeQuery,
                 context_id: None,
             })
             .unwrap();
@@ -1277,14 +1278,14 @@ mod permission_validation_test {
                     id: "permission_requisition_mutation".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
-                    permission: Permission::RequisitionMutate,
+                    permission: PermissionType::RequisitionMutate,
                     context_id: None,
                 },
                 UserPermissionRow {
                     id: "permission_store_access".to_string(),
                     user_id: user().id,
                     store_id: Some(store().id),
-                    permission: Permission::StoreAccess,
+                    permission: PermissionType::StoreAccess,
                     context_id: None,
                 },
             ]

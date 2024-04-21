@@ -99,7 +99,7 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         ActivityLogRow, ActivityLogType, EqualFilter, InvoiceLineFilter, InvoiceLineRepository,
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRowRepository, LocationMovementRow,
+        InvoiceLineRow, InvoiceLineType, InvoiceRowRepository, LocationMovementRow,
         StockLineFilter, StockLineRepository, StockLineRow, StorageConnection,
     };
     use util::{inline_edit, inline_init};
@@ -207,7 +207,7 @@ mod test {
                 .unwrap();
 
             let (in_line, out_line) =
-                if invoice_lines[0].invoice_line_row.r#type == InvoiceLineRowType::StockIn {
+                if invoice_lines[0].invoice_line_row.r#type == InvoiceLineType::StockIn {
                     (invoice_lines[0].clone(), invoice_lines[1].clone())
                 } else {
                     (invoice_lines[1].clone(), invoice_lines[0].clone())
@@ -284,7 +284,7 @@ mod test {
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack * 2.0,
                 total_before_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
                 total_after_tax: (mock_stock_line_a().cost_price_per_pack * 2.0) * 4.0,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineType::StockIn,
                 number_of_packs: 4.0,
                 ..Default::default()
             }
@@ -306,7 +306,7 @@ mod test {
                 sell_price_per_pack: mock_stock_line_a().sell_price_per_pack,
                 total_after_tax: mock_stock_line_a().cost_price_per_pack * 8.0,
                 total_before_tax: mock_stock_line_a().cost_price_per_pack * 8.0,
-                r#type: InvoiceLineRowType::StockOut,
+                r#type: InvoiceLineType::StockOut,
                 number_of_packs: 8.0,
                 ..Default::default()
             }

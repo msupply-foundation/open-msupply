@@ -54,7 +54,7 @@ impl<'a> TemperatureLogRowRepository<'a> {
             .on_conflict(temperature_log_dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

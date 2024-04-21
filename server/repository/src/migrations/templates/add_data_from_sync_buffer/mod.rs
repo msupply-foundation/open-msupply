@@ -14,14 +14,14 @@ table! {
     sync_buffer (record_id) {
         record_id -> Text,
         table_name -> Text,
-        action -> crate::migrations::templates::add_data_from_sync_buffer::SyncBufferActionMapping,
+        action -> crate::migrations::templates::add_data_from_sync_buffer::SyncActionMapping,
         data -> Text,
     }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncBufferAction {
+pub enum SyncAction {
     Upsert,
 }
 
@@ -61,7 +61,7 @@ impl Migration for V1_00_08 {
             .select((sync_buffer_dsl::record_id, sync_buffer_dsl::data))
             .filter(
                 sync_buffer_dsl::action
-                    .eq(SyncBufferAction::Upsert)
+                    .eq(SyncAction::Upsert)
                     .and(sync_buffer_dsl::table_name.eq("store")),
             )
             .load::<(String, String)>(connection.lock().connection())?;

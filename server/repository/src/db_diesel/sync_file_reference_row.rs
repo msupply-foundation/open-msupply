@@ -8,7 +8,7 @@ use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 use serde::{Deserialize, Serialize};
 
-use crate::{ChangeLogInsertRow, ChangelogAction, ChangelogRepository, ChangelogTableName, Upsert};
+use crate::{ChangeLogInsertRow, ChangelogRepository, ChangelogTableName, RowActionType, Upsert};
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -125,16 +125,13 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         sync_file_reference_row: &SyncFileReferenceRow,
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(sync_file_reference_row)?;
-        self.insert_changelog(
-            sync_file_reference_row.id.to_owned(),
-            ChangelogAction::Upsert,
-        )
+        self.insert_changelog(sync_file_reference_row.id.to_owned(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
         sync_file_reference_id: String,
-        action: ChangelogAction,
+        action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::SyncFileReference,
@@ -161,7 +158,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(sync_file_reference_id.to_owned(), ChangelogAction::Delete)?;
+        self.insert_changelog(sync_file_reference_id.to_owned(), RowActionType::Delete)?;
         Ok(())
     }
 
@@ -179,7 +176,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
                         .eq(SyncFileStatus::Error)
                         .and(retry_at.lt(diesel::dsl::now))),
             )
-            .load(&self.connection.connection)?;
+            .load(self.connection.lock().connection())?;
         Ok(result)
     }
 

@@ -1,4 +1,6 @@
-use repository::{mock::context_program_a, Permission, UserPermissionRow, UserPermissionRowDelete};
+use repository::{
+    mock::context_program_a, PermissionType, UserPermissionRow, UserPermissionRowDelete,
+};
 
 use crate::sync::test::TestSyncIncomingRecord;
 
@@ -35,7 +37,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 id: USER_PERMISSION_1.0.to_owned(),
                 user_id: "user_account_a".to_string(),
                 store_id: Some("store_a".to_string()),
-                permission: Permission::DocumentQuery,
+                permission: PermissionType::DocumentQuery,
                 context_id: Some(context_program_a().id.to_string()),
             },
         ),
@@ -46,7 +48,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 id: USER_PERMISSION_2.0.to_owned(),
                 user_id: "user_account_a".to_string(),
                 store_id: Some("store_a".to_string()),
-                permission: Permission::DocumentMutate,
+                permission: PermissionType::DocumentMutate,
                 context_id: Some(context_program_a().id.to_string()),
             },
         ),

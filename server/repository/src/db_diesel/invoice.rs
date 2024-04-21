@@ -6,7 +6,7 @@ use super::{
     name_link_row::{name_link, name_link::dsl as name_link_dsl},
     name_row::{name, name::dsl as name_dsl},
     store_row::{store, store::dsl as store_dsl},
-    ClinicianRow, DBType, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, RepositoryError,
+    ClinicianRow, DBType, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, RepositoryError,
     StorageConnection, StoreRow,
 };
 
@@ -41,8 +41,8 @@ pub struct InvoiceFilter {
     pub name: Option<StringFilter>,
     pub store_id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<InvoiceRowType>>,
-    pub status: Option<EqualFilter<InvoiceRowStatus>>,
+    pub r#type: Option<EqualFilter<InvoiceType>>,
+    pub status: Option<EqualFilter<InvoiceStatus>>,
     pub on_hold: Option<bool>,
     pub comment: Option<StringFilter>,
     pub their_reference: Option<EqualFilter<String>>,
@@ -275,7 +275,7 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
     query
 }
 
-impl InvoiceRowStatus {
+impl InvoiceStatus {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -289,7 +289,7 @@ impl InvoiceRowStatus {
     }
 }
 
-impl InvoiceRowType {
+impl InvoiceType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -318,7 +318,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<InvoiceRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<InvoiceType>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -328,7 +328,7 @@ impl InvoiceFilter {
         self
     }
 
-    pub fn status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
+    pub fn status(mut self, filter: EqualFilter<InvoiceStatus>) -> Self {
         self.status = Some(filter);
         self
     }
@@ -422,15 +422,15 @@ impl InvoiceFilter {
     }
 }
 
-impl InvoiceRowStatus {
+impl InvoiceStatus {
     pub fn index(&self) -> u8 {
         match self {
-            InvoiceRowStatus::New => 1,
-            InvoiceRowStatus::Allocated => 2,
-            InvoiceRowStatus::Picked => 3,
-            InvoiceRowStatus::Shipped => 4,
-            InvoiceRowStatus::Delivered => 5,
-            InvoiceRowStatus::Verified => 6,
+            InvoiceStatus::New => 1,
+            InvoiceStatus::Allocated => 2,
+            InvoiceStatus::Picked => 3,
+            InvoiceStatus::Shipped => 4,
+            InvoiceStatus::Delivered => 5,
+            InvoiceStatus::Verified => 6,
         }
     }
 }

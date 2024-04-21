@@ -6,7 +6,7 @@ use cli::RefreshDatesRepository;
 use graphql::{Mutations, OperationalSchema, Queries};
 use log::info;
 use repository::{
-    get_storage_connection_manager, test_db, KeyValueStoreRepository, KeyValueType,
+    get_storage_connection_manager, test_db, KeyType, KeyValueStoreRepository,
     SyncBufferRowRepository,
 };
 use serde::{Deserialize, Serialize};
@@ -276,7 +276,7 @@ async fn main() -> anyhow::Result<()> {
             info!("Integrate sync buffer");
             // Need to set site_id before integration
             KeyValueStoreRepository::new(&ctx.connection)
-                .set_i32(KeyValueType::SettingsSyncSiteId, Some(data.site_id))?;
+                .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
             let buffer_repo = SyncBufferRowRepository::new(&ctx.connection);
             let buffer_rows = data
                 .sync_buffer_rows

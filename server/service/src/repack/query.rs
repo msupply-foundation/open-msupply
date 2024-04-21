@@ -1,6 +1,6 @@
 use repository::{
     EqualFilter, Invoice, InvoiceFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
-    InvoiceLineRowType, InvoiceRepository, InvoiceRowType, RepositoryError,
+    InvoiceLineType, InvoiceRepository, InvoiceType, RepositoryError,
 };
 
 use crate::service_provider::ServiceContext;
@@ -20,7 +20,7 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
             InvoiceFilter::new()
                 .id(EqualFilter::equal_to(invoice_id))
                 .store_id(EqualFilter::equal_to(&ctx.store_id))
-                .r#type(InvoiceRowType::Repack.equal_to()),
+                .r#type(InvoiceType::Repack.equal_to()),
         )?
         .pop()
         .ok_or(RepositoryError::NotFound)?;
@@ -30,13 +30,13 @@ pub fn get_repack(ctx: &ServiceContext, invoice_id: &str) -> Result<Repack, Repo
 
     let invoice_line_from = invoice_lines
         .iter()
-        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockOut)
+        .find(|line| line.invoice_line_row.r#type == InvoiceLineType::StockOut)
         .ok_or(RepositoryError::NotFound)?
         .clone();
 
     let invoice_line_to = invoice_lines
         .iter()
-        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
+        .find(|line| line.invoice_line_row.r#type == InvoiceLineType::StockIn)
         .ok_or(RepositoryError::NotFound)?
         .clone();
 
@@ -56,7 +56,7 @@ pub fn get_repacks_by_stock_line(
     let invoices = InvoiceRepository::new(connection).query_by_filter(
         InvoiceFilter::new()
             .store_id(EqualFilter::equal_to(&ctx.store_id))
-            .r#type(InvoiceRowType::Repack.equal_to())
+            .r#type(InvoiceType::Repack.equal_to())
             .stock_line_id(stock_line_id.to_owned()),
     )?;
     let invoice_ids: Vec<String> = invoices
@@ -74,7 +74,7 @@ pub fn get_repacks_by_stock_line(
         let invoice_line_from = invoice_lines
             .iter()
             .find(|line| {
-                line.invoice_line_row.r#type == InvoiceLineRowType::StockOut
+                line.invoice_line_row.r#type == InvoiceLineType::StockOut
                     && line.invoice_line_row.invoice_id == invoice.invoice_row.id
             })
             .ok_or(RepositoryError::NotFound)?
@@ -83,7 +83,7 @@ pub fn get_repacks_by_stock_line(
         let invoice_line_to = invoice_lines
             .iter()
             .find(|line| {
-                line.invoice_line_row.r#type == InvoiceLineRowType::StockIn
+                line.invoice_line_row.r#type == InvoiceLineType::StockIn
                     && line.invoice_line_row.invoice_id == invoice.invoice_row.id
             })
             .ok_or(RepositoryError::NotFound)?
@@ -120,8 +120,8 @@ mod test {
         },
         test_db::setup_all_with_data,
         EqualFilter, InvoiceFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-        InvoiceLineRowType, InvoiceRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-        StockLineRow, StockLineRowRepository,
+        InvoiceLineType, InvoiceRepository, InvoiceRow, InvoiceStatus, InvoiceType, StockLineRow,
+        StockLineRowRepository,
     };
     use util::inline_init;
 
@@ -132,8 +132,8 @@ mod test {
             name_link_id: "name_store_a".to_string(),
             store_id: "store_a".to_string(),
             invoice_number: 10,
-            r#type: InvoiceRowType::Repack,
-            status: InvoiceRowStatus::Verified,
+            r#type: InvoiceType::Repack,
+            status: InvoiceStatus::Verified,
             created_datetime: NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
@@ -173,7 +173,7 @@ mod test {
                 * invoice_line_a_stock_line_a.total_number_of_packs,
             number_of_packs: invoice_line_a_stock_line_a.total_number_of_packs,
             pack_size: invoice_line_a_stock_line_a.pack_size,
-            r#type: InvoiceLineRowType::StockIn,
+            r#type: InvoiceLineType::StockIn,
             location_id: Some(mock_location_1().id.clone()),
             ..Default::default()
         };
@@ -205,7 +205,7 @@ mod test {
                 * original_stock_line.total_number_of_packs,
             number_of_packs: original_stock_line.total_number_of_packs,
             pack_size: original_stock_line.pack_size,
-            r#type: InvoiceLineRowType::StockOut,
+            r#type: InvoiceLineType::StockOut,
             ..Default::default()
         };
 
@@ -288,7 +288,7 @@ mod test {
                 InvoiceFilter::new()
                     .id(EqualFilter::equal_to(&repack.invoice_row.id))
                     .store_id(EqualFilter::equal_to(&context.store_id))
-                    .r#type(InvoiceRowType::Repack.equal_to()),
+                    .r#type(InvoiceType::Repack.equal_to()),
             )
             .unwrap()
             .pop()
@@ -305,7 +305,7 @@ mod test {
                 InvoiceFilter::new()
                     .id(EqualFilter::equal_to(&invoice.id))
                     .store_id(EqualFilter::equal_to(&context.store_id))
-                    .r#type(InvoiceRowType::Repack.equal_to()),
+                    .r#type(InvoiceType::Repack.equal_to()),
             )
             .unwrap()
             .pop()
@@ -325,12 +325,12 @@ mod test {
                     invoice: invoice_a,
                     invoice_line_from: invoice_a_lines
                         .iter()
-                        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockOut)
+                        .find(|line| line.invoice_line_row.r#type == InvoiceLineType::StockOut)
                         .unwrap()
                         .clone(),
                     invoice_line_to: invoice_a_lines
                         .iter()
-                        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
+                        .find(|line| line.invoice_line_row.r#type == InvoiceLineType::StockIn)
                         .unwrap()
                         .clone(),
                 },
@@ -338,12 +338,12 @@ mod test {
                     invoice: invoice_b,
                     invoice_line_from: invoice_b_lines
                         .iter()
-                        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockOut)
+                        .find(|line| line.invoice_line_row.r#type == InvoiceLineType::StockOut)
                         .unwrap()
                         .clone(),
                     invoice_line_to: invoice_b_lines
                         .iter()
-                        .find(|line| line.invoice_line_row.r#type == InvoiceLineRowType::StockIn)
+                        .find(|line| line.invoice_line_row.r#type == InvoiceLineType::StockIn)
                         .unwrap()
                         .clone(),
                 }

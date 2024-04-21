@@ -1,6 +1,7 @@
 use super::{
-    item_link_row::item_link, location_row::location::dsl as location_dsl,
-    name_link_row::name_link, store_row::store, RepositoryError, StorageConnection,
+    assets::asset_internal_location_row::asset_internal_location, item_link_row::item_link,
+    location_row::location::dsl as location_dsl, name_link_row::name_link, store_row::store,
+    RepositoryError, StorageConnection,
 };
 use crate::{Delete, Upsert};
 use diesel::prelude::*;
@@ -18,6 +19,7 @@ table! {
 joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);
 allow_tables_to_appear_in_same_query!(location, name_link);
+allow_tables_to_appear_in_same_query!(location, asset_internal_location);
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
 #[diesel(table_name = location)]

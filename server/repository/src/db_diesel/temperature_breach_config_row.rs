@@ -1,7 +1,7 @@
 use super::{
     store_row::store,
     temperature_breach_config_row::temperature_breach_config::dsl as temperature_breach_config_dsl,
-    temperature_breach_row::TemperatureBreachRowType, temperature_log_row::temperature_log,
+    temperature_breach_row::TemperatureBreachType, temperature_log_row::temperature_log,
     StorageConnection,
 };
 
@@ -12,7 +12,7 @@ table! {
     temperature_breach_config (id) {
         id -> Text,
         duration_milliseconds -> Integer,
-        #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachTypeMapping,
         description -> Text,
         is_active -> Bool,
         store_id -> Text,
@@ -40,7 +40,7 @@ pub struct TemperatureBreachConfigRow {
     pub id: String,
     pub duration_milliseconds: i32,
     #[diesel(column_name = "type_")]
-    pub r#type: TemperatureBreachRowType,
+    pub r#type: TemperatureBreachType,
     pub description: String,
     pub is_active: bool,
     pub store_id: String,

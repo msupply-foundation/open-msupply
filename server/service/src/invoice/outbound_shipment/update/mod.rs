@@ -1,5 +1,5 @@
 use repository::{
-    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus,
+    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
     LocationMovementRowRepository, RepositoryError, StockLineRowRepository, TransactionError,
 };
 
@@ -143,23 +143,23 @@ impl From<TransactionError<UpdateOutboundShipmentError>> for UpdateOutboundShipm
 }
 
 impl UpdateOutboundShipmentStatus {
-    pub fn full_status(&self) -> InvoiceRowStatus {
+    pub fn full_status(&self) -> InvoiceStatus {
         match self {
-            UpdateOutboundShipmentStatus::Allocated => InvoiceRowStatus::Allocated,
-            UpdateOutboundShipmentStatus::Picked => InvoiceRowStatus::Picked,
-            UpdateOutboundShipmentStatus::Shipped => InvoiceRowStatus::Shipped,
+            UpdateOutboundShipmentStatus::Allocated => InvoiceStatus::Allocated,
+            UpdateOutboundShipmentStatus::Picked => InvoiceStatus::Picked,
+            UpdateOutboundShipmentStatus::Shipped => InvoiceStatus::Shipped,
         }
     }
 
     pub fn full_status_option(
         status: &Option<UpdateOutboundShipmentStatus>,
-    ) -> Option<InvoiceRowStatus> {
+    ) -> Option<InvoiceStatus> {
         status.as_ref().map(|status| status.full_status())
     }
 }
 
 impl UpdateOutboundShipment {
-    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+    pub fn full_status(&self) -> Option<InvoiceStatus> {
         self.status.as_ref().map(|status| status.full_status())
     }
 }
@@ -175,8 +175,8 @@ mod test {
         },
         test_db::setup_all_with_data,
         ActivityLogRowRepository, ActivityLogType, InvoiceLineRow, InvoiceLineRowRepository,
-        InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-        NameRow, NameStoreJoinRow, StockLineRow, StockLineRowRepository,
+        InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NameRow,
+        NameStoreJoinRow, StockLineRow, StockLineRowRepository,
     };
     use util::{assert_matches, inline_edit, inline_init};
 
@@ -199,8 +199,8 @@ mod test {
                 r.id = String::from("outbound_shipment_no_stock");
                 r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::Allocated;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::Allocated;
                 r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 7)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)
@@ -222,7 +222,7 @@ mod test {
                 r.item_name = String::from("Item A");
                 r.item_code = String::from("item_a_code");
                 r.batch = None;
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
             })
         }
 
@@ -330,7 +330,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -339,7 +339,7 @@ mod test {
                 r.id = "invoice_line".to_string();
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.r#type = InvoiceLineType::UnallocatedStock;
                 r.pack_size = 1;
                 r.number_of_packs = 0.0;
             })
@@ -387,7 +387,7 @@ mod test {
                 r.id = "test_invoice_pricing".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -545,7 +545,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -567,7 +567,7 @@ mod test {
                 r.stock_line_id = Some(stock_line().id);
                 r.number_of_packs = 2.0;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
             })
         }
 

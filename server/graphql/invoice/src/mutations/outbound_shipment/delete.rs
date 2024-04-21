@@ -94,7 +94,7 @@ mod graphql {
 
     use repository::mock::{MockData, MockDataInserts};
     use repository::{
-        InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
     };
     use serde_json::json;
     use util::inline_init;
@@ -120,8 +120,8 @@ mod graphql {
                 r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
                 r.invoice_number = 3;
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::Shipped;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::Shipped;
                 r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 5)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)
@@ -142,8 +142,8 @@ mod graphql {
                 r.id = String::from("outbound_shipment_no_lines_test");
                 r.name_link_id = String::from("name_store_a");
                 r.store_id = String::from("store_a");
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::Picked;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::Picked;
                 r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 6)
                     .unwrap()
                     .and_hms_milli_opt(15, 30, 0, 0)

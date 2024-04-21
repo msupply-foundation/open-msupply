@@ -8,7 +8,7 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
     ActivityLogType, RepositoryError, Requisition, RequisitionRowRepository, StorageConnection,
 };
 use util::inline_edit;
@@ -89,11 +89,11 @@ pub fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.r#type != RequisitionRowType::Response {
+    if requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
     }
 
-    if requisition_row.status != RequisitionRowStatus::New {
+    if requisition_row.status != RequisitionStatus::New {
         return Err(OutError::CannotEditRequisition);
     }
 
@@ -116,7 +116,7 @@ pub fn generate(
     inline_edit(&existing, |mut r| {
         r.user_id = Some(user_id.to_string());
         r.status = if update_status.is_some() {
-            RequisitionRowStatus::Finalised
+            RequisitionStatus::Finalised
         } else {
             r.status
         };
@@ -149,7 +149,7 @@ mod test_update {
             mock_sent_request_requisition, mock_store_a, mock_store_b, mock_user_account_b,
             MockDataInserts,
         },
-        requisition_row::{RequisitionRow, RequisitionRowStatus},
+        requisition_row::{RequisitionRow, RequisitionStatus},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, RequisitionRowRepository,
     };
@@ -298,7 +298,7 @@ mod test_update {
         assert_eq!(colour, Some("new colour".to_owned()));
         assert_eq!(their_reference, Some("new their_reference".to_owned()));
         assert_eq!(comment, Some("new comment".to_owned()));
-        assert_eq!(status, RequisitionRowStatus::Finalised);
+        assert_eq!(status, RequisitionStatus::Finalised);
 
         let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&id)

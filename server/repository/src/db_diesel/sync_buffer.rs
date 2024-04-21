@@ -10,7 +10,7 @@ use diesel_derive_enum::DbEnum;
 
 #[derive(DbEnum, Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncBufferAction {
+pub enum SyncAction {
     Upsert,
     Delete,
     Merge,
@@ -23,7 +23,7 @@ table! {
         integration_datetime -> Nullable<Timestamp>,
         integration_error -> Nullable<Text>,
         table_name -> Text,
-        action -> crate::SyncBufferActionMapping,
+        action -> crate::SyncActionMapping,
         data -> Text,
         source_site_id -> Nullable<Integer>,
     }
@@ -40,7 +40,7 @@ pub struct SyncBufferRow {
     pub integration_datetime: Option<NaiveDateTime>,
     pub integration_error: Option<String>,
     pub table_name: String,
-    pub action: SyncBufferAction,
+    pub action: SyncAction,
     pub data: String,
     pub source_site_id: Option<i32>,
 }
@@ -53,7 +53,7 @@ impl Default for SyncBufferRow {
             integration_datetime: Default::default(),
             integration_error: Default::default(),
             table_name: Default::default(),
-            action: SyncBufferAction::Upsert,
+            action: SyncAction::Upsert,
             data: Default::default(),
             source_site_id: Default::default(),
         }
@@ -124,7 +124,7 @@ pub struct SyncBufferFilter {
     pub record_id: Option<EqualFilter<String>>,
     pub integration_datetime: Option<DatetimeFilter>,
     pub integration_error: Option<EqualFilter<String>>,
-    pub action: Option<EqualFilter<SyncBufferAction>>,
+    pub action: Option<EqualFilter<SyncAction>>,
     pub table_name: Option<EqualFilter<String>>,
 }
 
@@ -153,13 +153,13 @@ impl SyncBufferFilter {
         self
     }
 
-    pub fn action(mut self, filter: EqualFilter<SyncBufferAction>) -> Self {
+    pub fn action(mut self, filter: EqualFilter<SyncAction>) -> Self {
         self.action = Some(filter);
         self
     }
 }
 
-impl SyncBufferAction {
+impl SyncAction {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -229,15 +229,15 @@ mod test {
 
     use crate::{
         mock::{MockData, MockDataInserts},
-        test_db, DatetimeFilter, EqualFilter, SyncBufferAction, SyncBufferFilter,
-        SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
+        test_db, DatetimeFilter, EqualFilter, SyncAction, SyncBufferFilter, SyncBufferRepository,
+        SyncBufferRow, SyncBufferRowRepository,
     };
 
     pub fn row_a() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "store_a".to_string();
             r.integration_datetime = Some(Defaults::naive_date_time());
-            r.action = SyncBufferAction::Upsert;
+            r.action = SyncAction::Upsert;
         })
     }
 
@@ -245,14 +245,14 @@ mod test {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "store_b".to_string();
             r.integration_error = Some("error".to_string());
-            r.action = SyncBufferAction::Delete;
+            r.action = SyncAction::Delete;
         })
     }
 
     pub fn row_c() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "store_c".to_string();
-            r.action = SyncBufferAction::Upsert;
+            r.action = SyncAction::Upsert;
         })
     }
 
@@ -291,9 +291,7 @@ mod test {
 
         assert_eq!(
             SyncBufferRepository::new(&connection)
-                .query_by_filter(
-                    SyncBufferFilter::new().action(SyncBufferAction::Delete.equal_to())
-                )
+                .query_by_filter(SyncBufferFilter::new().action(SyncAction::Delete.equal_to()))
                 .unwrap(),
             vec![row_b()]
         );

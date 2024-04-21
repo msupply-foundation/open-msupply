@@ -44,7 +44,7 @@ impl<'a> AssetCategoryRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_category_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

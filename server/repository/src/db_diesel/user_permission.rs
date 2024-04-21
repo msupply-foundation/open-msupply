@@ -1,6 +1,6 @@
 use super::{
     user_permission_row::{user_permission, user_permission::dsl as user_permission_dsl},
-    DBType, Permission, StorageConnection, UserPermissionRow,
+    DBType, PermissionType, StorageConnection, UserPermissionRow,
 };
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
@@ -18,7 +18,7 @@ pub struct UserPermissionFilter {
     pub id: Option<EqualFilter<String>>,
     pub user_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
-    pub permission: Option<EqualFilter<Permission>>,
+    pub permission: Option<EqualFilter<PermissionType>>,
     pub has_context: Option<bool>,
 }
 
@@ -137,7 +137,7 @@ impl UserPermissionFilter {
         self
     }
 
-    pub fn permission(mut self, filter: EqualFilter<Permission>) -> Self {
+    pub fn permission(mut self, filter: EqualFilter<PermissionType>) -> Self {
         self.permission = Some(filter);
         self
     }
@@ -153,7 +153,7 @@ impl UserPermissionFilter {
     }
 }
 
-impl Permission {
+impl PermissionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

@@ -59,7 +59,7 @@ impl<'a> PackVariantRowRepository<'a> {
             .on_conflict(pack_variant::dsl::id)
             .do_update()
             .set(row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         Ok(())
     }

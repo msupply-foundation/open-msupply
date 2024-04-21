@@ -1,4 +1,4 @@
-use repository::{InvoiceLineRow, InvoiceLineRowType, ItemRow, RepositoryError, StorageConnection};
+use repository::{InvoiceLineRow, InvoiceLineType, ItemRow, RepositoryError, StorageConnection};
 
 use crate::invoice::common::{calculate_foreign_currency_total, calculate_total_after_tax};
 
@@ -29,7 +29,7 @@ pub fn generate(
         item_code: item.code,
         item_link_id: item.id,
         item_name: name.unwrap_or(item.name),
-        r#type: InvoiceLineRowType::Service,
+        r#type: InvoiceLineType::Service,
         foreign_currency_price_before_tax: calculate_foreign_currency_total(
             connection,
             total_before_tax,

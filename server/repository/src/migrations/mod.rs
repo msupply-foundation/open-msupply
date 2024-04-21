@@ -32,7 +32,7 @@ mod templates;
 pub use self::version::*;
 
 use crate::{
-    run_db_migrations, KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection,
+    run_db_migrations, KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection,
 };
 use diesel::connection::SimpleConnection;
 use thiserror::Error;
@@ -155,7 +155,7 @@ pub fn migrate(
 }
 
 fn get_database_version(connection: &StorageConnection) -> Version {
-    match KeyValueStoreRepository::new(connection).get_string(KeyValueType::DatabaseVersion) {
+    match KeyValueStoreRepository::new(connection).get_string(KeyType::DatabaseVersion) {
         Ok(Some(version_str)) => Version::from_str(&version_str),
         // Rust migrations start at "1.0.3"
         // DatabaseVersion key is introduced in 1.0.4 and first app version to have manual rust migrations
@@ -169,7 +169,7 @@ fn set_database_version(
     new_version: &Version,
 ) -> Result<(), RepositoryError> {
     KeyValueStoreRepository::new(connection)
-        .set_string(KeyValueType::DatabaseVersion, Some(new_version.to_string()))
+        .set_string(KeyType::DatabaseVersion, Some(new_version.to_string()))
 }
 
 #[derive(Error, Debug)]

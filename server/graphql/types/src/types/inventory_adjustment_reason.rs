@@ -1,7 +1,7 @@
 use async_graphql::*;
 use repository::{
     inventory_adjustment_reason::InventoryAdjustmentReason, InventoryAdjustmentReasonRow,
-    InventoryAdjustmentReasonType,
+    InventoryAdjustmentType,
 };
 use service::ListResult;
 
@@ -56,9 +56,9 @@ impl InventoryAdjustmentReasonNode {
 }
 
 impl InventoryAdjustmentReasonNodeType {
-    pub fn from_domain(from: &InventoryAdjustmentReasonType) -> InventoryAdjustmentReasonNodeType {
+    pub fn from_domain(from: &InventoryAdjustmentType) -> InventoryAdjustmentReasonNodeType {
         use InventoryAdjustmentReasonNodeType as to;
-        use InventoryAdjustmentReasonType as from;
+        use InventoryAdjustmentType as from;
 
         match from {
             from::Positive => to::Positive,
@@ -66,9 +66,9 @@ impl InventoryAdjustmentReasonNodeType {
         }
     }
 
-    pub fn to_domain(self) -> InventoryAdjustmentReasonType {
+    pub fn to_domain(self) -> InventoryAdjustmentType {
         use InventoryAdjustmentReasonNodeType as from;
-        use InventoryAdjustmentReasonType as to;
+        use InventoryAdjustmentType as to;
 
         match self {
             from::Positive => to::Positive,

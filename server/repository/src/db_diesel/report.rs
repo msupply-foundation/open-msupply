@@ -2,7 +2,7 @@ use super::{
     form_schema_row,
     form_schema_row::form_schema::dsl as form_schema_dsl,
     report_row::{report, report::dsl as report_dsl},
-    ReportContext, ReportRow, ReportType, StorageConnection,
+    ContextType, ReportRow, ReportType, StorageConnection,
 };
 
 use crate::{
@@ -27,7 +27,7 @@ pub struct ReportFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub r#type: Option<EqualFilter<ReportType>>,
-    pub context: Option<EqualFilter<ReportContext>>,
+    pub context: Option<EqualFilter<ContextType>>,
     pub sub_context: Option<EqualFilter<String>>,
 }
 
@@ -59,7 +59,7 @@ impl ReportFilter {
         self
     }
 
-    pub fn context(mut self, filter: EqualFilter<ReportContext>) -> Self {
+    pub fn context(mut self, filter: EqualFilter<ContextType>) -> Self {
         self.context = Some(filter);
         self
     }

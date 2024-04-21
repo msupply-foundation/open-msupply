@@ -6,7 +6,7 @@ use super::{
     item_row::{item, item::dsl as item_dsl},
     location_row::{location, location::dsl as location_dsl},
     stock_line_row::{stock_line, stock_line::dsl as stock_line_dsl},
-    DBType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, LocationRow, StorageConnection,
+    DBType, InvoiceLineRow, InvoiceLineType, InvoiceRow, LocationRow, StorageConnection,
 };
 
 use crate::{
@@ -14,8 +14,7 @@ use crate::{
         apply_equal_filter, apply_sort, apply_sort_asc_nulls_last, apply_sort_no_case,
     },
     repository_error::RepositoryError,
-    EqualFilter, InvoiceRowStatus, InvoiceRowType, ItemLinkRow, ItemRow, Pagination, Sort,
-    StockLineRow,
+    EqualFilter, InvoiceStatus, InvoiceType, ItemLinkRow, ItemRow, Pagination, Sort, StockLineRow,
 };
 
 use diesel::{
@@ -82,12 +81,12 @@ pub struct InvoiceLineFilter {
     pub store_id: Option<EqualFilter<String>>,
     pub invoice_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<InvoiceLineRowType>>,
+    pub r#type: Option<EqualFilter<InvoiceLineType>>,
     pub location_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
     pub number_of_packs: Option<EqualFilter<f64>>,
-    pub invoice_type: Option<EqualFilter<InvoiceRowType>>,
-    pub invoice_status: Option<EqualFilter<InvoiceRowStatus>>,
+    pub invoice_type: Option<EqualFilter<InvoiceType>>,
+    pub invoice_status: Option<EqualFilter<InvoiceStatus>>,
     pub stock_line_id: Option<EqualFilter<String>>,
 }
 
@@ -116,7 +115,7 @@ impl InvoiceLineFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<InvoiceLineRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<InvoiceLineType>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -136,12 +135,12 @@ impl InvoiceLineFilter {
         self
     }
 
-    pub fn invoice_type(mut self, filter: EqualFilter<InvoiceRowType>) -> Self {
+    pub fn invoice_type(mut self, filter: EqualFilter<InvoiceType>) -> Self {
         self.invoice_type = Some(filter);
         self
     }
 
-    pub fn invoice_status(mut self, filter: EqualFilter<InvoiceRowStatus>) -> Self {
+    pub fn invoice_status(mut self, filter: EqualFilter<InvoiceStatus>) -> Self {
         self.invoice_status = Some(filter);
         self
     }
@@ -317,9 +316,9 @@ impl InvoiceLine {
 
     pub fn pricing(&self) -> PricingRow {
         let row = &self.invoice_line_row;
-        let is_stock = matches!(row.r#type, InvoiceLineRowType::StockIn)
-            || matches!(row.r#type, InvoiceLineRowType::StockOut);
-        let is_service = matches!(row.r#type, InvoiceLineRowType::Service);
+        let is_stock = matches!(row.r#type, InvoiceLineType::StockIn)
+            || matches!(row.r#type, InvoiceLineType::StockOut);
+        let is_service = matches!(row.r#type, InvoiceLineType::Service);
 
         PricingRow {
             invoice_id: row.invoice_id.clone(),
@@ -343,7 +342,7 @@ impl InvoiceLine {
     }
 }
 
-impl InvoiceLineRowType {
+impl InvoiceLineType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

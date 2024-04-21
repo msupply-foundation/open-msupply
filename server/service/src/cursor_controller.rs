@@ -1,9 +1,9 @@
-use repository::{KeyValueStoreRepository, KeyValueType, RepositoryError, StorageConnection};
+use repository::{KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection};
 
-pub struct CursorController(KeyValueType);
+pub struct CursorController(KeyType);
 
 impl CursorController {
-    pub fn new(cursor_type: KeyValueType) -> Self {
+    pub fn new(cursor_type: KeyType) -> Self {
         Self(cursor_type)
     }
 

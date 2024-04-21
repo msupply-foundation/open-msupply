@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceRow, InvoiceRowType, ItemFilter, ItemRepository, ItemRow, ItemRowType, RepositoryError,
+    InvoiceRow, InvoiceType, ItemFilter, ItemRepository, ItemRow, ItemType, RepositoryError,
     StorageConnection, StringFilter,
 };
 use util::constants::DEFAULT_SERVICE_ITEM_CODE;
@@ -28,7 +28,7 @@ pub fn validate(
         }
         Some(item_id) => {
             let item = check_item_exists(connection, item_id)?.ok_or(OutError::ItemNotFound)?;
-            if item.r#type != ItemRowType::Service {
+            if item.r#type != ItemType::Service {
                 return Err(OutError::NotAServiceItem);
             }
             item
@@ -40,7 +40,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(OutError::NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(OutError::NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

@@ -7,10 +7,10 @@ use crate::{
 };
 
 use repository::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
+    requisition_row::{RequisitionStatus, RequisitionType},
+    ApprovalStatusType, EqualFilter, RepositoryError, RequisitionLine, RequisitionLineFilter,
     RequisitionLineRepository, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-    RequisitionRowApprovalStatus, RequisitionRowRepository, StorageConnection,
+    RequisitionRowRepository, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]
@@ -79,11 +79,11 @@ fn validate(
         return Err(OutError::NotThisStoreRequisition);
     }
 
-    if requisition_row.r#type != RequisitionRowType::Response {
+    if requisition_row.r#type != RequisitionType::Response {
         return Err(OutError::NotAResponseRequisition);
     }
 
-    if requisition_row.status != RequisitionRowStatus::New {
+    if requisition_row.status != RequisitionStatus::New {
         return Err(OutError::CannotEditRequisition);
     }
 
@@ -105,7 +105,7 @@ fn generate(
     // Use approved_quantity rather then requested_quantity if requisition was authorised
     let no_approval_status = matches!(
         existing_requisition_row.approval_status,
-        None | Some(RequisitionRowApprovalStatus::None)
+        None | Some(ApprovalStatusType::None)
     );
 
     let result = lines
@@ -145,8 +145,8 @@ mod test {
             mock_store_b, mock_user_account_b, MockDataInserts,
         },
         test_db::setup_all,
-        RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
-        RequisitionRowApprovalStatus, RequisitionRowRepository,
+        ApprovalStatusType, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+        RequisitionRowRepository,
     };
     use util::inline_edit;
 
@@ -273,7 +273,7 @@ mod test {
 
         RequisitionRowRepository::new(&connection)
             .upsert_one(&RequisitionRow {
-                approval_status: Some(RequisitionRowApprovalStatus::Approved),
+                approval_status: Some(ApprovalStatusType::Approved),
                 ..requisition
             })
             .unwrap();

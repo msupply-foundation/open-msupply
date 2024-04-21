@@ -10,7 +10,7 @@ use super::{sync_log_row::sync_log::dsl as sync_log_dsl, StorageConnection};
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum SyncLogRowErrorCode {
+pub enum SyncApiErrorCode {
     ConnectionError,
     SiteNameNotFound,
     IncorrectPassword,
@@ -53,7 +53,7 @@ table! {
         integration_progress_total -> Nullable<Integer>,
         integration_progress_done -> Nullable<Integer>,
         error_message -> Nullable<Text>,
-        error_code -> Nullable<crate::db_diesel::sync_log_row::SyncLogRowErrorCodeMapping>,
+        error_code -> Nullable<crate::db_diesel::sync_log_row::SyncApiErrorCodeMapping>,
     }
 }
 
@@ -91,7 +91,7 @@ pub struct SyncLogRow {
     pub integration_progress_total: Option<i32>,
     pub integration_progress_done: Option<i32>,
     pub error_message: Option<String>,
-    pub error_code: Option<SyncLogRowErrorCode>,
+    pub error_code: Option<SyncApiErrorCode>,
 }
 
 impl Default for SyncLogRow {
@@ -175,7 +175,7 @@ mod test {
     use util::inline_init;
 
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, SyncLogRow, SyncLogRowErrorCode,
+        mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogRow,
         SyncLogRowRepository,
     };
 
@@ -184,8 +184,8 @@ mod test {
         let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
 
         let repo = SyncLogRowRepository::new(&connection);
-        // Try upsert all variants of SyncLogRowErrorCode, confirm that diesel enums match postgres
-        for variant in SyncLogRowErrorCode::iter() {
+        // Try upsert all variants of SyncApiErrorCode, confirm that diesel enums match postgres
+        for variant in SyncApiErrorCode::iter() {
             let result = repo.upsert_one(&inline_init(|r: &mut SyncLogRow| {
                 r.id = "test".to_string();
                 r.error_code = Some(variant.clone());

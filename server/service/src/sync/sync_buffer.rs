@@ -1,7 +1,7 @@
 use chrono::Utc;
 use repository::{
-    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, SyncBufferAction,
-    SyncBufferFilter, SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
+    DatetimeFilter, EqualFilter, RepositoryError, StorageConnection, SyncAction, SyncBufferFilter,
+    SyncBufferRepository, SyncBufferRow, SyncBufferRowRepository,
 };
 use util::inline_edit;
 
@@ -43,16 +43,16 @@ impl<'a> SyncBuffer<'a> {
 
     pub(crate) fn get_ordered_sync_buffer_records(
         &self,
-        action: SyncBufferAction,
+        action: SyncAction,
         ordered_table_names: &[&str],
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         let ordered_table_names = ordered_table_names.iter().map(|r| *r);
         // Get ordered table names, for  upsert we sort in referential constraint order
         // and for delete in reverse of referential constraint order
         let order: Vec<&str> = match action {
-            SyncBufferAction::Upsert => ordered_table_names.collect(),
-            SyncBufferAction::Delete => ordered_table_names.rev().collect(),
-            SyncBufferAction::Merge => ordered_table_names.collect(),
+            SyncAction::Upsert => ordered_table_names.collect(),
+            SyncAction::Delete => ordered_table_names.rev().collect(),
+            SyncAction::Merge => ordered_table_names.collect(),
         };
 
         let mut result = Vec::new();
@@ -76,7 +76,7 @@ mod test {
     use repository::{
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
-        SyncBufferAction, SyncBufferRow, SyncBufferRowRepository,
+        SyncAction, SyncBufferRow, SyncBufferRowRepository,
     };
     use util::{inline_init, Defaults};
 
@@ -121,7 +121,7 @@ mod test {
             r.record_id = "5".to_string();
             r.table_name = "list_master".to_string();
             r.received_datetime = Defaults::naive_date_time();
-            r.action = SyncBufferAction::Delete;
+            r.action = SyncAction::Delete;
         })
     }
 
@@ -130,7 +130,7 @@ mod test {
             r.record_id = "6".to_string();
             r.table_name = "list_master_line".to_string();
             r.received_datetime = Defaults::naive_date_time();
-            r.action = SyncBufferAction::Delete;
+            r.action = SyncAction::Delete;
         })
     }
 
@@ -152,7 +152,7 @@ mod test {
 
         // ORDER/ACTION
         let in_referencial_order = buffer
-            .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
             .unwrap();
 
         assert_eq!(
@@ -161,7 +161,7 @@ mod test {
         );
 
         let in_reverese_referencial_order = buffer
-            .get_ordered_sync_buffer_records(repository::SyncBufferAction::Delete, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Delete, &table_order)
             .unwrap();
 
         assert_eq!(in_reverese_referencial_order, vec![row_6(), row_5()]);
@@ -175,7 +175,7 @@ mod test {
             .unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
             .unwrap();
 
         assert_eq!(result, vec![row_4(), row_3()]);
@@ -191,7 +191,7 @@ mod test {
         buffer.record_successful_integration(&row_3()).unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
             .unwrap();
 
         assert_eq!(result, vec![row_4()]);
@@ -199,7 +199,7 @@ mod test {
         buffer.record_successful_integration(&row_4()).unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncBufferAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
             .unwrap();
 
         assert_eq!(result, vec![]);

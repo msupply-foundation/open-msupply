@@ -16,7 +16,7 @@ pub enum ReportType {
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ReportContext {
+pub enum ContextType {
     Asset,
     InboundShipment,
     OutboundShipment,
@@ -38,7 +38,7 @@ table! {
       name -> Text,
       #[sql_name = "type"] type_ -> crate::db_diesel::report_row::ReportTypeMapping,
       template -> Text,
-      context -> crate::db_diesel::report_row::ReportContextMapping,
+      context -> crate::db_diesel::report_row::ContextTypeMapping,
       comment -> Nullable<Text>,
       sub_context -> Nullable<Text>,
       argument_schema_id -> Nullable<Text>,
@@ -59,7 +59,7 @@ pub struct ReportRow {
     /// The template format depends on the report type
     pub template: String,
     /// Used to store the report context
-    pub context: ReportContext,
+    pub context: ContextType,
     pub comment: Option<String>,
     pub sub_context: Option<String>,
     pub argument_schema_id: Option<String>,
@@ -72,7 +72,7 @@ impl Default for ReportRow {
             name: Default::default(),
             r#type: ReportType::OmSupply,
             template: Default::default(),
-            context: ReportContext::InboundShipment,
+            context: ContextType::InboundShipment,
             comment: Default::default(),
             sub_context: Default::default(),
             argument_schema_id: Default::default(),

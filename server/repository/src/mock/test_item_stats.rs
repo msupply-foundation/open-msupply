@@ -2,8 +2,7 @@ use chrono::{Duration, Utc};
 use util::{constants::NUMBER_OF_DAYS_IN_A_MONTH, inline_edit, inline_init, uuid::uuid};
 
 use crate::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, ItemRow, ItemRowType,
-    StockLineRow,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, ItemRow, ItemType, StockLineRow,
 };
 
 use super::{mock_name_a, mock_store_a, mock_store_b, MockData};
@@ -18,21 +17,21 @@ fn consumption_points() -> MockData {
             r.id = invoice_id.clone();
             r.store_id = mock_store_a().id;
             r.name_link_id = mock_name_a().id;
-            r.r#type = InvoiceRowType::OutboundShipment;
+            r.r#type = InvoiceType::OutboundShipment;
         })];
         r.invoice_lines = vec![
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = format!("{}line1", invoice_id);
                 r.invoice_id = invoice_id.clone();
                 r.item_link_id = item().id;
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
                 r.pack_size = 1;
             }),
             inline_init(|r: &mut InvoiceLineRow| {
                 r.id = format!("{}line2", invoice_id);
                 r.invoice_id = invoice_id.clone();
                 r.item_link_id = item2().id;
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
                 r.pack_size = 1;
             }),
         ];
@@ -104,7 +103,7 @@ pub fn item() -> ItemRow {
         r.id = id.clone();
         r.name = id.clone();
         r.code = id.clone();
-        r.r#type = ItemRowType::Stock;
+        r.r#type = ItemType::Stock;
     })
 }
 
@@ -174,7 +173,7 @@ pub fn item2() -> ItemRow {
         r.id = id.clone();
         r.name = id.clone();
         r.code = id.clone();
-        r.r#type = ItemRowType::Stock;
+        r.r#type = ItemType::Stock;
     })
 }
 

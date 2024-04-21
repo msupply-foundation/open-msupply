@@ -12,7 +12,7 @@ table! {
         username -> Text,
         hashed_password -> Text,
         email -> Nullable<Text>,
-        language -> crate::db_diesel::user_row::LanguageMapping,
+        language -> crate::db_diesel::user_row::LanguageTypeMapping,
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
         phone_number -> Nullable<Text>,
@@ -24,7 +24,7 @@ table! {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Language {
+pub enum LanguageType {
     #[default]
     English,
     French,
@@ -43,7 +43,7 @@ pub struct UserAccountRow {
     pub username: String,
     pub hashed_password: String,
     pub email: Option<String>,
-    pub language: Language,
+    pub language: LanguageType,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub phone_number: Option<String>,
@@ -151,7 +151,7 @@ impl Upsert for UserAccountRow {
 #[cfg(test)]
 mod test {
     use crate::{
-        mock::MockDataInserts, test_db::setup_all, Language, UserAccountRow,
+        mock::MockDataInserts, test_db::setup_all, LanguageType, UserAccountRow,
         UserAccountRowRepository,
     };
     use strum::IntoEnumIterator;
@@ -164,7 +164,7 @@ mod test {
 
         let repo = UserAccountRowRepository::new(&connection);
         // Try upsert all variants of Language, confirm that diesel enums match postgres
-        for variant in Language::iter() {
+        for variant in LanguageType::iter() {
             let id = format!("{:?}", variant);
             let result = repo.insert_one(&inline_init(|r: &mut UserAccountRow| {
                 r.id = id.clone();

@@ -82,7 +82,7 @@ mod test {
         mock::{MockData, MockDataInserts},
         test_db::setup_all_with_data,
         DatetimeFilter, LocationRow, NameRow, SensorRow, StoreRow, TemperatureBreachConfigRow,
-        TemperatureBreachRowType, TemperatureExcursion, TemperatureExcursionRepository,
+        TemperatureBreachType, TemperatureExcursion, TemperatureExcursionRepository,
         TemperatureLogFilter, TemperatureLogRow,
     };
 
@@ -132,7 +132,7 @@ mod test {
             store_id: store.id.clone(),
             is_active: true,
             duration_milliseconds: 24 * 60 * 60 * 1000, // one day
-            r#type: TemperatureBreachRowType::Excursion,
+            r#type: TemperatureBreachType::Excursion,
         };
 
         // testing with two sensors

@@ -8,7 +8,7 @@ use crate::sync::{
 use chrono::NaiveDate;
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, InvoiceLine, InvoiceLineFilter,
-    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineRowType,
+    InvoiceLineRepository, InvoiceLineRow, InvoiceLineRowDelete, InvoiceLineType,
     ItemRowRepository, StockLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
@@ -331,23 +331,23 @@ impl SyncTranslation for InvoiceLineTranslation {
     }
 }
 
-fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineRowType> {
+fn to_invoice_line_type(_type: &LegacyTransLineType) -> Option<InvoiceLineType> {
     let invoice_line_type = match _type {
-        LegacyTransLineType::StockIn => InvoiceLineRowType::StockIn,
-        LegacyTransLineType::StockOut => InvoiceLineRowType::StockOut,
-        LegacyTransLineType::Placeholder => InvoiceLineRowType::UnallocatedStock,
-        LegacyTransLineType::Service => InvoiceLineRowType::Service,
+        LegacyTransLineType::StockIn => InvoiceLineType::StockIn,
+        LegacyTransLineType::StockOut => InvoiceLineType::StockOut,
+        LegacyTransLineType::Placeholder => InvoiceLineType::UnallocatedStock,
+        LegacyTransLineType::Service => InvoiceLineType::Service,
         _ => return None,
     };
     Some(invoice_line_type)
 }
 
-fn to_legacy_invoice_line_type(_type: &InvoiceLineRowType) -> LegacyTransLineType {
+fn to_legacy_invoice_line_type(_type: &InvoiceLineType) -> LegacyTransLineType {
     match _type {
-        InvoiceLineRowType::StockIn => LegacyTransLineType::StockIn,
-        InvoiceLineRowType::StockOut => LegacyTransLineType::StockOut,
-        InvoiceLineRowType::UnallocatedStock => LegacyTransLineType::Placeholder,
-        InvoiceLineRowType::Service => LegacyTransLineType::Service,
+        InvoiceLineType::StockIn => LegacyTransLineType::StockIn,
+        InvoiceLineType::StockOut => LegacyTransLineType::StockOut,
+        InvoiceLineType::UnallocatedStock => LegacyTransLineType::Placeholder,
+        InvoiceLineType::Service => LegacyTransLineType::Service,
     }
 }
 
@@ -361,7 +361,7 @@ mod tests {
     use repository::{
         mock::{mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
         test_db::{setup_all, setup_all_with_data},
-        ChangelogFilter, ChangelogRepository, KeyValueStoreRow, KeyValueType,
+        ChangelogFilter, ChangelogRepository, KeyType, KeyValueStoreRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -384,7 +384,7 @@ mod tests {
             inline_init(|r: &mut MockData| {
                 r.invoices = vec![mock_outbound_shipment_a()];
                 r.key_value_store_rows = vec![inline_init(|r: &mut KeyValueStoreRow| {
-                    r.id = KeyValueType::SettingsSyncSiteId;
+                    r.id = KeyType::SettingsSyncSiteId;
                     r.value_int = Some(mock_store_b().site_id);
                 })]
             }),

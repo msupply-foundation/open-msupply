@@ -1,6 +1,6 @@
 use crate::{
-    requisition_row::RequisitionRowType, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowStatus, InvoiceRowType, RequisitionLineRow, RequisitionRow,
+    requisition_row::RequisitionType, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus,
+    InvoiceType, RequisitionLineRow, RequisitionRow,
 };
 use util::inline_init;
 
@@ -13,13 +13,13 @@ pub fn requisition() -> RequisitionRow {
         r.id = "test_loader".to_string();
         r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
-        r.r#type = RequisitionRowType::Response;
+        r.r#type = RequisitionType::Response;
     })
 }
 pub fn linked_invoice_1() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "lined_invoice_1".to_string();
-        r.r#type = InvoiceRowType::OutboundShipment;
+        r.r#type = InvoiceType::OutboundShipment;
         r.requisition_id = Some(requisition().id);
         r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
@@ -28,8 +28,8 @@ pub fn linked_invoice_1() -> InvoiceRow {
 pub fn linked_invoice_2() -> InvoiceRow {
     inline_init(|r: &mut InvoiceRow| {
         r.id = "lined_invoice_2".to_string();
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::Picked;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::Picked;
         r.requisition_id = Some(requisition().id);
         r.name_link_id = mock_name_a().id;
         r.store_id = mock_store_a().id;
@@ -59,7 +59,7 @@ pub fn linked_line_1() -> InvoiceLineRow {
         r.invoice_id = linked_invoice_1().id;
         r.id = "linked_line_1".to_string();
         r.item_link_id = line_to_supply_q2().item_link_id;
-        r.r#type = InvoiceLineRowType::UnallocatedStock;
+        r.r#type = InvoiceLineType::UnallocatedStock;
         r.pack_size = 1;
         r.number_of_packs = 3.0;
     })
@@ -79,7 +79,7 @@ pub fn linked_line_2() -> InvoiceLineRow {
         r.invoice_id = linked_invoice_1().id;
         r.id = "linked_line_2".to_string();
         r.item_link_id = line_to_supply_q1().item_link_id;
-        r.r#type = InvoiceLineRowType::UnallocatedStock;
+        r.r#type = InvoiceLineType::UnallocatedStock;
         r.pack_size = 1;
         r.number_of_packs = 3.0;
     })
@@ -89,7 +89,7 @@ pub fn linked_line_3() -> InvoiceLineRow {
         r.invoice_id = linked_invoice_2().id;
         r.id = "linked_line_3".to_string();
         r.item_link_id = line_to_supply_q1().item_link_id;
-        r.r#type = InvoiceLineRowType::StockOut;
+        r.r#type = InvoiceLineType::StockOut;
         r.pack_size = 3;
         r.number_of_packs = 2.0;
     })
@@ -108,7 +108,7 @@ pub fn linked_line_4() -> InvoiceLineRow {
         r.invoice_id = linked_invoice_1().id;
         r.id = "linked_line_4".to_string();
         r.item_link_id = line_to_supply_q0().item_link_id;
-        r.r#type = InvoiceLineRowType::UnallocatedStock;
+        r.r#type = InvoiceLineType::UnallocatedStock;
         r.pack_size = 2;
         r.number_of_packs = 1.0;
     })

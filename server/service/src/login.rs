@@ -7,8 +7,8 @@ use bcrypt::BcryptError;
 use chrono::Utc;
 use log::info;
 use repository::{
-    ActivityLogType, Language, Permission, RepositoryError, UserAccountRow, UserPermissionRow,
-    UserStoreJoinRow,
+    ActivityLogType, LanguageType, PermissionType, RepositoryError, UserAccountRow,
+    UserPermissionRow, UserStoreJoinRow,
 };
 use reqwest::{ClientBuilder, Url};
 use serde::{Deserialize, Serialize};
@@ -268,15 +268,15 @@ impl LoginService {
                 .map_err(UpdateUserError::PasswordHashError)?,
             email: user_info.user.e_mail,
             language: match user_info.user.language {
-                0 => Language::English,
-                1 => Language::French,
-                2 => Language::Spanish,
-                3 => Language::Laos,
-                4 => Language::Khmer,
-                5 => Language::Portuguese,
-                6 => Language::Russian,
-                7 => Language::Tetum,
-                _ => Language::English,
+                0 => LanguageType::English,
+                1 => LanguageType::French,
+                2 => LanguageType::Spanish,
+                3 => LanguageType::Laos,
+                4 => LanguageType::Khmer,
+                5 => LanguageType::Portuguese,
+                6 => LanguageType::Russian,
+                7 => LanguageType::Tetum,
+                _ => LanguageType::English,
             },
             first_name: user_info.user.first_name,
             last_name: user_info.user.last_name,
@@ -298,7 +298,7 @@ impl LoginService {
                 let permissions = map_api_permissions(user_store.permissions);
                 let mut permission_set = permissions_to_domain(permissions);
                 // Give the user access to the store
-                permission_set.insert(Permission::StoreAccess);
+                permission_set.insert(PermissionType::StoreAccess);
                 let permissions = permission_set
                     .into_iter()
                     .map(|permission| UserPermissionRow {
@@ -331,139 +331,139 @@ impl From<RepositoryError> for LoginError {
     }
 }
 
-fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permission> {
+fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<PermissionType> {
     let mut output = HashSet::new();
     for per in permissions {
         match per {
             // admin
             Permissions::AccessServerAdministration => {
-                output.insert(Permission::ServerAdmin);
+                output.insert(PermissionType::ServerAdmin);
             }
             // location
             Permissions::ManageLocations => {
-                output.insert(Permission::LocationMutate);
+                output.insert(PermissionType::LocationMutate);
             }
             // sensor
             Permissions::EditSensorLocation => {
-                output.insert(Permission::SensorMutate);
+                output.insert(PermissionType::SensorMutate);
             }
             Permissions::ViewSensorDetails => {
-                output.insert(Permission::SensorQuery);
+                output.insert(PermissionType::SensorQuery);
             }
             // stock line
             // stock line & stocktake lines
             Permissions::ViewStock => {
-                output.insert(Permission::StockLineQuery);
-                output.insert(Permission::StocktakeQuery);
+                output.insert(PermissionType::StockLineQuery);
+                output.insert(PermissionType::StocktakeQuery);
             }
             Permissions::EditStock => {
-                output.insert(Permission::StockLineMutate);
+                output.insert(PermissionType::StockLineMutate);
             }
             Permissions::CreateRepacksOrSplitStock => {
-                output.insert(Permission::CreateRepack);
+                output.insert(PermissionType::CreateRepack);
             }
             // stocktake
             Permissions::CreateStocktake => {
-                output.insert(Permission::StocktakeMutate);
+                output.insert(PermissionType::StocktakeMutate);
             }
             Permissions::DeleteStocktake => {
-                output.insert(Permission::StocktakeMutate);
+                output.insert(PermissionType::StocktakeMutate);
             }
             Permissions::AddStocktakeLines => {
-                output.insert(Permission::StocktakeMutate);
+                output.insert(PermissionType::StocktakeMutate);
             }
             Permissions::EditStocktakeLines => {
-                output.insert(Permission::StocktakeMutate);
+                output.insert(PermissionType::StocktakeMutate);
             }
             Permissions::DeleteStocktakeLines => {
-                output.insert(Permission::StocktakeMutate);
+                output.insert(PermissionType::StocktakeMutate);
             }
             // inventory adjustments
             Permissions::EnterInventoryAdjustments
             | Permissions::EditInventoryAdjustments
             | Permissions::FinaliseInventoryAdjustments => {
-                output.insert(Permission::InventoryAdjustmentMutate);
+                output.insert(PermissionType::InventoryAdjustmentMutate);
             }
             // customer invoices
             Permissions::ViewCustomerInvoices => {
-                output.insert(Permission::OutboundShipmentQuery);
-                output.insert(Permission::InboundReturnQuery);
-                output.insert(Permission::PrescriptionQuery);
+                output.insert(PermissionType::OutboundShipmentQuery);
+                output.insert(PermissionType::InboundReturnQuery);
+                output.insert(PermissionType::PrescriptionQuery);
             }
             Permissions::CreateCustomerInvoices => {
-                output.insert(Permission::OutboundShipmentMutate);
-                output.insert(Permission::PrescriptionMutate);
+                output.insert(PermissionType::OutboundShipmentMutate);
+                output.insert(PermissionType::PrescriptionMutate);
             }
             Permissions::EditCustomerInvoices => {
-                output.insert(Permission::OutboundShipmentMutate);
-                output.insert(Permission::PrescriptionMutate);
+                output.insert(PermissionType::OutboundShipmentMutate);
+                output.insert(PermissionType::PrescriptionMutate);
             }
             // supplier invoices
             Permissions::ViewSupplierInvoices => {
-                output.insert(Permission::InboundShipmentQuery);
-                output.insert(Permission::OutboundReturnQuery);
+                output.insert(PermissionType::InboundShipmentQuery);
+                output.insert(PermissionType::OutboundReturnQuery);
             }
             Permissions::EditSupplierInvoices => {
-                output.insert(Permission::InboundShipmentMutate);
+                output.insert(PermissionType::InboundShipmentMutate);
             }
             Permissions::CreateSupplierInvoices => {
-                output.insert(Permission::InboundShipmentMutate);
+                output.insert(PermissionType::InboundShipmentMutate);
             }
             // returns
             Permissions::ReturnStockFromSupplierInvoices => {
-                output.insert(Permission::OutboundReturnMutate);
+                output.insert(PermissionType::OutboundReturnMutate);
             }
             Permissions::ReturnStockFromCustomerInvoices => {
-                output.insert(Permission::InboundReturnMutate);
+                output.insert(PermissionType::InboundReturnMutate);
             }
             // requisitions
             Permissions::ViewRequisitions => {
-                output.insert(Permission::RequisitionQuery);
+                output.insert(PermissionType::RequisitionQuery);
             }
             Permissions::CreateAndEditRequisitions => {
-                output.insert(Permission::RequisitionMutate);
+                output.insert(PermissionType::RequisitionMutate);
             }
             Permissions::ConfirmInternalOrderSent => {
-                output.insert(Permission::RequisitionSend);
+                output.insert(PermissionType::RequisitionSend);
             }
             // reports
             Permissions::ViewReports => {
-                output.insert(Permission::Report);
+                output.insert(PermissionType::Report);
             }
             // log
             Permissions::ViewLog => {
-                output.insert(Permission::LogQuery);
+                output.insert(PermissionType::LogQuery);
             }
             // patient
             Permissions::AddPatients => {
-                output.insert(Permission::PatientMutate);
+                output.insert(PermissionType::PatientMutate);
             }
             Permissions::EditPatientDetails => {
-                output.insert(Permission::PatientMutate);
+                output.insert(PermissionType::PatientMutate);
             }
             Permissions::ViewPatients => {
-                output.insert(Permission::PatientQuery);
+                output.insert(PermissionType::PatientQuery);
             }
             // items
             Permissions::EditItems => {
-                output.insert(Permission::ItemMutate);
+                output.insert(PermissionType::ItemMutate);
             }
             Permissions::EditItemNamesCodesAndUnits => {
-                output.insert(Permission::ItemNamesCodesAndUnitsMutate);
+                output.insert(PermissionType::ItemNamesCodesAndUnitsMutate);
             }
             // cold chain
             Permissions::ColdChainApi => {
-                output.insert(Permission::ColdChainApi);
+                output.insert(PermissionType::ColdChainApi);
             }
             // assets
             Permissions::ViewAssets => {
-                output.insert(Permission::AssetQuery);
+                output.insert(PermissionType::AssetQuery);
             }
             Permissions::AddEditAssets => {
-                output.insert(Permission::AssetMutate);
+                output.insert(PermissionType::AssetMutate);
             }
             Permissions::SetupAssets => {
-                output.insert(Permission::AssetCatalogueItemMutate);
+                output.insert(PermissionType::AssetCatalogueItemMutate);
             }
             _ => continue,
         }

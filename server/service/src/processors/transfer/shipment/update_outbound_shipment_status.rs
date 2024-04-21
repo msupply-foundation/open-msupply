@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, RepositoryError,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
     StorageConnection,
 };
 
@@ -50,7 +50,7 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
         // 2.
         if !matches!(
             inbound_shipment.invoice_row.r#type,
-            InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn
+            InvoiceType::InboundShipment | InvoiceType::InboundReturn
         ) {
             return Ok(None);
         }
@@ -60,7 +60,7 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
             None => return Ok(None),
         };
         // 4.
-        if outbound_shipment.invoice_row.status == InvoiceRowStatus::Verified {
+        if outbound_shipment.invoice_row.status == InvoiceStatus::Verified {
             return Ok(None);
         }
         // 5.
@@ -68,7 +68,7 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
             return Ok(None);
         }
         // 6.
-        if inbound_shipment.invoice_row.status == InvoiceRowStatus::New {
+        if inbound_shipment.invoice_row.status == InvoiceStatus::New {
             return Ok(None);
         }
 

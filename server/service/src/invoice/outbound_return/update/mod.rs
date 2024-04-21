@@ -1,5 +1,5 @@
 use repository::{
-    Invoice, InvoiceRowRepository, InvoiceRowStatus, RepositoryError, StockLineRowRepository,
+    Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
 };
 
 use crate::{
@@ -97,16 +97,16 @@ impl From<RepositoryError> for UpdateOutboundReturnError {
 }
 
 impl UpdateOutboundReturnStatus {
-    pub fn as_invoice_row_status(&self) -> InvoiceRowStatus {
+    pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
-            UpdateOutboundReturnStatus::Picked => InvoiceRowStatus::Picked,
-            UpdateOutboundReturnStatus::Shipped => InvoiceRowStatus::Shipped,
+            UpdateOutboundReturnStatus::Picked => InvoiceStatus::Picked,
+            UpdateOutboundReturnStatus::Shipped => InvoiceStatus::Shipped,
         }
     }
 
     pub fn full_status_option(
         status: &Option<UpdateOutboundReturnStatus>,
-    ) -> Option<InvoiceRowStatus> {
+    ) -> Option<InvoiceStatus> {
         match status {
             Some(status) => Some(status.as_invoice_row_status()),
             None => None,
@@ -115,7 +115,7 @@ impl UpdateOutboundReturnStatus {
 }
 
 impl UpdateOutboundReturn {
-    pub fn full_status(&self) -> Option<InvoiceRowStatus> {
+    pub fn full_status(&self) -> Option<InvoiceStatus> {
         match &self.status {
             Some(status) => Some(status.as_invoice_row_status()),
             None => None,
@@ -141,7 +141,7 @@ mod test {
             mock_store_b, mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
         StockLineRowRepository,
     };
 
@@ -152,8 +152,8 @@ mod test {
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceRowType::OutboundReturn,
-                status: InvoiceRowStatus::New,
+                r#type: InvoiceType::OutboundReturn,
+                status: InvoiceStatus::New,
                 ..Default::default()
             }
         }
@@ -169,7 +169,7 @@ mod test {
         fn shipped_return() -> InvoiceRow {
             InvoiceRow {
                 id: "shipped_return".to_string(),
-                status: InvoiceRowStatus::Shipped,
+                status: InvoiceStatus::Shipped,
                 ..base_test_return()
             }
         }
@@ -186,7 +186,7 @@ mod test {
                 id: "new_return_line_no_stock_line".to_string(),
                 invoice_id: new_return().id,
                 item_link_id: mock_item_a().id,
-                r#type: InvoiceLineRowType::StockOut,
+                r#type: InvoiceLineType::StockOut,
                 ..Default::default()
             }
         }
@@ -303,7 +303,7 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(result.invoice_row.status, InvoiceRowStatus::Shipped);
+        assert_eq!(result.invoice_row.status, InvoiceStatus::Shipped);
         assert!(result.invoice_row.picked_datetime.is_some());
         assert!(result.invoice_row.shipped_datetime.is_some());
 
@@ -347,7 +347,7 @@ mod test {
             )
             .unwrap();
 
-        assert_eq!(result.invoice_row.status, InvoiceRowStatus::Shipped);
+        assert_eq!(result.invoice_row.status, InvoiceStatus::Shipped);
         assert!(result.invoice_row.shipped_datetime.is_some());
 
         let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();

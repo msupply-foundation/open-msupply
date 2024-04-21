@@ -1,6 +1,6 @@
 use util::inline_init;
 
-use crate::{InvoiceLineRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType};
+use crate::{InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType};
 
 use super::{mock_default_service_item, mock_name_a, MockData};
 
@@ -28,8 +28,8 @@ pub fn mock_draft_outbound_with_service_lines() -> InvoiceRow {
         r.id = "mock_draft_outbound_with_service_lines".to_string();
         r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::New;
     })
 }
 
@@ -46,8 +46,8 @@ pub fn mock_draft_outbound_shipped_with_service_lines() -> InvoiceRow {
         r.id = "mock_draft_outbound_shipped_with_service_lines".to_string();
         r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
-        r.r#type = InvoiceRowType::OutboundShipment;
-        r.status = InvoiceRowStatus::Shipped;
+        r.r#type = InvoiceType::OutboundShipment;
+        r.status = InvoiceStatus::Shipped;
     })
 }
 
@@ -66,8 +66,8 @@ pub fn mock_draft_inbound_shipment_with_service_lines() -> InvoiceRow {
         r.id = "mock_draft_inbound_shipment_with_service_lines".to_string();
         r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
-        r.r#type = InvoiceRowType::InboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::InboundShipment;
+        r.status = InvoiceStatus::New;
     })
 }
 
@@ -84,8 +84,8 @@ pub fn mock_draft_inbound_shipment_no_lines() -> InvoiceRow {
         r.id = "mock_draft_inbound_shipment_no_lines".to_string();
         r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
-        r.r#type = InvoiceRowType::InboundShipment;
-        r.status = InvoiceRowStatus::New;
+        r.r#type = InvoiceType::InboundShipment;
+        r.status = InvoiceStatus::New;
     })
 }
 
@@ -94,8 +94,8 @@ pub fn mock_draft_inbound_verified_with_service_lines() -> InvoiceRow {
         r.id = "mock_draft_inbound_shipped_with_service_lines".to_string();
         r.name_link_id = mock_name_a().id;
         r.store_id = "store_a".to_owned();
-        r.r#type = InvoiceRowType::InboundShipment;
-        r.status = InvoiceRowStatus::Verified;
+        r.r#type = InvoiceType::InboundShipment;
+        r.status = InvoiceStatus::Verified;
     })
 }
 

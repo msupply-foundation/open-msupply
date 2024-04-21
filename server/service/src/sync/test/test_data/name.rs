@@ -3,7 +3,7 @@ use crate::sync::{
     translations::name::{LegacyNameRow, LegacyNameType},
 };
 use chrono::NaiveDate;
-use repository::{Gender, NameRow, NameRowDelete, NameType};
+use repository::{GenderType, NameRow, NameRowDelete, NameType};
 use serde_json::json;
 
 const TABLE_NAME: &str = "name";
@@ -123,7 +123,7 @@ fn name_1() -> TestSyncIncomingRecord {
             supplying_store_id: None,
             first_name: Some("first_name".to_string()),
             last_name: Some("last_name".to_string()),
-            gender: Some(Gender::Female),
+            gender: Some(GenderType::Female),
             date_of_birth: None,
             phone: Some("0123456789".to_string()),
             charge_code: Some("GEN".to_string()),
@@ -529,7 +529,7 @@ fn name_4() -> TestSyncIncomingRecord {
             supplying_store_id: Some("store_a".to_string()),
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
-            gender: Some(Gender::Female),
+            gender: Some(GenderType::Female),
             date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 7, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
@@ -592,7 +592,7 @@ fn name_push_record_1() -> TestSyncOutgoingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
-            gender: Some(Gender::Female),
+            gender: Some(GenderType::Female),
             date_of_death: None,
             custom_data: None
         }),
@@ -635,7 +635,7 @@ fn name_push_record_2() -> TestSyncOutgoingRecord {
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
             ),
-            gender: Some(Gender::Female),
+            gender: Some(GenderType::Female),
             date_of_death: None,
             custom_data: None
         }),

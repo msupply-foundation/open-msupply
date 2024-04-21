@@ -5,7 +5,7 @@ use crate::{
         DeleteInboundShipmentLine,
     },
 };
-use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceLineRow, InvoiceType, StorageConnection};
 
 use super::DeleteInboundShipmentServiceLineError;
 
@@ -22,7 +22,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

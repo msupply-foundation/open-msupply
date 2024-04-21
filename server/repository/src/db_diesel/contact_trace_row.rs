@@ -1,6 +1,6 @@
 use super::{document::document, program_row::program, StorageConnection};
 
-use crate::{repository_error::RepositoryError, Gender};
+use crate::{repository_error::RepositoryError, GenderType};
 
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -16,7 +16,7 @@ table! {
       contact_patient_link_id -> Nullable<Text>,
       first_name -> Nullable<Text>,
       last_name -> Nullable<Text>,
-      gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+      gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
       date_of_birth -> Nullable<Date>,
       store_id -> Nullable<Text>,
       relationship -> Nullable<Text>,
@@ -40,7 +40,7 @@ struct ContactTraceRawRow {
     pub contact_patient_link_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub store_id: Option<String>,
     pub relationship: Option<String>,
@@ -57,7 +57,7 @@ table! {
       contact_patient_id -> Nullable<Text>,
       first_name -> Nullable<Text>,
       last_name -> Nullable<Text>,
-      gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+      gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
       date_of_birth -> Nullable<Date>,
       store_id -> Nullable<Text>,
       relationship -> Nullable<Text>,
@@ -84,7 +84,7 @@ pub struct ContactTraceRow {
     pub contact_patient_id: Option<String>,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub store_id: Option<String>,
     pub relationship: Option<String>,
@@ -173,7 +173,7 @@ mod tests {
             document_a, mock_merged_patient_name_link, mock_program_a, mock_store_a,
             MockDataInserts,
         },
-        test_db, Gender, Pagination,
+        test_db, GenderType, Pagination,
     };
 
     use super::ContactTraceRowRepository;
@@ -199,7 +199,7 @@ mod tests {
             contact_patient_id: Some(patient_link.id.clone()),
             first_name: Some("first".to_string()),
             last_name: Some("last".to_string()),
-            gender: Some(Gender::Female),
+            gender: Some(GenderType::Female),
             date_of_birth: Some(NaiveDate::from_ymd_opt(2000, 1, 15).unwrap()),
             store_id: Some(mock_store_a().id),
             relationship: Some("rel".to_string()),

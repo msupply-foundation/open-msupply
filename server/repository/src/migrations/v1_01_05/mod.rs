@@ -1,3 +1,5 @@
+use crate::StorageConnection;
+
 use super::{version::Version, Migration};
 
 pub(crate) struct V1_01_05;
@@ -7,7 +9,7 @@ impl Migration for V1_01_05 {
         Version::from_str("1.1.5")
     }
     #[cfg(feature = "postgres")]
-    fn migrate(&self, connection: &mut crate::StorageConnection) -> anyhow::Result<()> {
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         use crate::migrations::sql;
         sql!(
             connection,

@@ -1,7 +1,7 @@
 use repository::RepositoryError;
 use repository::{
     ActivityLogType, Invoice, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, StockLine, StockLineRowRepository,
+    InvoiceStatus, StockLine, StockLineRowRepository,
 };
 
 use super::generate::generate;
@@ -63,7 +63,7 @@ pub fn insert_inventory_adjustment(
             StockLineRowRepository::new(connection).upsert_one(&stock_line_row)?;
 
             let verified_invoice = InvoiceRow {
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceStatus::Verified,
                 ..new_invoice
             };
 
@@ -100,9 +100,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType,
-        InvoiceRowRepository, InvoiceRowStatus, StockLineFilter, StockLineRepository,
-        StockLineRowRepository,
+        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentType, InvoiceRowRepository,
+        InvoiceStatus, StockLineFilter, StockLineRepository, StockLineRowRepository,
     };
     use util::inline_edit;
 
@@ -122,7 +121,7 @@ mod test {
                 id: "reduction".to_string(),
                 reason: "test reduction".to_string(),
                 is_active: true,
-                r#type: InventoryAdjustmentReasonType::Negative,
+                r#type: InventoryAdjustmentType::Negative,
             }
         }
         let (_, _, connection_manager, _) = setup_all_with_data(
@@ -249,8 +248,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_inventory_adjustment_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_inventory_adjustment_success", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -294,7 +296,7 @@ mod test {
             retrieved_invoice,
             inline_edit(&retrieved_invoice, |mut u| {
                 u.id = created_invoice.invoice_row.id;
-                u.status = InvoiceRowStatus::Verified;
+                u.status = InvoiceStatus::Verified;
                 u
             })
         );
@@ -334,7 +336,7 @@ mod test {
             retrieved_invoice,
             inline_edit(&retrieved_invoice, |mut u| {
                 u.id = created_invoice.invoice_row.id;
-                u.status = InvoiceRowStatus::Verified;
+                u.status = InvoiceStatus::Verified;
                 u
             })
         );

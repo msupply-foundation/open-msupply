@@ -3,7 +3,7 @@ use repository::{
     ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowRepository,
     ProgramRequisitionSettings, ProgramRequisitionSettingsFilter,
     ProgramRequisitionSettingsRepository, ProgramSupplier, ProgramSupplierFilter,
-    ProgramSupplierRepository, RepositoryError, RequisitionRowType, RequisitionsInPeriod,
+    ProgramSupplierRepository, RepositoryError, RequisitionType, RequisitionsInPeriod,
     RequisitionsInPeriodFilter, RequisitionsInPeriodRepository,
 };
 
@@ -66,7 +66,7 @@ pub(super) fn prepare(
         .store_id(equal_to_store_id)
         .program_id(EqualFilter::equal_any(program_ids.clone()))
         .period_id(EqualFilter::equal_any(period_ids))
-        .r#type(RequisitionRowType::Request.equal_to());
+        .r#type(RequisitionType::Request.equal_to());
 
     let requisitions_in_periods =
         RequisitionsInPeriodRepository::new(&ctx.connection).query(filter)?;

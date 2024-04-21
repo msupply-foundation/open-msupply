@@ -7,7 +7,7 @@ use diesel_derive_enum::DbEnum;
 
 table! {
     key_value_store (id) {
-        id -> crate::db_diesel::key_value_store::KeyValueTypeMapping,
+        id -> crate::db_diesel::key_value_store::KeyTypeMapping,
         value_string -> Nullable<Text>,
         value_int-> Nullable<Integer>,
         value_bigint-> Nullable<BigInt>,
@@ -19,7 +19,7 @@ table! {
 // Database:  https://github.com/openmsupply/open-msupply/blob/d6645711184c63593949c3e8b6dc96b5a5ded39f/server/repository/migrations/postgres/2022-02-11T15-00_create_key_value_store/up.sql#L2-L16
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum KeyValueType {
+pub enum KeyType {
     #[default]
     CentralSyncPullCursor,
     SyncPullCursorV6,
@@ -55,7 +55,7 @@ pub enum KeyValueType {
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = key_value_store)]
 pub struct KeyValueStoreRow {
-    pub id: KeyValueType,
+    pub id: KeyType,
     pub value_string: Option<String>,
     pub value_int: Option<i32>,
     pub value_bigint: Option<i64>,
@@ -91,7 +91,7 @@ impl<'a> KeyValueStoreRepository<'a> {
         Ok(())
     }
 
-    fn get_row(&self, key: KeyValueType) -> Result<Option<KeyValueStoreRow>, RepositoryError> {
+    fn get_row(&self, key: KeyType) -> Result<Option<KeyValueStoreRow>, RepositoryError> {
         let result = kv_store_dsl::key_value_store
             .filter(kv_store_dsl::id.eq(key))
             .first(self.connection.lock().connection())
@@ -99,11 +99,7 @@ impl<'a> KeyValueStoreRepository<'a> {
         Ok(result)
     }
 
-    pub fn set_string(
-        &self,
-        key: KeyValueType,
-        value: Option<String>,
-    ) -> Result<(), RepositoryError> {
+    pub fn set_string(&self, key: KeyType, value: Option<String>) -> Result<(), RepositoryError> {
         self.upsert_one(&KeyValueStoreRow {
             id: key,
             value_string: value,
@@ -114,12 +110,12 @@ impl<'a> KeyValueStoreRepository<'a> {
         })
     }
 
-    pub fn get_string(&self, key: KeyValueType) -> Result<Option<String>, RepositoryError> {
+    pub fn get_string(&self, key: KeyType) -> Result<Option<String>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_string))
     }
 
-    pub fn set_i32(&self, key: KeyValueType, value: Option<i32>) -> Result<(), RepositoryError> {
+    pub fn set_i32(&self, key: KeyType, value: Option<i32>) -> Result<(), RepositoryError> {
         self.upsert_one(&KeyValueStoreRow {
             id: key,
             value_string: None,
@@ -130,12 +126,12 @@ impl<'a> KeyValueStoreRepository<'a> {
         })
     }
 
-    pub fn get_i32(&self, key: KeyValueType) -> Result<Option<i32>, RepositoryError> {
+    pub fn get_i32(&self, key: KeyType) -> Result<Option<i32>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_int))
     }
 
-    pub fn set_i64(&self, key: KeyValueType, value: Option<i64>) -> Result<(), RepositoryError> {
+    pub fn set_i64(&self, key: KeyType, value: Option<i64>) -> Result<(), RepositoryError> {
         self.upsert_one(&KeyValueStoreRow {
             id: key,
             value_string: None,
@@ -146,12 +142,12 @@ impl<'a> KeyValueStoreRepository<'a> {
         })
     }
 
-    pub fn get_i64(&self, key: KeyValueType) -> Result<Option<i64>, RepositoryError> {
+    pub fn get_i64(&self, key: KeyType) -> Result<Option<i64>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bigint))
     }
 
-    pub fn set_f64(&self, key: KeyValueType, value: Option<f64>) -> Result<(), RepositoryError> {
+    pub fn set_f64(&self, key: KeyType, value: Option<f64>) -> Result<(), RepositoryError> {
         self.upsert_one(&KeyValueStoreRow {
             id: key,
             value_string: None,
@@ -162,12 +158,12 @@ impl<'a> KeyValueStoreRepository<'a> {
         })
     }
 
-    pub fn get_f64(&self, key: KeyValueType) -> Result<Option<f64>, RepositoryError> {
+    pub fn get_f64(&self, key: KeyType) -> Result<Option<f64>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_float))
     }
 
-    pub fn set_bool(&self, key: KeyValueType, value: Option<bool>) -> Result<(), RepositoryError> {
+    pub fn set_bool(&self, key: KeyType, value: Option<bool>) -> Result<(), RepositoryError> {
         self.upsert_one(&KeyValueStoreRow {
             id: key,
             value_string: None,
@@ -178,7 +174,7 @@ impl<'a> KeyValueStoreRepository<'a> {
         })
     }
 
-    pub fn get_bool(&self, key: KeyValueType) -> Result<Option<bool>, RepositoryError> {
+    pub fn get_bool(&self, key: KeyType) -> Result<Option<bool>, RepositoryError> {
         let row = self.get_row(key)?;
         Ok(row.and_then(|row| row.value_bool))
     }

@@ -14,14 +14,14 @@ table! {
       id -> Text,
       user_id -> Text,
       store_id -> Nullable<Text>,
-      permission -> crate::db_diesel::user_permission_row::PermissionMapping,
+      permission -> crate::db_diesel::user_permission_row::PermissionTypeMapping,
       context_id -> Nullable<Text>,
     }
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Permission {
+pub enum PermissionType {
     ServerAdmin,
 
     /// User has access to the store this permission is associated with.
@@ -88,7 +88,7 @@ pub struct UserPermissionRow {
     pub id: String,
     pub user_id: String,
     pub store_id: Option<String>,
-    pub permission: Permission,
+    pub permission: PermissionType,
     /// An optional resource associated with this permission.
     /// The resource value is only used for certain Permission variants.
     pub context_id: Option<String>,

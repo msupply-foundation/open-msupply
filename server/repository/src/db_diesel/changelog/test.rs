@@ -10,11 +10,10 @@ use crate::{
         mock_location_on_hold, mock_store_a, mock_store_b, MockData, MockDataInserts,
     },
     test_db::{self, setup_all, setup_all_with_data},
-    ChangelogAction, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName,
-    CurrencyRow, EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow,
-    InvoiceRowRepository, LocationRowRepository, NameRow, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, StorageConnection,
-    StoreRow, Upsert,
+    ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogTableName, CurrencyRow,
+    EqualFilter, InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
+    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, RowActionType, StorageConnection, StoreRow, Upsert,
 };
 
 #[actix_rt::test]
@@ -39,7 +38,7 @@ async fn test_changelog() {
             r.cursor = starting_cursor as i64 + 1;
             r.table_name = ChangelogTableName::Location;
             r.record_id = mock_location_1().id.clone();
-            r.row_action = ChangelogAction::Upsert;
+            r.row_action = RowActionType::Upsert;
         })
     );
 
@@ -67,7 +66,7 @@ async fn test_changelog() {
             r.cursor = starting_cursor as i64 + 2;
             r.table_name = ChangelogTableName::Location;
             r.record_id = mock_location_1().id.clone();
-            r.row_action = ChangelogAction::Upsert;
+            r.row_action = RowActionType::Upsert;
         })
     );
 
@@ -82,7 +81,7 @@ async fn test_changelog() {
             r.cursor = starting_cursor as i64 + 2;
             r.table_name = ChangelogTableName::Location;
             r.record_id = mock_location_1().id.clone();
-            r.row_action = ChangelogAction::Upsert;
+            r.row_action = RowActionType::Upsert;
         })
     );
 
@@ -97,13 +96,13 @@ async fn test_changelog() {
                 r.cursor = starting_cursor as i64 + 2;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_1().id.clone();
-                r.row_action = ChangelogAction::Upsert;
+                r.row_action = RowActionType::Upsert;
             }),
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 3;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_on_hold().id.clone();
-                r.row_action = ChangelogAction::Upsert;
+                r.row_action = RowActionType::Upsert;
             })
         ]
     );
@@ -119,13 +118,13 @@ async fn test_changelog() {
                 r.cursor = starting_cursor as i64 + 2;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_1().id.clone();
-                r.row_action = ChangelogAction::Upsert;
+                r.row_action = RowActionType::Upsert;
             }),
             inline_init(|r: &mut ChangelogRow| {
                 r.cursor = starting_cursor as i64 + 4;
                 r.table_name = ChangelogTableName::Location;
                 r.record_id = mock_location_on_hold().id.clone();
-                r.row_action = ChangelogAction::Delete;
+                r.row_action = RowActionType::Delete;
             })
         ]
     );
@@ -207,7 +206,7 @@ async fn test_changelog_filter() {
         cursor: 1,
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice1".to_string(),
-        row_action: ChangelogAction::Upsert,
+        row_action: RowActionType::Upsert,
         name_id: Some("name1".to_string()),
         store_id: Some("store1".to_string()),
         is_sync_update: false,
@@ -218,7 +217,7 @@ async fn test_changelog_filter() {
         cursor: 2,
         table_name: ChangelogTableName::Requisition,
         record_id: "requisition1".to_string(),
-        row_action: ChangelogAction::Upsert,
+        row_action: RowActionType::Upsert,
         name_id: Some("name2".to_string()),
         store_id: Some("store2".to_string()),
         is_sync_update: false,
@@ -229,7 +228,7 @@ async fn test_changelog_filter() {
         cursor: 3,
         table_name: ChangelogTableName::Invoice,
         record_id: "invoice2".to_string(),
-        row_action: ChangelogAction::Upsert,
+        row_action: RowActionType::Upsert,
         name_id: Some("name3".to_string()),
         store_id: Some("store3".to_string()),
         is_sync_update: false,
@@ -240,7 +239,7 @@ async fn test_changelog_filter() {
         cursor: 4,
         table_name: ChangelogTableName::StocktakeLine,
         record_id: "stocktake_line1".to_string(),
-        row_action: ChangelogAction::Upsert,
+        row_action: RowActionType::Upsert,
         name_id: None,
         store_id: None,
         is_sync_update: false,
@@ -311,7 +310,7 @@ struct TestRecord<T> {
 fn test_changelog_name_and_store_id<T, F>(
     connection: &StorageConnection,
     record: TestRecord<T>,
-    row_action: ChangelogAction,
+    row_action: RowActionType,
     db_op: F,
 ) where
     F: Fn(&StorageConnection, &T),
@@ -424,7 +423,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |_, _| {
             // already inserted in setup_all
         },
@@ -440,7 +439,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |connection, r| {
             InvoiceLineRowRepository::new(connection)
                 .upsert_one(r)
@@ -458,7 +457,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
-        ChangelogAction::Delete,
+        RowActionType::Delete,
         |connection, r| {
             InvoiceLineRowRepository::new(connection)
                 .delete(&r.id)
@@ -476,7 +475,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |_, _| {
             // already inserted in setup_all
         },
@@ -492,7 +491,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |connection, r| InvoiceRowRepository::new(connection).upsert_one(r).unwrap(),
     );
 
@@ -506,7 +505,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: invoice().name_link_id,
             store_id: invoice().store_id,
         },
-        ChangelogAction::Delete,
+        RowActionType::Delete,
         |connection, r| InvoiceRowRepository::new(connection).delete(&r.id).unwrap(),
     );
 
@@ -520,7 +519,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |_, _| {
             // already inserted in setup_all
         },
@@ -536,7 +535,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |connection, r| {
             RequisitionLineRowRepository::new(connection)
                 .upsert_one(r)
@@ -554,7 +553,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
-        ChangelogAction::Delete,
+        RowActionType::Delete,
         |connection, r| {
             RequisitionLineRowRepository::new(connection)
                 .delete(&r.id)
@@ -572,7 +571,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |_, _| {
             // already inserted in setup_all
         },
@@ -588,7 +587,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
-        ChangelogAction::Upsert,
+        RowActionType::Upsert,
         |connection, r| {
             RequisitionRowRepository::new(connection)
                 .upsert_one(r)
@@ -606,7 +605,7 @@ async fn test_changelog_name_and_store_id_in_trigger() {
             name_id: requisition().name_link_id,
             store_id: requisition().store_id,
         },
-        ChangelogAction::Delete,
+        RowActionType::Delete,
         |connection, r| {
             RequisitionRowRepository::new(connection)
                 .delete(&r.id)
