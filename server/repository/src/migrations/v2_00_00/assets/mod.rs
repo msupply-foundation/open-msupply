@@ -9,6 +9,7 @@ pub mod asset_log;
 mod label_printer;
 pub mod latest_asset_log;
 pub mod reference_data;
+mod sync_error_codes;
 mod sync_triggers_central;
 
 pub(crate) fn migrate_assets(connection: &StorageConnection) -> anyhow::Result<()> {
@@ -22,5 +23,6 @@ pub(crate) fn migrate_assets(connection: &StorageConnection) -> anyhow::Result<(
     latest_asset_log::migrate(connection)?;
     sync_triggers_central::migrate(connection)?;
     label_printer::migrate(connection)?;
+    sync_error_codes::migrate(connection)?;
     Ok(())
 }
