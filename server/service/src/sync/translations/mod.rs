@@ -48,6 +48,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod utils;
 
 use repository::*;
 use thiserror::Error;
