@@ -35,10 +35,7 @@ export const Environment = {
   PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
 
   // Feature flags
-  FEATURE_INVENTORY_ADJUSTMENTS:
-    typeof FEATURE_INVENTORY_ADJUSTMENTS === 'undefined'
-      ? false
-      : FEATURE_INVENTORY_ADJUSTMENTS,
+  FEATURE_INVENTORY_ADJUSTMENTS,
 };
 
 export default Environment;
