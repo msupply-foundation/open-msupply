@@ -1,2 +1,2 @@
-pub mod insert;
-pub use self::insert::*;
+pub mod adjust_existing_stock;
+pub use self::adjust_existing_stock::*;
