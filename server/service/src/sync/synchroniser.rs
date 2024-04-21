@@ -64,7 +64,7 @@ pub(crate) enum SyncError {
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
-    IntegrationError(anyhow::Error),
+    IntegrationError(RepositoryError),
 }
 
 // For unwrap and expect debug implementation is used
@@ -297,11 +297,14 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
     execute_in_transaction: bool,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: Option<i32>,
-) -> anyhow::Result<(
-    TranslationAndIntegrationResults,
-    TranslationAndIntegrationResults,
-    TranslationAndIntegrationResults,
-)> {
+) -> Result<
+    (
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+    ),
+    RepositoryError,
+> {
     // Integration is done inside a transaction, to make sure all records are available at the same time
     // and maintain logical data integrity. During initialisation nested transactions cause significant
     // reduction in speed of this operation, since the system is not available during initialisation we don't need
