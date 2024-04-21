@@ -73,6 +73,7 @@ pub fn generate_requisition_lines(
                 snapshot_datetime: Some(Utc::now().naive_utc()),
                 // Default
                 comment: None,
+                item_name: "".to_string(),
                 supply_quantity: 0,
                 requested_quantity: 0,
                 approved_quantity: 0,
