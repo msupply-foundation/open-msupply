@@ -4,7 +4,7 @@ use crate::sync::{
 };
 use chrono::NaiveDateTime;
 use repository::{
-    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, ItemRowRepository, RequisitionLineRow,
+    ChangelogRow, ChangelogTableName, ItemLinkRowRepository, RequisitionLineRow,
     RequisitionLineRowRepository, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
