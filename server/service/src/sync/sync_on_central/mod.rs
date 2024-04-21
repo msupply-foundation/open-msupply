@@ -1,4 +1,7 @@
-use std::{sync::RwLock, vec};
+use std::{
+    sync::{Arc, RwLock},
+    vec,
+};
 
 use repository::{ChangelogRepository, SyncBufferRowRepository};
 use util::format_error;
@@ -102,7 +105,7 @@ pub async fn pull(
 
 /// Receive Records from a remote open-mSupply Server
 pub async fn push(
-    service_provider: &ServiceProvider,
+    service_provider: Arc<ServiceProvider>,
     SyncPushRequestV6 {
         batch,
         sync_v5_settings,
@@ -150,17 +153,7 @@ pub async fn push(
     }
 
     if is_last_batch {
-        set_integrating(response.site_id, true);
-
-        integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(response.site_id))
-            .await
-            .map_err(|e| {
-                Error::OtherServerError(
-                    "Error integrating records: ".to_string() + e.to_string().as_str(),
-                )
-            })?;
-
-        set_integrating(response.site_id, false);
+        spawn_integration(service_provider.clone(), response.site_id);
     }
 
     Ok(SyncPushSuccessV6 {
@@ -204,4 +197,30 @@ fn set_integrating(site_id: i32, is_integrating: bool) {
     } else {
         sites_being_integrated.retain(|id| *id != site_id);
     }
+}
+
+fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> () {
+    tokio::spawn(async move {
+        let ctx = match service_provider.basic_context() {
+            Ok(ctx) => ctx,
+            Err(e) => {
+                log::error!("Error getting basic context: {}", e);
+                return;
+            }
+        };
+
+        set_integrating(site_id, true);
+
+        match integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(site_id)).await
+        {
+            Ok(_) => {
+                log::info!("Integration complete for site {}", site_id);
+            }
+            Err(e) => {
+                log::error!("Error integrating records for site {}: {}", site_id, e);
+            }
+        }
+
+        set_integrating(site_id, false);
+    });
 }
