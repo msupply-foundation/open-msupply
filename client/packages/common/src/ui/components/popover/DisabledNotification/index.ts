@@ -1,1 +1,2 @@
-export * from './useDisabledNotification';
+export * from './useDisabledNotificationPopover';
+export * from './useDisabledNotificationToast';
