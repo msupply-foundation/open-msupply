@@ -1,6 +1,6 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, ItemRowType, MasterListFilter, MasterListLineFilter,
+    ActivityLogType, DateFilter, EqualFilter, ItemRowType, MasterListFilter, MasterListLineFilter,
     MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError,
     StockLineFilter, StockLineRepository, StockLineRow, Stocktake, StocktakeFilter,
     StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
@@ -25,6 +25,7 @@ pub struct InsertStocktake {
     pub master_list_id: Option<String>,
     pub location: Option<NullableUpdate<String>>,
     pub items_have_stock: Option<bool>,
+    pub expires_before: Option<NaiveDate>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -100,6 +101,7 @@ fn generate(
         location,
         master_list_id,
         items_have_stock,
+        expires_before,
     }: InsertStocktake,
 ) -> Result<(StocktakeRow, Vec<StocktakeLineRow>), RepositoryError> {
     let stocktake_number = next_number(connection, &NumberRowType::Stocktake, store_id)?;
@@ -121,7 +123,19 @@ fn generate(
         Some(_) => generate_lines_with_stock(connection, store_id, &id)?,
         None => Vec::new(),
     };
-    let lines = [master_list_lines, location_lines, items_have_stock_lines].concat();
+    // let expiring_items_lines = match expiring_within_days {
+    //     Some(_) => {
+    //         generate_lines_expiring_soon(connection, store_id, &id, &expiring_within_days.unwrap())?
+    //     }
+    //     None => Vec::new(),
+    // };
+    let lines = [
+        master_list_lines,
+        location_lines,
+        items_have_stock_lines,
+        // expiring_items_lines,
+    ]
+    .concat();
 
     Ok((
         StocktakeRow {
@@ -302,6 +316,62 @@ pub fn generate_lines_with_stock(
     connection: &StorageConnection,
     store_id: &str,
     stocktake_id: &str,
+) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
+    let stock_lines = StockLineRepository::new(&connection).query_by_filter(
+        StockLineFilter::new()
+            .store_id(EqualFilter::equal_to(store_id))
+            .has_packs_in_store(true),
+        Some(store_id.to_string()),
+    )?;
+
+    let result = stock_lines
+        .into_iter()
+        .map(|line| {
+            let StockLineRow {
+                id: stock_line_id,
+                item_link_id: _,
+                location_id,
+                batch,
+                pack_size,
+                cost_price_per_pack,
+                sell_price_per_pack,
+                total_number_of_packs,
+                expiry_date,
+                note,
+                supplier_link_id: _,
+                store_id: _,
+                on_hold: _,
+                available_number_of_packs: _,
+                barcode_id: _,
+            } = line.stock_line_row;
+
+            StocktakeLineRow {
+                id: uuid(),
+                stocktake_id: stocktake_id.to_string(),
+                snapshot_number_of_packs: total_number_of_packs,
+                item_link_id: line.item_row.id,
+                location_id,
+                batch,
+                expiry_date,
+                note,
+                stock_line_id: Some(stock_line_id),
+                pack_size: Some(pack_size),
+                cost_price_per_pack: Some(cost_price_per_pack),
+                sell_price_per_pack: Some(sell_price_per_pack),
+                comment: None,
+                counted_number_of_packs: None,
+                inventory_adjustment_reason_id: None,
+            }
+        })
+        .collect();
+    Ok(result)
+}
+
+fn generate_lines_expiring_soon(
+    connection: &StorageConnection,
+    store_id: &str,
+    stocktake_id: &str,
+    days: &i32,
 ) -> Result<Vec<StocktakeLineRow>, RepositoryError> {
     let stock_lines = StockLineRepository::new(&connection).query_by_filter(
         StockLineFilter::new()
