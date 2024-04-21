@@ -200,6 +200,7 @@ fn generate_response_requisition_lines(
                          average_monthly_consumption,
                          snapshot_datetime,
                          comment,
+                         item_name,
                      },
                  item_row: ItemRow { id: item_id, .. },
                  requisition_row: _,
@@ -213,6 +214,7 @@ fn generate_response_requisition_lines(
                 average_monthly_consumption,
                 snapshot_datetime,
                 comment: comment.clone(),
+                item_name,
                 // Default
                 supply_quantity: 0,
                 approved_quantity: 0,
