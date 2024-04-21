@@ -213,6 +213,31 @@ export const PricingTableComponent: FC<
   }
 
   columnDefinitions.push([
+    'sellPricePerPack',
+    {
+      Cell: CurrencyInputCell,
+      width: 100,
+      setter: updateDraftLine,
+    },
+  ]);
+
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
+    columnDefinitions.push({
+      key: 'foreignCurrencySellPricePerPack',
+      label: 'label.fc-sell-price',
+      description: 'description.fc-sell-price',
+      width: 100,
+      align: ColumnAlign.Right,
+      Cell: CurrencyCell,
+      accessor: ({ rowData }) => {
+        if (currency) {
+          return rowData.sellPricePerPack / currency.rate;
+        }
+      },
+    });
+  }
+
+  columnDefinitions.push([
     'lineTotal',
     {
       accessor: ({ rowData }) =>
@@ -220,7 +245,7 @@ export const PricingTableComponent: FC<
     },
   ]);
 
-  if (isExternalSupplier) {
+  if (isExternalSupplier && !!store?.preferences.issueInForeignCurrency) {
     columnDefinitions.push({
       key: 'foreignCurrencyLineTotal',
       label: 'label.fc-line-total',

@@ -82,6 +82,7 @@ fn get_exclude_timestamp_fields() -> Vec<TableAndFieldName> {
         ("user_account", "last_successful_sync"),
         ("activity_log", "datetime"),
         ("asset_log", "log_datetime"),
+        ("sync_file_reference", "retry_at"),
     ]
     .iter()
     .map(|(table_name, field_name)| TableAndFieldName {
@@ -675,6 +676,8 @@ mod tests {
             FROM information_schema.columns 
             WHERE data_type = 'timestamp without time zone' 
               AND table_name != '__diesel_schema_migrations'
+              -- ignore all report views
+              AND table_name NOT LIKE 'report_%'
               AND column_name not in ('deleted_datetime') -- assume we don't want to change dates on these fields?
               AND is_updatable = 'YES'
             "#;
@@ -720,6 +723,8 @@ mod tests {
         FROM information_schema.columns 
         WHERE data_type = 'date' 
           AND table_name != '__diesel_schema_migrations'
+          -- ignore all report views
+          AND table_name NOT LIKE 'report_%'
           AND is_updatable = 'YES'
         "#;
 

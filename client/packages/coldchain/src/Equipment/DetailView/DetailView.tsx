@@ -34,7 +34,7 @@ export const EquipmentDetailView = () => {
         key: 'name',
         direction: 'asc',
       },
-      filterBy: null,
+      filterBy: { assignedToAsset: false },
     });
   const navigate = useNavigate();
   const t = useTranslation('coldchain');
@@ -52,7 +52,7 @@ export const EquipmentDetailView = () => {
         setIsDirty(false);
         success(t('messages.asset-saved'))();
       })
-      .catch(() => error(t('error.unable-to-save-asset'))());
+      .catch(e => error(`${t('error.unable-to-save-asset')}: ${e.message}`)());
   };
 
   const showSaveConfirmation = useConfirmationModal({

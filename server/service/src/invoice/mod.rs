@@ -13,6 +13,9 @@ pub mod query;
 use self::inbound_return::insert::insert_inbound_return;
 use self::inbound_return::insert::InsertInboundReturn;
 use self::inbound_return::insert::InsertInboundReturnError;
+use self::inventory_adjustment::insert_inventory_adjustment;
+use self::inventory_adjustment::InsertInventoryAdjustment;
+use self::inventory_adjustment::InsertInventoryAdjustmentError;
 use self::outbound_return::delete::*;
 use self::outbound_return::generate_outbound_return_lines::*;
 use self::outbound_return::insert::*;
@@ -34,6 +37,8 @@ pub mod outbound_shipment;
 use self::outbound_shipment::{delete::*, insert::*, update::*, update_outbound_shipment_name};
 pub mod inbound_shipment;
 use self::inbound_shipment::*;
+
+pub mod inventory_adjustment;
 
 pub mod validate;
 pub use self::validate::*;
@@ -276,6 +281,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         id: String,
     ) -> Result<String, DeleteInboundReturnError> {
         delete_inbound_return(ctx, id)
+    }
+
+    fn insert_inventory_adjustment(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertInventoryAdjustment,
+    ) -> Result<Invoice, InsertInventoryAdjustmentError> {
+        insert_inventory_adjustment(ctx, input)
     }
 }
 

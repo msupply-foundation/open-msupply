@@ -1,6 +1,10 @@
 pub mod asset;
 pub mod asset_catalogue_item;
+pub mod asset_catalogue_item_property;
+pub mod asset_catalogue_item_property_row;
 pub mod asset_catalogue_item_row;
+pub mod asset_catalogue_property;
+pub mod asset_catalogue_property_row;
 pub mod asset_category;
 pub mod asset_category_row;
 pub mod asset_class;

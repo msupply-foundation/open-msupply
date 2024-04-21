@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BasicSpinner,
   useNotification,
@@ -8,11 +8,16 @@ import {
   DialogButton,
   InputWithLabelRow,
   Select,
-  Autocomplete,
   FnUtils,
   BasicTextInput,
   useIsCentralServerApi,
   Switch,
+  AutocompleteWithPagination,
+  usePagination,
+  useStringFilter,
+  ArrayUtils,
+  useDebounceCallback,
+  AssetLogStatusInput,
 } from '@openmsupply-client/common';
 import {
   AssetCatalogueItemFragment,
@@ -24,6 +29,9 @@ import {
 import { useAssets } from '../api';
 import { CCE_CLASS_ID } from '../utils';
 import { InsertAsset } from '../api/api';
+
+const DEBOUNCE_TIMEOUT = 300;
+const RECORDS_PER_PAGE = 100;
 
 interface CreateAssetModalProps {
   isOpen: boolean;
@@ -88,10 +96,19 @@ export const CreateAssetModal = ({
     useAssetData.utils.types({
       categoryId: { equalTo: draft.categoryId ?? '' },
     });
-  const { data: catalogueItemData } = useAssetData.document.list(
-    draft.categoryId ?? ''
-  );
+  const { pagination, onPageChange } = usePagination(RECORDS_PER_PAGE);
+  const { filter, onFilter } = useStringFilter('search');
+  const {
+    data: catalogueItemData,
+    isFetching,
+    fetchNextPage,
+  } = useAssetData.document.infiniteList({
+    filter,
+    categoryId: draft.categoryId,
+    pagination,
+  });
   const { mutateAsync: save } = useAssets.document.insert();
+  const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
 
   const handleClose = () => {
@@ -103,7 +120,11 @@ export const CreateAssetModal = ({
     setDraft({ ...draft, ...patch });
   };
 
-  const catalogueItems = catalogueItemData?.nodes ?? [];
+  const catalogueItems = ArrayUtils.flatMap(
+    catalogueItemData?.pages,
+    page => page.nodes
+  );
+
   const selectedCatalogueItem = catalogueItems.find(
     ci => ci.id === draft.catalogueItemId
   );
@@ -130,6 +151,42 @@ export const CreateAssetModal = ({
     !draft.assetNumber ||
     (isCatalogueAsset ? !draft.catalogueItemId : !draft.typeId);
 
+  const debounceOnFilter = useDebounceCallback(
+    (searchText: string) => {
+      onPageChange(0); // Reset pagination when searching for a new item
+      onFilter(searchText);
+    },
+    [onFilter],
+    DEBOUNCE_TIMEOUT
+  );
+
+  const onSave = async () => {
+    try {
+      await save(draft);
+      await insertLog({
+        id: FnUtils.generateUUID(),
+        assetId: draft.id,
+        comment: t('label.created'),
+        status: AssetLogStatusInput.Functioning,
+      });
+      invalidateQueries();
+      success(t('messages.cce-created'))();
+      handleClose();
+    } catch (e) {
+      error(t(parseInsertError(e)))();
+    }
+  };
+
+  // when the pagination changes, fetch the next page
+  useEffect(() => {
+    fetchNextPage({ pageParam: pagination });
+  }, [fetchNextPage, pagination]);
+
+  // reset the catalogue item pagination when the category changes
+  useEffect(() => {
+    onPageChange(0);
+  }, [draft.categoryId, onPageChange]);
+
   return (
     <Modal
       title={t('heading.add-cold-chain-equipment')}
@@ -137,19 +194,7 @@ export const CreateAssetModal = ({
       height={100}
       cancelButton={<DialogButton variant="cancel" onClick={handleClose} />}
       okButton={
-        <DialogButton
-          variant="ok"
-          disabled={isDisabled}
-          onClick={async () => {
-            try {
-              await save(draft);
-              success(t('messages.cce-created'))();
-              handleClose();
-            } catch (e) {
-              error(t(parseInsertError(e)))();
-            }
-          }}
-        />
+        <DialogButton variant="ok" disabled={isDisabled} onClick={onSave} />
       }
     >
       {isLoadingCategories ? (
@@ -163,6 +208,20 @@ export const CreateAssetModal = ({
               label={t('label.use-catalogue')}
             />
           </Box>
+          {isCentralServer && (
+            <InputRow
+              label={t('label.store')}
+              Input={
+                <StoreSearchInput
+                  clearable
+                  fullWidth
+                  value={draft.store ?? undefined}
+                  onChange={onStoreChange}
+                  onInputChange={onStoreInputChange}
+                />
+              }
+            />
+          )}
           <InputRow
             label={t('label.category')}
             Input={
@@ -184,7 +243,7 @@ export const CreateAssetModal = ({
             <InputRow
               label={t('label.catalogue-item')}
               Input={
-                <Autocomplete
+                <AutocompleteWithPagination
                   value={
                     !!selectedCatalogueItem
                       ? mapCatalogueItem(selectedCatalogueItem)
@@ -199,6 +258,14 @@ export const CreateAssetModal = ({
                   onChange={(_event, selected) =>
                     updateDraft({ catalogueItemId: selected?.value ?? '' })
                   }
+                  pagination={{
+                    ...pagination,
+                    total: catalogueItemData?.pages?.[0]?.totalCount ?? 0,
+                  }}
+                  paginationDebounce={DEBOUNCE_TIMEOUT}
+                  onPageChange={onPageChange}
+                  loading={isFetching}
+                  onInputChange={(_, value) => debounceOnFilter(value)}
                 />
               }
             />
@@ -233,20 +300,6 @@ export const CreateAssetModal = ({
               />
             }
           />
-          {isCentralServer && (
-            <InputRow
-              label={t('label.store')}
-              Input={
-                <StoreSearchInput
-                  clearable
-                  fullWidth
-                  value={draft.store ?? undefined}
-                  onChange={onStoreChange}
-                  onInputChange={onStoreInputChange}
-                />
-              }
-            />
-          )}
           <InputRow
             label={t('label.notes')}
             Input={

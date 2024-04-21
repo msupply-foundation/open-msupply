@@ -4,7 +4,7 @@ import { GraphQLClient } from 'graphql-request';
 import { GraphQLClientRequestHeaders } from 'graphql-request/build/cjs/types';
 import gql from 'graphql-tag';
 import { graphql, ResponseResolver, GraphQLRequest, GraphQLContext } from 'msw'
-export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
+export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null };
 
 export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -15,14 +15,14 @@ export type AssetCatalogueItemsQueryVariables = Types.Exact<{
 }>;
 
 
-export type AssetCatalogueItemsQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
+export type AssetCatalogueItemsQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
 
 export type AssetCatalogueItemByIdQueryVariables = Types.Exact<{
   assetCatalogueItemId: Types.Scalars['String']['input'];
 }>;
 
 
-export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
+export type AssetCatalogueItemByIdQuery = { __typename: 'Queries', assetCatalogueItems: { __typename: 'AssetCatalogueItemConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCatalogueItemNode', assetCategoryId: string, assetClassId: string, assetTypeId: string, code: string, id: string, manufacturer?: string | null, model: string, subCatalogue: string, assetClass?: { __typename: 'AssetClassNode', name: string } | null, assetCategory?: { __typename: 'AssetCategoryNode', name: string } | null, assetType?: { __typename: 'AssetTypeNode', name: string } | null }> } };
 
 export type AssetClassesQueryVariables = Types.Exact<{
   sort?: Types.InputMaybe<Types.AssetClassSortInput>;
@@ -47,6 +47,21 @@ export type AssetCategoriesQueryVariables = Types.Exact<{
 
 export type AssetCategoriesQuery = { __typename: 'Queries', assetCategories: { __typename: 'AssetCategoryConnector', totalCount: number, nodes: Array<{ __typename: 'AssetCategoryNode', id: string, name: string, classId: string }> } };
 
+export type InsertAssetCatalogueItemMutationVariables = Types.Exact<{
+  input: Types.InsertAssetCatalogueItemInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type InsertAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', insertAssetCatalogueItem: { __typename: 'AssetCatalogueItemNode', id: string } | { __typename: 'InsertAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueCombinationViolation', fields: Array<Types.UniqueCombinationKey>, description: string } | { __typename: 'UniqueValueViolation', field: Types.UniqueValueKey, description: string } } } } };
+
+export type DeleteAssetCatalogueItemMutationVariables = Types.Exact<{
+  assetCatalogueItemId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteAssetCatalogueItemMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', deleteAssetCatalogueItem: { __typename: 'DeleteAssetCatalogueItemError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } } } };
+
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
   assetCategoryId
@@ -56,6 +71,7 @@ export const AssetCatalogueItemFragmentDoc = gql`
   id
   manufacturer
   model
+  subCatalogue
   assetClass {
     name
   }
@@ -75,7 +91,6 @@ export const AssetCatalogueItemsDocument = gql`
     filter: $filter
   ) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
         ...AssetCatalogueItem
       }
@@ -88,9 +103,7 @@ export const AssetCatalogueItemByIdDocument = gql`
     query assetCatalogueItemById($assetCatalogueItemId: String!) {
   assetCatalogueItems(filter: {id: {equalTo: $assetCatalogueItemId}}) {
     ... on AssetCatalogueItemConnector {
-      __typename
       nodes {
-        __typename
         ...AssetCatalogueItem
       }
       totalCount
@@ -139,6 +152,57 @@ export const AssetCategoriesDocument = gql`
   }
 }
     `;
+export const InsertAssetCatalogueItemDocument = gql`
+    mutation insertAssetCatalogueItem($input: InsertAssetCatalogueItemInput!, $storeId: String!) {
+  centralServer {
+    assetCatalogue {
+      insertAssetCatalogueItem(input: $input, storeId: $storeId) {
+        ... on AssetCatalogueItemNode {
+          id
+        }
+        ... on InsertAssetCatalogueItemError {
+          __typename
+          error {
+            ... on UniqueValueViolation {
+              __typename
+              field
+              description
+            }
+            ... on UniqueCombinationViolation {
+              __typename
+              fields
+              description
+            }
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    `;
+export const DeleteAssetCatalogueItemDocument = gql`
+    mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
+  centralServer {
+    assetCatalogue {
+      deleteAssetCatalogueItem(assetCatalogueItemId: $assetCatalogueItemId) {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeleteAssetCatalogueItemError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -161,6 +225,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     assetCategories(variables?: AssetCategoriesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCategoriesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCategoriesQuery>(AssetCategoriesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCategories', 'query');
+    },
+    insertAssetCatalogueItem(variables: InsertAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemMutation>(InsertAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItem', 'mutation');
+    },
+    deleteAssetCatalogueItem(variables: DeleteAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteAssetCatalogueItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteAssetCatalogueItemMutation>(DeleteAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteAssetCatalogueItem', 'mutation');
     }
   };
 }
@@ -248,5 +318,39 @@ export const mockAssetTypesQuery = (resolver: ResponseResolver<GraphQLRequest<As
 export const mockAssetCategoriesQuery = (resolver: ResponseResolver<GraphQLRequest<AssetCategoriesQueryVariables>, GraphQLContext<AssetCategoriesQuery>, any>) =>
   graphql.query<AssetCategoriesQuery, AssetCategoriesQueryVariables>(
     'assetCategories',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertAssetCatalogueItemMutation((req, res, ctx) => {
+ *   const { input, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockInsertAssetCatalogueItemMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetCatalogueItemMutationVariables>, GraphQLContext<InsertAssetCatalogueItemMutation>, any>) =>
+  graphql.mutation<InsertAssetCatalogueItemMutation, InsertAssetCatalogueItemMutationVariables>(
+    'insertAssetCatalogueItem',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteAssetCatalogueItemMutation((req, res, ctx) => {
+ *   const { assetCatalogueItemId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockDeleteAssetCatalogueItemMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteAssetCatalogueItemMutationVariables>, GraphQLContext<DeleteAssetCatalogueItemMutation>, any>) =>
+  graphql.mutation<DeleteAssetCatalogueItemMutation, DeleteAssetCatalogueItemMutationVariables>(
+    'deleteAssetCatalogueItem',
     resolver
   )

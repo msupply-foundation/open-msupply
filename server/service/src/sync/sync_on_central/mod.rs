@@ -3,13 +3,15 @@ use util::{format_error, is_central_server};
 
 use crate::{
     service_provider::ServiceProvider,
+    settings::Settings,
+    static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{api::SyncApiV5, translations::ToSyncRecordTranslationType},
 };
 
 use super::{
     api_v6::{
-        SyncBatchV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6,
-        SyncRecordV6,
+        SyncBatchV6, SyncDownloadFileRequestV6, SyncParsedErrorV6, SyncPullRequestV6,
+        SyncPushRequestV6, SyncPushSuccessV6, SyncRecordV6,
     },
     translations::translate_changelogs_to_sync_records,
 };
@@ -135,4 +137,46 @@ pub async fn push(
     Ok(SyncPushSuccessV6 {
         records_pushed: records_in_this_batch,
     })
+}
+
+/// Send a file to a remote open-mSupply Server
+pub async fn download_file(
+    settings: &Settings,
+    SyncDownloadFileRequestV6 {
+        id,
+        table_name,
+        record_id,
+        sync_v5_settings,
+    }: SyncDownloadFileRequestV6,
+) -> Result<(actix_files::NamedFile, StaticFile), SyncParsedErrorV6> {
+    use SyncParsedErrorV6 as Error;
+
+    log::info!(
+        "Downloading file for table: {}, record: {}, file: {}",
+        table_name,
+        record_id,
+        id
+    );
+
+    if !is_central_server() {
+        return Err(Error::NotACentralServer);
+    }
+    // Check credentials again mSupply central server
+    let _ = SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?
+        .get_site_info()
+        .await
+        .map_err(Error::from)?;
+
+    let service = StaticFileService::new(&settings.server.base_dir)?;
+    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
+    let file_description = service
+        .find_file(&id, static_file_category.clone())?
+        .ok_or(SyncParsedErrorV6::OtherServerError(
+            "File not found".to_string(),
+        ))?;
+
+    let named_file =
+        actix_files::NamedFile::open(&file_description.path).map_err(|e| Error::from_error(&e))?;
+    Ok((named_file, file_description))
 }
