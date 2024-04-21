@@ -1,6 +1,6 @@
 use crate::EqualFilter;
-use crate::RequisitionRowStatus;
-use crate::RequisitionRowType;
+use crate::RequisitionStatus;
+use crate::RequisitionType;
 
 pub mod requisition_line;
 pub mod requisition_line_row;
@@ -13,10 +13,10 @@ pub struct RequisitionLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub requisition_id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<RequisitionRowType>>,
+    pub r#type: Option<EqualFilter<RequisitionType>>,
     pub item_id: Option<EqualFilter<String>>,
     pub requested_quantity: Option<EqualFilter<i32>>,
-    pub status: Option<EqualFilter<RequisitionRowStatus>>,
+    pub status: Option<EqualFilter<RequisitionStatus>>,
 }
 
 impl RequisitionLineFilter {
@@ -49,12 +49,12 @@ impl RequisitionLineFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<RequisitionRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<RequisitionType>) -> Self {
         self.r#type = Some(filter);
         self
     }
 
-    pub fn status(mut self, filter: EqualFilter<RequisitionRowStatus>) -> Self {
+    pub fn status(mut self, filter: EqualFilter<RequisitionStatus>) -> Self {
         self.status = Some(filter);
         self
     }

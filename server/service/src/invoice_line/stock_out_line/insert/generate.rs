@@ -1,5 +1,5 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
     StockLine, StockLineRow, StorageConnection,
 };
 
@@ -14,7 +14,7 @@ pub fn generate(
     batch: StockLine,
     invoice: InvoiceRow,
 ) -> Result<(InvoiceLineRow, StockLineRow), InsertStockOutLineError> {
-    let adjust_total_number_of_packs = invoice.status == InvoiceRowStatus::Picked;
+    let adjust_total_number_of_packs = invoice.status == InvoiceStatus::Picked;
 
     let update_batch = generate_batch_update(
         &input,
@@ -101,7 +101,7 @@ fn generate_line(
         expiry_date,
         sell_price_per_pack,
         cost_price_per_pack,
-        r#type: InvoiceLineRowType::StockOut,
+        r#type: InvoiceLineType::StockOut,
         number_of_packs,
         item_name,
         item_code,

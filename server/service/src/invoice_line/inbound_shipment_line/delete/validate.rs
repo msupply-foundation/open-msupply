@@ -8,7 +8,7 @@ use crate::{
         },
     },
 };
-use repository::{InvoiceLineRow, InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceLineRow, InvoiceRow, InvoiceType, StorageConnection};
 
 use super::{DeleteInboundShipmentLine, DeleteInboundShipmentLineError};
 
@@ -25,7 +25,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

@@ -10,6 +10,7 @@ mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod linked_shipment;
 mod pack_variant;
+mod pg_enums;
 mod report_views;
 mod returns;
 mod store_add_created_date;
@@ -37,6 +38,7 @@ impl Migration for V2_00_00 {
         user_change_last_synced_to_optional::migrate(connection)?;
         inventory_adjustment_logtype::migrate(connection)?;
         report_views::migrate(connection)?;
+        pg_enums::migrate(connection)?;
         Ok(())
     }
 }

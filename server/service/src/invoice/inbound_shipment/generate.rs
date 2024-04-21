@@ -1,4 +1,4 @@
-use repository::db_diesel::InvoiceLineRowType;
+use repository::db_diesel::InvoiceLineType;
 use repository::{InvoiceLineRow, InvoiceRow, ItemRowRepository, RepositoryError};
 use util::uuid::uuid;
 
@@ -30,7 +30,7 @@ pub fn generate_empty_invoice_lines(
                     total_before_tax: 0.0,
                     total_after_tax: 0.0,
                     tax: None,
-                    r#type: InvoiceLineRowType::StockIn,
+                    r#type: InvoiceLineType::StockIn,
                     number_of_packs: 0.0,
                     note: None,
                     inventory_adjustment_reason_id: None,

@@ -1,7 +1,7 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
     repository_error::RepositoryError,
-    EqualFilter, ItemLinkRow, ItemRow, ItemRowType, Pagination, Sort,
+    EqualFilter, ItemLinkRow, ItemRow, ItemType, Pagination, Sort,
 };
 
 use super::{
@@ -30,7 +30,7 @@ pub struct MasterListLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub master_list_id: Option<EqualFilter<String>>,
-    pub item_type: Option<EqualFilter<ItemRowType>>,
+    pub item_type: Option<EqualFilter<ItemType>>,
 }
 
 pub enum MasterListLineSortField {
@@ -158,7 +158,7 @@ impl MasterListLineFilter {
         self
     }
 
-    pub fn item_type(mut self, filter: EqualFilter<ItemRowType>) -> Self {
+    pub fn item_type(mut self, filter: EqualFilter<ItemType>) -> Self {
         self.item_type = Some(filter);
         self
     }

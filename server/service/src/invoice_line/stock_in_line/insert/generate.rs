@@ -7,7 +7,7 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError,
     StockLineRow, StorageConnection,
 };
 
@@ -29,7 +29,7 @@ pub fn generate(
         false => new_line,
     };
 
-    let new_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
+    let new_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
         let new_batch = generate_batch(
             &existing_invoice_row.store_id,
             new_line.clone(),
@@ -91,7 +91,7 @@ fn generate_line(
         expiry_date,
         sell_price_per_pack,
         cost_price_per_pack,
-        r#type: InvoiceLineRowType::StockIn,
+        r#type: InvoiceLineType::StockIn,
         number_of_packs,
         item_name,
         item_code,

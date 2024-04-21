@@ -5,7 +5,7 @@ use crate::{
         validate::{check_line_belongs_to_invoice, check_line_row_exists_option},
     },
 };
-use repository::{InvoiceLineRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceLineRow, InvoiceType, StorageConnection};
 
 use super::DeleteOutboundShipmentServiceLineError;
 
@@ -22,7 +22,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

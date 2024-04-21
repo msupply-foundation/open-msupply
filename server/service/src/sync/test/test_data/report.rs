@@ -1,5 +1,5 @@
 use crate::sync::test::TestSyncIncomingRecord;
-use repository::{ReportContext, ReportRow, ReportRowDelete, ReportType};
+use repository::{ContextType, ReportRow, ReportRowDelete, ReportType};
 
 const TABLE_NAME: &str = "report";
 
@@ -35,7 +35,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             name: "Test".to_string(),
             r#type: ReportType::OmSupply,
             template: "template data".to_string(),
-            context: ReportContext::Stocktake,
+            context: ContextType::Stocktake,
             comment: Some("Test comment".to_string()),
             sub_context: None,
             argument_schema_id: None,

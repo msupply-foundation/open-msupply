@@ -82,8 +82,8 @@ mod test {
             mock_outbound_shipment_a, mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
-        InvoiceRowType, StockLineRow, StockLineRowRepository,
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceRowRepository, InvoiceStatus,
+        InvoiceType, StockLineRow, StockLineRowRepository,
     };
 
     use crate::{
@@ -97,7 +97,7 @@ mod test {
             InvoiceRow {
                 id: "wrong_store".to_string(),
                 store_id: mock_store_a().id,
-                r#type: InvoiceRowType::InboundReturn,
+                r#type: InvoiceType::InboundReturn,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
@@ -107,9 +107,9 @@ mod test {
             InvoiceRow {
                 id: "verified".to_string(),
                 store_id: mock_store_b().id,
-                r#type: InvoiceRowType::InboundReturn,
+                r#type: InvoiceType::InboundReturn,
                 name_link_id: mock_name_store_b().id,
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceStatus::Verified,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
             }
@@ -164,8 +164,8 @@ mod test {
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceRowType::InboundReturn,
-                status: InvoiceRowStatus::New,
+                r#type: InvoiceType::InboundReturn,
+                status: InvoiceStatus::New,
                 ..Default::default()
             }
         }
@@ -184,7 +184,7 @@ mod test {
                 invoice_id: return_to_delete().id,
                 stock_line_id: Some(stock_line().id),
                 item_link_id: mock_item_a().id,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }
         }

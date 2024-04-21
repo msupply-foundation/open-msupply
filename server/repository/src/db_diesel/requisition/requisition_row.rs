@@ -22,8 +22,8 @@ table! {
         name_link_id -> Text,
         store_id -> Text,
         user_id -> Nullable<Text>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionRowTypeMapping,
-        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionRowStatusMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
+        #[sql_name = "status"] status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
         created_datetime -> Timestamp,
         sent_datetime -> Nullable<Timestamp>,
         finalised_datetime -> Nullable<Timestamp>,
@@ -33,7 +33,7 @@ table! {
         their_reference -> Nullable<Text>,
         max_months_of_stock -> Double,
         min_months_of_stock -> Double,
-        approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::RequisitionRowApprovalStatusMapping>,
+        approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::ApprovalStatusTypeMapping>,
         linked_requisition_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
         period_id -> Nullable<Text>,
@@ -59,14 +59,14 @@ allow_tables_to_appear_in_same_query!(requisition, item_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RequisitionRowType {
+pub enum RequisitionType {
     Request,
     Response,
 }
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RequisitionRowStatus {
+pub enum RequisitionStatus {
     Draft,
     New,
     Sent,
@@ -75,7 +75,7 @@ pub enum RequisitionRowStatus {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum RequisitionRowApprovalStatus {
+pub enum ApprovalStatusType {
     None,
     Approved,
     Pending,
@@ -95,8 +95,8 @@ pub struct RequisitionRow {
     pub store_id: String,
     pub user_id: Option<String>,
     #[diesel(column_name = type_)]
-    pub r#type: RequisitionRowType,
-    pub status: RequisitionRowStatus,
+    pub r#type: RequisitionType,
+    pub status: RequisitionStatus,
     pub created_datetime: NaiveDateTime,
     pub sent_datetime: Option<NaiveDateTime>,
     pub finalised_datetime: Option<NaiveDateTime>,
@@ -106,7 +106,7 @@ pub struct RequisitionRow {
     pub their_reference: Option<String>,
     pub max_months_of_stock: f64,
     pub min_months_of_stock: f64,
-    pub approval_status: Option<RequisitionRowApprovalStatus>,
+    pub approval_status: Option<ApprovalStatusType>,
     pub linked_requisition_id: Option<String>,
     pub program_id: Option<String>,
     pub period_id: Option<String>,
@@ -116,8 +116,8 @@ pub struct RequisitionRow {
 impl Default for RequisitionRow {
     fn default() -> Self {
         Self {
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Draft,
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Draft,
             created_datetime: Defaults::naive_date_time(),
             // Defaults
             id: Default::default(),
@@ -200,7 +200,7 @@ impl<'a> RequisitionRowRepository<'a> {
 
     pub fn find_max_requisition_number(
         &self,
-        r#type: RequisitionRowType,
+        r#type: RequisitionType,
         store_id: &str,
     ) -> Result<Option<i64>, RepositoryError> {
         let result = requisition_dsl::requisition
@@ -269,7 +269,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all,
-        RequisitionRow, RequisitionRowApprovalStatus, RequisitionRowRepository,
+        ApprovalStatusType, RequisitionRow, RequisitionRowRepository,
     };
     use strum::IntoEnumIterator;
 
@@ -283,7 +283,7 @@ mod test {
 
         let repo = RequisitionRowRepository::new(&connection);
         // Try upsert all variants of RequisitionRowApprovalStatus, confirm that diesel enums match postgres
-        for variant in RequisitionRowApprovalStatus::iter() {
+        for variant in ApprovalStatusType::iter() {
             let row = RequisitionRow {
                 approval_status: Some(variant),
                 ..mock_request_draft_requisition_all_fields().requisition

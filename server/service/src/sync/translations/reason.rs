@@ -1,6 +1,6 @@
 use repository::{
-    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete,
-    InventoryAdjustmentReasonType, ReturnReasonRow, StorageConnection, SyncBufferRow,
+    InventoryAdjustmentReasonRow, InventoryAdjustmentReasonRowDelete, InventoryAdjustmentType,
+    ReturnReasonRow, StorageConnection, SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 
@@ -56,7 +56,7 @@ impl SyncTranslation for ReasonTranslation {
             LegacyOptionsType::PositiveInventoryAdjustment => {
                 PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
                     id: data.id.to_string(),
-                    r#type: InventoryAdjustmentReasonType::Positive,
+                    r#type: InventoryAdjustmentType::Positive,
                     is_active: data.is_active,
                     reason: data.reason,
                 })
@@ -64,7 +64,7 @@ impl SyncTranslation for ReasonTranslation {
             LegacyOptionsType::NegativeInventoryAdjustment => {
                 PullTranslateResult::upsert(InventoryAdjustmentReasonRow {
                     id: data.id.to_string(),
-                    r#type: InventoryAdjustmentReasonType::Negative,
+                    r#type: InventoryAdjustmentType::Negative,
                     is_active: data.is_active,
                     reason: data.reason,
                 })

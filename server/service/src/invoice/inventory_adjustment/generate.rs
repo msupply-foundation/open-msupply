@@ -1,8 +1,8 @@
 use chrono::Utc;
 
-use repository::{InvoiceLineRow, InvoiceLineRowType, NameRowRepository, StockLine, StockLineRow};
+use repository::{InvoiceLineRow, InvoiceLineType, NameRowRepository, StockLine, StockLineRow};
 use repository::{
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NumberRowType, RepositoryError, StorageConnection,
+    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
 };
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 use util::uuid::uuid;
@@ -43,13 +43,13 @@ pub fn generate(
         user_id: Some(user_id.to_string()),
         name_link_id: inventory_adjustment_name.id,
         r#type: match adjustment_type {
-            AdjustmentType::Addition => InvoiceRowType::InventoryAddition,
-            AdjustmentType::Reduction => InvoiceRowType::InventoryReduction,
+            AdjustmentType::Addition => InvoiceType::InventoryAddition,
+            AdjustmentType::Reduction => InvoiceType::InventoryReduction,
         },
         invoice_number,
         store_id: store_id.to_string(),
         created_datetime: current_datetime,
-        status: InvoiceRowStatus::New,
+        status: InvoiceStatus::New,
         original_shipment_id: None,
         // Default
         currency_id: None,
@@ -99,8 +99,8 @@ pub fn generate(
         total_after_tax: 0.0,
         tax: None,
         r#type: match adjustment_type {
-            AdjustmentType::Addition => InvoiceLineRowType::StockIn,
-            AdjustmentType::Reduction => InvoiceLineRowType::StockOut,
+            AdjustmentType::Addition => InvoiceLineType::StockIn,
+            AdjustmentType::Reduction => InvoiceLineType::StockOut,
         },
         number_of_packs: adjustment,
         note,

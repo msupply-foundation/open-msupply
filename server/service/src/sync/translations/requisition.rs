@@ -1,9 +1,9 @@
 use chrono::{NaiveDate, NaiveDateTime};
 use repository::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
-    ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository, RequisitionRow,
-    RequisitionRowApprovalStatus, RequisitionRowDelete, StorageConnection, SyncBufferRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
+    ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
+    InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
+    RequisitionRow, RequisitionRowDelete, StorageConnection, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -143,7 +143,7 @@ pub struct LegacyRequisitionRow {
 
     #[serde(deserialize_with = "empty_str_as_option")]
     #[serde(default)]
-    pub om_status: Option<RequisitionRowStatus>,
+    pub om_status: Option<RequisitionStatus>,
     /// We ignore the legacy colour field
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
@@ -375,27 +375,27 @@ impl SyncTranslation for RequisitionTranslation {
 
 fn from_legacy_sent_datetime(
     last_modified_at: i64,
-    r#type: &RequisitionRowType,
+    r#type: &RequisitionType,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionRowType::Request => {
+        RequisitionType::Request => {
             if last_modified_at > 0 {
                 Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
             } else {
                 None
             }
         }
-        RequisitionRowType::Response => None,
+        RequisitionType::Response => None,
     }
 }
 
 fn from_legacy_finalised_datetime(
     last_modified_at: i64,
-    r#type: &RequisitionRowType,
+    r#type: &RequisitionType,
 ) -> Option<NaiveDateTime> {
     match r#type {
-        RequisitionRowType::Request => None,
-        RequisitionRowType::Response => {
+        RequisitionType::Request => None,
+        RequisitionType::Response => {
             if last_modified_at > 0 {
                 Some(NaiveDateTime::from_timestamp_opt(last_modified_at, 0).unwrap())
             } else {
@@ -406,53 +406,51 @@ fn from_legacy_finalised_datetime(
 }
 
 fn to_legacy_last_modified_at(
-    r#type: &RequisitionRowType,
+    r#type: &RequisitionType,
     sent_datetime: Option<NaiveDateTime>,
     finalised_datetime: Option<NaiveDateTime>,
 ) -> i64 {
     match r#type {
-        RequisitionRowType::Request => sent_datetime.map(|time| time.timestamp()).unwrap_or(0),
-        RequisitionRowType::Response => {
-            finalised_datetime.map(|time| time.timestamp()).unwrap_or(0)
-        }
+        RequisitionType::Request => sent_datetime.map(|time| time.timestamp()).unwrap_or(0),
+        RequisitionType::Response => finalised_datetime.map(|time| time.timestamp()).unwrap_or(0),
     }
 }
 
-fn from_legacy_type(t: &LegacyRequisitionType) -> Option<RequisitionRowType> {
+fn from_legacy_type(t: &LegacyRequisitionType) -> Option<RequisitionType> {
     let t = match t {
-        LegacyRequisitionType::Response => RequisitionRowType::Response,
-        LegacyRequisitionType::Request => RequisitionRowType::Request,
+        LegacyRequisitionType::Response => RequisitionType::Response,
+        LegacyRequisitionType::Request => RequisitionType::Request,
         _ => return None,
     };
     Some(t)
 }
 
-fn to_legacy_type(t: &RequisitionRowType) -> LegacyRequisitionType {
+fn to_legacy_type(t: &RequisitionType) -> LegacyRequisitionType {
     match t {
-        RequisitionRowType::Request => LegacyRequisitionType::Request,
-        RequisitionRowType::Response => LegacyRequisitionType::Response,
+        RequisitionType::Request => LegacyRequisitionType::Request,
+        RequisitionType::Response => LegacyRequisitionType::Response,
     }
 }
 
 fn from_legacy_status(
     r#type: &LegacyRequisitionType,
     status: &LegacyRequisitionStatus,
-) -> Option<RequisitionRowStatus> {
+) -> Option<RequisitionStatus> {
     let status = match r#type {
         LegacyRequisitionType::Request => match status {
-            LegacyRequisitionStatus::Sg => RequisitionRowStatus::Draft,
-            &LegacyRequisitionStatus::Cn => RequisitionRowStatus::Sent,
-            LegacyRequisitionStatus::Fn => RequisitionRowStatus::Sent,
+            LegacyRequisitionStatus::Sg => RequisitionStatus::Draft,
+            &LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
+            LegacyRequisitionStatus::Fn => RequisitionStatus::Sent,
             // Note, nw shouldn't be possible but is seen historical data:
-            LegacyRequisitionStatus::Nw => RequisitionRowStatus::Draft,
+            LegacyRequisitionStatus::Nw => RequisitionStatus::Draft,
             LegacyRequisitionStatus::Others => return None,
         },
         LegacyRequisitionType::Response => match status {
-            LegacyRequisitionStatus::Sg => RequisitionRowStatus::New,
-            &LegacyRequisitionStatus::Cn => RequisitionRowStatus::New,
-            LegacyRequisitionStatus::Fn => RequisitionRowStatus::Finalised,
+            LegacyRequisitionStatus::Sg => RequisitionStatus::New,
+            &LegacyRequisitionStatus::Cn => RequisitionStatus::New,
+            LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
             // Note, nw shouldn't be possible but is seen historical data:
-            LegacyRequisitionStatus::Nw => RequisitionRowStatus::New,
+            LegacyRequisitionStatus::Nw => RequisitionStatus::New,
             LegacyRequisitionStatus::Others => return None,
         },
         _ => return None,
@@ -461,21 +459,21 @@ fn from_legacy_status(
 }
 
 fn to_legacy_status(
-    r#type: &RequisitionRowType,
-    status: &RequisitionRowStatus,
+    r#type: &RequisitionType,
+    status: &RequisitionStatus,
     has_outbound_shipment: bool,
 ) -> Option<LegacyRequisitionStatus> {
     let status = match r#type {
-        RequisitionRowType::Request => match status {
-            RequisitionRowStatus::Draft => LegacyRequisitionStatus::Sg,
-            RequisitionRowStatus::Sent => LegacyRequisitionStatus::Fn,
-            RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+        RequisitionType::Request => match status {
+            RequisitionStatus::Draft => LegacyRequisitionStatus::Sg,
+            RequisitionStatus::Sent => LegacyRequisitionStatus::Fn,
+            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
             _ => return None,
         },
-        RequisitionRowType::Response => match status {
-            RequisitionRowStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
-            RequisitionRowStatus::New => LegacyRequisitionStatus::Sg,
-            RequisitionRowStatus::Finalised => LegacyRequisitionStatus::Fn,
+        RequisitionType::Response => match status {
+            RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
+            RequisitionStatus::New => LegacyRequisitionStatus::Sg,
+            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
             _ => return None,
         },
     };
@@ -483,9 +481,9 @@ fn to_legacy_status(
 }
 
 impl LegacyAuthorisationStatus {
-    fn to(self) -> RequisitionRowApprovalStatus {
+    fn to(self) -> ApprovalStatusType {
+        use ApprovalStatusType as to;
         use LegacyAuthorisationStatus as from;
-        use RequisitionRowApprovalStatus as to;
         match self {
             from::None => to::None,
             from::Pending => to::Pending,
@@ -497,9 +495,9 @@ impl LegacyAuthorisationStatus {
         }
     }
 
-    fn from(status: RequisitionRowApprovalStatus) -> LegacyAuthorisationStatus {
+    fn from(status: ApprovalStatusType) -> LegacyAuthorisationStatus {
+        use ApprovalStatusType as from;
         use LegacyAuthorisationStatus as to;
-        use RequisitionRowApprovalStatus as from;
         match status {
             from::None => to::None,
             from::Pending => to::Pending,

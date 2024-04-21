@@ -6,7 +6,7 @@ use super::{
     master_list_row::master_list::dsl as master_list_dsl,
     store_row::store::dsl as store_dsl,
     unit_row::{unit, unit::dsl as unit_dsl},
-    DBType, ItemRow, ItemRowType, StorageConnection, UnitRow,
+    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{
@@ -43,7 +43,7 @@ pub struct ItemFilter {
     pub id: Option<EqualFilter<String>>,
     pub name: Option<StringFilter>,
     pub code: Option<StringFilter>,
-    pub r#type: Option<EqualFilter<ItemRowType>>,
+    pub r#type: Option<EqualFilter<ItemType>>,
     /// If true it only returns ItemAndMasterList that have a name join row
     pub is_visible: Option<bool>,
     pub code_or_name: Option<StringFilter>,
@@ -70,7 +70,7 @@ impl ItemFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<ItemRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<ItemType>) -> Self {
         self.r#type = Some(filter);
         self
     }
@@ -245,7 +245,7 @@ impl Item {
     }
 }
 
-impl ItemRowType {
+impl ItemType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }
@@ -264,7 +264,7 @@ mod tests {
     use crate::{
         mock::{mock_item_b, mock_item_link_from_item, MockDataInserts},
         test_db, EqualFilter, ItemFilter, ItemLinkRowRepository, ItemRepository, ItemRow,
-        ItemRowRepository, ItemRowType, MasterListLineRow, MasterListLineRowRepository,
+        ItemRowRepository, ItemType, MasterListLineRow, MasterListLineRowRepository,
         MasterListNameJoinRepository, MasterListNameJoinRow, MasterListRow,
         MasterListRowRepository, NameRow, NameRowRepository, Pagination, StoreRow,
         StoreRowRepository, StringFilter, DEFAULT_PAGINATION_LIMIT,
@@ -288,7 +288,7 @@ mod tests {
                 r.id = format!("id{:05}", index);
                 r.name = format!("name{}", index);
                 r.code = format!("code{}", index);
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             }));
         }
         rows
@@ -462,31 +462,31 @@ mod tests {
                 r.id = "item1".to_owned();
                 r.name = "name1".to_owned();
                 r.code = "name1".to_owned();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
                 r.id = "item2".to_owned();
                 r.name = "name2".to_owned();
                 r.code = "name2".to_owned();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
                 r.id = "item3".to_owned();
                 r.name = "name3".to_owned();
                 r.code = "name3".to_owned();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
                 r.id = "item4".to_owned();
                 r.name = "name4".to_owned();
                 r.code = "name4".to_owned();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             }),
             inline_init(|r: &mut ItemRow| {
                 r.id = "item5".to_owned();
                 r.name = "name5".to_owned();
                 r.code = "name5".to_owned();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             }),
         ];
 

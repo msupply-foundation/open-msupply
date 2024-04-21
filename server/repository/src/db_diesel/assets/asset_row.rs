@@ -3,10 +3,10 @@ use super::asset_row::asset::dsl::*;
 use serde::{Deserialize, Serialize};
 
 use crate::ChangeLogInsertRow;
-use crate::ChangelogAction;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
 use crate::RepositoryError;
+use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
@@ -72,7 +72,7 @@ impl<'a> AssetRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -88,7 +88,7 @@ impl<'a> AssetRowRepository<'a> {
         self._upsert_one(asset_row)?;
         self.insert_changelog(
             asset_row.id.to_owned(),
-            ChangelogAction::Upsert,
+            RowActionType::Upsert,
             Some(asset_row.clone()),
         )
     }
@@ -96,7 +96,7 @@ impl<'a> AssetRowRepository<'a> {
     fn insert_changelog(
         &self,
         asset_id: String,
-        action: ChangelogAction,
+        action: RowActionType,
         row: Option<AssetRow>,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
@@ -128,7 +128,7 @@ impl<'a> AssetRowRepository<'a> {
         diesel::update(asset.filter(id.eq(asset_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        _ = self.insert_changelog(asset_id.to_owned(), ChangelogAction::Delete, None); // TODO: return this and enable delete sync...
+        _ = self.insert_changelog(asset_id.to_owned(), RowActionType::Delete, None); // TODO: return this and enable delete sync...
         Ok(())
     }
 }

@@ -2,9 +2,9 @@ use chrono::NaiveDate;
 use util::inline_init;
 
 use crate::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, InvoiceRowType,
-    RequisitionLineRow, RequisitionRow, StockLineRow,
+    requisition_row::{RequisitionStatus, RequisitionType},
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, RequisitionLineRow,
+    RequisitionRow, StockLineRow,
 };
 
 use super::{
@@ -62,8 +62,8 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
             r.requisition_number = 3;
             r.name_link_id = mock_name_a().id;
             r.store_id = mock_store_a().id;
-            r.r#type = RequisitionRowType::Request;
-            r.status = RequisitionRowStatus::Draft;
+            r.r#type = RequisitionType::Request;
+            r.status = RequisitionStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -119,8 +119,8 @@ pub fn mock_response_draft_requisition_all_fields() -> FullMockRequisition {
             r.requisition_number = 3;
             r.name_link_id = mock_name_b().id;
             r.store_id = mock_store_a().id;
-            r.r#type = RequisitionRowType::Response;
-            r.status = RequisitionRowStatus::Draft;
+            r.r#type = RequisitionType::Response;
+            r.status = RequisitionStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -167,8 +167,8 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
-            r.r#type = InvoiceRowType::InboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::InboundShipment;
+            r.status = InvoiceStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
@@ -193,7 +193,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     total_before_tax: 278.26,
                     total_after_tax: 320.0,
                     tax: Some(15.0),
-                    r#type: InvoiceLineRowType::StockOut,
+                    r#type: InvoiceLineType::StockOut,
                     number_of_packs: 10.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
@@ -235,7 +235,7 @@ pub fn mock_invoice1_linked_to_requisition() -> FullMockInvoice {
                     total_before_tax: 278.26,
                     total_after_tax: 320.0,
                     tax: Some(15.0),
-                    r#type: InvoiceLineRowType::StockOut,
+                    r#type: InvoiceLineType::StockOut,
                     number_of_packs: 10.0,
                     note: None,
                     inventory_adjustment_reason_id: None,
@@ -274,8 +274,8 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
-            r.r#type = InvoiceRowType::InboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::InboundShipment;
+            r.status = InvoiceStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
@@ -299,7 +299,7 @@ pub fn mock_invoice2_linked_to_requisition() -> FullMockInvoice {
                 total_before_tax: 278.26,
                 total_after_tax: 320.0,
                 tax: Some(15.0),
-                r#type: InvoiceLineRowType::StockOut,
+                r#type: InvoiceLineType::StockOut,
                 number_of_packs: 10.0,
                 note: None,
                 inventory_adjustment_reason_id: None,
@@ -337,8 +337,8 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
             r.name_link_id = mock_name_a().id;
             r.store_id = "store_a".to_owned();
             r.invoice_number = 20;
-            r.r#type = InvoiceRowType::OutboundShipment;
-            r.status = InvoiceRowStatus::New;
+            r.r#type = InvoiceType::OutboundShipment;
+            r.status = InvoiceStatus::New;
             r.created_datetime = NaiveDate::from_ymd_opt(1970, 1, 1)
                 .unwrap()
                 .and_hms_milli_opt(12, 30, 0, 0)
@@ -362,7 +362,7 @@ pub fn mock_invoice3_linked_to_requisition() -> FullMockInvoice {
                 total_before_tax: 278.26,
                 total_after_tax: 320.0,
                 tax: Some(15.0),
-                r#type: InvoiceLineRowType::StockOut,
+                r#type: InvoiceLineType::StockOut,
                 number_of_packs: 10.0,
                 note: None,
                 inventory_adjustment_reason_id: None,

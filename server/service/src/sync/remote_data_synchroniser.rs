@@ -19,7 +19,7 @@ use super::{
 
 use log::info;
 use repository::{
-    ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRowRepository,
+    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository,
 };
 
 use thiserror::Error;
@@ -119,7 +119,7 @@ impl RemoteDataSynchroniser {
     ) -> Result<(), RepositoryError> {
         let cursor = ChangelogRepository::new(connection).latest_cursor()?;
 
-        CursorController::new(KeyValueType::RemoteSyncPushCursor).update(connection, cursor + 1)?;
+        CursorController::new(KeyType::RemoteSyncPushCursor).update(connection, cursor + 1)?;
         Ok(())
     }
 
@@ -169,7 +169,7 @@ impl RemoteDataSynchroniser {
     ) -> Result<(), RemotePushError> {
         let changelog_repo = ChangelogRepository::new(connection);
         let change_log_filter = get_sync_push_changelogs_filter(connection)?;
-        let cursor_controller = CursorController::new(KeyValueType::RemoteSyncPushCursor);
+        let cursor_controller = CursorController::new(KeyType::RemoteSyncPushCursor);
 
         loop {
             // TODO inside transaction

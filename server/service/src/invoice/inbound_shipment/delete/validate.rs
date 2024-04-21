@@ -1,7 +1,7 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
-use repository::{InvoiceRow, InvoiceRowType, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, StorageConnection};
 
 use super::{DeleteInboundShipment, DeleteInboundShipmentError};
 
@@ -16,7 +16,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::InboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
         return Err(NotAnInboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

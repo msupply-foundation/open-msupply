@@ -7,7 +7,7 @@ use diesel::sql_types::*;
 #[cfg(feature = "postgres")]
 #[derive(QueryableByName, Debug, PartialEq)]
 pub struct JsonDataRow {
-    #[sql_type = "Text"]
+    #[diesel(sql_type = Text)]
     data: String,
 }
 
@@ -74,7 +74,8 @@ pub fn query_json(
     };
 
     // do the query
-    let pg_connection = &connection.connection;
+    let mut guard = connection.lock();
+    let pg_connection = guard.connection();
     let statement_name = format!("statement_{}", small_uuid());
     let json_row_sql_query = format!(
         "PREPARE {} AS

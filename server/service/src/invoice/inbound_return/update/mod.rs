@@ -2,7 +2,7 @@ use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
 use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
 use repository::Invoice;
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceRowStatus, RepositoryError,
+    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
     StockLineRowRepository,
 };
 
@@ -112,16 +112,16 @@ where
 }
 
 impl UpdateInboundReturnStatus {
-    pub fn as_invoice_row_status(&self) -> InvoiceRowStatus {
+    pub fn as_invoice_row_status(&self) -> InvoiceStatus {
         match self {
-            UpdateInboundReturnStatus::Delivered => InvoiceRowStatus::Delivered,
-            UpdateInboundReturnStatus::Verified => InvoiceRowStatus::Verified,
+            UpdateInboundReturnStatus::Delivered => InvoiceStatus::Delivered,
+            UpdateInboundReturnStatus::Verified => InvoiceStatus::Verified,
         }
     }
 }
 
 impl UpdateInboundReturn {
-    pub fn invoice_row_status_option(&self) -> Option<InvoiceRowStatus> {
+    pub fn invoice_row_status_option(&self) -> Option<InvoiceStatus> {
         match &self.status {
             Some(status) => Some(status.as_invoice_row_status()),
             None => None,
@@ -139,8 +139,8 @@ mod test {
         },
         test_db::{setup_all, setup_all_with_data},
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceLineFilter,
-        InvoiceLineRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow,
-        NameStoreJoinRow, StockLineRowRepository,
+        InvoiceLineRepository, InvoiceRow, InvoiceStatus, InvoiceType, NameRow, NameStoreJoinRow,
+        StockLineRowRepository,
     };
     use util::inline_init;
 
@@ -182,8 +182,8 @@ mod test {
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceRowType::InboundReturn,
-                status: InvoiceRowStatus::Verified,
+                r#type: InvoiceType::InboundReturn,
+                status: InvoiceStatus::Verified,
                 ..Default::default()
             }
         }
@@ -193,8 +193,8 @@ mod test {
                 store_id: mock_store_a().id,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
-                r#type: InvoiceRowType::InboundReturn,
-                status: InvoiceRowStatus::New,
+                r#type: InvoiceType::InboundReturn,
+                status: InvoiceStatus::New,
                 on_hold: true,
                 ..Default::default()
             }
@@ -316,7 +316,7 @@ mod test {
 
         let return_row = updated_return.invoice_row;
         // Status has been updated
-        assert_eq!(return_row.status, InvoiceRowStatus::Delivered);
+        assert_eq!(return_row.status, InvoiceStatus::Delivered);
         assert!(return_row.delivered_datetime.is_some());
         assert!(return_row.verified_datetime.is_none());
 
@@ -367,7 +367,7 @@ mod test {
 
         let return_row = updated_return.invoice_row;
         // Status has been updated
-        assert_eq!(return_row.status, InvoiceRowStatus::Verified);
+        assert_eq!(return_row.status, InvoiceStatus::Verified);
         assert!(return_row.verified_datetime.is_some());
 
         let invoice_lines = invoice_line_repo

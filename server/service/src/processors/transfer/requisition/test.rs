@@ -3,9 +3,9 @@ use std::time::Duration;
 use chrono::NaiveDate;
 use repository::{
     mock::{insert_extra_mock_data, MockData, MockDataInserts},
-    EqualFilter, ItemRow, KeyValueStoreRow, KeyValueType, NameRow, RequisitionFilter,
+    EqualFilter, ItemRow, KeyType, KeyValueStoreRow, NameRow, RequisitionFilter,
     RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRow, RequisitionRepository,
-    RequisitionRow, RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType,
+    RequisitionRow, RequisitionRowRepository, RequisitionStatus, RequisitionType,
     StorageConnection, StoreRow,
 };
 use util::{inline_edit, inline_init, uuid::uuid};
@@ -57,7 +57,7 @@ async fn requisition_transfer() {
     });
 
     let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
-        r.id = KeyValueType::SettingsSyncSiteId;
+        r.id = KeyType::SettingsSyncSiteId;
         r.value_int = Some(site_id);
     });
 
@@ -152,12 +152,12 @@ async fn stock_on_deleted_requisitions() {
         requisition_number: 3,
         name_link_id: store.name_id.clone(),
         store_id: store.id.clone(),
-        r#type: RequisitionRowType::Request,
+        r#type: RequisitionType::Request,
         ..RequisitionRow::default()
     };
 
     let site_id_settings = inline_init(|r: &mut KeyValueStoreRow| {
-        r.id = KeyValueType::SettingsSyncSiteId;
+        r.id = KeyType::SettingsSyncSiteId;
         r.value_int = Some(site_id);
     });
 
@@ -215,8 +215,8 @@ impl RequisitionTransferTester {
             r.requisition_number = 3;
             r.name_link_id = response_store.name_id.clone();
             r.store_id = request_store.id.clone();
-            r.r#type = RequisitionRowType::Request;
-            r.status = RequisitionRowStatus::Draft;
+            r.r#type = RequisitionType::Request;
+            r.status = RequisitionStatus::Draft;
             r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
@@ -321,8 +321,8 @@ impl RequisitionTransferTester {
         assert!(response_requisition.is_some());
         let response_requisition = response_requisition.unwrap().requisition_row;
         self.response_requisition = Some(response_requisition.clone());
-        assert_eq!(response_requisition.r#type, RequisitionRowType::Response);
-        assert_eq!(response_requisition.status, RequisitionRowStatus::New);
+        assert_eq!(response_requisition.r#type, RequisitionType::Response);
+        assert_eq!(response_requisition.status, RequisitionStatus::New);
         assert_eq!(response_requisition.store_id, self.response_store.id);
         assert_eq!(
             response_requisition.name_link_id,
@@ -416,7 +416,7 @@ impl RequisitionTransferTester {
         assert_eq!(
             request_requisition,
             inline_edit(&request_requisition, |mut r| {
-                r.status = RequisitionRowStatus::Finalised;
+                r.status = RequisitionStatus::Finalised;
                 r.finalised_datetime = self
                     .response_requisition
                     .clone()

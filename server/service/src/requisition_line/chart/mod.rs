@@ -1,6 +1,6 @@
 use chrono::NaiveDate;
 use repository::{
-    requisition_row::RequisitionRowType, RepositoryError, RequisitionLine, RequisitionLineRow,
+    requisition_row::RequisitionType, RepositoryError, RequisitionLine, RequisitionLineRow,
     StorageConnection,
 };
 use util::{date_with_months_offset, last_day_of_the_month};
@@ -133,7 +133,7 @@ fn validate(
         return Err(OutError::RequisitionLineDoesNotBelongToCurrentStore);
     }
 
-    if requisition_line.requisition_row.r#type != RequisitionRowType::Request {
+    if requisition_line.requisition_row.r#type != RequisitionType::Request {
         return Err(OutError::NotARequestRequisition);
     }
 
@@ -176,7 +176,7 @@ mod test {
             mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowType, NameRow, RequisitionRow,
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceType, NameRow, RequisitionRow,
         StockLineRow, StoreRow,
     };
     use util::{
@@ -255,7 +255,7 @@ mod test {
                 r.store_id = store().id;
                 r.name_link_id = mock_name_a().id;
                 r.expected_delivery_date = Some(date_now());
-                r.r#type = RequisitionRowType::Request;
+                r.r#type = RequisitionType::Request;
             })
         }
 
@@ -281,13 +281,13 @@ mod test {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
-                    r.r#type = InvoiceRowType::OutboundShipment;
+                    r.r#type = InvoiceType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
                     r.item_link_id = mock_item_a().id;
-                    r.r#type = InvoiceLineRowType::StockOut;
+                    r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
                     r.pack_size = 1;
                 })];
@@ -499,7 +499,7 @@ mod test {
                 r.store_id = store().id;
                 r.name_link_id = mock_name_a().id;
                 r.expected_delivery_date = Some(NaiveDate::from_ymd_opt(2021, 1, 5).unwrap());
-                r.r#type = RequisitionRowType::Request;
+                r.r#type = RequisitionType::Request;
             })
         }
 
@@ -527,13 +527,13 @@ mod test {
                     r.id = invoice_id.clone();
                     r.store_id = store().id;
                     r.name_link_id = mock_name_a().id;
-                    r.r#type = InvoiceRowType::OutboundShipment;
+                    r.r#type = InvoiceType::OutboundShipment;
                 })];
                 r.invoice_lines = vec![inline_init(|r: &mut InvoiceLineRow| {
                     r.id = format!("{}line", invoice_id);
                     r.invoice_id = invoice_id.clone();
                     r.item_link_id = mock_item_a().id;
-                    r.r#type = InvoiceLineRowType::StockOut;
+                    r.r#type = InvoiceLineType::StockOut;
                     r.stock_line_id = Some(format!("{}stock_line", invoice_id));
                     r.pack_size = 1;
                 })];
@@ -563,9 +563,9 @@ mod test {
                         .and_hms_opt(10, 0, 0)
                         .unwrap(),
                 );
-                u.invoices[0].r#type = InvoiceRowType::InboundShipment;
+                u.invoices[0].r#type = InvoiceType::InboundShipment;
                 u.invoice_lines[0].number_of_packs = 10.0;
-                u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
@@ -587,9 +587,9 @@ mod test {
                         .and_hms_opt(2, 0, 0)
                         .unwrap(),
                 );
-                u.invoices[0].r#type = InvoiceRowType::InventoryAddition;
+                u.invoices[0].r#type = InvoiceType::InventoryAddition;
                 u.invoice_lines[0].number_of_packs = 15.0;
-                u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
@@ -600,9 +600,9 @@ mod test {
                         .and_hms_opt(2, 0, 0)
                         .unwrap(),
                 );
-                u.invoices[0].r#type = InvoiceRowType::InboundShipment;
+                u.invoices[0].r#type = InvoiceType::InboundShipment;
                 u.invoice_lines[0].number_of_packs = 7.0;
-                u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
@@ -613,9 +613,9 @@ mod test {
                         .and_hms_opt(2, 0, 0)
                         .unwrap(),
                 );
-                u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
+                u.invoices[0].r#type = InvoiceType::InventoryReduction;
                 u.invoice_lines[0].number_of_packs = 11.0;
-                u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockOut;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
@@ -626,9 +626,9 @@ mod test {
                         .and_hms_opt(2, 0, 0)
                         .unwrap(),
                 );
-                u.invoices[0].r#type = InvoiceRowType::InboundShipment;
+                u.invoices[0].r#type = InvoiceType::InboundShipment;
                 u.invoice_lines[0].number_of_packs = 10.0;
-                u.invoice_lines[0].r#type = InvoiceLineRowType::StockIn;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockIn;
                 u
             }))
             .join(inline_edit(&consumption_point(), |mut u| {
@@ -639,9 +639,9 @@ mod test {
                         .and_hms_opt(2, 0, 0)
                         .unwrap(),
                 );
-                u.invoices[0].r#type = InvoiceRowType::InventoryReduction;
+                u.invoices[0].r#type = InvoiceType::InventoryReduction;
                 u.invoice_lines[0].number_of_packs = 11.0;
-                u.invoice_lines[0].r#type = InvoiceLineRowType::StockOut;
+                u.invoice_lines[0].r#type = InvoiceLineType::StockOut;
                 u
             })),
         )

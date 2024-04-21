@@ -1,6 +1,6 @@
 use repository::{
-    ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType,
-    NumberRowType, RepositoryError, StorageConnection,
+    ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, NumberRowType,
+    RepositoryError, StorageConnection,
 };
 
 use crate::{activity_log::system_activity_log_entry, number::next_number};
@@ -46,14 +46,14 @@ impl ShipmentTransferProcessor for AssignInvoiceNumberProcessor {
         // 2.
         if !matches!(
             outbound_shipment.invoice_row.r#type,
-            InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn
+            InvoiceType::OutboundShipment | InvoiceType::OutboundReturn
         ) {
             return Ok(None);
         }
         // 3.
         if !matches!(
             outbound_shipment.invoice_row.status,
-            InvoiceRowStatus::Shipped | InvoiceRowStatus::Picked
+            InvoiceStatus::Shipped | InvoiceStatus::Picked
         ) {
             return Ok(None);
         }

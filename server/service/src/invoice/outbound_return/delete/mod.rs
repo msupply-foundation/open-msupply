@@ -89,7 +89,7 @@ mod test {
             mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceRow, InvoiceRowRepository, InvoiceRowStatus, InvoiceRowType, StockLineRowRepository,
+        InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRowRepository,
     };
 
     use crate::{
@@ -103,7 +103,7 @@ mod test {
             InvoiceRow {
                 id: "wrong_store".to_string(),
                 store_id: mock_store_a().id,
-                r#type: InvoiceRowType::OutboundReturn,
+                r#type: InvoiceType::OutboundReturn,
                 name_link_id: mock_name_store_a().id,
                 currency_id: Some(currency_a().id),
                 ..Default::default()
@@ -113,10 +113,10 @@ mod test {
             InvoiceRow {
                 id: "verified".to_string(),
                 store_id: mock_store_b().id,
-                r#type: InvoiceRowType::OutboundReturn,
+                r#type: InvoiceType::OutboundReturn,
                 name_link_id: mock_name_store_b().id,
                 currency_id: Some(currency_a().id),
-                status: InvoiceRowStatus::Verified,
+                status: InvoiceStatus::Verified,
                 ..Default::default()
             }
         }

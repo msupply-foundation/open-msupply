@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use repository::{
-    Language, StorageConnection, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
+    LanguageType, StorageConnection, SyncBufferRow, UserAccountRow, UserAccountRowRepository,
 };
 
 use crate::sync::sync_serde::empty_str_as_option_string;
@@ -87,17 +87,17 @@ impl SyncTranslation for UserTranslation {
     }
 }
 
-fn user_language(language: i32) -> Language {
+fn user_language(language: i32) -> LanguageType {
     match language {
-        0 => Language::English,
-        1 => Language::French,
-        2 => Language::Spanish,
-        3 => Language::Laos,
-        4 => Language::Khmer,
-        5 => Language::Portuguese,
-        6 => Language::Russian,
-        7 => Language::Tetum,
-        _ => Language::English,
+        0 => LanguageType::English,
+        1 => LanguageType::French,
+        2 => LanguageType::Spanish,
+        3 => LanguageType::Laos,
+        4 => LanguageType::Khmer,
+        5 => LanguageType::Portuguese,
+        6 => LanguageType::Russian,
+        7 => LanguageType::Tetum,
+        _ => LanguageType::English,
     }
 }
 

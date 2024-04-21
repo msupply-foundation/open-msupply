@@ -683,7 +683,7 @@ mod tests {
             "#;
 
         let schema_table_and_fields = sql_query(query)
-            .load::<TableNameAndFieldRow>(&mut connection.connection)
+            .load::<TableNameAndFieldRow>(connection.lock().connection())
             .unwrap();
 
         let mut defined_table_and_fields = get_timestamp_fields();
@@ -729,7 +729,7 @@ mod tests {
         "#;
 
         let schema_table_and_fields = sql_query(query)
-            .load::<TableNameAndFieldRow>(&mut connection.connection)
+            .load::<TableNameAndFieldRow>(connection.lock().connection())
             .unwrap();
 
         let mut defined_table_and_fields = get_date_fields();

@@ -19,7 +19,7 @@ table! {
         cursor -> BigInt,
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -32,7 +32,7 @@ table! {
         cursor -> BigInt,
         table_name -> crate::db_diesel::changelog::ChangelogTableNameMapping,
         record_id -> Text,
-        row_action -> crate::db_diesel::changelog::ChangelogActionMapping,
+        row_action -> crate::db_diesel::changelog::RowActionTypeMapping,
         name_link_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         is_sync_update -> Bool,
@@ -50,7 +50,7 @@ sql_function!(
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum ChangelogAction {
+pub enum RowActionType {
     #[default]
     Upsert,
     Delete,
@@ -150,7 +150,7 @@ impl ChangelogTableName {
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,
     pub record_id: String,
-    pub row_action: ChangelogAction,
+    pub row_action: RowActionType,
     pub name_link_id: Option<String>,
     pub store_id: Option<String>,
 }
@@ -161,7 +161,7 @@ pub struct ChangelogRow {
     pub cursor: i64,
     pub table_name: ChangelogTableName,
     pub record_id: String,
-    pub row_action: ChangelogAction,
+    pub row_action: RowActionType,
     #[diesel(column_name = "name_link_id")]
     pub name_id: Option<String>,
     pub store_id: Option<String>,
@@ -175,7 +175,7 @@ pub struct ChangelogFilter {
     pub name_id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
     pub record_id: Option<EqualFilter<String>>,
-    pub action: Option<EqualFilter<ChangelogAction>>,
+    pub action: Option<EqualFilter<RowActionType>>,
     pub is_sync_update: Option<EqualFilter<bool>>,
     pub source_site_id: Option<EqualFilter<i32>>,
 }
@@ -204,7 +204,9 @@ impl<'a> ChangelogRepository<'a> {
         limit: u32,
         filter: Option<ChangelogFilter>,
     ) -> Result<Vec<ChangelogRow>, RepositoryError> {
-        let query = create_filtered_query(earliest, filter).limit(limit.into());
+        let query = create_filtered_query(earliest, filter)
+            .order(changelog_deduped::dsl::cursor.asc())
+            .limit(limit.into());
 
         // // Debug diesel query
         // println!(
@@ -337,7 +339,7 @@ impl<'a> ChangelogRepository<'a> {
         let cursor_id = diesel::insert_into(changelog::table)
             .values(row)
             .returning(changelog::cursor)
-            .get_results(&self.connection.connection)?
+            .get_results(self.connection.lock().connection())?
             .pop()
             .unwrap_or_default(); // This shouldn't happen, maybe should unwrap or panic?
 
@@ -464,7 +466,7 @@ fn create_filtered_outgoing_sync_query(
 impl Default for ChangelogRow {
     fn default() -> Self {
         Self {
-            row_action: ChangelogAction::Upsert,
+            row_action: RowActionType::Upsert,
             table_name: ChangelogTableName::Invoice,
             // Default
             cursor: Default::default(),
@@ -502,7 +504,7 @@ impl ChangelogFilter {
         self
     }
 
-    pub fn action(mut self, filter: EqualFilter<ChangelogAction>) -> Self {
+    pub fn action(mut self, filter: EqualFilter<RowActionType>) -> Self {
         self.action = Some(filter);
         self
     }
@@ -524,7 +526,7 @@ impl ChangelogTableName {
     }
 }
 
-impl ChangelogAction {
+impl RowActionType {
     pub fn equal_to(&self) -> EqualFilter<Self> {
         inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
     }

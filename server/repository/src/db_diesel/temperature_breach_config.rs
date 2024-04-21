@@ -2,7 +2,7 @@ use super::{
     temperature_breach_config_row::{
         temperature_breach_config, temperature_breach_config::dsl as temperature_breach_config_dsl,
     },
-    DBType, StorageConnection, TemperatureBreachConfigRow, TemperatureBreachRowType,
+    DBType, StorageConnection, TemperatureBreachConfigRow, TemperatureBreachType,
 };
 use diesel::prelude::*;
 
@@ -21,7 +21,7 @@ pub struct TemperatureBreachConfig {
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachConfigFilter {
     pub id: Option<EqualFilter<String>>,
-    pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
+    pub r#type: Option<EqualFilter<TemperatureBreachType>>,
     pub is_active: Option<bool>,
     pub store_id: Option<EqualFilter<String>>,
     pub description: Option<EqualFilter<String>>,
@@ -143,7 +143,7 @@ impl TemperatureBreachConfigFilter {
         self
     }
 
-    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachRowType>) -> Self {
+    pub fn r#type(mut self, filter: EqualFilter<TemperatureBreachType>) -> Self {
         self.r#type = Some(filter);
         self
     }

@@ -2,7 +2,7 @@ use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
 };
 use crate::validate::{check_other_party, CheckOtherPartyType, OtherPartyErrors};
-use repository::{InvoiceRow, InvoiceRowType, Name, StorageConnection};
+use repository::{InvoiceRow, InvoiceType, Name, StorageConnection};
 
 use super::{UpdateOutboundShipmentName, UpdateOutboundShipmentNameError};
 
@@ -17,7 +17,7 @@ pub fn validate(
     if !check_store(&invoice, store_id) {
         return Err(NotThisStoreInvoice);
     }
-    if !check_invoice_type(&invoice, InvoiceRowType::OutboundShipment) {
+    if !check_invoice_type(&invoice, InvoiceType::OutboundShipment) {
         return Err(NotAnOutboundShipment);
     }
     if !check_invoice_is_editable(&invoice) {

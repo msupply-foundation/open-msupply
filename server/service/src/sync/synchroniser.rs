@@ -3,7 +3,7 @@ use crate::{
     sync::sync_status::logger::SyncStep,
 };
 use log::warn;
-use repository::{RepositoryError, StorageConnection, SyncBufferAction};
+use repository::{RepositoryError, StorageConnection, SyncAction};
 
 use std::ops::Not;
 use std::sync::Arc;
@@ -296,10 +296,10 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
         // Translate and integrate upserts (ordered by referential database constraints)
         let upsert_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
+            sync_buffer.get_ordered_sync_buffer_records(SyncAction::Upsert, &table_order)?;
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
         let delete_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
+            sync_buffer.get_ordered_sync_buffer_records(SyncAction::Delete, &table_order)?;
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
@@ -318,7 +318,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
             )?;
 
         let merge_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+            sync_buffer.get_ordered_sync_buffer_records(SyncAction::Merge, &table_order)?;
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
                 merge_sync_buffer_records,

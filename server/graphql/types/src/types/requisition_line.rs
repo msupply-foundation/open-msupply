@@ -1,7 +1,7 @@
 use async_graphql::*;
 use dataloader::DataLoader;
 use repository::{
-    requisition_row::{RequisitionRow, RequisitionRowType},
+    requisition_row::{RequisitionRow, RequisitionType},
     ItemRow, RequisitionLine, RequisitionLineRow,
 };
 use service::{item_stats::ItemStats, usize_to_u32, ListResult};
@@ -86,7 +86,7 @@ impl RequisitionLineNode {
         // use linked requisition id
         let requisition_row = &self.requisition_line.requisition_row;
         let requisition_id = match requisition_row.r#type {
-            RequisitionRowType::Request => match &requisition_row.linked_requisition_id {
+            RequisitionType::Request => match &requisition_row.linked_requisition_id {
                 Some(linked_requisition_id) => linked_requisition_id,
                 None => return Ok(InvoiceLineConnector::empty()),
             },
@@ -112,7 +112,7 @@ impl RequisitionLineNode {
         // use linked requisition id
         let requisition_row = &self.requisition_line.requisition_row;
         let requisition_id = match requisition_row.r#type {
-            RequisitionRowType::Response => match &requisition_row.linked_requisition_id {
+            RequisitionType::Response => match &requisition_row.linked_requisition_id {
                 Some(linked_requisition_id) => linked_requisition_id,
                 None => return Ok(InvoiceLineConnector::empty()),
             },
@@ -139,7 +139,7 @@ impl RequisitionLineNode {
         ctx: &Context<'_>,
         #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<u32>,
     ) -> Result<ItemStatsNode> {
-        if self.requisition_row().r#type == RequisitionRowType::Request {
+        if self.requisition_row().r#type == RequisitionType::Request {
             return Ok(ItemStatsNode {
                 item_stats: ItemStats::from_requisition_line(&self.requisition_line),
             });
@@ -169,7 +169,7 @@ impl RequisitionLineNode {
     /// supplyQuantity minus all (including unallocated) linked invoice lines numberOfPacks * packSize
     /// Only available in response requisition, request requisition returns 0
     pub async fn remaining_quantity_to_supply(&self, ctx: &Context<'_>) -> Result<f64> {
-        if self.requisition_row().r#type == RequisitionRowType::Request {
+        if self.requisition_row().r#type == RequisitionType::Request {
             return Ok(0.0);
         }
 

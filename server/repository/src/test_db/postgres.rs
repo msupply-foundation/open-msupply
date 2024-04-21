@@ -37,20 +37,20 @@ pub(crate) async fn setup_with_version(
     let connection_manager =
         ConnectionManager::<PgConnection>::new(&db_settings.connection_string_without_db());
     let pool = Pool::new(connection_manager).expect("Failed to connect to database");
-    let connection = pool.get().expect("Failed to open connection");
+    let mut connection = pool.get().expect("Failed to open connection");
 
     diesel::sql_query(format!(
         "DROP DATABASE IF EXISTS \"{}\";",
         &db_settings.database_name
     ))
-    .execute(&connection)
+    .execute(&mut connection)
     .unwrap();
 
     diesel::sql_query(format!(
         "CREATE DATABASE \"{}\";",
         &db_settings.database_name
     ))
-    .execute(&connection)
+    .execute(&mut connection)
     .unwrap();
 
     let connection_manager = get_storage_connection_manager(&db_settings);

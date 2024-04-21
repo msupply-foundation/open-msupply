@@ -1,7 +1,8 @@
 use super::{name_link_row::name_link, StorageConnection};
 
 use crate::{
-    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, Gender, RepositoryError, Upsert,
+    clinician_link, ClinicianLinkRow, ClinicianLinkRowRepository, GenderType, RepositoryError,
+    Upsert,
 };
 
 use diesel::prelude::*;
@@ -18,7 +19,7 @@ table! {
     phone -> Nullable<Text>,
     mobile -> Nullable<Text>,
     email -> Nullable<Text>,
-    gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+    gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
     is_active -> Bool,
   }
 
@@ -37,7 +38,7 @@ pub struct ClinicianRow {
     pub phone: Option<String>,
     pub mobile: Option<String>,
     pub email: Option<String>,
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub is_active: bool,
 }
 

@@ -9,7 +9,7 @@ use graphql_core::{
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::FormSchemaNode;
 use repository::{
-    EqualFilter, PaginationOption, Report, ReportContext as ReportContextDomain, ReportFilter,
+    ContextType as ReportContextDomain, EqualFilter, PaginationOption, Report, ReportFilter,
     ReportSort, ReportSortField, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};

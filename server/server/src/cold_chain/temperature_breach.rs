@@ -9,7 +9,7 @@ use anyhow::Context;
 use chrono::NaiveDateTime;
 use log::error;
 use mime_guess::mime;
-use repository::{RepositoryError, TemperatureBreachRowType};
+use repository::{RepositoryError, TemperatureBreachType};
 use service::{
     auth_data::AuthData,
     cold_chain::{
@@ -39,7 +39,7 @@ pub struct TemperatureBreach {
     pub threshold_maximum: f64,
     #[serde(rename = "thresholdMinimumTemperature")]
     pub threshold_minimum: f64,
-    pub r#type: TemperatureBreachRowType,
+    pub r#type: TemperatureBreachType,
     pub comment: Option<String>,
 }
 

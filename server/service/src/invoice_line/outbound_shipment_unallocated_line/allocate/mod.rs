@@ -8,7 +8,7 @@ use crate::{
     },
     service_provider::ServiceContext,
 };
-use repository::{InvoiceLine, InvoiceLineRowType, RepositoryError, StockLine, StorageConnection};
+use repository::{InvoiceLine, InvoiceLineType, RepositoryError, StockLine, StorageConnection};
 
 use super::{
     delete_outbound_shipment_unallocated_line, update_outbound_shipment_unallocated_line,
@@ -146,7 +146,7 @@ fn validate(connection: &StorageConnection, line_id: &str) -> Result<InvoiceLine
     let invoice_line =
         check_line_exists_option(connection, line_id)?.ok_or(OutError::LineDoesNotExist)?;
 
-    if invoice_line.invoice_line_row.r#type != InvoiceLineRowType::UnallocatedStock {
+    if invoice_line.invoice_line_row.r#type != InvoiceLineType::UnallocatedStock {
         return Err(OutError::LineIsNotUnallocatedLine);
     }
 

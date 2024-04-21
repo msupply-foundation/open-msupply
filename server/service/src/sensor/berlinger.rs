@@ -6,7 +6,7 @@ use repository::{
     SensorType, StorageConnection, TemperatureBreach, TemperatureBreachConfig,
     TemperatureBreachConfigFilter, TemperatureBreachConfigRepository, TemperatureBreachConfigRow,
     TemperatureBreachConfigRowRepository, TemperatureBreachFilter, TemperatureBreachRepository,
-    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachRowType, TemperatureLog,
+    TemperatureBreachRow, TemperatureBreachRowRepository, TemperatureBreachType, TemperatureLog,
     TemperatureLogFilter, TemperatureLogRepository, TemperatureLogRow, TemperatureLogRowRepository,
 };
 use serde::Serialize;
@@ -16,12 +16,12 @@ use util::uuid::uuid;
 
 use temperature_sensor::*;
 
-pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachRowType {
+pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachType {
     match breach_type {
-        BreachType::ColdConsecutive => TemperatureBreachRowType::ColdConsecutive,
-        BreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
-        BreachType::HotConsecutive => TemperatureBreachRowType::HotConsecutive,
-        BreachType::HotCumulative => TemperatureBreachRowType::HotCumulative,
+        BreachType::ColdConsecutive => TemperatureBreachType::ColdConsecutive,
+        BreachType::ColdCumulative => TemperatureBreachType::ColdCumulative,
+        BreachType::HotConsecutive => TemperatureBreachType::HotConsecutive,
+        BreachType::HotCumulative => TemperatureBreachType::HotCumulative,
     }
 }
 
@@ -48,7 +48,7 @@ pub fn get_matching_sensor_log(
 pub fn get_matching_sensor_breach_config(
     connection: &StorageConnection,
     description: &str,
-    breach_type: &TemperatureBreachRowType,
+    breach_type: &TemperatureBreachType,
 ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
     let filter = TemperatureBreachConfigFilter::new()
         .description(EqualFilter::equal_to(description))
@@ -62,7 +62,7 @@ pub fn get_matching_sensor_breach(
     sensor_id: &str,
     start_datetime: NaiveDateTime,
     _end_datetime: NaiveDateTime,
-    breach_type: &TemperatureBreachRowType,
+    breach_type: &TemperatureBreachType,
 ) -> Result<Vec<TemperatureBreach>, RepositoryError> {
     let filter = TemperatureBreachFilter::new()
         .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))

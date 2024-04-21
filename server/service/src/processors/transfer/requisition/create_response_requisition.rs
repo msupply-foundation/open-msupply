@@ -6,9 +6,9 @@ use crate::{
 use super::{RequisitionTransferProcessor, RequisitionTransferProcessorRecord};
 use chrono::Utc;
 use repository::{
-    ActivityLogType, ItemRow, NumberRowType, RepositoryError, Requisition, RequisitionLine,
-    RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow, RequisitionRowApprovalStatus,
-    RequisitionRowRepository, RequisitionRowStatus, RequisitionRowType, StorageConnection,
+    ActivityLogType, ApprovalStatusType, ItemRow, NumberRowType, RepositoryError, Requisition,
+    RequisitionLine, RequisitionLineRow, RequisitionLineRowRepository, RequisitionRow,
+    RequisitionRowRepository, RequisitionStatus, RequisitionType, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -41,11 +41,11 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
             ..
         } = &record_for_processing;
         // 2.
-        if request_requisition.requisition_row.r#type != RequisitionRowType::Request {
+        if request_requisition.requisition_row.r#type != RequisitionType::Request {
             return Ok(None);
         }
         // 3.
-        if request_requisition.requisition_row.status != RequisitionRowStatus::Sent {
+        if request_requisition.requisition_row.status != RequisitionStatus::Sent {
             return Ok(None);
         }
         // 4.
@@ -63,7 +63,7 @@ impl RequisitionTransferProcessor for CreateResponseRequisitionProcessor {
         let approval_status = if store_preference.response_requisition_requires_authorisation
             && request_requisition.requisition_row.program_id.is_some()
         {
-            Some(RequisitionRowApprovalStatus::Pending)
+            Some(ApprovalStatusType::Pending)
         } else {
             None
         };
@@ -145,8 +145,8 @@ fn generate_response_requisition(
         requisition_number,
         name_link_id,
         store_id,
-        r#type: RequisitionRowType::Response,
-        status: RequisitionRowStatus::New,
+        r#type: RequisitionType::Response,
+        status: RequisitionStatus::New,
         created_datetime: Utc::now().naive_utc(),
         their_reference: Some(their_ref),
         max_months_of_stock: request_requisition_row.max_months_of_stock,

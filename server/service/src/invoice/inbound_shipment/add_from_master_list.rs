@@ -3,10 +3,10 @@ use crate::invoice::common::{
 };
 use crate::invoice::{check_invoice_exists, common::check_master_list_for_store};
 use crate::service_provider::ServiceContext;
-use repository::{EqualFilter, ItemRowType};
+use repository::{EqualFilter, ItemType};
 use repository::{
     InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, MasterListLineFilter,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, InvoiceType, MasterListLineFilter,
     MasterListLineRepository, RepositoryError, StorageConnection,
 };
 
@@ -68,11 +68,11 @@ fn validate(
     if invoice_row.store_id != store_id {
         return Err(InError::NotThisStoreShipment);
     }
-    if invoice_row.status != InvoiceRowStatus::New {
+    if invoice_row.status != InvoiceStatus::New {
         return Err(InError::CannotEditShipment);
     }
 
-    if invoice_row.r#type != InvoiceRowType::InboundShipment {
+    if invoice_row.r#type != InvoiceType::InboundShipment {
         return Err(InError::NotAnInboundShipment);
     }
 
@@ -99,7 +99,7 @@ fn generate(
             MasterListLineFilter::new()
                 .master_list_id(EqualFilter::equal_to(&input.master_list_id))
                 .item_id(EqualFilter::not_equal_all(item_ids_in_invoice))
-                .item_type(ItemRowType::Stock.equal_to()),
+                .item_type(ItemType::Stock.equal_to()),
         )?;
 
     let items_ids_not_in_invoice: Vec<String> = master_list_lines_not_in_invoice

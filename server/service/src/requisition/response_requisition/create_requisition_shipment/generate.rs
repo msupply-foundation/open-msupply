@@ -5,9 +5,8 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    CurrencyFilter, CurrencyRepository, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
-    InvoiceRowStatus, InvoiceRowType, ItemRowRepository, NumberRowType, Requisition,
-    StorageConnection,
+    CurrencyFilter, CurrencyRepository, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus,
+    InvoiceType, ItemRowRepository, NumberRowType, Requisition, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -35,8 +34,8 @@ pub fn generate(
         name_store_id: other_party.store_id().map(|id| id.to_string()),
         store_id: store_id.to_owned(),
         invoice_number: next_number(connection, &NumberRowType::OutboundShipment, &store_id)?,
-        r#type: InvoiceRowType::OutboundShipment,
-        status: InvoiceRowStatus::New,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
         created_datetime: Utc::now().naive_utc(),
         requisition_id: Some(requisition_row.id),
 
@@ -83,7 +82,7 @@ pub fn generate_invoice_lines(
             item_link_id: item_row.id,
             item_code: item_row.code,
             item_name: item_row.name,
-            r#type: InvoiceLineRowType::UnallocatedStock,
+            r#type: InvoiceLineType::UnallocatedStock,
 
             // Default
             total_before_tax: 0.0,

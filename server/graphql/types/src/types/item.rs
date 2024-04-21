@@ -11,7 +11,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{Item, ItemRow, ItemRowType};
+use repository::{Item, ItemRow, ItemType};
 use serde_json::json;
 use service::ListResult;
 
@@ -186,19 +186,19 @@ pub enum ItemNodeType {
 }
 
 impl ItemNodeType {
-    pub fn from_domain(from: &ItemRowType) -> ItemNodeType {
+    pub fn from_domain(from: &ItemType) -> ItemNodeType {
         match from {
-            ItemRowType::Stock => ItemNodeType::Stock,
-            ItemRowType::Service => ItemNodeType::Service,
-            ItemRowType::NonStock => ItemNodeType::NonStock,
+            ItemType::Stock => ItemNodeType::Stock,
+            ItemType::Service => ItemNodeType::Service,
+            ItemType::NonStock => ItemNodeType::NonStock,
         }
     }
 
-    pub fn to_domain(self) -> ItemRowType {
+    pub fn to_domain(self) -> ItemType {
         match self {
-            ItemNodeType::Stock => ItemRowType::Stock,
-            ItemNodeType::Service => ItemRowType::Service,
-            ItemNodeType::NonStock => ItemRowType::NonStock,
+            ItemNodeType::Stock => ItemType::Stock,
+            ItemNodeType::Service => ItemType::Service,
+            ItemNodeType::NonStock => ItemType::NonStock,
         }
     }
 }

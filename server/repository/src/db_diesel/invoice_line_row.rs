@@ -30,7 +30,7 @@ table! {
         total_before_tax -> Double,
         total_after_tax -> Double,
         tax -> Nullable<Double>,
-        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::invoice_line_row::InvoiceLineTypeMapping,
         number_of_packs -> Double,
         note -> Nullable<Text>,
         inventory_adjustment_reason_id -> Nullable<Text>,
@@ -50,14 +50,14 @@ allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InvoiceLineRowType {
+pub enum InvoiceLineType {
     StockIn,
     StockOut,
     UnallocatedStock,
     Service,
 }
 
-impl Default for InvoiceLineRowType {
+impl Default for InvoiceLineType {
     fn default() -> Self {
         Self::StockIn
     }
@@ -85,7 +85,7 @@ pub struct InvoiceLineRow {
     /// Optional column to store line a line specific tax value
     pub tax: Option<f64>,
     #[diesel(column_name =type_)]
-    pub r#type: InvoiceLineRowType,
+    pub r#type: InvoiceLineType,
     pub number_of_packs: f64,
     pub note: Option<String>,
     pub inventory_adjustment_reason_id: Option<String>,

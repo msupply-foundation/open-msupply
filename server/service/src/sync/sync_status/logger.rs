@@ -1,6 +1,6 @@
 use log::{error, info};
 use repository::{
-    RepositoryError, StorageConnection, SyncLogRow, SyncLogRowErrorCode, SyncLogRowRepository,
+    RepositoryError, StorageConnection, SyncApiErrorCode, SyncLogRow, SyncLogRowRepository,
 };
 use thiserror::Error;
 use util::format_error;
@@ -310,7 +310,7 @@ impl SyncLogError {
             }
             // Integration timeout reached
             SyncError::WaitForIntegrationError(_) => {
-                return Self::new(SyncLogRowErrorCode::IntegrationTimeoutReached, sync_error)
+                return Self::new(SyncApiErrorCode::IntegrationTimeoutReached, sync_error)
             }
             // Internal errors
             _ => return Self::message_only(sync_error),
@@ -321,14 +321,14 @@ impl SyncLogError {
             SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
             // Important to map connection error
             SyncApiErrorVariantV5::ConnectionError { .. } => {
-                return Self::new(SyncLogRowErrorCode::ConnectionError, sync_error)
+                return Self::new(SyncApiErrorCode::ConnectionError, sync_error)
             }
             // Internal errors
             _ => return Self::message_only(sync_error),
         };
 
+        use SyncApiErrorCode as to;
         use SyncErrorCodeV5 as from;
-        use SyncLogRowErrorCode as to;
         let log_error_code = match sync_v5_error_code {
             from::SiteNameNotFound => to::SiteNameNotFound,
             from::SiteIncorrectPassword => to::IncorrectPassword,
@@ -349,7 +349,7 @@ impl SyncLogError {
         }
     }
 
-    fn new<T: std::error::Error>(code: SyncLogRowErrorCode, error: &T) -> Self {
+    fn new<T: std::error::Error>(code: SyncApiErrorCode, error: &T) -> Self {
         Self {
             message: format_error(error),
             code: Some(code),
@@ -368,7 +368,7 @@ mod test {
         sync_status::{logger::SyncLoggerError, SyncLogError},
         synchroniser::SyncError,
     };
-    use repository::{RepositoryError, SyncLogRowErrorCode};
+    use repository::{RepositoryError, SyncApiErrorCode};
     use reqwest::{Client, StatusCode, Url};
     use serde_json::json;
     use url::ParseError;
@@ -392,10 +392,7 @@ mod test {
             SyncApiError::new_test(reqwest_error().await.into()),
         ));
         let sync_log_error = SyncLogError::from_sync_error(&sync_error);
-        assert_eq!(
-            sync_log_error.code,
-            Some(SyncLogRowErrorCode::ConnectionError)
-        );
+        assert_eq!(sync_log_error.code, Some(SyncApiErrorCode::ConnectionError));
         // RemotePullError -> ResponseParsingError
         let sync_error = SyncError::RemotePullError(RemotePullError::SyncApiError(
             SyncApiError::new_test(Variant::ResponseParsingError(reqwest_error().await.into())),
@@ -443,7 +440,7 @@ mod test {
             sync_log_error,
             SyncLogError {
                 message: format_error(&sync_error),
-                code: Some(SyncLogRowErrorCode::IntegrationTimeoutReached)
+                code: Some(SyncApiErrorCode::IntegrationTimeoutReached)
             }
         );
         // CentralPullError -> MappedError::ParsedError -> Other
@@ -481,7 +478,7 @@ mod test {
             sync_log_error,
             SyncLogError {
                 message: format_error(&sync_error),
-                code: Some(SyncLogRowErrorCode::HardwareIdMismatch)
+                code: Some(SyncApiErrorCode::HardwareIdMismatch)
             }
         );
     }

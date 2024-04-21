@@ -10,7 +10,7 @@ use crate::{
         apply_string_or_filter,
     },
     repository_error::RepositoryError,
-    DateFilter, EqualFilter, Gender, NameType, Pagination, ProgramEnrolmentFilter,
+    DateFilter, EqualFilter, GenderType, NameType, Pagination, ProgramEnrolmentFilter,
     ProgramEnrolmentRepository, Sort, StringFilter,
 };
 
@@ -27,7 +27,7 @@ pub struct PatientFilter {
     pub code_2: Option<StringFilter>,
     pub first_name: Option<StringFilter>,
     pub last_name: Option<StringFilter>,
-    pub gender: Option<EqualFilter<Gender>>,
+    pub gender: Option<EqualFilter<GenderType>>,
     pub date_of_birth: Option<DateFilter>,
     pub date_of_death: Option<DateFilter>,
     pub phone: Option<StringFilter>,
@@ -303,7 +303,7 @@ impl PatientFilter {
         self
     }
 
-    pub fn gender(mut self, filter: EqualFilter<Gender>) -> Self {
+    pub fn gender(mut self, filter: EqualFilter<GenderType>) -> Self {
         self.gender = Some(filter);
         self
     }

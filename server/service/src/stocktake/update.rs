@@ -2,10 +2,10 @@ use chrono::{NaiveDate, Utc};
 use repository::{
     location_movement::{LocationMovementFilter, LocationMovementRepository},
     ActivityLogType, CurrencyFilter, CurrencyRepository, DatetimeFilter, EqualFilter,
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowRepository,
-    InvoiceRowStatus, InvoiceRowType, ItemLinkRowRepository, ItemRowRepository,
-    LocationMovementRow, LocationMovementRowRepository, NameLinkRowRepository, NameRowRepository,
-    NumberRowType, RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceRowRepository,
+    InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRowRepository, LocationMovementRow,
+    LocationMovementRowRepository, NameLinkRowRepository, NameRowRepository, NumberRowType,
+    RepositoryError, StockLine, StockLineFilter, StockLineRepository, StockLineRow,
     StockLineRowRepository, Stocktake, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeLineRowRepository, StocktakeRow, StocktakeRowRepository,
     StocktakeStatus, StorageConnection,
@@ -280,14 +280,11 @@ fn generate_stock_line_update(
     let quantity_change = f64::abs(delta);
     let shipment_line = if quantity_change > 0.0 {
         let (invoice_id, r#type) = if delta > 0.0 {
-            (
-                inventory_addition_id.to_string(),
-                InvoiceLineRowType::StockIn,
-            )
+            (inventory_addition_id.to_string(), InvoiceLineType::StockIn)
         } else {
             (
                 inventory_reduction_id.to_string(),
-                InvoiceLineRowType::StockOut,
+                InvoiceLineType::StockOut,
             )
         };
         Some(InvoiceLineRow {
@@ -403,7 +400,7 @@ fn generate_new_stock_line(
     let shipment_line = if counted_number_of_packs > 0.0 {
         Some(InvoiceLineRow {
             id: uuid(),
-            r#type: InvoiceLineRowType::StockIn,
+            r#type: InvoiceLineType::StockIn,
             invoice_id: inventory_addition_id.to_string(),
             item_link_id: item.id,
             item_name: item.name,
@@ -601,7 +598,7 @@ fn generate(
         };
         stock_lines.push(stock_line);
         if let Some(shipment_line) = invoice_line {
-            if shipment_line.r#type == InvoiceLineRowType::StockIn {
+            if shipment_line.r#type == InvoiceLineType::StockIn {
                 inventory_addition_lines.push(shipment_line)
             } else {
                 inventory_reduction_lines.push(shipment_line)
@@ -627,12 +624,12 @@ fn generate(
         // Different between addition and reduction
         id: "".to_string(),
         invoice_number: 0,
-        r#type: InvoiceRowType::InventoryAddition,
+        r#type: InvoiceType::InventoryAddition,
         // Same for addition and reduction
         user_id: Some(user_id.to_string()),
         name_link_id: inventory_adjustment_name.id,
         store_id: store_id.to_string(),
-        status: InvoiceRowStatus::Verified,
+        status: InvoiceStatus::Verified,
         verified_datetime: Some(now),
         // Default
         currency_id: Some(currency.currency_row.id),
@@ -659,7 +656,7 @@ fn generate(
         Some(InvoiceRow {
             id: inventory_addition_id,
             invoice_number: next_number(connection, &NumberRowType::InventoryAddition, store_id)?,
-            r#type: InvoiceRowType::InventoryAddition,
+            r#type: InvoiceType::InventoryAddition,
             ..template_adjustment.clone()
         })
     } else {
@@ -669,7 +666,7 @@ fn generate(
         Some(InvoiceRow {
             id: inventory_reduction_id,
             invoice_number: next_number(connection, &NumberRowType::InventoryReduction, store_id)?,
-            r#type: InvoiceRowType::InventoryReduction,
+            r#type: InvoiceType::InventoryReduction,
             ..template_adjustment.clone()
         })
     } else {
@@ -788,7 +785,7 @@ mod test {
             MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineRowType,
+        EqualFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceLineType,
         StockLineRow, StockLineRowRepository, StocktakeLine, StocktakeLineFilter,
         StocktakeLineRepository, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
         StocktakeRow, StocktakeStatus,
@@ -975,7 +972,7 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(invoice_line.r#type, InvoiceLineRowType::StockIn);
+        assert_eq!(invoice_line.r#type, InvoiceLineType::StockIn);
         assert_eq!(invoice_line.number_of_packs, surplus_amount);
         assert_eq!(result.inventory_reduction_id, None);
 
@@ -1000,7 +997,7 @@ mod test {
             .unwrap()
             .pop()
             .unwrap();
-        assert_eq!(invoice_line.r#type, InvoiceLineRowType::StockOut);
+        assert_eq!(invoice_line.r#type, InvoiceLineType::StockOut);
         assert_eq!(invoice_line.number_of_packs, f64::abs(deficit_amount));
         assert_eq!(result.inventory_addition_id, None);
 

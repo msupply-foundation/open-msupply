@@ -86,8 +86,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus,
-        InvoiceRowType, StockLineRow, StockLineRowRepository,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceStatus,
+        InvoiceType, StockLineRow, StockLineRowRepository,
     };
 
     use crate::{
@@ -105,8 +105,8 @@ mod test {
                 id: "verified_return".to_string(),
                 store_id: mock_store_b().id,
                 name_link_id: mock_name_store_b().id,
-                r#type: InvoiceRowType::InboundReturn,
-                status: InvoiceRowStatus::Verified,
+                r#type: InvoiceType::InboundReturn,
+                status: InvoiceStatus::Verified,
                 ..Default::default()
             }
         }
@@ -116,7 +116,7 @@ mod test {
                 id: "verified_return_line".to_string(),
                 invoice_id: verified_return().id,
                 item_link_id: mock_item_a().id,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }
         }
@@ -214,7 +214,7 @@ mod test {
                 invoice_id: mock_inbound_return_a().id,
                 stock_line_id: Some(stock_line().id),
                 item_link_id: mock_item_a().id,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineType::StockIn,
                 ..Default::default()
             }
         }

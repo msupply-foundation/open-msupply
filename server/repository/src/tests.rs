@@ -27,7 +27,7 @@ mod repository_test {
                 r.id = "item1".to_string();
                 r.name = "name1".to_string();
                 r.code = "code1".to_string();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             })
         }
 
@@ -36,7 +36,7 @@ mod repository_test {
                 r.id = "item2".to_string();
                 r.name = "item-2".to_string();
                 r.code = "code2".to_string();
-                r.r#type = ItemRowType::Stock;
+                r.r#type = ItemType::Stock;
             })
         }
 
@@ -45,7 +45,7 @@ mod repository_test {
                 r.id = "item_service_1".to_string();
                 r.name = "item_service_name_1".to_string();
                 r.code = "item_service_code_1".to_string();
-                r.r#type = ItemRowType::Service;
+                r.r#type = ItemType::Service;
             })
         }
 
@@ -119,8 +119,8 @@ mod repository_test {
                 r.name_link_id = name_1().id.to_string();
                 r.store_id = store_1().id.to_string();
                 r.invoice_number = 12;
-                r.r#type = InvoiceRowType::InboundShipment;
-                r.status = InvoiceRowStatus::New;
+                r.r#type = InvoiceType::InboundShipment;
+                r.status = InvoiceStatus::New;
                 r.comment = Some("".to_string());
                 r.their_reference = Some("".to_string());
                 // Note: keep nsecs small enough for Postgres which has limited precision;
@@ -134,8 +134,8 @@ mod repository_test {
                 r.name_link_id = name_1().id.to_string();
                 r.store_id = store_1().id.to_string();
                 r.invoice_number = 12;
-                r.r#type = InvoiceRowType::OutboundShipment;
-                r.status = InvoiceRowStatus::New;
+                r.r#type = InvoiceType::OutboundShipment;
+                r.status = InvoiceStatus::New;
                 r.comment = Some("".to_string());
                 r.their_reference = Some("".to_string());
                 r.created_datetime = NaiveDateTime::from_timestamp_opt(2000, 0).unwrap();
@@ -158,7 +158,7 @@ mod repository_test {
                 total_before_tax: 1.0,
                 total_after_tax: 1.0,
                 tax: None,
-                r#type: InvoiceLineRowType::StockIn,
+                r#type: InvoiceLineType::StockIn,
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
@@ -183,7 +183,7 @@ mod repository_test {
                 total_before_tax: 2.0,
                 total_after_tax: 2.0,
                 tax: None,
-                r#type: InvoiceLineRowType::StockOut,
+                r#type: InvoiceLineType::StockOut,
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
@@ -209,7 +209,7 @@ mod repository_test {
                 total_before_tax: 3.0,
                 total_after_tax: 3.0,
                 tax: None,
-                r#type: InvoiceLineRowType::StockOut,
+                r#type: InvoiceLineType::StockOut,
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
@@ -235,7 +235,7 @@ mod repository_test {
                 total_before_tax: 10.0,
                 total_after_tax: 15.0,
                 tax: None,
-                r#type: InvoiceLineRowType::Service,
+                r#type: InvoiceLineType::Service,
                 number_of_packs: 1.0,
                 note: None,
                 location_id: None,
@@ -288,11 +288,11 @@ mod repository_test {
             mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
-        requisition_row::RequisitionRowStatus,
+        requisition_row::RequisitionStatus,
         test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
         InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRowRepository,
-        InvoiceRowType, ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyValueStoreRepository,
-        KeyValueType, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
+        InvoiceType, ItemLinkRowRepository, ItemRow, ItemRowRepository, KeyType,
+        KeyValueStoreRepository, MasterListFilter, MasterListLineFilter, MasterListLineRepository,
         MasterListLineRowRepository, MasterListNameJoinRepository, MasterListRepository,
         MasterListRowRepository, NameRowRepository, NumberRowRepository, NumberRowType,
         RequisitionFilter, RequisitionLineFilter, RequisitionLineRepository,
@@ -643,7 +643,7 @@ mod repository_test {
         let loaded_item = invoice_repo
             .query_by_filter(
                 InvoiceFilter::new()
-                    .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                    .r#type(InvoiceType::OutboundShipment.equal_to())
                     .name_id(EqualFilter::equal_to(&item1.name_link_id)),
             )
             .unwrap();
@@ -652,7 +652,7 @@ mod repository_test {
         let loaded_item = invoice_repo
             .query_by_filter(
                 InvoiceFilter::new()
-                    .r#type(InvoiceRowType::OutboundShipment.equal_to())
+                    .r#type(InvoiceType::OutboundShipment.equal_to())
                     .store_id(EqualFilter::equal_to(&item1.store_id)),
             )
             .unwrap();
@@ -936,7 +936,7 @@ mod repository_test {
         let result = RequisitionRepository::new(&connection)
             .query_by_filter(
                 RequisitionFilter::new()
-                    .status(RequisitionRowStatus::Draft.equal_to())
+                    .status(RequisitionStatus::Draft.equal_to())
                     .comment(StringFilter::like("iquE_coMme")),
             )
             .unwrap();
@@ -1039,52 +1039,43 @@ mod repository_test {
         let repo = KeyValueStoreRepository::new(&connection);
 
         // access a non-existing row
-        let result = repo
-            .get_string(KeyValueType::CentralSyncPullCursor)
-            .unwrap();
+        let result = repo.get_string(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, None);
 
         // write a string value
-        repo.set_string(
-            KeyValueType::CentralSyncPullCursor,
-            Some("test".to_string()),
-        )
-        .unwrap();
-        let result = repo
-            .get_string(KeyValueType::CentralSyncPullCursor)
+        repo.set_string(KeyType::CentralSyncPullCursor, Some("test".to_string()))
             .unwrap();
+        let result = repo.get_string(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, Some("test".to_string()));
 
         // unset a value
-        repo.set_string(KeyValueType::CentralSyncPullCursor, None)
+        repo.set_string(KeyType::CentralSyncPullCursor, None)
             .unwrap();
-        let result = repo
-            .get_string(KeyValueType::CentralSyncPullCursor)
-            .unwrap();
+        let result = repo.get_string(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, None);
 
         // write a i32 value
-        repo.set_i32(KeyValueType::CentralSyncPullCursor, Some(50))
+        repo.set_i32(KeyType::CentralSyncPullCursor, Some(50))
             .unwrap();
-        let result = repo.get_i32(KeyValueType::CentralSyncPullCursor).unwrap();
+        let result = repo.get_i32(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, Some(50));
 
         // write a i64 value
-        repo.set_i64(KeyValueType::CentralSyncPullCursor, Some(500))
+        repo.set_i64(KeyType::CentralSyncPullCursor, Some(500))
             .unwrap();
-        let result = repo.get_i64(KeyValueType::CentralSyncPullCursor).unwrap();
+        let result = repo.get_i64(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, Some(500));
 
         // write a f64 value
-        repo.set_f64(KeyValueType::CentralSyncPullCursor, Some(600.0))
+        repo.set_f64(KeyType::CentralSyncPullCursor, Some(600.0))
             .unwrap();
-        let result = repo.get_f64(KeyValueType::CentralSyncPullCursor).unwrap();
+        let result = repo.get_f64(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, Some(600.0));
 
         // write a bool value
-        repo.set_bool(KeyValueType::CentralSyncPullCursor, Some(true))
+        repo.set_bool(KeyType::CentralSyncPullCursor, Some(true))
             .unwrap();
-        let result = repo.get_bool(KeyValueType::CentralSyncPullCursor).unwrap();
+        let result = repo.get_bool(KeyType::CentralSyncPullCursor).unwrap();
         assert_eq!(result, Some(true));
     }
 

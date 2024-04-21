@@ -14,7 +14,7 @@ table! {
     temperature_breach (id) {
         id -> Text,
         duration_milliseconds -> Integer,
-        #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachRowTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::temperature_breach_row::TemperatureBreachTypeMapping,
         sensor_id -> Text,
         location_id -> Nullable<Text>,
         store_id -> Text,
@@ -35,7 +35,7 @@ joinable!(temperature_breach -> location (location_id));
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum TemperatureBreachRowType {
+pub enum TemperatureBreachType {
     ColdConsecutive,
     ColdCumulative,
     #[default]
@@ -53,7 +53,7 @@ pub struct TemperatureBreachRow {
     pub id: String,
     pub duration_milliseconds: i32,
     #[diesel(column_name = "type_")]
-    pub r#type: TemperatureBreachRowType,
+    pub r#type: TemperatureBreachType,
     pub sensor_id: String,
     pub location_id: Option<String>,
     pub store_id: String,

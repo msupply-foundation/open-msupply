@@ -19,7 +19,7 @@ use super::{
 
 use log::debug;
 use repository::{
-    ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
+    ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
 };
 use thiserror::Error;
@@ -69,7 +69,7 @@ impl CentralDataSynchroniserV6 {
         is_initialised: bool,
         logger: &mut SyncLogger<'a>,
     ) -> Result<(), CentralPullErrorV6> {
-        let cursor_controller = CursorController::new(KeyValueType::SyncPullCursorV6);
+        let cursor_controller = CursorController::new(KeyType::SyncPullCursorV6);
         // TODO protection from infinite loop
         loop {
             let cursor = cursor_controller.get(&connection)?;
@@ -116,7 +116,7 @@ impl CentralDataSynchroniserV6 {
     ) -> Result<(), RemotePushErrorV6> {
         let changelog_repo = ChangelogRepository::new(connection);
         let change_log_filter = get_sync_push_changelogs_filter(connection)?;
-        let cursor_controller = CursorController::new(KeyValueType::SyncPushCursorV6);
+        let cursor_controller = CursorController::new(KeyType::SyncPushCursorV6);
 
         loop {
             // TODO inside transaction

@@ -1,7 +1,7 @@
 use chrono::Utc;
 
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, StockLineRow,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceRow, InvoiceStatus, StockLineRow,
     StorageConnection,
 };
 use util::uuid::uuid;
@@ -62,7 +62,7 @@ pub(crate) fn generate(
 
 fn changed_status(
     status: Option<UpdateInboundReturnStatus>,
-    existing_status: &InvoiceRowStatus,
+    existing_status: &InvoiceStatus,
 ) -> Option<UpdateInboundReturnStatus> {
     let new_status = match status {
         Some(status) => status,
@@ -77,10 +77,7 @@ fn changed_status(
     Some(new_status)
 }
 
-pub fn should_create_batches(
-    existing_status: &InvoiceRowStatus,
-    patch: &UpdateInboundReturn,
-) -> bool {
+pub fn should_create_batches(existing_status: &InvoiceStatus, patch: &UpdateInboundReturn) -> bool {
     let new_status = match changed_status(patch.status.to_owned(), existing_status) {
         Some(status) => status,
         None => return false, // There's no status to update
@@ -89,7 +86,7 @@ pub fn should_create_batches(
     match (existing_status, new_status) {
         (
             // From New/Picked/Shipped to Delivered
-            InvoiceRowStatus::New | InvoiceRowStatus::Picked | InvoiceRowStatus::Shipped,
+            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateInboundReturnStatus::Delivered,
         ) => true,
         _ => false,
@@ -107,7 +104,7 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
     match (&inbound_return.status, new_status) {
         // From New/Picked/Shipped to Delivered
         (
-            InvoiceRowStatus::New | InvoiceRowStatus::Picked | InvoiceRowStatus::Shipped,
+            InvoiceStatus::New | InvoiceStatus::Picked | InvoiceStatus::Shipped,
             UpdateInboundReturnStatus::Delivered,
         ) => {
             inbound_return.delivered_datetime = Some(current_datetime);
@@ -115,10 +112,10 @@ fn set_new_status_datetime(inbound_return: &mut InvoiceRow, patch: &UpdateInboun
 
         // From New/Picked/Shipped/Delivered to Verified
         (
-            InvoiceRowStatus::New
-            | InvoiceRowStatus::Picked
-            | InvoiceRowStatus::Shipped
-            | InvoiceRowStatus::Delivered,
+            InvoiceStatus::New
+            | InvoiceStatus::Picked
+            | InvoiceStatus::Shipped
+            | InvoiceStatus::Delivered,
             UpdateInboundReturnStatus::Verified,
         ) => {
             inbound_return.verified_datetime = Some(current_datetime);

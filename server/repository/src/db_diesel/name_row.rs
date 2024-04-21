@@ -24,7 +24,7 @@ table! {
         supplying_store_id -> Nullable<Text>,
         first_name -> Nullable<Text>,
         last_name -> Nullable<Text>,
-        gender -> Nullable<crate::db_diesel::name_row::GenderMapping>,
+        gender -> Nullable<crate::db_diesel::name_row::GenderTypeMapping>,
         date_of_birth -> Nullable<Date>,
         phone -> Nullable<Text>,
         charge_code-> Nullable<Text>,
@@ -59,7 +59,7 @@ allow_tables_to_appear_in_same_query!(name, name_link);
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum Gender {
+pub enum GenderType {
     Female,
     Male,
     Transgender,
@@ -73,8 +73,8 @@ pub enum Gender {
     NonBinary,
 }
 
-impl Gender {
-    pub fn equal_to(&self) -> EqualFilter<Gender> {
+impl GenderType {
+    pub fn equal_to(&self) -> EqualFilter<GenderType> {
         EqualFilter {
             equal_to: Some(self.clone()),
             not_equal_to: None,
@@ -125,7 +125,7 @@ pub struct NameRow {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
 
-    pub gender: Option<Gender>,
+    pub gender: Option<GenderType>,
     pub date_of_birth: Option<NaiveDate>,
     pub phone: Option<String>,
     pub charge_code: Option<String>,

@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 table! {
     inventory_adjustment_reason (id) {
         id -> Text,
-        #[sql_name = "type"] type_ -> crate::db_diesel::inventory_adjustment_reason_row::InventoryAdjustmentReasonTypeMapping,
+        #[sql_name = "type"] type_ -> crate::db_diesel::inventory_adjustment_reason_row::InventoryAdjustmentTypeMapping,
         is_active -> Bool,
         reason -> Text,
     }
@@ -20,7 +20,7 @@ table! {
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
-pub enum InventoryAdjustmentReasonType {
+pub enum InventoryAdjustmentType {
     Positive,
     Negative,
 }
@@ -31,7 +31,7 @@ pub enum InventoryAdjustmentReasonType {
 pub struct InventoryAdjustmentReasonRow {
     pub id: String,
     #[diesel(column_name = type_)]
-    pub r#type: InventoryAdjustmentReasonType,
+    pub r#type: InventoryAdjustmentType,
     pub is_active: bool,
     pub reason: String,
 }
@@ -39,7 +39,7 @@ pub struct InventoryAdjustmentReasonRow {
 impl Default for InventoryAdjustmentReasonRow {
     fn default() -> Self {
         Self {
-            r#type: InventoryAdjustmentReasonType::Positive,
+            r#type: InventoryAdjustmentType::Positive,
             id: Default::default(),
             is_active: false,
             reason: Default::default(),

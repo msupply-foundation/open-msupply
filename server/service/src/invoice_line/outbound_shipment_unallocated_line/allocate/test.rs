@@ -8,7 +8,7 @@ mod test {
             mock_store_a, mock_store_b, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineRowType, InvoiceRow, InvoiceRowType,
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow, InvoiceType,
         RepositoryError, StockLine, StockLineRow,
     };
     use util::{
@@ -55,7 +55,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -64,7 +64,7 @@ mod test {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 20.0;
                 r.pack_size = 1;
             })
@@ -160,7 +160,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -169,7 +169,7 @@ mod test {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 50.0;
                 r.pack_size = 1;
             })
@@ -300,7 +300,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -309,7 +309,7 @@ mod test {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 3.0;
                 r.pack_size = 1;
             })
@@ -453,7 +453,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -462,7 +462,7 @@ mod test {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 50.0;
                 r.pack_size = 1;
             })
@@ -485,7 +485,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line().id);
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 2.0;
                 r.pack_size = 1;
             })
@@ -507,7 +507,7 @@ mod test {
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
                 r.stock_line_id = Some(stock_line2().id);
-                r.r#type = InvoiceLineRowType::StockOut;
+                r.r#type = InvoiceLineType::StockOut;
                 r.number_of_packs = 10.0;
                 r.pack_size = 1;
             })
@@ -590,7 +590,7 @@ mod test {
                 r.id = "invoice".to_string();
                 r.store_id = mock_store_a().id;
                 r.name_link_id = mock_name_a().id;
-                r.r#type = InvoiceRowType::OutboundShipment;
+                r.r#type = InvoiceType::OutboundShipment;
             })
         }
 
@@ -599,7 +599,7 @@ mod test {
                 r.id = "line".to_string();
                 r.invoice_id = invoice().id;
                 r.item_link_id = mock_item_a().id;
-                r.r#type = InvoiceLineRowType::UnallocatedStock;
+                r.r#type = InvoiceLineType::UnallocatedStock;
                 r.number_of_packs = 1.0;
                 r.pack_size = 1;
             })

@@ -10,8 +10,8 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
-    StockLineRow, StorageConnection,
+    InvoiceLine, InvoiceLineRow, InvoiceRow, InvoiceStatus, ItemRow, RepositoryError, StockLineRow,
+    StorageConnection,
 };
 
 use super::UpdateStockInLine;
@@ -50,7 +50,7 @@ pub fn generate(
         false => update_line,
     };
 
-    let upsert_batch_option = if existing_invoice_row.status != InvoiceRowStatus::New {
+    let upsert_batch_option = if existing_invoice_row.status != InvoiceStatus::New {
         let new_batch = generate_batch(
             &existing_invoice_row.store_id,
             update_line.clone(),

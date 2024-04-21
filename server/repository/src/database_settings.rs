@@ -156,7 +156,7 @@ pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageCon
             );
 
             match root_connection_manager.connect() {
-                Ok(root_connection) => {
+                Ok(mut root_connection) => {
                     root_connection
                         .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
                         .expect("Failed to create database");

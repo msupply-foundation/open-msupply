@@ -62,7 +62,7 @@ impl<'a> ItemLinkRowRepository<'a> {
             .values(item_link_row)
             .on_conflict(item_link::id)
             .do_nothing()
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 

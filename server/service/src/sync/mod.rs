@@ -21,11 +21,11 @@ pub mod synchroniser_driver;
 pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 
+use crate::service_provider::ServiceProvider;
 use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
-use crate::service_provider::ServiceProvider;
 
 use thiserror::Error;
 
@@ -63,7 +63,7 @@ impl ActiveStoresOnSite {
         use GetActiveStoresOnSiteError as Error;
 
         let site_id = KeyValueStoreRepository::new(connection)
-            .get_i32(repository::KeyValueType::SettingsSyncSiteId)
+            .get_i32(repository::KeyType::SettingsSyncSiteId)
             .map_err(Error::DatabaseError)?
             .ok_or(Error::SiteIdNotSet)?;
 
@@ -89,8 +89,6 @@ impl ActiveStoresOnSite {
         self.stores.iter().map(|r| r.store_row.id.clone()).collect()
     }
 }
-
-
 
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     let ctx = service_provider.basic_context().unwrap();
