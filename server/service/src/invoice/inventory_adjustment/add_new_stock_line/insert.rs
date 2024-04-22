@@ -24,6 +24,7 @@ pub struct AddNewStockLine {
     pub location: Option<NullableUpdate<String>>,
     pub expiry_date: Option<NaiveDate>,
     pub inventory_adjustment_reason_id: Option<String>,
+    pub barcode: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -93,8 +94,8 @@ impl From<RepositoryError> for AddNewStockLineError {
 mod test {
     use repository::{
         mock::{
-            mock_item_a, mock_stock_line_a, mock_store_a, mock_user_account_a, MockData,
-            MockDataInserts,
+            mock_item_a, mock_location_1, mock_stock_line_a, mock_store_a, mock_user_account_a,
+            MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType,
@@ -105,6 +106,7 @@ mod test {
     use crate::{
         invoice::inventory_adjustment::add_new_stock_line::AddNewStockLine,
         invoice_line::stock_in_line::InsertStockInLineError, service_provider::ServiceProvider,
+        NullableUpdate,
     };
 
     use super::AddNewStockLineError;
@@ -208,8 +210,23 @@ mod test {
 
     #[actix_rt::test]
     async fn add_new_stock_line_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("add_new_stock_line_success", MockDataInserts::all()).await;
+        fn addition_reason() -> InventoryAdjustmentReasonRow {
+            InventoryAdjustmentReasonRow {
+                id: "addition".to_string(),
+                reason: "test addition".to_string(),
+                is_active: true,
+                r#type: InventoryAdjustmentReasonType::Positive,
+            }
+        }
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "add_new_stock_line_success",
+            MockDataInserts::all(),
+            MockData {
+                inventory_adjustment_reasons: vec![addition_reason()],
+                ..Default::default()
+            },
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -225,7 +242,11 @@ mod test {
                     pack_size: 1,
                     number_of_packs: 2.0,
                     item_id: mock_item_a().id,
-                    inventory_adjustment_reason_id: None, // todo set
+                    inventory_adjustment_reason_id: Some(addition_reason().id),
+                    on_hold: true,
+                    location: Some(NullableUpdate {
+                        value: Some(mock_location_1().id),
+                    }),
                     ..Default::default()
                 },
             )
@@ -258,6 +279,7 @@ mod test {
             invoice_line_row,
             inline_edit(&invoice_line_row, |mut u| {
                 u.number_of_packs = 2.0;
+                u.inventory_adjustment_reason_id = Some(addition_reason().id);
                 u
             })
         );
@@ -266,6 +288,8 @@ mod test {
             inline_edit(&stock_line_row, |mut u| {
                 u.available_number_of_packs = 2.0;
                 u.total_number_of_packs = 2.0;
+                u.location_id = Some(mock_location_1().id);
+                u.on_hold = true;
                 u
             })
         );
