@@ -19,7 +19,7 @@ pub(crate) struct AssetTypeTranslation;
 
 impl SyncTranslation for AssetTypeTranslation {
     fn table_name(&self) -> &str {
-        "asset_type"
+        "asset_catalogue_type"
     }
 
     fn pull_dependencies(&self) -> Vec<&str> {
