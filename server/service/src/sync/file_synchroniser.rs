@@ -11,40 +11,35 @@ use repository::{
     RepositoryError,
 };
 
-use crate::static_files::StaticFile;
+use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
 use crate::sync::api_v6::SyncApiV6;
 use crate::sync::settings::SYNC_VERSION;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};
 
-use super::api::SyncApiV5CreatingError;
 use super::api_v6::{SyncApiErrorV6, SyncApiV6CreatingError};
 use super::settings::SyncSettings;
+use super::{
+    api::SyncApiV5CreatingError,
+    api_v6::{SyncApiErrorVariantV6, SyncParsedErrorV6},
+};
 
 pub static MAX_UPLOAD_ATTEMPTS: i32 = 7 * 24; // 7 days * 24 hours Retry sending for up to for 1 week before giving up
 pub static RETRY_DELAY_MINUTES: i64 = 15; // Doubles each retry until MAX_RETRY_DELAY_MINUTES
 pub static MAX_RETRY_DELAY_MINUTES: i64 = 60; // 1 hour
 
-#[derive(Debug)]
-pub(crate) enum UploadError {
-    ConnectionError,
-    NotFound,
-    Other(String),
-}
-
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub(crate) enum FileSyncError {
-    DatabaseError(RepositoryError),
-    CantFindFile(String),
-    StdIoError(std::io::Error),
-    ReqwestError(reqwest::Error),
-    UploadError(UploadError),
-}
-
-impl From<RepositoryError> for FileSyncError {
-    fn from(error: RepositoryError) -> Self {
-        FileSyncError::DatabaseError(error)
-    }
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiErrorV6),
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Cannot find file with id {0}")]
+    FileNotFound(String),
+    #[error("File system error")]
+    FileSystemError(#[from] std::io::Error),
+    #[error("Unknown file sync error")]
+    Other(#[from] anyhow::Error),
 }
 
 #[derive(Error, Debug)]
@@ -120,7 +115,7 @@ impl FileSynchroniser {
         Ok(download_result?)
     }
 
-    pub(crate) async fn sync(&self) -> Result<usize, FileSyncError> {
+    pub(crate) async fn sync(&self) -> Result<usize /* number of files */, FileSyncError> {
         let ctx = self.service_provider.basic_context()?;
 
         // Find any files that need to be uploaded
@@ -131,87 +126,92 @@ impl FileSynchroniser {
 
         // Get any files that need to be sent to central server
         let sync_file_repo = SyncFileReferenceRowRepository::new(&ctx.connection);
-        let files = sync_file_repo.find_all_to_upload()?;
+        let file_references = sync_file_repo.find_all_to_upload()?;
 
         // Try to upload the next file
-        let file = files.first();
-        match file {
-            Some(file) => {
-                // update the database to say we're uploading the file
-                sync_file_repo.update_status(&SyncFileReferenceRow {
-                    status: SyncFileStatus::InProgress,
-                    ..file.clone()
-                })?;
+        let Some(sync_file_reference) = file_references.first() else {
+            return Ok(0);
+        };
 
-                let result = self
-                    .sync_api_v6
-                    .upload_file(&self.static_file_service, file)
-                    .await;
+        // update the database to say we're uploading the file
+        sync_file_repo.update_status(&SyncFileReferenceRow {
+            status: SyncFileStatus::InProgress,
+            ..sync_file_reference.clone()
+        })?;
 
-                match result {
-                    Ok(_) => {
-                        log::debug!("File uploaded successfully");
-                    }
-                    Err(err) => {
-                        log::error!("Error uploading file: {:#?}", err);
+        let file_category = StaticFileCategory::SyncFile(
+            sync_file_reference.table_name.to_owned(),
+            sync_file_reference.record_id.to_owned(),
+        );
 
-                        // Update database to record the file has failed to upload
-                        if file.retries >= MAX_UPLOAD_ATTEMPTS {
-                            sync_file_repo.update_status(&SyncFileReferenceRow {
-                                status: SyncFileStatus::PermanentFailure,
-                                error: Some(format!("{:?}", err)),
-                                ..file.clone()
-                            })?;
-                        } else {
-                            // Calculate the next retry time
+        let file = self
+            .static_file_service
+            .find_file(&sync_file_reference.id, file_category)?
+            .ok_or(FileSyncError::FileNotFound(sync_file_reference.id.clone()))?;
 
-                            // if we get a 404 error it probably means the sync_file_reference hasn't been synced yet.
-                            // So wait 1 minute before retrying
-                            // Otherwise, do an exponential backoff
-                            let retry_at = match err {
-                                FileSyncError::UploadError(UploadError::NotFound) => {
-                                    // wait 1 minute before retrying
-                                    let retry_at = Utc::now().naive_utc() + Duration::minutes(1);
-                                    retry_at
-                                }
-                                _ => {
-                                    Utc::now().naive_utc()
-                                        + Duration::minutes(cmp::min(
-                                            RETRY_DELAY_MINUTES * i64::pow(2, file.retries as u32),
-                                            MAX_RETRY_DELAY_MINUTES,
-                                        ))
-                                }
-                            };
+        let file_handle = std::fs::File::open(file.path.clone())?;
 
-                            // Update database to record the file has failed to upload
-                            sync_file_repo.update_status(&SyncFileReferenceRow {
-                                status: SyncFileStatus::Error,
-                                retries: file.retries + 1,
-                                retry_at: Some(retry_at),
-                                error: Some(format!("{:?}", err)),
-                                ..file.clone()
-                            })?;
-                        }
+        let upload_result = self
+            .sync_api_v6
+            .upload_file(&sync_file_reference, &file.name, file_handle)
+            .await;
 
-                        return Err(err);
-                    }
-                };
+        let Err(error) = upload_result
+        // On Success
+        else {
+            sync_file_repo.update_status(&SyncFileReferenceRow {
+                uploaded_bytes: sync_file_reference.total_bytes, // We always upload the whole file in one go
+                status: SyncFileStatus::Done,
+                error: None,
+                ..sync_file_reference.clone()
+            })?;
 
-                // Update database to record the file has been uploaded
-                sync_file_repo.update_status(&SyncFileReferenceRow {
-                    uploaded_bytes: file.total_bytes, // We always upload the whole file in one go
-                    status: SyncFileStatus::Done,
-                    error: None,
-                    ..file.clone()
-                })?;
+            return Ok(file_references.len());
+        };
+
+        // On Error
+
+        // Update database to record the file has failed to upload
+        let sync_file_ref_update = if sync_file_reference.retries >= MAX_UPLOAD_ATTEMPTS {
+            SyncFileReferenceRow {
+                status: SyncFileStatus::PermanentFailure,
+                ..sync_file_reference.clone()
             }
-            None => {
-                // No files to upload
+        } else {
+            // Calculate the next retry time
+
+            // if we get a 404 error it probably means the sync_file_reference hasn't been synced yet.
+            // So wait 1 minute before retrying
+            // Otherwise, do an exponential backoff
+            let retry_at = match error.source {
+                SyncApiErrorVariantV6::ParsedError(SyncParsedErrorV6::SyncFileNotFound(_)) => {
+                    // wait 1 minute before retrying
+                    let retry_at = Utc::now().naive_utc() + Duration::minutes(1);
+                    retry_at
+                }
+                _ => {
+                    Utc::now().naive_utc()
+                        + Duration::minutes(cmp::min(
+                            RETRY_DELAY_MINUTES * i64::pow(2, sync_file_reference.retries as u32),
+                            MAX_RETRY_DELAY_MINUTES,
+                        ))
+                }
+            };
+
+            // Update database to record the file has failed to upload
+            SyncFileReferenceRow {
+                status: SyncFileStatus::Error,
+                retries: sync_file_reference.retries + 1,
+                retry_at: Some(retry_at),
+                ..sync_file_reference.clone()
             }
         };
 
-        let num_of_files = files.len();
+        sync_file_repo.update_status(&SyncFileReferenceRow {
+            error: Some(format_error(&error)),
+            ..sync_file_ref_update
+        })?;
 
-        Ok(num_of_files)
+        Err(error.into())
     }
 }
