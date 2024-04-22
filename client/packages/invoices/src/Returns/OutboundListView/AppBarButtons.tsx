@@ -15,6 +15,7 @@ import {
   FnUtils,
   UserPermission,
   useAuthContext,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { SupplierSearchModal } from '@openmsupply-client/system';
 import { useReturns } from '../api';
@@ -26,6 +27,7 @@ export const AppBarButtonsComponent: FC<{
   const t = useTranslation('replenishment');
   const { success, error } = useNotification();
   const { userHasPermission } = useAuthContext();
+  const showPermissionDenied = useDisabledNotificationToast();
 
   const { mutateAsync: onCreate } = useReturns.document.insertOutboundReturn();
   const { fetchAsync, isLoading } = useReturns.document.listAllOutbound({
@@ -47,8 +49,7 @@ export const AppBarButtonsComponent: FC<{
 
   const openModal = () => {
     if (!userHasPermission(UserPermission.OutboundReturnMutate)) {
-      const errorSnack = error(t('auth.permission-denied', { ns: 'app' }));
-      errorSnack();
+      showPermissionDenied();
       return;
     }
     modalController.toggleOn();

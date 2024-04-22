@@ -7,7 +7,7 @@ import {
 import { useReturnsApi } from '../utils/useReturnsApi';
 import { useEffect, useState } from 'react';
 import { OutboundReturnFragment } from '../..';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config/src';
 
 export const useOutboundReturn = () => {
   const isOutboundReturnPage = useMatch(
