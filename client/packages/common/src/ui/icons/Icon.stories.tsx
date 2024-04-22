@@ -8,6 +8,7 @@ import { ArrowRightIcon } from './ArrowRight';
 import { BarChartIcon } from './BarChart';
 import { BookIcon } from './Book';
 import { CartIcon } from './Cart';
+import { CentralIcon } from './Central';
 import { CheckIcon } from './Check';
 import { CheckboxCheckedIcon } from './CheckboxChecked';
 import { CheckboxEmptyIcon } from './CheckboxEmpty';
@@ -101,6 +102,7 @@ const Template: ComponentStory<React.FC<SvgIconProps>> = args => {
     { icon: <BarChartIcon {...args} />, name: 'BarChart' },
     { icon: <BookIcon {...args} />, name: 'Book' },
     { icon: <CartIcon {...args} />, name: 'Cart' },
+    { icon: <CentralIcon {...args} />, name: 'Central' },
     { icon: <CheckIcon {...args} />, name: 'Check' },
     { icon: <CheckboxCheckedIcon {...args} />, name: 'CheckboxChecked' },
     { icon: <CheckboxEmptyIcon {...args} />, name: 'CheckboxEmpty' },

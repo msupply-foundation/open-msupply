@@ -1,4 +1,4 @@
-use reqwest::{Client, Response};
+use reqwest::Client;
 use thiserror::Error;
 use url::ParseError;
 
@@ -16,66 +16,6 @@ pub enum SyncApiV6CreatingError {
     CannotParseSyncUrl(String, #[source] ParseError),
     #[error("Error while creating SyncApiV6 instance")]
     Other(#[source] anyhow::Error),
-}
-
-async fn response_or_err(
-    result: Result<Response, reqwest::Error>,
-) -> Result<SyncPullResponseV6, SyncApiErrorVariantV6> {
-    let response = match result {
-        Ok(result) => result,
-        Err(error) => {
-            if error.is_connect() {
-                return Err(SyncApiErrorVariantV6::ConnectionError(error));
-            } else {
-                return Err(SyncApiErrorVariantV6::Other(error.into()));
-            }
-        }
-    };
-
-    // Not checking for status, expecting 200 only, even if there is error
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextResponse)?;
-
-    let result = serde_json::from_str(&response_text).map_err(|source| {
-        ParsingResponseError::ParseError {
-            source,
-            response_text,
-        }
-    })?;
-
-    Ok(result)
-}
-
-async fn response_or_err_push(
-    result: Result<Response, reqwest::Error>,
-) -> Result<SyncPushResponseV6, SyncApiErrorVariantV6> {
-    let response = match result {
-        Ok(result) => result,
-        Err(error) => {
-            if error.is_connect() {
-                return Err(SyncApiErrorVariantV6::ConnectionError(error));
-            } else {
-                return Err(SyncApiErrorVariantV6::Other(error.into()));
-            }
-        }
-    };
-
-    // Not checking for status, expecting 200 only, even if there is error
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextResponse)?;
-
-    let result = serde_json::from_str(&response_text).map_err(|source| {
-        ParsingResponseError::ParseError {
-            source,
-            response_text,
-        }
-    })?;
-
-    Ok(result)
 }
 
 impl SyncApiV6 {
@@ -146,7 +86,7 @@ impl SyncApiV6 {
 
         let result = Client::new().post(url.clone()).json(&request).send().await;
 
-        let error = match response_or_err_push(result).await {
+        let error = match response_or_err(result).await {
             Ok(SyncPushResponseV6::Data(data)) => return Ok(data),
             Ok(SyncPushResponseV6::Error(error)) => error.into(),
             Err(error) => error.into(),

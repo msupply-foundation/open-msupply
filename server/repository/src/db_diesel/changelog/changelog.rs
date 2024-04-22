@@ -50,9 +50,10 @@ no_arg_sql_function!(
     "Represents the SQL last_insert_row() function"
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ChangelogAction {
+    #[default]
     Upsert,
     Delete,
 }
@@ -94,6 +95,7 @@ pub enum ChangelogTableName {
     SyncFileReference,
     Asset,
     AssetLog,
+    AssetLogReason,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -142,11 +144,12 @@ impl ChangelogTableName {
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
         }
     }
 }
 
-#[derive(Debug, PartialEq, Insertable)]
+#[derive(Debug, PartialEq, Insertable, Default)]
 #[table_name = "changelog"]
 pub struct ChangeLogInsertRow {
     pub table_name: ChangelogTableName,

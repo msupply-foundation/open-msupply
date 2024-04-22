@@ -10,7 +10,7 @@ pub fn mock_asset_log_a() -> AssetLogRow {
         status: None,
         comment: None,
         r#type: None,
-        reason: None,
+        reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2022, 4, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
@@ -26,7 +26,7 @@ pub fn mock_asset_log_b() -> AssetLogRow {
         status: None,
         comment: None,
         r#type: None,
-        reason: None,
+        reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2022, 5, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
@@ -42,7 +42,7 @@ pub fn mock_asset_log_c() -> AssetLogRow {
         status: Some(AssetLogStatus::Functioning),
         comment: None,
         r#type: None,
-        reason: None,
+        reason_id: None,
         log_datetime: NaiveDate::from_ymd_opt(2021, 6, 12)
             .unwrap()
             .and_hms_opt(11, 11, 11)
