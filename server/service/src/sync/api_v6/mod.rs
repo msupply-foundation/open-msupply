@@ -174,14 +174,7 @@ pub struct SiteStatusRequestV6 {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct SiteStatusV6 {
-    pub(crate) code: SiteStatusCodeV6,
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SiteStatusCodeV6 {
-    IntegrationInProgress,
-    Idle,
+    pub(crate) is_integrating: bool,
 }
 
 #[derive(Serialize, Deserialize)]

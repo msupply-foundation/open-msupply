@@ -3,7 +3,7 @@ use std::time::{Duration, SystemTime};
 use crate::{
     cursor_controller::CursorController,
     sync::{
-        api_v6::{SiteStatusCodeV6, SyncBatchV6, SyncRecordV6},
+        api_v6::{SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
     },
 };
@@ -213,7 +213,7 @@ impl SynchroniserV6 {
 
             let response = self.sync_api_v6.get_site_status().await?;
 
-            if response.code == SiteStatusCodeV6::Idle {
+            if !response.is_integrating {
                 log::info!("Central server operation finished");
                 break;
             }
