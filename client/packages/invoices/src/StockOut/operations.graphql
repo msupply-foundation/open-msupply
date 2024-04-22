@@ -7,6 +7,7 @@ fragment PartialStockLine on StockLineNode {
   sellPricePerPack
   packSize
   expiryDate
+
   item {
     name
     code
@@ -35,6 +36,7 @@ fragment StockOutLine on InvoiceLineNode {
   totalAfterTax
   taxPercentage
   note
+  itemName
 
   item {
     __typename
