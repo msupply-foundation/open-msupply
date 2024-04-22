@@ -1,6 +1,6 @@
 use crate::{
     diesel_macros::{apply_equal_filter, apply_sort_no_case},
-    EqualFilter, InvoiceRowType, RepositoryError, Sort,
+    EqualFilter, InvoiceRowType, Pagination, RepositoryError, Sort,
 };
 
 use super::{ledger::ledger::dsl as ledger_dsl, StorageConnection};
@@ -78,6 +78,7 @@ impl<'a> LedgerRepository<'a> {
 
     pub fn query(
         &self,
+        pagination: Pagination,
         filter: Option<LedgerFilter>,
         sort: Option<LedgerSort>,
     ) -> Result<Vec<LedgerRow>, RepositoryError> {
@@ -125,7 +126,10 @@ impl<'a> LedgerRepository<'a> {
         //     diesel::debug_query::<crate::DBType, _>(&final_query).to_string()
         // );
 
-        let result = final_query.load::<LedgerRow>(&self.connection.connection)?;
+        let result = final_query
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<LedgerRow>(&self.connection.connection)?;
 
         Ok(result)
     }
