@@ -91,6 +91,7 @@ const processProperties = (
               })
             );
           }
+          importRow.properties[property.id] = { ...property, value };
           break;
         case 'BOOLEAN':
           const isTrue =
