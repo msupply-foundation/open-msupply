@@ -191,7 +191,7 @@ mod test {
                     location: None,
                     master_list_id: None,
                     items_have_stock: None,
-                    expiry_date: None
+                    expires_before: None
                 }
             );
             // StocktakeNode result is checked in queries
