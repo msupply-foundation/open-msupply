@@ -2,6 +2,7 @@
   "admin": "Admin",
   "app": "mSupply",
   "assets": "Assets",
+  "log-reasons": "Log reasons",
   "auth.alert-title": "Authentication Error",
   "auth.no-store-assigned": "You are not assigned to any stores. Please login as a different user, or contact your administrator.",
   "auth.server-error": "The server has returned an error when fetching user details!\nUnable to continue, please contact support@msupply.foundation.",
