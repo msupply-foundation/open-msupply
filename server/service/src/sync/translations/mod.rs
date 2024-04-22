@@ -6,6 +6,7 @@ pub(crate) mod asset_catalogue_property;
 pub(crate) mod asset_category;
 pub(crate) mod asset_class;
 pub(crate) mod asset_log;
+pub(crate) mod asset_log_reason;
 pub(crate) mod asset_type;
 pub(crate) mod barcode;
 pub(crate) mod clinician;
@@ -47,6 +48,7 @@ pub(crate) mod temperature_log;
 pub(crate) mod unit;
 pub(crate) mod user;
 pub(crate) mod user_permission;
+pub(crate) mod utils;
 
 use repository::*;
 use thiserror::Error;
@@ -115,6 +117,7 @@ pub(crate) fn all_translators() -> SyncTranslators {
         asset_catalogue_item_property::boxed(),
         asset_catalogue_property::boxed(),
         asset_log::boxed(),
+        asset_log_reason::boxed(),
         //Sync file reference
         sync_file_reference::boxed(),
     ]
