@@ -28,6 +28,7 @@ pub fn generate(
         batch,
         location,
         expiry_date,
+        barcode,
     }: AddNewStockLine,
 ) -> Result<(InvoiceRow, InsertStockInLine), RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
@@ -82,10 +83,13 @@ pub fn generate(
         sell_price_per_pack,
         expiry_date,
         number_of_packs,
+        stock_on_hold: on_hold,
+        inventory_adjustment_reason_id,
         r#type: StockInType::InventoryAddition,
         note: None,
         total_before_tax: None,
         tax: None,
+        barcode,
     };
 
     Ok((invoice, stock_in_line))

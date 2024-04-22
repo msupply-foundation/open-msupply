@@ -32,6 +32,10 @@ pub struct InsertStockInLine {
     pub total_before_tax: Option<f64>,
     pub tax: Option<f64>,
     pub r#type: StockInType,
+    pub inventory_adjustment_reason_id: Option<String>,
+    pub stock_line_id: Option<String>,
+    pub barcode: Option<String>,
+    pub stock_on_hold: bool,
 }
 
 type OutError = InsertStockInLineError;

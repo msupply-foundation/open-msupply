@@ -11,12 +11,14 @@ pub use self::update::*;
 pub enum StockInType {
     #[default]
     InboundReturn,
+    InventoryAddition,
 }
 
 impl StockInType {
     pub fn to_domain(&self) -> InvoiceRowType {
         match self {
             StockInType::InboundReturn => InvoiceRowType::InboundReturn,
+            StockInType::InventoryAddition => InvoiceRowType::InventoryAddition,
         }
     }
 }
