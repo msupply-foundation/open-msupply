@@ -89,6 +89,8 @@ export enum ActivityLogNodeType {
   AssetCreated = 'ASSET_CREATED',
   AssetDeleted = 'ASSET_DELETED',
   AssetLogCreated = 'ASSET_LOG_CREATED',
+  AssetLogReasonCreated = 'ASSET_LOG_REASON_CREATED',
+  AssetLogReasonDeleted = 'ASSET_LOG_REASON_DELETED',
   AssetUpdated = 'ASSET_UPDATED',
   InventoryAdjustment = 'INVENTORY_ADJUSTMENT',
   InvoiceCreated = 'INVOICE_CREATED',
@@ -396,6 +398,7 @@ export type AssetLogFilterInput = {
   assetId?: InputMaybe<EqualFilterStringInput>;
   id?: InputMaybe<EqualFilterStringInput>;
   logDatetime?: InputMaybe<DatetimeFilterInput>;
+  reasonId?: InputMaybe<EqualFilterStringInput>;
   status?: InputMaybe<EqualFilterStatusInput>;
   user?: InputMaybe<StringFilterInput>;
 };
@@ -407,25 +410,62 @@ export type AssetLogNode = {
   documents: SyncFileReferenceConnector;
   id: Scalars['String']['output'];
   logDatetime: Scalars['NaiveDateTime']['output'];
-  reason?: Maybe<ReasonType>;
+  reason?: Maybe<AssetLogReasonNode>;
   status?: Maybe<StatusType>;
   type?: Maybe<Scalars['String']['output']>;
   user?: Maybe<UserNode>;
 };
 
-export enum AssetLogReasonInput {
-  AwaitingDecommissioning = 'AWAITING_DECOMMISSIONING',
-  AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decommissioned = 'DECOMMISSIONED',
-  Functioning = 'FUNCTIONING',
-  LackOfPower = 'LACK_OF_POWER',
-  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
-  NeedsServicing = 'NEEDS_SERVICING',
-  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
-  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
-  Stored = 'STORED',
-  Unknown = 'UNKNOWN'
+export type AssetLogReasonConnector = {
+  __typename: 'AssetLogReasonConnector';
+  nodes: Array<AssetLogReasonNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AssetLogReasonFilterInput = {
+  assetLogStatus?: InputMaybe<EqualFilterStatusInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  reason?: InputMaybe<StringFilterInput>;
+};
+
+export type AssetLogReasonMutations = {
+  __typename: 'AssetLogReasonMutations';
+  deleteLogReason: DeleteAssetLogReasonResponse;
+  insertAssetLogReason: InsertAssetLogReasonResponse;
+};
+
+
+export type AssetLogReasonMutationsDeleteLogReasonArgs = {
+  reasonId: Scalars['String']['input'];
+};
+
+
+export type AssetLogReasonMutationsInsertAssetLogReasonArgs = {
+  input: InsertAssetLogReasonInput;
+};
+
+export type AssetLogReasonNode = {
+  __typename: 'AssetLogReasonNode';
+  assetLogStatus: StatusType;
+  id: Scalars['String']['output'];
+  reason: Scalars['String']['output'];
+};
+
+export enum AssetLogReasonSortFieldInput {
+  Status = 'status'
 }
+
+export type AssetLogReasonSortInput = {
+  /**
+   * 	Sort query result is sorted descending or ascending (if not provided the default is
+   * ascending)
+   */
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: AssetLogReasonSortFieldInput;
+};
+
+export type AssetLogReasonsResponse = AssetLogReasonConnector;
 
 export enum AssetLogSortFieldInput {
   LogDatetime = 'logDatetime',
@@ -784,6 +824,7 @@ export type CentralPatientSearchResponse = CentralPatientSearchConnector | Centr
 export type CentralServerMutationNode = {
   __typename: 'CentralServerMutationNode';
   assetCatalogue: AssetCatalogueMutations;
+  logReason: AssetLogReasonMutations;
   packVariant: PackVariantMutations;
 };
 
@@ -1009,7 +1050,7 @@ export type CurrencySortInput = {
   key: CurrencySortFieldInput;
 };
 
-export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type DatabaseError = DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & NodeErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'DatabaseError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -1056,6 +1097,17 @@ export type DeleteAssetError = {
 export type DeleteAssetErrorInterface = {
   description: Scalars['String']['output'];
 };
+
+export type DeleteAssetLogReasonError = {
+  __typename: 'DeleteAssetLogReasonError';
+  error: DeleteAssetLogReasonErrorInterface;
+};
+
+export type DeleteAssetLogReasonErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type DeleteAssetLogReasonResponse = DeleteAssetLogReasonError | DeleteResponse;
 
 export type DeleteAssetResponse = DeleteAssetError | DeleteResponse;
 
@@ -1992,10 +2044,27 @@ export type InsertAssetLogInput = {
   assetId: Scalars['String']['input'];
   comment?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
-  reason?: InputMaybe<AssetLogReasonInput>;
+  reasonId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<AssetLogStatusInput>;
   type?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type InsertAssetLogReasonError = {
+  __typename: 'InsertAssetLogReasonError';
+  error: InsertAssetLogReasonErrorInterface;
+};
+
+export type InsertAssetLogReasonErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
+export type InsertAssetLogReasonInput = {
+  assetLogStatus: AssetLogStatusInput;
+  id: Scalars['String']['input'];
+  reason: Scalars['String']['input'];
+};
+
+export type InsertAssetLogReasonResponse = AssetLogReasonNode | InsertAssetLogReasonError;
 
 export type InsertAssetLogResponse = AssetLogNode | InsertAssetLogError;
 
@@ -2577,7 +2646,7 @@ export type InsertStocktakeResponseWithId = {
   response: InsertStocktakeResponse;
 };
 
-export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & RefreshTokenErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'InternalError';
   description: Scalars['String']['output'];
   fullError: Scalars['String']['output'];
@@ -4616,6 +4685,7 @@ export type Queries = {
   assetCategory: AssetCategoryResponse;
   assetClass: AssetClassResponse;
   assetClasses: AssetClassesResponse;
+  assetLogReasons: AssetLogReasonsResponse;
   assetLogs: AssetLogsResponse;
   assetType: AssetTypeResponse;
   assetTypes: AssetTypesResponse;
@@ -4791,6 +4861,14 @@ export type QueriesAssetClassesArgs = {
   filter?: InputMaybe<AssetClassFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<AssetClassSortInput>>;
+};
+
+
+export type QueriesAssetLogReasonsArgs = {
+  filter?: InputMaybe<AssetLogReasonFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<AssetLogReasonSortInput>>;
+  storeId: Scalars['String']['input'];
 };
 
 
@@ -5282,31 +5360,17 @@ export type RawDocumentNode = {
   type: Scalars['String']['output'];
 };
 
-export enum ReasonType {
-  AwaitingDecommissioning = 'AWAITING_DECOMMISSIONING',
-  AwaitingInstallation = 'AWAITING_INSTALLATION',
-  Decommissioned = 'DECOMMISSIONED',
-  Functioning = 'FUNCTIONING',
-  LackOfPower = 'LACK_OF_POWER',
-  MultipleTemperatureBreaches = 'MULTIPLE_TEMPERATURE_BREACHES',
-  NeedsServicing = 'NEEDS_SERVICING',
-  NeedsSpareParts = 'NEEDS_SPARE_PARTS',
-  OffsiteForRepairs = 'OFFSITE_FOR_REPAIRS',
-  Stored = 'STORED',
-  Unknown = 'UNKNOWN'
-}
-
-export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & {
+export type RecordAlreadyExist = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & {
   __typename: 'RecordAlreadyExist';
   description: Scalars['String']['output'];
 };
 
-export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type RecordBelongsToAnotherStore = DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'RecordBelongsToAnotherStore';
   description: Scalars['String']['output'];
 };
 
-export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertStockLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
+export type RecordNotFound = AddFromMasterListErrorInterface & AddToInboundShipmentFromMasterListErrorInterface & AddToOutboundShipmentFromMasterListErrorInterface & AllocateOutboundShipmentUnallocatedLineErrorInterface & CreateRequisitionShipmentErrorInterface & DeleteAssetCatalogueItemErrorInterface & DeleteAssetErrorInterface & DeleteAssetLogReasonErrorInterface & DeleteErrorInterface & DeleteInboundReturnErrorInterface & DeleteInboundShipmentErrorInterface & DeleteInboundShipmentLineErrorInterface & DeleteInboundShipmentServiceLineErrorInterface & DeleteLocationErrorInterface & DeleteOutboundReturnErrorInterface & DeleteOutboundShipmentLineErrorInterface & DeleteOutboundShipmentServiceLineErrorInterface & DeleteOutboundShipmentUnallocatedLineErrorInterface & DeletePrescriptionErrorInterface & DeletePrescriptionLineErrorInterface & DeleteRequestRequisitionErrorInterface & DeleteRequestRequisitionLineErrorInterface & InsertStockLineErrorInterface & NodeErrorInterface & RequisitionLineChartErrorInterface & RequisitionLineStatsErrorInterface & SupplyRequestedQuantityErrorInterface & UpdateAssetErrorInterface & UpdateErrorInterface & UpdateInboundShipmentErrorInterface & UpdateInboundShipmentLineErrorInterface & UpdateInboundShipmentServiceLineErrorInterface & UpdateLocationErrorInterface & UpdateNameErrorInterface & UpdateOutboundShipmentLineErrorInterface & UpdateOutboundShipmentServiceLineErrorInterface & UpdateOutboundShipmentUnallocatedLineErrorInterface & UpdatePrescriptionErrorInterface & UpdatePrescriptionLineErrorInterface & UpdateRequestRequisitionErrorInterface & UpdateRequestRequisitionLineErrorInterface & UpdateResponseRequisitionErrorInterface & UpdateResponseRequisitionLineErrorInterface & UpdateSensorErrorInterface & UpdateStockLineErrorInterface & UseSuggestedQuantityErrorInterface & {
   __typename: 'RecordNotFound';
   description: Scalars['String']['output'];
 };
@@ -6355,7 +6419,7 @@ export enum UniqueValueKey {
   Serial = 'serial'
 }
 
-export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
+export type UniqueValueViolation = InsertAssetCatalogueItemErrorInterface & InsertAssetErrorInterface & InsertAssetLogErrorInterface & InsertAssetLogReasonErrorInterface & InsertLocationErrorInterface & UpdateAssetErrorInterface & UpdateLocationErrorInterface & UpdateSensorErrorInterface & {
   __typename: 'UniqueValueViolation';
   description: Scalars['String']['output'];
   field: UniqueValueKey;

@@ -7,9 +7,8 @@ import {
   UserCircleIcon,
 } from '@openmsupply-client/common';
 import { useFormatDateTime, useIntlUtils, useTranslation } from '@common/intl';
-import { AssetLogFragment, useAssets } from '../../api';
+import { ColdchainAssetLogFragment, useAssets } from '../../api';
 import { Status } from '../../Components';
-import { translateReason } from '../../utils';
 import { FileList } from '../../Components';
 
 const Divider = () => (
@@ -33,7 +32,7 @@ const Connector = ({ visible }: { visible: boolean }) => (
   />
 );
 
-const User = ({ user }: { user: AssetLogFragment['user'] }) => {
+const User = ({ user }: { user: ColdchainAssetLogFragment['user'] }) => {
   const t = useTranslation('coldchain');
   const { getLocalisedFullName } = useIntlUtils();
   const fullName = getLocalisedFullName(user?.firstName, user?.lastName);
@@ -84,7 +83,7 @@ const StatusLog = ({
 }: {
   isFirst: boolean;
   isLast: boolean;
-  log: AssetLogFragment;
+  log: ColdchainAssetLogFragment;
 }) => {
   const { localisedDate } = useFormatDateTime();
   const t = useTranslation('coldchain');
@@ -124,7 +123,7 @@ const StatusLog = ({
           <User user={log.user} />
           <Box display="flex" alignItems="flex-start">
             <Typography sx={{ fontSize: '12px' }}>
-              <b>{t('label.reason')}:</b> {translateReason(log.reason, t)}
+              <b>{t('label.reason')}:</b> {log.reason?.reason ?? '-'}
             </Typography>
           </Box>
           <Typography sx={{ fontSize: '12px' }}>
