@@ -171,14 +171,13 @@ impl<'a> NumberRowRepository<'a> {
                     .bind::<Text, _>(store_id)
                     .bind::<Text, _>(r#type.to_string());
 
-                match insert_query.get_result::<NextNumber>(self.connection.lock().connection()) {
+                let mut guard = self.connection.lock();
+                match insert_query.get_result::<NextNumber>(guard.connection()) {
                     Ok(result) => Ok(result),
                     Err(NotFound) => {
                         // 3. If we got here another thread inserted the record before we we able to (we know this because nothing was returned for the insert)
                         // We should now be able to do the same 'update returning' query as before to get our new number.
-
-                        let result = update_query
-                            .get_result::<NextNumber>(self.connection.lock().connection())?;
+                        let result = update_query.get_result::<NextNumber>(guard.connection())?;
                         Ok(result)
                     }
                     Err(e) => Err(RepositoryError::from(e)),
