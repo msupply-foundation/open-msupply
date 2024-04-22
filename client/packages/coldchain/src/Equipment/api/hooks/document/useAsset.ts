@@ -1,5 +1,4 @@
-import { useMutation, useParams } from '@openmsupply-client/common';
-import { useQuery } from 'react-query';
+import { useMutation, useParams, useQuery } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
 
 export const useAssetId = () => {

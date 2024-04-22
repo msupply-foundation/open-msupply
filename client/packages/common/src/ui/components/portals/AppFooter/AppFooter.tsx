@@ -1,10 +1,11 @@
-import { Box, BoxProps, Portal } from '@mui/material';
+import { Box, BoxProps, Portal, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext } from '@common/hooks';
+import { CentralIcon, useIsCentralServerApi } from '@openmsupply-client/common';
+import { useTranslation } from '@common/intl';
 
-const Container = styled('div')(({ theme }) => ({
-  backgroundColor: theme.palette.background.menu,
+const Container = styled('div')(() => ({
   display: 'flex',
   flex: 1,
   maxHeight: 100,
@@ -18,6 +19,8 @@ export const AppFooter: FC = () => {
   const { setAppFooterRef, setAppSessionDetailsRef } = useHostContext();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
+  const isCentralServer = useIsCentralServerApi();
+  const t = useTranslation('app');
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);
@@ -25,9 +28,31 @@ export const AppFooter: FC = () => {
   }, []);
 
   return (
-    <Box>
-      <Container ref={appFooterRef} />
+    <Box
+      sx={{
+        backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
+        color: isCentralServer ? '#fff' : 'gray.main',
+      }}
+    >
+      <Container ref={appFooterRef} style={{ flex: 0 }} />
       <Container ref={appSessionDetailsRef} />
+      {isCentralServer ? (
+        <Box
+          flex={0}
+          display="flex"
+          alignItems="center"
+          paddingX={2}
+          paddingY={0.5}
+        >
+          <CentralIcon />
+          <Typography
+            variant="caption"
+            sx={{ color: 'inherit', whiteSpace: 'nowrap' }}
+          >
+            {t('label.central-server')}
+          </Typography>
+        </Box>
+      ) : null}
     </Box>
   );
 };
