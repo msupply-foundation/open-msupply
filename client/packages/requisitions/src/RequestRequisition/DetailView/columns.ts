@@ -37,8 +37,8 @@ export const useRequestColumns = () => {
       {
         Cell: TooltipTextCell,
         width: 350,
-        accessor: ({ rowData }) => rowData.item.name,
-        getSortValue: rowData => rowData.item.name,
+        accessor: ({ rowData }) => rowData.itemName,
+        getSortValue: rowData => rowData.itemName,
       },
     ],
     {

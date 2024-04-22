@@ -4484,6 +4484,7 @@ export type RequisitionLineNode = {
   inboundShipmentLines: InvoiceLineConnector;
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   /**
    * For request requisition: snapshot stats (when requisition was created)
    * For response requisition current item stats
