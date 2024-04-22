@@ -7,7 +7,6 @@ use crate::repository_error::RepositoryError;
 use diesel::{
     connection::{AnsiTransactionManager, SimpleConnection, TransactionManager},
     r2d2::{ConnectionManager, Pool},
-    Connection,
 };
 use log::error;
 
@@ -20,14 +19,6 @@ const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
 
 struct InnerStorageConnection {
     connection: DBConnection,
-    // pub arc_connection: Arc<DBConnection>,
-    /// Current level of nested transaction.
-    /// For example:
-    /// 0 => no transaction
-    /// 1 => in transaction
-    /// 2 => 1st nested transaction
-    /// 3 => 2nd nested transaction
-    pub transaction_level: i32,
 }
 
 /// Helper class to avoid deref_mut() calls, which would require to import DerefMut everywhere we
@@ -42,6 +33,32 @@ impl<'a> LockedConnection<'a> {
     pub fn connection(&mut self) -> &mut DBConnection {
         &mut self.inner.connection
     }
+
+    /// Current level of nested transaction.
+    /// For example:
+    /// 0 => no transaction
+    /// 1 => in transaction
+    /// 2 => 1st nested transaction
+    /// 3 => 2nd nested transaction
+    pub fn transaction_level<E>(&mut self) -> Result<i32, TransactionError<E>> {
+        let con: &mut DBBackendConnection = &mut self.inner.connection;
+        let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
+            diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
+            diesel::connection::TransactionManagerStatus::InError => {
+                return Err(TransactionError::Transaction {
+                    msg: "Failed to get transaction depth".to_string(),
+                    level: -1,
+                })
+            }
+        };
+        Ok(match level {
+            Some(l) => {
+                let l: u32 = l.into();
+                l as i32
+            }
+            None => 0,
+        })
+    }
 }
 
 pub struct StorageConnection {
@@ -53,16 +70,6 @@ impl StorageConnection {
         LockedConnection {
             inner: self.inner.lock().unwrap(),
         }
-    }
-
-    pub fn transaction_level(&self) -> i32 {
-        let guard = self.inner.lock().unwrap();
-        guard.transaction_level
-    }
-
-    pub fn set_transaction_level(&self, value: i32) {
-        let mut guard = self.inner.lock().unwrap();
-        guard.transaction_level = value;
     }
 }
 
@@ -105,10 +112,7 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
 impl StorageConnection {
     pub fn new(connection: DBConnection) -> StorageConnection {
         StorageConnection {
-            inner: Mutex::new(InnerStorageConnection {
-                connection,
-                transaction_level: 0,
-            }),
+            inner: Mutex::new(InnerStorageConnection { connection }),
         }
     }
 
@@ -132,38 +136,30 @@ impl StorageConnection {
     where
         F: FnOnce(&StorageConnection) -> Result<T, E>,
     {
-        let current_level = self.transaction_level();
-        if current_level > 0 && reuse_tx {
-            return match f(self) {
-                Ok(ok) => Ok(ok),
-                Err(err) => Err(TransactionError::Inner(err)),
-            };
-        }
+        let current_level = {
+            let mut guard = self.lock();
+            let current_level = guard.transaction_level()?;
+            if current_level > 0 && reuse_tx {
+                drop(guard);
+                return match f(self) {
+                    Ok(ok) => Ok(ok),
+                    Err(err) => Err(TransactionError::Inner(err)),
+                };
+            }
 
-        if current_level == 0 {
-            // sqlite can only have 1 writer, so to avoid concurrency issues,
-            // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
-            let mut guard = self.inner.lock().unwrap();
-            let con: &mut DBBackendConnection = &mut guard.connection;
-            let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
-                diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
-                diesel::connection::TransactionManagerStatus::InError => panic!("TEST"),
-            };
-            AnsiTransactionManager::begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
-        } else {
-            let mut guard = self.inner.lock().unwrap();
-            let con: &mut DBBackendConnection = &mut guard.connection;
-            let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
-                diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
-                diesel::connection::TransactionManagerStatus::InError => panic!("TEST2"),
-            };
-            AnsiTransactionManager::begin_transaction(con)
-        }
-        .map_err(|e| map_begin_transaction_error(e, current_level))?;
+            let con: &mut DBBackendConnection = guard.connection();
+            if current_level == 0 {
+                // sqlite can only have 1 writer, so to avoid concurrency issues,
+                // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+                AnsiTransactionManager::begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
+            } else {
+                AnsiTransactionManager::begin_transaction(con)
+            }
+            .map_err(|e| map_begin_transaction_error(e, current_level))?;
+            current_level
+        };
 
-        self.set_transaction_level(current_level + 1);
         let result = f(self);
-        self.set_transaction_level(current_level);
 
         match result {
             Ok(value) => {
@@ -238,40 +234,58 @@ mod connection_manager_tests {
         let connection_manager = test_db::setup(&settings).await;
         let connection = connection_manager.connection().unwrap();
 
-        assert_eq!(connection.transaction_level(), 0);
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
         let _result: Result<(), TransactionError<RepositoryError>> = connection
             .transaction_sync_etc(
                 |con| {
-                    assert_eq!(con.transaction_level(), 1);
+                    assert_eq!(con.lock().transaction_level()?, 1);
                     con.transaction_sync_etc(
                         |con| {
-                            assert_eq!(con.transaction_level(), 2);
+                            assert_eq!(con.lock().transaction_level()?, 2);
                             // reuse previous tx
                             con.transaction_sync(|con| {
-                                assert_eq!(con.transaction_level(), 2);
+                                assert_eq!(con.lock().transaction_level()?, 2);
                                 Ok(())
                             })?;
-                            assert_eq!(con.transaction_level(), 2);
+                            assert_eq!(con.lock().transaction_level()?, 2);
                             Ok(())
                         },
                         false,
                     )?;
-                    assert_eq!(con.transaction_level(), 1);
+                    assert_eq!(con.lock().transaction_level()?, 1);
                     Ok(())
                 },
                 false,
             );
-        assert_eq!(connection.transaction_level(), 0);
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
 
         // test that new tx is started if there is none but reuse_tx was request
         let _result: Result<(), TransactionError<RepositoryError>> = connection
             .transaction_sync_etc(
                 |con| {
-                    assert_eq!(con.transaction_level(), 1);
+                    assert_eq!(con.lock().transaction_level()?, 1);
                     Ok(())
                 },
                 true,
             );
-        assert_eq!(connection.transaction_level(), 0);
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
     }
 }

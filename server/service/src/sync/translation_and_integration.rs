@@ -199,7 +199,13 @@ pub(crate) fn integrate(
     integration_records: &[IntegrationOperation],
 ) -> Result<(), RepositoryError> {
     // Only start nested transaction if transaction is already ongoing. See integrate_and_translate_sync_buffer
-    let start_nested_transaction = { connection.transaction_level() > 0 };
+    let start_nested_transaction = {
+        connection
+            .lock()
+            .transaction_level::<RepositoryError>()
+            .map_err(|e| e.to_inner_error())?
+            > 0
+    };
 
     for integration_record in integration_records.iter() {
         // Integrate every record in a sub transaction. This is mainly for Postgres where the
