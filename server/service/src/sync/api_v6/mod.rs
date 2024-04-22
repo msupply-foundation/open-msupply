@@ -1,11 +1,9 @@
 mod core;
 pub mod download_file;
 pub mod upload_file;
-
-use actix_multipart::form::{json::Json, tempfile::TempFile, MultipartForm};
 use repository::RepositoryError;
-use reqwest::Url;
-use serde::{Deserialize, Serialize};
+use reqwest::{Response, Url};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
@@ -37,8 +35,8 @@ pub enum SyncParsedErrorV6 {
     NotACentralServer,
     #[error("Could not parse record to sync buffer row: {0}")]
     ParsingSyncRecordError(String),
-    #[error("Sync File Not Found")]
-    SyncFileNotFound,
+    #[error("Sync file not found, file_id: {0}")]
+    SyncFileNotFound(String),
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
@@ -115,7 +113,7 @@ pub enum SyncApiErrorVariantV6 {
     #[error("Could not parse response")]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
-    Other(#[source] anyhow::Error),
+    Other(#[from] anyhow::Error),
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -167,9 +165,45 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) sync_v5_settings: SyncApiSettings,
 }
 
-#[derive(MultipartForm)]
+#[derive(Deserialize, Debug, Serialize)]
 pub struct SyncUploadFileRequestV6 {
-    pub sync_v5_settings: Json<SyncApiSettings>,
-    #[multipart(rename = "file")]
-    pub files: Vec<TempFile>,
+    pub file_id: String,
+    pub sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SyncUploadFileResponseV6 {
+    Data(()),
+    Error(SyncParsedErrorV6),
+}
+
+async fn response_or_err<T: DeserializeOwned>(
+    result: Result<Response, reqwest::Error>,
+) -> Result<T, SyncApiErrorVariantV6> {
+    let response = match result {
+        Ok(result) => result,
+        Err(error) => {
+            if error.is_connect() {
+                return Err(SyncApiErrorVariantV6::ConnectionError(error));
+            } else {
+                return Err(SyncApiErrorVariantV6::Other(error.into()));
+            }
+        }
+    };
+
+    // Not checking for status, expecting 200 only, even if there is error
+    let response_text = response
+        .text()
+        .await
+        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+
+    let result = serde_json::from_str(&response_text).map_err(|source| {
+        ParsingResponseError::ParseError {
+            source,
+            response_text,
+        }
+    })?;
+
+    Ok(result)
 }
