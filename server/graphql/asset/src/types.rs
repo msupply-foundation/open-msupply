@@ -10,11 +10,12 @@ use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
 use graphql_core::generic_filters::{
     DateFilterInput, DatetimeFilterInput, EqualFilterStringInput, StringFilterInput,
 };
+use graphql_core::loader::SyncFileReferenceLoader;
 use graphql_core::loader::{
     AssetCatalogueItemLoader, AssetCatalogueItemPropertyLoader, AssetCategoryLoader,
     AssetClassLoader, AssetLocationLoader, AssetTypeLoader, StoreByIdLoader, UserLoader,
 };
-use graphql_core::loader::{AssetStatusLogLoader, SyncFileReferenceLoader};
+use graphql_core::loader::{AssetLogReasonLoader, AssetStatusLogLoader};
 use graphql_core::simple_generic_errors::NodeError;
 use graphql_core::{map_filter, ContextExt};
 use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnector, UserNode};
@@ -22,6 +23,9 @@ use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnec
 use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
 use repository::asset_catalogue_item_property_row::AssetCatalogueItemPropertyRow;
 use repository::asset_catalogue_property_row::AssetCataloguePropertyRow;
+use repository::asset_log_reason::{
+    AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort, AssetLogReasonSortField,
+};
 use repository::assets::asset::AssetSortField;
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort, AssetLogSortField};
 
@@ -32,7 +36,7 @@ use repository::{
 use repository::{DateFilter, DatetimeFilter, StringFilter};
 use service::{usize_to_u32, ListResult};
 
-use repository::asset_log_row::{AssetLogReason, AssetLogStatus};
+use repository::asset_log_row::AssetLogStatus;
 use serde::Serialize;
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
@@ -462,6 +466,7 @@ pub struct AssetLogFilterInput {
     pub status: Option<EqualFilterStatusInput>,
     pub log_datetime: Option<DatetimeFilterInput>,
     pub user: Option<StringFilterInput>,
+    pub reason_id: Option<EqualFilterStringInput>,
 }
 
 impl From<AssetLogFilterInput> for AssetLogFilter {
@@ -474,43 +479,7 @@ impl From<AssetLogFilterInput> for AssetLogFilter {
                 .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
             log_datetime: f.log_datetime.map(DatetimeFilter::from),
             user: f.user.map(StringFilter::from),
-        }
-    }
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum AssetLogReasonInput {
-    AwaitingInstallation,
-    Stored,
-    OffsiteForRepairs,
-    AwaitingDecommissioning,
-    NeedsServicing,
-    MultipleTemperatureBreaches,
-    Unknown,
-    NeedsSpareParts,
-    LackOfPower,
-    Functioning,
-    Decommissioned,
-}
-
-impl AssetLogReasonInput {
-    pub fn to_domain(self) -> AssetLogReason {
-        match self {
-            AssetLogReasonInput::AwaitingInstallation => AssetLogReason::AwaitingInstallation,
-            AssetLogReasonInput::Stored => AssetLogReason::Stored,
-            AssetLogReasonInput::OffsiteForRepairs => AssetLogReason::OffsiteForRepairs,
-            AssetLogReasonInput::AwaitingDecommissioning => AssetLogReason::AwaitingDecommissioning,
-            AssetLogReasonInput::NeedsServicing => AssetLogReason::NeedsServicing,
-            AssetLogReasonInput::MultipleTemperatureBreaches => {
-                AssetLogReason::MultipleTemperatureBreaches
-            }
-            AssetLogReasonInput::Unknown => AssetLogReason::Unknown,
-            AssetLogReasonInput::NeedsSpareParts => AssetLogReason::NeedsSpareParts,
-            AssetLogReasonInput::LackOfPower => AssetLogReason::LackOfPower,
-            AssetLogReasonInput::Functioning => AssetLogReason::Functioning,
-            AssetLogReasonInput::Decommissioned => AssetLogReason::Decommissioned,
+            reason_id: f.reason_id.map(EqualFilter::from),
         }
     }
 }
@@ -520,40 +489,6 @@ pub struct EqualFilterStatusInput {
     pub equal_to: Option<AssetLogStatusInput>,
     pub equal_any: Option<Vec<AssetLogStatusInput>>,
     pub not_equal_to: Option<AssetLogStatusInput>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-
-pub enum ReasonType {
-    AwaitingInstallation,
-    Stored,
-    OffsiteForRepairs,
-    AwaitingDecommissioning,
-    NeedsServicing,
-    MultipleTemperatureBreaches,
-    Unknown,
-    NeedsSpareParts,
-    LackOfPower,
-    Functioning,
-    Decommissioned,
-}
-impl ReasonType {
-    pub fn from_domain(reason: &AssetLogReason) -> Self {
-        match reason {
-            AssetLogReason::AwaitingInstallation => ReasonType::AwaitingInstallation,
-            AssetLogReason::Stored => ReasonType::Stored,
-            AssetLogReason::OffsiteForRepairs => ReasonType::OffsiteForRepairs,
-            AssetLogReason::AwaitingDecommissioning => ReasonType::AwaitingDecommissioning,
-            AssetLogReason::NeedsServicing => ReasonType::NeedsServicing,
-            AssetLogReason::MultipleTemperatureBreaches => ReasonType::MultipleTemperatureBreaches,
-            AssetLogReason::Unknown => ReasonType::Unknown,
-            AssetLogReason::NeedsSpareParts => ReasonType::NeedsSpareParts,
-            AssetLogReason::LackOfPower => ReasonType::LackOfPower,
-            AssetLogReason::Functioning => ReasonType::Functioning,
-            AssetLogReason::Decommissioned => ReasonType::Decommissioned,
-        }
-    }
 }
 
 #[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
@@ -622,8 +557,17 @@ impl AssetLogNode {
         &self.row().r#type
     }
 
-    pub async fn reason(&self) -> Option<ReasonType> {
-        self.row().reason.as_ref().map(ReasonType::from_domain)
+    pub async fn reason(&self, ctx: &Context<'_>) -> Result<Option<AssetLogReasonNode>> {
+        match &self.row().reason_id {
+            Some(reason_id) => {
+                let loader = ctx.get_loader::<DataLoader<AssetLogReasonLoader>>();
+                Ok(loader
+                    .load_one(reason_id.clone())
+                    .await?
+                    .map(AssetLogReasonNode::from_domain))
+            }
+            None => Ok(None),
+        }
     }
 
     pub async fn log_datetime(&self) -> &chrono::NaiveDateTime {
@@ -685,6 +629,119 @@ impl AssetLogSortInput {
         };
 
         AssetLogSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}
+
+// asset log reason
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum AssetLogReasonSortFieldInput {
+    Status,
+}
+
+#[derive(InputObject)]
+pub struct AssetLogReasonSortInput {
+    /// Sort query result by `key`
+    key: AssetLogReasonSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct AssetLogReasonNode {
+    pub asset_log_reason: AssetLogReason,
+}
+
+#[derive(SimpleObject)]
+pub struct AssetLogReasonConnector {
+    total_count: u32,
+    nodes: Vec<AssetLogReasonNode>,
+}
+
+#[Object]
+impl AssetLogReasonNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn asset_log_status(&self) -> StatusType {
+        let asset_log_status = &self.row().asset_log_status;
+        StatusType::from_domain(&asset_log_status)
+    }
+
+    pub async fn reason(&self) -> &str {
+        &self.row().reason
+    }
+}
+
+#[derive(Union)]
+pub enum AssetLogReasonsResponse {
+    Response(AssetLogReasonConnector),
+}
+
+#[derive(Union)]
+pub enum AssetLogReasonResponse {
+    Error(NodeError),
+    Response(AssetLogReasonNode),
+}
+
+#[derive(InputObject, Clone)]
+
+pub struct AssetLogReasonFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub asset_log_status: Option<EqualFilterStatusInput>,
+    pub reason: Option<StringFilterInput>,
+}
+
+impl From<AssetLogReasonFilterInput> for AssetLogReasonFilter {
+    fn from(f: AssetLogReasonFilterInput) -> Self {
+        AssetLogReasonFilter {
+            id: f.id.map(EqualFilter::from),
+            asset_log_status: f
+                .asset_log_status
+                .map(|s| map_filter!(s, AssetLogStatusInput::to_domain)),
+            reason: f.reason.map(StringFilter::from),
+        }
+    }
+}
+
+impl AssetLogReasonNode {
+    pub fn from_domain(asset_log_reason: AssetLogReason) -> AssetLogReasonNode {
+        AssetLogReasonNode { asset_log_reason }
+    }
+
+    pub fn row(&self) -> &AssetLogReason {
+        &self.asset_log_reason
+    }
+}
+
+impl AssetLogReasonConnector {
+    pub fn from_domain(assets: ListResult<AssetLogReason>) -> AssetLogReasonConnector {
+        AssetLogReasonConnector {
+            total_count: assets.count,
+            nodes: assets
+                .rows
+                .into_iter()
+                .map(AssetLogReasonNode::from_domain)
+                .collect(),
+        }
+    }
+}
+
+impl AssetLogReasonSortInput {
+    pub fn to_domain(&self) -> AssetLogReasonSort {
+        use AssetLogReasonSortField as to;
+        use AssetLogReasonSortFieldInput as from;
+        let key = match self.key {
+            from::Status => to::AssetLogStatus,
+        };
+
+        AssetLogReasonSort {
             key,
             desc: self.desc,
         }

@@ -107,6 +107,7 @@ export const CreateAssetModal = ({
     categoryId: draft.categoryId,
     pagination,
   });
+
   const { mutateAsync: save } = useAssets.document.insert();
   const { insertLog, invalidateQueries } = useAssets.log.insert();
   const isCentralServer = useIsCentralServerApi();
@@ -265,7 +266,9 @@ export const CreateAssetModal = ({
                   paginationDebounce={DEBOUNCE_TIMEOUT}
                   onPageChange={onPageChange}
                   loading={isFetching}
-                  onInputChange={(_, value) => debounceOnFilter(value)}
+                  onInputChange={(reason, value) => {
+                    if (reason?.type === 'change') debounceOnFilter(value);
+                  }}
                 />
               }
             />

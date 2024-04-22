@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
+use crate::sync::is_initialised;
 use crate::{
     service_provider::ServiceProvider, settings::Settings, static_files::StaticFileService,
     sync::file_synchroniser::FileSynchroniser,
 };
-use crate::sync::is_initialised;
 
 use super::settings::SyncSettings;
 use tokio::{
@@ -130,13 +130,21 @@ impl FileSyncDriver {
     pub async fn sync(&self, service_provider: Arc<ServiceProvider>) -> usize {
         // ...Try to upload a file
 
-        let result = FileSynchroniser::new(
+        let synchroniser = FileSynchroniser::new(
             get_sync_settings(&service_provider),
             service_provider,
             self.static_file_service.clone(),
-        )
-        .sync()
-        .await;
+        );
+
+        let synchroniser = match synchroniser {
+            Ok(synchroniser) => synchroniser,
+            Err(error) => {
+                log::error!("Problem creating file synchroniser {:#?}", error);
+                return 0;
+            }
+        };
+
+        let result = synchroniser.sync().await;
 
         let files_to_upload = match result {
             Ok(num_of_files) => num_of_files,

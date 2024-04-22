@@ -5,6 +5,7 @@ use std::sync::Mutex;
 
 use actix_files as fs;
 use actix_multipart::Multipart;
+
 use actix_web::error::InternalError;
 use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
 use actix_web::http::StatusCode;
@@ -19,6 +20,7 @@ use serde::{Deserialize, Serialize};
 
 use repository::sync_file_reference_row::SyncFileReferenceRow;
 
+use service::auth_data::AuthData;
 use service::plugin::plugin_files::{PluginFileService, PluginInfo};
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
@@ -27,7 +29,9 @@ use service::static_files::{StaticFileCategory, StaticFileService};
 use service::sync::file_sync_driver::get_sync_settings;
 use service::sync::file_synchroniser::FileSynchroniser;
 use util::is_central_server;
+use util::sanitize_filename;
 
+use crate::authentication::validate_cookie_auth;
 use crate::middleware::limit_content_length;
 
 // this function could be located in different module
@@ -125,8 +129,12 @@ pub(crate) async fn handle_file_upload(
         log::debug!("Content Disposition: {:?}", content_disposition);
         log::debug!("Content Type: {:?}", field.content_type());
 
-        let sanitized_filename =
-            sanitize_filename::sanitize(content_disposition.get_filename().unwrap_or_default());
+        let sanitized_filename = sanitize_filename(
+            content_disposition
+                .get_filename()
+                .unwrap_or_default()
+                .to_owned(),
+        );
         let static_file = service
             .reserve_file(&sanitized_filename, &file_category, file_id.clone())
             .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
@@ -165,7 +173,16 @@ async fn delete_sync_file(
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
+    request: HttpRequest,
+    auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
+    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You must be logged in to delete files",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
+
     let (table_name, record_id, file_id) = path.into_inner();
     let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
 
@@ -203,8 +220,18 @@ async fn upload_sync_file(
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String)>,
+    request: HttpRequest,
+    auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
-    // TODO Authorization
+    // For now, we just check that the user is authenticated
+    // In future we might want to check that the user has access to the record
+    // Access to the file UUID should normally only be exposed to users with access from the frontend
+    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You need to be logged in",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
 
     let db_connection = service_provider
         .connection()
@@ -263,9 +290,20 @@ async fn sync_files(
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
     path: web::Path<(String, String, String)>,
+    auth_data: Data<AuthData>,
 ) -> Result<HttpResponse, Error> {
+    // For now, we just check that the user is authenticated
+    // In future we might want to check that the user has access to the record
+    // Access to the file UUID should normally only be exposed to users with access from the frontend
+    validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You need to be logged in",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
+
     let service = StaticFileService::new(&settings.server.base_dir)
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+        .map_err(|err| InternalError::new(err, StatusCode::FORBIDDEN))?;
 
     let (table_name, parent_record_id, file_id) = path.into_inner();
 
@@ -297,6 +335,18 @@ async fn sync_files(
                 service_provider.clone().into_inner(),
                 Arc::new(service),
             );
+
+            let file_synchroniser = match file_synchroniser {
+                Ok(file_synchroniser) => file_synchroniser,
+                Err(err) => {
+                    log::error!("Error creating file synchroniser: {}", err);
+                    return Err(InternalError::new(
+                        "Couldn't download this file from the central server.",
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                    .into());
+                }
+            };
 
             file_synchroniser
                 .download_file_from_central(&file_id)
