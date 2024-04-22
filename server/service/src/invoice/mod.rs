@@ -13,6 +13,9 @@ pub mod query;
 use self::inbound_return::insert::insert_inbound_return;
 use self::inbound_return::insert::InsertInboundReturn;
 use self::inbound_return::insert::InsertInboundReturnError;
+use self::inventory_adjustment::add_new_stock_line::{
+    add_new_stock_line, AddNewStockLine, AddNewStockLineError,
+};
 use self::inventory_adjustment::insert_inventory_adjustment;
 use self::inventory_adjustment::InsertInventoryAdjustment;
 use self::inventory_adjustment::InsertInventoryAdjustmentError;
@@ -289,6 +292,14 @@ pub trait InvoiceServiceTrait: Sync + Send {
         input: InsertInventoryAdjustment,
     ) -> Result<Invoice, InsertInventoryAdjustmentError> {
         insert_inventory_adjustment(ctx, input)
+    }
+
+    fn add_new_stock_line(
+        &self,
+        ctx: &ServiceContext,
+        input: AddNewStockLine,
+    ) -> Result<Invoice, AddNewStockLineError> {
+        add_new_stock_line(ctx, input)
     }
 }
 
