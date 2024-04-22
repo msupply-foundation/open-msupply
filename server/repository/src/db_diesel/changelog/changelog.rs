@@ -350,11 +350,11 @@ impl<'a> ChangelogRepository<'a> {
     pub fn insert(&self, row: &ChangeLogInsertRow) -> Result<i64, RepositoryError> {
         // Insert the record, and then return the cursor of the inserted record
         // SQLite docs say this is safe if you don't have different threads sharing a single connection
-        let mut con = self.connection.lock();
         diesel::insert_into(changelog::table)
             .values(row)
-            .execute(con.connection())?;
-        let cursor_id = diesel::select(last_insert_rowid()).get_result::<i64>(con.connection())?;
+            .execute(self.connection.lock().connection())?;
+        let cursor_id = diesel::select(last_insert_rowid())
+            .get_result::<i64>(self.connection.lock().connection())?;
         Ok(cursor_id)
     }
 }
