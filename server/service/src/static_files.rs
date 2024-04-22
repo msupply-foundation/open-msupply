@@ -78,7 +78,7 @@ impl StaticFileService {
 
         let static_file = self.reserve_file(&sanitized_filename, &category, file_id)?;
         let destination = Path::new(&static_file.path);
-
+        // Is this blocking ? If it is it a problem ?
         move_file(temp_file.file.path(), destination).context("Problem moving file")?;
 
         Ok(static_file)
