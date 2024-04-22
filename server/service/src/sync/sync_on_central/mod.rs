@@ -15,11 +15,8 @@ use crate::{
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
     sync::{
-        api::SyncApiV5,
-        api_v6::{SiteStatusCodeV6, SiteStatusV6},
-        synchroniser::integrate_and_translate_sync_buffer,
-        translations::ToSyncRecordTranslationType,
-        CentralServerConfig,
+        api::SyncApiV5, api_v6::SiteStatusV6, synchroniser::integrate_and_translate_sync_buffer,
+        translations::ToSyncRecordTranslationType, CentralServerConfig,
     },
 };
 
@@ -183,12 +180,9 @@ pub async fn get_site_status(
         .await
         .map_err(Error::from)?;
 
-    let code = match is_integrating(response.site_id) {
-        true => SiteStatusCodeV6::IntegrationInProgress,
-        false => SiteStatusCodeV6::Idle,
-    };
+    let is_integrating = is_integrating(response.site_id);
 
-    Ok(SiteStatusV6 { code })
+    Ok(SiteStatusV6 { is_integrating })
 }
 
 fn is_integrating(site_id: i32) -> bool {
