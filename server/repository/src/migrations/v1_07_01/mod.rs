@@ -5,6 +5,7 @@ use crate::StorageConnection;
 pub(crate) struct V1_07_01;
 
 mod requisition_line_add_item_name;
+mod stock_on_hand_add_item_name;
 
 impl Migration for V1_07_01 {
     fn version(&self) -> Version {
@@ -13,6 +14,7 @@ impl Migration for V1_07_01 {
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
         requisition_line_add_item_name::migrate(connection)?;
+        stock_on_hand_add_item_name::migrate(connection)?;
 
         Ok(())
     }
