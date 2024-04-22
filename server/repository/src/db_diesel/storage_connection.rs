@@ -17,21 +17,17 @@ const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN IMMEDIATE;";
 #[cfg(feature = "postgres")]
 const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
 
-struct InnerStorageConnection {
-    connection: DBConnection,
-}
-
 /// Helper class to avoid deref_mut() calls, which would require to import DerefMut everywhere we
 /// want to use a connection.
 /// For example, with out it it would look like:
 /// let con: &mut DBConnection = LockedConnection.inner.lock().unwrap().deref_mut();
 pub struct LockedConnection<'a> {
-    inner: MutexGuard<'a, InnerStorageConnection>,
+    raw_connection: MutexGuard<'a, DBConnection>,
 }
 
 impl<'a> LockedConnection<'a> {
     pub fn connection(&mut self) -> &mut DBConnection {
-        &mut self.inner.connection
+        &mut self.raw_connection
     }
 
     /// Current level of nested transaction.
@@ -41,7 +37,7 @@ impl<'a> LockedConnection<'a> {
     /// 2 => 1st nested transaction
     /// 3 => 2nd nested transaction
     pub fn transaction_level<E>(&mut self) -> Result<i32, TransactionError<E>> {
-        let con: &mut DBBackendConnection = &mut self.inner.connection;
+        let con: &mut DBBackendConnection = &mut self.raw_connection;
         let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
             diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
             diesel::connection::TransactionManagerStatus::InError => {
@@ -62,13 +58,13 @@ impl<'a> LockedConnection<'a> {
 }
 
 pub struct StorageConnection {
-    inner: Mutex<InnerStorageConnection>,
+    raw_connection: Mutex<DBConnection>,
 }
 
 impl StorageConnection {
     pub fn lock(&self) -> LockedConnection {
         LockedConnection {
-            inner: self.inner.lock().unwrap(),
+            raw_connection: self.raw_connection.lock().unwrap(),
         }
     }
 }
@@ -112,7 +108,7 @@ impl From<TransactionError<RepositoryError>> for RepositoryError {
 impl StorageConnection {
     pub fn new(connection: DBConnection) -> StorageConnection {
         StorageConnection {
-            inner: Mutex::new(InnerStorageConnection { connection }),
+            raw_connection: Mutex::new(connection),
         }
     }
 
@@ -163,8 +159,8 @@ impl StorageConnection {
 
         match result {
             Ok(value) => {
-                let mut guard = self.inner.lock().unwrap();
-                let con: &mut DBBackendConnection = &mut guard.connection;
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
                 AnsiTransactionManager::commit_transaction(con).map_err(|err| {
                     error!("Failed to end tx: {:?}", err);
                     TransactionError::Transaction {
@@ -175,8 +171,8 @@ impl StorageConnection {
                 Ok(value)
             }
             Err(e) => {
-                let mut guard = self.inner.lock().unwrap();
-                let con: &mut DBBackendConnection = &mut guard.connection;
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
                 AnsiTransactionManager::rollback_transaction(con).map_err(|err| {
                     error!("Failed to rollback tx: {:?}", err);
                     TransactionError::Transaction {
