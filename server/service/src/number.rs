@@ -171,6 +171,14 @@ mod test {
         assert_eq!(result, 1);
     }
 
+    /// Note: this test is disabled when running tests using in 'memory' sqlite.
+    /// When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response
+    /// when two threads try to write using the shared cache concurrently
+    /// https://sqlite.org/rescode.html#locked
+    /// We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this
+    /// test and there's no equivalent available for shared cache connections (SQLITE_LOCKED).
+    /// If we were to use shared cache in production, we'd probably need to use a mutex (or
+    /// similar) to protect the database connection.
     #[actix_rt::test]
     #[cfg(not(feature = "memory"))]
     async fn test_concurrent_next_number() {
@@ -180,23 +188,15 @@ mod test {
         )
         .await;
 
-        // Note: this test is disabled when running tests using in 'memory' sqlite.
-        // When running in memory sqlite uses a shared cache and returns an SQLITE_LOCKED response when two threads try to write using the shared cache concurrently
-        // https://sqlite.org/rescode.html#locked
-        // We are relying on busy_timeout handler to manage the SQLITE_BUSY response code in this test and there's no equivelant available for shared cache connections (SQLITE_LOCKED).
-        // If we were to use shared cache in production, we'd probably need to use a mutex (or similar) to protect the database connection.
-
-        /*
-            Test Scenario
-
-            Process A starts a transaction, and gets the next number, then waits before commiting the transaction
-            Concurrently Process B tries to get the next number
-            (Note: This test did fail with previous implementation of next number on postgres)
-        */
+        // Test Scenario
+        //
+        // Process A starts a transaction, and gets the next number, then waits before committing
+        // the transaction.
+        // Concurrently Process B tries to get the next number
+        // (Note: This test did fail with previous implementation of next number on postgres)
 
         // Part 1: Both threads will try to add a new number row (first time this number type has been used)
         // This should result in 1 insert and 1 update.
-
         let manager_a = connection_manager.clone();
         let process_a = std::thread::spawn(move || {
             let connection = manager_a.connection().unwrap();
