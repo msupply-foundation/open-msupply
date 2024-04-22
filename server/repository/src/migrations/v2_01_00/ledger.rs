@@ -21,7 +21,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
                 'INBOUND_SHIPMENT', 'INBOUND_RETURN'
             ) THEN delivered_datetime
                         WHEN invoice.type IN (
-                'INVENTORY_ADDITION', 'INVENTORY_REDUCTION'
+                'INVENTORY_ADDITION', 'INVENTORY_REDUCTION', 'REPACK'
             ) THEN verified_datetime
                 END AS datetime,
             name,
