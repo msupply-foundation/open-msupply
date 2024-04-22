@@ -9,7 +9,7 @@ const Container = styled('div')(() => ({
   display: 'flex',
   flex: 1,
   maxHeight: 100,
-  justifyContent: 'flex-end',
+  justifyContent: 'center',
   flexDirection: 'column',
   paddingLeft: '20px',
   paddingRight: '20px',
@@ -33,8 +33,9 @@ export const AppFooter: FC = () => {
         backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
         color: isCentralServer ? '#fff' : 'gray.main',
       }}
+      display="flex"
     >
-      <Container ref={appFooterRef} style={{ flex: 0 }} />
+      <Container ref={appFooterRef} style={{ flex: 0, padding: 0 }} />
       <Container ref={appSessionDetailsRef} />
       {isCentralServer ? (
         <Box
