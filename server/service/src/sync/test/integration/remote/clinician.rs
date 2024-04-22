@@ -5,7 +5,7 @@ use crate::sync::{
     translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
-use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreMode, StoreRow};
+use repository::{ClinicianRow, ClinicianStoreJoinRow, GenderType, StoreMode, StoreRow};
 use serde_json::json;
 use util::{
     inline_edit,
@@ -46,7 +46,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             phone: None,
             mobile: None,
             email: None,
-            gender: Some(Gender::Male),
+            gender: Some(GenderType::Male),
             is_active: true,
         };
 
@@ -96,7 +96,7 @@ impl SyncRecordTester for ClinicianRecordTester {
             d.phone = Some("phone".to_string());
             d.mobile = Some("mobile".to_string());
             d.email = Some("email".to_string());
-            d.gender = Some(Gender::Female);
+            d.gender = Some(GenderType::Female);
             d
         });
 

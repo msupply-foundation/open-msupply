@@ -6,7 +6,7 @@ use crate::sync::{
 };
 use chrono::NaiveDate;
 use repository::{
-    requisition_row::{RequisitionRowStatus, RequisitionRowType},
+    requisition_row::{RequisitionStatus, RequisitionType},
     RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
 };
 use serde_json::json;
@@ -25,8 +25,8 @@ impl SyncRecordTester for RequisitionRecordTester {
             user_id: None,
             requisition_number: 456,
             name_link_id: uuid(),
-            r#type: RequisitionRowType::Request,
-            status: RequisitionRowStatus::Draft,
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Draft,
             created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)
                 .unwrap()
                 .and_hms_opt(8, 53, 0)
@@ -63,18 +63,18 @@ impl SyncRecordTester for RequisitionRecordTester {
 
         let requisition_row_2 = inline_edit(&base_requisition_row, |mut d| {
             d.id = uuid();
-            d.r#type = RequisitionRowType::Response;
-            d.status = RequisitionRowStatus::New;
+            d.r#type = RequisitionType::Response;
+            d.status = RequisitionStatus::New;
             d
         });
         let requisition_row_3 = inline_edit(&base_requisition_row, |mut d| {
             d.id = uuid();
-            d.status = RequisitionRowStatus::Sent;
+            d.status = RequisitionStatus::Sent;
             d
         });
         let requisition_row_4 = inline_edit(&base_requisition_row, |mut d| {
             d.id = uuid();
-            d.status = RequisitionRowStatus::Finalised;
+            d.status = RequisitionStatus::Finalised;
             d
         });
 
@@ -102,8 +102,8 @@ impl SyncRecordTester for RequisitionRecordTester {
         // STEP 2 - mutate
         let requisition_row_1 = inline_edit(&requisition_row_1, |mut d| {
             d.user_id = Some("test user 2".to_string());
-            d.r#type = RequisitionRowType::Response;
-            d.status = RequisitionRowStatus::Finalised;
+            d.r#type = RequisitionType::Response;
+            d.status = RequisitionStatus::Finalised;
             d.comment = Some("requisition comment".to_string());
             d.their_reference = Some("requisition their ref".to_string());
             d.colour = Some("#1A1919".to_string());

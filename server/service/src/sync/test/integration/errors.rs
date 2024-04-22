@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use repository::{mock::MockDataInserts, StorageConnectionManager};
+    use repository::{mock::MockDataInserts, StorageConnectionManager, SyncApiErrorCode};
     use reqwest::StatusCode;
     use std::{io::Error, path::PathBuf, sync::Arc};
     use util::assert_matches;

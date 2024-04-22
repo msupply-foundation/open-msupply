@@ -7,7 +7,7 @@ use crate::sync::{
     },
     translations::IntegrationOperation,
 };
-use repository::{ItemRow, ItemRowDelete, ItemRowType, UnitRow, UnitRowDelete};
+use repository::{ItemRow, ItemRowDelete, ItemType, UnitRow, UnitRowDelete};
 
 use serde_json::json;
 use util::{merge_json, uuid::uuid};
@@ -51,7 +51,7 @@ impl SyncRecordTester for UnitAndItemTester {
             name: uuid(),
             code: uuid(),
             unit_id: None,
-            r#type: ItemRowType::NonStock,
+            r#type: ItemType::NonStock,
             legacy_record: "".to_string(),
             default_pack_size: 1,
             is_active: true,
@@ -70,7 +70,7 @@ impl SyncRecordTester for UnitAndItemTester {
             name: uuid(),
             code: uuid(),
             unit_id: Some(unit_row1.id.clone()),
-            r#type: ItemRowType::Stock,
+            r#type: ItemType::Stock,
             legacy_record: "".to_string(),
             default_pack_size: 1,
             is_active: true,
@@ -89,7 +89,7 @@ impl SyncRecordTester for UnitAndItemTester {
             name: uuid(),
             code: uuid(),
             unit_id: None,
-            r#type: ItemRowType::Service,
+            r#type: ItemType::Service,
             legacy_record: "".to_string(),
             default_pack_size: 1,
             is_active: true,
