@@ -534,6 +534,7 @@ mod test {
                     location: None,
                     master_list_id: None,
                     items_have_stock: None,
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -589,6 +590,7 @@ mod test {
                 location: None,
                 master_list_id: Some("invalid".to_string()),
                 items_have_stock: None,
+                expires_before: None,
             },
         );
         assert!(invalid_result.is_err());
@@ -614,6 +616,7 @@ mod test {
                     location: None,
                     master_list_id: Some(master_list_id.clone()),
                     items_have_stock: None,
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -663,6 +666,7 @@ mod test {
                     location: None,
                     master_list_id: Some(master_list_id.clone()),
                     items_have_stock: None,
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -713,6 +717,7 @@ mod test {
                     }),
                     master_list_id: None,
                     items_have_stock: None,
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -753,6 +758,7 @@ mod test {
                     }),
                     master_list_id: None,
                     items_have_stock: None,
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -841,6 +847,7 @@ mod test {
                     location: Some(NullableUpdate { value: None }),
                     master_list_id: None,
                     items_have_stock: None,
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -866,6 +873,7 @@ mod test {
                     location: Some(NullableUpdate { value: None }),
                     master_list_id: None,
                     items_have_stock: Some(true),
+                    expires_before: None,
                 },
             )
             .unwrap();
@@ -878,5 +886,82 @@ mod test {
             .unwrap();
 
         assert_eq!(stocktake_rows.len(), 2);
+    }
+
+    #[actix_rt::test]
+    async fn insert_stocktake_with_expiry() {
+        let (_, connection, connection_manager, _) =
+            setup_all("insert_stocktake_with_expiry", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+        let service = service_provider.stocktake_service;
+
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_1".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
+                    is_locked: Some(true),
+                    location: None,
+                    master_list_id: None,
+                    items_have_stock: None,
+                    expires_before: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
+                },
+            )
+            .unwrap();
+
+        // check that no rows were created for the stocktake
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_1")),
+                None,
+            )
+            .unwrap();
+
+        // do we have a stocktake row?
+        assert_eq!(stocktake_rows.len(), 0);
+
+        // try again with later date
+        service
+            .insert_stocktake(
+                &context,
+                InsertStocktake {
+                    id: "stocktake_2".to_string(),
+                    comment: Some("comment".to_string()),
+                    description: Some("description".to_string()),
+                    stocktake_date: Some(NaiveDate::from_ymd_opt(2020, 1, 2).unwrap()),
+                    is_locked: Some(true),
+                    location: None,
+                    master_list_id: None,
+                    items_have_stock: None,
+                    expires_before: Some(NaiveDate::from_ymd_opt(2020, 4, 22).unwrap()),
+                },
+            )
+            .unwrap();
+
+        let stocktake_rows = StocktakeLineRepository::new(&connection)
+            .query_by_filter(
+                StocktakeLineFilter::new().stocktake_id(EqualFilter::equal_to("stocktake_2")),
+                None,
+            )
+            .unwrap();
+
+        // Should have 3 stocklines earlier than input date
+        assert_eq!(stocktake_rows.len(), 3);
+        // and that it does have a stock_line linked
+        // let stock_line_row = stocktake_rows
+        //     .iter()
+        //     .find(|r| r.line.stock_line_id == Some("stock_line_row_1".to_string()));
+        // assert!(stock_line_row.is_some());
+        // assert_eq!(
+        //     stock_line_row.unwrap().line.stock_line_id,
+        //     Some("stock_line_row_1".to_string())
+        // );
     }
 }
