@@ -10,7 +10,7 @@ import {
   useRegisterActions,
   Box,
   useNavigate,
-  useDisabledNotification,
+  useDisabledNotificationPopover,
   RouteBuilder,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
@@ -23,7 +23,7 @@ export const AddFromScannerButtonComponent = () => {
   const { error } = useNotification();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
-  const { DisabledNotification, show } = useDisabledNotification({
+  const { DisabledNotification, show } = useDisabledNotificationPopover({
     title: t('error.unable-to-scan'),
     message: t('error.scanner-not-connected'),
   });
