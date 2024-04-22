@@ -12,6 +12,7 @@ import {
   SortBy,
   useAuthContext,
   UserPermission,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { PatientRowFragment, usePatient } from '../api';
 import { patientsToCsv } from '../utils';
@@ -25,6 +26,7 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
   const { isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
   const { userHasPermission } = useAuthContext();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const showPermissionDenied = useDisabledNotificationToast();
 
   const csvExport = async () => {
     const data = await mutateAsync();
@@ -38,14 +40,21 @@ export const AppBarButtons: FC<{ sortBy: SortBy<PatientRowFragment> }> = ({
     success(t('success'))();
   };
 
+  const onCreatePatient = () => {
+    if (!userHasPermission(UserPermission.PatientMutate)) {
+      showPermissionDenied();
+      return;
+    }
+    setCreateModalOpen(true);
+  };
+
   return (
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
-          disabled={!userHasPermission(UserPermission.PatientMutate)}
-          onClick={() => setCreateModalOpen(true)}
+          onClick={onCreatePatient}
         />
         <LoadingButton
           startIcon={<DownloadIcon />}

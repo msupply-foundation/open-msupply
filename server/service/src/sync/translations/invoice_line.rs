@@ -14,8 +14,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    is_active_record_on_site, ActiveRecordCheck, PullTranslateResult, PushTranslateResult,
-    SyncTranslation,
+    is_active_record_on_site, utils::clear_invalid_location_id, ActiveRecordCheck,
+    PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -209,11 +209,12 @@ impl SyncTranslation for InvoiceLineTranslation {
         // When invoice lines are coming from another site, we don't get stock line and location
         // so foreign key constraint is violated, thus we want to set them to None if it's foreign site record.
         // If the invoice is an auto generated inbound shipment, then the stock_lines are not valid either.
-        let (stock_line_id, location_id) = if is_record_active_on_site && is_stock_line_valid {
-            (stock_line_id, location_id)
+        let stock_line_id = if is_record_active_on_site && is_stock_line_valid {
+            stock_line_id
         } else {
-            (None, None)
+            None
         };
+        let location_id = clear_invalid_location_id(connection, location_id)?;
 
         let result = InvoiceLineRow {
             id,
