@@ -1,16 +1,4 @@
-import { useState, useCallback } from 'react';
-
-export const useItemFilter = (searchText = '') => {
-  const filterBy = useCallback(
-    (value: string) => ({ name: { like: value } }),
-    [searchText]
-  );
-  const [filter, setFilter] = useState(filterBy(searchText));
-  return {
-    filter,
-    onFilter: (searchText: string) => setFilter(filterBy(searchText)),
-  };
-};
+import { useCallback, useState } from 'react';
 
 export const usePagination = (first: number = 500) => {
   const [pagination, setPagination] = useState({
@@ -26,7 +14,7 @@ export const usePagination = (first: number = 500) => {
         offset: pagination.first * page,
         page,
       }),
-    []
+    [pagination.first]
   );
 
   return { pagination, onPageChange };

@@ -12,7 +12,9 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
+use super::{
+    utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
+};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -73,33 +75,52 @@ impl SyncTranslation for StocktakeLineTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
-        let data = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
+        let LegacyStocktakeLineRow {
+            ID,
+            stock_take_ID,
+            location_id,
+            comment,
+            snapshot_qty,
+            snapshot_packsize,
+            stock_take_qty,
+            is_edited,
+            item_line_ID,
+            item_ID,
+            Batch,
+            expiry,
+            cost_price,
+            sell_price,
+            note,
+            inventory_adjustment_reason_id,
+        } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
-        let counted_number_of_packs = if data.is_edited {
-            Some(data.stock_take_qty)
+        let counted_number_of_packs = if is_edited {
+            Some(stock_take_qty)
         } else {
             None
         };
+
+        let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
-            id: data.ID,
-            stocktake_id: data.stock_take_ID,
-            stock_line_id: data.item_line_ID,
-            location_id: data.location_id,
-            comment: data.comment,
-            snapshot_number_of_packs: data.snapshot_qty,
+            id: ID,
+            stocktake_id: stock_take_ID,
+            stock_line_id: item_line_ID,
+            location_id,
+            comment,
+            snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
-            item_link_id: data.item_ID,
-            batch: data.Batch,
-            expiry_date: data.expiry,
-            pack_size: Some(data.snapshot_packsize),
-            cost_price_per_pack: Some(data.cost_price),
-            sell_price_per_pack: Some(data.sell_price),
-            note: data.note,
-            inventory_adjustment_reason_id: data.inventory_adjustment_reason_id,
+            item_link_id: item_ID,
+            batch: Batch,
+            expiry_date: expiry,
+            pack_size: Some(snapshot_packsize),
+            cost_price_per_pack: Some(cost_price),
+            sell_price_per_pack: Some(sell_price),
+            note,
+            inventory_adjustment_reason_id,
         };
 
         Ok(PullTranslateResult::upsert(result))

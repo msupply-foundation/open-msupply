@@ -1,30 +1,25 @@
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, ReactNode } from 'react';
 import {
   Grid,
   BasicModal,
-  DialogButton,
   Typography,
   InfoIcon,
 } from '@openmsupply-client/common';
 
-interface ConfirmationWithChildrenModalProps extends PropsWithChildren {
+interface ConfirmationModalLayoutProps extends PropsWithChildren {
   isOpen: boolean;
-  onClose: () => void;
-  onSave: () => void;
   title: string;
   message: string;
-  disableOk?: boolean;
+  buttons?: ReactNode;
 }
 
-export const ConfirmationWithChildrenModal = ({
+export const ConfirmationModalLayout = ({
   isOpen,
   title,
   message,
   children,
-  onClose,
-  onSave,
-  disableOk = false,
-}: ConfirmationWithChildrenModalProps) => {
+  buttons,
+}: ConfirmationModalLayoutProps) => {
   return (
     <BasicModal width={400} height={200} open={isOpen}>
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
@@ -52,12 +47,7 @@ export const ConfirmationWithChildrenModal = ({
           display="flex"
           marginTop={2}
         >
-          <Grid item>
-            <DialogButton variant="cancel" onClick={onClose} />
-          </Grid>
-          <Grid item>
-            <DialogButton variant="ok" disabled={disableOk} onClick={onSave} />
-          </Grid>
+          {buttons}
         </Grid>
       </Grid>
     </BasicModal>

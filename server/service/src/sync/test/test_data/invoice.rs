@@ -777,7 +777,7 @@ const INVENTORY_REDUCTION: (&str, &str) = (
         "comment": "Stocktake 2; Reduced stock",
         "entry_date": "2023-01-16",
         "type": "sc",
-        "status": "fn",
+        "status": "FN",
         "total": 0,
         "export_batch": 0,
         "linked_transaction_id": "",

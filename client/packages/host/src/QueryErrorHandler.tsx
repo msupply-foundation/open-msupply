@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNotification } from '@common/hooks';
 import { useTranslation } from '@common/intl';
-import { useQueryClient } from 'react-query';
 import {
   AuthError,
   useLocalStorage,
   useLocation,
+  useQueryClient,
 } from '@openmsupply-client/common';
 
 export const QueryErrorHandler = () => {

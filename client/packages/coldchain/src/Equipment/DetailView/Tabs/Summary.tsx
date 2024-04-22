@@ -13,7 +13,6 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { translateReason } from '../../utils';
 import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
@@ -236,7 +235,7 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row label={t('label.reason')}>
             <BasicTextInput
-              value={translateReason(draft.statusLog?.reason, t)}
+              value={draft.statusLog?.reason?.reason ?? '-'}
               disabled
               fullWidth
             />

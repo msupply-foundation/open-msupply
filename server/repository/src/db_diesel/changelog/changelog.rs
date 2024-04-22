@@ -89,10 +89,13 @@ pub enum ChangelogTableName {
     AssetCategory,
     AssetType,
     AssetCatalogueItem,
+    AssetCatalogueItemProperty,
+    AssetCatalogueProperty,
     #[default]
     SyncFileReference,
     Asset,
     AssetLog,
+    AssetLogReason,
 }
 
 pub(crate) enum ChangeLogSyncStyle {
@@ -139,6 +142,9 @@ impl ChangelogTableName {
             ChangelogTableName::Asset => ChangeLogSyncStyle::Remote,
             ChangelogTableName::SyncFileReference => ChangeLogSyncStyle::File,
             ChangelogTableName::AssetLog => ChangeLogSyncStyle::Remote,
+            ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
+            ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
         }
     }
 }
