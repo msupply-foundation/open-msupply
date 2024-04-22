@@ -3,7 +3,7 @@ import { PaperPopoverSection, usePaperClickPopover } from '../PaperPopover';
 import { AlertIcon } from '../../../icons/Alert';
 import { Typography } from '@mui/material';
 
-export const useDisabledNotification = ({
+export const useDisabledNotificationPopover = ({
   title,
   message,
 }: {
@@ -12,6 +12,13 @@ export const useDisabledNotification = ({
 }) => {
   const { hide, PaperClickPopover, show } = usePaperClickPopover();
 
+  /**
+   * Display a notification that the user is not allowed to perform an action
+   * Uses a PaperClickPopover to display the notification, which allows for more
+   * information than the useDisabledNotificationToast
+   * @param title
+   * @returns
+   */
   const DisabledNotification = ({
     placement = 'bottom',
   }: {
