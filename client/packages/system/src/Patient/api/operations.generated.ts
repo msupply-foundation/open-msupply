@@ -37,6 +37,7 @@ export type PatientSearchQuery = { __typename: 'Queries', patientSearch: { __typ
 export type CentralPatientSearchQueryVariables = Types.Exact<{
   input: Types.CentralPatientSearchInput;
   storeId: Types.Scalars['String']['input'];
+  page?: Types.InputMaybe<Types.PaginationInput>;
 }>;
 
 
@@ -205,8 +206,8 @@ export const PatientSearchDocument = gql`
 }
     ${ProgramPatientRowFragmentDoc}`;
 export const CentralPatientSearchDocument = gql`
-    query centralPatientSearch($input: CentralPatientSearchInput!, $storeId: String!) {
-  centralPatientSearch(input: $input, storeId: $storeId) {
+    query centralPatientSearch($input: CentralPatientSearchInput!, $storeId: String!, $page: PaginationInput) {
+  centralPatientSearch(input: $input, storeId: $storeId, page: $page) {
     __typename
     ... on CentralPatientSearchConnector {
       nodes {
@@ -411,7 +412,7 @@ export const mockPatientSearchQuery = (resolver: ResponseResolver<GraphQLRequest
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
  * mockCentralPatientSearchQuery((req, res, ctx) => {
- *   const { input, storeId } = req.variables;
+ *   const { input, storeId, page } = req.variables;
  *   return res(
  *     ctx.data({ centralPatientSearch })
  *   )
