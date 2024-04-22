@@ -1,12 +1,7 @@
 import { LocaleKey, TypedTFunction } from '@common/intl';
 import { AssetRowFragment } from './api';
 import { Formatter } from '@common/utils';
-import {
-  AssetLogStatusInput,
-  PropertyNodeValueType,
-  ReasonType,
-  StatusType,
-} from '@common/types';
+import { PropertyNodeValueType, StatusType } from '@common/types';
 import { ImportRow, LineNumber } from './ImportAsset';
 import { PropertyValue } from './types';
 
