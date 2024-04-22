@@ -268,7 +268,6 @@ impl Synchroniser {
             },
             None,
         )
-        .await
         .map_err(SyncError::IntegrationError)?;
 
         warn!("Upsert Integration result: {:?}", upserts);
@@ -292,7 +291,7 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub async fn integrate_and_translate_sync_buffer<'a>(
+pub fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
     execute_in_transaction: bool,
     logger: Option<&mut SyncLogger<'a>>,
