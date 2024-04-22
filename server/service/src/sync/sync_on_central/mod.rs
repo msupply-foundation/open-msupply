@@ -153,7 +153,7 @@ pub async fn push(
     }
 
     if is_last_batch {
-        spawn_integration(service_provider.clone(), response.site_id);
+        spawn_integration(service_provider, response.site_id);
     }
 
     Ok(SyncPushSuccessV6 {
