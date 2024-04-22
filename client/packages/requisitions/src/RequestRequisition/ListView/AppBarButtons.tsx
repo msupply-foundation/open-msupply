@@ -80,7 +80,7 @@ export const AppBarButtons: FC<{
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
+                    .addPart(String(requisitionNumber.requisitionNumber))
                     .build(),
                   { replace: true }
                 );
@@ -95,7 +95,7 @@ export const AppBarButtons: FC<{
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
-                    .addPart(String(requisitionNumber))
+                    .addPart(String(requisitionNumber.requisitionNumber))
                     .build(),
                   { replace: true }
                 );
