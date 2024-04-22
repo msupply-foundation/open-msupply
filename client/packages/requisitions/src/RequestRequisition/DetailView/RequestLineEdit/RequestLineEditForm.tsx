@@ -8,6 +8,7 @@ import {
   Switch,
   Box,
   NumUtils,
+  BasicTextInput,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import {
@@ -112,25 +113,38 @@ export const RequestLineEditForm = ({
   const [isPacks, setIsPacks] = useState(isPacksEnabled);
   const requestedQuantity = draftLine?.requestedQuantity ?? 0;
   const defaultPackSize = item?.defaultPackSize ?? 0;
+  const originalItemName = lines?.find(({ item }) => item.id === item?.id)
+    ?.itemName;
 
   return (
     <RequestLineEditFormLayout
       Top={
-        <StockItemSearchInputWithStats
-          autoFocus={!item}
-          openOnFocus={!item}
-          width={600}
-          disabled={disabled}
-          currentItemId={item?.id}
-          onChange={(newItem: ItemRowWithStatsFragment | null) =>
-            newItem && onChangeItem(newItem)
-          }
-          extraFilter={
-            disabled
-              ? undefined
-              : itemRow => !lines?.some(({ item }) => itemRow.id === item.id)
-          }
-        />
+        <>
+          {(disabled && (
+            <BasicTextInput
+              value={`${item?.code}     ${originalItemName}`}
+              disabled
+              fullWidth
+            />
+          )) || (
+            <StockItemSearchInputWithStats
+              autoFocus={!item}
+              openOnFocus={!item}
+              width={600}
+              disabled={disabled}
+              currentItemId={item?.id}
+              onChange={(newItem: ItemRowWithStatsFragment | null) =>
+                newItem && onChangeItem(newItem)
+              }
+              extraFilter={
+                disabled
+                  ? undefined
+                  : itemRow =>
+                      !lines?.some(({ item }) => itemRow.id === item.id)
+              }
+            />
+          )}
+        </>
       }
       Left={
         <>
