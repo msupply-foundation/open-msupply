@@ -124,8 +124,8 @@ fn generate(
         None => Vec::new(),
     };
     let expiring_items_lines = match expires_before {
-        Some(_) => {
-            generate_lines_expiring_before(connection, store_id, &id, &expires_before.unwrap())?
+        Some(expires_before) => {
+            generate_lines_expiring_before(connection, store_id, &id, &expires_before)?
         }
         None => Vec::new(),
     };
