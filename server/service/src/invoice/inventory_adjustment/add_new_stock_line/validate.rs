@@ -1,6 +1,6 @@
 use repository::StorageConnection;
 
-use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
+use crate::common_stock::check_stock_line_does_not_exist;
 
 use crate::stocktake_line::validate::{check_active_adjustment_reasons, check_reason_is_valid};
 use crate::validate::check_store_exists;
@@ -17,14 +17,9 @@ pub fn validate(
         return Err(InvalidStore);
     }
 
-    // TODO maybe? stock line already existing
-    // let stock_line = check_stock_line_exists(connection, store_id, &input.stock_line_id).map_err(
-    //     |err| match err {
-    //         CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockLineDoesNotExist,
-    //         CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
-    //         CommonStockLineError::DatabaseError(error) => DatabaseError(error),
-    //     },
-    // )?;
+    if !check_stock_line_does_not_exist(&input.stock_line_id, connection)? {
+        return Err(StockLineAlreadyExists);
+    }
 
     let reduction_amount = -input.number_of_packs;
 
@@ -43,6 +38,8 @@ pub fn validate(
     {
         return Err(AdjustmentReasonNotValid);
     }
+
+    // Most stock/invoice line fields validated by `stock_in_line`
 
     Ok(())
 }

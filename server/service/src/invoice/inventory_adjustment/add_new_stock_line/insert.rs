@@ -92,7 +92,10 @@ impl From<RepositoryError> for AddNewStockLineError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_store_a, mock_user_account_a, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_stock_line_a, mock_store_a, mock_user_account_a, MockData,
+            MockDataInserts,
+        },
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType,
         InvoiceLineFilter, InvoiceLineRepository, InvoiceRowStatus,
@@ -134,18 +137,17 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        // tODO
         // Stockline already exists
-        // assert_eq!(
-        //     service.add_new_stock_line(
-        //         &context,
-        //         AddNewStockLine {
-        //             id: "x".to_string(),
-        //             ..Default::default()
-        //         }
-        //     ),
-        //     Err(ServiceError::StockLineAlreadyExists)
-        // );
+        assert_eq!(
+            service.add_new_stock_line(
+                &context,
+                AddNewStockLine {
+                    stock_line_id: mock_stock_line_a().id,
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::StockLineAlreadyExists)
+        );
 
         // Invalid store
         context.store_id = "invalid".to_string();
