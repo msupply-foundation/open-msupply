@@ -18,6 +18,29 @@ fragment AssetCatalogueItem on AssetCatalogueItemNode {
   }
 }
 
+fragment AssetLog on AssetLogNode {
+  comment
+  id
+  logDatetime
+  reason {
+    reason
+  }
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+    jobTitle
+  }
+}
+
+fragment AssetLogReason on AssetLogReasonNode {
+  id
+  assetLogStatus
+  reason
+}
+
 query assetCatalogueItems(
   $first: Int
   $offset: Int
@@ -134,6 +157,62 @@ mutation deleteAssetCatalogueItem($assetCatalogueItemId: String!) {
           id
         }
         ... on DeleteAssetCatalogueItemError {
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+query assetLogReasons(
+  $filter: AssetLogReasonFilterInput
+  $sort: AssetLogReasonSortInput
+  $storeId: String!
+) {
+  assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLogReason
+      }
+    }
+  }
+}
+
+mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
+  centralServer {
+    logReason {
+      insertAssetLogReason(input: $input) {
+        ... on AssetLogReasonNode {
+          __typename
+          id
+          reason
+        }
+        ... on InsertAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteLogReason($reasonId: String!) {
+  centralServer {
+    logReason {
+      deleteLogReason(reasonId: $reasonId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteAssetLogReasonError {
+          __typename
           error {
             description
           }
