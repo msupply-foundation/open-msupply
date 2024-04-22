@@ -158,6 +158,9 @@ mod tests {
             desc: Some(false),
         };
         // Check deserialization (into rust types)
-        assert!(matches!(repo.query(Some(filter), Some(sort)), Ok(_)));
+        assert!(matches!(
+            repo.query(Pagination::all(), Some(filter), Some(sort)),
+            Ok(_)
+        ));
     }
 }
