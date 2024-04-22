@@ -13,7 +13,12 @@ import {
   UploadIcon,
   ToggleState,
   useIsCentralServerApi,
+  RouteBuilder,
+  useNavigate,
+  BaseButton,
+  EditIcon,
 } from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
 import { useAssetData } from '../api';
 import { assetCatalogueItemsListToCsv } from '../utils';
 
@@ -25,6 +30,8 @@ export const AppBarButtonsComponent = ({
   const isCentralServer = useIsCentralServerApi();
   const { success, error } = useNotification();
   const t = useTranslation(['catalogue']);
+  const navigate = useNavigate();
+
   const { fetchAsync, isLoading } = useAssetData.document.listAll();
 
   const csvExport = async () => {
@@ -38,6 +45,10 @@ export const AppBarButtonsComponent = ({
     FileUtils.exportCSV(csv, t('filename.asset-categories'));
     success(t('success'))();
   };
+  const path = RouteBuilder.create(AppRoute.Catalogue)
+    .addPart(AppRoute.Assets)
+    .addPart(AppRoute.LogReasons)
+    .build();
 
   return (
     <AppBarButtonsPortal>
@@ -58,6 +69,18 @@ export const AppBarButtonsComponent = ({
         >
           {t('button.export')}
         </LoadingButton>
+        {isCentralServer && (
+          <BaseButton
+            startIcon={<EditIcon />}
+            variant="outlined"
+            onClick={() => {
+              navigate(path);
+            }}
+            disabled={EnvUtils.platform === Platform.Android}
+          >
+            {t('button.manage-asset-log-reasons')}
+          </BaseButton>
+        )}
       </Grid>
     </AppBarButtonsPortal>
   );

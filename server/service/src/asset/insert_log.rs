@@ -9,7 +9,7 @@ use crate::{
 };
 use chrono::Utc;
 use repository::{
-    asset_log_row::{AssetLogReason, AssetLogStatus},
+    asset_log_row::AssetLogStatus,
     assets::asset_log_row::{AssetLogRow, AssetLogRowRepository},
     ActivityLogType, RepositoryError, StorageConnection,
 };
@@ -19,6 +19,7 @@ pub enum InsertAssetLogError {
     AssetLogAlreadyExists,
     AssetDoesNotExist,
     CreatedRecordNotFound,
+    ReasonDoesNotExist,
     DatabaseError(RepositoryError),
     InsufficientPermission,
     ReasonInvalidForStatus,
@@ -30,7 +31,7 @@ pub struct InsertAssetLog {
     pub status: Option<AssetLogStatus>,
     pub comment: Option<String>,
     pub r#type: Option<String>,
-    pub reason: Option<AssetLogReason>,
+    pub reason_id: Option<String>,
 }
 
 pub fn insert_asset_log(
@@ -66,7 +67,7 @@ pub fn validate(
         return Err(InsertAssetLogError::AssetLogAlreadyExists);
     }
 
-    if !check_reason_matches_status(&input.status, &input.reason) {
+    if !check_reason_matches_status(&input.status, &input.reason_id, connection) {
         return Err(InsertAssetLogError::ReasonInvalidForStatus);
     }
     if check_asset_exists(&input.asset_id, connection)?
@@ -86,7 +87,7 @@ pub fn generate(
         status,
         comment,
         r#type,
-        reason,
+        reason_id,
     }: InsertAssetLog,
 ) -> AssetLogRow {
     AssetLogRow {
@@ -96,7 +97,7 @@ pub fn generate(
         status,
         comment,
         r#type,
-        reason,
+        reason_id,
         log_datetime: Utc::now().naive_utc(),
     }
 }

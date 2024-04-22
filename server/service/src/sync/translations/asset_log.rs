@@ -3,7 +3,9 @@ use repository::{
     ChangelogRow, ChangelogTableName, StorageConnection, SyncBufferRow,
 };
 
-use crate::sync::translations::asset::AssetTranslation;
+use crate::sync::translations::{
+    asset::AssetTranslation, asset_log_reason::AssetLogReasonTranslation,
+};
 
 use super::{
     PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
@@ -23,7 +25,10 @@ impl SyncTranslation for AssetLogTranslation {
     }
 
     fn pull_dependencies(&self) -> Vec<&'static str> {
-        vec![AssetTranslation.table_name()]
+        vec![
+            AssetTranslation.table_name(),
+            AssetLogReasonTranslation.table_name(),
+        ]
     }
 
     fn try_translate_from_upsert_sync_record(

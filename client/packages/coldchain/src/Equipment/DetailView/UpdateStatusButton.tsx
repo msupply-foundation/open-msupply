@@ -19,7 +19,7 @@ import { StatusTab } from './StatusTab';
 import { UploadTab } from './UploadTab';
 import { useAssets } from '../api';
 import { Draft } from '../Components';
-import { Environment } from 'packages/config/src';
+import { Environment } from '@openmsupply-client/config/src';
 
 enum Tabs {
   Status = 'Status',

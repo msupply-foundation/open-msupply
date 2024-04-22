@@ -50,6 +50,7 @@ export enum AppRoute {
   Catalogue = 'catalogue',
   Items = 'items',
   Assets = 'assets',
+  LogReasons = 'log-reasons',
 
   PageNotFound = 'page-not-found',
 }
