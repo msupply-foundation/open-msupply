@@ -15,7 +15,6 @@ pub fn get_ledger(
     filter: Option<LedgerFilter>,
     sort: Option<LedgerSort>,
 ) -> Result<ListResult<LedgerRow>, ListError> {
-    // let pagination = get_default_pagination(pagination, MAX_LIMIT, MIN_LIMIT)?;
     let connection = connection_manager.connection()?;
     let repository = LedgerRepository::new(&connection);
 
