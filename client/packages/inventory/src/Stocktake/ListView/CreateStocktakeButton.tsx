@@ -177,11 +177,16 @@ export const CreateStocktakeButton: React.FC<{
         >
           <Box flex={1} display="flex" justifyContent="center">
             {!isSaving ? (
-              <Box paddingLeft={2}>
+              <Box
+                paddingLeft={2}
+                display="flex"
+                flexDirection="column"
+                gap={2}
+              >
                 <Typography padding={1}>
                   {t('messages.create-stocktake-1')}
                 </Typography>
-                <Typography padding={1} paddingBottom={4}>
+                <Typography padding={1}>
                   {t('messages.create-stocktake-2')}
                 </Typography>
                 <InputWithLabelRow
@@ -207,7 +212,6 @@ export const CreateStocktakeButton: React.FC<{
                   }
                   label={t('label.master-list')}
                 />
-                <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
@@ -231,7 +235,6 @@ export const CreateStocktakeButton: React.FC<{
                   }
                   label={t('label.location')}
                 />
-                <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
