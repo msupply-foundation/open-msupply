@@ -1,6 +1,6 @@
 use repository::{
     ledger::{LedgerFilter, LedgerRepository, LedgerRow, LedgerSort},
-    StorageConnectionManager,
+    Pagination, StorageConnectionManager,
 };
 
 use crate::usize_to_u32;
@@ -12,7 +12,6 @@ use super::{ListError, ListResult};
 
 pub fn get_ledger(
     connection_manager: &StorageConnectionManager,
-    // pagination: Option<PaginationOption>,
     filter: Option<LedgerFilter>,
     sort: Option<LedgerSort>,
 ) -> Result<ListResult<LedgerRow>, ListError> {
@@ -20,11 +19,7 @@ pub fn get_ledger(
     let connection = connection_manager.connection()?;
     let repository = LedgerRepository::new(&connection);
 
-    let rows = repository.query(
-        // pagination,
-        filter.clone(),
-        sort,
-    )?;
+    let rows = repository.query(Pagination::one(), filter.clone(), sort)?;
     Ok(ListResult {
         count: usize_to_u32(rows.len()),
         rows,
