@@ -21,7 +21,6 @@ use service::{
 #[derive(Enum, Copy, Clone, PartialEq, Eq)]
 #[graphql(rename_items = "camelCase")]
 pub enum LedgerSortFieldInput {
-    Id,
     Datetime,
     Name,
     InvoiceType,
@@ -152,7 +151,6 @@ impl LedgerSortInput {
         use LedgerSortField as to;
         use LedgerSortFieldInput as from;
         let key = match self.key {
-            from::Id => to::Id,
             from::Datetime => to::Datetime,
             from::Name => to::Name,
             from::InvoiceType => to::InvoiceType,
