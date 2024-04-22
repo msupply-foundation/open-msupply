@@ -4,13 +4,14 @@ use actix_multipart::form::MultipartForm;
 use actix_web::{
     post,
     web::{self, Data},
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use anyhow::Context;
 
 use serde::Deserialize;
 
 use service::{
+    auth_data::AuthData,
     sensor::berlinger::{read_sensor, ReadSensor},
     service_provider::ServiceProvider,
     settings::Settings,
@@ -18,7 +19,7 @@ use service::{
 };
 use util::format_error;
 
-use crate::static_files::UploadForm;
+use crate::{authentication::validate_cookie_auth, static_files::UploadForm};
 
 pub fn config_upload_fridge_tag(cfg: &mut web::ServiceConfig) {
     cfg.service(upload);
@@ -36,8 +37,14 @@ async fn upload(
     url_params: web::Query<UrlParams>,
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+    request: HttpRequest,
 ) -> HttpResponse {
-    // TODO Permissions
+    // For now, we just check that the user is authenticated
+    // In future we might want to check that the user has access to upload fridge tag
+    if let Err(_) = validate_cookie_auth(request.clone(), &auth_data) {
+        return HttpResponse::InternalServerError().body("You need to be logged in");
+    };
 
     match upload_fridge_tag(form, url_params.into_inner(), &settings, &service_provider) {
         Ok(result) => HttpResponse::Ok().json(result),
