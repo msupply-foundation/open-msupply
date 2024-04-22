@@ -1,3 +1,5 @@
+use actix_multipart::form::tempfile::TempFile;
+use anyhow::Context;
 use repository::sync_file_reference_row::SyncFileReferenceRow;
 use reqwest::Response;
 use std::io::Error;
@@ -6,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
 use util::uuid::uuid;
+use util::{move_file, sanitize_filename};
 #[derive(Debug, PartialEq)]
 pub struct StaticFile {
     pub id: String,
@@ -32,6 +35,12 @@ impl StaticFileCategory {
     }
 }
 
+impl StaticFile {
+    pub fn to_path_buf(&self) -> PathBuf {
+        PathBuf::from(&self.path)
+    }
+}
+
 /// Stores files in a temp storage and associate an id with each file.
 /// This can, for example, be used to deposition a file for a user and the user can pick up the file
 /// by id within a certain time frame.
@@ -54,6 +63,25 @@ impl StaticFileService {
             dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
         })
+    }
+
+    // Temp file in this case refers to system 'TempFile' not our own definition of Temporary file
+    // at the time of method creation TempFile only comes from web multipart
+    pub fn move_temp_file(
+        &self,
+        temp_file: TempFile,
+        category: &StaticFileCategory,
+        file_id: Option<String>,
+    ) -> anyhow::Result<StaticFile> {
+        let file_name = temp_file.file_name.context("Filename not provided")?;
+        let sanitized_filename = sanitize_filename(file_name);
+
+        let static_file = self.reserve_file(&sanitized_filename, &category, file_id)?;
+        let destination = Path::new(&static_file.path);
+
+        move_file(temp_file.file.path(), destination).context("Problem moving file")?;
+
+        Ok(static_file)
     }
 
     /// Checks filepath and creates uuid for a file without creating the file itself
