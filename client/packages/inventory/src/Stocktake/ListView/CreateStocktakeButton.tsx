@@ -112,7 +112,7 @@ export const CreateStocktakeButton: React.FC<{
         : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
       expiresBefore: expiresBefore
-        ? Formatter.naiveDate(new Date(expiresBefore))
+        ? Formatter.naiveDate(expiresBefore)
         : undefined,
       comment: generateComment(),
     };
