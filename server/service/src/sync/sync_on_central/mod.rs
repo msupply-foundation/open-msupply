@@ -1,7 +1,9 @@
-use std::path::Path;
-
-use repository::{ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRowRepository};
-use util::{format_error, is_central_server, move_file, sanitize_filename};
+use actix_multipart::form::tempfile::TempFile;
+use repository::{
+    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
+    SyncFileReferenceRowRepository,
+};
+use util::{format_error, is_central_server};
 
 use crate::{
     service_provider::ServiceProvider,
@@ -188,11 +190,11 @@ pub async fn download_file(
 pub async fn upload_file(
     settings: &Settings,
     service_provider: &ServiceProvider,
-    file_id: String,
     SyncUploadFileRequestV6 {
-        files,
+        file_id,
         sync_v5_settings,
     }: SyncUploadFileRequestV6,
+    file_part: TempFile,
 ) -> Result<(), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
@@ -202,76 +204,35 @@ pub async fn upload_file(
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
-    let _ = SyncApiV5::new(sync_v5_settings.into_inner())
+    let _ = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
         .get_site_info()
         .await
         .map_err(Error::from)?;
 
     let file_service = StaticFileService::new(&settings.server.base_dir)?;
-    let db_connection = service_provider
-        .connection()
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
+    let ctx = service_provider.basic_context()?;
 
-    let repo = SyncFileReferenceRowRepository::new(&db_connection);
-    let mut sync_file_reference = repo
-        .find_one_by_id(&file_id)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .ok_or({
-            log::error!(
-                "Sync File Reference not found, can't upload until this is synced: {}",
-                file_id
-            );
-            Error::SyncFileNotFound
-        })?;
+    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+    let sync_file_reference = repo
+        .find_one_by_id(&file_id)?
+        .ok_or(Error::SyncFileNotFound(file_id.clone()))?;
 
-    // for each uploaded file reserve a file in the static files directory, then copy the file from the temp file location
-    // Should only be 1 file, but we will loop through them all just in case we need to do some clean up..
-    for file in files {
-        let static_file_category = StaticFileCategory::SyncFile(
+    file_service.move_temp_file(
+        file_part,
+        &StaticFileCategory::SyncFile(
             sync_file_reference.table_name.clone(),
             sync_file_reference.record_id.clone(),
-        );
-        let sanitized_filename = file.file_name.map(sanitize_filename).unwrap_or_default();
+        ),
+        Some(file_id),
+    )?;
 
-        let static_file = file_service.reserve_file(
-            &sanitized_filename,
-            &static_file_category,
-            Some(file_id.clone()),
-        )?;
-        let destination = Path::new(&static_file.path);
-
-        // Copy the file from the temp location to the final location
-        // TODO: Ideally these fs operations should be done in a separate thread e.g. using web::block (see handle_upload in static_files.rs)
-        let result = move_file(file.file.path(), destination);
-        match result {
-            Ok(_) => {
-                sync_file_reference.uploaded_bytes = sync_file_reference.total_bytes;
-                let result = repo.upsert_one(&sync_file_reference);
-                match result {
-                    Ok(_) => {}
-                    Err(err) => {
-                        log::error!(
-                            "Error updating sync file reference: {} - DELETING UPLOADED FILE",
-                            err
-                        );
-                        // Delete uploaded file
-                        let _ = std::fs::remove_file(file.file.path());
-                    }
-                }
-            }
-            Err(err) => {
-                log::error!(
-                    "Error moving file {:?} to {:?} - {}",
-                    file.file.path(),
-                    destination,
-                    err
-                );
-                // Delete uploaded file
-                let _ = std::fs::remove_file(file.file.path());
-            }
-        }
-    }
+    repo.upsert_one(&SyncFileReferenceRow {
+        // Do we really need to store this ?
+        // I can see total bytes could be useful, but uploaded ?
+        uploaded_bytes: sync_file_reference.total_bytes,
+        ..sync_file_reference
+    })?;
 
     Ok(())
 }

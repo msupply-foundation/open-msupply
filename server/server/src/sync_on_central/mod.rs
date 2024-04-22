@@ -1,15 +1,11 @@
 use std::fmt::Display;
 
-use actix_multipart::form::MultipartForm;
+use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{
-    error::InternalError,
-    http::{
-        header::{ContentDisposition, DispositionParam, DispositionType},
-        StatusCode,
-    },
+    http::header::{ContentDisposition, DispositionParam, DispositionType},
     post, put,
     web::{self, Data, Json},
-    Error, HttpRequest, HttpResponse, Responder, ResponseError,
+    HttpRequest, Responder, ResponseError,
 };
 
 use crate::central_server_only;
@@ -20,6 +16,7 @@ use service::{
         api_v6::{
             SyncDownloadFileRequestV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6,
             SyncPushRequestV6, SyncPushResponseV6, SyncUploadFileRequestV6,
+            SyncUploadFileResponseV6,
         },
         sync_on_central,
     },
@@ -99,35 +96,35 @@ async fn download_file(
     Ok(response)
 }
 
-#[put("/sync/upload_file/{file_id}")]
+// Request one part 'json_part' one part 'file_part'
+// can't directly align multipart between actix_web and reqwest
+// need to be vigilant when changing parts and update equivalent upload_part in sync apiv_v6 client request
+#[derive(MultipartForm)]
+pub struct SyncUploadFileMultipartRequestV6 {
+    pub file_part: TempFile,
+    pub json_part: actix_multipart::form::json::Json<SyncUploadFileRequestV6>,
+}
+
+#[put("/sync/upload_file")]
 async fn upload_file(
-    MultipartForm(form): MultipartForm<SyncUploadFileRequestV6>,
+    MultipartForm(SyncUploadFileMultipartRequestV6 {
+        file_part,
+        json_part,
+    }): MultipartForm<SyncUploadFileMultipartRequestV6>,
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
-    path: web::Path<String>,
-) -> Result<HttpResponse, Error> {
-    let file_id = path.into_inner();
-    log::info!("Receiving a file via sync : {}", file_id);
+) -> actix_web::Result<impl Responder> {
+    let response = match sync_on_central::upload_file(
+        &settings,
+        &service_provider,
+        json_part.into_inner(),
+        file_part,
+    )
+    .await
+    {
+        Ok(batch) => SyncUploadFileResponseV6::Data(batch),
+        Err(error) => SyncUploadFileResponseV6::Error(error),
+    };
 
-    let result = sync_on_central::upload_file(&settings, &service_provider, file_id, form).await;
-    match result {
-        Ok(_) => {
-            log::info!("File uploaded successfully");
-            Ok(HttpResponse::Ok().finish())
-        }
-        Err(e) => {
-            log::error!("Error uploading file: {}", e);
-            match e {
-                SyncParsedErrorV6::NotACentralServer => {
-                    return Ok(HttpResponse::Forbidden().finish());
-                }
-                SyncParsedErrorV6::SyncFileNotFound => {
-                    return Ok(HttpResponse::NotFound().finish());
-                }
-                _ => {
-                    return Err(InternalError::new(e, StatusCode::INTERNAL_SERVER_ERROR).into());
-                }
-            }
-        }
-    }
+    Ok(web::Json(response))
 }
