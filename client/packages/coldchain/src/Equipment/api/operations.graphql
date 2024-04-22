@@ -10,7 +10,9 @@ fragment AssetRow on AssetNode {
   replacementDate
   statusLog {
     logDatetime
-    reason
+    reason {
+      reason
+    }
     status
   }
   storeId
@@ -66,7 +68,9 @@ fragment Asset on AssetNode {
   serialNumber
   statusLog {
     logDatetime
-    reason
+    reason {
+      reason
+    }
     status
   }
   storeId
@@ -90,11 +94,13 @@ fragment Asset on AssetNode {
   }
 }
 
-fragment AssetLog on AssetLogNode {
+fragment ColdchainAssetLog on AssetLogNode {
   comment
   id
   logDatetime
-  reason
+  reason {
+    reason
+  }
   status
   type
   user {
@@ -159,7 +165,7 @@ query assetLogs(
       totalCount
       nodes {
         __typename
-        ...AssetLog
+        ...ColdchainAssetLog
       }
     }
   }

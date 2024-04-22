@@ -1,7 +1,4 @@
-use repository::{
-    asset_log_row::{AssetLogReason, AssetLogStatus},
-    db_diesel::assets::asset_log_row::AssetLogRow,
-};
+use repository::{asset_log_row::AssetLogStatus, db_diesel::assets::asset_log_row::AssetLogRow};
 use serde_json::json;
 use util::Defaults;
 
@@ -17,7 +14,7 @@ const ASSET_LOG1: (&'static str, &'static str) = (
         "user_id": "user_account_a",
         "status": "FUNCTIONING",
         "comment": "test_comment",
-        "reason": "AWAITING_INSTALLATION",
+        "reason_id": null,
         "log_datetime": "2020-01-22T15:16:00"   
     }"#,
 );
@@ -29,7 +26,7 @@ fn asset_log1() -> AssetLogRow {
         user_id: "user_account_a".to_string(), // Mock user account
         status: Some(AssetLogStatus::Functioning),
         comment: Some("test_comment".to_string()),
-        reason: Some(AssetLogReason::AwaitingInstallation),
+        reason_id: None,
         log_datetime: Defaults::naive_date_time(),
         r#type: None,
     }

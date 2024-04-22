@@ -8,6 +8,10 @@ export type AssetCatalogueItemFragment = { __typename: 'AssetCatalogueItemNode',
 
 export type AssetPropertyFragment = { __typename: 'AssetCataloguePropertyNode', id: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType };
 
+export type AssetLogFragment = { __typename: 'AssetLogNode', comment?: string | null, id: string, logDatetime: any, status?: Types.StatusType | null, type?: string | null, reason?: { __typename: 'AssetLogReasonNode', reason: string } | null, user?: { __typename: 'UserNode', firstName?: string | null, lastName?: string | null, username: string, jobTitle?: string | null } | null };
+
+export type AssetLogReasonFragment = { __typename: 'AssetLogReasonNode', id: string, assetLogStatus: Types.StatusType, reason: string };
+
 export type AssetCatalogueItemsQueryVariables = Types.Exact<{
   first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
   offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
@@ -56,6 +60,15 @@ export type AssetCataloguePropertiesQueryVariables = Types.Exact<{
 
 export type AssetCataloguePropertiesQuery = { __typename: 'Queries', assetCatalogueProperties: { __typename: 'AssetCataloguePropertyConnector', nodes: Array<{ __typename: 'AssetCataloguePropertyNode', id: string, allowedValues?: string | null, name: string, valueType: Types.PropertyNodeValueType }> } | { __typename: 'NodeError' } };
 
+export type AssetLogReasonsQueryVariables = Types.Exact<{
+  filter?: Types.InputMaybe<Types.AssetLogReasonFilterInput>;
+  sort?: Types.InputMaybe<Types.AssetLogReasonSortInput>;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+
+export type AssetLogReasonsQuery = { __typename: 'Queries', assetLogReasons: { __typename: 'AssetLogReasonConnector', totalCount: number, nodes: Array<{ __typename: 'AssetLogReasonNode', id: string, assetLogStatus: Types.StatusType, reason: string }> } };
+
 export type InsertAssetCatalogueItemMutationVariables = Types.Exact<{
   input: Types.InsertAssetCatalogueItemInput;
   storeId: Types.Scalars['String']['input'];
@@ -78,6 +91,20 @@ export type InsertAssetCatalogueItemPropertyMutationVariables = Types.Exact<{
 
 
 export type InsertAssetCatalogueItemPropertyMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', assetCatalogue: { __typename: 'AssetCatalogueMutations', insertAssetCatalogueItemProperty: { __typename: 'AssetCatalogueItemPropertyNode', id: string } | { __typename: 'InsertAssetCatalogueItemPropertyError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } } } } };
+
+export type InsertAssetLogReasonMutationVariables = Types.Exact<{
+  input: Types.InsertAssetLogReasonInput;
+}>;
+
+
+export type InsertAssetLogReasonMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', logReason: { __typename: 'AssetLogReasonMutations', insertAssetLogReason: { __typename: 'AssetLogReasonNode', id: string, reason: string } | { __typename: 'InsertAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'InternalError', description: string } | { __typename: 'RecordAlreadyExist', description: string } | { __typename: 'UniqueValueViolation', description: string } } } } };
+
+export type DeleteLogReasonMutationVariables = Types.Exact<{
+  reasonId: Types.Scalars['String']['input'];
+}>;
+
+
+export type DeleteLogReasonMutation = { __typename: 'Mutations', centralServer: { __typename: 'CentralServerMutationNode', logReason: { __typename: 'AssetLogReasonMutations', deleteLogReason: { __typename: 'DeleteAssetLogReasonError', error: { __typename: 'DatabaseError', description: string } | { __typename: 'RecordBelongsToAnotherStore', description: string } | { __typename: 'RecordNotFound', description: string } } | { __typename: 'DeleteResponse', id: string } } } };
 
 export const AssetCatalogueItemFragmentDoc = gql`
     fragment AssetCatalogueItem on AssetCatalogueItemNode {
@@ -106,6 +133,31 @@ export const AssetPropertyFragmentDoc = gql`
   allowedValues
   name
   valueType
+}
+    `;
+export const AssetLogFragmentDoc = gql`
+    fragment AssetLog on AssetLogNode {
+  comment
+  id
+  logDatetime
+  reason {
+    reason
+  }
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+    jobTitle
+  }
+}
+    `;
+export const AssetLogReasonFragmentDoc = gql`
+    fragment AssetLogReason on AssetLogReasonNode {
+  id
+  assetLogStatus
+  reason
 }
     `;
 export const AssetCatalogueItemsDocument = gql`
@@ -193,6 +245,20 @@ export const AssetCataloguePropertiesDocument = gql`
   }
 }
     ${AssetPropertyFragmentDoc}`;
+export const AssetLogReasonsDocument = gql`
+    query assetLogReasons($filter: AssetLogReasonFilterInput, $sort: AssetLogReasonSortInput, $storeId: String!) {
+  assetLogReasons(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...AssetLogReason
+      }
+    }
+  }
+}
+    ${AssetLogReasonFragmentDoc}`;
 export const InsertAssetCatalogueItemDocument = gql`
     mutation insertAssetCatalogueItem($input: InsertAssetCatalogueItemInput!, $storeId: String!) {
   centralServer {
@@ -265,6 +331,47 @@ export const InsertAssetCatalogueItemPropertyDocument = gql`
   }
 }
     `;
+export const InsertAssetLogReasonDocument = gql`
+    mutation insertAssetLogReason($input: InsertAssetLogReasonInput!) {
+  centralServer {
+    logReason {
+      insertAssetLogReason(input: $input) {
+        ... on AssetLogReasonNode {
+          __typename
+          id
+          reason
+        }
+        ... on InsertAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    `;
+export const DeleteLogReasonDocument = gql`
+    mutation deleteLogReason($reasonId: String!) {
+  centralServer {
+    logReason {
+      deleteLogReason(reasonId: $reasonId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteAssetLogReasonError {
+          __typename
+          error {
+            description
+          }
+        }
+      }
+    }
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -291,6 +398,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     assetCatalogueProperties(variables?: AssetCataloguePropertiesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetCataloguePropertiesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<AssetCataloguePropertiesQuery>(AssetCataloguePropertiesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetCatalogueProperties', 'query');
     },
+    assetLogReasons(variables: AssetLogReasonsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AssetLogReasonsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<AssetLogReasonsQuery>(AssetLogReasonsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'assetLogReasons', 'query');
+    },
     insertAssetCatalogueItem(variables: InsertAssetCatalogueItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemMutation>(InsertAssetCatalogueItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItem', 'mutation');
     },
@@ -299,6 +409,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     insertAssetCatalogueItemProperty(variables: InsertAssetCatalogueItemPropertyMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetCatalogueItemPropertyMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetCatalogueItemPropertyMutation>(InsertAssetCatalogueItemPropertyDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetCatalogueItemProperty', 'mutation');
+    },
+    insertAssetLogReason(variables: InsertAssetLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<InsertAssetLogReasonMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<InsertAssetLogReasonMutation>(InsertAssetLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'insertAssetLogReason', 'mutation');
+    },
+    deleteLogReason(variables: DeleteLogReasonMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<DeleteLogReasonMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<DeleteLogReasonMutation>(DeleteLogReasonDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'deleteLogReason', 'mutation');
     }
   };
 }
@@ -410,6 +526,23 @@ export const mockAssetCataloguePropertiesQuery = (resolver: ResponseResolver<Gra
  * @param resolver a function that accepts a captured request and may return a mocked response.
  * @see https://mswjs.io/docs/basics/response-resolver
  * @example
+ * mockAssetLogReasonsQuery((req, res, ctx) => {
+ *   const { filter, sort, storeId } = req.variables;
+ *   return res(
+ *     ctx.data({ assetLogReasons })
+ *   )
+ * })
+ */
+export const mockAssetLogReasonsQuery = (resolver: ResponseResolver<GraphQLRequest<AssetLogReasonsQueryVariables>, GraphQLContext<AssetLogReasonsQuery>, any>) =>
+  graphql.query<AssetLogReasonsQuery, AssetLogReasonsQueryVariables>(
+    'assetLogReasons',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
  * mockInsertAssetCatalogueItemMutation((req, res, ctx) => {
  *   const { input, storeId } = req.variables;
  *   return res(
@@ -454,5 +587,39 @@ export const mockDeleteAssetCatalogueItemMutation = (resolver: ResponseResolver<
 export const mockInsertAssetCatalogueItemPropertyMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetCatalogueItemPropertyMutationVariables>, GraphQLContext<InsertAssetCatalogueItemPropertyMutation>, any>) =>
   graphql.mutation<InsertAssetCatalogueItemPropertyMutation, InsertAssetCatalogueItemPropertyMutationVariables>(
     'insertAssetCatalogueItemProperty',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockInsertAssetLogReasonMutation((req, res, ctx) => {
+ *   const { input } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockInsertAssetLogReasonMutation = (resolver: ResponseResolver<GraphQLRequest<InsertAssetLogReasonMutationVariables>, GraphQLContext<InsertAssetLogReasonMutation>, any>) =>
+  graphql.mutation<InsertAssetLogReasonMutation, InsertAssetLogReasonMutationVariables>(
+    'insertAssetLogReason',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockDeleteLogReasonMutation((req, res, ctx) => {
+ *   const { reasonId } = req.variables;
+ *   return res(
+ *     ctx.data({ centralServer })
+ *   )
+ * })
+ */
+export const mockDeleteLogReasonMutation = (resolver: ResponseResolver<GraphQLRequest<DeleteLogReasonMutationVariables>, GraphQLContext<DeleteLogReasonMutation>, any>) =>
+  graphql.mutation<DeleteLogReasonMutation, DeleteLogReasonMutationVariables>(
+    'deleteLogReason',
     resolver
   )
