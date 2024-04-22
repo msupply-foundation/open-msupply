@@ -369,9 +369,8 @@ mod test {
         sync_status::{logger::SyncLoggerError, SyncLogError},
         synchroniser::SyncError,
     };
-    use actix_web::http::StatusCode;
     use repository::{RepositoryError, SyncLogRowErrorCode};
-    use reqwest::{Client, Url};
+    use reqwest::{Client, StatusCode, Url};
     use serde_json::json;
     use url::ParseError;
     use util::format_error;

@@ -26,10 +26,11 @@ machine-uid = { version = "0.2.0", optional = true }
 
 actix-cors = "0.6.1"
 actix-web = { version = "4.0.1", features = ["rustls"] }
-actix-files = "0.6.0"
+actix-files.workspace = true
 anyhow.workspace = true
 config = "0.11.0"
 chrono = { workspace = true }
+thiserror = {workspace = true}
 log = "0.4.14"
 rustls = "0.20.4"
 rustls-pemfile = "1.0.0"
@@ -42,9 +43,8 @@ futures = "0.3"
 simple-log = { version = "1.6" }
 rcgen = "0.9.2"
 regex = "1.5.5"
-actix-multipart = "0.6.1"
+actix-multipart = { workspace = true }
 futures-util = "0.3"
-sanitize-filename = "0.4"
 serde_json = "1.0.64"
 
 [dev-dependencies]
