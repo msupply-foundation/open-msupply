@@ -1,6 +1,7 @@
 use crate::{migrations::sql, StorageConnection};
 
 pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
+    // table name asset_type is renamed to asset_catalogue_type to prevent table name clash with OG mSupply
     sql!(
         connection,
         r#"
