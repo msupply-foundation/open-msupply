@@ -96,8 +96,6 @@ const getLocalisationKey = (type: InvoiceNodeType): LocaleKey => {
       return 'inventory-addition';
     case InvoiceNodeType.InventoryReduction:
       return 'inventory-reduction';
-    // Repack shouldn't show up in ledger, but included here for exhaustive
-    // matching
     case InvoiceNodeType.Repack:
       return 'label.repack';
   }

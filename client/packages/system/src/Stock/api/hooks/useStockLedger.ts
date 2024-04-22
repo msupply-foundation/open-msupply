@@ -38,15 +38,14 @@ export function useStockLedger(
 
 const getSortKey = (sortBy: string): LedgerSortFieldInput => {
   switch (sortBy) {
-    case ColumnKey.DateTime:
-      return LedgerSortFieldInput.Datetime;
     case ColumnKey.Name:
       return LedgerSortFieldInput.Name;
     case ColumnKey.Quantity:
       return LedgerSortFieldInput.Quantity;
     case ColumnKey.Type:
       return LedgerSortFieldInput.InvoiceType;
+    case ColumnKey.DateTime:
     default:
-      return LedgerSortFieldInput.StockLineId;
+      return LedgerSortFieldInput.Datetime;
   }
 };
