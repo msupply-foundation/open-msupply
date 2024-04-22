@@ -2166,7 +2166,7 @@ export type InvoiceNode = {
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   currency?: Maybe<CurrencyNode>;
-  currencyRate?: Maybe<Scalars['Float']['output']>;
+  currencyRate: Scalars['Float']['output'];
   deliveredDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   invoiceNumber: Scalars['Int']['output'];

@@ -192,7 +192,9 @@ export const inboundLinesToSummaryItems = (
     createSummaryItem(itemId, lines)
   );
 };
-export const canDeleteInvoice = (invoice: OutboundRowFragment): boolean =>
+export const canDeleteInvoice = (
+  invoice: OutboundRowFragment | PrescriptionRowFragment
+): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated ||
   invoice.status === InvoiceNodeStatus.Picked;

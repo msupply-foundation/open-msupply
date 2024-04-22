@@ -4,9 +4,11 @@ import {
   InvoiceLineNodeType,
   renderHookWithProvider,
 } from '@openmsupply-client/common';
-import { createDraftStockOutLine, createStockOutPlaceholderRow } from '../utils';
+import {
+  createDraftStockOutLine,
+  createStockOutPlaceholderRow,
+} from '../utils';
 import { DraftStockOutLine } from '../../types';
-
 
 const pastDate = () => new Date(0).toISOString();
 
@@ -48,6 +50,7 @@ const testLine = ({
         unitName: '',
         __typename: 'ItemNode',
       },
+      itemName: '',
       type: InvoiceLineNodeType.StockOut,
       packSize,
       invoiceId: '',
