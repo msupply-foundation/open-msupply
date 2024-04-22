@@ -12,6 +12,7 @@ use actix_web::http::StatusCode;
 use actix_web::web::Data;
 use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse};
 
+use fs::NamedFile;
 use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
 use repository::sync_file_reference_row::SyncFileStatus;
 use repository::RepositoryError;
@@ -28,11 +29,12 @@ use service::settings::Settings;
 use service::static_files::StaticFile;
 use service::static_files::{StaticFileCategory, StaticFileService};
 use service::sync::file_sync_driver::get_sync_settings;
+use service::sync::file_synchroniser;
 use service::sync::file_synchroniser::FileSynchroniser;
+use service::sync::CentralServerConfig;
 use service::usize_to_i32;
 use thiserror::Error;
 use util::format_error;
-use util::is_central_server;
 
 use crate::authentication::validate_cookie_auth;
 use crate::middleware::limit_content_length;
@@ -49,7 +51,7 @@ pub fn config_static_files(cfg: &mut web::ServiceConfig) {
     cfg.service(plugins);
     cfg.service(
         web::scope("/sync_files")
-            .service(sync_files)
+            .service(download_sync_file)
             .service(delete_sync_file)
             .service(upload_sync_file)
             .wrap(limit_content_length()),
@@ -233,7 +235,7 @@ async fn upload_sync_file_inner(
 }
 
 #[get("/{table_name}/{record_id}/{file_id}")]
-async fn sync_files(
+async fn download_sync_file(
     req: HttpRequest,
     settings: Data<Settings>,
     service_provider: Data<ServiceProvider>,
@@ -250,75 +252,80 @@ async fn sync_files(
         )
     })?;
 
-    let service = StaticFileService::new(&settings.server.base_dir)
-        .map_err(|err| InternalError::new(err, StatusCode::FORBIDDEN))?;
+    let error = match download_sync_file_inner(service_provider, &settings, path.into_inner()).await
+    {
+        Ok((named_file, file_name)) => {
+            let response = named_file
+                .set_content_disposition(ContentDisposition {
+                    disposition: DispositionType::Inline,
+                    parameters: vec![DispositionParam::Filename(file_name)],
+                })
+                .into_response(&req);
 
-    let (table_name, parent_record_id, file_id) = path.into_inner();
-
-    let static_file_category = StaticFileCategory::SyncFile(table_name, parent_record_id);
-
-    let file = service
-        .find_file(&file_id, static_file_category.clone())
-        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
-
-    let file = match file {
-        None => {
-            if is_central_server() {
-                // If we can't find the file locally, and we are the central server don't try to download from ourself...
-                return Err(InternalError::new(
-                    "File not found, it may not have been synced from the remote site yet..."
-                        .to_string(),
-                    StatusCode::NOT_FOUND,
-                )
-                .into());
-            }
-
-            log::info!(
-                "Sync File not found locally, will attempt to download it from the central server: {}",
-                file_id
-            );
-
-            let file_synchroniser = FileSynchroniser::new(
-                get_sync_settings(&service_provider),
-                service_provider.clone().into_inner(),
-                Arc::new(service),
-            );
-
-            let file_synchroniser = match file_synchroniser {
-                Ok(file_synchroniser) => file_synchroniser,
-                Err(err) => {
-                    log::error!("Error creating file synchroniser: {}", err);
-                    return Err(InternalError::new(
-                        "Couldn't download this file from the central server.",
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                    )
-                    .into());
-                }
-            };
-
-            file_synchroniser
-                .download_file_from_central(&file_id)
-                .await
-                .map_err(|err| {
-                    log::error!("Error downloading file from central server: {}", err);
-                    InternalError::new(
-                        "Couldn't download this file from the central server.",
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                    )
-                })?
+            return Ok(response);
         }
-        Some(file) => {
-            log::debug!("Sync File found: {}", file_id);
-            file
-        }
+        Err(error) => error,
     };
 
-    let response = fs::NamedFile::open(file.path)?
-        .set_content_disposition(ContentDisposition {
-            disposition: DispositionType::Inline,
-            parameters: vec![DispositionParam::Filename(file.name)],
-        })
-        .into_response(&req);
+    let error = match error {
+        DownloadFileError::NotFoundLocallyAndThisIsCentralServer => InternalError::new(
+            "File not found, it may not have been synced from the remote site yet...",
+            StatusCode::NOT_FOUND,
+        ),
+        _ => InternalError::new(
+            "Error downloading file, please see server logs",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ),
+    };
 
-    Ok(response)
+    Err(error.into())
+}
+
+#[derive(Error, Debug)]
+enum DownloadFileError {
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("File IO error")]
+    FileIOError(#[from] std::io::Error),
+    #[error("File not found locally and it's central server")]
+    NotFoundLocallyAndThisIsCentralServer,
+    #[error("Error downloading file from central")]
+    ErrorDownloadingFile(#[from] file_synchroniser::DownloadFileError),
+    #[error("Other")]
+    Other(#[from] anyhow::Error),
+}
+
+async fn download_sync_file_inner(
+    service_provider: Data<ServiceProvider>,
+    settings: &Settings,
+    (table_name, parent_record_id, file_id): (String, String, String),
+) -> Result<(NamedFile, /* file_name */ String), DownloadFileError> {
+    let file_service = StaticFileService::new(&settings.server.base_dir)?;
+    let static_file_category = StaticFileCategory::SyncFile(table_name, parent_record_id);
+
+    let file = file_service.find_file(&file_id, static_file_category.clone())?;
+
+    match file {
+        Some(file) => return Ok((NamedFile::open(file.path)?, file.name)),
+        None => {}
+    };
+
+    let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() else {
+        // Not found locally and is central server
+        return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
+    };
+
+    // File not found locally, download from central
+    let file_synchroniser = FileSynchroniser::new(
+        &url,
+        get_sync_settings(&service_provider),
+        service_provider.into_inner(),
+        Arc::new(file_service),
+    )?;
+
+    let file = file_synchroniser
+        .download_file_from_central(&file_id)
+        .await?;
+
+    return Ok((NamedFile::open(file.path)?, file.name));
 }

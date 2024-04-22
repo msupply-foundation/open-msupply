@@ -109,7 +109,7 @@ From version 2.0 omSupply would require both legacy and omSupply central server 
 - `cargo run` twice but change port, database and sync settings in yaml file or overwrite with env variables
 
 For example, two sites running locally from the same repo,  __central__ and  __test__, for __central__ site `Site is open mSupply central server` is checked and `This site url` is http://localhost:2055. 
-Commented out all sync settings in yaml and can start  __central__ with `APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `cd client/packages/host && yarn start -- --env API_HOST='http://localhost:2055'`, and then start  __test__ with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with  __test__ credentials,  __test__ site would sync with both legacy mSupply and omSupply central server (this  __central__ site), and __central__ site would synchronise with legacy mSupply server only
+Comment out all sync settings in yaml and can start  __central__ with `APP_SERVER__PORT=2055 APP_DATABASE__DATABASE_NAME="central_test" cargo run` front end would be started with `yarn start -- -- --env API_HOST='http://localhost:2055' --port 3005` (--port is for webpack port), and then start  __test__ with `cargo run` and `yarn && yarn start-local` from respective folders. The first site would be initialised with `central` site credentials first, and second sites with  __test__ credentials,  __test__ site would sync with both legacy mSupply and omSupply central server (this  __central__ site), and __central__ site would synchronise with legacy mSupply server only
 
 
 ### Start server in watch mode
