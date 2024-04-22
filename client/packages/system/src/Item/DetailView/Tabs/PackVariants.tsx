@@ -13,12 +13,12 @@ import {
   Grid,
   useEditModal,
   useAuthContext,
-  useNotification,
   UserPermission,
   DropdownMenu,
   DropdownMenuItem,
   DeleteIcon,
   useCentralServerCallback,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { usePackVariant } from '../../context';
 import { PackVariantEditModal } from '../../Components/PackVariantEditModal';
@@ -29,9 +29,8 @@ const PackVariantTable: FC<{ itemId: string }> = ({ itemId }) => {
   const { variantsControl } = usePackVariant(itemId, null);
   const { isOpen, entity, mode, onClose, onOpen } =
     useEditModal<VariantFragment>();
-  const { warning } = useNotification();
   const { userHasPermission } = useAuthContext();
-  const warningSnack = warning(t('auth.permission-denied'));
+  const warningSnack = useDisabledNotificationToast();
   const hasPermission = userHasPermission(
     UserPermission.ItemNamesCodesAndUnitsMutate
   );
