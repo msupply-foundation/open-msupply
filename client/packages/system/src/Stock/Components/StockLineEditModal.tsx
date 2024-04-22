@@ -146,12 +146,7 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       }
       cancelButton={<DialogButton variant="cancel" onClick={onClose} />}
     >
-      <Grid
-        container
-        paddingBottom={4}
-        alignItems="center"
-        flexDirection="column"
-      >
+      <Grid container alignItems="center" flexDirection="column">
         <Typography sx={{ fontWeight: 'bold' }} variant="h6">
           {stockLine.item.name}
         </Typography>
