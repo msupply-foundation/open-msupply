@@ -1,7 +1,7 @@
 use repository::{BarcodeRowRepository, LocationRowRepository, RepositoryError, StorageConnection};
 
-/// Some datafile contain links to non-existing barcode references.
-/// Check if the entry exist and if not return None.
+/// Some datafiles contain links to non-existing barcode references.
+/// Check if the entry exists and if not return None.
 pub(crate) fn clear_invalid_barcode_id(
     connection: &StorageConnection,
     barcode_id: Option<String>,
@@ -16,8 +16,8 @@ pub(crate) fn clear_invalid_barcode_id(
     Ok(barcode_id)
 }
 
-/// Some datafile contain links to non-existing location references.
-/// Check if the entry exist and if not return None.
+/// Some datafiles contain links to non-existing location references.
+/// Check if the entry exists and if not return None.
 pub(crate) fn clear_invalid_location_id(
     connection: &StorageConnection,
     location_id: Option<String>,
