@@ -94,11 +94,9 @@ fn create_filtered_query(filter: Option<CurrencyFilter>) -> BoxedLogQuery {
             None => query,
         };
 
-        query = match filter.is_active {
-            Some(true) => query.filter(currency_dsl::is_active.eq(true)),
-            Some(false) => query.filter(currency_dsl::is_active.eq(false)),
-            None => query,
-        };
+        if let Some(is_active) = filter.is_active {
+            query = query.filter(currency_dsl::is_active.eq(is_active))
+        }
     }
     query
 }
