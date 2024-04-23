@@ -168,15 +168,6 @@ impl SynchroniserV6 {
             .map(SyncRecordV6::from)
             .collect();
 
-            if records.is_empty() {
-                // No v6 records to push, update cursor and continue to next batch
-                if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                    cursor_controller.update(connection, last_pushed_cursor_id as u64 + 1)?
-                };
-
-                continue;
-            }
-
             let is_last_batch = change_logs_total <= batch_size as u64;
 
             let batch = SyncBatchV6 {
