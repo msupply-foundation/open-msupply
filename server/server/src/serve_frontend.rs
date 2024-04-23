@@ -14,18 +14,32 @@ use rust_embed::RustEmbed;
 struct Asset;
 
 const INDEX: &'static str = "index.html";
-const CACHE_MAX_AGE: u32 = 60 * 60 * 24; // 1 day
+const CACHE_MAX_AGE: u32 = 365 * 60 * 60 * 24; // 1 year
 
 // https://github.com/pyrossh/rust-embed/blob/master/examples/actix.rs
 fn serve_frontend(path: &str) -> HttpResponse {
     if let Some(content) = Asset::get(path) {
+        let cache_control = if path == "index.html" {
+            // The index and config files can change so we don't want to cache them
+            // The other files are generally static and can be cached
+            // Technically the config.js shouldn't change either but if it did we'd want pick it up immediately.
+            header::CacheControl(vec![header::CacheDirective::NoCache])
+        } else if path.starts_with("locales/") {
+            // These are the translation json files, in the typescript code they are cached in local storage and invalidated after a yarn build
+            // So we don't want to cache them here...
+            header::CacheControl(vec![header::CacheDirective::NoCache])
+        } else {
+            // Cache everything else for 1 year
+            header::CacheControl(vec![
+                header::CacheDirective::Public,
+                header::CacheDirective::MaxAge(CACHE_MAX_AGE),
+            ])
+        };
+
         return HttpResponse::Ok()
             .content_type(from_path(path).first_or_octet_stream().as_ref())
             .append_header(("x-content-type-options", "nosniff"))
-            .append_header(header::CacheControl(vec![
-                header::CacheDirective::Public,
-                header::CacheDirective::MaxAge(CACHE_MAX_AGE),
-            ]))
+            .append_header(cache_control)
             .body(content.data.into_owned());
     }
 
