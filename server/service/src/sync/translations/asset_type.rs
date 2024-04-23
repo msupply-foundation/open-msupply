@@ -37,7 +37,7 @@ impl SyncTranslation for AssetTypeTranslation {
     }
 
     fn change_log_type(&self) -> Option<ChangelogTableName> {
-        Some(ChangelogTableName::AssetType)
+        Some(ChangelogTableName::AssetCatalogueType)
     }
 
     // Only translating and pulling from central server
