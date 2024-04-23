@@ -142,7 +142,9 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           const constrained = constrain(parsed, decimalLimit, min, max);
 
-          setTextValue(formatValue(constrained));
+          // DON'T use the formatValue callback here, we only want to do FULL
+          // formatting onBlur
+          setTextValue(format(constrained));
           onChange(constrained);
         }}
         onKeyDown={e => {
