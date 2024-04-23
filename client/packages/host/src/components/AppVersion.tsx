@@ -1,5 +1,10 @@
 import React, { FC, CSSProperties } from 'react';
-import { Grid, Typography, useTranslation } from '@openmsupply-client/common';
+import {
+  Grid,
+  Typography,
+  useIsCentralServerApi,
+  useTranslation,
+} from '@openmsupply-client/common';
 // Version is shared for client and server and is located in repo root package.json
 const appVersion = require('../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
@@ -9,7 +14,9 @@ interface AppVersionProps {
 }
 
 export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
-  const t = useTranslation();
+  const t = useTranslation('app');
+  const isCentralServer = useIsCentralServerApi();
+
   return (
     <Grid
       style={{
@@ -31,6 +38,15 @@ export const AppVersion: FC<AppVersionProps> = ({ SiteInfo, style }) => {
             <Typography whiteSpace="nowrap">{appVersion}</Typography>
           </Grid>
         </Grid>
+        {isCentralServer && (
+          <Grid item display="flex" flex={1} gap={1} justifyContent="flex-end">
+            <Grid item justifyContent="flex-end" flex={0} display="flex">
+              <Typography fontWeight={700} sx={{ whiteSpace: 'nowrap' }}>
+                {t('label.central-server')}
+              </Typography>
+            </Grid>
+          </Grid>
+        )}{' '}
       </Grid>
       <Grid padding={1} paddingTop={0}>
         {SiteInfo}

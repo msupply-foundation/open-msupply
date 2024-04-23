@@ -3,6 +3,7 @@ use std::vec;
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use graphql_asset_catalogue::types::asset_catalogue_item::AssetCatalogueItemNode;
+use graphql_asset_catalogue::types::asset_catalogue_property::PropertyNodeValueType;
 use graphql_asset_catalogue::types::asset_category::AssetCategoryNode;
 use graphql_asset_catalogue::types::asset_class::AssetClassNode;
 use graphql_asset_catalogue::types::asset_type::AssetTypeNode;
@@ -21,7 +22,7 @@ use graphql_types::types::{LocationConnector, StoreNode, SyncFileReferenceConnec
 
 use repository::asset_catalogue_item_property::AssetCatalogueItemPropertyValue;
 use repository::asset_catalogue_item_property_row::AssetCatalogueItemPropertyRow;
-use repository::asset_catalogue_property_row::{AssetCataloguePropertyRow, PropertyValueType};
+use repository::asset_catalogue_property_row::AssetCataloguePropertyRow;
 use repository::asset_log_reason::{
     AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort, AssetLogReasonSortField,
 };
@@ -112,39 +113,18 @@ impl AssetConnector {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct AssetCatalogueItemPropertyNode {
+pub struct AssetCatalogueItemPropertyValueNode {
     pub value: AssetCatalogueItemPropertyRow,
     pub property: AssetCataloguePropertyRow,
 }
 
 #[derive(SimpleObject)]
 pub struct AssetCatalogueItemPropertyConnector {
-    nodes: Vec<AssetCatalogueItemPropertyNode>,
-}
-
-#[derive(Enum, Copy, Clone, PartialEq, Eq, Debug, Serialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")] // only needed to be comparable in tests
-pub enum PropertyNodeValueType {
-    String,
-    Boolean,
-    Integer,
-    Float,
-}
-
-impl PropertyNodeValueType {
-    pub fn from_domain(value_type: &PropertyValueType) -> PropertyNodeValueType {
-        use PropertyValueType::*;
-        match value_type {
-            String => PropertyNodeValueType::String,
-            Boolean => PropertyNodeValueType::Boolean,
-            Integer => PropertyNodeValueType::Integer,
-            Float => PropertyNodeValueType::Float,
-        }
-    }
+    nodes: Vec<AssetCatalogueItemPropertyValueNode>,
 }
 
 #[Object]
-impl AssetCatalogueItemPropertyNode {
+impl AssetCatalogueItemPropertyValueNode {
     pub async fn id(&self) -> &str {
         &self.value().id
     }
@@ -173,12 +153,12 @@ impl AssetCatalogueItemPropertyNode {
         &self.value().value_bool
     }
 }
-impl AssetCatalogueItemPropertyNode {
+impl AssetCatalogueItemPropertyValueNode {
     pub fn from_domain(
         property_and_value: AssetCatalogueItemPropertyValue,
-    ) -> AssetCatalogueItemPropertyNode {
+    ) -> AssetCatalogueItemPropertyValueNode {
         let AssetCatalogueItemPropertyValue { property, value } = property_and_value;
-        AssetCatalogueItemPropertyNode { property, value }
+        AssetCatalogueItemPropertyValueNode { property, value }
     }
 
     pub fn property(&self) -> &AssetCataloguePropertyRow {
@@ -197,7 +177,7 @@ impl AssetCatalogueItemPropertyConnector {
         AssetCatalogueItemPropertyConnector {
             nodes: properties_and_values
                 .into_iter()
-                .map(AssetCatalogueItemPropertyNode::from_domain)
+                .map(AssetCatalogueItemPropertyValueNode::from_domain)
                 .collect(),
         }
     }
@@ -208,7 +188,7 @@ impl AssetCatalogueItemPropertyConnector {
         AssetCatalogueItemPropertyConnector {
             nodes: properties_and_values
                 .into_iter()
-                .map(AssetCatalogueItemPropertyNode::from_domain)
+                .map(AssetCatalogueItemPropertyValueNode::from_domain)
                 .collect(),
         }
     }
@@ -308,7 +288,7 @@ impl AssetNode {
     pub async fn properties(
         &self,
         ctx: &Context<'_>,
-    ) -> Result<Vec<AssetCatalogueItemPropertyNode>> {
+    ) -> Result<Vec<AssetCatalogueItemPropertyValueNode>> {
         let properties = match &self.row().catalogue_item_id {
             Some(catalogue_item_id) => {
                 let loader = ctx.get_loader::<DataLoader<AssetCatalogueItemPropertyLoader>>();
@@ -317,7 +297,7 @@ impl AssetNode {
                 result_option
                     .unwrap_or(Vec::<AssetCatalogueItemPropertyValue>::new())
                     .iter()
-                    .map(|p| AssetCatalogueItemPropertyNode::from_domain(p.to_owned()))
+                    .map(|p| AssetCatalogueItemPropertyValueNode::from_domain(p.to_owned()))
                     .into_iter()
                     .collect()
             }
