@@ -5053,7 +5053,6 @@ dependencies = [
  "rust-embed",
  "rustls 0.20.9",
  "rustls-pemfile",
- "sanitize-filename",
  "serde 1.0.197",
  "serde_json",
  "service",
@@ -5068,6 +5067,7 @@ name = "service"
 version = "0.1.0"
 dependencies = [
  "actix-files",
+ "actix-multipart",
  "actix-rt",
  "actix-web",
  "anyhow",
@@ -5927,6 +5927,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "env_logger 0.8.4",
+ "sanitize-filename",
  "serde 1.0.197",
  "serde_json",
  "sha2",
