@@ -2,10 +2,10 @@ use super::asset_log_reason_row::asset_log_reason::dsl::*;
 
 use crate::asset_log_row::AssetLogStatus;
 use crate::ChangeLogInsertRow;
-use crate::ChangelogAction;
 use crate::ChangelogRepository;
 use crate::ChangelogTableName;
 use crate::RepositoryError;
+use crate::RowActionType;
 use crate::StorageConnection;
 use crate::Upsert;
 
@@ -25,7 +25,7 @@ table! {
 #[derive(
     Clone, Insertable, Queryable, Default, Debug, PartialEq, AsChangeset, Eq, Serialize, Deserialize,
 )]
-#[table_name = "asset_log_reason"]
+#[diesel(table_name = asset_log_reason)]
 pub struct AssetLogReasonRow {
     pub id: String,
     pub asset_log_status: AssetLogStatus,
@@ -52,7 +52,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
             .on_conflict(id)
             .do_update()
             .set(asset_log_reason_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -63,7 +63,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     ) -> Result<(), RepositoryError> {
         diesel::replace_into(asset_log_reason)
             .values(asset_log_reason_row)
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
         Ok(())
     }
 
@@ -73,13 +73,13 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     ) -> Result<i64, RepositoryError> {
         self._upsert_one(asset_log_reason_row)?;
         // Return the changelog id
-        self.insert_changelog(asset_log_reason_row.id.to_owned(), ChangelogAction::Upsert)
+        self.insert_changelog(asset_log_reason_row.id.to_owned(), RowActionType::Upsert)
     }
 
     fn insert_changelog(
         &self,
         asset_log_id: String,
-        action: ChangelogAction,
+        action: RowActionType,
     ) -> Result<i64, RepositoryError> {
         let row = ChangeLogInsertRow {
             table_name: ChangelogTableName::AssetLogReason,
@@ -93,7 +93,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     }
 
     pub fn find_all(&self) -> Result<Vec<AssetLogReasonRow>, RepositoryError> {
-        let result = asset_log_reason.load(&self.connection.connection);
+        let result = asset_log_reason.load(self.connection.lock().connection());
         Ok(result?)
     }
 
@@ -103,7 +103,7 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     ) -> Result<Option<AssetLogReasonRow>, RepositoryError> {
         let result = asset_log_reason
             .filter(id.eq(asset_log_id))
-            .first(&self.connection.connection)
+            .first(self.connection.lock().connection())
             .optional()?;
         Ok(result)
     }
@@ -111,10 +111,10 @@ impl<'a> AssetLogReasonRowRepository<'a> {
     pub fn delete(&self, asset_log_reason_id: &str) -> Result<(), RepositoryError> {
         diesel::update(asset_log_reason.filter(id.eq(asset_log_reason_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
-            .execute(&self.connection.connection)?;
+            .execute(self.connection.lock().connection())?;
 
         let _cursor_id =
-            self.insert_changelog(asset_log_reason_id.to_owned(), ChangelogAction::Delete);
+            self.insert_changelog(asset_log_reason_id.to_owned(), RowActionType::Delete);
         Ok(())
     }
 }
