@@ -81,9 +81,9 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'asset_type';
-                CREATE TRIGGER asset_type_trigger
-                AFTER INSERT OR UPDATE ON asset_type
+                ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'asset_catalogue_type';
+                CREATE TRIGGER asset_catalogue_type_trigger
+                AFTER INSERT OR UPDATE ON asset_catalogue_type
                 FOR EACH ROW EXECUTE PROCEDURE update_changelog();
             "#
         )?;
@@ -91,11 +91,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                CREATE TRIGGER asset_type_insert_trigger
-                AFTER INSERT ON asset_type
+                CREATE TRIGGER asset_catalogue_type_insert_trigger
+                AFTER INSERT ON asset_catalogue_type
                 BEGIN
                     INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ("asset_type", NEW.id, "UPSERT");
+                    VALUES ("asset_catalogue_type", NEW.id, "UPSERT");
                 END;
             "#
         )?;
@@ -103,11 +103,11 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
         sql!(
             connection,
             r#"
-                CREATE TRIGGER asset_type_update_trigger
-                AFTER UPDATE ON asset_type
+                CREATE TRIGGER asset_catalogue_type_update_trigger
+                AFTER UPDATE ON asset_catalogue_type
                 BEGIN
                 INSERT INTO changelog (table_name, record_id, row_action)
-                    VALUES ('asset_type', NEW.id, 'UPSERT');
+                    VALUES ('asset_catalogue_type', NEW.id, 'UPSERT');
                 END;
             "#
         )?;

@@ -17,7 +17,7 @@ table! {
         code -> Text,
         manufacturer -> Nullable<Text>,
         model -> Text,
-        asset_type_id -> Text,
+        asset_catalogue_type_id -> Text,
     }
 }
 
@@ -36,7 +36,7 @@ pub struct AssetCatalogueItemRow {
     pub code: String,
     pub manufacturer: Option<String>,
     pub model: String,
-    #[column_name = "asset_type_id"]
+    #[column_name = "asset_catalogue_type_id"]
     pub type_id: String,
 }
 
