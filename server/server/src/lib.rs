@@ -37,6 +37,7 @@ use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
 use util::is_central_server;
 
+mod authentication;
 pub mod certs;
 pub mod cold_chain;
 pub mod configuration;
@@ -49,6 +50,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+
 pub mod print;
 mod sync_on_central;
 

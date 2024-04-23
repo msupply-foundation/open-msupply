@@ -18,7 +18,9 @@ topological-sort = "0.2.2"
 bcrypt = "0.12.0"
 chrono = { workspace = true }
 rand = { workspace = true }
+actix-web = { workspace = true }
 actix-files = { workspace = true }
+actix-multipart = { workspace = true }
 jsonschema = "0.16.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
