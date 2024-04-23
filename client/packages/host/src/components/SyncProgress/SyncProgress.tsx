@@ -9,6 +9,7 @@ import {
   HorizontalStepper,
   StepDefinition,
   StepperColour,
+  useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import {
   FullSyncStatusFragment,
@@ -33,10 +34,18 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   colour = 'primary',
 }) => {
   const t = useTranslation('app');
+  const isCentralServer = useIsCentralServerApi();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
-  const steps = getSteps(t, colour, syncStatus, !!error, isOperational);
+  const steps = getSteps(
+    t,
+    colour,
+    isCentralServer,
+    syncStatus,
+    !!error,
+    isOperational
+  );
 
   return (
     <Box display="flex" flexDirection={'column'}>
@@ -72,6 +81,7 @@ type Progress = {
 const getSteps = (
   t: TypedTFunction<LocaleKey>,
   colour: StepperColour,
+  isCentralServer: boolean,
   syncStatus?: SyncStatus,
   isError?: boolean,
   isOperational?: boolean
@@ -117,12 +127,16 @@ const getSteps = (
   }
 
   if (isOperational) {
-    steps.push(getStep('sync-status.push-v6', syncStatus?.pushV6));
+    if (!isCentralServer) {
+      steps.push(getStep('sync-status.push-v6', syncStatus?.pushV6));
+    }
     steps.push(getStep('sync-status.push', syncStatus?.push));
   }
 
   steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
-  steps.push(getStep('sync-status.pull-v6', syncStatus?.pullV6));
+  if (!isCentralServer) {
+    steps.push(getStep('sync-status.pull-v6', syncStatus?.pullV6));
+  }
   steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
   steps.push(getStep('sync-status.integrate', syncStatus?.integration));
 
