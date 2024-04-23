@@ -147,11 +147,11 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn test_graphql_insert_asset_log_success() {
+    async fn test_graphql_insert_asset_log_reason_success() {
         let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             AssetLogReasonMutations,
-            "test_graphql_insert_asset_log_success",
+            "test_graphql_insert_asset_log_reason_success",
             MockDataInserts::all(),
         )
         .await;
