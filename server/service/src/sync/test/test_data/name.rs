@@ -1,15 +1,14 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{
-        name::{LegacyNameRow, LegacyNameType},
-        LegacyTableName, PullUpsertRecord,
-    },
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::name::{LegacyNameRow, LegacyNameType},
 };
 use chrono::NaiveDate;
-use repository::{Gender, NameRow, NameType};
+use repository::{Gender, NameRow, NameRowDelete, NameType};
 use serde_json::json;
 
-const NAME_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "name";
+
+const NAME_1: (&str, &str) = (
     "1FB32324AF8049248D929CFB35F255BA",
     r#"{
     "ID": "1FB32324AF8049248D929CFB35F255BA",
@@ -107,11 +106,11 @@ const NAME_1: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_1() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+fn name_1() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         NAME_1,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_1.0.to_owned(),
             name: "General".to_owned(),
             code: "GEN".to_owned(),
@@ -138,18 +137,18 @@ fn name_1() -> TestSyncPullRecord {
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
             ),
             date_of_death: None,
             custom_data_string: None,
-        }),
+        },
     )
 }
 
-const NAME_2: (&'static str, &'static str) = (
+const NAME_2: (&str, &str) = (
     "9EDD3F83C3D64C22A3CC9C98CF4967C4",
     r#"{
     "ID": "9EDD3F83C3D64C22A3CC9C98CF4967C4",
@@ -247,11 +246,11 @@ const NAME_2: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_2() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+fn name_2() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         NAME_2,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_2.0.to_owned(),
             name: "Birch Store".to_owned(),
             code: "SNA".to_owned(),
@@ -279,11 +278,11 @@ fn name_2() -> TestSyncPullRecord {
             national_health_number: None,
             date_of_death: None,
             custom_data_string: None,
-        }),
+        },
     )
 }
 
-const NAME_3: (&'static str, &'static str) = (
+const NAME_3: (&str, &str) = (
     "CB929EB86530455AB0392277FAC3DBA4",
     r#"{
     "ID": "CB929EB86530455AB0392277FAC3DBA4",
@@ -381,11 +380,11 @@ const NAME_3: (&'static str, &'static str) = (
 }"#,
 );
 
-fn name_3() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+fn name_3() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         NAME_3,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_3.0.to_owned(),
             name: "Birch Store 2".to_owned(),
             code: "SNA".to_owned(),
@@ -413,11 +412,11 @@ fn name_3() -> TestSyncPullRecord {
             national_health_number: Some("NHN002".to_string()),
             date_of_death: None,
             custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
-        }),
+        },
     )
 }
 
-const NAME_4: (&'static str, &'static str) = (
+const NAME_4: (&str, &str) = (
     "C3FB3B30A8D04DDF9AF59A15BB48668A",
     r#"{
       "ID": "C3FB3B30A8D04DDF9AF59A15BB48668A",
@@ -516,11 +515,11 @@ const NAME_4: (&'static str, &'static str) = (
   }"#,
 );
 
-fn name_4() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME,
+fn name_4() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         NAME_4,
-        PullUpsertRecord::Name(NameRow {
+        NameRow {
             id: NAME_4.0.to_string(),
             name: "Moemoe, Alex".to_string(),
             code: "00102/19/00".to_string(),
@@ -531,7 +530,7 @@ fn name_4() -> TestSyncPullRecord {
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
             gender: Some(Gender::Female),
-            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 07, 29).unwrap()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 7, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
             comment: Some("name comment 1".to_string()),
@@ -544,7 +543,7 @@ fn name_4() -> TestSyncPullRecord {
             is_donor: false,
             on_hold: false,
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap(),
@@ -553,13 +552,13 @@ fn name_4() -> TestSyncPullRecord {
             national_health_number: Some("NHN003".to_string()),
             date_of_death: None,
             custom_data_string: None,
-        }),
+        },
     )
 }
 
-fn name_push_record_1() -> TestSyncPushRecord {
-    TestSyncPushRecord {
-        table_name: LegacyTableName::NAME.to_string(),
+fn name_push_record_1() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: NAME_1.0.to_string(),
         push_data: json!(LegacyNameRow {
             id: NAME_1.0.to_owned(),
@@ -585,10 +584,10 @@ fn name_push_record_1() -> TestSyncPushRecord {
             on_hold: true,
             address1: Some("address1".to_string()),
             address2: Some("address2".to_string()),
-            created_date: Some(NaiveDate::from_ymd_opt(2022, 05, 22).unwrap()),
+            created_date: Some(NaiveDate::from_ymd_opt(2022, 5, 22).unwrap()),
             female: true,
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
@@ -600,9 +599,9 @@ fn name_push_record_1() -> TestSyncPushRecord {
     }
 }
 
-fn name_push_record_2() -> TestSyncPushRecord {
-    TestSyncPushRecord {
-        table_name: LegacyTableName::NAME.to_string(),
+fn name_push_record_2() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: NAME_4.0.to_string(),
         push_data: json!(LegacyNameRow {
             id: NAME_4.0.to_string(),
@@ -614,7 +613,7 @@ fn name_push_record_2() -> TestSyncPushRecord {
             supplying_store_id: Some("store_a".to_string()),
             first_name: Some("Alex".to_string()),
             last_name: Some("Moemoe".to_string()),
-            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 07, 29).unwrap()),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(1998, 7, 29).unwrap()),
             phone: Some("02345678".to_string()),
             charge_code: Some("00102/19/01".to_string()),
             comment: Some("name comment 1".to_string()),
@@ -629,9 +628,9 @@ fn name_push_record_2() -> TestSyncPushRecord {
             is_deceased: true,
             national_health_number: Some("NHN003".to_string()),
             female: true,
-            created_date: Some(NaiveDate::from_ymd_opt(2022, 05, 22).unwrap()),
+            created_date: Some(NaiveDate::from_ymd_opt(2022, 5, 22).unwrap()),
             created_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 05, 22)
+                NaiveDate::from_ymd_opt(2022, 5, 22)
                     .unwrap()
                     .and_hms_opt(0, 0, 0)
                     .unwrap()
@@ -643,10 +642,18 @@ fn name_push_record_2() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![name_1(), name_2(), name_3(), name_4()]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        NAME_4.0,
+        NameRowDelete(NAME_4.0.to_string()),
+    )]
+}
+
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![name_push_record_1(), name_push_record_2()]
 }

@@ -6,11 +6,16 @@ import { AuthError } from '../authentication/AuthContext';
 export type GroupByItem = {
   outboundShipment?: boolean;
   inboundShipment?: boolean;
+  outboundReturn?: boolean;
+  inboundReturn?: boolean;
   stocktake?: boolean;
 };
 export type AuthenticationCredentials = {
   store?: UserStoreNodeFragment | undefined;
   username: string;
+};
+export type UserSelectedPackVariant = {
+  [itemId: string]: /* userSelectedPackVariantId */ string;
 };
 
 export type LocalStorageRecord = {
@@ -27,6 +32,9 @@ export type LocalStorageRecord = {
   '/error/server': string;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
-};
+} & Record<
+  `/user/${string}/store/${string}/selectedvariant`,
+  UserSelectedPackVariant
+>;
 
 export type LocalStorageKey = keyof LocalStorageRecord;

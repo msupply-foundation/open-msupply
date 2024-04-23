@@ -1,15 +1,16 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ChangelogRepository, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
-    SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
+    ChangelogRepository, DatetimeFilter, EqualFilter, KeyValueType, Pagination, RepositoryError,
+    Sort, SyncLogFilter, SyncLogRepository, SyncLogRow, SyncLogSortField,
 };
 use util::Defaults;
 
 use crate::{
+    cursor_controller::CursorController,
     i32_to_u32,
     service_provider::ServiceContext,
     settings_service::{SettingsService, SettingsServiceTrait},
-    sync::{get_sync_push_changelogs_filter, remote_data_synchroniser, GetActiveStoresOnSiteError},
+    sync::{get_sync_push_changelogs_filter, GetActiveStoresOnSiteError},
 };
 
 use super::SyncLogError;
@@ -37,7 +38,9 @@ pub struct FullSyncStatus {
     pub prepare_initial: Option<SyncStatus>,
     pub integration: Option<SyncStatusWithProgress>,
     pub pull_central: Option<SyncStatusWithProgress>,
+    pub pull_v6: Option<SyncStatusWithProgress>,
     pub pull_remote: Option<SyncStatusWithProgress>,
+    pub push_v6: Option<SyncStatusWithProgress>,
     pub push: Option<SyncStatusWithProgress>,
 }
 
@@ -65,6 +68,14 @@ impl FullSyncStatus {
             error_code: _,
             error_message: _,
             id: _,
+            pull_v6_started_datetime,
+            pull_v6_finished_datetime,
+            pull_v6_progress_total,
+            pull_v6_progress_done,
+            push_v6_started_datetime,
+            push_v6_finished_datetime,
+            push_v6_progress_total,
+            push_v6_progress_done,
             integration_progress_total,
             integration_progress_done,
         } = sync_log_row;
@@ -104,6 +115,18 @@ impl FullSyncStatus {
                 finished: push_finished_datetime,
                 total: push_progress_total.map(i32_to_u32),
                 done: push_progress_done.map(i32_to_u32),
+            }),
+            pull_v6: pull_v6_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: pull_v6_finished_datetime,
+                total: pull_v6_progress_total.map(i32_to_u32),
+                done: pull_v6_progress_done.map(i32_to_u32),
+            }),
+            push_v6: push_v6_started_datetime.map(|started| SyncStatusWithProgress {
+                started,
+                finished: push_v6_finished_datetime,
+                total: push_v6_progress_total.map(i32_to_u32),
+                done: push_v6_progress_done.map(i32_to_u32),
             }),
         }
     }
@@ -192,7 +215,7 @@ fn get_initialisation_status(
         return Ok(InitialisationStatus::PreInitialisation);
     };
 
-    if sync_log.sync_log_row.finished_datetime == None {
+    if sync_log.sync_log_row.finished_datetime.is_none() {
         return Ok(InitialisationStatus::Initialising);
     };
 
@@ -204,8 +227,8 @@ fn get_initialisation_status(
 }
 
 /// During initial sync remote server asks central server to initialise remote data
-/// preparte initial done datetime is set on associated sync log, this is check to see
-/// if synce queue was initialised
+/// prepare initial done datetime is set on associated sync log, this is check to see
+/// if sync queue was initialised
 fn is_sync_queue_initialised(ctx: &ServiceContext) -> Result<bool, RepositoryError> {
     let log_with_done_prepare_initial_datetime = SyncLogRepository::new(&ctx.connection)
         .query_one(SyncLogFilter::new().prepare_initial_finished_datetime(
@@ -275,8 +298,9 @@ fn number_of_records_in_push_queue(
     use NumberOfRecordsInPushQueueError as Error;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
 
-    let cursor =
-        remote_data_synchroniser::get_push_cursor(&ctx.connection).map_err(Error::DatabaseError)?;
+    let cursor = CursorController::new(KeyValueType::RemoteSyncPushCursor)
+        .get(&ctx.connection)
+        .map_err(Error::DatabaseError)?;
 
     let changelog_filter =
         get_sync_push_changelogs_filter(&ctx.connection).map_err(|error| match error {

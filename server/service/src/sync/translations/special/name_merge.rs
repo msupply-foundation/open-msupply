@@ -1,13 +1,13 @@
 use repository::{
     EqualFilter, NameLinkRow, NameLinkRowRepository, NameStoreJoinFilter, NameStoreJoinRepository,
-    NameStoreJoinRow, StorageConnection, StoreFilter, StoreRepository, SyncBufferRow,
+    NameStoreJoinRow, NameStoreJoinRowDelete, StorageConnection, StoreFilter, StoreRepository,
+    SyncBufferRow,
 };
 
 use serde::Deserialize;
 
 use crate::sync::translations::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecord, PullDeleteRecordTable, PullDependency,
-    PullUpsertRecord, SyncTranslation,
+    name::NameTranslation, IntegrationOperation, PullTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize)]
@@ -18,30 +18,32 @@ pub struct NameMergeMessage {
     pub merge_id_to_delete: String,
 }
 
-pub(crate) struct NameMergeTranslation {}
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(NameMergeTranslation)
+}
+pub(crate) struct NameMergeTranslation;
 impl SyncTranslation for NameMergeTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::NAME,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &str {
+        NameTranslation.table_name()
     }
 
-    fn try_translate_pull_merge(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![]
+    }
+    fn try_translate_from_merge_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if sync_record.table_name != LegacyTableName::NAME {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<NameMergeMessage>(&sync_record.data)?;
 
         let name_link_repo = NameLinkRowRepository::new(connection);
         let name_links = name_link_repo.find_many_by_name_id(&data.merge_id_to_delete)?;
-        if name_links.len() == 0 {
-            return Ok(None);
+        if name_links.is_empty() {
+            return Ok(PullTranslateResult::Ignored(
+                "No mergeable name links found".to_string(),
+            ));
         }
         let indirect_link = name_link_repo
             .find_one_by_id(&data.merge_id_to_keep)?
@@ -50,10 +52,10 @@ impl SyncTranslation for NameMergeTranslation {
                 data.merge_id_to_keep
             ))?;
 
-        let mut upserts: Vec<PullUpsertRecord> = name_links
+        let mut operations: Vec<IntegrationOperation> = name_links
             .into_iter()
             .map(|NameLinkRow { id, .. }| {
-                PullUpsertRecord::NameLink(NameLinkRow {
+                IntegrationOperation::upsert(NameLinkRow {
                     id,
                     name_id: indirect_link.name_id.clone(),
                 })
@@ -84,7 +86,7 @@ impl SyncTranslation for NameMergeTranslation {
         let store_repo = StoreRepository::new(connection);
         let store = store_repo
             .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(&data.merge_id_to_keep)))?;
-        let deletes = name_store_joins_for_delete
+        let mut deletes = name_store_joins_for_delete
             .iter()
             .filter_map(|nsj_delete| {
                 // delete nsj_delete if it points to the store that belongs to the "keep" name. Avoids:
@@ -94,10 +96,9 @@ impl SyncTranslation for NameMergeTranslation {
                 // storeK joined to nameK (delete the join before this happens, stores shouldn't be visible to themselves)
                 if let Some(store) = &store {
                     if nsj_delete.name_store_join.store_id == store.store_row.id {
-                        return Some(PullDeleteRecord {
-                            id: nsj_delete.name_store_join.id.clone(),
-                            table: PullDeleteRecordTable::NameStoreJoin,
-                        });
+                        return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
+                            nsj_delete.name_store_join.id.clone(),
+                        )));
                     }
                 }
 
@@ -121,7 +122,7 @@ impl SyncTranslation for NameMergeTranslation {
                         || (!nsj_keep.name_store_join.name_is_supplier
                             && nsj_keep.name_store_join.name_is_supplier)
                     {
-                        upserts.push(PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+                        operations.push(IntegrationOperation::upsert(NameStoreJoinRow {
                             id: nsj_keep.name_store_join.id.clone(),
                             name_link_id: nsj_keep.name_store_join.name_link_id.clone(),
                             store_id: nsj_keep.name_store_join.store_id.clone(),
@@ -132,17 +133,17 @@ impl SyncTranslation for NameMergeTranslation {
                         }));
                     }
 
-                    return Some(PullDeleteRecord {
-                        id: nsj_delete.name_store_join.id.clone(),
-                        table: PullDeleteRecordTable::NameStoreJoin,
-                    });
+                    return Some(IntegrationOperation::delete(NameStoreJoinRowDelete(
+                        nsj_delete.name_store_join.id.clone(),
+                    )));
                 }
 
                 None
             })
             .collect::<Vec<_>>();
+        operations.append(&mut deletes);
 
-        Ok(Some(IntegrationRecords { upserts, deletes }))
+        Ok(PullTranslateResult::IntegrationOperations(operations))
     }
 }
 
@@ -162,7 +163,7 @@ mod tests {
         let mut sync_records = vec![
             SyncBufferRow {
                 record_id: "name_b".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "name_b",
@@ -173,7 +174,7 @@ mod tests {
             },
             SyncBufferRow {
                 record_id: "name_c".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_c",
@@ -214,9 +215,7 @@ mod tests {
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
-        let mut name_links = name_link_repo
-            .find_many_by_name_id(&"name_c".to_string())
-            .unwrap();
+        let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
 
         name_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(name_links, expected_name_links);
@@ -236,9 +235,7 @@ mod tests {
             .unwrap();
 
         let name_link_repo = NameLinkRowRepository::new(&connection);
-        let mut name_links = name_link_repo
-            .find_many_by_name_id(&"name_c".to_string())
-            .unwrap();
+        let mut name_links = name_link_repo.find_many_by_name_id("name_c").unwrap();
 
         name_links.sort_by_key(|i| i.id.to_owned());
         assert_eq!(name_links, expected_name_links);
@@ -280,7 +277,7 @@ mod tests {
         let sync_records = vec![
             SyncBufferRow {
                 record_id: "name3_merge".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "name2",
@@ -291,7 +288,7 @@ mod tests {
             },
             SyncBufferRow {
                 record_id: "name2_merge".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_a",
@@ -303,7 +300,7 @@ mod tests {
             SyncBufferRow {
                 // name_a is visible to name_store_a. This merge is test if the name_store_join is deleted, rather than letting the store have it's own name visible
                 record_id: "name_a_merge".to_string(),
-                table_name: LegacyTableName::NAME.to_string(),
+                table_name: "name".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "name_store_a",

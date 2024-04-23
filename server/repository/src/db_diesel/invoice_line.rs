@@ -76,7 +76,7 @@ pub enum InvoiceLineSortField {
 
 pub type InvoiceLineSort = Sort<InvoiceLineSortField>;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct InvoiceLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub store_id: Option<EqualFilter<String>>,
@@ -93,19 +93,7 @@ pub struct InvoiceLineFilter {
 
 impl InvoiceLineFilter {
     pub fn new() -> InvoiceLineFilter {
-        InvoiceLineFilter {
-            id: None,
-            store_id: None,
-            invoice_id: None,
-            r#type: None,
-            item_id: None,
-            location_id: None,
-            requisition_id: None,
-            number_of_packs: None,
-            invoice_type: None,
-            invoice_status: None,
-            stock_line_id: None,
-        }
+        InvoiceLineFilter::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
@@ -335,10 +323,14 @@ impl InvoiceLine {
             invoice_id: row.invoice_id.clone(),
             total_before_tax: row.total_before_tax,
             total_after_tax: row.total_after_tax,
-            stock_total_before_tax: is_stock.then(|| row.total_before_tax).unwrap_or(0.0),
-            stock_total_after_tax: is_stock.then(|| row.total_after_tax).unwrap_or(0.0),
-            service_total_before_tax: is_service.then(|| row.total_before_tax).unwrap_or(0.0),
-            service_total_after_tax: is_service.then(|| row.total_after_tax).unwrap_or(0.0),
+            stock_total_before_tax: if is_stock { row.total_before_tax } else { 0.0 },
+            stock_total_after_tax: if is_stock { row.total_after_tax } else { 0.0 },
+            service_total_before_tax: if is_service {
+                row.total_before_tax
+            } else {
+                0.0
+            },
+            service_total_after_tax: if is_service { row.total_after_tax } else { 0.0 },
             tax_percentage: row.tax,
             foreign_currency_total_after_tax: row.foreign_currency_price_before_tax.map(|price| {
                 row.tax

@@ -16,7 +16,7 @@ pub fn generate(
     store_id: &str,
     user_id: &str,
     requisition: Requisition,
-    fullfilments: Vec<RequisitionLineSupplyStatus>,
+    fulfillments: Vec<RequisitionLineSupplyStatus>,
 ) -> Result<(InvoiceRow, Vec<InvoiceLineRow>), OutError> {
     let other_party = get_other_party(connection, store_id, &requisition.name_row.id)?
         .ok_or(OutError::ProblemGettingOtherParty)?;
@@ -56,9 +56,10 @@ pub fn generate(
         linked_invoice_id: None,
         tax: None,
         clinician_link_id: None,
+        original_shipment_id: None,
     };
 
-    let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fullfilments)?;
+    let invoice_line_rows = generate_invoice_lines(connection, &new_invoice.id, fulfillments)?;
     Ok((new_invoice, invoice_line_rows))
 }
 
@@ -71,7 +72,7 @@ pub fn generate_invoice_lines(
 
     for requisition_line_supply_status in requisition_line_supply_statuses.into_iter() {
         let item_row = ItemRowRepository::new(connection)
-            .find_one_by_id(requisition_line_supply_status.item_id())?
+            .find_active_by_id(requisition_line_supply_status.item_id())?
             .ok_or(OutError::ProblemFindingItem)?;
 
         invoice_line_rows.push(InvoiceLineRow {
@@ -96,6 +97,7 @@ pub fn generate_invoice_lines(
             cost_price_per_pack: 0.0,
             stock_line_id: None,
             inventory_adjustment_reason_id: None,
+            return_reason_id: None,
             foreign_currency_price_before_tax: None,
         });
     }

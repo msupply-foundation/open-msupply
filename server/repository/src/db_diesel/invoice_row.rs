@@ -1,10 +1,12 @@
+use std::any::Any;
+
 use super::{
     clinician_link_row::clinician_link, currency_row::currency, invoice_row::invoice::dsl::*,
     item_link_row::item_link, name_link_row::name_link, store_row::store, user_row::user_account,
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::{dsl::max, prelude::*};
 
@@ -40,6 +42,7 @@ table! {
         currency_id -> Nullable<Text>,
         currency_rate -> Double,
         clinician_link_id -> Nullable<Text>,
+        original_shipment_id -> Nullable<Text>,
     }
 }
 
@@ -64,6 +67,8 @@ pub enum InvoiceRowType {
     InventoryAddition,
     InventoryReduction,
     Repack,
+    InboundReturn,
+    OutboundReturn,
 }
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -108,6 +113,7 @@ pub struct InvoiceRow {
     pub currency_id: Option<String>,
     pub currency_rate: f64,
     pub clinician_link_id: Option<String>,
+    pub original_shipment_id: Option<String>,
 }
 
 impl Default for InvoiceRow {
@@ -139,6 +145,7 @@ impl Default for InvoiceRow {
             currency_id: Default::default(),
             currency_rate: Default::default(),
             clinician_link_id: Default::default(),
+            original_shipment_id: Default::default(),
         }
     }
 }
@@ -180,7 +187,7 @@ impl<'a> InvoiceRowRepository<'a> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(&self.connection.connection);
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     // TODO replace find_one_by_id with this one
@@ -212,5 +219,38 @@ impl<'a> InvoiceRowRepository<'a> {
             .select(max(invoice_number))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct InvoiceRowDelete(pub String);
+impl Delete for InvoiceRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceRowRepository::new(con).find_one_by_id_option(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for InvoiceRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        InvoiceRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            InvoiceRowRepository::new(con).find_one_by_id_option(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
     }
 }

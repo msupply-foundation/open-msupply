@@ -36,9 +36,9 @@ pub fn insert(
                 validate(ctx, &input, allowed_ctx)?;
                 let id = input.id.clone();
                 let data = generate(input);
-                DocumentRegistryRowRepository::new(&connection).upsert_one(&data)?;
+                DocumentRegistryRowRepository::new(connection).upsert_one(&data)?;
 
-                let result = DocumentRegistryRepository::new(&connection)
+                let result = DocumentRegistryRepository::new(connection)
                     .query(
                         Pagination::one(),
                         Some(DocumentRegistryFilter::new().id(EqualFilter::equal_to(&id))),

@@ -2,7 +2,7 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use chrono::NaiveDate;
 use rand::{thread_rng, Rng};
@@ -26,6 +26,13 @@ impl SyncRecordTester for StocktakeRecordTester {
             code: "TestLocationCode".to_string(),
             on_hold: false,
             store_id: store_id.to_string(),
+        };
+        let currency_row = CurrencyRow {
+            id: uuid(),
+            rate: 1.0,
+            code: "NZD".to_string(),
+            is_home_currency: true,
+            date_updated: None,
         };
         let stocktake_row = StocktakeRow {
             id: uuid(),
@@ -66,13 +73,19 @@ impl SyncRecordTester for StocktakeRecordTester {
             central_upsert: json!({"item": [{
                 "ID": stocktake_line_row.item_link_id,
                 "type_of": "general"
+            }],
+            "currency": [{
+                "ID": currency_row.id,
+                "rate": currency_row.rate,
+                "currency": currency_row.code,
+                "is_home_currency": currency_row.is_home_currency,
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Location(location_row),
-                PullUpsertRecord::Stocktake(stocktake_row.clone()),
-                PullUpsertRecord::StocktakeLine(stocktake_line_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(location_row),
+                IntegrationOperation::upsert(stocktake_row.clone()),
+                IntegrationOperation::upsert(stocktake_line_row.clone()),
+            ],
+            ..Default::default()
         });
         // STEP 2 - mutate
         let invoice_row = inline_init(|r: &mut InvoiceRow| {
@@ -81,6 +94,7 @@ impl SyncRecordTester for StocktakeRecordTester {
             r.store_id = store_id.clone();
             r.name_store_id = Some(store_id.clone());
             r.tax = Some(0.0);
+            r.currency_id = currency_row.id.clone();
         });
 
         let stock_line_row = inline_init(|r: &mut StockLineRow| {
@@ -125,29 +139,28 @@ impl SyncRecordTester for StocktakeRecordTester {
             central_upsert: json!({"item": [{
                 "ID": stock_line_row.item_link_id,
                 "type_of": "general"
+            }],
+            "currency": [{
+                "ID": currency_row.id,
+                "rate": currency_row.rate,
+                "currency": currency_row.code,
+                "is_home_currency": currency_row.is_home_currency,
             }]}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Invoice(invoice_row),
-                PullUpsertRecord::StockLine(stock_line_row),
-                PullUpsertRecord::Stocktake(stocktake_row.clone()),
-                PullUpsertRecord::StocktakeLine(stocktake_line_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(invoice_row),
+                IntegrationOperation::upsert(stock_line_row.clone()),
+                IntegrationOperation::upsert(stocktake_row.clone()),
+                IntegrationOperation::upsert(stocktake_line_row.clone()),
+            ],
+            ..Default::default()
         });
         // STEP 3 - delete
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_deletes(vec![
-                PullDeleteRecord {
-                    id: stocktake_line_row.id.clone(),
-                    table: PullDeleteRecordTable::StocktakeLine,
-                },
-                PullDeleteRecord {
-                    id: stocktake_row.id.clone(),
-                    table: PullDeleteRecordTable::Stocktake,
-                },
-            ]),
+            integration_records: vec![
+                IntegrationOperation::delete(StocktakeLineRowDelete(stocktake_line_row.id.clone())),
+                IntegrationOperation::delete(StocktakeRowDelete(stocktake_row.id.clone())),
+            ],
+            ..Default::default()
         });
         result
     }

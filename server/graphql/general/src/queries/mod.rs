@@ -11,7 +11,9 @@ pub use self::refresh_token::*;
 pub mod master_list;
 pub use self::master_list::*;
 pub mod invoice_counts;
+pub mod master_list_line;
 pub use self::invoice_counts::*;
+pub use self::master_list_line::*;
 pub mod names;
 pub use self::names::*;
 pub mod item;
@@ -45,9 +47,16 @@ pub use self::log::*;
 pub mod last_successful_user_sync;
 pub use self::last_successful_user_sync::*;
 pub use self::plugin::*;
-pub mod temperature_chart;
-pub use self::temperature_chart::*;
 pub mod currency;
+pub mod label_printer_settings;
+pub use self::label_printer_settings::*;
+
+pub mod generate_inbound_return_lines;
+pub use self::generate_inbound_return_lines::*;
+pub mod generate_outbound_return_lines;
+pub use self::generate_outbound_return_lines::*;
+pub mod return_reason;
+pub use self::return_reason::*;
 
 #[cfg(test)]
 mod tests;

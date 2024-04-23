@@ -26,7 +26,7 @@ impl RefreshToken {
 pub struct NoRefreshTokenProvided;
 #[Object]
 impl NoRefreshTokenProvided {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "No refresh token provided"
     }
 }
@@ -34,7 +34,7 @@ impl NoRefreshTokenProvided {
 pub struct TokenExpired;
 #[Object]
 impl TokenExpired {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Token is expired"
     }
 }
@@ -42,7 +42,7 @@ impl TokenExpired {
 pub struct NotARefreshToken;
 #[Object]
 impl NotARefreshToken {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Not a refresh token"
     }
 }
@@ -50,7 +50,7 @@ impl NotARefreshToken {
 pub struct InvalidToken;
 #[Object]
 impl InvalidToken {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Invalid token"
     }
 }

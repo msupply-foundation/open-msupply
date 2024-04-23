@@ -36,7 +36,7 @@ pub fn insert_inbound_shipment(
             InvoiceRowRepository::new(connection).upsert_one(&new_invoice)?;
 
             activity_log_entry(
-                &ctx,
+                ctx,
                 ActivityLogType::InvoiceCreated,
                 Some(new_invoice.id.to_owned()),
                 None,
@@ -44,7 +44,7 @@ pub fn insert_inbound_shipment(
             )?;
 
             get_invoice(ctx, None, &new_invoice.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;

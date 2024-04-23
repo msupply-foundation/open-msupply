@@ -18,7 +18,7 @@ use graphql_core::{
 };
 use repository::{ClinicianRow, InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, PricingRow};
 
-use repository::{unknown_user, Invoice};
+use repository::Invoice;
 use serde::Serialize;
 use service::{usize_to_u32, ListResult};
 
@@ -30,6 +30,8 @@ pub enum InvoiceNodeType {
     Prescription,
     InventoryAddition,
     InventoryReduction,
+    OutboundReturn,
+    InboundReturn,
     Repack,
 }
 
@@ -120,9 +122,9 @@ impl InvoiceNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     pub async fn r#type(&self) -> InvoiceNodeType {
@@ -285,7 +287,7 @@ impl InvoiceNode {
         Ok(loader
             .load_one(ClinicianLoaderInput::new(
                 &self.row().store_id,
-                &clinician_id,
+                clinician_id,
             ))
             .await?
             .map(ClinicianNode::from_domain))
@@ -328,11 +330,11 @@ impl InvoiceNode {
         };
 
         let currency = currency_provider
-            .get_currency(service_context, &currency_id)
+            .get_currency(service_context, currency_id)
             .map_err(|e| StandardGraphqlError::from_repository_error(e).extend())?
             .ok_or(StandardGraphqlError::InternalError(format!(
                 "Cannot find currency ({}) linked to invoice ({})",
-                &currency_id,
+                currency_id,
                 &self.row().id
             )))?;
 
@@ -341,6 +343,20 @@ impl InvoiceNode {
 
     pub async fn currency_rate(&self) -> &f64 {
         &self.row().currency_rate
+    }
+
+    /// Inbound Shipment that is the origin of this Outbound Return
+    /// OR Outbound Shipment that is the origin of this Inbound Return
+    pub async fn original_shipment(&self, ctx: &Context<'_>) -> Result<Option<InvoiceNode>> {
+        let Some(original_shipment_id) = &self.row().original_shipment_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<InvoiceByIdLoader>>();
+        Ok(loader
+            .load_one(original_shipment_id.to_string())
+            .await?
+            .map(InvoiceNode::from_domain))
     }
 }
 
@@ -437,6 +453,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceRowType::InventoryAddition,
             InventoryReduction => InvoiceRowType::InventoryReduction,
             Repack => InvoiceRowType::Repack,
+            OutboundReturn => InvoiceRowType::OutboundReturn,
+            InboundReturn => InvoiceRowType::InboundReturn,
         }
     }
 
@@ -449,6 +467,8 @@ impl InvoiceNodeType {
             InventoryAddition => InvoiceNodeType::InventoryAddition,
             InventoryReduction => InvoiceNodeType::InventoryReduction,
             Repack => InvoiceNodeType::Repack,
+            InboundReturn => InvoiceNodeType::InboundReturn,
+            OutboundReturn => InvoiceNodeType::OutboundReturn,
         }
     }
 }
@@ -484,10 +504,10 @@ mod test {
 
     use async_graphql::{EmptyMutation, Object};
 
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test_with_data};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{
-            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            currency_a, mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
             MockDataInserts,
         },
         Invoice, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
@@ -507,6 +527,7 @@ mod test {
                 r.id = "test_invoice_pricing".to_string();
                 r.name_link_id = mock_name_a().id;
                 r.store_id = mock_store_a().id;
+                r.currency_id = Some(currency_a().id);
             })
         }
         fn line1() -> InvoiceLineRow {
@@ -543,7 +564,7 @@ mod test {
             })
         }
 
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphq_test_invoice_pricing",

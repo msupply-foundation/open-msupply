@@ -2,14 +2,28 @@ import {
   SortBy,
   MasterListSortFieldInput,
   FilterByWithBoolean,
+  MasterListFilterInput,
+  MasterListLineFilterInput,
+  MasterListLineSortFieldInput,
 } from '@openmsupply-client/common';
-import { Sdk, MasterListRowFragment } from './operations.generated';
+import {
+  Sdk,
+  MasterListRowFragment,
+  MasterListLineFragment,
+} from './operations.generated';
 
 export type ListParams = {
   first: number;
   offset: number;
   sortBy: SortBy<MasterListRowFragment>;
-  filterBy: FilterByWithBoolean | null;
+  filterBy: MasterListFilterInput | null;
+};
+
+export type LinesParams = {
+  first: number;
+  offset: number;
+  sortBy: SortBy<MasterListLineFragment>;
+  filterBy: MasterListLineFilterInput | null;
 };
 
 const masterListParser = {
@@ -17,6 +31,15 @@ const masterListParser = {
     if (sortBy.key === 'name') return MasterListSortFieldInput.Name;
     if (sortBy.key === 'code') return MasterListSortFieldInput.Code;
     return MasterListSortFieldInput.Description;
+  },
+};
+
+const masterListLineParser = {
+  toSort: (
+    sortBy: SortBy<MasterListLineFragment>
+  ): MasterListLineSortFieldInput => {
+    if (sortBy.key === 'code') return MasterListLineSortFieldInput.Code;
+    return MasterListLineSortFieldInput.Name;
   },
 };
 
@@ -71,6 +94,23 @@ export const getMasterListQueries = (sdk: Sdk, storeId: string) => ({
       }
 
       throw new Error('Record not found');
+    },
+    lines: async (
+      id: string,
+      { first, offset, sortBy, filterBy }: LinesParams
+    ) => {
+      const key = masterListLineParser.toSort(sortBy);
+      const result = await sdk.masterListLines({
+        masterListId: id,
+        page: { first, offset },
+        sort: {
+          desc: !!sortBy.isDesc,
+          key,
+        },
+        filter: filterBy,
+        storeId,
+      });
+      return result?.masterListLines;
     },
   },
 });

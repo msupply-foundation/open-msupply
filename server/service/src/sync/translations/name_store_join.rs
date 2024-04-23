@@ -1,17 +1,14 @@
 use repository::{
     ChangelogRow, ChangelogTableName, EqualFilter, NameRowRepository, NameStoreJoin,
-    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, StorageConnection,
-    StoreRowRepository, SyncBufferRow,
+    NameStoreJoinFilter, NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete,
+    StorageConnection, StoreRowRepository, SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
 
-use crate::sync::api::RemoteSyncRecordV5;
+use crate::sync::translations::{name::NameTranslation, store::StoreTranslation};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -28,39 +25,38 @@ pub struct LegacyNameStoreJoinRow {
     #[serde(rename = "om_name_is_supplier")]
     pub name_is_supplier: Option<bool>,
 }
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LegacyTableName::NAME_STORE_JOIN
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(NameStoreJoinTranslation)
 }
 
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::NameStoreJoin
-}
-
-pub(crate) struct NameStoreJoinTranslation {}
+pub(super) struct NameStoreJoinTranslation;
 impl SyncTranslation for NameStoreJoinTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::NAME_STORE_JOIN,
-            dependencies: vec![LegacyTableName::NAME, LegacyTableName::STORE],
-        }
+    fn table_name(&self) -> &str {
+        "name_store_join"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![NameTranslation.table_name(), StoreTranslation.table_name()]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::NameStoreJoin)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyNameStoreJoinRow>(&sync_record.data)?;
 
         // in mSupply the inactive flag is used for soft-deletes.
         // given that we don't handle soft deletes, translate to a hard-delete
         if let Some(inactive) = data.inactive {
             if inactive {
-                return self.try_translate_pull_delete(connection, sync_record);
+                return self.try_translate_from_delete_sync_record(connection, sync_record);
             }
         }
 
@@ -82,7 +78,9 @@ impl SyncTranslation for NameStoreJoinTranslation {
             // if the name_store_join is referencing itself, then exclude it
             // this is an invalid configuration which shouldn't be possible.. but is
             if store.name_id == data.name_id {
-                return Ok(None);
+                return Ok(PullTranslateResult::Ignored(
+                    "Name store join references itself".to_string(),
+                ));
             }
         }
 
@@ -99,20 +97,14 @@ impl SyncTranslation for NameStoreJoinTranslation {
             name_is_supplier: name.is_supplier,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::NameStoreJoin(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let NameStoreJoin {
             name_store_join:
                 NameStoreJoinRow {
@@ -139,35 +131,32 @@ impl SyncTranslation for NameStoreJoinTranslation {
             inactive: Some(false),
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LegacyTableName::NAME_STORE_JOIN,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         // it is possible for name store join to be set inactive
         // this is handled in the upsert translation
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(
-                &sync_record.record_id,
-                PullDeleteRecordTable::NameStoreJoin,
-            )
-        });
-
-        Ok(result)
+        Ok(PullTranslateResult::delete(NameStoreJoinRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    };
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ChangelogFilter, ChangelogRepository,
     };
@@ -185,8 +174,9 @@ mod tests {
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -194,15 +184,16 @@ mod tests {
 
         for record in test_data::test_pull_upsert_inactive_records() {
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -229,12 +220,21 @@ mod tests {
 
         let translator = NameStoreJoinTranslation {};
         for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

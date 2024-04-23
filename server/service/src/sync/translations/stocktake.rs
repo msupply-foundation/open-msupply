@@ -1,9 +1,9 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
         empty_str_as_option_string, naive_time, zero_date_as_option,
     },
+    translations::{invoice::InvoiceTranslation, store::StoreTranslation},
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
@@ -12,18 +12,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::STOCKTAKE;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Stocktake
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum LegacyStocktakeStatus {
@@ -86,24 +75,34 @@ pub struct LegacyStocktakeRow {
     pub finalised_datetime: Option<NaiveDateTime>,
 }
 
-pub(crate) struct StocktakeTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(StocktakeTranslation)
+}
+
+pub(super) struct StocktakeTranslation;
 impl SyncTranslation for StocktakeTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::STOCKTAKE,
-            dependencies: vec![LegacyTableName::STORE, LegacyTableName::TRANSACT],
-        }
+    fn table_name(&self) -> &str {
+        "Stock_take"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            InvoiceTranslation.table_name(),
+            StoreTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Stocktake)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyStocktakeRow>(&sync_record.data)?;
         let (created_datetime, finalised_datetime) = match data.created_datetime {
             Some(created_datetime) => {
@@ -135,20 +134,14 @@ impl SyncTranslation for StocktakeTranslation {
             is_locked: data.is_locked,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Stocktake(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let StocktakeRow {
             id,
             user_id,
@@ -185,22 +178,19 @@ impl SyncTranslation for StocktakeTranslation {
             finalised_datetime,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -234,8 +224,9 @@ mod tests {
             setup_all("test_stocktake_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

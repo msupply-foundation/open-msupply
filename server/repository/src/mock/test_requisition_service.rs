@@ -71,7 +71,7 @@ pub fn mock_requisition_for_number_test() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -88,7 +88,7 @@ pub fn mock_draft_request_requisition_for_update_test() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -105,7 +105,7 @@ pub fn mock_sent_request_requisition() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Sent;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -134,7 +134,7 @@ pub fn mock_finalised_response_requisition() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Response;
         r.status = RequisitionRowStatus::Finalised;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -163,7 +163,7 @@ pub fn mock_new_response_requisition_for_update_test() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Response;
         r.status = RequisitionRowStatus::New;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -180,7 +180,7 @@ pub fn mock_new_response_requisition() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Response;
         r.status = RequisitionRowStatus::New;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -210,7 +210,7 @@ pub fn mock_full_draft_response_requisition_for_update_test() -> FullMockRequisi
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
@@ -243,7 +243,7 @@ pub fn mock_request_draft_requisition_calculation_test() -> FullMockRequisition 
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Request;
             r.status = RequisitionRowStatus::Draft;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
@@ -318,7 +318,7 @@ pub fn mock_new_response_requisition_test() -> FullMockRequisition {
             r.store_id = mock_store_a().id;
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::New;
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();
@@ -390,6 +390,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                     location_id: None,
                     stock_line_id: None,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
                     foreign_currency_price_before_tax: None,
                 },
                 stock_line: mock_stock_line_a(),
@@ -415,6 +416,7 @@ pub fn mock_new_response_requisition_test_invoice() -> FullMockInvoice {
                     location_id: None,
                     stock_line_id: None,
                     inventory_adjustment_reason_id: None,
+                    return_reason_id: None,
                     foreign_currency_price_before_tax: None,
                 },
                 stock_line: mock_stock_line_a(),
@@ -431,7 +433,7 @@ pub fn mock_request_program_requisition() -> RequisitionRow {
         r.store_id = mock_store_a().id;
         r.r#type = RequisitionRowType::Request;
         r.status = RequisitionRowStatus::Draft;
-        r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+        r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap();
@@ -453,7 +455,7 @@ pub fn mock_response_program_requisition() -> FullMockRequisition {
             r.r#type = RequisitionRowType::Response;
             r.status = RequisitionRowStatus::New;
             r.approval_status = Some(RequisitionRowApprovalStatus::Pending);
-            r.created_datetime = NaiveDate::from_ymd_opt(2021, 01, 01)
+            r.created_datetime = NaiveDate::from_ymd_opt(2021, 1, 1)
                 .unwrap()
                 .and_hms_opt(0, 0, 0)
                 .unwrap();

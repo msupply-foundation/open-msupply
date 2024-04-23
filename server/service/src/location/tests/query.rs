@@ -2,12 +2,14 @@
 mod query {
     use repository::{
         location::{LocationFilter, LocationSortField},
-        mock::MockDataInserts,
+        mock::{mock_asset_a, mock_location_1, MockDataInserts},
         test_db::setup_all,
     };
     use repository::{EqualFilter, PaginationOption, Sort};
 
-    use crate::{service_provider::ServiceProvider, ListError, SingleRecordError};
+    use crate::{
+        asset::update::UpdateAsset, service_provider::ServiceProvider, ListError, SingleRecordError,
+    };
 
     #[actix_rt::test]
     async fn location_service_pagination() {
@@ -64,7 +66,7 @@ mod query {
             .unwrap();
 
         assert_eq!(result.location_row.id, "location_on_hold");
-        assert_eq!(result.location_row.on_hold, true);
+        assert!(result.location_row.on_hold);
     }
 
     #[actix_rt::test]
@@ -168,5 +170,60 @@ mod query {
             .collect();
 
         assert_eq!(result_names, sorted_names);
+    }
+
+    #[actix_rt::test]
+    async fn location_service_assigned_to_asset() {
+        let (_mock_data, _, connection_manager, _) =
+            setup_all("test_location_asset_assigned", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager, "app_data");
+        let context = service_provider.basic_context().unwrap();
+        let service = service_provider.location_service;
+
+        // Check location 1 is not assigned to an asset
+        let result = service
+            .get_locations(
+                &context,
+                None,
+                Some(
+                    LocationFilter::new()
+                        .id(EqualFilter::equal_to("location_1"))
+                        .assigned_to_asset(true),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.count, 0);
+
+        // assign location_1 to an asset
+        let asset_service = service_provider.asset_service;
+        let _result = asset_service
+            .update_asset(
+                &context,
+                UpdateAsset {
+                    id: mock_asset_a().id,
+                    location_ids: Some(vec![mock_location_1().id]),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Check location 1 is assigned to an asset
+        let result = service
+            .get_locations(
+                &context,
+                None,
+                Some(
+                    LocationFilter::new()
+                        .id(EqualFilter::equal_to("location_1"))
+                        .assigned_to_asset(true),
+                ),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.count, 1);
     }
 }

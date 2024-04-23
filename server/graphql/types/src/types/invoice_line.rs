@@ -161,6 +161,9 @@ impl InvoiceLineNode {
     pub async fn note(&self) -> &Option<String> {
         &self.row().note
     }
+    pub async fn return_reason_id(&self) -> &Option<String> {
+        &self.row().return_reason_id
+    }
 }
 
 #[derive(Union)]
@@ -223,7 +226,7 @@ mod test {
 
     use async_graphql::{EmptyMutation, Object};
     use chrono::NaiveDate;
-    use graphql_core::{assert_graphql_query, test_helpers::setup_graphl_test};
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::{
         mock::MockDataInserts, InvoiceLine, InvoiceLineRow, InvoiceLineRowType, InvoiceRow,
         ItemRow, LocationRow,
@@ -238,7 +241,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_test_invoice_line_basic",
@@ -261,7 +264,7 @@ mod test {
                             r.pack_size = 1;
                             r.number_of_packs = 2.0;
                             r.batch = Some("line_batch".to_string());
-                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 01, 01).unwrap());
+                            r.expiry_date = Some(NaiveDate::from_ymd_opt(2021, 1, 1).unwrap());
                             r.location_id = Some("line_location_id".to_string());
                             r.note = None;
                         }),
@@ -325,7 +328,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_test_invoice_line_pricing",

@@ -12,10 +12,12 @@ import {
   Switch,
   InvoiceNodeStatus,
   Alert,
+  ArrowLeftIcon,
+  RewindIcon,
   Tooltip,
 } from '@openmsupply-client/common';
 import { SupplierSearchInput } from '@openmsupply-client/system';
-import { InboundRowFragment, useInbound } from '../api';
+import { InboundLineFragment, InboundRowFragment, useInbound } from '../api';
 
 const InboundInfoPanel = ({
   shipment,
@@ -38,20 +40,25 @@ const InboundInfoPanel = ({
   return <Alert severity="info">{loadMessage(shipment)}</Alert>;
 };
 
-export const Toolbar: FC = () => {
+export const Toolbar: FC<{
+  onReturnLines: (selectedLines: InboundLineFragment[]) => void;
+}> = ({ onReturnLines }) => {
   const isDisabled = useInbound.utils.isDisabled();
   const { data } = useInbound.lines.items();
   const { data: shipment } = useInbound.document.get();
 
   const onDelete = useInbound.lines.deleteSelected();
+  const onZeroQuantities = useInbound.lines.zeroQuantities();
   const { otherParty, theirReference, update } = useInbound.document.fields([
     'otherParty',
     'theirReference',
   ]);
   const { isGrouped, toggleIsGrouped } = useInbound.lines.rows();
   const t = useTranslation('replenishment');
-  const isTransfer = !!shipment?.linkedShipment?.id;
 
+  const selectedLines = useInbound.utils.selectedLines();
+
+  const isTransfer = !!shipment?.linkedShipment?.id;
   if (!data) return null;
 
   return (
@@ -115,8 +122,20 @@ export const Toolbar: FC = () => {
             />
           </Box>
           <DropdownMenu label={t('label.actions')}>
+            <DropdownMenuItem
+              IconComponent={ArrowLeftIcon}
+              onClick={() => onReturnLines(selectedLines)}
+            >
+              {t('button.return-lines')}
+            </DropdownMenuItem>
             <DropdownMenuItem IconComponent={DeleteIcon} onClick={onDelete}>
               {t('button.delete-lines')}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              IconComponent={RewindIcon}
+              onClick={onZeroQuantities}
+            >
+              {t('button.zero-line-quantity')}
             </DropdownMenuItem>
           </DropdownMenu>
         </Grid>

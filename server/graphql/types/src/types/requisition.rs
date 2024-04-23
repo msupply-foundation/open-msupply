@@ -12,7 +12,7 @@ use graphql_core::{
 };
 use repository::{
     requisition_row::{RequisitionRow, RequisitionRowStatus, RequisitionRowType},
-    unknown_user, NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
+    NameRow, PeriodRow, Requisition, RequisitionRowApprovalStatus,
 };
 use service::ListResult;
 
@@ -78,7 +78,7 @@ impl RequisitionNode {
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
-        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime.clone(), Utc)
+        DateTime::<Utc>::from_naive_utc_and_offset(self.row().created_datetime, Utc)
     }
 
     pub async fn expected_delivery_date(&self) -> &Option<NaiveDate> {
@@ -106,19 +106,19 @@ impl RequisitionNode {
         let result = loader
             .load_one(user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(Some(UserNode::from_domain(result)))
+        Ok(result)
     }
 
     /// Applicable to request requisition only
     pub async fn sent_datetime(&self) -> Option<DateTime<Utc>> {
-        let sent_datetime = self.row().sent_datetime.clone();
+        let sent_datetime = self.row().sent_datetime;
         sent_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
     pub async fn finalised_datetime(&self) -> Option<DateTime<Utc>> {
-        let finalised_datetime = self.row().finalised_datetime.clone();
+        let finalised_datetime = self.row().finalised_datetime;
         finalised_datetime.map(|v| DateTime::<Utc>::from_naive_utc_and_offset(v, Utc))
     }
 
@@ -237,10 +237,10 @@ impl RequisitionNode {
     }
 
     pub async fn period(&self) -> Option<PeriodNode> {
-        match &self.requisition.period {
-            Some(period) => Some(PeriodNode::from_domain(period.to_owned())),
-            None => None,
-        }
+        self.requisition
+            .period
+            .as_ref()
+            .map(|period| PeriodNode::from_domain(period.to_owned()))
     }
 
     // % allocated ?
@@ -340,11 +340,11 @@ mod test {
 
     use graphql_core::{
         assert_graphql_query,
-        test_helpers::{setup_graphl_test, setup_graphl_test_with_data},
+        test_helpers::{setup_graphql_test, setup_graphql_test_with_data},
     };
     use repository::{
         mock::{mock_user_account_a, MockDataInserts},
-        unknown_user, Requisition, RequisitionRow,
+        Requisition, RequisitionRow,
     };
     use serde_json::json;
     use util::inline_init;
@@ -356,7 +356,7 @@ mod test {
         #[derive(Clone)]
         struct TestQuery;
 
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             TestQuery,
             EmptyMutation,
             "graphql_requisition_user_loader",
@@ -399,11 +399,6 @@ mod test {
                     "userId": mock_user_account_a().id
                 }
             },
-            "testQueryUserDoesNotExist": {
-                "user": {
-                    "userId": unknown_user().user_row.id
-                }
-            },
             "testQueryUserNotAssociated": {
                 "user": null
             },
@@ -437,7 +432,7 @@ mod test {
         use repository::mock::test_remaining_to_supply as TestData;
         #[derive(Clone)]
         struct TestQuery;
-        let (_, _, _, settings) = setup_graphl_test_with_data(
+        let (_, _, _, settings) = setup_graphql_test_with_data(
             TestQuery,
             EmptyMutation,
             "graphql_requisition_lines_remaining_to_supply_loader",

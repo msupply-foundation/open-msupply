@@ -2,14 +2,13 @@ use chrono::NaiveDate;
 use repository::StockLineRow;
 use serde_json::json;
 
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{stock_line::LegacyStockLineRow, LegacyTableName, PullUpsertRecord},
-};
+use crate::sync::{test::TestSyncIncomingRecord, translations::stock_line::LegacyStockLineRow};
 
-use super::TestSyncPushRecord;
+use super::TestSyncOutgoingRecord;
 
-const ITEM_LINE_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "item_line";
+
+const ITEM_LINE_1: (&str, &str) = (
     "0a3b02d0f0d211eb8dddb54df6d741bc",
     r#"{
       "ID": "0a3b02d0f0d211eb8dddb54df6d741bc",
@@ -52,11 +51,11 @@ const ITEM_LINE_1: (&'static str, &'static str) = (
       "weight_per_pack": 0
     }"#,
 );
-fn item_line_1_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::ITEM_LINE,
+fn item_line_1_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         ITEM_LINE_1,
-        PullUpsertRecord::StockLine(StockLineRow {
+        StockLineRow {
             id: ITEM_LINE_1.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_a".to_string(),
@@ -72,12 +71,12 @@ fn item_line_1_pull_record() -> TestSyncPullRecord {
             note: Some("test note".to_string()),
             supplier_link_id: Some("name_store_b".to_string()),
             barcode_id: None,
-        }),
+        },
     )
 }
-fn item_line_1_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
-        table_name: LegacyTableName::ITEM_LINE.to_string(),
+fn item_line_1_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: ITEM_LINE_1.0.to_string(),
         push_data: json!(LegacyStockLineRow {
             ID: ITEM_LINE_1.0.to_string(),
@@ -99,7 +98,7 @@ fn item_line_1_push_record() -> TestSyncPushRecord {
     }
 }
 
-const ITEM_LINE_2: (&'static str, &'static str) = (
+const ITEM_LINE_2: (&str, &str) = (
     "4E8AAB798EBA42819E24CC753C800242",
     r#"{
       "ID": "4E8AAB798EBA42819E24CC753C800242",
@@ -142,11 +141,11 @@ const ITEM_LINE_2: (&'static str, &'static str) = (
       "weight_per_pack": 0
   }"#,
 );
-fn item_line_2_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::ITEM_LINE,
+fn item_line_2_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         ITEM_LINE_2,
-        PullUpsertRecord::StockLine(StockLineRow {
+        StockLineRow {
             id: ITEM_LINE_2.0.to_string(),
             store_id: "store_a".to_string(),
             item_link_id: "item_b".to_string(),
@@ -162,12 +161,12 @@ fn item_line_2_pull_record() -> TestSyncPullRecord {
             note: None,
             supplier_link_id: None,
             barcode_id: None,
-        }),
+        },
     )
 }
-fn item_line_2_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
-        table_name: LegacyTableName::ITEM_LINE.to_string(),
+fn item_line_2_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: ITEM_LINE_2.0.to_string(),
         push_data: json!(LegacyStockLineRow {
             ID: ITEM_LINE_2.0.to_string(),
@@ -189,10 +188,10 @@ fn item_line_2_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![item_line_1_pull_record(), item_line_2_pull_record()]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![item_line_1_push_record(), item_line_2_push_record()]
 }

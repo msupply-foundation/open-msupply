@@ -1,10 +1,9 @@
-use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullDeleteRecordTable, PullUpsertRecord},
-};
-use repository::MasterListNameJoinRow;
+use crate::sync::test::TestSyncIncomingRecord;
+use repository::{MasterListNameJoinRow, MasterListNameJoinRowDelete};
 
-const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "list_master_name_join";
+
+const LIST_MASTER_NAME_JOIN_1: (&str, &str) = (
     "A7A06D78361041448B836857ED4330C4",
     r#"{
     "ID": "A7A06D78361041448B836857ED4330C4",
@@ -18,22 +17,22 @@ const LIST_MASTER_NAME_JOIN_1: (&'static str, &'static str) = (
   }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::LIST_MASTER_NAME_JOIN,
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         LIST_MASTER_NAME_JOIN_1,
-        PullUpsertRecord::MasterListNameJoin(MasterListNameJoinRow {
+        MasterListNameJoinRow {
             id: LIST_MASTER_NAME_JOIN_1.0.to_owned(),
             master_list_id: "87027C44835B48E6989376F42A58F7E3".to_owned(),
             name_link_id: "name_store_a".to_owned(),
-        }),
+        },
     )]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::LIST_MASTER_NAME_JOIN,
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
         LIST_MASTER_NAME_JOIN_1.0,
-        PullDeleteRecordTable::MasterListNameJoin,
+        MasterListNameJoinRowDelete(LIST_MASTER_NAME_JOIN_1.0.to_string()),
     )]
 }

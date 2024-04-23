@@ -14,6 +14,7 @@ import {
 import { DraftInboundLine } from '../../../../types';
 import { InboundLineEditPanel } from './InboundLineEditPanel';
 import { QuantityTable, PricingTable, LocationTable } from './TabTables';
+import { InboundLineFragment } from '../../../api';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
 interface TabLayoutProps {
@@ -21,6 +22,7 @@ interface TabLayoutProps {
   draftLines: DraftInboundLine[];
   isDisabled: boolean;
   updateDraftLine: (patch: Partial<DraftInboundLine> & { id: string }) => void;
+  item: InboundLineFragment['item'] | null;
   currency?: CurrencyRowFragment | null;
   isExternalSupplier?: boolean;
 }
@@ -32,6 +34,7 @@ enum Tabs {
 }
 
 export const TabLayout: FC<TabLayoutProps> = ({
+  item,
   addDraftLine,
   draftLines,
   isDisabled,
@@ -103,6 +106,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
       >
         <InboundLineEditPanel value={Tabs.Batch}>
           <QuantityTable
+            item={item}
             isDisabled={isDisabled}
             lines={draftLines}
             updateDraftLine={updateDraftLine}
@@ -116,6 +120,7 @@ export const TabLayout: FC<TabLayoutProps> = ({
             updateDraftLine={updateDraftLine}
             currency={currency}
             isExternalSupplier={isExternalSupplier}
+            item={item}
           />
         </InboundLineEditPanel>
 

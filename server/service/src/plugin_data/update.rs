@@ -33,9 +33,9 @@ pub fn update(
             validate(ctx, &input)?;
             let data = generate(ctx, input.clone())?;
 
-            PluginDataRowRepository::new(&connection)
+            PluginDataRowRepository::new(connection)
                 .upsert_one(&data)
-                .map_err(|error| UpdatePluginDataError::DatabaseError(error))
+                .map_err(UpdatePluginDataError::DatabaseError)
         })
         .map_err(|error| error.to_inner_error())?;
 
@@ -50,13 +50,13 @@ fn validate(ctx: &ServiceContext, input: &UpdatePluginData) -> Result<(), Update
     let plugin_data = check_plugin_data_exists(ctx, &input.id)?
         .ok_or(UpdatePluginDataError::PluginDataDoesNotExist)?;
 
-    if &input.related_record_id != &plugin_data.related_record_id {
+    if input.related_record_id != plugin_data.related_record_id {
         return Err(UpdatePluginDataError::RelatedRecordDoesNotMatch);
     }
-    if &input.related_record_type != &plugin_data.related_record_type {
+    if input.related_record_type != plugin_data.related_record_type {
         return Err(UpdatePluginDataError::RelatedRecordTypeDoesNotMatch);
     }
-    if &input.plugin_name != &plugin_data.plugin_name {
+    if input.plugin_name != plugin_data.plugin_name {
         return Err(UpdatePluginDataError::PluginNameDoesNotMatch);
     }
 
@@ -127,7 +127,7 @@ mod test {
     use crate::{plugin_data::UpdatePluginData, service_provider::ServiceProvider};
 
     #[actix_rt::test]
-    async fn update_inbound_shipment_success() {
+    async fn update_plugin_success() {
         fn plugin_data_donor() -> PluginDataRow {
             PluginDataRow {
                 id: "plugin_data".to_string(),

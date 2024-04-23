@@ -7,35 +7,41 @@ use actix_web::web::{self, Data};
 use actix_web::HttpResponse;
 use actix_web::{guard, HttpRequest};
 
-use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
+use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
 use async_graphql::{MergedObject, Response};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use graphql_batch_mutations::BatchMutations;
 use graphql_clinician::ClinicianQueries;
 use graphql_core::loader::LoaderRegistry;
+use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::{auth_data_from_request, BoxedSelfRequest, RequestUserData, SelfRequest};
 use graphql_form_schema::{FormSchemaMutations, FormSchemaQueries};
 use graphql_general::{
     DiscoveryQueries, GeneralMutations, GeneralQueries, InitialisationMutations,
     InitialisationQueries,
 };
+
+use graphql_asset::{
+    AssetLogMutations, AssetLogQueries, AssetLogReasonMutations, AssetLogReasonQueries,
+    AssetMutations, AssetQueries,
+};
+use graphql_asset_catalogue::AssetCatalogueMutations;
+use graphql_asset_catalogue::AssetCatalogueQueries;
+use graphql_cold_chain::{ColdChainMutations, ColdChainQueries};
+use graphql_inventory_adjustment::InventoryAdjustmentMutations;
 use graphql_invoice::{InvoiceMutations, InvoiceQueries};
 use graphql_invoice_line::{InvoiceLineMutations, InvoiceLineQueries};
 use graphql_location::{LocationMutations, LocationQueries};
+use graphql_pack_variant::{PackVariantMutations, PackVariantQueries};
 use graphql_plugin::{PluginMutations, PluginQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::ReportQueries;
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
-use graphql_sensor::{SensorMutations, SensorQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
 use graphql_stocktake_line::{StocktakeLineMutations, StocktakeLineQueries};
-use graphql_temperature_breach::{TemperatureBreachMutations, TemperatureBreachQueries};
-use graphql_temperature_log::TemperatureLogQueries;
-use graphql_temperature_notification::TemperatureNotificationQueries;
 
 use repository::StorageConnectionManager;
 use service::auth_data::AuthData;
@@ -43,6 +49,7 @@ use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use tokio::sync::RwLock;
+use util::is_central_server;
 
 pub type OperationalSchema =
     async_graphql::Schema<Queries, Mutations, async_graphql::EmptySubscription>;
@@ -51,16 +58,40 @@ pub type InitialisationSchema = async_graphql::Schema<
     InitialisationMutations,
     async_graphql::EmptySubscription,
 >;
+#[derive(Default, Clone)]
+pub struct CentralServerMutationNode;
+#[Object]
+impl CentralServerMutationNode {
+    async fn pack_variant(&self) -> PackVariantMutations {
+        PackVariantMutations
+    }
+    async fn asset_catalogue(&self) -> AssetCatalogueMutations {
+        AssetCatalogueMutations
+    }
+    async fn log_reason(&self) -> AssetLogReasonMutations {
+        AssetLogReasonMutations
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct CentralServerMutations;
+#[Object]
+impl CentralServerMutations {
+    async fn central_server(&self) -> async_graphql::Result<CentralServerMutationNode> {
+        if !is_central_server() {
+            return Err(StandardGraphqlError::from_str("Not a central server"));
+        };
+
+        Ok(CentralServerMutationNode)
+    }
+}
 
 #[derive(MergedObject, Default, Clone)]
 pub struct Queries(
     pub InvoiceQueries,
     pub InvoiceLineQueries,
     pub LocationQueries,
-    pub SensorQueries,
-    pub TemperatureBreachQueries,
-    pub TemperatureLogQueries,
-    pub TemperatureNotificationQueries,
+    pub ColdChainQueries,
     pub StocktakeQueries,
     pub StocktakeLineQueries,
     pub GeneralQueries,
@@ -71,7 +102,12 @@ pub struct Queries(
     pub ProgramsQueries,
     pub FormSchemaQueries,
     pub ClinicianQueries,
+    pub PackVariantQueries,
     pub PluginQueries,
+    pub AssetCatalogueQueries,
+    pub AssetQueries,
+    pub AssetLogQueries,
+    pub AssetLogReasonQueries,
 );
 
 impl Queries {
@@ -80,10 +116,7 @@ impl Queries {
             InvoiceQueries,
             InvoiceLineQueries,
             LocationQueries,
-            SensorQueries,
-            TemperatureBreachQueries,
-            TemperatureLogQueries,
-            TemperatureNotificationQueries,
+            ColdChainQueries,
             StocktakeQueries,
             StocktakeLineQueries,
             GeneralQueries,
@@ -94,7 +127,12 @@ impl Queries {
             ProgramsQueries,
             FormSchemaQueries,
             ClinicianQueries,
+            PackVariantQueries,
             PluginQueries,
+            AssetCatalogueQueries,
+            AssetQueries,
+            AssetLogQueries,
+            AssetLogReasonQueries,
         )
     }
 }
@@ -104,7 +142,6 @@ pub struct Mutations(
     pub InvoiceMutations,
     pub InvoiceLineMutations,
     pub LocationMutations,
-    pub SensorMutations,
     pub StocktakeMutations,
     pub StocktakeLineMutations,
     pub BatchMutations,
@@ -116,7 +153,11 @@ pub struct Mutations(
     pub ProgramsMutations,
     pub FormSchemaMutations,
     pub PluginMutations,
-    pub TemperatureBreachMutations,
+    pub ColdChainMutations,
+    pub CentralServerMutations,
+    pub AssetMutations,
+    pub AssetLogMutations,
+    pub InventoryAdjustmentMutations,
 );
 
 impl Mutations {
@@ -125,7 +166,6 @@ impl Mutations {
             InvoiceMutations,
             InvoiceLineMutations,
             LocationMutations,
-            SensorMutations,
             StocktakeMutations,
             StocktakeLineMutations,
             BatchMutations,
@@ -137,7 +177,11 @@ impl Mutations {
             ProgramsMutations,
             FormSchemaMutations,
             PluginMutations,
-            TemperatureBreachMutations,
+            ColdChainMutations,
+            CentralServerMutations,
+            AssetMutations,
+            AssetLogMutations,
+            InventoryAdjustmentMutations,
         )
     }
 }
@@ -258,7 +302,7 @@ async fn graphql_index(
 async fn graphql_playground() -> HttpResponse {
     HttpResponse::Ok()
         .content_type("text/html; charset=utf-8")
-        .body(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
+        .body(include_str!("playground.html"))
 }
 
 // TODO remove this and just do reqwest query to self
@@ -282,7 +326,7 @@ impl SelfRequest for SelfRequestImpl {
         user_data: RequestUserData,
     ) -> async_graphql::Response {
         let query = request.data(user_data);
-        self.schema.execute(query).await.into()
+        self.schema.execute(query).await
     }
 }
 

@@ -2,11 +2,11 @@ use super::{
     stocktake_row::stocktake::dsl as stocktake_dsl, user_row::user_account, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete};
 
-use diesel::{dsl::max, prelude::*};
-
+use crate::Upsert;
 use chrono::{NaiveDate, NaiveDateTime};
+use diesel::{dsl::max, prelude::*};
 use diesel_derive_enum::DbEnum;
 use util::Defaults;
 
@@ -122,7 +122,7 @@ impl<'a> StocktakeRowRepository<'a> {
             .filter(stocktake_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StocktakeRow>, RepositoryError> {
@@ -141,5 +141,35 @@ impl<'a> StocktakeRowRepository<'a> {
             .select(max(stocktake_dsl::stocktake_number))
             .first(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StocktakeRowDelete(pub String);
+// For tests only
+impl Delete for StocktakeRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StocktakeRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StocktakeRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StocktakeRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StocktakeRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StocktakeRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

@@ -44,16 +44,19 @@ pub fn calculate_foreign_currency_total(
     currency_id: Option<String>,
     currency_rate: &f64,
 ) -> Result<Option<f64>, RepositoryError> {
+    let Some(currency_id) = currency_id else {
+        return Ok(None);
+    };
+
     let currency = CurrencyRepository::new(connection)
         .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
         .pop()
         .ok_or(RepositoryError::NotFound)?;
-
-    if currency_id.is_none() || currency.currency_row.id == currency_id.unwrap_or_default() {
-        Ok(None)
-    } else {
-        Ok(Some(total / currency_rate))
+    if currency_id == currency.currency_row.id {
+        return Ok(None);
     }
+
+    Ok(Some(total / currency_rate))
 }
 
 #[derive(Debug, PartialEq)]
@@ -116,7 +119,7 @@ pub fn generate_batches_total_number_of_packs_update(
                 .invoice_id(EqualFilter::equal_to(invoice_id))
                 .r#type(InvoiceLineRowType::StockOut.equal_to()),
         )
-        .map_err(|err| InvoiceLineHasNoStockLine::DatabaseError(err))?;
+        .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
 
     let mut result = Vec::new();
     for invoice_line in invoice_lines {
@@ -125,8 +128,7 @@ pub fn generate_batches_total_number_of_packs_update(
             InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_owned()),
         )?;
 
-        stock_line.total_number_of_packs =
-            stock_line.total_number_of_packs - invoice_line_row.number_of_packs;
+        stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;
         result.push(stock_line);
     }
     Ok(result)

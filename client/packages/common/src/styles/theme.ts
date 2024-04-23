@@ -82,6 +82,14 @@ declare module '@mui/material/styles/zIndex' {
 declare module '@mui/material/styles/createPalette' {
   interface Palette {
     border: string;
+    cceStatus: {
+      decommissioned: string;
+      functioning: string;
+      functioningButNeedsAttention: string;
+      notFunctioning: string;
+      notInUse: string;
+      text: string;
+    };
     chart: {
       cold: PaletteColor;
       hot: PaletteColor;
@@ -194,6 +202,14 @@ export const themeOptions = {
       cold: { main: '#aacae2', light: '#d9edfa' },
       hot: { main: '#db6974', light: '#fbe2e4' },
       lines: ['#EED600', '#922DD0', '#E1A200', '#59639C', '#E500EA', '#00DBCE'],
+    },
+    cceStatus: {
+      decommissioned: '#323232',
+      functioning: '#69a607',
+      functioningButNeedsAttention: '#f2a001',
+      notFunctioning: '#de0001',
+      notInUse: '#b0b0b0',
+      text: '#fff',
     },
   },
   zIndex: {

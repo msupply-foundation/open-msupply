@@ -59,8 +59,8 @@ pub fn generate_requisition_lines(
             let suggested_quantity = generate_suggested_quantity(GenerateSuggestedQuantity {
                 average_monthly_consumption,
                 available_stock_on_hand,
-                min_months_of_stock: requisition_row.min_months_of_stock.clone(),
-                max_months_of_stock: requisition_row.max_months_of_stock.clone(),
+                min_months_of_stock: requisition_row.min_months_of_stock,
+                max_months_of_stock: requisition_row.max_months_of_stock,
             });
 
             RequisitionLineRow {

@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use chrono::{NaiveDate, NaiveDateTime};
 use util::inline_init;
 
@@ -181,6 +183,20 @@ impl EqualFilter<String> {
     }
 }
 
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct NumberFilter<T> {
+    /// ( {field} < range.start or range.end < {field} )
+    pub not_in_range: Option<Range<T>>,
+}
+
+impl<T> NumberFilter<T> {
+    pub fn not_in_range(value: Range<T>) -> Self {
+        Self {
+            not_in_range: Some(value),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct DatetimeFilter {
     pub equal_to: Option<NaiveDateTime>,
@@ -247,8 +263,8 @@ impl DateFilter {
     pub fn date_range(from: &NaiveDate, to: &NaiveDate) -> DateFilter {
         DateFilter {
             equal_to: None,
-            after_or_equal_to: Some(from.clone()),
-            before_or_equal_to: Some(to.clone()),
+            after_or_equal_to: Some(*from),
+            before_or_equal_to: Some(*to),
         }
     }
 

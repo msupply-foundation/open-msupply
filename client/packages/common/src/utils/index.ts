@@ -25,6 +25,7 @@ import mapValues from 'lodash/mapValues';
 import merge from 'lodash/merge';
 import uniqBy from 'lodash/uniqBy';
 import uniqWith from 'lodash/uniqWith';
+import isEqual from 'lodash/isEqual';
 
 export {
   debounce,
@@ -35,4 +36,5 @@ export {
   merge,
   uniqBy,
   uniqWith,
+  isEqual,
 };

@@ -1,32 +1,24 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{
         date_from_date_time, date_option_to_isostring, date_to_isostring, empty_str_as_option,
         empty_str_as_option_string, naive_time, zero_date_as_option,
     },
+    translations::{
+        clinician::ClinicianTranslation, currency::CurrencyTranslation, name::NameTranslation,
+        store::StoreTranslation,
+    },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, Invoice, InvoiceFilter, InvoiceRepository,
-    InvoiceRow, InvoiceRowStatus, InvoiceRowType, NameRow, NameRowRepository, StorageConnection,
-    StoreRowRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, CurrencyFilter, CurrencyRepository, EqualFilter, Invoice,
+    InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowDelete, InvoiceRowStatus,
+    InvoiceRowType, NameRow, NameRowRepository, StorageConnection, StoreRowRepository,
+    SyncBufferRow,
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDeleteRecordTable, PullDependency, PullUpsertRecord,
-    SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &str = LegacyTableName::TRANSACT;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::Invoice
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 pub enum LegacyTransactType {
@@ -43,8 +35,11 @@ pub enum LegacyTransactType {
     /// Repack
     #[serde(rename = "sr")]
     Sr,
+    // Customer Credit
+    #[serde(rename = "cc")]
+    Cc,
     /// Bucket to catch all other variants
-    /// E.g. "cc" (customer credit), "bu" (build),
+    /// E.g. "bu" (build),
     /// "rc" (cash receipt), "ps" (cash payment)
     #[serde(other)]
     Others,
@@ -63,6 +58,7 @@ pub enum LegacyTransactStatus {
     Cn,
     /// finalised
     #[serde(rename = "fn")]
+    #[serde(alias = "FN")]
     Fn,
     /// Bucket to catch all other variants
     /// E.g. "wp" (web processed), "wp" (web finalised),
@@ -106,7 +102,6 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub currency_id: Option<String>,
     pub currency_rate: f64,
-
     #[serde(default)]
     #[serde(rename = "om_transport_reference")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -181,6 +176,11 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(default)]
     pub om_colour: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "om_original_shipment_id")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub original_shipment_id: Option<String>,
 }
 
 /// The mSupply central server will map outbound invoices from omSupply to "si" invoices for the
@@ -213,29 +213,35 @@ fn sanitize_legacy_record(mut data: serde_json::Value) -> serde_json::Value {
     data
 }
 
-pub(crate) struct InvoiceTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(InvoiceTranslation)
+}
+pub(crate) struct InvoiceTranslation;
 impl SyncTranslation for InvoiceTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::TRANSACT,
-            dependencies: vec![
-                LegacyTableName::NAME,
-                LegacyTableName::STORE,
-                LegacyTableName::CLINICIAN,
-                LegacyTableName::CURRENCY,
-            ],
-        }
+    fn table_name(&self) -> &str {
+        "transact"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            ClinicianTranslation.table_name(),
+            CurrencyTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Invoice)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<serde_json::Value>(&sync_record.data)?;
         let data = sanitize_legacy_record(data);
         let data = serde_json::from_value::<LegacyTransactRow>(data)?;
@@ -254,13 +260,28 @@ impl SyncTranslation for InvoiceTranslation {
             .map(|store_row| store_row.id);
 
         let invoice_type = invoice_type(&data, &name).ok_or(anyhow::Error::msg(format!(
-            "Unsupported invoice type: {:?} for {:?} mode",
+            "Unsupported invoice type: {:?} for (mode: {:?})",
             data._type, data.mode
         )))?;
-        let invoice_status = invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(
-            format!("Unsupported invoice type: {:?}", data._type),
-        ))?;
+        let invoice_status =
+            invoice_status(&invoice_type, &data).ok_or(anyhow::Error::msg(format!(
+                "Unsupported invoice status: {:?} (type: {:?})",
+                data.status, data._type
+            )))?;
         let mapping = map_legacy(&invoice_type, &data);
+
+        let currency_id = match data.currency_id {
+            Some(currency_id) => Some(currency_id),
+            None => {
+                let currency_id = CurrencyRepository::new(connection)
+                    .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+                    .pop()
+                    .ok_or(anyhow::Error::msg("Home currency not found"))?
+                    .currency_row
+                    .id;
+                Some(currency_id)
+            }
+        };
 
         let result = InvoiceRow {
             id: data.ID,
@@ -275,7 +296,7 @@ impl SyncTranslation for InvoiceTranslation {
             comment: data.comment,
             their_reference: data.their_ref,
             tax: data.tax,
-            currency_id: data.currency_id,
+            currency_id,
             currency_rate: data.currency_rate,
             clinician_link_id: data.clinician_id,
 
@@ -291,35 +312,28 @@ impl SyncTranslation for InvoiceTranslation {
             requisition_id: data.requisition_ID,
             linked_invoice_id: data.linked_transaction_id,
             transport_reference: data.transport_reference,
+            original_shipment_id: data.original_shipment_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::Invoice(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_pull_delete(
+    fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         // TODO, check site ? (should never get delete records for this site, only transfer other half)
-        let result = match_pull_table(sync_record).then(|| {
-            IntegrationRecords::from_delete(&sync_record.record_id, PullDeleteRecordTable::Invoice)
-        });
-
-        Ok(result)
+        Ok(PullTranslateResult::delete(InvoiceRowDelete(
+            sync_record.record_id.clone(),
+        )))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Some(invoice) = InvoiceRepository::new(connection)
             .query_by_filter(InvoiceFilter::new().id(EqualFilter::equal_to(&changelog.record_id)))?
             .pop()
@@ -359,6 +373,7 @@ impl SyncTranslation for InvoiceTranslation {
                     clinician_link_id: _,
                     currency_id,
                     currency_rate,
+                    original_shipment_id,
                 },
             name_row,
             clinician_row,
@@ -413,9 +428,10 @@ impl SyncTranslation for InvoiceTranslation {
             currency_id,
             currency_rate,
             clinician_id: clinician_row.map(|row| row.id),
+            original_shipment_id,
         };
 
-        let json_record = serde_json::to_value(&legacy_row)?;
+        let json_record = serde_json::to_value(legacy_row)?;
 
         // log::info!(
         //     "Translated row {}",
@@ -423,22 +439,19 @@ impl SyncTranslation for InvoiceTranslation {
         //         .unwrap_or("Failed to stringify json".to_string())
         // );
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
+            self.table_name(),
             json_record,
-        )]))
+        ))
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
@@ -460,7 +473,9 @@ fn invoice_type(data: &LegacyTransactRow, name: &NameRow) -> Option<InvoiceRowTy
         LegacyTransactType::Si => Some(InvoiceRowType::InboundShipment),
         LegacyTransactType::Ci => Some(InvoiceRowType::OutboundShipment),
         LegacyTransactType::Sr => Some(InvoiceRowType::Repack),
-        _ => return None,
+        LegacyTransactType::Cc => Some(InvoiceRowType::InboundReturn),
+        LegacyTransactType::Sc => Some(InvoiceRowType::OutboundReturn),
+        _ => None,
     }
 }
 
@@ -505,19 +520,19 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
         .map(|confirm_date| NaiveDateTime::new(confirm_date, data.confirm_time));
 
     match invoice_type {
-        InvoiceRowType::OutboundShipment => match data.status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match data.status {
             LegacyTransactStatus::Cn => {
-                mapping.allocated_datetime = confirm_datetime.clone();
+                mapping.allocated_datetime = confirm_datetime;
                 mapping.picked_datetime = confirm_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.allocated_datetime = confirm_datetime.clone();
-                mapping.picked_datetime = confirm_datetime.clone();
+                mapping.allocated_datetime = confirm_datetime;
+                mapping.picked_datetime = confirm_datetime;
                 mapping.shipped_datetime = confirm_datetime;
             }
             _ => {}
         },
-        InvoiceRowType::InboundShipment => {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => {
             mapping.delivered_datetime = confirm_datetime;
 
             match data.status {
@@ -525,7 +540,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
                     mapping.delivered_datetime = confirm_datetime;
                 }
                 LegacyTransactStatus::Fn => {
-                    mapping.delivered_datetime = confirm_datetime.clone();
+                    mapping.delivered_datetime = confirm_datetime;
                     mapping.verified_datetime = confirm_datetime;
                 }
                 _ => {}
@@ -536,7 +551,7 @@ fn map_legacy(invoice_type: &InvoiceRowType, data: &LegacyTransactRow) -> Legacy
                 mapping.picked_datetime = confirm_datetime;
             }
             LegacyTransactStatus::Fn => {
-                mapping.picked_datetime = confirm_datetime.clone();
+                mapping.picked_datetime = confirm_datetime;
                 mapping.verified_datetime = confirm_datetime;
             }
             _ => {}
@@ -580,6 +595,9 @@ fn to_legacy_confirm_time(
         InvoiceRowType::InventoryAddition
         | InvoiceRowType::InventoryReduction
         | InvoiceRowType::Repack => verified_datetime,
+        // TODO confirm
+        InvoiceRowType::InboundReturn => delivered_datetime,
+        InvoiceRowType::OutboundReturn => picked_datetime,
     };
 
     let date = datetime.map(|datetime| datetime.date());
@@ -603,7 +621,7 @@ fn invoice_status(
             _ => return None,
         },
         // outbound
-        InvoiceRowType::OutboundShipment => match data.status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match data.status {
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Picked,
@@ -611,7 +629,7 @@ fn invoice_status(
             _ => return None,
         },
         // inbound
-        InvoiceRowType::InboundShipment => match data.status {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => match data.status {
             LegacyTransactStatus::Sg => InvoiceRowStatus::New,
             LegacyTransactStatus::Nw => InvoiceRowStatus::New,
             LegacyTransactStatus::Cn => InvoiceRowStatus::Delivered,
@@ -641,8 +659,10 @@ fn legacy_invoice_type(_type: &InvoiceRowType) -> Option<LegacyTransactType> {
         InvoiceRowType::InventoryAddition => LegacyTransactType::Si,
         InvoiceRowType::InventoryReduction => LegacyTransactType::Sc,
         InvoiceRowType::Repack => LegacyTransactType::Sr,
+        InvoiceRowType::InboundReturn => LegacyTransactType::Cc,
+        InvoiceRowType::OutboundReturn => LegacyTransactType::Sc,
     };
-    return Some(t);
+    Some(t)
 }
 
 fn legacy_invoice_status(
@@ -650,7 +670,7 @@ fn legacy_invoice_status(
     status: &InvoiceRowStatus,
 ) -> Option<LegacyTransactStatus> {
     let status = match t {
-        InvoiceRowType::OutboundShipment => match status {
+        InvoiceRowType::OutboundShipment | InvoiceRowType::OutboundReturn => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Sg,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Sg,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Cn,
@@ -658,7 +678,7 @@ fn legacy_invoice_status(
             InvoiceRowStatus::Delivered => LegacyTransactStatus::Fn,
             InvoiceRowStatus::Verified => LegacyTransactStatus::Fn,
         },
-        InvoiceRowType::InboundShipment => match status {
+        InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn => match status {
             InvoiceRowStatus::New => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Allocated => LegacyTransactStatus::Nw,
             InvoiceRowStatus::Picked => LegacyTransactStatus::Nw,
@@ -690,7 +710,9 @@ fn legacy_invoice_status(
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_name_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -705,21 +727,23 @@ mod tests {
 
         let (_, connection, _, _) = setup_all(
             "test_invoice_translation",
-            MockDataInserts::none().names().stores(),
+            MockDataInserts::none().names().stores().currencies(),
         )
         .await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
         }
 
         for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_delete(&connection, &record.sync_buffer_row)
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -744,12 +768,21 @@ mod tests {
 
         let translator = InvoiceTranslation {};
         for changelog in changelogs {
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["name_ID"], json!("name_a"));
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
         }
     }
 }

@@ -40,7 +40,7 @@ impl LocationQueries {
         // always filter by store_id
         let filter = filter
             .map(LocationFilter::from)
-            .unwrap_or(LocationFilter::new())
+            .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
 
         let locations = service_provider
@@ -98,7 +98,7 @@ impl LocationMutations {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::assert_graphql_query;
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::mock_locations;
     use repository::{
         location::{Location, LocationFilter, LocationSort, LocationSortField},
@@ -149,7 +149,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_locations_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             LocationQueries,
             EmptyMutation,
             "test_graphql_locations_success",
@@ -256,7 +256,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_locations_inputs() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             LocationQueries,
             EmptyMutation,
             "test_graphql_location_inputs",
@@ -366,7 +366,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_locations_always_filtered_by_store() {
-        let (_, _, _, settings) = setup_graphl_test(
+        let (_, _, _, settings) = setup_graphql_test(
             LocationQueries,
             EmptyMutation,
             "test_locations_always_filtered_by_store",

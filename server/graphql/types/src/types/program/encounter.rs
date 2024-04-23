@@ -296,7 +296,7 @@ impl EncounterNode {
         let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
 
         let result = loader
-            .load_one(ClinicianLoaderInput::new(&self.store_id, &clinician_id))
+            .load_one(ClinicianLoaderInput::new(&self.store_id, clinician_id))
             .await?
             .map(ClinicianNode::from_domain)
             .ok_or(Error::new(format!(
@@ -346,7 +346,7 @@ impl EncounterNode {
         self.encounter_row()
             .status
             .as_ref()
-            .map(|status| EncounterNodeStatus::from_domain(status))
+            .map(EncounterNodeStatus::from_domain)
     }
 
     pub async fn created_datetime(&self) -> DateTime<Utc> {
@@ -392,7 +392,7 @@ impl EncounterNode {
         let mut program_filter = filter
             .as_ref()
             .map(|f| f.clone().to_domain())
-            .unwrap_or(ProgramEventFilter::new())
+            .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(&self.patient_row().id))
             .document_type(EqualFilter::equal_to(&self.encounter_row().document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
@@ -441,7 +441,7 @@ impl EncounterNode {
         let mut program_filter = filter
             .as_ref()
             .map(|f| f.clone().to_domain())
-            .unwrap_or(ProgramEventFilter::new())
+            .unwrap_or_default()
             .patient_id(EqualFilter::equal_to(&self.patient_row().id))
             .document_type(EqualFilter::equal_to(&self.encounter_row().document_type));
         if filter.and_then(|f| f.is_current_encounter).unwrap_or(false) {
