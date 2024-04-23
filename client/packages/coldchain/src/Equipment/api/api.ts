@@ -63,7 +63,7 @@ const assetParsers = {
     id: input.id ?? '',
     assetId: input.assetId ?? '',
     comment: input.comment,
-    reason: input.reason,
+    reasonId: input.reasonId,
     status: input.status,
     type: input.type,
   }),

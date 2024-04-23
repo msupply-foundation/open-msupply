@@ -1,5 +1,8 @@
 mod core;
+pub mod download_file;
+pub mod upload_file;
 
+use actix_multipart::form::{json::Json, tempfile::TempFile, MultipartForm};
 use repository::RepositoryError;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -34,6 +37,20 @@ pub enum SyncParsedErrorV6 {
     NotACentralServer,
     #[error("Could not parse record to sync buffer row: {0}")]
     ParsingSyncRecordError(String),
+    #[error("Sync File Not Found")]
+    SyncFileNotFound,
+}
+
+impl From<anyhow::Error> for SyncParsedErrorV6 {
+    fn from(from: anyhow::Error) -> Self {
+        SyncParsedErrorV6::OtherServerError(from.to_string())
+    }
+}
+
+impl SyncParsedErrorV6 {
+    pub fn from_error<E: std::error::Error>(error: &E) -> Self {
+        Self::OtherServerError(format_error(error))
+    }
 }
 
 impl From<SyncApiError> for SyncParsedErrorV6 {
@@ -83,14 +100,14 @@ pub enum SyncPullResponseV6 {
 
 #[derive(Error, Debug)]
 #[error("Sync api error, url: '{url}', route: '{route}'")]
-pub(crate) struct SyncApiErrorV6 {
+pub struct SyncApiErrorV6 {
     pub source: SyncApiErrorVariantV6,
     pub(crate) url: Url,
     pub(crate) route: String,
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum SyncApiErrorVariantV6 {
+pub enum SyncApiErrorVariantV6 {
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
     #[error("Could not parse response")]
@@ -139,4 +156,20 @@ pub struct SyncPullRequestV6 {
 pub struct SyncPushRequestV6 {
     pub(crate) batch: SyncBatchV6,
     pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncDownloadFileRequestV6 {
+    pub(crate) table_name: String,
+    pub(crate) record_id: String,
+    pub(crate) id: String,
+    pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(MultipartForm)]
+pub struct SyncUploadFileRequestV6 {
+    pub sync_v5_settings: Json<SyncApiSettings>,
+    #[multipart(rename = "file")]
+    pub files: Vec<TempFile>,
 }

@@ -31,6 +31,7 @@ pub struct AssetLogFilter {
     pub status: Option<EqualFilter<AssetLogStatus>>,
     pub log_datetime: Option<DatetimeFilter>,
     pub user: Option<StringFilter>,
+    pub reason_id: Option<EqualFilter<String>>,
 }
 
 impl AssetLogFilter {
@@ -56,6 +57,10 @@ impl AssetLogFilter {
     }
     pub fn user(mut self, filter: StringFilter) -> Self {
         self.user = Some(filter);
+        self
+    }
+    pub fn reason_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.reason_id = Some(filter);
         self
     }
 }
@@ -110,12 +115,6 @@ impl<'a> AssetLogRepository<'a> {
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 
-        // Debug diesel query
-        // println!(
-        //    "{}",
-        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
-        // );
-
         let result = final_query.load::<AssetLog>(&self.connection.connection)?;
 
         Ok(result.into_iter().map(to_domain).collect())
@@ -156,6 +155,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
             status,
             log_datetime,
             user,
+            reason_id,
         } = f;
 
         apply_equal_filter!(query, id, asset_log_dsl::id);
@@ -163,6 +163,7 @@ fn create_filtered_query(filter: Option<AssetLogFilter>) -> BoxedAssetLogQuery {
         apply_date_filter!(query, log_datetime, asset_log_dsl::log_datetime);
 
         apply_equal_filter!(query, asset_id, asset_log_dsl::asset_id);
+        apply_equal_filter!(query, reason_id, asset_log_dsl::reason_id);
 
         if let Some(user) = user {
             let mut sub_query = user_account_dsl::user_account
