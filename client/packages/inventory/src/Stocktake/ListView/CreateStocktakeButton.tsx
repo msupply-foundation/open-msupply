@@ -3,6 +3,7 @@ import {
   BasicSpinner,
   ButtonWithIcon,
   Checkbox,
+  DateTimePickerInput,
   DialogButton,
   InputWithLabelRow,
   Select,
@@ -16,6 +17,7 @@ import { useMasterList, useLocation } from '@openmsupply-client/system';
 import {
   Box,
   FnUtils,
+  Formatter,
   InsertStocktakeInput,
   useAuthContext,
 } from '@openmsupply-client/common';
@@ -27,12 +29,14 @@ interface CreateStocktakeArgs {
   masterListId: string;
   locationId: string;
   itemsHaveStock: boolean;
+  expiresBefore: Date | null;
 }
 
 const DEFAULT_ARGS: CreateStocktakeArgs = {
   masterListId: '',
   locationId: '',
   itemsHaveStock: false,
+  expiresBefore: null,
 };
 
 export const CreateStocktakeButton: React.FC<{
@@ -95,7 +99,8 @@ export const CreateStocktakeButton: React.FC<{
       username: user ? user.name : 'unknown user',
       date: localisedDate(new Date()),
     });
-    const { locationId, masterListId, itemsHaveStock } = createStocktakeArgs;
+    const { locationId, masterListId, itemsHaveStock, expiresBefore } =
+      createStocktakeArgs;
     const input: InsertStocktakeInput = {
       id: FnUtils.generateUUID(),
       description,
@@ -106,6 +111,9 @@ export const CreateStocktakeButton: React.FC<{
           }
         : undefined,
       itemsHaveStock: itemsHaveStock ? itemsHaveStock : undefined,
+      expiresBefore: expiresBefore
+        ? Formatter.naiveDate(expiresBefore)
+        : undefined,
       comment: generateComment(),
     };
     await mutateAsync(input);
@@ -169,11 +177,16 @@ export const CreateStocktakeButton: React.FC<{
         >
           <Box flex={1} display="flex" justifyContent="center">
             {!isSaving ? (
-              <Box paddingLeft={2}>
+              <Box
+                paddingLeft={2}
+                display="flex"
+                flexDirection="column"
+                gap={2}
+              >
                 <Typography padding={1}>
                   {t('messages.create-stocktake-1')}
                 </Typography>
-                <Typography padding={1} paddingBottom={4}>
+                <Typography padding={1}>
                   {t('messages.create-stocktake-2')}
                 </Typography>
                 <InputWithLabelRow
@@ -199,7 +212,6 @@ export const CreateStocktakeButton: React.FC<{
                   }
                   label={t('label.master-list')}
                 />
-                <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
@@ -223,7 +235,6 @@ export const CreateStocktakeButton: React.FC<{
                   }
                   label={t('label.location')}
                 />
-                <Box sx={{ height: 16 }} />
                 <InputWithLabelRow
                   labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
                   Input={
@@ -245,6 +256,21 @@ export const CreateStocktakeButton: React.FC<{
                     )
                   }
                   label={t('label.items-with-stock')}
+                />
+                <InputWithLabelRow
+                  labelProps={{ sx: { flex: `${LABEL_FLEX}` } }}
+                  Input={
+                    <DateTimePickerInput
+                      value={createStocktakeArgs.expiresBefore}
+                      onChange={event => {
+                        setCreateStocktakeArgs({
+                          ...DEFAULT_ARGS,
+                          expiresBefore: event,
+                        });
+                      }}
+                    />
+                  }
+                  label={t('label.items-expiring-before')}
                 />
               </Box>
             ) : (
