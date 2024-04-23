@@ -147,6 +147,7 @@ module.exports = env => {
         FEATURE_INVENTORY_ADJUSTMENTS: env.FEATURE_INVENTORY_ADJUSTMENTS,
         API_HOST: JSON.stringify(env.API_HOST),
         LOCAL_PLUGINS: JSON.stringify(localPlugins()),
+        LANG_VERSION: Date.now(),
       }),
       bundleAnalyzerPlugin,
       new HtmlWebpackPlugin({

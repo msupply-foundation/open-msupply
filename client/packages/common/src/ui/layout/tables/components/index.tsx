@@ -9,10 +9,9 @@ export * from './Cells';
 export * from './Header';
 export * from './Expand';
 
-export const BasicCellLayout: FC<PropsWithChildren<{ isError?: boolean }>> = ({
-  children,
-  isError,
-}) => (
+export const BasicCellLayout: FC<
+  PropsWithChildren<{ isError?: boolean; width?: number }>
+> = ({ children, isError, width }) => (
   <Box
     sx={{
       border: theme =>
@@ -21,6 +20,7 @@ export const BasicCellLayout: FC<PropsWithChildren<{ isError?: boolean }>> = ({
       padding: '4px 8px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      width,
     }}
   >
     {children}
