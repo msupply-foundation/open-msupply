@@ -21,7 +21,7 @@ use crate::{
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteInfoV5, SiteStatusCodeV5, SiteStatusV5,
         },
         api_v6::{
-            SiteStatusCodeV6, SiteStatusResponseV6, SiteStatusV6, SyncBatchV6, SyncPullResponseV6,
+            SiteStatusResponseV6, SiteStatusV6, SyncBatchV6, SyncPullResponseV6,
             SyncPushResponseV6, SyncPushSuccessV6,
         },
         settings::{BatchSize, SyncSettings},
@@ -627,7 +627,7 @@ async fn empty_v6_server(port: u16) -> Server {
     }
     async fn empty_status_response() -> impl Responder {
         web::Json(SiteStatusResponseV6::Data(SiteStatusV6 {
-            code: SiteStatusCodeV6::Idle,
+            is_integrating: false,
         }))
     }
     HttpServer::new(move || {
