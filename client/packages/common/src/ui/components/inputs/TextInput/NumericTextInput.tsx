@@ -144,7 +144,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
           // DON'T use the formatValue callback here, we only want to do FULL
           // formatting onBlur
-          setTextValue(format(constrained));
+          if (!noFormatting) setTextValue(format(constrained));
           onChange(constrained);
         }}
         onKeyDown={e => {
