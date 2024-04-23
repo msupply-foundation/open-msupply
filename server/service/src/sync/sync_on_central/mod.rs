@@ -29,8 +29,6 @@ use super::{
     translations::translate_changelogs_to_sync_records,
 };
 
-static SITES_BEING_INTEGRATED: RwLock<Vec<i32>> = RwLock::new(vec![]);
-
 /// Send Records to a remote open-mSupply Server
 pub async fn pull(
     service_provider: &ServiceProvider,
@@ -185,21 +183,6 @@ pub async fn get_site_status(
     Ok(SiteStatusV6 { is_integrating })
 }
 
-fn is_integrating(site_id: i32) -> bool {
-    let sites_being_integrated = SITES_BEING_INTEGRATED.read().unwrap();
-    sites_being_integrated.contains(&site_id)
-}
-
-fn set_integrating(site_id: i32, is_integrating: bool) {
-    let mut sites_being_integrated = SITES_BEING_INTEGRATED.write().unwrap();
-
-    if is_integrating {
-        sites_being_integrated.push(site_id);
-    } else {
-        sites_being_integrated.retain(|id| *id != site_id);
-    }
-}
-
 fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> () {
     tokio::spawn(async move {
         let ctx = match service_provider.basic_context() {
@@ -317,4 +300,21 @@ pub async fn upload_file(
     })?;
 
     Ok(())
+}
+
+static SITES_BEING_INTEGRATED: RwLock<Vec<i32>> = RwLock::new(vec![]);
+
+fn is_integrating(site_id: i32) -> bool {
+    let sites_being_integrated = SITES_BEING_INTEGRATED.read().unwrap();
+    sites_being_integrated.contains(&site_id)
+}
+
+fn set_integrating(site_id: i32, is_integrating: bool) {
+    let mut sites_being_integrated = SITES_BEING_INTEGRATED.write().unwrap();
+
+    if is_integrating {
+        sites_being_integrated.push(site_id);
+    } else {
+        sites_being_integrated.retain(|id| *id != site_id);
+    }
 }
