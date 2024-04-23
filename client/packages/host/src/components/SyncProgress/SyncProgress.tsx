@@ -122,7 +122,7 @@ const getSteps = (
   }
 
   steps.push(getStep('sync-status.pull-central', syncStatus?.pullCentral));
-  steps.push(getStep('sync-status.pull-central-v6', syncStatus?.pullV6));
+  steps.push(getStep('sync-status.pull-v6', syncStatus?.pullV6));
   steps.push(getStep('sync-status.pull-remote', syncStatus?.pullRemote));
   steps.push(getStep('sync-status.integrate', syncStatus?.integration));
 
