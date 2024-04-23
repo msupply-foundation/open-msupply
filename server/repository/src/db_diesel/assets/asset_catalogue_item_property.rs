@@ -38,6 +38,15 @@ impl<'a> AssetCatalogueItemPropertyRepository<'a> {
         AssetCatalogueItemPropertyRepository { connection }
     }
 
+    pub fn count(
+        &self,
+        filter: Option<AssetCataloguePropertyItemFilter>,
+    ) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        Ok(query.count().get_result(&self.connection.connection)?)
+    }
+
     pub fn query(
         &self,
         filter: Option<AssetCataloguePropertyItemFilter>,

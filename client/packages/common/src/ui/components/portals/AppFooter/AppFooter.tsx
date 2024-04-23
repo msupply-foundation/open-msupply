@@ -1,15 +1,14 @@
-import { Box, BoxProps, Portal, Typography } from '@mui/material';
+import { Box, BoxProps, Portal } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext } from '@common/hooks';
-import { CentralIcon, useIsCentralServerApi } from '@openmsupply-client/common';
-import { useTranslation } from '@common/intl';
+import { useIsCentralServerApi } from '@openmsupply-client/common';
 
 const Container = styled('div')(() => ({
   display: 'flex',
   flex: 1,
   maxHeight: 100,
-  justifyContent: 'flex-end',
+  justifyContent: 'center',
   flexDirection: 'column',
   paddingLeft: '20px',
   paddingRight: '20px',
@@ -20,7 +19,6 @@ export const AppFooter: FC = () => {
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
   const isCentralServer = useIsCentralServerApi();
-  const t = useTranslation('app');
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);
@@ -28,31 +26,15 @@ export const AppFooter: FC = () => {
   }, []);
 
   return (
-    <Box
-      sx={{
-        backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
-        color: isCentralServer ? '#fff' : 'gray.main',
-      }}
-    >
-      <Container ref={appFooterRef} style={{ flex: 0 }} />
-      <Container ref={appSessionDetailsRef} />
-      {isCentralServer ? (
-        <Box
-          flex={0}
-          display="flex"
-          alignItems="center"
-          paddingX={2}
-          paddingY={0.5}
-        >
-          <CentralIcon />
-          <Typography
-            variant="caption"
-            sx={{ color: 'inherit', whiteSpace: 'nowrap' }}
-          >
-            {t('label.central-server')}
-          </Typography>
-        </Box>
-      ) : null}
+    <Box>
+      <Container ref={appFooterRef} style={{ flex: 0, padding: 0 }} />
+      <Container
+        ref={appSessionDetailsRef}
+        sx={{
+          backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
+          color: isCentralServer ? '#fff' : 'gray.main',
+        }}
+      />
     </Box>
   );
 };
@@ -77,9 +59,7 @@ export const AppFooterPortal: FC<AppFooterPortalProps> = ({
         <Box {...boxProps}>{Content}</Box>
       </Portal>
       <Portal container={appSessionDetailsRef.current}>
-        <Box {...boxProps} style={{ paddingBottom: 3, paddingTop: 5 }}>
-          {SessionDetails}
-        </Box>
+        <Box {...boxProps}>{SessionDetails}</Box>
       </Portal>
     </>
   );

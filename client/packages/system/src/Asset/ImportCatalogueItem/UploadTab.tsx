@@ -3,7 +3,7 @@ import Papa, { ParseResult } from 'papaparse';
 import { ImportPanel } from './ImportPanel';
 import { useNotification } from '@common/hooks';
 import { InlineProgress, Typography, Upload } from '@common/components';
-import { useTranslation } from '@common/intl';
+import { LocaleKey, TypedTFunction, useTranslation } from '@common/intl';
 import {
   Grid,
   Stack,
@@ -16,8 +16,12 @@ import {
 } from '@openmsupply-client/common';
 import * as AssetItemImportModal from './CatalogueItemImportModal';
 import { ImportRow } from './CatalogueItemImportModal';
-import { AssetCatalogueItemFragment } from '@openmsupply-client/system';
 import { importRowToCsv } from '../utils';
+import {
+  useAssetData,
+  AssetCatalogueItemFragment,
+  AssetPropertyFragment,
+} from '../api';
 
 interface AssetItemUploadTabProps {
   setAssetItem: React.Dispatch<React.SetStateAction<ImportRow[]>>;
@@ -54,6 +58,56 @@ const getCell = (row: ParsedImport, index: AssetColumn) => {
   return row[key] ?? '';
 };
 
+const processProperties = (
+  properties: undefined | AssetPropertyFragment[],
+  row: ParsedImport,
+  importRow: ImportRow,
+  rowErrors: string[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  properties?.forEach(property => {
+    const value = row[property.name];
+
+    if (!!value?.trim()) {
+      if (!!property.allowedValues) {
+        const allowedValues = property.allowedValues.split(',');
+        if (allowedValues.every(v => v !== value)) {
+          rowErrors.push(
+            t('error.invalid-field-value', {
+              field: property.name,
+              value: value,
+            })
+          );
+        }
+      }
+      switch (property.valueType) {
+        case 'INTEGER':
+        case 'FLOAT':
+          if (Number.isNaN(Number(value))) {
+            rowErrors.push(
+              t('error.invalid-field-value', {
+                field: property.name,
+                value: value,
+              })
+            );
+          }
+          importRow.properties[property.id] = { ...property, value };
+          break;
+        case 'BOOLEAN':
+          const isTrue =
+            value.toLowerCase() === 'true' || value.toLowerCase() === 'yes';
+          importRow.properties[property.id] = {
+            ...property,
+            value: isTrue ? 'true' : 'false',
+          };
+          break;
+        default:
+          importRow.properties[property.id] = { ...property, value };
+      }
+    }
+  });
+};
+
 export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   tab,
   setErrorMessage,
@@ -67,6 +121,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
   const { error } = useNotification();
   const [isLoading, setIsLoading] = useState(false);
   const AssetItemBuffer: AssetItemImportModal.ImportRow[] = [];
+  const { data: properties } = useAssetData.utils.properties();
 
   const csvExample = async () => {
     const exampleRows: ImportRow[] = [
@@ -80,12 +135,14 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
         manufacturer: 'Some Manufacturer',
         model: 'Some Model',
         errorMessage: '',
+        properties: {},
       },
     ];
     const csv = importRowToCsv(
       exampleRows,
       t,
-      false // exclude errors
+      false, // exclude errors
+      properties ? properties.map(p => p.name) : []
     );
     FileUtils.exportCSV(csv, t('filename.asset-import-example'));
   };
@@ -129,7 +186,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
     let hasErrors = false;
 
     csvRows.map((row, _index) => {
-      const importRow = {} as ImportRow;
+      const importRow = { properties: {} } as ImportRow;
       const rowErrors: string[] = [];
       importRow.id = FnUtils.generateUUID();
       const subCatalogue = getCell(row, AssetColumn.SUB_CATALOGUE);
@@ -234,7 +291,7 @@ export const AssetItemUploadTab: FC<ImportPanel & AssetItemUploadTabProps> = ({
       } else {
         importRow.model = model;
       }
-
+      processProperties(properties, row, importRow, rowErrors, t);
       importRow.errorMessage = rowErrors.join(',');
       hasErrors = hasErrors || rowErrors.length > 0;
       rows.push(importRow);

@@ -9,6 +9,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             ALTER TYPE activity_log_type ADD VALUE 'ASSET_UPDATED';
             ALTER TYPE activity_log_type ADD VALUE 'ASSET_DELETED';
             ALTER TYPE activity_log_type ADD VALUE 'ASSET_LOG_CREATED';
+            ALTER TYPE activity_log_type ADD VALUE 'ASSET_CATALOGUE_ITEM_PROPERTY_CREATED';
             "#
         )?;
     }
