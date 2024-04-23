@@ -508,7 +508,7 @@
   "sync-status.integrate": "Integrate",
   "sync-status.prepare": "Prepare",
   "sync-status.pull-central": "Pull Central",
-  "sync-status.pull-central-v6": "Pull Central V6",
+  "sync-status.pull-v6": "Pull V6",
   "sync-status.pull-remote": "Pull Remote",
   "sync-status.push": "Push",
   "sync-status.push-v6": "Push V6",
