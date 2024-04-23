@@ -5,6 +5,7 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
+use tokio::fs::File;
 use util::uuid::uuid;
 #[derive(Debug, PartialEq)]
 pub struct StaticFile {
@@ -155,7 +156,7 @@ impl StaticFileService {
 
         let file =
             self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
-        let mut file_handle = tokio::fs::File::create(&file.path).await?;
+        let mut file_handle = File::create(&file.path).await?;
 
         loop {
             log::info!("Downloading chunk");
