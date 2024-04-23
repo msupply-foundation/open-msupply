@@ -66,7 +66,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   mode,
 }) => {
   const item = !draft ? null : draft.item ?? null;
-  const t = useTranslation(['distribution']);
+  const t = useTranslation('distribution');
   const { info } = useNotification();
   const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
   const [currentItem, setCurrentItem] = useBufferState(item);
@@ -74,9 +74,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const [okDisabled, setOkDisabled] = useState(false);
 
   const { mutateAsync: insertBarcode } = useOutbound.utils.barcodeInsert();
-  const { status, currency } = useOutbound.document.fields([
+  const { status, currency, otherParty } = useOutbound.document.fields([
     'status',
     'currency',
+    'otherParty'
   ]);
   const { mutateAsync } = useOutbound.line.save(status);
   const isDisabled = useOutbound.utils.isDisabled();
@@ -86,7 +87,10 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
     setDraftStockOutLines,
     isLoading,
   } = useDraftOutboundLines(currentItem);
-  const packSizeController = usePackSizeController(draftStockOutLines);
+  const packSizeController = usePackSizeController(
+    currentItem,
+    draftStockOutLines
+  );
   const { next, disabled: nextDisabled } = useNextItem(currentItem?.id);
   const { isDirty, setIsDirty } = useDirtyCheck();
   const height = useKeyboardHeightAdjustment(700);
@@ -265,6 +269,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
           allocatedQuantity={getAllocatedQuantity(draftStockOutLines)}
           batch={draft?.barcode?.batch}
           currency={currency}
+          isExternalSupplier={!otherParty?.store}
         />
       </Grid>
     </Modal>
@@ -281,6 +286,7 @@ interface TableProps {
   allocatedQuantity: number;
   batch?: string;
   currency?: CurrencyRowFragment | null;
+  isExternalSupplier: boolean;
 }
 
 const TableWrapper: React.FC<TableProps> = ({
@@ -293,6 +299,7 @@ const TableWrapper: React.FC<TableProps> = ({
   allocatedQuantity,
   batch,
   currency,
+  isExternalSupplier
 }) => {
   const t = useTranslation('distribution');
 
@@ -333,6 +340,7 @@ const TableWrapper: React.FC<TableProps> = ({
         batch={batch}
         allocatedQuantity={allocatedQuantity}
         currency={currency}
+        isExternalSupplier={isExternalSupplier}
       />
     </TableProvider>
   );

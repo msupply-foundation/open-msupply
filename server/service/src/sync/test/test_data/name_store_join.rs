@@ -1,14 +1,13 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{
-        name_store_join::LegacyNameStoreJoinRow, LegacyTableName, PullDeleteRecordTable,
-        PullUpsertRecord,
-    },
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::name_store_join::LegacyNameStoreJoinRow,
 };
-use repository::NameStoreJoinRow;
+use repository::{NameStoreJoinRow, NameStoreJoinRowDelete};
 use serde_json::json;
 
-const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "name_store_join";
+
+const NAME_STORE_JOIN_1: (&str, &str) = (
     "66607B6E7F2A47E782B8AC6743F71A8A",
     r#"{
       "ID": "66607B6E7F2A47E782B8AC6743F71A8A",
@@ -21,21 +20,21 @@ const NAME_STORE_JOIN_1: (&'static str, &'static str) = (
   }"#,
 );
 
-fn name_store_join_1_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME_STORE_JOIN,
+fn name_store_join_1_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         NAME_STORE_JOIN_1,
-        PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+        NameStoreJoinRow {
             id: NAME_STORE_JOIN_1.0.to_string(),
             store_id: "store_a".to_string(),
             name_link_id: "name_store_c".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
-        }),
+        },
     )
 }
 
-const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
+const NAME_STORE_JOIN_2: (&str, &str) = (
     "BE65A4A05E4D47E88303D6105A7872CC",
     r#"{
       "ID": "BE65A4A05E4D47E88303D6105A7872CC",
@@ -47,7 +46,7 @@ const NAME_STORE_JOIN_2: (&'static str, &'static str) = (
       "store_ID": "store_b"
   }"#,
 );
-const NAME_STORE_JOIN_INACTIVE_2: (&'static str, &'static str) = (
+const NAME_STORE_JOIN_INACTIVE_2: (&str, &str) = (
     "BE65A4A05E4D47E88303D6105A7872CC",
     r#"{
       "ID": "BE65A4A05E4D47E88303D6105A7872CC",
@@ -59,28 +58,28 @@ const NAME_STORE_JOIN_INACTIVE_2: (&'static str, &'static str) = (
       "store_ID": "store_b"
   }"#,
 );
-fn name_store_join_2_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::NAME_STORE_JOIN,
+fn name_store_join_2_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         NAME_STORE_JOIN_2,
-        PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+        NameStoreJoinRow {
             id: NAME_STORE_JOIN_2.0.to_string(),
             store_id: "store_b".to_string(),
             name_link_id: "name_store_a".to_string(),
             name_is_customer: false,
             name_is_supplier: true,
-        }),
+        },
     )
 }
-fn name_store_join_2_delete_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::NAME_STORE_JOIN,
+fn name_store_join_2_delete_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
         NAME_STORE_JOIN_2.0,
-        PullDeleteRecordTable::NameStoreJoin,
+        NameStoreJoinRowDelete(NAME_STORE_JOIN_2.0.to_string()),
     )
 }
 
-fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
+fn name_store_join_2_inactive_pull_record() -> TestSyncIncomingRecord {
     let mut record = name_store_join_2_delete_record();
     record.sync_buffer_row.data = NAME_STORE_JOIN_INACTIVE_2.1.to_string();
     record
@@ -88,7 +87,7 @@ fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
 
 // same as NAME_STORE_JOIN_2 but with new om fields
 // See TODO in name_store_join translator
-// const NAME_STORE_JOIN_3: (&'static str, &'static str) = (
+// const NAME_STORE_JOIN_3: (&str, &str) = (
 //     "BE65A4A05E4D47E88303D6105A7872C2",
 //     r#"{
 //       "ID": "BE65A4A05E4D47E88303D6105A7872C2",
@@ -102,21 +101,21 @@ fn name_store_join_2_inactive_pull_record() -> TestSyncPullRecord {
 //       "om_name_is_supplier": true
 //   }"#,
 // );
-// fn name_store_join_3_pull_record() -> TestSyncPullRecord {
-//     TestSyncPullRecord::new_pull_upsert(
-//         LegacyTableName::NAME_STORE_JOIN,
+// fn name_store_join_3_pull_record() -> TestSyncIncomingRecord {
+//     TestSyncIncomingRecord::new_pull_upsert(
+//         TABLE_NAME,
 //         NAME_STORE_JOIN_3,
-//         PullUpsertRecord::NameStoreJoin(NameStoreJoinRow {
+//         NameStoreJoinRow {
 //             id: NAME_STORE_JOIN_3.0.to_string(),
 //             store_id: "store_b".to_string(),
 //             name_id: "name_store_c".to_string(),
 //             name_is_customer: true,
 //             name_is_supplier: true,
-//         }),
+//         }
 //     )
 // }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         name_store_join_1_pull_record(),
         name_store_join_2_pull_record(),
@@ -124,19 +123,19 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
     vec![name_store_join_2_delete_record()]
 }
 
-pub(crate) fn test_pull_upsert_inactive_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_inactive_records() -> Vec<TestSyncIncomingRecord> {
     vec![name_store_join_2_inactive_pull_record()]
 }
 
-pub(crate) fn test_push_upsert() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_upsert() -> Vec<TestSyncOutgoingRecord> {
     vec![
-        TestSyncPushRecord {
+        TestSyncOutgoingRecord {
             record_id: NAME_STORE_JOIN_1.0.to_string(),
-            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
                 id: NAME_STORE_JOIN_1.0.to_string(),
                 store_id: "store_a".to_string(),
@@ -146,9 +145,9 @@ pub(crate) fn test_push_upsert() -> Vec<TestSyncPushRecord> {
                 name_is_supplier: Some(true),
             }),
         },
-        TestSyncPushRecord {
+        TestSyncOutgoingRecord {
             record_id: NAME_STORE_JOIN_2.0.to_string(),
-            table_name: LegacyTableName::NAME_STORE_JOIN.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyNameStoreJoinRow {
                 id: NAME_STORE_JOIN_2.0.to_string(),
                 store_id: "store_b".to_string(),

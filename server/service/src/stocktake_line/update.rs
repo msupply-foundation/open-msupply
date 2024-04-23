@@ -92,14 +92,14 @@ fn validate(
         return Err(AdjustmentReasonNotProvided);
     }
 
-    if input.inventory_adjustment_reason_id.is_some() {
-        if !check_reason_is_valid(
+    if input.inventory_adjustment_reason_id.is_some()
+        && !check_reason_is_valid(
             connection,
             input.inventory_adjustment_reason_id.clone(),
             stocktake_reduction_amount,
-        )? {
-            return Err(AdjustmentReasonNotValid);
-        }
+        )?
+    {
+        return Err(AdjustmentReasonNotValid);
     }
 
     if let (Some(counted_number_of_packs), Some(stock_line_id)) = (

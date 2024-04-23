@@ -1,3 +1,5 @@
+use crate::Upsert;
+
 use super::{
     barcode_row::barcode::dsl as barcode_dsl, invoice_line_row::invoice_line,
     item_link_row::item_link, item_row::item, name_link_row::name_link, RepositoryError,
@@ -115,6 +117,21 @@ impl<'a> BarcodeRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+pub struct BarcodeRowDelete(pub String);
+impl Upsert for BarcodeRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        BarcodeRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            BarcodeRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

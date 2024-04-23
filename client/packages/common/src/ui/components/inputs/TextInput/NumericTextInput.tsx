@@ -15,18 +15,23 @@ export interface NumericInputProps {
   step?: number;
   multiplier?: number;
   value?: number | undefined;
+  focusOnRender?: boolean;
+  noFormatting?: boolean;
 }
+
 export type NumericTextInputProps = NumericInputProps &
   Omit<StandardTextFieldProps, 'onChange'> & {
     onChange?: (value: number | undefined) => void;
   };
+
+export const DEFAULT_NUMERIC_TEXT_INPUT_WIDTH = 75;
 
 export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
   (
     {
       sx,
       InputProps,
-      width = 75,
+      width = DEFAULT_NUMERIC_TEXT_INPUT_WIDTH,
       onChange = () => {},
       defaultValue,
       allowNegative,
@@ -37,6 +42,7 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
       step = 1,
       multiplier = 10,
       value,
+      noFormatting = false,
       ...props
     },
     ref
@@ -45,9 +51,19 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
     const {
       options: { separator, decimal },
     } = useCurrency();
-    const [textValue, setTextValue] = useState(
-      format(value ?? defaultValue, { minimumFractionDigits: decimalMin })
+    const formatValue = useCallback(
+      (val: number | undefined) =>
+        noFormatting
+          ? val === undefined
+            ? undefined
+            : String(val)
+          : format(val, { minimumFractionDigits: decimalMin }),
+      [decimalMin, format, noFormatting]
     );
+    const [textValue, setTextValue] = useState(
+      formatValue(value ?? defaultValue)
+    );
+
     const isFirstRender = useRef(true);
 
     const isInputIncomplete = useCallback(
@@ -72,9 +88,20 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
 
       // On subsequent renders, keep textValue up to date with value if value
       // has changed externally
-      if (parse(textValue) !== value && !isInputIncomplete(textValue))
-        setTextValue(format(value));
-    }, [value, textValue, format, parse, onChange, isInputIncomplete]);
+      if (
+        parse(textValue ?? '') !== value &&
+        !isInputIncomplete(textValue ?? '')
+      )
+        setTextValue(formatValue(value));
+    }, [
+      value,
+      textValue,
+      format,
+      parse,
+      onChange,
+      isInputIncomplete,
+      formatValue,
+    ]);
 
     const inputRegex = new RegExp(
       `^-?\\d*${RegexUtils.escapeChars(decimal)}?\\d*$`
@@ -114,8 +141,9 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
           if (Number.isNaN(parsed)) return;
 
           const constrained = constrain(parsed, decimalLimit, min, max);
-
-          setTextValue(format(constrained));
+          setTextValue(
+            noFormatting ? String(constrained) : format(constrained)
+          );
           onChange(constrained);
         }}
         onKeyDown={e => {
@@ -132,12 +160,12 @@ export const NumericTextInput: FC<NumericTextInputProps> = React.forwardRef(
             min,
             max
           );
-          setTextValue(format(newNum, { minimumFractionDigits: decimalMin }));
+          setTextValue(formatValue(newNum));
           onChange(newNum);
         }}
         onBlur={() => {
-          onChange(Number(parse(textValue)) || undefined);
-          setTextValue(format(value, { minimumFractionDigits: decimalMin }));
+          onChange(Number(parse(textValue ?? '')) || undefined);
+          setTextValue(formatValue(value));
         }}
         onFocus={e => e.target.select()}
         {...props}

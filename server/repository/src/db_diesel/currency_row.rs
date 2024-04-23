@@ -1,4 +1,5 @@
 use super::{currency_row::currency::dsl as currency_dsl, StorageConnection};
+use crate::Upsert;
 
 use crate::repository_error::RepositoryError;
 
@@ -69,5 +70,19 @@ impl<'a> CurrencyRowRepository<'a> {
         diesel::delete(currency_dsl::currency.filter(currency_dsl::id.eq(currency_id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+impl Upsert for CurrencyRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        CurrencyRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            CurrencyRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

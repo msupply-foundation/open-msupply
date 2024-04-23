@@ -83,7 +83,8 @@ export const requestsToCsv = (
     t('label.name'),
     t('label.number'),
     t('label.status'),
-    t('label.entered'),
+    t('label.created'),
+    t('label.created'),
     t('label.reference'),
     t('label.comment'),
   ];
@@ -108,7 +109,7 @@ export const responsesToCsv = (
     'id',
     t('label.name'),
     t('label.number'),
-    t('label.entered'),
+    t('label.created'),
     t('label.status'),
     t('label.reference'),
     t('label.comment'),

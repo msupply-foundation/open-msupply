@@ -1,5 +1,3 @@
-// M1 speced API is moved to their own files
-// Types defined here are prototype types and should be removed before M1 release to avoid confusion (for consumers and devs)
 pub mod name;
 pub use self::name::*;
 
@@ -21,32 +19,14 @@ pub use self::stock_line::*;
 pub mod location;
 pub use self::location::*;
 
-pub mod sensor;
-pub use self::sensor::*;
-
-pub mod temperature_breach;
-pub use self::temperature_breach::*;
-
-pub mod temperature_log;
-pub use self::temperature_log::*;
-
-pub mod temperature_notification;
-pub use self::temperature_notification::*;
-
 pub mod master_list;
 pub use self::master_list::*;
-
-pub mod master_list_line;
-pub use self::master_list_line::*;
 
 pub mod invoice_query;
 pub use self::invoice_query::*;
 
 pub mod invoice_line;
 pub use self::invoice_line::*;
-
-pub mod item_chart;
-pub use self::item_chart::*;
 
 pub mod store;
 pub use self::store::*;
@@ -93,14 +73,23 @@ pub use self::repack::*;
 pub mod program;
 pub use self::program::*;
 
-pub mod plugin_data;
-pub use self::plugin_data::*;
+pub mod pack_variant;
+pub use self::pack_variant::*;
 
-pub mod program_node;
-pub use self::program_node::*;
+pub mod outbound_return_line;
+pub use self::outbound_return_line::*;
+
+pub mod inbound_return_line;
+pub use self::inbound_return_line::*;
+
+pub mod return_reason;
+pub use self::return_reason::*;
 
 pub mod currency;
 pub use self::currency::*;
+
+pub mod sync_file_reference;
+pub use self::sync_file_reference::*;
 
 use async_graphql::*;
 pub struct DeleteResponse(pub String);

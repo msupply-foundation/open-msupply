@@ -27,6 +27,11 @@ use self::outbound_shipment_unallocated_line::*;
 pub mod stock_out_line;
 use self::stock_out_line::*;
 
+pub mod stock_in_line;
+
+pub mod update_return_reason_id;
+use self::update_return_reason_id::*;
+
 pub trait InvoiceLineServiceTrait: Sync + Send {
     fn get_invoice_line(
         &self,
@@ -177,6 +182,14 @@ pub trait InvoiceLineServiceTrait: Sync + Send {
         line_id: String,
     ) -> Result<AllocateLineResult, AllocateOutboundShipmentUnallocatedLineError> {
         allocate_outbound_shipment_unallocated_line(ctx, line_id)
+    }
+
+    fn update_return_reason_id(
+        &self,
+        ctx: &ServiceContext,
+        input: UpdateLineReturnReason,
+    ) -> Result<InvoiceLine, UpdateLineReturnReasonError> {
+        update_return_reason_id(ctx, input)
     }
 }
 

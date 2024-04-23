@@ -141,7 +141,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{mock_request_draft_requisition, MockDataInserts},
@@ -199,7 +199,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_request_requisition_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_insert_request_requisition_structured_errors",
@@ -292,7 +292,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_request_requisition_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             RequisitionMutations,
             "test_graphql_insert_request_requisition_success",
@@ -322,7 +322,7 @@ mod test {
                     comment: Some("comment input".to_string()),
                     max_months_of_stock: 1.0,
                     min_months_of_stock: 2.0,
-                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 01, 03).unwrap())
+                    expected_delivery_date: Some(NaiveDate::from_ymd_opt(2022, 1, 3).unwrap())
                 }
             );
             Ok(inline_init(|r: &mut Requisition| {

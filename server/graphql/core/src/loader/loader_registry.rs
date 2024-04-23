@@ -118,13 +118,6 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
-    let master_list_line_by_master_list_id = DataLoader::new(
-        MasterListLineByMasterListId {
-            connection_manager: connection_manager.clone(),
-        },
-        async_std::task::spawn,
-    );
-
     let stocktake_line_loader = DataLoader::new(
         StocktakeLineByStocktakeIdLoader {
             connection_manager: connection_manager.clone(),
@@ -216,6 +209,34 @@ pub async fn get_loaders(
         async_std::task::spawn,
     );
 
+    let asset_by_location_loader = DataLoader::new(
+        AssetByLocationLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let asset_location_loader = DataLoader::new(
+        AssetLocationLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let file_sync_reference_loader = DataLoader::new(
+        SyncFileReferenceLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
+    let asset_log_reason_loader = DataLoader::new(
+        AssetLogReasonLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    );
+
     loaders.insert(item_loader);
     loaders.insert(name_by_id_loader);
     loaders.insert(store_by_id_loader);
@@ -229,7 +250,6 @@ pub async fn get_loaders(
     loaders.insert(stock_line_by_id_loader);
     loaders.insert(user_account_loader);
     loaders.insert(location_by_id_loader);
-    loaders.insert(master_list_line_by_master_list_id);
     loaders.insert(requisitions_by_id_loader);
     loaders.insert(requisition_line_by_requisition_id_loader);
     loaders.insert(requisition_line_by_linked_requisition_line_id_loader);
@@ -243,6 +263,10 @@ pub async fn get_loaders(
     loaders.insert(document_loader);
     loaders.insert(schema_loader);
     loaders.insert(doc_registry_loader);
+    loaders.insert(asset_by_location_loader);
+    loaders.insert(asset_location_loader);
+    loaders.insert(file_sync_reference_loader);
+    loaders.insert(asset_log_reason_loader);
     loaders.insert(DataLoader::new(
         PatientLoader {
             service_provider: service_provider.clone(),
@@ -275,6 +299,43 @@ pub async fn get_loaders(
     ));
     loaders.insert(DataLoader::new(
         SensorByIdLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+
+    loaders.insert(DataLoader::new(
+        AssetClassLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetCategoryLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetTypeLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetCatalogueItemLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetStatusLogLoader {
+            connection_manager: connection_manager.clone(),
+        },
+        async_std::task::spawn,
+    ));
+    loaders.insert(DataLoader::new(
+        AssetCatalogueItemPropertyLoader {
             connection_manager: connection_manager.clone(),
         },
         async_std::task::spawn,

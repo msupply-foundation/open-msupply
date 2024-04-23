@@ -4,14 +4,17 @@ use repository::{
         mock_period_schedule_2,
     },
     ContextRow, ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
+    SyncBufferAction, SyncBufferRow,
 };
 
 use crate::sync::{
-    test::TestSyncPullRecord,
-    translations::{LegacyTableName, PullUpsertRecord},
+    test::TestSyncIncomingRecord,
+    translations::{IntegrationOperation, PullTranslateResult},
 };
 
-const MASTER_LIST_WITH_PROGRAM_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "list_master";
+
+const MASTER_LIST_WITH_PROGRAM_1: (&str, &str) = (
     "program_test",
     r#"{
     "ID": "program_test",
@@ -86,7 +89,7 @@ const MASTER_LIST_WITH_PROGRAM_1: (&'static str, &'static str) = (
 }"#,
 );
 
-const MASTER_LIST_WITH_PROGRAM_2: (&'static str, &'static str) = (
+const MASTER_LIST_WITH_PROGRAM_2: (&str, &str) = (
     "program_test_2",
     r#"{
     "ID": "program_test_2",
@@ -114,29 +117,27 @@ const MASTER_LIST_WITH_PROGRAM_2: (&'static str, &'static str) = (
 }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upserts(
-            LegacyTableName::LIST_MASTER,
-            MASTER_LIST_WITH_PROGRAM_1,
-            vec![
-                PullUpsertRecord::Context(ContextRow {
+        TestSyncIncomingRecord {
+            translated_record: PullTranslateResult::IntegrationOperations(vec![
+                IntegrationOperation::upsert(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     name: "Program Test 01".to_owned(),
                 }),
-                PullUpsertRecord::Program(ProgramRow {
+                IntegrationOperation::upsert(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     name: "Program Test 01".to_owned(),
                     master_list_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     context_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                 }),
-                PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
+                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_1().id,
                     name_tag_id: mock_name_tag_1().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
                 }),
-                PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
+                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_1().id
                         + "New order 1",
@@ -147,7 +148,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     max_mos: 3.0,
                     max_order_per_period: 1,
                 }),
-                PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
+                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_1().id
                         + "New order 2",
@@ -158,13 +159,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     max_mos: 3.0,
                     max_order_per_period: 1,
                 }),
-                PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
+                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_2().id,
                     name_tag_id: mock_name_tag_2().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
                 }),
-                PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
+                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_2().id
                         + "New order 1",
@@ -175,13 +176,13 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     max_mos: 4.0,
                     max_order_per_period: 1,
                 }),
-                PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
+                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned() + &mock_name_tag_3().id,
                     name_tag_id: mock_name_tag_3().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
                     period_schedule_id: mock_period_schedule_2().id,
                 }),
-                PullUpsertRecord::ProgramRequisitionOrderType(ProgramRequisitionOrderTypeRow {
+                IntegrationOperation::upsert(ProgramRequisitionOrderTypeRow {
                     id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned()
                         + &mock_name_tag_3().id
                         + "New order 1",
@@ -192,29 +193,43 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
                     max_mos: 2.0,
                     max_order_per_period: 3,
                 }),
-            ],
-        ),
-        TestSyncPullRecord::new_pull_upserts(
-            LegacyTableName::LIST_MASTER,
-            MASTER_LIST_WITH_PROGRAM_2,
-            vec![
-                PullUpsertRecord::Context(ContextRow {
+            ]),
+            sync_buffer_row: SyncBufferRow {
+                table_name: TABLE_NAME.to_string(),
+                record_id: MASTER_LIST_WITH_PROGRAM_1.0.to_owned(),
+                data: MASTER_LIST_WITH_PROGRAM_1.1.to_owned(),
+                action: SyncBufferAction::Upsert,
+                ..Default::default()
+            },
+            extra_data: None,
+        },
+        TestSyncIncomingRecord {
+            translated_record: PullTranslateResult::IntegrationOperations(vec![
+                IntegrationOperation::upsert(ContextRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     name: "Program Test 02".to_owned(),
                 }),
-                PullUpsertRecord::Program(ProgramRow {
+                IntegrationOperation::upsert(ProgramRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     name: "Program Test 02".to_owned(),
                     master_list_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     context_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                 }),
-                PullUpsertRecord::ProgramRequisitionSettings(ProgramRequisitionSettingsRow {
+                IntegrationOperation::upsert(ProgramRequisitionSettingsRow {
                     id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned() + &mock_name_tag_1().id,
                     name_tag_id: mock_name_tag_1().id,
                     program_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
                     period_schedule_id: mock_period_schedule_1().id,
                 }),
-            ],
-        ),
+            ]),
+            sync_buffer_row: SyncBufferRow {
+                table_name: TABLE_NAME.to_string(),
+                record_id: MASTER_LIST_WITH_PROGRAM_2.0.to_owned(),
+                data: MASTER_LIST_WITH_PROGRAM_2.1.to_owned(),
+                action: SyncBufferAction::Upsert,
+                ..Default::default()
+            },
+            extra_data: None,
+        },
     ]
 }

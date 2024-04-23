@@ -1,6 +1,9 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{date_option_to_isostring, empty_str_as_option_string, zero_date_as_option},
+    translations::{
+        item::ItemTranslation, location::LocationTranslation, reason::ReasonTranslation,
+        stock_line::StockLineTranslation, stocktake::StocktakeTranslation,
+    },
 };
 use chrono::NaiveDate;
 use repository::{
@@ -10,17 +13,8 @@ use repository::{
 use serde::{Deserialize, Serialize};
 
 use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+    utils::clear_invalid_location_id, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::STOCKTAKE_LINE;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::StocktakeLine
-}
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -53,75 +47,95 @@ pub struct LegacyStocktakeLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub inventory_adjustment_reason_id: Option<String>,
 }
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(StocktakeLineTranslation)
+}
 
-pub(crate) struct StocktakeLineTranslation {}
+pub(super) struct StocktakeLineTranslation;
 impl SyncTranslation for StocktakeLineTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::STOCKTAKE_LINE,
-            dependencies: vec![
-                LegacyTableName::STOCKTAKE,
-                LegacyTableName::ITEM_LINE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::ITEM,
-                LegacyTableName::INVENTORY_ADJUSTMENT_REASON,
-            ],
-        }
+    fn table_name(&self) -> &str {
+        "Stock_take_lines"
     }
 
-    fn try_translate_pull_upsert(
-        &self,
-        _: &StorageConnection,
-        sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            StocktakeTranslation.table_name(),
+            StockLineTranslation.table_name(),
+            ItemTranslation.table_name(),
+            LocationTranslation.table_name(),
+            ReasonTranslation.table_name(),
+        ]
+    }
 
-        let data = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::StocktakeLine)
+    }
+
+    fn try_translate_from_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let LegacyStocktakeLineRow {
+            ID,
+            stock_take_ID,
+            location_id,
+            comment,
+            snapshot_qty,
+            snapshot_packsize,
+            stock_take_qty,
+            is_edited,
+            item_line_ID,
+            item_ID,
+            Batch,
+            expiry,
+            cost_price,
+            sell_price,
+            note,
+            inventory_adjustment_reason_id,
+        } = serde_json::from_str::<LegacyStocktakeLineRow>(&sync_record.data)?;
 
         // TODO is this correct?
-        let counted_number_of_packs = if data.is_edited {
-            Some(data.stock_take_qty)
+        let counted_number_of_packs = if is_edited {
+            Some(stock_take_qty)
         } else {
             None
         };
+
+        let location_id = clear_invalid_location_id(connection, location_id)?;
         let result = StocktakeLineRow {
-            id: data.ID,
-            stocktake_id: data.stock_take_ID,
-            stock_line_id: data.item_line_ID,
-            location_id: data.location_id,
-            comment: data.comment,
-            snapshot_number_of_packs: data.snapshot_qty,
+            id: ID,
+            stocktake_id: stock_take_ID,
+            stock_line_id: item_line_ID,
+            location_id,
+            comment,
+            snapshot_number_of_packs: snapshot_qty,
             counted_number_of_packs,
-            item_link_id: data.item_ID,
-            batch: data.Batch,
-            expiry_date: data.expiry,
-            pack_size: Some(data.snapshot_packsize),
-            cost_price_per_pack: Some(data.cost_price),
-            sell_price_per_pack: Some(data.sell_price),
-            note: data.note,
-            inventory_adjustment_reason_id: data.inventory_adjustment_reason_id,
+            item_link_id: item_ID,
+            batch: Batch,
+            expiry_date: expiry,
+            pack_size: Some(snapshot_packsize),
+            cost_price_per_pack: Some(cost_price),
+            sell_price_per_pack: Some(sell_price),
+            note,
+            inventory_adjustment_reason_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::StocktakeLine(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let Some(stocktake_line) = StocktakeLineRepository::new(connection)
             .query_by_filter(
                 StocktakeLineFilter::new().id(EqualFilter::equal_to(&changelog.record_id)),
-            None,)?
+                None,
+            )?
             .pop()
         else {
             return Err(anyhow::anyhow!("Stocktake row not found"));
@@ -171,28 +185,27 @@ impl SyncTranslation for StocktakeLineTranslation {
             inventory_adjustment_reason_id,
         };
 
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 
-    fn try_translate_push_delete(
+    fn try_translate_to_delete_sync_record(
         &self,
         _: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        let result = match_push_table(changelog)
-            .then(|| vec![RemoteSyncRecordV5::new_delete(changelog, LEGACY_TABLE_NAME)]);
-
-        Ok(result)
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::test::merge_helpers::merge_all_item_links;
+    use crate::sync::{
+        test::merge_helpers::merge_all_item_links, translations::ToSyncRecordTranslationType,
+    };
 
     use super::*;
     use repository::{
@@ -209,8 +222,9 @@ mod tests {
             setup_all("test_stock_take_line_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);
@@ -242,12 +256,22 @@ mod tests {
         let translator = StocktakeLineTranslation {};
         for changelog in changelogs {
             // Translate and sort
+            // Translate and sort
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
             let translated = translator
-                .try_translate_push_upsert(&connection, &changelog)
-                .unwrap()
+                .try_translate_to_upsert_sync_record(&connection, &changelog)
                 .unwrap();
 
-            assert_eq!(translated[0].record.data["item_ID"], json!("item_a"))
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["item_ID"], json!("item_a"));
         }
     }
 }

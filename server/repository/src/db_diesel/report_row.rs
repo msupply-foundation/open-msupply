@@ -3,7 +3,7 @@ use super::{
 };
 
 use crate::repository_error::RepositoryError;
-
+use crate::{Delete, Upsert};
 use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
@@ -17,6 +17,7 @@ pub enum ReportType {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportContext {
+    Asset,
     InboundShipment,
     OutboundShipment,
     Requisition,
@@ -27,6 +28,8 @@ pub enum ReportContext {
     Patient,
     Dispensary,
     Repack,
+    OutboundReturn,
+    InboundReturn,
 }
 
 table! {
@@ -117,5 +120,34 @@ impl<'a> ReportRowRepository<'a> {
         diesel::delete(report_dsl::report.filter(report_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ReportRowDelete(pub String);
+impl Delete for ReportRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ReportRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ReportRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for ReportRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        ReportRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ReportRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

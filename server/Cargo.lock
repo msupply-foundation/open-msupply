@@ -1325,7 +1325,6 @@ dependencies = [
  "graphql",
  "log",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "server",
@@ -1978,6 +1977,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "fallible-iterator"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
+
+[[package]]
+name = "fallible-streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a"
+
+[[package]]
 name = "fancy-regex"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2250,41 +2261,80 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
+ "graphql_asset",
+ "graphql_asset_catalogue",
  "graphql_batch_mutations",
  "graphql_clinician",
+ "graphql_cold_chain",
  "graphql_core",
  "graphql_form_schema",
  "graphql_general",
+ "graphql_inventory_adjustment",
  "graphql_invoice",
  "graphql_invoice_line",
  "graphql_location",
+ "graphql_pack_variant",
  "graphql_plugin",
  "graphql_programs",
  "graphql_repack",
  "graphql_reports",
  "graphql_requisition",
  "graphql_requisition_line",
- "graphql_sensor",
  "graphql_stock_line",
  "graphql_stocktake",
  "graphql_stocktake_line",
- "graphql_temperature_breach",
- "graphql_temperature_log",
- "graphql_temperature_notification",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "tokio",
+ "util",
+]
+
+[[package]]
+name = "graphql_asset"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_asset_catalogue",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_asset_catalogue"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -2294,7 +2344,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2309,11 +2358,9 @@ dependencies = [
  "graphql_stocktake_line",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2323,7 +2370,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2332,11 +2378,27 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
+ "serde 1.0.197",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_cold_chain"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "assert-json-diff",
+ "async-graphql",
+ "chrono",
+ "graphql_asset",
+ "graphql_core",
+ "graphql_types",
+ "regex",
+ "repository",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2352,11 +2414,11 @@ dependencies = [
  "async-trait",
  "chrono",
  "repository",
- "reqwest",
+ "reqwest 0.12.2",
  "serde 1.0.197",
  "serde_json",
  "service",
- "strum 0.25.0",
+ "strum",
  "thiserror",
  "tokio",
  "util",
@@ -2369,7 +2431,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2378,11 +2439,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2392,7 +2451,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2401,11 +2459,31 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
+ "reqwest 0.12.2",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_inventory_adjustment"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -2415,21 +2493,17 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2439,7 +2513,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2449,12 +2522,10 @@ dependencies = [
  "graphql_invoice",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "strum 0.25.0",
- "thiserror",
+ "strum",
  "util",
 ]
 
@@ -2464,7 +2535,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2473,11 +2543,28 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
+ "util",
+]
+
+[[package]]
+name = "graphql_pack_variant"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde 1.0.197",
+ "serde_json",
+ "service",
  "util",
 ]
 
@@ -2487,7 +2574,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2495,14 +2581,10 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
- "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
 ]
 
 [[package]]
@@ -2519,14 +2601,11 @@ dependencies = [
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2537,7 +2616,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2546,11 +2624,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2561,7 +2637,6 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2570,11 +2645,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2584,21 +2657,17 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "graphql_general",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2608,7 +2677,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2617,34 +2685,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_sensor"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
  "util",
 ]
 
@@ -2654,7 +2697,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2663,11 +2705,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2677,7 +2717,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2686,11 +2725,9 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2700,7 +2737,6 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
  "async-graphql-actix-web",
@@ -2709,81 +2745,10 @@ dependencies = [
  "graphql_core",
  "graphql_types",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "strum 0.25.0",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_breach"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_log"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
- "util",
-]
-
-[[package]]
-name = "graphql_temperature_notification"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "anymap",
- "assert-json-diff",
- "async-graphql",
- "async-graphql-actix-web",
- "async-trait",
- "chrono",
- "graphql_core",
- "graphql_types",
- "repository",
- "reqwest",
- "serde 1.0.197",
- "serde_json",
- "service",
- "thiserror",
+ "strum",
  "util",
 ]
 
@@ -2792,21 +2757,15 @@ name = "graphql_types"
 version = "0.1.0"
 dependencies = [
  "actix-rt",
- "actix-web",
- "anymap",
  "assert-json-diff",
  "async-graphql",
- "async-graphql-actix-web",
  "async-trait",
  "chrono",
  "graphql_core",
- "regex",
  "repository",
- "reqwest",
  "serde 1.0.197",
  "serde_json",
  "service",
- "thiserror",
  "util",
 ]
 
@@ -2831,6 +2790,15 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
+dependencies = [
+ "ahash 0.7.8",
+]
+
+[[package]]
+name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
@@ -2843,6 +2811,15 @@ name = "hashbrown"
 version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "290f1a1d9242c78d09ce40a5e87e7554ee637af1351968159f4952f028f75604"
+
+[[package]]
+name = "hashlink"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7249a3129cbc1ffccd74857f81464a323a152173cdb134e0fd81bc803b29facf"
+dependencies = [
+ "hashbrown 0.11.2",
+]
 
 [[package]]
 name = "headless_chrome"
@@ -2937,6 +2914,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-body"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1cac85db508abc24a2e48553ba12a996e87244a0395ce011e62b37158745d643"
+dependencies = [
+ "bytes",
+ "http 1.1.0",
+]
+
+[[package]]
+name = "http-body-util"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0475f8b2ac86659c21b64320d5d653f9efe42acd2a4e560073ec61a155a34f1d"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "pin-project-lite",
+]
+
+[[package]]
 name = "http-range"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2968,7 +2968,7 @@ dependencies = [
  "crossbeam-utils",
  "form_urlencoded",
  "futures-util",
- "hyper",
+ "hyper 0.14.28",
  "isahc",
  "lazy_static",
  "levenshtein",
@@ -3018,7 +3018,7 @@ dependencies = [
  "futures-util",
  "h2",
  "http 0.2.12",
- "http-body",
+ "http-body 0.4.6",
  "httparse",
  "httpdate",
  "itoa",
@@ -3031,17 +3031,59 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyper-rustls"
-version = "0.24.2"
+name = "hyper"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec3efd23720e2049821a693cbc7e65ea87c72f1c58ff2f9522ff332b1491e590"
+checksum = "186548d73ac615b32a73aafe38fb4f56c0d340e110e5a200bcadbaf2e199263a"
+dependencies = [
+ "bytes",
+ "futures-channel",
+ "futures-util",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "httparse",
+ "itoa",
+ "pin-project-lite",
+ "smallvec",
+ "tokio",
+ "want",
+]
+
+[[package]]
+name = "hyper-rustls"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0bea761b46ae2b24eb4aef630d8d1c398157b6fc29e6350ecf090a0b70c952c"
 dependencies = [
  "futures-util",
- "http 0.2.12",
- "hyper",
- "rustls 0.21.10",
+ "http 1.1.0",
+ "hyper 1.2.0",
+ "hyper-util",
+ "rustls 0.22.2",
+ "rustls-pki-types",
  "tokio",
- "tokio-rustls 0.24.1",
+ "tokio-rustls 0.25.0",
+ "tower-service",
+]
+
+[[package]]
+name = "hyper-util"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca38ef113da30126bbff9cd1705f9273e15d45498615d138b0c20279ac7a76aa"
+dependencies = [
+ "bytes",
+ "futures-channel",
+ "futures-util",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "hyper 1.2.0",
+ "pin-project-lite",
+ "socket2 0.5.6",
+ "tokio",
+ "tower",
+ "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -3283,7 +3325,7 @@ dependencies = [
  "parking_lot 0.12.1",
  "percent-encoding",
  "regex",
- "reqwest",
+ "reqwest 0.11.24",
  "serde 1.0.197",
  "serde_json",
  "time",
@@ -4419,7 +4461,7 @@ dependencies = [
  "clap 3.2.25",
  "log",
  "regex",
- "reqwest",
+ "reqwest 0.12.2",
  "serde 1.0.197",
  "serde_json",
  "serde_yaml",
@@ -4442,10 +4484,12 @@ dependencies = [
  "log",
  "pretty_assertions",
  "rand",
+ "regex",
+ "rusqlite",
  "rust-embed",
  "serde 1.0.197",
  "serde_json",
- "strum 0.24.1",
+ "strum",
  "thiserror",
  "tokio",
  "util",
@@ -4465,9 +4509,8 @@ dependencies = [
  "futures-util",
  "h2",
  "http 0.2.12",
- "http-body",
- "hyper",
- "hyper-rustls",
+ "http-body 0.4.6",
+ "hyper 0.14.28",
  "ipnet",
  "js-sys",
  "log",
@@ -4475,21 +4518,60 @@ dependencies = [
  "once_cell",
  "percent-encoding",
  "pin-project-lite",
- "rustls 0.21.10",
- "rustls-pemfile",
  "serde 1.0.197",
  "serde_json",
  "serde_urlencoded",
  "sync_wrapper",
  "system-configuration",
  "tokio",
- "tokio-rustls 0.24.1",
  "tower-service",
  "url",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "webpki-roots 0.25.4",
+ "winreg 0.50.0",
+]
+
+[[package]]
+name = "reqwest"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d66674f2b6fb864665eea7a3c1ac4e3dfacd2fda83cf6f935a612e01b0e3338"
+dependencies = [
+ "base64 0.21.7",
+ "bytes",
+ "futures-channel",
+ "futures-core",
+ "futures-util",
+ "http 1.1.0",
+ "http-body 1.0.0",
+ "http-body-util",
+ "hyper 1.2.0",
+ "hyper-rustls",
+ "hyper-util",
+ "ipnet",
+ "js-sys",
+ "log",
+ "mime",
+ "mime_guess",
+ "once_cell",
+ "percent-encoding",
+ "pin-project-lite",
+ "rustls 0.22.2",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "serde 1.0.197",
+ "serde_json",
+ "serde_urlencoded",
+ "sync_wrapper",
+ "tokio",
+ "tokio-rustls 0.25.0",
+ "tower-service",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+ "webpki-roots 0.26.1",
  "winreg 0.50.0",
 ]
 
@@ -4555,6 +4637,21 @@ dependencies = [
  "spki",
  "subtle",
  "zeroize",
+]
+
+[[package]]
+name = "rusqlite"
+version = "0.25.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c4b1eaf239b47034fb450ee9cdedd7d0226571689d8823030c4b6c2cb407152"
+dependencies = [
+ "bitflags 1.3.2",
+ "fallible-iterator",
+ "fallible-streaming-iterator",
+ "hashlink",
+ "libsqlite3-sys",
+ "memchr",
+ "smallvec",
 ]
 
 [[package]]
@@ -4662,18 +4759,6 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.21.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9d5a6813c0759e4609cd494e8e725babae6a2ca7b62a5536a13daaec6fcb7ba"
-dependencies = [
- "log",
- "ring 0.17.8",
- "rustls-webpki 0.101.7",
- "sct",
-]
-
-[[package]]
-name = "rustls"
 version = "0.22.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e87c9956bd9807afa1f77e0f7594af32566e830e088a5576d27c5b6f30f49d41"
@@ -4681,7 +4766,7 @@ dependencies = [
  "log",
  "ring 0.17.8",
  "rustls-pki-types",
- "rustls-webpki 0.102.2",
+ "rustls-webpki",
  "subtle",
  "zeroize",
 ]
@@ -4700,16 +4785,6 @@ name = "rustls-pki-types"
 version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ede67b28608b4c60685c7d54122d4400d90f62b40caee7700e700380a390fa8"
-
-[[package]]
-name = "rustls-webpki"
-version = "0.101.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b6275d1ee7a1cd780b64aca7726599a1dbc893b1e64144529e55c3c2f745765"
-dependencies = [
- "ring 0.17.8",
- "untrusted 0.9.0",
-]
 
 [[package]]
 name = "rustls-webpki"
@@ -4741,6 +4816,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "sanitize-filename"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08c502bdb638f1396509467cb0580ef3b29aa2a45c5d43e5d84928241280296c"
+dependencies = [
+ "lazy_static",
+ "regex",
 ]
 
 [[package]]
@@ -4955,9 +5040,9 @@ dependencies = [
  "clap 3.2.25",
  "config",
  "futures",
+ "futures-util",
  "graphql",
  "graphql_core",
- "graphql_types",
  "httpmock",
  "log",
  "machine-uid",
@@ -4965,7 +5050,6 @@ dependencies = [
  "rcgen",
  "regex",
  "repository",
- "reqwest",
  "rust-embed",
  "rustls 0.20.9",
  "rustls-pemfile",
@@ -4973,7 +5057,6 @@ dependencies = [
  "serde_json",
  "service",
  "simple-log",
- "thiserror",
  "tokio",
  "util",
  "winres",
@@ -4983,10 +5066,11 @@ dependencies = [
 name = "service"
 version = "0.1.0"
 dependencies = [
+ "actix-files",
+ "actix-multipart",
  "actix-rt",
  "actix-web",
  "anyhow",
- "anymap",
  "assert-json-diff",
  "async-trait",
  "bcrypt",
@@ -5002,7 +5086,7 @@ dependencies = [
  "pretty_assertions",
  "rand",
  "repository",
- "reqwest",
+ "reqwest 0.12.2",
  "rsa",
  "schemafy",
  "schemafy_core",
@@ -5011,6 +5095,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "simple-log",
+ "telnet",
  "temperature-sensor",
  "tera",
  "thiserror",
@@ -5223,40 +5308,18 @@ checksum = "5ee073c9e4cd00e28217186dbe12796d692868f432bf2e97ee73bed0c56dfa01"
 
 [[package]]
 name = "strum"
-version = "0.24.1"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+checksum = "5d8cec3501a5194c432b2b7976db6b7d10ec95c253208b45f83f7136aa985e29"
 dependencies = [
- "strum_macros 0.24.3",
-]
-
-[[package]]
-name = "strum"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "290d54ea6f91c969195bdbcd7442c8c2a2ba87da8bf60a7ee86a235d4bc1e125"
-dependencies = [
- "strum_macros 0.25.3",
+ "strum_macros",
 ]
 
 [[package]]
 name = "strum_macros"
-version = "0.24.3"
+version = "0.26.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
-dependencies = [
- "heck",
- "proc-macro2",
- "quote",
- "rustversion",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "strum_macros"
-version = "0.25.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23dc1fa9ac9c169a78ba62f0b841814b7abae11bdd047b9c58f893439e309ea0"
+checksum = "c6cf59daf282c0a494ba14fd21610a0325f9f90ec9d1231dea26bcb1d696c946"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -5333,9 +5396,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "telnet"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99f2cc260bea5219955ab4832c9600a41b87101d280939edae6dd10b3c68a4f3"
+
+[[package]]
 name = "temperature-sensor"
 version = "0.1.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git#5764b9b4d8f673060ec492d95f11bf13bbf19b46"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.1.0-beta3#5764b9b4d8f673060ec492d95f11bf13bbf19b46"
 dependencies = [
  "chrono",
  "json",
@@ -5534,11 +5603,12 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.24.1"
+version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c28327cf380ac148141087fbfb9de9d7bd4e84ab5d2c28fbc911d753de8a7081"
+checksum = "775e0c0f0adb3a2f22a00c4745d728b479985fc15ee7ca6a2608388c5569860f"
 dependencies = [
- "rustls 0.21.10",
+ "rustls 0.22.2",
+ "rustls-pki-types",
  "tokio",
 ]
 
@@ -5587,6 +5657,28 @@ name = "topological-sort"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea68304e134ecd095ac6c3574494fc62b909f416c4fca77e440530221e549d3d"
+
+[[package]]
+name = "tower"
+version = "0.4.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8fa9be0de6cf49e536ce1851f987bd21a43b771b09473c3549a6c853db37c1c"
+dependencies = [
+ "futures-core",
+ "futures-util",
+ "pin-project",
+ "pin-project-lite",
+ "tokio",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "tower-layer"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c20c8dbed6283a09604c3e69b4b7eeb54e298b8a600d4d5ecb5ad39de609f1d0"
 
 [[package]]
 name = "tower-service"
@@ -5783,7 +5875,7 @@ dependencies = [
  "once_cell",
  "rustls 0.22.2",
  "rustls-pki-types",
- "rustls-webpki 0.102.2",
+ "rustls-webpki",
  "socks",
  "url",
  "webpki-roots 0.26.1",
@@ -5835,6 +5927,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "env_logger 0.8.4",
+ "sanitize-filename",
  "serde 1.0.197",
  "serde_json",
  "sha2",
@@ -6009,12 +6102,6 @@ checksum = "b6c71e40d7d2c34a5106301fb632274ca37242cd0c9d3e64dbece371a40a2d87"
 dependencies = [
  "webpki",
 ]
-
-[[package]]
-name = "webpki-roots"
-version = "0.25.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f20c57d8d7db6d3b86154206ae5d8fba62dd39573114de97c2cb0578251f8e1"
 
 [[package]]
 name = "webpki-roots"

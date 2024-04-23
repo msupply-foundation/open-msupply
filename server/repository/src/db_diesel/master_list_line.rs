@@ -1,6 +1,7 @@
 use crate::{
-    diesel_macros::apply_equal_filter, repository_error::RepositoryError, EqualFilter, ItemLinkRow,
-    ItemRow, ItemRowType, Pagination,
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    repository_error::RepositoryError,
+    EqualFilter, ItemLinkRow, ItemRow, ItemRowType, Pagination, Sort,
 };
 
 use super::{
@@ -24,13 +25,20 @@ pub struct MasterListLine {
 
 type MasterListLineJoin = (MasterListLineRow, (ItemLinkRow, ItemRow));
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct MasterListLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
     pub master_list_id: Option<EqualFilter<String>>,
     pub item_type: Option<EqualFilter<ItemRowType>>,
 }
+
+pub enum MasterListLineSortField {
+    Name,
+    Code,
+}
+
+pub type MasterListLineSort = Sort<MasterListLineSortField>;
 
 pub struct MasterListLineRepository<'a> {
     connection: &'a StorageConnection,
@@ -66,11 +74,23 @@ impl<'a> MasterListLineRepository<'a> {
         &self,
         pagination: Pagination,
         filter: Option<MasterListLineFilter>,
+        sort: Option<MasterListLineSort>,
     ) -> Result<Vec<MasterListLine>, RepositoryError> {
         // TODO (beyond M1), check that store_id matches current store
         let mut query = create_filtered_query(filter)?;
 
-        query = query.order(master_list_line_dsl::id.asc());
+        if let Some(sort) = sort {
+            match sort.key {
+                MasterListLineSortField::Name => {
+                    apply_sort_no_case!(query, sort, item_dsl::name);
+                }
+                MasterListLineSortField::Code => {
+                    apply_sort_no_case!(query, sort, item_dsl::code);
+                }
+            }
+        } else {
+            query = query.order(master_list_line_dsl::id.asc())
+        }
 
         let result = query
             .offset(pagination.offset as i64)
@@ -118,12 +138,7 @@ fn to_domain((master_list_line_row, (_, item_row)): MasterListLineJoin) -> Maste
 
 impl MasterListLineFilter {
     pub fn new() -> MasterListLineFilter {
-        MasterListLineFilter {
-            id: None,
-            item_id: None,
-            master_list_id: None,
-            item_type: None,
-        }
+        Self::default()
     }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {

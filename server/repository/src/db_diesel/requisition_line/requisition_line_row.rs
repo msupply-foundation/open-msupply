@@ -5,6 +5,8 @@ use crate::repository_error::RepositoryError;
 use crate::StorageConnection;
 use diesel::prelude::*;
 
+use crate::{Delete, Upsert};
+
 use chrono::NaiveDateTime;
 
 table! {
@@ -129,6 +131,35 @@ impl<'a> RequisitionLineRowRepository<'a> {
             .first(&self.connection.connection)
             .optional()?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RequisitionLineRowDelete(pub String);
+impl Delete for RequisitionLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        RequisitionLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RequisitionLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for RequisitionLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        RequisitionLineRowRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RequisitionLineRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }
 

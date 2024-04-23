@@ -3,7 +3,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -25,14 +25,6 @@ table! {
     }
 }
 
-table! {
-    #[sql_name = "sensor"]
-    sensor_is_sync_update (id) {
-        id -> Text,
-        is_sync_update -> Bool,
-    }
-}
-
 joinable!(sensor -> store (store_id));
 joinable!(sensor -> location (location_id));
 
@@ -46,7 +38,7 @@ pub enum SensorType {
 
 // TODO put this somewhere more sensible
 // perhaps the cold chain service
-pub fn get_sensor_type(serial: &String) -> SensorType {
+pub fn get_sensor_type(serial: &str) -> SensorType {
     match serial.split('|').nth(1) {
         Some("BLUE_MAESTRO") => SensorType::BlueMaestro,
         Some("LAIRD") => SensorType::Laird,
@@ -133,5 +125,19 @@ impl<'a> SensorRowRepository<'a> {
         Ok(sensor_dsl::sensor
             .filter(sensor_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?)
+    }
+}
+
+impl Upsert for SensorRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        SensorRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            SensorRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

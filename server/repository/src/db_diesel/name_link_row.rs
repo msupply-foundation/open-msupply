@@ -1,6 +1,6 @@
 use super::{name_link_row::name_link::dsl::*, name_row::name};
 
-use crate::{RepositoryError, StorageConnection};
+use crate::{RepositoryError, StorageConnection, Upsert};
 
 use diesel::prelude::*;
 
@@ -88,5 +88,19 @@ impl<'a> NameLinkRowRepository<'a> {
             .filter(name_id.eq(name))
             .load::<NameLinkRow>(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+impl Upsert for NameLinkRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameLinkRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameLinkRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

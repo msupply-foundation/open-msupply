@@ -33,7 +33,7 @@ pub fn delete_outbound_shipment_unallocated_line(
         .connection
         .transaction_sync(|connection| {
             validate(connection, &ctx.store_id, &input)?;
-            match InvoiceLineRowRepository::new(&connection).delete(&input.id) {
+            match InvoiceLineRowRepository::new(connection).delete(&input.id) {
                 Ok(_) => Ok(input.id),
                 Err(error) => Err(OutError::DatabaseError(error)),
             }

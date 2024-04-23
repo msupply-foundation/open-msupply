@@ -45,7 +45,19 @@ export type ColumnKey =
   | 'requestedQuantity'
   | 'supplyQuantity'
   | 'stockOnHand'
-  | 'theirReference';
+  | 'theirReference'
+  | 'returnReason'
+  | 'availableNumberOfPacks'
+  | 'numberOfPacksToReturn'
+  | 'numberOfPacksReturned';
+
+export const getColumnLookupWithOverrides = <T extends RecordWithId>(
+  columnKey: ColumnKey,
+  overrides: Partial<ColumnDefinition<T>>
+): ColumnDefinition<T> => ({
+  ...getColumnLookup<T>()[columnKey],
+  ...overrides,
+});
 
 const getColumnLookup = <T extends RecordWithId>(): Record<
   ColumnKey,
@@ -64,7 +76,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     format: ColumnFormat.Integer,
     align: ColumnAlign.Right,
     description: 'description.pack-quantity',
-    label: 'label.pack-quantity',
+    label: 'label.num-packs',
     width: 100,
     Cell: NumberCell,
   },
@@ -84,6 +96,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     key: 'itemCode',
     label: 'label.code',
     width: 125,
+    Cell: TooltipTextCell,
   },
   itemName: {
     key: 'itemName',
@@ -124,7 +137,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   createdDatetime: {
     description: 'description.entered',
-    label: 'label.entered',
+    label: 'label.created',
     key: 'createdDatetime',
     format: ColumnFormat.Date,
     width: 130,
@@ -173,6 +186,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.code',
     key: 'code',
     width: 20,
+    Cell: TooltipTextCell,
   },
   packSize: {
     label: 'label.pack-size',
@@ -182,7 +196,7 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
   },
   quantity: {
     description: 'description.pack-quantity',
-    label: 'label.pack-quantity',
+    label: 'label.num-packs',
     key: 'quantity',
     width: 100,
     align: ColumnAlign.Right,
@@ -266,6 +280,29 @@ const getColumnLookup = <T extends RecordWithId>(): Record<
     label: 'label.reference',
     key: 'theirReference',
     width: 100,
+  },
+  numberOfPacksToReturn: {
+    label: 'label.quantity-to-return',
+    key: 'numberOfPacksToReturn',
+    width: 125,
+    align: ColumnAlign.Right,
+  },
+  numberOfPacksReturned: {
+    label: 'label.quantity-returned',
+    key: 'numberOfPacksReturned',
+    width: 125,
+    align: ColumnAlign.Right,
+  },
+  availableNumberOfPacks: {
+    label: 'label.available-quantity-for-return',
+    key: 'availableNumberOfPacks',
+    width: 125,
+    align: ColumnAlign.Right,
+  },
+  returnReason: {
+    label: 'label.reason',
+    key: 'returnReason',
+    width: 200,
   },
 });
 

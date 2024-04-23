@@ -1,7 +1,7 @@
 use anyhow::Result;
 use service::report::definition::{
     DefaultQuery, GraphQlQuery, ReportDefinition, ReportDefinitionEntry, ReportDefinitionIndex,
-    ReportOutputType, TeraTemplate,
+    ReportOutputType, SQLQuery, TeraTemplate,
 };
 use std::{
     collections::HashMap,
@@ -43,12 +43,62 @@ fn parse_default_query(input: &str) -> anyhow::Result<DefaultQuery> {
     Ok(query)
 }
 
+/// Returns query name and SQLQuery
+fn extract_sql_entry(
+    args: &BuildArgs,
+    files: &mut HashMap<String, PathBuf>,
+) -> Result<Vec<SQLQuery>> {
+    let Some(sql_queries) = &args.query_sql else {
+        return Ok(vec![]);
+    };
+    let result: Result<Vec<_>> = sql_queries
+        .iter()
+        .map(|query| {
+            let common_query = format!("{query}.sql");
+            if let Some(file_path) = files.remove(&common_query) {
+                let query_sql = fs::read_to_string(file_path).map_err(|err| {
+                    anyhow::Error::msg(format!("Failed to load query file: {}", err))
+                })?;
+                return Ok(SQLQuery {
+                    name: query.clone(),
+                    query_sqlite: query_sql.clone(),
+                    query_postgres: query_sql.clone(),
+                });
+            }
+            let query_sqlite = format!("{query}.sqlite.sql");
+            let file_path = files
+                .remove(&query_sqlite)
+                .ok_or(anyhow::Error::msg(format!(
+                    "Sqlite query file ({query_sqlite}) does not exist"
+                )))?;
+            let query_sqlite_sql = fs::read_to_string(file_path).map_err(|err| {
+                anyhow::Error::msg(format!("Failed to load Sqlite query file: {}", err))
+            })?;
+            let query_postgres = format!("{query}.postgres.sql");
+            let file_path = files
+                .remove(&query_postgres)
+                .ok_or(anyhow::Error::msg(format!(
+                    "Postgres query file ({query_postgres}) does not exist"
+                )))?;
+            let query_postgres_sql = fs::read_to_string(file_path).map_err(|err| {
+                anyhow::Error::msg(format!("Failed to load Postgres query file: {}", err))
+            })?;
+            return Ok(SQLQuery {
+                name: query.clone(),
+                query_sqlite: query_sqlite_sql.clone(),
+                query_postgres: query_postgres_sql.clone(),
+            });
+        })
+        .collect();
+    result
+}
+
 fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<ReportDefinition> {
     let mut index = ReportDefinitionIndex {
         template: Some(args.template.clone()),
         header: None,
         footer: None,
-        query: None,
+        query: vec![],
     };
     let mut entries: HashMap<String, ReportDefinitionEntry> = HashMap::new();
 
@@ -101,13 +151,25 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
     }
 
     // query
+    let query_specified = args.query_gql.is_some()
+        || args.query_default.is_some()
+        || !args
+            .query_sql
+            .as_ref()
+            .map(|it| it.is_empty())
+            .unwrap_or(false);
+    if !query_specified {
+        return Err(anyhow::Error::msg(
+            "No query specified, e.g. --query-gql or --query-default or --query-sql",
+        ));
+    }
     if let Some(query_gql) = &args.query_gql {
         let file_path = files
             .remove(query_gql)
             .ok_or(anyhow::Error::msg("GraphQl query file does not exist"))?;
         let query = fs::read_to_string(file_path)
             .map_err(|err| anyhow::Error::msg(format!("Failed to load GQL query file: {}", err)))?;
-        index.query = Some(query_gql.clone());
+        index.query.push(query_gql.clone());
         entries.insert(
             query_gql.clone(),
             ReportDefinitionEntry::GraphGLQuery(GraphQlQuery {
@@ -116,15 +178,18 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
             }),
         );
     } else if let Some(query_default) = &args.query_default {
-        index.query = Some("query_default".to_string());
+        index.query.push("query_default".to_string());
         entries.insert(
             "query_default".to_string(),
-            ReportDefinitionEntry::DefaultQuery(parse_default_query(&query_default)?),
+            ReportDefinitionEntry::DefaultQuery(parse_default_query(query_default)?),
         );
-    } else {
-        return Err(anyhow::Error::msg(
-            "No query specified, e.g. --query-gql or --query-default",
-        ));
+    }
+    for sql_query in extract_sql_entry(&args, &mut files)? {
+        index.query.push(sql_query.name.clone());
+        entries.insert(
+            sql_query.name.clone(),
+            ReportDefinitionEntry::SQLQuery(sql_query),
+        );
     }
 
     // resources: try to use remaining files as resources
@@ -169,7 +234,7 @@ fn make_report(args: &BuildArgs, mut files: HashMap<String, PathBuf>) -> Result<
 
 pub fn build(args: BuildArgs) -> anyhow::Result<()> {
     let project_dir = Path::new(&args.dir);
-    let files = find_project_files(&project_dir)?;
+    let files = find_project_files(project_dir)?;
     let definition = make_report(&args, files)?;
 
     let output_path = args.output.unwrap_or("./generated/output.json".to_string());
@@ -179,7 +244,7 @@ pub fn build(args: BuildArgs) -> anyhow::Result<()> {
         output_path
     )))?)?;
 
-    fs::write(&output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
+    fs::write(output_path, serde_json::to_string_pretty(&definition)?).map_err(|_| {
         anyhow::Error::msg(format!(
             "Failed to write to {:?}. Does output dir exist?",
             output_path

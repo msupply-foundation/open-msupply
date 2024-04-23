@@ -1,3 +1,4 @@
+export * from './Asset';
 export * from './Item';
 export * from './ActivityLog';
 export * from './Stock';
@@ -13,4 +14,5 @@ export * from './Encounter';
 export * from './Clinician';
 export * from './ContactTrace';
 export * from './Log';
+export * from './ReturnReason';
 export * from './Currency';

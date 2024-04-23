@@ -3,7 +3,7 @@ use repository::{ClinicianLinkRow, ClinicianLinkRowRepository, StorageConnection
 use serde::Deserialize;
 
 use crate::sync::translations::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
+    clinician::ClinicianTranslation, PullTranslateResult, SyncTranslation,
 };
 
 #[derive(Deserialize)]
@@ -14,32 +14,37 @@ pub struct ClinicianMergeMessage {
     pub merge_id_to_delete: String,
 }
 
-pub(crate) struct ClinicianMergeTranslation {}
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ClinicianMergeTranslation)
+}
+pub(crate) struct ClinicianMergeTranslation;
 impl SyncTranslation for ClinicianMergeTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::CLINICIAN,
-            dependencies: vec![],
-        }
+    fn table_name(&self) -> &str {
+        ClinicianTranslation.table_name()
     }
 
-    fn try_translate_pull_merge(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![]
+    }
+
+    fn try_translate_from_merge_sync_record(
         &self,
         connection: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if sync_record.table_name != LegacyTableName::CLINICIAN {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<ClinicianMergeMessage>(&sync_record.data)?;
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(connection);
         let clinician_links =
             clinician_link_repo.find_many_by_clinician_id(&data.merge_id_to_delete)?;
+
         if clinician_links.is_empty() {
-            return Ok(None);
+            return Ok(PullTranslateResult::Ignored(
+                "No mergeable clinician links found".to_string(),
+            ));
         }
+
         let indirect_link = clinician_link_repo
             .find_one_by_id(&data.merge_id_to_keep)?
             .ok_or_else(|| {
@@ -49,17 +54,15 @@ impl SyncTranslation for ClinicianMergeTranslation {
                 )
             })?;
 
-        let upsert_records: Vec<PullUpsertRecord> = clinician_links
+        let upsert_records: Vec<ClinicianLinkRow> = clinician_links
             .into_iter()
-            .map(|ClinicianLinkRow { id, .. }| {
-                PullUpsertRecord::ClinicianLink(ClinicianLinkRow {
-                    id,
-                    clinician_id: indirect_link.clinician_id.clone(),
-                })
+            .map(|ClinicianLinkRow { id, .. }| ClinicianLinkRow {
+                id,
+                clinician_id: indirect_link.clinician_id.clone(),
             })
             .collect();
 
-        Ok(Some(IntegrationRecords::from_upserts(upsert_records)))
+        Ok(PullTranslateResult::upserts(upsert_records))
     }
 }
 
@@ -79,7 +82,7 @@ mod tests {
         let mut sync_records = vec![
             SyncBufferRow {
                 record_id: "clinician_b_merge".to_string(),
-                table_name: LegacyTableName::CLINICIAN.to_string(),
+                table_name: "clinician".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                         "mergeIdToKeep": "clinician_b",
@@ -90,7 +93,7 @@ mod tests {
             },
             SyncBufferRow {
                 record_id: "clinician_c_merge".to_string(),
-                table_name: LegacyTableName::CLINICIAN.to_string(),
+                table_name: "clinician".to_string(),
                 action: SyncBufferAction::Merge,
                 data: r#"{
                       "mergeIdToKeep": "clinician_c",
@@ -133,7 +136,7 @@ mod tests {
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
-            .find_many_by_clinician_id(&"clinician_c")
+            .find_many_by_clinician_id("clinician_c")
             .unwrap();
 
         clinician_links.sort_by_key(|i| i.id.to_owned());
@@ -156,7 +159,7 @@ mod tests {
 
         let clinician_link_repo = ClinicianLinkRowRepository::new(&connection);
         let mut clinician_links = clinician_link_repo
-            .find_many_by_clinician_id(&"clinician_c".to_string())
+            .find_many_by_clinician_id("clinician_c")
             .unwrap();
 
         clinician_links.sort_by_key(|i| i.id.to_owned());

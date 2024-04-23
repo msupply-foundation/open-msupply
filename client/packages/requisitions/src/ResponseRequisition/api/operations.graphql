@@ -16,6 +16,7 @@ fragment ResponseLine on RequisitionLineNode {
   requestedQuantity
   supplyQuantity
   remainingQuantityToSupply
+  alreadyIssued
   comment
 
   itemStats {

@@ -5,7 +5,7 @@ use super::{
     StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
 use diesel::prelude::*;
 
@@ -104,7 +104,7 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .filter(stocktake_line_dsl::id.eq(id))
             .first(&self.connection.connection)
             .optional();
-        result.map_err(|err| RepositoryError::from(err))
+        result.map_err(RepositoryError::from)
     }
 
     pub fn find_many_by_id(
@@ -115,5 +115,35 @@ impl<'a> StocktakeLineRowRepository<'a> {
             .filter(stocktake_line_dsl::id.eq_any(ids))
             .load(&self.connection.connection)?;
         Ok(result)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StocktakeLineRowDelete(pub String);
+// For tests only
+impl Delete for StocktakeLineRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StocktakeLineRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StocktakeLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StocktakeLineRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StocktakeLineRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StocktakeLineRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

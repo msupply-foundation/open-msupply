@@ -1,8 +1,11 @@
 use crate::sync::{
-    api::RemoteSyncRecordV5,
     sync_serde::{
         date_option_to_isostring, empty_str_as_option, empty_str_as_option_string, naive_time,
         zero_date_as_option,
+    },
+    translations::{
+        location::LocationTranslation, sensor::SensorTranslation, store::StoreTranslation,
+        temperature_breach::TemperatureBreachTranslation,
     },
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -13,18 +16,7 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::{
-    IntegrationRecords, LegacyTableName, PullDependency, PullUpsertRecord, SyncTranslation,
-};
-
-const LEGACY_TABLE_NAME: &'static str = LegacyTableName::TEMPERATURE_LOG;
-
-fn match_pull_table(sync_record: &SyncBufferRow) -> bool {
-    sync_record.table_name == LEGACY_TABLE_NAME
-}
-fn match_push_table(changelog: &ChangelogRow) -> bool {
-    changelog.table_name == ChangelogTableName::TemperatureLog
-}
+use super::{PullTranslateResult, PushTranslateResult, SyncTranslation};
 
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize)]
@@ -52,29 +44,36 @@ pub struct LegacyTemperatureLogRow {
     pub datetime: Option<NaiveDateTime>,
 }
 
-pub(crate) struct TemperatureLogTranslation {}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(TemperatureLogTranslation)
+}
+
+pub(crate) struct TemperatureLogTranslation;
 impl SyncTranslation for TemperatureLogTranslation {
-    fn pull_dependencies(&self) -> PullDependency {
-        PullDependency {
-            table: LegacyTableName::TEMPERATURE_LOG,
-            dependencies: vec![
-                LegacyTableName::STORE,
-                LegacyTableName::LOCATION,
-                LegacyTableName::SENSOR,
-                LegacyTableName::TEMPERATURE_BREACH,
-            ],
-        }
+    fn table_name(&self) -> &str {
+        "temperature_log"
     }
 
-    fn try_translate_pull_upsert(
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            StoreTranslation.table_name(),
+            LocationTranslation.table_name(),
+            SensorTranslation.table_name(),
+            TemperatureBreachTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::TemperatureLog)
+    }
+
+    fn try_translate_from_upsert_sync_record(
         &self,
         _: &StorageConnection,
         sync_record: &SyncBufferRow,
-    ) -> Result<Option<IntegrationRecords>, anyhow::Error> {
-        if !match_pull_table(sync_record) {
-            return Ok(None);
-        }
-
+    ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = serde_json::from_str::<LegacyTemperatureLogRow>(&sync_record.data)?;
 
         let LegacyTemperatureLogRow {
@@ -101,20 +100,14 @@ impl SyncTranslation for TemperatureLogTranslation {
             temperature_breach_id,
         };
 
-        Ok(Some(IntegrationRecords::from_upsert(
-            PullUpsertRecord::TemperatureLog(result),
-        )))
+        Ok(PullTranslateResult::upsert(result))
     }
 
-    fn try_translate_push_upsert(
+    fn try_translate_to_upsert_sync_record(
         &self,
         connection: &StorageConnection,
         changelog: &ChangelogRow,
-    ) -> Result<Option<Vec<RemoteSyncRecordV5>>, anyhow::Error> {
-        if !match_push_table(changelog) {
-            return Ok(None);
-        }
-
+    ) -> Result<PushTranslateResult, anyhow::Error> {
         let TemperatureLogRow {
             id,
             temperature,
@@ -141,11 +134,11 @@ impl SyncTranslation for TemperatureLogTranslation {
             temperature_breach_id,
             datetime: Some(datetime),
         };
-        Ok(Some(vec![RemoteSyncRecordV5::new_upsert(
+        Ok(PushTranslateResult::upsert(
             changelog,
-            LEGACY_TABLE_NAME,
-            serde_json::to_value(&legacy_row)?,
-        )]))
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
     }
 }
 
@@ -163,8 +156,9 @@ mod tests {
             setup_all("test_temperature_log_translation", MockDataInserts::none()).await;
 
         for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
             let translation_result = translator
-                .try_translate_pull_upsert(&connection, &record.sync_buffer_row)
+                .try_translate_from_upsert_sync_record(&connection, &record.sync_buffer_row)
                 .unwrap();
 
             assert_eq!(translation_result, record.translated_record);

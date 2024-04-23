@@ -121,7 +121,7 @@ pub fn stocktake_lines(
             nodes: stocktake_lines
                 .rows
                 .into_iter()
-                .map(|line| StocktakeLineNode::from_domain(line))
+                .map(StocktakeLineNode::from_domain)
                 .collect(),
         }))
     } else {
@@ -147,7 +147,7 @@ mod test {
     use chrono::NaiveDate;
     use graphql_core::assert_graphql_query;
     use graphql_core::generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput};
-    use graphql_core::test_helpers::setup_graphl_test;
+    use graphql_core::test_helpers::setup_graphql_test;
     use repository::mock::{mock_item_a, mock_stocktake_line_a};
     use repository::{mock::MockDataInserts, StorageConnectionManager};
     use repository::{
@@ -233,7 +233,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_stocktake_lines_query() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             StocktakeLineQueries,
             EmptyMutation,
             "test_graphql_stocktake_lines_query",

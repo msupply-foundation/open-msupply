@@ -65,7 +65,7 @@ pub fn get_temperature_chart(
     // Always filter by store_id
     let filter = filter
         .map(TemperatureLogFilter::from)
-        .unwrap_or(TemperatureLogFilter::new())
+        .unwrap_or_default()
         .store_id(EqualFilter::equal_to(&ctx.store_id));
 
     let temperature_chart_rows =
@@ -135,8 +135,8 @@ mod test {
         // Each interval should be 6 seconds long
 
         let result = calculate_intervals(
-            create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-            create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+            create_datetime(2021, 1, 1, 23, 59, 50).unwrap(),
+            create_datetime(2021, 1, 2, 00, 00, 20).unwrap(),
             5,
         );
 
@@ -144,28 +144,28 @@ mod test {
             result,
             vec![
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 59, 50).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 1, 23, 59, 56).unwrap(),
                     interval_id: result[0].interval_id.clone()
                 },
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 01, 23, 59, 56).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 1, 23, 59, 56).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 2, 00, 00, 2).unwrap(),
                     interval_id: result[1].interval_id.clone()
                 },
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 02).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 2, 00, 00, 2).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 2, 00, 00, 8).unwrap(),
                     interval_id: result[2].interval_id.clone()
                 },
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 08).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 2, 00, 00, 8).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 2, 00, 00, 14).unwrap(),
                     interval_id: result[3].interval_id.clone()
                 },
                 Interval {
-                    from_datetime: create_datetime(2021, 01, 02, 00, 00, 14).unwrap(),
-                    to_datetime: create_datetime(2021, 01, 02, 00, 00, 20).unwrap(),
+                    from_datetime: create_datetime(2021, 1, 2, 00, 00, 14).unwrap(),
+                    to_datetime: create_datetime(2021, 1, 2, 00, 00, 20).unwrap(),
                     interval_id: result[4].interval_id.clone()
                 }
             ]
@@ -173,8 +173,8 @@ mod test {
 
         // Test 2: 30 Intervals in 30 seconds
         // Each interval should be 1 second long
-        let from_datetime = create_datetime(2021, 01, 01, 23, 59, 50).unwrap();
-        let to_datetime = create_datetime(2021, 01, 02, 00, 00, 20).unwrap();
+        let from_datetime = create_datetime(2021, 1, 1, 23, 59, 50).unwrap();
+        let to_datetime = create_datetime(2021, 1, 2, 00, 00, 20).unwrap();
         let intervals = calculate_intervals(from_datetime, to_datetime, 30);
 
         assert_eq!(intervals.len(), 30);
@@ -206,8 +206,8 @@ mod test {
 
         let ctx = service_provider.basic_context().unwrap();
         let base = TemperatureChartInput {
-            from_datetime: create_datetime(2021, 01, 01, 23, 59, 50).unwrap(),
-            to_datetime: create_datetime(2021, 01, 01, 23, 59, 51).unwrap(),
+            from_datetime: create_datetime(2021, 1, 1, 23, 59, 50).unwrap(),
+            to_datetime: create_datetime(2021, 1, 1, 23, 59, 51).unwrap(),
             number_of_data_points: 5,
             filter: None,
         };
@@ -244,7 +244,7 @@ mod test {
                 .get_temperature_chart(
                     &ctx,
                     TemperatureChartInput {
-                        to_datetime: create_datetime(2021, 01, 01, 23, 59, 20).unwrap(),
+                        to_datetime: create_datetime(2021, 1, 1, 23, 59, 20).unwrap(),
                         ..base.clone()
                     }
                 ),

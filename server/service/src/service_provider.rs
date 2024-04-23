@@ -1,8 +1,11 @@
 use crate::{
     app_data::{AppDataService, AppDataServiceTrait},
+    asset::AssetServiceTrait,
     auth::{AuthService, AuthServiceTrait},
     barcode::{BarcodeService, BarcodeServiceTrait},
+    catalogue::{AssetCatalogueServiceTrait, CatalogueService},
     clinician::{ClinicianService, ClinicianServiceTrait},
+    cold_chain::{ColdChainService, ColdChainServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
@@ -19,11 +22,13 @@ use crate::{
     invoice::{InvoiceService, InvoiceServiceTrait},
     invoice_line::{InvoiceLineService, InvoiceLineServiceTrait},
     item_stats::{ItemStatsService, ItemStatsServiceTrait},
+    label_printer_settings_service::LabelPrinterSettingsServiceTrait,
     location::{LocationService, LocationServiceTrait},
     log_service::{LogService, LogServiceTrait},
     master_list::{MasterListService, MasterListServiceTrait},
     missing_program::create_missing_master_list_and_program,
     name::get_names,
+    pack_variant::PackVariantServiceTrait,
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     processors::ProcessorsTrigger,
     programs::{
@@ -49,10 +54,8 @@ use crate::{
         synchroniser_driver::{SiteIsInitialisedTrigger, SyncTrigger},
     },
     system_user::create_system_user,
-    temperature_breach::{TemperatureBreachService, TemperatureBreachServiceTrait},
     temperature_chart::{TemperatureChartService, TemperatureChartServiceTrait},
     temperature_excursion::{TemperatureExcursionService, TemperatureExcursionServiceTrait},
-    temperature_log::{TemperatureLogService, TemperatureLogServiceTrait},
     ListError, ListResult,
 };
 use repository::{
@@ -65,11 +68,13 @@ pub struct ServiceProvider {
     pub validation_service: Box<dyn AuthServiceTrait>,
 
     pub location_service: Box<dyn LocationServiceTrait>,
+
+    // Cold chain
     pub sensor_service: Box<dyn SensorServiceTrait>,
-    pub temperature_breach_service: Box<dyn TemperatureBreachServiceTrait>,
     pub temperature_excursion_service: Box<dyn TemperatureExcursionServiceTrait>,
-    pub temperature_log_service: Box<dyn TemperatureLogServiceTrait>,
+    pub cold_chain_service: Box<dyn ColdChainServiceTrait>,
     pub temperature_chart_service: Box<dyn TemperatureChartServiceTrait>,
+
     pub invoice_service: Box<dyn InvoiceServiceTrait>,
     pub master_list_service: Box<dyn MasterListServiceTrait>,
     pub stocktake_service: Box<dyn StocktakeServiceTrait>,
@@ -118,10 +123,17 @@ pub struct ServiceProvider {
     pub barcode_service: Box<dyn BarcodeServiceTrait>,
     // Log
     pub log_service: Box<dyn LogServiceTrait>,
+    pub pack_variant_service: Box<dyn PackVariantServiceTrait>,
     // Plugin
     pub plugin_data_service: Box<dyn PluginDataServiceTrait>,
     // Currency
     pub currency_service: Box<dyn CurrencyServiceTrait>,
+    // Asset catalogue
+    pub catalogue_service: Box<dyn AssetCatalogueServiceTrait>,
+    // Assets
+    pub asset_service: Box<dyn AssetServiceTrait>,
+    // Label Printer
+    pub label_printer_settings_service: Box<dyn LabelPrinterSettingsServiceTrait>,
 }
 
 pub struct ServiceContext {
@@ -157,8 +169,7 @@ impl ServiceProvider {
             validation_service: Box::new(AuthService::new()),
             location_service: Box::new(LocationService {}),
             sensor_service: Box::new(SensorService {}),
-            temperature_breach_service: Box::new(TemperatureBreachService {}),
-            temperature_log_service: Box::new(TemperatureLogService {}),
+            cold_chain_service: Box::new(ColdChainService {}),
             temperature_chart_service: Box::new(TemperatureChartService),
             master_list_service: Box::new(MasterListService {}),
             invoice_line_service: Box::new(InvoiceLineService {}),
@@ -195,9 +206,15 @@ impl ServiceProvider {
             barcode_service: Box::new(BarcodeService {}),
             repack_service: Box::new(RepackService {}),
             log_service: Box::new(LogService {}),
+            pack_variant_service: Box::new(crate::pack_variant::PackVariantService {}),
             plugin_data_service: Box::new(PluginDataService {}),
             temperature_excursion_service: Box::new(TemperatureExcursionService {}),
             currency_service: Box::new(CurrencyService {}),
+            catalogue_service: Box::new(CatalogueService {}),
+            asset_service: Box::new(crate::asset::AssetService {}),
+            label_printer_settings_service: Box::new(
+                crate::label_printer_settings_service::LabelPrinterSettingsService {},
+            ),
         }
     }
 

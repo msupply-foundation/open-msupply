@@ -27,6 +27,13 @@ fragment Sensor on SensorNode {
       datetime
     }
   }
+  assets {
+    totalCount
+    nodes {
+      id
+      assetNumber
+    }
+  }
 }
 
 query sensors(

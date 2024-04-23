@@ -100,7 +100,7 @@ pub struct LocationInUse {
 
 #[Object]
 impl LocationInUse {
-    pub async fn description(&self) -> &'static str {
+    pub async fn description(&self) -> &str {
         "Location in use"
     }
 
@@ -117,7 +117,7 @@ impl LocationInUse {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -164,7 +164,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_delete_location_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             LocationMutations,
             "test_graphql_delete_location_errors",
@@ -295,7 +295,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_delete_location_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             LocationMutations,
             "test_graphql_delete_location_success",

@@ -19,18 +19,18 @@ pub fn check_line_does_not_exist(
 
 pub fn check_number_of_packs(number_of_packs_option: Option<f64>) -> bool {
     if let Some(number_of_packs) = number_of_packs_option {
-        if number_of_packs < 1.0 {
+        if number_of_packs < 0.0 {
             return false;
         }
     }
-    return true;
+    true
 }
 
 pub fn check_item_exists(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<ItemRow>, RepositoryError> {
-    ItemRowRepository::new(connection).find_one_by_id(id)
+    ItemRowRepository::new(connection).find_active_by_id(id)
 }
 
 pub fn check_line_row_exists_option(
@@ -59,7 +59,7 @@ pub fn check_line_belongs_to_invoice(line: &InvoiceLineRow, invoice: &InvoiceRow
     if line.invoice_id != invoice.id {
         return false;
     }
-    return true;
+    true
 }
 
 pub fn check_line_not_associated_with_stocktake(
@@ -72,9 +72,7 @@ pub fn check_line_not_associated_with_stocktake(
         Some(store_id),
     );
     match result {
-        Ok(line) => {
-            return if line.len() == 0 { true } else { false };
-        }
+        Ok(line) => line.is_empty(),
         Err(RepositoryError::NotFound) => true,
         Err(_error) => false,
     }

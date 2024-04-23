@@ -13,6 +13,7 @@ import {
   NumberCell,
   CurrencyCell,
 } from '@openmsupply-client/common';
+import { getPackVariantCell } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
 
@@ -30,9 +31,6 @@ const notePopoverColumn = getNotePopoverColumn<
 
 const isDefaultPlaceholderRow = (row: StockOutLineFragment) =>
   row.type === InvoiceLineNodeType.UnallocatedStock && !row.numberOfPacks;
-
-const getPackSize = (row: StockOutLineFragment) =>
-  isDefaultPlaceholderRow(row) ? '' : row.packSize;
 
 const getNumberOfPacks = (row: StockOutLineFragment) =>
   isDefaultPlaceholderRow(row) ? '' : row.numberOfPacks;
@@ -101,21 +99,6 @@ export const useOutboundColumns = ({
         },
       ],
       [
-        'itemUnit',
-        {
-          getSortValue: row =>
-            getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-          accessor: ({ rowData }) =>
-            getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'unitName'] },
-              { path: ['item', 'unitName'], default: '' },
-            ]),
-        },
-      ],
-      [
         'batch',
         {
           getSortValue: row =>
@@ -160,6 +143,26 @@ export const useOutboundColumns = ({
             ]),
         },
       ],
+      {
+        key: 'packUnit',
+        label: 'label.pack',
+        sortable: false,
+        Cell: getPackVariantCell({
+          getItemId: row => {
+            if ('lines' in row) return '';
+            else return row?.item?.id;
+          },
+          getPackSizes: row => {
+            if ('lines' in row) return row.lines.map(l => l.packSize ?? 1);
+            else return [row.packSize ?? 1];
+          },
+          getUnitName: row => {
+            if ('lines' in row) return row.lines[0]?.item?.unitName ?? null;
+            else return row?.item?.unitName ?? null;
+          },
+        }),
+        width: 130,
+      },
       [
         'numberOfPacks',
         {
@@ -207,32 +210,8 @@ export const useOutboundColumns = ({
         },
       ],
       [
-        'packSize',
-        {
-          getSortValue: row => {
-            if ('lines' in row) {
-              const { lines } = row;
-              return (
-                ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '') ?? ''
-              );
-            } else {
-              return getPackSize(row) ?? '';
-            }
-          },
-          accessor: ({ rowData }) => {
-            if ('lines' in rowData) {
-              const { lines } = rowData;
-              return ArrayUtils.ifTheSameElseDefault(lines, 'packSize', '');
-            } else {
-              return getPackSize(rowData);
-            }
-          },
-        },
-      ],
-      [
         'unitQuantity',
         {
-          Cell: NumberCell,
           accessor: ({ rowData }) => {
             if ('lines' in rowData) {
               const { lines } = rowData;

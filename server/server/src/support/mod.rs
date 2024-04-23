@@ -34,6 +34,8 @@ fn validate_request(
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
 ) -> Result<ValidatedUser, AuthError> {
+    // TODO: Refactor to use authentication::validate_cookie_auth
+
     let service_context = service_provider
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;
@@ -47,7 +49,7 @@ fn validate_request(
             .to_str()
             .ok()
             .and_then(|header| {
-                let cookies = header.split(" ").collect::<Vec<&str>>();
+                let cookies = header.split(' ').collect::<Vec<&str>>();
                 cookies
                     .into_iter()
                     .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
@@ -86,9 +88,9 @@ fn validate_request(
     };
 
     validate_access(
-        &service_provider,
+        service_provider,
         &service_context,
-        &auth_data,
+        auth_data,
         Some(pair.token),
     )
 }

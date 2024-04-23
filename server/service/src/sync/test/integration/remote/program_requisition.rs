@@ -2,11 +2,12 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullDeleteRecord, PullDeleteRecordTable, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
 use repository::{
     MasterListNameJoinRow, MasterListRow, NameTagRow, PeriodScheduleRow,
-    ProgramRequisitionOrderTypeRow, ProgramRequisitionSettingsRow, ProgramRow,
+    ProgramRequisitionOrderTypeRow, ProgramRequisitionOrderTypeRowDelete,
+    ProgramRequisitionSettingsRow, ProgramRequisitionSettingsRowDelete, ProgramRow,
 };
 
 use serde_json::json;
@@ -174,7 +175,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
             name: uuid(),
             code: uuid(),
             description: uuid(),
-            is_active: true,
+            is_active: false,
         };
         let master_list_json2 = json!({
         "ID": master_list_row2.id,
@@ -182,6 +183,7 @@ impl SyncRecordTester for ProgramRequisitionTester {
         "code": master_list_row2.code,
         "note": master_list_row2.description,
         "isProgram": true,
+        "inactive": true,
         "programSettings": {
             "elmisCode": "",
             "storeTags": {
@@ -224,25 +226,25 @@ impl SyncRecordTester for ProgramRequisitionTester {
                 "list_master": [master_list_json, master_list_json2],
                 "list_master_name_join": [master_list_name_join_json, master_list_name_join_json2],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::PeriodSchedule(period_schedule1.clone()),
-                PullUpsertRecord::PeriodSchedule(period_schedule2),
-                PullUpsertRecord::NameTag(name_tag1),
-                PullUpsertRecord::NameTag(name_tag2),
-                PullUpsertRecord::MasterList(master_list_row.clone()),
-                PullUpsertRecord::MasterList(master_list_row2),
-                PullUpsertRecord::MasterListNameJoin(master_list_name_join_row),
-                PullUpsertRecord::MasterListNameJoin(master_list_name_join_row2),
-                PullUpsertRecord::Program(program),
-                PullUpsertRecord::Program(program2),
-                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings1.clone()),
-                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings2.clone()),
-                PullUpsertRecord::ProgramRequisitionSettings(program_requisition_settings3),
-                PullUpsertRecord::ProgramRequisitionOrderType(order_type1.clone()),
-                PullUpsertRecord::ProgramRequisitionOrderType(order_type2.clone()),
-                PullUpsertRecord::ProgramRequisitionOrderType(order_type3.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(period_schedule1.clone()),
+                IntegrationOperation::upsert(period_schedule2),
+                IntegrationOperation::upsert(name_tag1),
+                IntegrationOperation::upsert(name_tag2),
+                IntegrationOperation::upsert(master_list_row.clone()),
+                IntegrationOperation::upsert(master_list_row2),
+                IntegrationOperation::upsert(master_list_name_join_row),
+                IntegrationOperation::upsert(master_list_name_join_row2),
+                IntegrationOperation::upsert(program),
+                IntegrationOperation::upsert(program2),
+                IntegrationOperation::upsert(program_requisition_settings1.clone()),
+                IntegrationOperation::upsert(program_requisition_settings2.clone()),
+                IntegrationOperation::upsert(program_requisition_settings3),
+                IntegrationOperation::upsert(order_type1.clone()),
+                IntegrationOperation::upsert(order_type2.clone()),
+                IntegrationOperation::upsert(order_type3.clone()),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate from central
@@ -296,42 +298,26 @@ impl SyncRecordTester for ProgramRequisitionTester {
             max_order_per_period: 1,
         };
 
-        let upserts = vec![
-            PullUpsertRecord::NameTag(upsert_name_tag),
-            PullUpsertRecord::ProgramRequisitionSettings(upsert_program_requisition_settings),
-            PullUpsertRecord::ProgramRequisitionOrderType(upsert_order_type),
-        ];
-
-        let deletes = vec![
-            PullDeleteRecord {
-                id: order_type1.id,
-                table: PullDeleteRecordTable::ProgramRequisitionOrderType,
-            },
-            PullDeleteRecord {
-                id: order_type2.id,
-                table: PullDeleteRecordTable::ProgramRequisitionOrderType,
-            },
-            PullDeleteRecord {
-                id: order_type3.id,
-                table: PullDeleteRecordTable::ProgramRequisitionOrderType,
-            },
-            PullDeleteRecord {
-                id: program_requisition_settings1.id,
-                table: PullDeleteRecordTable::ProgramRequisitionSettings,
-            },
-            PullDeleteRecord {
-                id: program_requisition_settings2.id,
-                table: PullDeleteRecordTable::ProgramRequisitionSettings,
-            },
-        ];
-
         result.push(TestStepData {
             central_upsert: json!({
                 "name_tag": [upsert_name_tag_json],
                 "list_master": [upsert_master_list_json],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords { upserts, deletes },
+            integration_records: vec![
+                IntegrationOperation::upsert(upsert_name_tag),
+                IntegrationOperation::upsert(upsert_program_requisition_settings),
+                IntegrationOperation::upsert(upsert_order_type),
+                IntegrationOperation::delete(ProgramRequisitionOrderTypeRowDelete(order_type1.id)),
+                IntegrationOperation::delete(ProgramRequisitionOrderTypeRowDelete(order_type2.id)),
+                IntegrationOperation::delete(ProgramRequisitionOrderTypeRowDelete(order_type3.id)),
+                IntegrationOperation::delete(ProgramRequisitionSettingsRowDelete(
+                    program_requisition_settings1.id,
+                )),
+                IntegrationOperation::delete(ProgramRequisitionSettingsRowDelete(
+                    program_requisition_settings2.id,
+                )),
+            ],
+            ..Default::default()
         });
 
         result

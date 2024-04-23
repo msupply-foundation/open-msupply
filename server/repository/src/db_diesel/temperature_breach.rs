@@ -7,7 +7,6 @@ use super::{
     DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachRowType,
 };
 use diesel::prelude::*;
-use util::inline_init;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
@@ -23,7 +22,7 @@ pub struct TemperatureBreach {
     pub temperature_breach_row: TemperatureBreachRow,
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct TemperatureBreachFilter {
     pub id: Option<EqualFilter<String>>,
     pub r#type: Option<EqualFilter<TemperatureBreachRowType>>,
@@ -33,12 +32,6 @@ pub struct TemperatureBreachFilter {
     pub unacknowledged: Option<bool>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
-}
-
-impl EqualFilter<TemperatureBreachRowType> {
-    pub fn equal_to_breach_type(value: &TemperatureBreachRowType) -> Self {
-        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
-    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -152,20 +145,6 @@ impl<'a> TemperatureBreachRepository<'a> {
 
 type BoxedTemperatureBreachQuery = temperature_breach::BoxedQuery<'static, DBType>;
 
-impl TemperatureBreachRowType {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
-    }
-
-    pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
-    }
-
-    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
-    }
-}
-
 fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
@@ -174,17 +153,8 @@ fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach 
 
 impl TemperatureBreachFilter {
     pub fn new() -> TemperatureBreachFilter {
-        TemperatureBreachFilter {
-            id: None,
-            store_id: None,
-            unacknowledged: None,
-            start_datetime: None,
-            end_datetime: None,
-            r#type: None,
-            sensor: None,
-            location: None,
+        Self::default()
         }
-    }
 
     pub fn id(mut self, filter: EqualFilter<String>) -> Self {
         self.id = Some(filter);
@@ -224,5 +194,14 @@ impl TemperatureBreachFilter {
     pub fn location(mut self, filter: LocationFilter) -> Self {
         self.location = Some(filter);
         self
+    }
+}
+
+impl TemperatureBreachRowType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }

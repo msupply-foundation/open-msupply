@@ -6,7 +6,7 @@ use graphql_core::loader::{
     DocumentRegistryLoader, DocumentRegistryLoaderInput, JsonSchemaLoader, UserLoader,
 };
 use graphql_core::{standard_graphql_error::StandardGraphqlError, ContextExt};
-use repository::{unknown_user, Document};
+use repository::Document;
 use service::document::raw_document::RawDocument;
 
 use crate::types::{JSONSchemaNode, UserNode};
@@ -36,15 +36,15 @@ impl DocumentNode {
         &self.document.user_id
     }
 
-    pub async fn user(&self, ctx: &Context<'_>) -> Result<UserNode> {
+    pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
 
         let user = loader
             .load_one(self.document.user_id.clone())
             .await?
-            .unwrap_or(unknown_user());
+            .map(UserNode::from_domain);
 
-        Ok(UserNode::from_domain(user))
+        Ok(user)
     }
 
     pub async fn timestamp(&self) -> &DateTime<Utc> {
@@ -129,10 +129,10 @@ impl RawDocumentNode {
     }
 
     pub async fn data(&self) -> Result<String> {
-        Ok(serde_json::to_string(&self.document.data).map_err(|e| {
+        serde_json::to_string(&self.document.data).map_err(|e| {
             StandardGraphqlError::InternalError(format!("Failed to stringify json value: {}", e))
                 .extend()
-        })?)
+        })
     }
 
     pub async fn schema_id(&self) -> &Option<String> {

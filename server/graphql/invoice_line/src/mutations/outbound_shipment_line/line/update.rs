@@ -24,7 +24,6 @@ use super::{
 #[graphql(name = "UpdateOutboundShipmentLineInput")]
 pub struct UpdateInput {
     pub id: String,
-    item_id: Option<String>,
     stock_line_id: Option<String>,
     number_of_packs: Option<f64>,
     total_before_tax: Option<f64>,
@@ -92,7 +91,6 @@ impl UpdateInput {
     pub fn to_domain(self) -> ServiceInput {
         let UpdateInput {
             id,
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -101,7 +99,6 @@ impl UpdateInput {
         ServiceInput {
             id,
             r#type: Some(StockOutType::OutboundShipment),
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -172,7 +169,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         NotThisStoreInvoice
         | InvoiceTypeDoesNotMatch
         | NoInvoiceType
-        | NumberOfPacksBelowOne
+        | NumberOfPacksBelowZero
         | ItemNotFound
         | ItemDoesNotMatchStockLine
         | NotThisInvoiceLine(_)
@@ -189,7 +186,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -239,7 +236,6 @@ mod test {
         json!({
           "input": {
             "id": "n/a",
-            "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "totalBeforeTax": 0,
@@ -252,7 +248,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_outbound_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_update_outbound_line_errors",
@@ -466,31 +462,7 @@ mod test {
         );
 
         //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //ItemNotFound
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //ItemDoesNotMatchStockLine
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemDoesNotMatchStockLine)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -550,7 +522,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_update_outbound_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_update_outbound_line_success",
@@ -575,7 +547,6 @@ mod test {
                 ServiceInput {
                     id: "id input".to_string(),
                     r#type: Some(StockOutType::OutboundShipment),
-                    item_id: Some("item_id input".to_string()),
                     stock_line_id: Some("stock_line_id input".to_string()),
                     number_of_packs: Some(1.0),
                     total_before_tax: Some(1.0),
@@ -597,7 +568,6 @@ mod test {
         let variables = json!({
           "input": {
             "id": "id input",
-            "itemId": "item_id input",
             "stockLineId": "stock_line_id input",
             "numberOfPacks": 1.0,
             "totalBeforeTax": 1.0,

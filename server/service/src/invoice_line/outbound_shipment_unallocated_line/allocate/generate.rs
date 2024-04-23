@@ -89,8 +89,7 @@ pub fn generate(
             )),
         }
 
-        remaining_to_allocate =
-            remaining_to_allocate - packs_to_allocate * stock_line.stock_line_row.pack_size;
+        remaining_to_allocate -= packs_to_allocate * stock_line.stock_line_row.pack_size;
 
         if remaining_to_allocate <= 0 {
             break;
@@ -150,12 +149,10 @@ fn generate_new_line(
     stock_line: &StockLine,
 ) -> InsertStockOutLine {
     let stock_line_row = &stock_line.stock_line_row;
-    let item_row = &stock_line.item_row;
     InsertStockOutLine {
         id: uuid::uuid(),
         r#type: Some(StockOutType::OutboundShipment),
         invoice_id: invoice_id.to_string(),
-        item_id: item_row.id.clone(),
         stock_line_id: stock_line_row.id.clone(),
         number_of_packs: packs_to_allocate,
         total_before_tax: None,
@@ -167,7 +164,7 @@ fn generate_new_line(
 fn try_allocate_existing_line(
     number_of_packs_to_add: f64,
     stock_line_id: &str,
-    allocated_lines: &Vec<InvoiceLine>,
+    allocated_lines: &[InvoiceLine],
 ) -> Option<UpdateStockOutLine> {
     allocated_lines
         .iter()
@@ -178,7 +175,6 @@ fn try_allocate_existing_line(
                 id: line_row.id,
                 r#type: Some(StockOutType::OutboundShipment),
                 number_of_packs: Some(line_row.number_of_packs + number_of_packs_to_add),
-                item_id: None,
                 stock_line_id: None,
                 total_before_tax: None,
                 tax: None,

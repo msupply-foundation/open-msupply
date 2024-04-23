@@ -45,10 +45,10 @@ pub fn insert_outbound_shipment_unallocated_line(
         .transaction_sync(|connection| {
             let item_row = validate(connection, &ctx.store_id, &input)?;
             let new_line = generate(input, item_row)?;
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
 
             get_invoice_line(ctx, &new_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -122,6 +122,7 @@ fn generate(
         cost_price_per_pack: 0.0,
         stock_line_id: None,
         inventory_adjustment_reason_id: None,
+        return_reason_id: None,
         foreign_currency_price_before_tax: None,
     };
 
@@ -311,7 +312,7 @@ mod test_insert {
         // Successful insert
         let invoice_id = mock_new_invoice_with_unallocated_line().id.clone();
         let item = ItemRowRepository::new(&connection)
-            .find_one_by_id(&mock_unallocated_line2().item_link_id)
+            .find_active_by_id(&mock_unallocated_line2().item_link_id)
             .unwrap()
             .unwrap();
 
@@ -352,6 +353,7 @@ mod test_insert {
                 cost_price_per_pack: 0.0,
                 stock_line_id: None,
                 inventory_adjustment_reason_id: None,
+                return_reason_id: None,
                 foreign_currency_price_before_tax: None,
             }
         )

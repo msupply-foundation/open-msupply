@@ -17,10 +17,13 @@ table! {
 }
 
 // Database:  https://github.com/openmsupply/open-msupply/blob/d6645711184c63593949c3e8b6dc96b5a5ded39f/server/repository/migrations/postgres/2022-02-11T15-00_create_key_value_store/up.sql#L2-L16
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum KeyValueType {
+    #[default]
     CentralSyncPullCursor,
+    SyncPullCursorV6,
+    SyncPushCursorV6,
     RemoteSyncPushCursor,
     ShipmentTransferProcessorCursor,
     RequisitionTransferProcessorCursor,
@@ -41,16 +44,11 @@ pub enum KeyValueType {
     SettingsDisplayCustomLogoHash,
     SettingsDisplayCustomTheme,
     SettingsDisplayCustomThemeHash,
+    SettingsLabelPrinter,
 
     LogLevel,
     LogDirectory,
     LogFileName,
-}
-
-impl Default for KeyValueType {
-    fn default() -> Self {
-        KeyValueType::CentralSyncPullCursor
-    }
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]

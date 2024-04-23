@@ -10,7 +10,7 @@ use crate::{
 
 use super::{ShipmentTransferProcessor, ShipmentTransferProcessorRecord};
 
-const DESCRIPTION: &'static str = "Update outbound shipment status from inbound shipment";
+const DESCRIPTION: &str = "Update outbound shipment status from inbound shipment";
 
 pub(crate) struct UpdateOutboundShipmentStatusProcessor;
 
@@ -22,7 +22,7 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
     /// Outbound shipment status will be updated when all below conditions are met:
     ///
     /// 1. Source shipment name_id is for a store that is active on current site (transfer processor driver guarantees this)
-    /// 2. Source shipment is Inbound shipment
+    /// 2. Source shipment is Inbound shipment or Inbound Return
     /// 3. Linked shipment exists (the outbound shipment)
     /// 4. Linked outbound shipment status is not Verified (this is the last status possible)
     /// 5. Linked outbound shipment status is not source inbound shipment status
@@ -48,7 +48,10 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
             _ => return Ok(None),
         };
         // 2.
-        if inbound_shipment.invoice_row.r#type != InvoiceRowType::InboundShipment {
+        if !matches!(
+            inbound_shipment.invoice_row.r#type,
+            InvoiceRowType::InboundShipment | InvoiceRowType::InboundReturn
+        ) {
             return Ok(None);
         }
         // 3.
@@ -73,8 +76,8 @@ impl ShipmentTransferProcessor for UpdateOutboundShipmentStatusProcessor {
         let updated_outbound_shipment = InvoiceRow {
             // 7.
             status: inbound_shipment.invoice_row.status.clone(),
-            delivered_datetime: inbound_shipment.invoice_row.delivered_datetime.clone(),
-            verified_datetime: inbound_shipment.invoice_row.verified_datetime.clone(),
+            delivered_datetime: inbound_shipment.invoice_row.delivered_datetime,
+            verified_datetime: inbound_shipment.invoice_row.verified_datetime,
             ..outbound_shipment.invoice_row.clone()
         };
 

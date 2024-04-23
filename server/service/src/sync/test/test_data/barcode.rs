@@ -1,12 +1,14 @@
 use crate::sync::{
-    test::{TestSyncPullRecord, TestSyncPushRecord},
-    translations::{barcode::LegacyBarcodeRow, LegacyTableName, PullUpsertRecord},
+    test::{TestSyncIncomingRecord, TestSyncOutgoingRecord},
+    translations::barcode::LegacyBarcodeRow,
 };
 
 use repository::BarcodeRow;
 use serde_json::json;
 
-const BARCODE_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "barcode";
+
+const BARCODE_1: (&str, &str) = (
     "barcode_a",
     r#"{
     "ID": "barcode_a",
@@ -18,7 +20,7 @@ const BARCODE_1: (&'static str, &'static str) = (
     }"#,
 );
 
-const BARCODE_2: (&'static str, &'static str) = (
+const BARCODE_2: (&str, &str) = (
     "barcode_b",
     r#"{
     "ID": "barcode_b",
@@ -30,40 +32,40 @@ const BARCODE_2: (&'static str, &'static str) = (
     }"#,
 );
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::BARCODE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             BARCODE_1,
-            PullUpsertRecord::Barcode(BarcodeRow {
+            BarcodeRow {
                 id: BARCODE_1.0.to_string(),
                 gtin: "0123456789".to_string(),
                 item_id: "item_a".to_string(),
                 manufacturer_link_id: Some("name_a".to_string()),
                 pack_size: Some(1),
                 parent_id: None,
-            }),
+            },
         ),
-        TestSyncPullRecord::new_pull_upsert(
-            LegacyTableName::BARCODE,
+        TestSyncIncomingRecord::new_pull_upsert(
+            TABLE_NAME,
             BARCODE_2,
-            PullUpsertRecord::Barcode(BarcodeRow {
+            BarcodeRow {
                 id: BARCODE_2.0.to_string(),
                 gtin: "9876543210".to_string(),
                 item_id: "item_b".to_string(),
                 manufacturer_link_id: Some("name_a".to_string()),
                 pack_size: Some(1),
                 parent_id: None,
-            }),
+            },
         ),
     ]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
-        TestSyncPushRecord {
+        TestSyncOutgoingRecord {
             record_id: BARCODE_1.0.to_string(),
-            table_name: LegacyTableName::BARCODE.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyBarcodeRow {
                 id: BARCODE_1.0.to_string(),
                 gtin: "0123456789".to_string(),
@@ -73,9 +75,9 @@ pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
                 parent_id: None,
             }),
         },
-        TestSyncPushRecord {
+        TestSyncOutgoingRecord {
             record_id: BARCODE_2.0.to_string(),
-            table_name: LegacyTableName::BARCODE.to_string(),
+            table_name: TABLE_NAME.to_string(),
             push_data: json!(LegacyBarcodeRow {
                 id: BARCODE_2.0.to_string(),
                 gtin: "9876543210".to_string(),

@@ -5,11 +5,11 @@ use super::{
     store_row::store,
     StorageConnection,
 };
-
 use crate::{
     diesel_macros::apply_equal_filter, repository_error::RepositoryError, DBType, EqualFilter,
     NameLinkRow, NameRow,
 };
+use crate::{Delete, Upsert};
 
 use diesel::{
     dsl::{InnerJoin, IntoBoxed},
@@ -160,7 +160,7 @@ type BoxedNameStoreJoinQuery = IntoBoxed<
     DBType,
 >;
 
-fn create_filtered_query<'a>(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
+fn create_filtered_query(filter: Option<NameStoreJoinFilter>) -> BoxedNameStoreJoinQuery {
     let mut query = name_store_join_dsl::name_store_join
         .inner_join(name_link_dsl::name_link.inner_join(name_dsl::name))
         .into_boxed();
@@ -198,6 +198,34 @@ impl NameStoreJoinFilter {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct NameStoreJoinRowDelete(pub String);
+impl Delete for NameStoreJoinRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameStoreJoinRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameStoreJoinRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for NameStoreJoinRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        NameStoreJoinRepository::new(con).sync_upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            NameStoreJoinRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
 #[cfg(test)]
 mod test {
     use util::uuid::uuid;

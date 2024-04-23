@@ -39,21 +39,21 @@ pub fn insert_inbound_shipment_line(
     let new_line = ctx
         .connection
         .transaction_sync(|connection| {
-            let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
+            let (item, invoice) = validate(&input, &ctx.store_id, connection)?;
             let (invoice_row_option, new_line, new_batch_option) =
-                generate(&connection, &ctx.user_id, input, item, invoice)?;
+                generate(connection, &ctx.user_id, input, item, invoice)?;
 
             if let Some(new_batch) = new_batch_option {
-                StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
+                StockLineRowRepository::new(connection).upsert_one(&new_batch)?;
             }
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            InvoiceLineRowRepository::new(connection).upsert_one(&new_line)?;
 
             if let Some(invoice_row) = invoice_row_option {
-                InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
+                InvoiceRowRepository::new(connection).upsert_one(&invoice_row)?;
             }
 
             get_invoice_line(ctx, &new_line.id)
-                .map_err(|error| OutError::DatabaseError(error))?
+                .map_err(OutError::DatabaseError)?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
@@ -71,7 +71,7 @@ pub enum InsertInboundShipmentLineError {
     LocationDoesNotExist,
     ItemNotFound,
     PackSizeBelowOne,
-    NumberOfPacksBelowOne,
+    NumberOfPacksBelowZero,
     NewlyCreatedLineDoesNotExist,
 }
 
@@ -226,7 +226,7 @@ mod test {
             Err(ServiceError::PackSizeBelowOne)
         );
 
-        // NumberOfPacksBelowOne
+        // NumberOfPacksBelowZero
         assert_eq!(
             service.insert_inbound_shipment_line(
                 &context,
@@ -237,10 +237,10 @@ mod test {
                         .clone();
                     r.item_id = mock_item_a().id.clone();
                     r.pack_size = 1;
-                    r.number_of_packs = 0.0;
+                    r.number_of_packs = -1.0;
                 }),
             ),
-            Err(ServiceError::NumberOfPacksBelowOne)
+            Err(ServiceError::NumberOfPacksBelowZero)
         );
 
         // NotThisStoreInvoice

@@ -1,4 +1,5 @@
 import React, { FC } from 'react';
+import { AppRoute } from '@openmsupply-client/config';
 import {
   DownloadIcon,
   PlusCircleIcon,
@@ -13,6 +14,8 @@ import {
   ToggleState,
   EnvUtils,
   Platform,
+  RouteBuilder,
+  useNavigate,
 } from '@openmsupply-client/common';
 import { CustomerSearchModal } from '@openmsupply-client/system';
 import { useOutbound } from '../api';
@@ -21,9 +24,10 @@ import { outboundsToCsv } from '../../utils';
 export const AppBarButtonsComponent: FC<{
   modalController: ToggleState;
 }> = ({ modalController }) => {
+  const navigate = useNavigate();
   const { success, error } = useNotification();
-  const { mutate: onCreate } = useOutbound.document.insert();
-  const t = useTranslation(['distribution', 'common']);
+  const { mutateAsync: onCreate } = useOutbound.document.insert();
+  const t = useTranslation('distribution');
   const { fetchAsync, isLoading } = useOutbound.document.listAll({
     key: 'createdDateTime',
     direction: 'desc',
@@ -59,6 +63,14 @@ export const AppBarButtonsComponent: FC<{
               await onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: name?.id,
+              }).then(invoiceNumber => {
+                navigate(
+                  RouteBuilder.create(AppRoute.Distribution)
+                    .addPart(AppRoute.OutboundShipment)
+                    .addPart(String(invoiceNumber))
+                    .build(),
+                  { replace: true }
+                );
               });
             } catch (e) {
               const errorSnack = error(

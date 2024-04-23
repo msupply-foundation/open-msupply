@@ -21,7 +21,6 @@ use super::{
 pub struct InsertInput {
     pub id: String,
     pub invoice_id: String,
-    pub item_id: String,
     pub stock_line_id: String,
     pub number_of_packs: f64,
     pub total_before_tax: Option<f64>,
@@ -89,7 +88,6 @@ impl InsertInput {
         let InsertInput {
             id,
             invoice_id,
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -100,7 +98,6 @@ impl InsertInput {
             id,
             r#type: Some(StockOutType::OutboundShipment),
             invoice_id,
-            item_id,
             stock_line_id,
             number_of_packs,
             total_before_tax,
@@ -164,9 +161,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | NoInvoiceType
         | InvoiceTypeDoesNotMatch
         | LineAlreadyExists
-        | NumberOfPacksBelowOne
-        | ItemNotFound
-        | ItemDoesNotMatchStockLine => StandardGraphqlError::BadUserInput(formatted_error),
+        | NumberOfPacksBelowOne => StandardGraphqlError::BadUserInput(formatted_error),
         DatabaseError(_) => StandardGraphqlError::InternalError(formatted_error),
         NewlyCreatedLineDoesNotExist => StandardGraphqlError::InternalError(formatted_error),
     };
@@ -178,7 +173,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
 mod test {
     use async_graphql::EmptyMutation;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -229,7 +224,6 @@ mod test {
           "input": {
             "id": "n/a",
             "invoiceId": "n/a",
-            "itemId": "n/a",
             "stockLineId": "n/a",
             "numberOfPacks": 0,
             "stockLineId": "n/a",
@@ -240,7 +234,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_outbound_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_insert_outbound_line_errors",
@@ -476,30 +470,6 @@ mod test {
             Some(service_provider(test_service, &connection_manager))
         );
 
-        //ItemNotFound
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemNotFound)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
-        //ItemDoesNotMatchStockLine
-        let test_service = TestService(Box::new(|_| Err(ServiceError::ItemDoesNotMatchStockLine)));
-        let expected_message = "Bad user input";
-        assert_standard_graphql_error!(
-            &settings,
-            &mutation,
-            &Some(empty_variables()),
-            &expected_message,
-            None,
-            Some(service_provider(test_service, &connection_manager))
-        );
-
         //DatabaseError
         let test_service = TestService(Box::new(|_| {
             Err(ServiceError::DatabaseError(RepositoryError::NotFound))
@@ -531,7 +501,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_outbound_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_insert_outbound_line_success",
@@ -558,7 +528,6 @@ mod test {
                 ServiceInput {
                     id: "new id".to_string(),
                     invoice_id: "invoice input".to_string(),
-                    item_id: "item input".to_string(),
                     stock_line_id: "stock line input".to_string(),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
@@ -580,7 +549,6 @@ mod test {
             "input": {
                 "id": "new id",
                 "invoiceId": "invoice input",
-                "itemId": "item input",
                 "stockLineId": "stock line input",
                 "numberOfPacks": 1.0,
                 "totalBeforeTax": 1.1,

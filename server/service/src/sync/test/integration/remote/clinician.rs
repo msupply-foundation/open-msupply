@@ -2,8 +2,9 @@ use crate::sync::{
     test::integration::{
         central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
     },
-    translations::{IntegrationRecords, PullUpsertRecord},
+    translations::IntegrationOperation,
 };
+use chrono::NaiveDate;
 use repository::{ClinicianRow, ClinicianStoreJoinRow, Gender, StoreMode, StoreRow};
 use serde_json::json;
 use util::{
@@ -23,13 +24,15 @@ impl SyncRecordTester for ClinicianRecordTester {
             site_id: new_site_properties.site_id as i32,
             logo: None,
             store_mode: StoreMode::Dispensary,
+            created_date: NaiveDate::from_ymd_opt(2021, 1, 1),
         };
         let store_json = json!({
             "ID": store_row.id,
             "code": store_row.code,
             "name_ID": store_row.name_id,
             "sync_id_remote_site": store_row.site_id,
-            "store_mode": "dispensary"
+            "store_mode": "dispensary",
+            "created_date": "2021-01-01"
         });
 
         let clinician_row = ClinicianRow {
@@ -74,12 +77,12 @@ impl SyncRecordTester for ClinicianRecordTester {
                 "clinician": [clinician_json],
                 "clinician_store_join": [join_json],
             }),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Store(store_row),
-                PullUpsertRecord::Clinician(clinician_row.clone()),
-                PullUpsertRecord::ClinicianStoreJoin(join_row.clone()),
-            ]),
+            integration_records: vec![
+                IntegrationOperation::upsert(store_row),
+                IntegrationOperation::upsert(clinician_row.clone()),
+                IntegrationOperation::upsert(join_row),
+            ],
+            ..Default::default()
         });
 
         // STEP 2 - mutate
@@ -98,11 +101,8 @@ impl SyncRecordTester for ClinicianRecordTester {
         });
 
         result.push(TestStepData {
-            central_upsert: json!({}),
-            central_delete: json!({}),
-            integration_records: IntegrationRecords::from_upserts(vec![
-                PullUpsertRecord::Clinician(row.clone()),
-            ]),
+            integration_records: vec![IntegrationOperation::upsert(row)],
+            ..Default::default()
         });
         result
     }

@@ -1,15 +1,14 @@
-use crate::sync::translations::{
-    requisition_line::LegacyRequisitionLineRow, LegacyTableName, PullDeleteRecordTable,
-    PullUpsertRecord,
-};
+use crate::sync::translations::requisition_line::LegacyRequisitionLineRow;
 
-use super::{TestSyncPullRecord, TestSyncPushRecord};
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 use chrono::NaiveDate;
-use repository::RequisitionLineRow;
+use repository::{RequisitionLineRow, RequisitionLineRowDelete};
 use serde_json::json;
 use util::constants::NUMBER_OF_DAYS_IN_A_MONTH;
 
-const REQUISITION_LINE_1: (&'static str, &'static str) = (
+const TABLE_NAME: &str = "requisition_line";
+
+const REQUISITION_LINE_1: (&str, &str) = (
     "66FB0A41C95441ABBBC7905857466089",
     r#"{
         "ID": "66FB0A41C95441ABBBC7905857466089",
@@ -45,11 +44,11 @@ const REQUISITION_LINE_1: (&'static str, &'static str) = (
         "om_snapshot_datetime": ""
     }"#,
 );
-fn requisition_line_request_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REQUISITION_LINE,
+fn requisition_line_request_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         REQUISITION_LINE_1,
-        PullUpsertRecord::RequisitionLine(RequisitionLineRow {
+        RequisitionLineRow {
             id: REQUISITION_LINE_1.0.to_string(),
             requisition_id: "mock_request_draft_requisition3".to_string(),
             item_link_id: "item_a".to_string(),
@@ -63,12 +62,12 @@ fn requisition_line_request_pull_record() -> TestSyncPullRecord {
             approved_quantity: 0,
             approval_comment: None,
             item_name: "Ibuprofen 200mg tablets".to_string(),
-        }),
+        },
     )
 }
-fn requisition_line_request_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
-        table_name: LegacyTableName::REQUISITION_LINE.to_string(),
+fn requisition_line_request_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_LINE_1.0.to_string(),
         push_data: json!(LegacyRequisitionLineRow {
             ID: REQUISITION_LINE_1.0.to_string(),
@@ -88,7 +87,7 @@ fn requisition_line_request_push_record() -> TestSyncPushRecord {
     }
 }
 
-const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
+const REQUISITION_LINE_OM_FIELD: (&str, &str) = (
     "ABCB0A41C95441ABBBC7905857466089",
     r#"{
         "ID": "ABCB0A41C95441ABBBC7905857466089",
@@ -124,11 +123,11 @@ const REQUISITION_LINE_OM_FIELD: (&'static str, &'static str) = (
         "om_snapshot_datetime": "2022-04-04T14:48:11"
     }"#,
 );
-fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
-    TestSyncPullRecord::new_pull_upsert(
-        LegacyTableName::REQUISITION_LINE,
+fn requisition_line_om_fields_pull_record() -> TestSyncIncomingRecord {
+    TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
         REQUISITION_LINE_OM_FIELD,
-        PullUpsertRecord::RequisitionLine(RequisitionLineRow {
+        RequisitionLineRow {
             id: REQUISITION_LINE_OM_FIELD.0.to_string(),
             requisition_id: "mock_request_draft_requisition3".to_string(),
             item_link_id: "item_a".to_string(),
@@ -141,18 +140,18 @@ fn requisition_line_om_fields_pull_record() -> TestSyncPullRecord {
             average_monthly_consumption: 3 * NUMBER_OF_DAYS_IN_A_MONTH as i32,
             comment: Some("Some comment".to_string()),
             snapshot_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 04, 04)
+                NaiveDate::from_ymd_opt(2022, 4, 4)
                     .unwrap()
                     .and_hms_opt(14, 48, 11)
                     .unwrap(),
             ),
             item_name: "Ibuprofen 200mg tablets".to_string(),
-        }),
+        },
     )
 }
-fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
-    TestSyncPushRecord {
-        table_name: LegacyTableName::REQUISITION_LINE.to_string(),
+fn requisition_line_om_fields_push_record() -> TestSyncOutgoingRecord {
+    TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
         record_id: REQUISITION_LINE_OM_FIELD.0.to_string(),
         push_data: json!(LegacyRequisitionLineRow {
             ID: REQUISITION_LINE_OM_FIELD.0.to_string(),
@@ -168,7 +167,7 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
             comment: Some("Some comment".to_string()),
             item_name: "Ibuprofen 200mg tablets".to_string(),
             snapshot_datetime: Some(
-                NaiveDate::from_ymd_opt(2022, 04, 04)
+                NaiveDate::from_ymd_opt(2022, 4, 4)
                     .unwrap()
                     .and_hms_opt(14, 48, 11)
                     .unwrap()
@@ -177,22 +176,22 @@ fn requisition_line_om_fields_push_record() -> TestSyncPushRecord {
     }
 }
 
-pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncPullRecord> {
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
     vec![
         requisition_line_request_pull_record(),
         requisition_line_om_fields_pull_record(),
     ]
 }
 
-pub(crate) fn test_pull_delete_records() -> Vec<TestSyncPullRecord> {
-    vec![TestSyncPullRecord::new_pull_delete(
-        LegacyTableName::REQUISITION_LINE,
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
         REQUISITION_LINE_OM_FIELD.0,
-        PullDeleteRecordTable::RequisitionLine,
+        RequisitionLineRowDelete(REQUISITION_LINE_OM_FIELD.0.to_string()),
     )]
 }
 
-pub(crate) fn test_push_records() -> Vec<TestSyncPushRecord> {
+pub(crate) fn test_push_records() -> Vec<TestSyncOutgoingRecord> {
     vec![
         requisition_line_request_push_record(),
         requisition_line_om_fields_push_record(),

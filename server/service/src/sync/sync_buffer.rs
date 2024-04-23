@@ -46,7 +46,7 @@ impl<'a> SyncBuffer<'a> {
         action: SyncBufferAction,
         ordered_table_names: &[&str],
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
-        let ordered_table_names = ordered_table_names.into_iter().map(|r| *r);
+        let ordered_table_names = ordered_table_names.iter().map(|r| *r);
         // Get ordered table names, for  upsert we sort in referential constraint order
         // and for delete in reverse of referential constraint order
         let order: Vec<&str> = match action {
@@ -80,14 +80,14 @@ mod test {
     };
     use util::{inline_init, Defaults};
 
-    use crate::sync::translations::{all_translators, pull_integration_order, LegacyTableName};
+    use crate::sync::translations::{all_translators, pull_integration_order};
 
     use super::SyncBuffer;
 
     fn row_1() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "1".to_string();
-            r.table_name = LegacyTableName::TRANSACT.to_string();
+            r.table_name = "transact".to_string();
             r.received_datetime = Defaults::naive_date_time();
         })
     }
@@ -95,7 +95,7 @@ mod test {
     fn row_2() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "2".to_string();
-            r.table_name = LegacyTableName::TRANS_LINE.to_string();
+            r.table_name = "trans_line".to_string();
             r.received_datetime = Defaults::naive_date_time();
         })
     }
@@ -103,7 +103,7 @@ mod test {
     fn row_3() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "3".to_string();
-            r.table_name = LegacyTableName::STORE.to_string();
+            r.table_name = "store".to_string();
             r.received_datetime = Defaults::naive_date_time();
         })
     }
@@ -111,7 +111,7 @@ mod test {
     fn row_4() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "4".to_string();
-            r.table_name = LegacyTableName::NAME.to_string();
+            r.table_name = "name".to_string();
             r.received_datetime = Defaults::naive_date_time();
         })
     }
@@ -119,7 +119,7 @@ mod test {
     fn row_5() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "5".to_string();
-            r.table_name = LegacyTableName::LIST_MASTER.to_string();
+            r.table_name = "list_master".to_string();
             r.received_datetime = Defaults::naive_date_time();
             r.action = SyncBufferAction::Delete;
         })
@@ -128,7 +128,7 @@ mod test {
     fn row_6() -> SyncBufferRow {
         inline_init(|r: &mut SyncBufferRow| {
             r.record_id = "6".to_string();
-            r.table_name = LegacyTableName::LIST_MASTER_LINE.to_string();
+            r.table_name = "list_master_line".to_string();
             r.received_datetime = Defaults::naive_date_time();
             r.action = SyncBufferAction::Delete;
         })

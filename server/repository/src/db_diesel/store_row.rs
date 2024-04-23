@@ -3,8 +3,9 @@ use super::{
     store_row::store::dsl as store_dsl, StorageConnection,
 };
 
-use crate::repository_error::RepositoryError;
+use crate::{repository_error::RepositoryError, Delete, Upsert};
 
+use chrono::NaiveDate;
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
@@ -16,6 +17,7 @@ table! {
         site_id -> Integer,
         logo -> Nullable<Text>,
         store_mode -> crate::db_diesel::store_row::StoreModeMapping,
+        created_date -> Nullable<Date>,
     }
 }
 
@@ -42,6 +44,7 @@ pub struct StoreRow {
     pub site_id: i32,
     pub logo: Option<String>,
     pub store_mode: StoreMode,
+    pub created_date: Option<NaiveDate>,
 }
 
 impl Default for StoreMode {
@@ -117,5 +120,35 @@ impl<'a> StoreRowRepository<'a> {
         diesel::delete(store_dsl::store.filter(store_dsl::id.eq(id)))
             .execute(&self.connection.connection)?;
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StoreRowDelete(pub String);
+// TODO soft delete
+impl Delete for StoreRowDelete {
+    fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con).delete(&self.0)
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StoreRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StoreRow {
+    fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+        StoreRowRepository::new(con).upsert_one(self)
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StoreRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
     }
 }

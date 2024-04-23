@@ -114,7 +114,7 @@ impl StockLineQueries {
         // always filter by store_id
         let filter = filter
             .map(StockLineFilter::from)
-            .unwrap_or(StockLineFilter::new())
+            .unwrap_or_default()
             .store_id(EqualFilter::equal_to(&store_id));
 
         let stock_lines = service_provider
@@ -141,6 +141,15 @@ pub struct StockLineMutations;
 
 #[Object]
 impl StockLineMutations {
+    async fn insert_stock_line(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: mutations::InsertInput,
+    ) -> Result<mutations::InsertResponse> {
+        mutations::insert(ctx, &store_id, input)
+    }
+
     async fn update_stock_line(
         &self,
         ctx: &Context<'_>,

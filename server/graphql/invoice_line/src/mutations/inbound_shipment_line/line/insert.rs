@@ -140,7 +140,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAnInboundShipment => BadUserInput(formatted_error),
         ServiceError::LineAlreadyExists => BadUserInput(formatted_error),
-        ServiceError::NumberOfPacksBelowOne => BadUserInput(formatted_error),
+        ServiceError::NumberOfPacksBelowZero => BadUserInput(formatted_error),
         ServiceError::PackSizeBelowOne => BadUserInput(formatted_error),
         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
         ServiceError::ItemNotFound => BadUserInput(formatted_error),
@@ -156,7 +156,7 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::NaiveDate;
     use graphql_core::{
-        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphl_test,
+        assert_graphql_query, assert_standard_graphql_error, test_helpers::setup_graphql_test,
     };
     use repository::{
         mock::{
@@ -221,7 +221,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_inbound_line_errors() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_insert_inbound_line_errors",
@@ -318,7 +318,7 @@ mod test {
         );
 
         //NumberOfPacksBelowOne
-        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowOne)));
+        let test_service = TestService(Box::new(|_| Err(ServiceError::NumberOfPacksBelowZero)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,
@@ -396,7 +396,7 @@ mod test {
 
     #[actix_rt::test]
     async fn test_graphql_insert_inbound_line_success() {
-        let (_, _, connection_manager, settings) = setup_graphl_test(
+        let (_, _, connection_manager, settings) = setup_graphql_test(
             EmptyMutation,
             InvoiceLineMutations,
             "test_graphql_insert_inbound_line_success",
@@ -431,7 +431,7 @@ mod test {
                     batch: Some("batch".to_string()),
                     cost_price_per_pack: 1.1,
                     sell_price_per_pack: 2.2,
-                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 01, 01).unwrap()),
+                    expiry_date: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
                     number_of_packs: 1.0,
                     total_before_tax: Some(1.1),
                     tax: Some(5.0)

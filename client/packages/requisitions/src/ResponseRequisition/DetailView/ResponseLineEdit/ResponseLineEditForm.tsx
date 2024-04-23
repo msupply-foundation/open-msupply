@@ -8,11 +8,15 @@ import {
   useTranslation,
 } from '@openmsupply-client/common';
 import { DraftResponseLine } from './hooks';
+import { VariantControl } from '@openmsupply-client/system';
 
 interface ResponseLineEditFormProps {
   disabled: boolean;
   update: (patch: Partial<DraftResponseLine>) => void;
   draftLine: DraftResponseLine;
+  variantsControl?: VariantControl;
+  numberOfPacksFromQuantity: (totalQuantity: number) => number;
+  numberOfPacksToTotalQuantity: (numPacks: number) => number;
 }
 
 const InfoRow = ({ label, value }: { label: string; value: string }) => {
@@ -78,8 +82,12 @@ export const ResponseLineEditForm = ({
   disabled,
   update,
   draftLine,
+  variantsControl,
+  numberOfPacksFromQuantity,
+  numberOfPacksToTotalQuantity,
 }: ResponseLineEditFormProps) => {
-  const t = useTranslation(['distribution', 'common']);
+  const t = useTranslation('distribution');
+  const supplyQuantity = draftLine.supplyQuantity ?? 0;
 
   const { item } = draftLine;
 
@@ -88,13 +96,16 @@ export const ResponseLineEditForm = ({
       Left={
         <>
           <Typography variant="body1" fontWeight="bold">
-            {t('heading.stock-details', { ns: 'distribution' })}
+            {t('heading.stock-details')}
           </Typography>
 
           <InfoRow label={t('label.name')} value={item.name} />
           <InfoRow label={t('label.code')} value={item.code} />
-          {item.unitName ? (
-            <InfoRow label={t('label.unit')} value={item.unitName} />
+          {variantsControl ? (
+            <InfoRow
+              label={t('label.pack')}
+              value={variantsControl.activeVariant.longName}
+            />
           ) : null}
         </>
       }
@@ -107,27 +118,31 @@ export const ResponseLineEditForm = ({
             Input={
               <NumericTextInput
                 width={150}
-                value={draftLine.requestedQuantity}
+                value={numberOfPacksFromQuantity(draftLine.requestedQuantity)}
                 disabled
               />
             }
             labelWidth="150px"
             labelProps={{ sx: { fontWeight: 500 } }}
-            label={t('label.requested-quantity', { ns: 'distribution' })}
+            label={t('label.requested-quantity')}
           />
           <InputWithLabelRow
             Input={
               <NumericTextInput
                 disabled={disabled}
                 autoFocus
-                value={draftLine.supplyQuantity}
+                value={numberOfPacksFromQuantity(supplyQuantity)}
                 width={150}
-                onChange={supplyQuantity => update({ supplyQuantity })}
+                onChange={q =>
+                  update({
+                    supplyQuantity: q && numberOfPacksToTotalQuantity(q),
+                  })
+                }
               />
             }
             labelWidth="150px"
             labelProps={{ sx: { fontWeight: 500 } }}
-            label={t('label.supply-quantity', { ns: 'distribution' })}
+            label={t('label.supply-quantity')}
           />
         </>
       }
