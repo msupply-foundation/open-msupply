@@ -96,15 +96,13 @@ impl SynchroniserV6 {
                 end_cursor,
                 total_records,
                 records,
-                ..
+                is_last_batch,
             } = self
                 .sync_api_v6
                 .pull(cursor, batch_size, is_initialised)
                 .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
-
-            let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
                 let buffer_row = record.to_buffer_row(None)?;
@@ -119,7 +117,7 @@ impl SynchroniserV6 {
 
             cursor_controller.update(&connection, end_cursor + 1)?;
 
-            if is_empty && total_records == 0 {
+            if is_last_batch {
                 break;
             }
         }
