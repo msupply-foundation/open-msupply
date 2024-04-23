@@ -19,8 +19,8 @@ const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
 
 /// Helper class to avoid deref_mut() calls, which would require to import DerefMut everywhere we
 /// want to use a connection.
-/// For example, with out it it would look like:
-/// let con: &mut DBConnection = LockedConnection.inner.lock().unwrap().deref_mut();
+/// For example, without it, it would look like:
+/// let con: &mut DBConnection = connection.raw_connection.lock().unwrap().deref_mut();
 pub struct LockedConnection<'a> {
     raw_connection: MutexGuard<'a, DBConnection>,
 }
