@@ -1,22 +1,31 @@
 use self::delete::{delete_asset, DeleteAssetError};
+use self::delete_log_reason::{delete_log_reason, DeleteAssetLogReasonError};
 use self::insert::{insert_asset, InsertAsset, InsertAssetError};
 use self::insert_log::{insert_asset_log, InsertAssetLog, InsertAssetLogError};
+use self::insert_log_reason::{
+    insert_asset_log_reason, InsertAssetLogReason, InsertAssetLogReasonError,
+};
 use self::query::{get_asset, get_assets};
 use self::query_log::{get_asset_log, get_asset_logs};
+use self::query_log_reason::{get_asset_log_reason, get_asset_log_reasons};
 use self::update::{update_asset, UpdateAsset, UpdateAssetError};
 
 use super::{ListError, ListResult};
 use crate::{service_provider::ServiceContext, SingleRecordError};
+use repository::asset_log_reason::{AssetLogReason, AssetLogReasonFilter, AssetLogReasonSort};
 use repository::assets::asset::{Asset, AssetFilter, AssetSort};
 use repository::assets::asset_log::{AssetLog, AssetLogFilter, AssetLogSort};
 use repository::{PaginationOption, StorageConnection};
 
 pub mod delete;
+pub mod delete_log_reason;
 pub mod insert;
 pub mod insert_log;
+pub mod insert_log_reason;
 pub mod location;
 pub mod query;
 pub mod query_log;
+pub mod query_log_reason;
 pub mod update;
 mod validate;
 
@@ -55,6 +64,14 @@ pub trait AssetServiceTrait: Sync + Send {
         delete_asset(ctx, id)
     }
 
+    fn delete_log_reason(
+        &self,
+        ctx: &ServiceContext,
+        reason_id: String,
+    ) -> Result<String, DeleteAssetLogReasonError> {
+        delete_log_reason(ctx, reason_id)
+    }
+
     fn get_asset_logs(
         &self,
         connection: &StorageConnection,
@@ -79,6 +96,32 @@ pub trait AssetServiceTrait: Sync + Send {
         input: InsertAssetLog,
     ) -> Result<AssetLog, InsertAssetLogError> {
         insert_asset_log(ctx, input)
+    }
+
+    fn get_asset_log_reasons(
+        &self,
+        connection: &StorageConnection,
+        pagination: Option<PaginationOption>,
+        filter: Option<AssetLogReasonFilter>,
+        sort: Option<AssetLogReasonSort>,
+    ) -> Result<ListResult<AssetLogReason>, ListError> {
+        get_asset_log_reasons(connection, pagination, filter, sort)
+    }
+
+    fn get_asset_log_reason(
+        &self,
+        ctx: &ServiceContext,
+        id: String,
+    ) -> Result<AssetLogReason, SingleRecordError> {
+        get_asset_log_reason(ctx, id)
+    }
+
+    fn insert_asset_log_reason(
+        &self,
+        ctx: &ServiceContext,
+        input: InsertAssetLogReason,
+    ) -> Result<AssetLogReason, InsertAssetLogReasonError> {
+        insert_asset_log_reason(ctx, input)
     }
 }
 
