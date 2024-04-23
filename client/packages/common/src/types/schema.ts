@@ -272,6 +272,19 @@ export type AssetCatalogueItemNode = {
   subCatalogue: Scalars['String']['output'];
 };
 
+export type AssetCatalogueItemPropertyNode = {
+  __typename: 'AssetCatalogueItemPropertyNode';
+  catalogueItemId: Scalars['String']['output'];
+  cataloguePropertyId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  valueBool?: Maybe<Scalars['Boolean']['output']>;
+  valueFloat?: Maybe<Scalars['Float']['output']>;
+  valueInt?: Maybe<Scalars['Int']['output']>;
+  valueString?: Maybe<Scalars['String']['output']>;
+  valueType: PropertyNodeValueType;
+};
+
 export type AssetCatalogueItemResponse = AssetCatalogueItemNode | NodeError;
 
 export enum AssetCatalogueItemSortFieldInput {
@@ -507,6 +520,7 @@ export type AssetNode = {
   locations: LocationConnector;
   modifiedDatetime: Scalars['NaiveDateTime']['output'];
   notes?: Maybe<Scalars['String']['output']>;
+  properties: Array<AssetCatalogueItemPropertyNode>;
   replacementDate?: Maybe<Scalars['NaiveDate']['output']>;
   serialNumber?: Maybe<Scalars['String']['output']>;
   statusLog?: Maybe<AssetLogNode>;
@@ -4667,6 +4681,13 @@ export type ProgramRequisitionSettingNode = {
   programName: Scalars['String']['output'];
   suppliers: Array<NameNode>;
 };
+
+export enum PropertyNodeValueType {
+  Boolean = 'BOOLEAN',
+  Float = 'FLOAT',
+  Integer = 'INTEGER',
+  String = 'STRING'
+}
 
 export type Queries = {
   __typename: 'Queries';
