@@ -82,7 +82,7 @@ Please see below commit for an example of adding a new table and relative transl
 
 [Add translations](https://github.com/msupply-foundation/open-msupply/commit/a9b3d90a597f9670687f0fc26a5632310fe6b4c9)
 
-[Add asset category](https://github.com/msupply-foundation/open-msupply/pull/3146/commits/989ed2e56f77923d3a73f033956ae1d8e68fe196) (Shows - Changelog Trigger, Upsert Trait, Translation, etc)
+[Add asset log reason](https://github.com/msupply-foundation/open-msupply/commit/507681182ec39f716df73b7487167057b6731e0e) (Shows - Changelog Trigger, Upsert Trait, Translation, etc)
 
 ## Central Servers
 

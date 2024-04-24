@@ -1,8 +1,9 @@
 mod core;
-
+pub mod download_file;
+pub mod upload_file;
 use repository::RepositoryError;
-use reqwest::Url;
-use serde::{Deserialize, Serialize};
+use reqwest::{Response, Url};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use thiserror::Error;
 use util::format_error;
 
@@ -36,6 +37,20 @@ pub enum SyncParsedErrorV6 {
     ParsingSyncRecordError(String),
     #[error("Integration in progress")]
     IntegrationInProgress,
+    #[error("Sync file not found, file_id: {0}")]
+    SyncFileNotFound(String),
+}
+
+impl From<anyhow::Error> for SyncParsedErrorV6 {
+    fn from(from: anyhow::Error) -> Self {
+        SyncParsedErrorV6::OtherServerError(from.to_string())
+    }
+}
+
+impl SyncParsedErrorV6 {
+    pub fn from_error<E: std::error::Error>(error: &E) -> Self {
+        Self::OtherServerError(format_error(error))
+    }
 }
 
 impl From<SyncApiError> for SyncParsedErrorV6 {
@@ -92,14 +107,14 @@ pub enum SiteStatusResponseV6 {
 
 #[derive(Error, Debug)]
 #[error("Sync api error, url: '{url}', route: '{route}'")]
-pub(crate) struct SyncApiErrorV6 {
+pub struct SyncApiErrorV6 {
     pub source: SyncApiErrorVariantV6,
     pub(crate) url: Url,
     pub(crate) route: String,
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum SyncApiErrorVariantV6 {
+pub enum SyncApiErrorVariantV6 {
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
     #[error("Could not parse response")]
@@ -107,7 +122,7 @@ pub(crate) enum SyncApiErrorVariantV6 {
     #[error("Could not parse response")]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
-    Other(#[source] anyhow::Error),
+    Other(#[from] anyhow::Error),
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -159,12 +174,57 @@ pub struct SiteStatusRequestV6 {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct SiteStatusV6 {
-    pub(crate) code: SiteStatusCodeV6,
+    pub(crate) is_integrating: bool,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum SiteStatusCodeV6 {
-    IntegrationInProgress,
-    Idle,
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncDownloadFileRequestV6 {
+    pub(crate) table_name: String,
+    pub(crate) record_id: String,
+    pub(crate) id: String,
+    pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+pub struct SyncUploadFileRequestV6 {
+    pub file_id: String,
+    pub sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SyncUploadFileResponseV6 {
+    Data(()),
+    Error(SyncParsedErrorV6),
+}
+
+async fn response_or_err<T: DeserializeOwned>(
+    result: Result<Response, reqwest::Error>,
+) -> Result<T, SyncApiErrorVariantV6> {
+    let response = match result {
+        Ok(result) => result,
+        Err(error) => {
+            if error.is_connect() {
+                return Err(SyncApiErrorVariantV6::ConnectionError(error));
+            } else {
+                return Err(SyncApiErrorVariantV6::Other(error.into()));
+            }
+        }
+    };
+
+    // Not checking for status, expecting 200 only, even if there is error
+    let response_text = response
+        .text()
+        .await
+        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+
+    let result = serde_json::from_str(&response_text).map_err(|source| {
+        ParsingResponseError::ParseError {
+            source,
+            response_text,
+        }
+    })?;
+
+    Ok(result)
 }

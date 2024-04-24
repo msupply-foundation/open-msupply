@@ -1,4 +1,3 @@
-use super::validate_request;
 use actix_web::{
     web::{self, Data},
     HttpRequest, HttpResponse,
@@ -10,6 +9,8 @@ use service::{
     service_provider::ServiceProvider,
     settings::LabelPrinterSettingNode,
 };
+
+use crate::authentication::validate_cookie_auth;
 
 #[derive(serde::Deserialize)]
 pub struct LabelData {
@@ -23,7 +24,7 @@ pub async fn print_label_qr(
     auth_data: Data<AuthData>,
     data: web::Json<LabelData>,
 ) -> HttpResponse {
-    let auth_result = validate_request(request.clone(), &auth_data);
+    let auth_result = validate_cookie_auth(request.clone(), &auth_data);
     match auth_result {
         Ok(_) => (),
         Err(error) => {
