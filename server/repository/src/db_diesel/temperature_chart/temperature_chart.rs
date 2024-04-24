@@ -34,9 +34,6 @@ impl<'a> TemperatureChartRepository<'a> {
         intervals: Vec<Interval>,
         temperature_log_filter: Option<TemperatureLogFilter>,
     ) -> Result<Vec<TemperatureChartRow>, RepositoryError> {
-        /*let mut query = temperature TemperatureChart {
-            intervals: intervals.clone(),
-        }*/
         let mut query = temperature_chart::table {
             intervals: intervals.clone(),
         }
