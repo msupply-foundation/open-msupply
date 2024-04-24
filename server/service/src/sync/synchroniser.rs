@@ -5,7 +5,6 @@ use crate::{
 use log::warn;
 use repository::{RepositoryError, StorageConnection, SyncBufferAction};
 
-use std::ops::Not;
 use std::sync::Arc;
 use thiserror::Error;
 use util::format_error;
@@ -14,7 +13,9 @@ use super::{
     api::{SyncApiError, SyncApiSettings, SyncApiV5},
     api_v6::SyncApiV6CreatingError,
     central_data_synchroniser::{CentralDataSynchroniser, CentralPullError},
-    central_data_synchroniser_v6::{CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6},
+    central_data_synchroniser_v6::{
+        CentralPullErrorV6, RemotePushErrorV6, SynchroniserV6, WaitForSyncOperationErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemoteDataSynchroniser, RemotePullError, RemotePushError,
         WaitForSyncOperationError,
@@ -52,6 +53,8 @@ pub(crate) enum SyncError {
     RemotePushError(#[from] RemotePushError),
     #[error("Error while awaiting remote record integration")]
     WaitForIntegrationError(#[from] WaitForSyncOperationError),
+    #[error("Error while awaiting v6 remote record integration")]
+    WaitForIntegrationErrorV6(#[from] WaitForSyncOperationErrorV6),
     #[error("Error while pulling central records")]
     CentralPullError(#[from] CentralPullError),
     #[error("Error while pulling central v6 records")]
@@ -194,6 +197,13 @@ impl Synchroniser {
                 log::info!("{}", format_error(&error));
                 let _ = logger.error(&error.into());
             };
+
+            v6_sync
+                .wait_for_sync_operation(
+                    INTEGRATION_POLL_PERIOD_SECONDS,
+                    INTEGRATION_TIMEOUT_SECONDS,
+                )
+                .await?;
         }
         logger.done_step(SyncStep::PushCentralV6)?;
 
@@ -248,10 +258,18 @@ impl Synchroniser {
         // INTEGRATE RECORDS
         logger.start_step(SyncStep::Integrate)?;
 
-        let (upserts, deletes, merges) =
-            integrate_and_translate_sync_buffer(&ctx.connection, is_initialised, logger)
-                .await
-                .map_err(SyncError::IntegrationError)?;
+        let (upserts, deletes, merges) = integrate_and_translate_sync_buffer(
+            &ctx.connection,
+            is_initialised,
+            // Only pass in logger during initialisation
+            match is_initialised {
+                false => Some(logger),
+                true => None,
+            },
+            None,
+        )
+        .map_err(SyncError::IntegrationError)?;
+
         warn!("Upsert Integration result: {:?}", upserts);
         warn!("Delete Integration result: {:?}", deletes);
         warn!("Merge Integration result: {:?}", merges);
@@ -273,10 +291,11 @@ impl Synchroniser {
 }
 
 /// Translation And Integration of sync buffer, pub since used in CLI
-pub async fn integrate_and_translate_sync_buffer<'a>(
+pub fn integrate_and_translate_sync_buffer<'a>(
     connection: &StorageConnection,
-    is_initialised: bool,
-    logger: &mut SyncLogger<'a>,
+    execute_in_transaction: bool,
+    logger: Option<&mut SyncLogger<'a>>,
+    source_site_id: Option<i32>,
 ) -> anyhow::Result<(
     TranslationAndIntegrationResults,
     TranslationAndIntegrationResults,
@@ -304,19 +323,26 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
 
         let sync_buffer = SyncBuffer::new(connection);
         let translation_and_integration = TranslationAndIntegration::new(connection, &sync_buffer);
+
         // Translate and integrate upserts (ordered by referential database constraints)
-        let upsert_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Upsert, &table_order)?;
+        let upsert_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+            SyncBufferAction::Upsert,
+            &table_order,
+            source_site_id,
+        )?;
+
         // Translate and integrate delete (ordered by referential database constraints, in reverse)
-        let delete_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Delete, &table_order)?;
+        let delete_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+            SyncBufferAction::Delete,
+            &table_order,
+            source_site_id,
+        )?;
 
         let upsert_integration_result = translation_and_integration
             .translate_and_integrate_sync_records(
                 upsert_sync_buffer_records.clone(),
                 &translators,
-                // Only pass Some(logger) during initalisation
-                is_initialised.not().then(|| logger),
+                logger,
             )?;
 
         // pass the logger here
@@ -327,8 +353,11 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
                 None,
             )?;
 
-        let merge_sync_buffer_records =
-            sync_buffer.get_ordered_sync_buffer_records(SyncBufferAction::Merge, &table_order)?;
+        let merge_sync_buffer_records = sync_buffer.get_ordered_sync_buffer_records(
+            SyncBufferAction::Merge,
+            &table_order,
+            source_site_id,
+        )?;
         let merge_integration_result: TranslationAndIntegrationResults =
             translation_and_integration.translate_and_integrate_sync_records(
                 merge_sync_buffer_records,
@@ -343,7 +372,7 @@ pub async fn integrate_and_translate_sync_buffer<'a>(
         ))
     };
 
-    let result = if is_initialised {
+    let result = if execute_in_transaction {
         connection
             .transaction_sync(integrate_and_translate)
             .map_err::<RepositoryError, _>(|e| e.to_inner_error())

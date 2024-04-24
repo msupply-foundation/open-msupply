@@ -1,3 +1,5 @@
+use std::time::{Duration, SystemTime};
+
 use crate::{
     cursor_controller::CursorController,
     sync::{
@@ -17,7 +19,6 @@ use super::{
     GetActiveStoresOnSiteError,
 };
 
-use log::debug;
 use repository::{
     ChangelogRepository, KeyValueType, RepositoryError, StorageConnection, SyncBufferRow,
     SyncBufferRowRepository,
@@ -48,6 +49,14 @@ pub(crate) enum RemotePushErrorV6 {
     GetActiveStoresOnSiteError(#[from] GetActiveStoresOnSiteError),
     #[error(transparent)]
     SyncLoggerError(#[from] SyncLoggerError),
+}
+
+#[derive(Error, Debug)]
+pub(crate) enum WaitForSyncOperationErrorV6 {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiErrorV6),
+    #[error("Timeout was reached")]
+    TimeoutReached,
 }
 
 #[derive(Error, Debug)]
@@ -87,14 +96,13 @@ impl SynchroniserV6 {
                 end_cursor,
                 total_records,
                 records,
+                is_last_batch,
             } = self
                 .sync_api_v6
                 .pull(cursor, batch_size, is_initialised)
                 .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
-
-            let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
                 let buffer_row = record.to_buffer_row(None)?;
@@ -109,7 +117,7 @@ impl SynchroniserV6 {
 
             cursor_controller.update(&connection, end_cursor + 1)?;
 
-            if is_empty && total_records == 0 {
+            if is_last_batch {
                 break;
             }
         }
@@ -141,6 +149,7 @@ impl SynchroniserV6 {
             };
 
             let last_pushed_cursor = changelogs.last().map(|log| log.cursor);
+
             log::info!(
                 "Pushing {}/{} records to v6 central server",
                 changelogs.len(),
@@ -148,7 +157,7 @@ impl SynchroniserV6 {
             );
             log::debug!("Records: {:#?}", changelogs);
 
-            let records = translate_changelogs_to_sync_records(
+            let records: Vec<SyncRecordV6> = translate_changelogs_to_sync_records(
                 connection,
                 changelogs,
                 ToSyncRecordTranslationType::PushToOmSupplyCentral,
@@ -157,14 +166,16 @@ impl SynchroniserV6 {
             .map(SyncRecordV6::from)
             .collect();
 
+            let is_last_batch = change_logs_total <= batch_size as u64;
+
             let batch = SyncBatchV6 {
                 total_records: change_logs_total,
                 end_cursor: last_pushed_cursor.unwrap_or(0) as u64,
                 records,
+                is_last_batch,
             };
 
-            let response = self.sync_api_v6.push(batch).await?;
-            debug!("V6 Push response: {:#?}", response);
+            self.sync_api_v6.push(batch).await?;
 
             // Update cursor only if record for that cursor has been pushed/processed
             if let Some(last_pushed_cursor_id) = last_pushed_cursor {
@@ -176,7 +187,37 @@ impl SynchroniserV6 {
 
         Ok(())
     }
+
+    pub(crate) async fn wait_for_sync_operation(
+        &self,
+        poll_period_seconds: u64,
+        timeout_seconds: u64,
+    ) -> Result<(), WaitForSyncOperationErrorV6> {
+        let start = SystemTime::now();
+        let poll_period = Duration::from_secs(poll_period_seconds);
+        let timeout = Duration::from_secs(timeout_seconds);
+        log::info!("Awaiting central server operation...");
+        loop {
+            tokio::time::sleep(poll_period).await;
+
+            let response = self.sync_api_v6.get_site_status().await?;
+
+            if !response.is_integrating {
+                log::info!("Central server operation finished");
+                break;
+            }
+
+            let elapsed = start.elapsed().unwrap_or(timeout);
+
+            if elapsed >= timeout {
+                return Err(WaitForSyncOperationErrorV6::TimeoutReached);
+            }
+        }
+
+        Ok(())
+    }
 }
+
 fn insert_one_and_update_cursor(
     connection: &StorageConnection,
     cursor_controller: &CursorController,

@@ -20,7 +20,10 @@ use crate::{
             CentralSyncBatchV5, CentralSyncRecordV5, CommonSyncRecord, RemotePushResponseV5,
             RemoteSyncBatchV5, RemoteSyncRecordV5, SiteInfoV5, SiteStatusCodeV5, SiteStatusV5,
         },
-        api_v6::{SyncBatchV6, SyncPullResponseV6, SyncPushResponseV6, SyncPushSuccessV6},
+        api_v6::{
+            SiteStatusResponseV6, SiteStatusV6, SyncBatchV6, SyncPullResponseV6,
+            SyncPushResponseV6, SyncPushSuccessV6,
+        },
         settings::{BatchSize, SyncSettings},
         sync_status::{status::InitialisationStatus, SyncLogError},
         synchroniser::{SyncError, Synchroniser},
@@ -614,6 +617,7 @@ async fn empty_v6_server(port: u16) -> Server {
             end_cursor: 0,
             total_records: 0,
             records: Vec::new(),
+            is_last_batch: true,
         }))
     }
     async fn empty_push_response() -> impl Responder {
@@ -621,10 +625,16 @@ async fn empty_v6_server(port: u16) -> Server {
             records_pushed: 0,
         }))
     }
+    async fn empty_status_response() -> impl Responder {
+        web::Json(SiteStatusResponseV6::Data(SiteStatusV6 {
+            is_integrating: false,
+        }))
+    }
     HttpServer::new(move || {
         App::new()
             .route("/central/sync/pull", web::to(empty_pull_response))
             .route("/central/sync/push", web::to(empty_push_response))
+            .route("/central/sync/site_status", web::to(empty_status_response))
     })
     .bind(("127.0.0.1", port))
     .unwrap()
