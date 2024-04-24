@@ -4,10 +4,9 @@ mod test;
 use std::time::Duration;
 
 use reqwest::Client;
+use url::Url;
 
 use crate::sync::{
-    api_v6::get_omsupply_central_url,
-    settings::SyncSettings,
     test::{
         check_integrated,
         integration::{
@@ -15,6 +14,7 @@ use crate::sync::{
             init_test_context, SyncIntegrationContext,
         },
     },
+    CentralServerConfig,
 };
 
 use super::{GraphqlRequest, SyncRecordTester};
@@ -40,6 +40,13 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
     } = init_test_context(&sync_settings, &identifier).await;
 
     let steps_data = tester.test_step_data(&new_site_properties);
+    // First sync is required to get central server URL (before graphql queries are called)
+    synchroniser.sync().await.unwrap();
+
+    let CentralServerConfig::CentralServerUrl(central_server_url) = CentralServerConfig::get()
+    else {
+        panic!("Not a remote site or central server not configured in legacy mSupply");
+    };
 
     for (index, step_data) in steps_data.into_iter().enumerate() {
         println!(
@@ -54,10 +61,10 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
             .expect("Problem inserting central data");
 
         // Sync omSupply central server first
-        sync_omsupply_central(&sync_settings).await;
+        sync_omsupply_central(&central_server_url).await;
         // Integrate omSupply central server records via graphql
         for graphql_operation in step_data.om_supply_central_graphql_operations {
-            graphql(&sync_settings, graphql_operation).await;
+            graphql(&central_server_url, graphql_operation).await;
         }
 
         synchroniser.sync().await.unwrap();
@@ -66,8 +73,8 @@ async fn test_omsupply_central_records(identifier: &str, tester: &dyn SyncRecord
 }
 
 // Helper for graphql queries
-async fn graphql(sync_settings: &SyncSettings, graphql: GraphqlRequest) -> serde_json::Value {
-    let mut url = get_omsupply_central_url(&sync_settings.url).unwrap();
+async fn graphql(url: &str, graphql: GraphqlRequest) -> serde_json::Value {
+    let mut url = Url::parse(url).unwrap();
     url = url.join("graphql").unwrap();
 
     let result = Client::new()
@@ -91,9 +98,9 @@ async fn graphql(sync_settings: &SyncSettings, graphql: GraphqlRequest) -> serde
 }
 
 // Call manual sync mutation and then wait for synchronisation
-async fn sync_omsupply_central(sync_settings: &SyncSettings) {
+async fn sync_omsupply_central(url: &str) {
     graphql(
-        sync_settings,
+        url,
         GraphqlRequest {
             query: "mutation { manualSync }".to_string(),
             ..Default::default()
@@ -105,7 +112,7 @@ async fn sync_omsupply_central(sync_settings: &SyncSettings) {
         // TODO max timeout ? or log output every X seconds
         tokio::time::sleep(Duration::from_secs(1)).await;
         let result = graphql(
-            sync_settings,
+            url,
             GraphqlRequest {
                 query: r#" 
                     query {

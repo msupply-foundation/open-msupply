@@ -10,8 +10,7 @@ use actix_web::{
     Error, HttpResponse,
 };
 use futures_util::future::LocalBoxFuture;
-
-use util::is_central_server;
+use service::sync::CentralServerConfig;
 
 #[derive(Debug, Default)]
 pub(crate) struct CentralServerOnly {}
@@ -51,7 +50,7 @@ where
     forward_ready!(service);
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
-        if !is_central_server() {
+        if !CentralServerConfig::is_central_server() {
             // We're not the central server, so we'll return an error.
             return Box::pin(async move {
                 Ok(req.into_response({
