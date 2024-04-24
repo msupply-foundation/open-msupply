@@ -18,7 +18,7 @@ import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
 
 interface RequestLineEditFormProps {
-  item: ItemRowWithStatsFragment | null;
+  currentItem: ItemRowWithStatsFragment | null;
   disabled: boolean;
   onChangeItem: (item: ItemRowWithStatsFragment) => void;
   update: (patch: Partial<DraftRequestLine>) => void;
@@ -102,7 +102,7 @@ export const RequestLineEditFormLayout = ({
 };
 
 export const RequestLineEditForm = ({
-  item,
+  currentItem,
   disabled,
   onChangeItem,
   update,
@@ -115,8 +115,9 @@ export const RequestLineEditForm = ({
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();
   const requestedQuantity = draftLine?.requestedQuantity ?? 0;
-  const originalItemName = lines?.find(({ item }) => item.id === item.id)
-    ?.itemName;
+  const originalItemName = lines?.find(
+    ({ item }) => item.id === currentItem?.id
+  )?.itemName;
 
   return (
     <RequestLineEditFormLayout
@@ -124,17 +125,17 @@ export const RequestLineEditForm = ({
         <>
           {(disabled && (
             <BasicTextInput
-              value={`${item?.code}     ${originalItemName}`}
+              value={`${currentItem?.code}     ${originalItemName}`}
               disabled
               fullWidth
             />
           )) || (
             <StockItemSearchInputWithStats
-              autoFocus={!item}
-              openOnFocus={!item}
+              autoFocus={!currentItem}
+              openOnFocus={!currentItem}
               width={600}
               disabled={disabled}
-              currentItemId={item?.id}
+              currentItemId={currentItem?.id}
               onChange={(newItem: ItemRowWithStatsFragment | null) =>
                 newItem && onChangeItem(newItem)
               }
@@ -150,7 +151,7 @@ export const RequestLineEditForm = ({
       }
       Left={
         <>
-          {item && item?.unitName ? (
+          {currentItem && currentItem?.unitName ? (
             variantsControl ? (
               <Grid paddingTop={2}>
                 <InputWithLabelRow
@@ -164,7 +165,7 @@ export const RequestLineEditForm = ({
                 />
               </Grid>
             ) : (
-              <InfoRow label={t('label.unit')} value={item?.unitName} />
+              <InfoRow label={t('label.unit')} value={currentItem?.unitName} />
             )
           ) : null}
 
