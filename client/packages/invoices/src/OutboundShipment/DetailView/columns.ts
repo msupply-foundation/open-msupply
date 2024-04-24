@@ -88,13 +88,13 @@ export const useOutboundColumns = ({
           Cell: TooltipTextCell,
           getSortValue: row =>
             getColumnPropertyAsString(row, [
-              { path: ['lines', 'item', 'name'] },
-              { path: ['item', 'name'], default: '' },
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
             ]),
           accessor: ({ rowData }) =>
             getColumnProperty(rowData, [
-              { path: ['lines', 'item', 'name'] },
-              { path: ['item', 'name'], default: '' },
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
             ]),
         },
       ],
