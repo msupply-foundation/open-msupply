@@ -14,7 +14,7 @@ use service::{
     settings::Settings,
     sync::{
         api_v6::{
-            SyncDownloadFileRequestV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6,
+            SiteStatusRequestV6, SiteStatusResponseV6, SyncDownloadFileRequestV6, SyncParsedErrorV6, SyncPullRequestV6, SyncPullResponseV6,
             SyncPushRequestV6, SyncPushResponseV6, SyncUploadFileRequestV6,
             SyncUploadFileResponseV6,
         },
@@ -28,6 +28,7 @@ pub fn config_sync_on_central(cfg: &mut web::ServiceConfig) {
             .wrap(central_server_only())
             .service(pull)
             .service(push)
+            .service(site_status)
             .service(download_file)
             .service(upload_file),
     );
@@ -51,9 +52,20 @@ async fn push(
     request: Json<SyncPushRequestV6>,
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
-    let response = match sync_on_central::push(&service_provider, request.into_inner()).await {
-        Ok(result) => SyncPushResponseV6::Data(result),
-        Err(error) => SyncPushResponseV6::Error(error),
+    let response =
+        match sync_on_central::push(service_provider.into_inner(), request.into_inner()).await {
+            Ok(result) => SyncPushResponseV6::Data(result),
+            Err(error) => SyncPushResponseV6::Error(error),
+        };
+
+    Ok(web::Json(response))
+}
+
+#[post("/sync/site_status")]
+async fn site_status(request: Json<SiteStatusRequestV6>) -> actix_web::Result<impl Responder> {
+    let response = match sync_on_central::get_site_status(request.into_inner()).await {
+        Ok(result) => SiteStatusResponseV6::Data(result),
+        Err(error) => SiteStatusResponseV6::Error(error),
     };
 
     Ok(web::Json(response))

@@ -35,6 +35,8 @@ pub enum SyncParsedErrorV6 {
     NotACentralServer,
     #[error("Could not parse record to sync buffer row: {0}")]
     ParsingSyncRecordError(String),
+    #[error("Integration in progress")]
+    IntegrationInProgress,
     #[error("Sync file not found, file_id: {0}")]
     SyncFileNotFound(String),
 }
@@ -96,6 +98,13 @@ pub enum SyncPullResponseV6 {
     Error(SyncParsedErrorV6),
 }
 
+#[derive(Deserialize, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SiteStatusResponseV6 {
+    Data(SiteStatusV6),
+    Error(SyncParsedErrorV6),
+}
+
 #[derive(Error, Debug)]
 #[error("Sync api error, url: '{url}', route: '{route}'")]
 pub struct SyncApiErrorV6 {
@@ -130,6 +139,7 @@ pub struct SyncBatchV6 {
     // Including records in this batch
     pub(crate) total_records: u64,
     pub(crate) records: Vec<SyncRecordV6>,
+    pub(crate) is_last_batch: bool,
 }
 
 impl From<PushSyncRecord> for SyncRecordV6 {
@@ -154,6 +164,17 @@ pub struct SyncPullRequestV6 {
 pub struct SyncPushRequestV6 {
     pub(crate) batch: SyncBatchV6,
     pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiteStatusRequestV6 {
+    pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+pub struct SiteStatusV6 {
+    pub(crate) is_integrating: bool,
 }
 
 #[derive(Serialize, Deserialize)]
