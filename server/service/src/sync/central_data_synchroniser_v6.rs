@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::{
-    api::ParsingSyncRecordError,
-    api_v6::{SyncApiErrorV6, SyncApiV6},
+    api::{ParsingSyncRecordError, SyncApiSettings},
+    api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
     get_sync_push_changelogs_filter,
     sync_status::logger::{SyncLogger, SyncLoggerError},
     translations::{
@@ -57,11 +57,20 @@ pub(crate) struct SerialisingToSyncBuffer {
     record: serde_json::Value,
 }
 
-pub(crate) struct CentralDataSynchroniserV6 {
-    pub(crate) sync_api_v6: SyncApiV6,
+pub(crate) struct SynchroniserV6 {
+    sync_api_v6: SyncApiV6,
 }
 
-impl CentralDataSynchroniserV6 {
+impl SynchroniserV6 {
+    pub(crate) fn new(
+        url: &str,
+        sync_v5_settings: &SyncApiSettings,
+    ) -> Result<Self, SyncApiV6CreatingError> {
+        Ok(Self {
+            sync_api_v6: SyncApiV6::new(url, sync_v5_settings)?,
+        })
+    }
+
     pub(crate) async fn pull<'a>(
         &self,
         connection: &StorageConnection,
