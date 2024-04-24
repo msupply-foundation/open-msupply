@@ -115,7 +115,7 @@ export const RequestLineEditForm = ({
   const formatNumber = useFormatNumber();
   const { lines } = useRequest.line.list();
   const requestedQuantity = draftLine?.requestedQuantity ?? 0;
-  const originalItemName = lines?.find(({ item }) => item.id === item?.id)
+  const originalItemName = lines?.find(({ item }) => item.id === item.id)
     ?.itemName;
 
   return (
