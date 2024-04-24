@@ -76,7 +76,7 @@ export const AppBarButtons: FC<{
               return onCreate({
                 id: FnUtils.generateUUID(),
                 otherPartyId: newRequisition.name.id,
-              }).then(requisitionNumber => {
+              }).then(({ requisitionNumber }) => {
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)
@@ -91,7 +91,7 @@ export const AppBarButtons: FC<{
               return onProgramCreate({
                 id: FnUtils.generateUUID(),
                 ...rest,
-              }).then(requisitionNumber => {
+              }).then(({ requisitionNumber }) => {
                 navigate(
                   RouteBuilder.create(AppRoute.Replenishment)
                     .addPart(AppRoute.InternalOrder)

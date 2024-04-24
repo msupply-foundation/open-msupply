@@ -3,6 +3,7 @@ import groupBy from 'lodash/groupBy';
 import uniqBy from 'lodash/uniqBy';
 import keyBy from 'lodash/keyBy';
 import uniq from 'lodash/uniq';
+import flatMap from 'lodash/flatMap';
 
 export const ArrayUtils = {
   ifTheSameElseDefault: <T, K extends keyof T, J>(
@@ -52,4 +53,5 @@ export const ArrayUtils = {
   groupBy,
   uniqBy,
   keyBy,
+  flatMap,
 };

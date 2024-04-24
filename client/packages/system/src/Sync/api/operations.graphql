@@ -76,6 +76,12 @@ fragment FullSyncStatus on FullSyncStatusNode {
   push {
     ...SyncStatusWithProgress
   }
+  pullV6 {
+    ...SyncStatusWithProgress
+  }
+  pushV6 {
+    ...SyncStatusWithProgress
+  }
   summary {
     ...SyncStatus
   }

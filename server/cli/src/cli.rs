@@ -19,7 +19,7 @@ use service::{
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
     sync::{
-        settings::SyncSettings, sync_status::logger::SyncLogger,
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
         synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
     },
     token_bucket::TokenBucket,
@@ -114,6 +114,7 @@ async fn initialise_from_central(
 
     let connection_manager = get_storage_connection_manager(&settings.database);
     let app_data_folder = settings
+        .clone()
         .server
         .base_dir
         .ok_or(anyhow!("based dir not set in yaml configurations"))?;
@@ -123,6 +124,7 @@ async fn initialise_from_central(
     ));
 
     let sync_settings = settings
+        .clone()
         .sync
         .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
     let central_server_url = sync_settings.url.clone();
@@ -143,7 +145,10 @@ async fn initialise_from_central(
     service_provider
         .settings
         .update_sync_settings(&service_context, &sync_settings)?;
-    let (_, sync_driver) = SynchroniserDriver::init();
+
+    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
+    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
+    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
     sync_driver.sync(service_provider.clone()).await;
 
     info!("Syncing users");
@@ -285,7 +290,7 @@ async fn main() -> anyhow::Result<()> {
             buffer_repo.upsert_many(&buffer_rows)?;
 
             let mut logger = SyncLogger::start(&ctx.connection).unwrap();
-            integrate_and_translate_sync_buffer(&ctx.connection, false, &mut logger).await?;
+            integrate_and_translate_sync_buffer(&ctx.connection, false, Some(&mut logger), None)?;
 
             info!("Initialising users");
             for (input, user_info) in data.users {

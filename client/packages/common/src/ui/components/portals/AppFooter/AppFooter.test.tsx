@@ -1,13 +1,14 @@
 import React, { FC } from 'react';
 import { fireEvent, render } from '@testing-library/react';
 import { AppFooterPortal, AppFooter } from './AppFooter';
+import { TestingProvider } from '@common/utils';
 
 describe('AppBarContent', () => {
   const TestAppBarContent: FC<{ initialShow: boolean }> = ({ initialShow }) => {
     const [show, setShow] = React.useState(initialShow);
 
     return (
-      <>
+      <TestingProvider>
         <button onClick={() => setShow(state => !state)} />
         {show && (
           <div id="source">
@@ -21,7 +22,7 @@ describe('AppBarContent', () => {
             Content={<span>mark</span>}
           />
         </div>
-      </>
+      </TestingProvider>
     );
   };
 
