@@ -8,6 +8,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import { browserLanguageDetector } from './browserLanguageDetector';
 import { createRegisteredContext } from 'react-singleton-context';
 
+declare const LANG_VERSION: string; // Created by webpack DefinePlugin see webpack.config.js
 const defaultNS = 'common';
 
 type IntlProviderProps = PropsWithChildren<{ isElectron?: boolean }>;
@@ -31,8 +32,7 @@ export const IntlProvider: FC<IntlProviderProps> = ({
     const isDevelopment = process.env['NODE_ENV'] === 'development';
     const expirationTime = isDevelopment
       ? 0
-      : // TODO: change back to a week when things are stable
-        60 * minuteInMilliseconds; // 7 * 24 * 60 * minuteInMilliseconds;
+      : 7 * 24 * 60 * minuteInMilliseconds; // Cache for 7 days, on rebuild we should get a new language version so we can use a reasonably long cache
 
     // Electron `main` window translations should be served with relative path
     const loadPath = `${!!isElectron ? '.' : ''}/locales/{{lng}}/{{ns}}.json`;
@@ -51,6 +51,8 @@ export const IntlProvider: FC<IntlProviderProps> = ({
             {
               /* options for primary backend */
               expirationTime,
+              defaultVersion: 'v0.1',
+              versions: { en: LANG_VERSION },
             },
             {
               /* options for secondary backend */
