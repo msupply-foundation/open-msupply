@@ -11,8 +11,18 @@ import {
   AssetLogStatusInput,
   AssetLogReasonFilterInput,
   InsertAssetCatalogueItemInput,
+  AssetCataloguePropertyFilterInput,
+  InsertAssetCatalogueItemPropertyInput,
 } from '@openmsupply-client/common';
-import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
+import {
+  Sdk,
+  AssetCatalogueItemFragment,
+  AssetPropertyFragment,
+} from './operations.generated';
+
+export type AssetProperty = Omit<AssetPropertyFragment, '__typename'> & {
+  value?: string;
+};
 
 export type ListParams<T> = {
   first: number;
@@ -44,6 +54,33 @@ const itemParsers = {
     categoryId: input.assetCategoryId,
     typeId: input.assetTypeId,
   }),
+  toInsertProperty: (
+    catalogueItemId: string,
+    input: AssetProperty
+  ): InsertAssetCatalogueItemPropertyInput => {
+    const insertProperty: InsertAssetCatalogueItemPropertyInput = {
+      id: input.id ?? '',
+      catalogueItemId,
+      cataloguePropertyId: input.id,
+    };
+
+    switch (input.valueType) {
+      case 'STRING':
+        insertProperty.valueString = input.value;
+        break;
+      case 'INTEGER':
+        insertProperty.valueInt = Number(input.value);
+        break;
+      case 'FLOAT':
+        insertProperty.valueFloat = Number(input.value);
+        break;
+      case 'BOOLEAN':
+        insertProperty.valueBool = input.value === 'true';
+        break;
+    }
+
+    return insertProperty;
+  },
 };
 
 const logReasonParsers = {
@@ -144,6 +181,22 @@ export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
 
       return types;
     },
+    properties: async (
+      filter: AssetCataloguePropertyFilterInput | undefined
+    ) => {
+      const result = await sdk.assetCatalogueProperties({
+        filter,
+      });
+
+      if (
+        result?.assetCatalogueProperties?.__typename ===
+        'AssetCataloguePropertyConnector'
+      ) {
+        return result?.assetCatalogueProperties?.nodes;
+      }
+
+      throw new Error('Unable to fetch properties');
+    },
     logReasons: async (filter: AssetLogReasonFilterInput | undefined) => {
       const result = await sdk.assetLogReasons({
         filter,
@@ -187,6 +240,20 @@ export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
       result.centralServer.assetCatalogue.insertAssetCatalogueItem;
 
     return insertAssetCatalogueItem;
+  },
+  insertProperty: async (
+    catalogueItemId: string,
+    input: AssetProperty,
+    storeId: string
+  ) => {
+    const result = await sdk.insertAssetCatalogueItemProperty({
+      input: itemParsers.toInsertProperty(catalogueItemId, input),
+      storeId,
+    });
+    const insertAssetCatalogueItemProperty =
+      result.centralServer.assetCatalogue.insertAssetCatalogueItemProperty;
+
+    return insertAssetCatalogueItemProperty;
   },
   delete: async (id: string) => {
     const result = await sdk.deleteAssetCatalogueItem({

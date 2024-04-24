@@ -1,5 +1,8 @@
+use std::ops::Range;
+
 use repository::{
-    EqualFilter, PaginationOption, Sensor, SensorFilter, SensorRepository, SensorSort,
+    DatetimeFilter, EqualFilter, NumberFilter, PaginationOption, Sensor, SensorFilter,
+    SensorRepository, SensorSort, TemperatureBreachRow, TemperatureLogFilter,
 };
 
 use crate::{
@@ -36,4 +39,28 @@ pub fn get_sensor(ctx: &ServiceContext, id: String) -> Result<Sensor, SingleReco
     } else {
         Err(SingleRecordError::NotFound(id))
     }
+}
+
+pub fn get_sensor_logs_filter_for_breach(
+    breach: &TemperatureBreachRow,
+) -> Option<TemperatureLogFilter> {
+    let Some(end_datetime) = breach.end_datetime else {
+        log::info!("Breach {:?} has no end time", breach);
+        return None;
+    };
+    // Add datetime range
+    let datetime_filter = DatetimeFilter::date_range(breach.start_datetime, end_datetime);
+
+    // Add temperature threashold filter
+    let temperature_filter = NumberFilter::not_in_range(Range {
+        start: breach.threshold_minimum,
+        end: breach.threshold_maximum,
+    });
+
+    let filter = TemperatureLogFilter::new()
+        .sensor(SensorFilter::new().id(EqualFilter::equal_to(&breach.sensor_id)))
+        .datetime(datetime_filter)
+        .temperature(temperature_filter);
+
+    Some(filter)
 }
