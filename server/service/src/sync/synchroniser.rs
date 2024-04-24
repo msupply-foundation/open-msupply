@@ -41,6 +41,8 @@ pub struct Synchroniser {
 pub(crate) enum SyncError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiError),
+    #[error("V6 Not configured")]
+    V6NotConfigured,
     #[error("Failed to create Sync v6 Url")]
     SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
     #[error("Database error while syncing")]
@@ -64,7 +66,7 @@ pub(crate) enum SyncError {
     #[error("Error while pulling remote records")]
     RemotePullError(#[from] RemotePullError),
     #[error("Error while integrating records")]
-    IntegrationError(anyhow::Error),
+    IntegrationError(RepositoryError),
 }
 
 // For unwrap and expect debug implementation is used
@@ -180,23 +182,21 @@ impl Synchroniser {
 
         // We'll push records to open-mSupply first, then push to Legacy mSupply
 
+        let v6_sync = match CentralServerConfig::get() {
+            CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
+            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::CentralServerUrl(url) => {
+                let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+                Some(v6_sync)
+            }
+        };
+
         // PUSH V6
         logger.start_step(SyncStep::PushCentralV6)?;
-        if let (true, CentralServerConfig::CentralServerUrl(url)) =
-            (is_initialised, CentralServerConfig::get())
-        {
-            let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
-
-            let result = v6_sync
+        if let (true, Some(v6_sync)) = (is_initialised, &v6_sync) {
+            v6_sync
                 .push(&ctx.connection, batch_size.remote_push, logger)
-                .await;
-
-            if let Err(error) = result {
-                // Log but ignore error for now, to allow omSupply to run without omSupply server
-                // TODO : Fix at some point!
-                log::info!("{}", format_error(&error));
-                let _ = logger.error(&error.into());
-            };
+                .await?;
 
             v6_sync
                 .wait_for_sync_operation(
@@ -239,19 +239,13 @@ impl Synchroniser {
         logger.done_step(SyncStep::PullRemote)?;
 
         // PULL V6
-        if let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() {
-            let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
-
+        if let Some(v6_sync) = &v6_sync {
             logger.start_step(SyncStep::PullCentralV6)?;
-            if let Err(error) = v6_sync
+
+            v6_sync
                 .pull(&ctx.connection, 20, is_initialised, logger)
-                .await
-            {
-                // Log but ignore error for now, to allow omSupply to run without omSupply server
-                // TODO : Fix at some point!
-                log::info!("{}", format_error(&error));
-                let _ = logger.error(&error.into());
-            }
+                .await?;
+
             logger.done_step(SyncStep::PullCentralV6)?;
         }
 
@@ -296,11 +290,14 @@ pub fn integrate_and_translate_sync_buffer<'a>(
     execute_in_transaction: bool,
     logger: Option<&mut SyncLogger<'a>>,
     source_site_id: Option<i32>,
-) -> anyhow::Result<(
-    TranslationAndIntegrationResults,
-    TranslationAndIntegrationResults,
-    TranslationAndIntegrationResults,
-)> {
+) -> Result<
+    (
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+        TranslationAndIntegrationResults,
+    ),
+    RepositoryError,
+> {
     // Integration is done inside a transaction, to make sure all records are available at the same time
     // and maintain logical data integrity. During initialisation nested transactions cause significant
     // reduction in speed of this operation, since the system is not available during initialisation we don't need
