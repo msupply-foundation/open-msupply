@@ -108,7 +108,7 @@
   "messages.saved": "Guardado",
   "messages.confirm-not-fully-supplied": "No todos los elementos de esta requisición se han suministrado al cliente. Si finalizas, no podrás suministrar más elementos al cliente desde esta requisición. ¿Aún deseas continuar?",
   "messages.stock-on-hold": "Algunas líneas de stock están en espera y no se pueden asignar.",
-  "messages.stock-expired": "Algunas líneas de stock han caducado y no se pueden asignar.",
+  "messages.stock-expired": "Algunas líneas de stock han caducado y no serán asignadas automáticamente.",
   "messages.deleted-shipments_few": "Se eliminaron {{count}} envíos",
   "messages.confirm-delete-shipments_few": "Esto eliminará permanentemente {{count}} envíos",
   "messages.allocated-lines_few": "{{count}} líneas asignadas",
