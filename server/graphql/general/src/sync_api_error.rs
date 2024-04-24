@@ -29,6 +29,8 @@ pub enum Variant {
     InvalidUrl,
     Unknown,
     ApiVersionIncompatible,
+    CentralV6NotConfigured,
+    IntegrationError,
 }
 
 impl SyncErrorNode {
@@ -120,6 +122,8 @@ impl SyncErrorNode {
             from::ConnectionError => to::ConnectionError,
             from::IntegrationTimeoutReached => to::IntegrationTimeoutReached,
             from::ApiVersionIncompatible => to::ApiVersionIncompatible,
+            from::CentralV6NotConfigured => to::CentralV6NotConfigured,
+            from::IntegrationError => to::IntegrationError,
         };
 
         Self::from_variant(variant, message)
@@ -129,9 +133,9 @@ impl SyncErrorNode {
 #[cfg(test)]
 mod test {
     use super::*;
-    use actix_web::http::StatusCode;
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
     use repository::mock::MockDataInserts;
+    use reqwest::StatusCode;
     use reqwest::{Client, Url};
     use serde_json::json;
     use service::sync::api::ParsedError;

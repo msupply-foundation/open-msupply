@@ -26,14 +26,17 @@ use service::{
     processors::Processors,
     service_provider::ServiceProvider,
     settings::{is_develop, ServerSettings, Settings},
-    sync::synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+    sync::{
+        file_sync_driver::FileSyncDriver,
+        synchroniser_driver::{SiteIsInitialisedCallback, SynchroniserDriver},
+    },
     token_bucket::TokenBucket,
 };
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
-use util::is_central_server;
 
+mod authentication;
 pub mod certs;
 pub mod cold_chain;
 pub mod configuration;
@@ -46,6 +49,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+
 pub mod print;
 mod sync_on_central;
 
@@ -65,11 +69,7 @@ pub async fn start_server(
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
-        "{} server starting in {} mode on port {}",
-        match is_central_server() {
-            true => "Central",
-            false => "Remote",
-        },
+        "{} server starting on port {}",
         match is_develop() {
             true => "Development",
             false => "Production",
@@ -88,14 +88,11 @@ pub async fn start_server(
         .unwrap();
     info!("Run DB migrations...done");
 
-    if is_central_server() {
-        info!("Running as central");
-    }
-
     // INITIALISE CONTEXT
     info!("Initialising server context..");
     let (processors_trigger, processors) = Processors::init();
-    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init();
+    let (file_sync_trigger, file_sync_driver) = FileSyncDriver::init(&settings);
+    let (sync_trigger, synchroniser_driver) = SynchroniserDriver::init(file_sync_trigger.clone()); // Cloning as we want to expose this for stop messages
     let (site_is_initialise_trigger, site_is_initialised_callback) =
         SiteIsInitialisedCallback::init();
 
@@ -287,6 +284,7 @@ pub async fn start_server(
         service_provider.clone().into_inner(),
         force_trigger_sync_on_startup,
     );
+    let file_sync_task = file_sync_driver.run(service_provider.clone().into_inner());
 
     let closure_settings = settings.clone();
     let mut http_server = HttpServer::new(move || {
@@ -335,6 +333,7 @@ pub async fn start_server(
         _ = tokio::signal::ctrl_c() => {},
         Some(_) = off_switch.recv() => {},
         _ = synchroniser_task => unreachable!("Synchroniser unexpectedly stopped"),
+        _ = file_sync_task => unreachable!("File sync unexpectedly stopped"),
         result = processors_task => unreachable!("Processor terminated ({:?})", result)
     };
 

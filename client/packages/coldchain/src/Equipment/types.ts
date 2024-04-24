@@ -1,3 +1,4 @@
+import { PropertyNodeValueType } from '@common/types';
 import { AssetFragment } from './api';
 
 export interface LocationIds {
@@ -5,3 +6,11 @@ export interface LocationIds {
 }
 
 export type DraftAsset = AssetFragment & LocationIds & { files?: File[] };
+
+export type PropertyValue = {
+  valueString?: string | null;
+  valueFloat?: number | null;
+  valueBool?: boolean | null;
+  valueInt?: number | null;
+  valueType: PropertyNodeValueType;
+};

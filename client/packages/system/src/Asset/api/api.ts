@@ -7,9 +7,22 @@ import {
   AssetTypeSortFieldInput,
   AssetCategoryFilterInput,
   AssetTypeFilterInput,
+  InsertAssetLogReasonInput,
+  AssetLogStatusInput,
+  AssetLogReasonFilterInput,
   InsertAssetCatalogueItemInput,
+  AssetCataloguePropertyFilterInput,
+  InsertAssetCatalogueItemPropertyInput,
 } from '@openmsupply-client/common';
-import { Sdk, AssetCatalogueItemFragment } from './operations.generated';
+import {
+  Sdk,
+  AssetCatalogueItemFragment,
+  AssetPropertyFragment,
+} from './operations.generated';
+
+export type AssetProperty = Omit<AssetPropertyFragment, '__typename'> & {
+  value?: string;
+};
 
 export type ListParams<T> = {
   first: number;
@@ -41,9 +54,64 @@ const itemParsers = {
     categoryId: input.assetCategoryId,
     typeId: input.assetTypeId,
   }),
+  toInsertProperty: (
+    catalogueItemId: string,
+    input: AssetProperty
+  ): InsertAssetCatalogueItemPropertyInput => {
+    const insertProperty: InsertAssetCatalogueItemPropertyInput = {
+      id: input.id ?? '',
+      catalogueItemId,
+      cataloguePropertyId: input.id,
+    };
+
+    switch (input.valueType) {
+      case 'STRING':
+        insertProperty.valueString = input.value;
+        break;
+      case 'INTEGER':
+        insertProperty.valueInt = Number(input.value);
+        break;
+      case 'FLOAT':
+        insertProperty.valueFloat = Number(input.value);
+        break;
+      case 'BOOLEAN':
+        insertProperty.valueBool = input.value === 'true';
+        break;
+    }
+
+    return insertProperty;
+  },
 };
 
-export const getAssetQueries = (sdk: Sdk) => ({
+const logReasonParsers = {
+  toLogReasonInsert: (
+    input: Partial<InsertAssetLogReasonInput>
+  ): InsertAssetLogReasonInput => ({
+    id: input.id ?? '',
+    // default enum of NotInUse will never be used as it will fail the checkStatus check first
+    // and throw an error.
+    assetLogStatus: input.assetLogStatus ?? AssetLogStatusInput.NotInUse,
+    reason: input.reason ?? '',
+  }),
+  checkStatus: (status: string): boolean => {
+    switch (status) {
+      case AssetLogStatusInput.Decommissioned:
+        return true;
+      case AssetLogStatusInput.Functioning:
+        return true;
+      case AssetLogStatusInput.FunctioningButNeedsAttention:
+        return true;
+      case AssetLogStatusInput.NotFunctioning:
+        return true;
+      case AssetLogStatusInput.NotInUse:
+        return true;
+      default:
+        return false;
+    }
+  },
+};
+
+export const getAssetQueries = (sdk: Sdk, currentStoreId: string) => ({
   get: {
     byId: async (assetCatalogueItemId: string) => {
       const result = await sdk.assetCatalogueItemById({
@@ -113,6 +181,55 @@ export const getAssetQueries = (sdk: Sdk) => ({
 
       return types;
     },
+    properties: async (
+      filter: AssetCataloguePropertyFilterInput | undefined
+    ) => {
+      const result = await sdk.assetCatalogueProperties({
+        filter,
+      });
+
+      if (
+        result?.assetCatalogueProperties?.__typename ===
+        'AssetCataloguePropertyConnector'
+      ) {
+        return result?.assetCatalogueProperties?.nodes;
+      }
+
+      throw new Error('Unable to fetch properties');
+    },
+    logReasons: async (filter: AssetLogReasonFilterInput | undefined) => {
+      const result = await sdk.assetLogReasons({
+        filter,
+        storeId: currentStoreId,
+      });
+      return result?.assetLogReasons;
+    },
+  },
+  insertLogReason: async (input: InsertAssetLogReasonInput) => {
+    if (!logReasonParsers.checkStatus(input.assetLogStatus ?? '')) {
+      throw new Error('Cannot parse status');
+    }
+    const result = await sdk.insertAssetLogReason({
+      input: logReasonParsers.toLogReasonInsert(input),
+    });
+    if (
+      result.centralServer.logReason.insertAssetLogReason.__typename ===
+      'AssetLogReasonNode'
+    ) {
+      return result.centralServer.logReason.insertAssetLogReason;
+    }
+
+    throw new Error('Could not insert reason');
+  },
+  deleteLogReason: async (reasonId: string) => {
+    const result = await sdk.deleteLogReason({ reasonId });
+    if (
+      result.centralServer.logReason.deleteLogReason.__typename ===
+      'DeleteResponse'
+    ) {
+      return result.centralServer.logReason;
+    }
+    throw new Error('Could not delete reason');
   },
   insert: async (input: AssetCatalogueItemFragment, storeId: string) => {
     const result = await sdk.insertAssetCatalogueItem({
@@ -123,6 +240,20 @@ export const getAssetQueries = (sdk: Sdk) => ({
       result.centralServer.assetCatalogue.insertAssetCatalogueItem;
 
     return insertAssetCatalogueItem;
+  },
+  insertProperty: async (
+    catalogueItemId: string,
+    input: AssetProperty,
+    storeId: string
+  ) => {
+    const result = await sdk.insertAssetCatalogueItemProperty({
+      input: itemParsers.toInsertProperty(catalogueItemId, input),
+      storeId,
+    });
+    const insertAssetCatalogueItemProperty =
+      result.centralServer.assetCatalogue.insertAssetCatalogueItemProperty;
+
+    return insertAssetCatalogueItemProperty;
   },
   delete: async (id: string) => {
     const result = await sdk.deleteAssetCatalogueItem({

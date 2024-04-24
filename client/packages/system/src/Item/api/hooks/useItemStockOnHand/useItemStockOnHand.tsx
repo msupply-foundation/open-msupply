@@ -3,7 +3,7 @@ import { useItemApi } from '../useItemApi';
 
 type UseItemStockOnHandParams = {
   pagination: { first: number; offset: number };
-  filter: { name: { like: string } };
+  filter: { [key: string]: { like: string } };
   preload?: boolean;
 };
 

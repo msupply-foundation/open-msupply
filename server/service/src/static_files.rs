@@ -1,10 +1,15 @@
+use actix_multipart::form::tempfile::TempFile;
+use anyhow::Context;
+use repository::sync_file_reference_row::SyncFileReferenceRow;
+use reqwest::Response;
 use std::io::Error;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::time::{Duration, SystemTime};
-
+use tokio::fs::File;
 use util::uuid::uuid;
-
+use util::{move_file, sanitize_filename};
 #[derive(Debug, PartialEq)]
 pub struct StaticFile {
     pub id: String,
@@ -14,6 +19,7 @@ pub struct StaticFile {
 
 const STATIC_FILE_DIR: &str = "static_files";
 
+#[derive(Clone)]
 pub enum StaticFileCategory {
     Temporary,
     SyncFile(String, String), // Files to be synced (Table Name, Record Id)
@@ -30,11 +36,19 @@ impl StaticFileCategory {
     }
 }
 
+impl StaticFile {
+    pub fn to_path_buf(&self) -> PathBuf {
+        PathBuf::from(&self.path)
+    }
+}
+
 /// Stores files in a temp storage and associate an id with each file.
 /// This can, for example, be used to deposition a file for a user and the user can pick up the file
 /// by id within a certain time frame.
 ///
 /// Old files are deleted automatically.
+
+#[derive(Debug, Clone)]
 pub struct StaticFileService {
     pub dir: PathBuf,
     /// Time [s] for how long static files are kept before they are discarded
@@ -50,6 +64,25 @@ impl StaticFileService {
             dir: file_dir,
             max_lifetime_millis: 60 * 60 * 1000, // 1 hours
         })
+    }
+
+    // Temp file in this case refers to system 'TempFile' not our own definition of Temporary file
+    // at the time of method creation TempFile only comes from web multipart
+    pub fn move_temp_file(
+        &self,
+        temp_file: TempFile,
+        category: &StaticFileCategory,
+        file_id: Option<String>,
+    ) -> anyhow::Result<StaticFile> {
+        let file_name = temp_file.file_name.context("Filename not provided")?;
+        let sanitized_filename = sanitize_filename(file_name);
+
+        let static_file = self.reserve_file(&sanitized_filename, &category, file_id)?;
+        let destination = Path::new(&static_file.path);
+        // Is this blocking ? If it is it a problem ?
+        move_file(temp_file.file.path(), destination).context("Problem moving file")?;
+
+        Ok(static_file)
     }
 
     /// Checks filepath and creates uuid for a file without creating the file itself
@@ -72,8 +105,12 @@ impl StaticFileService {
         &self,
         file_name: &str,
         category: &StaticFileCategory,
+        file_id: Option<String>,
     ) -> anyhow::Result<StaticFile> {
-        let id = uuid();
+        let id = match file_id {
+            Some(file_id) => file_id,
+            None => uuid(),
+        };
 
         let dir = self.dir.join(category.to_path_buf());
 
@@ -114,6 +151,7 @@ impl StaticFileService {
     ) -> anyhow::Result<Option<StaticFile>> {
         let dir = self.dir.join(category.to_path_buf());
         std::fs::create_dir_all(&dir)?;
+
         // clean up the static file directory
         match category {
             StaticFileCategory::Temporary => {
@@ -134,6 +172,34 @@ impl StaticFileService {
             name: original_file_name,
             path: file_path.to_string_lossy().to_string(),
         }))
+    }
+
+    pub async fn download_file_in_chunks(
+        &self,
+        sync_file: &SyncFileReferenceRow,
+        mut download_response: Response,
+    ) -> anyhow::Result<StaticFile> {
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
+
+        let file =
+            self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
+        let mut file_handle = File::create(&file.path).await?;
+
+        loop {
+            log::info!("Downloading chunk");
+            let Some(bytes) = download_response.chunk().await? else {
+                break;
+            };
+
+            tokio::io::copy(&mut bytes.deref(), &mut file_handle).await?;
+        }
+
+        Ok(StaticFile {
+            id: sync_file.id.clone(),
+            name: sync_file.file_name.clone(),
+            path: file.path.to_string(),
+        })
     }
 }
 

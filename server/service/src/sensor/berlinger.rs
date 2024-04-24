@@ -1,3 +1,4 @@
+use super::update::update_sensor_logs_for_breach;
 use anyhow::Context;
 use chrono::{Local, LocalResult, NaiveDateTime, TimeZone};
 use repository::{DatetimeFilter, EqualFilter};
@@ -16,7 +17,7 @@ use util::uuid::uuid;
 
 use temperature_sensor::*;
 
-pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachRowType {
+fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachRowType {
     match breach_type {
         BreachType::ColdConsecutive => TemperatureBreachRowType::ColdConsecutive,
         BreachType::ColdCumulative => TemperatureBreachRowType::ColdCumulative,
@@ -25,7 +26,7 @@ pub fn get_breach_row_type(breach_type: &BreachType) -> TemperatureBreachRowType
     }
 }
 
-pub fn get_matching_sensor_serial(
+fn get_matching_sensor_serial(
     connection: &StorageConnection,
     serial: &str,
 ) -> Result<Vec<Sensor>, RepositoryError> {
@@ -33,7 +34,7 @@ pub fn get_matching_sensor_serial(
         .query_by_filter(SensorFilter::new().serial(EqualFilter::equal_to(&serial)))
 }
 
-pub fn get_matching_sensor_log(
+fn get_matching_sensor_log(
     connection: &StorageConnection,
     sensor_id: &str,
     datetime: NaiveDateTime,
@@ -45,60 +46,42 @@ pub fn get_matching_sensor_log(
     TemperatureLogRepository::new(connection).query_by_filter(filter)
 }
 
-pub fn get_matching_sensor_breach_config(
+fn get_matching_sensor_breach_config(
     connection: &StorageConnection,
-    description: &str,
+    store_id: &str,
+    temperature_breach_config: &temperature_sensor::TemperatureBreachConfig,
     breach_type: &TemperatureBreachRowType,
 ) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
     let filter = TemperatureBreachConfigFilter::new()
-        .description(EqualFilter::equal_to(description))
-        .r#type(EqualFilter::equal_to_breach_type(&breach_type));
+        .store_id(EqualFilter::equal_to(store_id))
+        .duration_milliseconds(EqualFilter::equal_to_i32(
+            temperature_breach_config.duration.num_seconds() as i32,
+        ))
+        .minimum_temperature(EqualFilter::equal_to_f64(
+            temperature_breach_config.minimum_temperature,
+        ))
+        .maximum_temperature(EqualFilter::equal_to_f64(
+            temperature_breach_config.maximum_temperature,
+        ))
+        .r#type(breach_type.equal_to());
 
     TemperatureBreachConfigRepository::new(connection).query_by_filter(filter)
 }
 
-pub fn get_matching_sensor_breach(
+fn get_matching_sensor_breach(
     connection: &StorageConnection,
     sensor_id: &str,
     start_datetime: NaiveDateTime,
-    _end_datetime: NaiveDateTime,
     breach_type: &TemperatureBreachRowType,
-) -> Result<Vec<TemperatureBreach>, RepositoryError> {
+) -> Result<Option<TemperatureBreach>, RepositoryError> {
     let filter = TemperatureBreachFilter::new()
         .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-        .r#type(EqualFilter::equal_to_breach_type(&breach_type))
+        .r#type(breach_type.equal_to())
         .start_datetime(DatetimeFilter::equal_to(start_datetime));
 
-    TemperatureBreachRepository::new(connection).query_by_filter(filter)
-}
-
-pub fn get_logs_for_sensor(
-    connection: &StorageConnection,
-    sensor_id: &str,
-) -> Result<Vec<TemperatureLog>, RepositoryError> {
-    TemperatureLogRepository::new(connection).query_by_filter(
-        TemperatureLogFilter::new()
-            .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id))),
-    )
-}
-
-pub fn get_breaches_for_sensor(
-    connection: &StorageConnection,
-    sensor_id: &str,
-) -> Result<Vec<TemperatureBreach>, RepositoryError> {
-    TemperatureBreachRepository::new(connection).query_by_filter(
-        TemperatureBreachFilter::new()
-            .sensor(SensorFilter::new().id(EqualFilter::equal_to(sensor_id)))
-            .unacknowledged(true),
-    )
-}
-
-pub fn get_breach_configs_for_sensor(
-    connection: &StorageConnection,
-    _sensor_id: &str,
-) -> Result<Vec<TemperatureBreachConfig>, RepositoryError> {
-    TemperatureBreachConfigRepository::new(connection)
-        .query_by_filter(TemperatureBreachConfigFilter::new().is_active(true))
+    Ok(TemperatureBreachRepository::new(connection)
+        .query_by_filter(filter)?
+        .pop())
 }
 
 fn sensor_add_log_if_new(
@@ -131,44 +114,53 @@ fn sensor_add_breach_if_new(
     sensor_row: &SensorRow,
     temperature_breach: &temperature_sensor::TemperatureBreach,
     breach_config: &temperature_sensor::TemperatureBreachConfig,
-) -> Result<(), RepositoryError> {
+) -> Result<Option<TemperatureBreachRow>, RepositoryError> {
     let breach_row_type = get_breach_row_type(&temperature_breach.breach_type);
-    let result = get_matching_sensor_breach(
+    let temperature_breach_option = get_matching_sensor_breach(
         connection,
         &sensor_row.id,
         temperature_breach.start_timestamp,
-        temperature_breach.end_timestamp,
         &breach_row_type,
     )?;
 
-    if let Some(mut record) = result.clone().pop() {
-        if record.temperature_breach_row.end_datetime != Some(temperature_breach.end_timestamp) {
-            // Update breach end time if it has changed
-            record.temperature_breach_row.end_datetime = Some(temperature_breach.end_timestamp);
-            TemperatureBreachRowRepository::new(connection)
-                .upsert_one(&record.temperature_breach_row)?;
+    let temperature_breach_upsert = match temperature_breach_option {
+        Some(existing_breach) => {
+            let existing_breach_row = existing_breach.temperature_breach_row;
+            if existing_breach_row.end_datetime == Some(temperature_breach.end_timestamp) {
+                return Ok(None);
+            }
+            let breach = TemperatureBreachRow {
+                end_datetime: Some(temperature_breach.end_timestamp),
+                duration_milliseconds: temperature_breach.duration.num_milliseconds() as i32,
+                ..existing_breach_row
+            };
+            log::info!("Updating breach {:?} ", breach);
+            breach
         }
-        Ok(())
-    } else {
-        let new_temperature_breach = TemperatureBreachRow {
-            id: uuid(),
-            store_id: sensor_row.store_id.clone(),
-            sensor_id: sensor_row.id.clone(),
-            location_id: sensor_row.location_id.clone(),
-            start_datetime: temperature_breach.start_timestamp,
-            end_datetime: Some(temperature_breach.end_timestamp),
-            unacknowledged: true,
-            duration_milliseconds: temperature_breach.duration.num_seconds() as i32,
-            r#type: breach_row_type,
-            threshold_duration_milliseconds: breach_config.duration.num_seconds() as i32,
-            threshold_minimum: breach_config.minimum_temperature,
-            threshold_maximum: breach_config.maximum_temperature,
+        None => {
+            let breach = TemperatureBreachRow {
+                id: uuid(),
+                store_id: sensor_row.store_id.clone(),
+                sensor_id: sensor_row.id.clone(),
+                location_id: sensor_row.location_id.clone(),
+                start_datetime: temperature_breach.start_timestamp,
+                end_datetime: Some(temperature_breach.end_timestamp),
+                unacknowledged: true,
+                duration_milliseconds: temperature_breach.duration.num_milliseconds() as i32,
+                r#type: breach_row_type,
+                threshold_duration_milliseconds: breach_config.duration.num_milliseconds() as i32,
+                threshold_minimum: breach_config.minimum_temperature,
+                threshold_maximum: breach_config.maximum_temperature,
             comment: None,
-        };
-        TemperatureBreachRowRepository::new(connection).upsert_one(&new_temperature_breach)?;
-        log::info!("Added sensor breach {:?} ", new_temperature_breach);
-        Ok(())
-    }
+            };
+            log::info!("Added breach {:?} ", breach);
+            breach
+        }
+    };
+
+    TemperatureBreachRowRepository::new(connection).upsert_one(&temperature_breach_upsert)?;
+
+    Ok(Some(temperature_breach_upsert))
 }
 
 fn sensor_add_breach_config_if_new(
@@ -176,41 +168,45 @@ fn sensor_add_breach_config_if_new(
     sensor_row: &SensorRow,
     temperature_breach_config: &temperature_sensor::TemperatureBreachConfig,
 ) -> Result<(), RepositoryError> {
-    let mut config_description = format!(
+    let config_description = format!(
         "for {} minutes",
         temperature_breach_config.duration.num_minutes()
     );
     let breach_row_type = get_breach_row_type(&temperature_breach_config.breach_type);
 
-    match temperature_breach_config.breach_type {
+    let config_description = match temperature_breach_config.breach_type {
         BreachType::ColdConsecutive => {
-            config_description = format!(
-                "Consecutive {} colder than {}",
-                config_description, temperature_breach_config.minimum_temperature
+            format!(
+                "Consecutive {config_description} colder than {}",
+                temperature_breach_config.minimum_temperature
             )
         }
         BreachType::ColdCumulative => {
-            config_description = format!(
-                "Cumulative {} colder than {}",
-                config_description, temperature_breach_config.minimum_temperature
+            format!(
+                "Cumulative {config_description} colder than {}",
+                temperature_breach_config.minimum_temperature
             )
         }
         BreachType::HotConsecutive => {
-            config_description = format!(
-                "Consecutive {} hotter than {}",
-                config_description, temperature_breach_config.maximum_temperature
+            format!(
+                "Consecutive {config_description} hotter than {}",
+                temperature_breach_config.maximum_temperature
             )
         }
         BreachType::HotCumulative => {
-            config_description = format!(
-                "Cumulative {} hotter than {}",
-                config_description, temperature_breach_config.maximum_temperature
+            format!(
+                "Cumulative {config_description} hotter than {}",
+                temperature_breach_config.maximum_temperature
             )
         }
-    }
+    };
 
-    let result =
-        get_matching_sensor_breach_config(connection, &config_description, &breach_row_type)?;
+    let result = get_matching_sensor_breach_config(
+        connection,
+        &sensor_row.store_id,
+        &temperature_breach_config,
+        &breach_row_type,
+    )?;
 
     if !result.is_empty() {
         return Ok(());
@@ -221,11 +217,12 @@ fn sensor_add_breach_config_if_new(
         store_id: sensor_row.store_id.clone(),
         is_active: true,
         description: config_description.clone(),
-        duration_milliseconds: temperature_breach_config.duration.num_seconds() as i32,
+        duration_milliseconds: temperature_breach_config.duration.num_milliseconds() as i32,
         r#type: breach_row_type,
         minimum_temperature: temperature_breach_config.minimum_temperature,
         maximum_temperature: temperature_breach_config.maximum_temperature,
     };
+
     TemperatureBreachConfigRowRepository::new(connection)
         .upsert_one(&new_temperature_breach_config)?;
     log::info!(
@@ -386,68 +383,485 @@ pub fn read_sensor(
 
     let temperature_sensor_unmapped =
         temperature_sensor::read_sensor_file(&filename).map_err(ReadSensorError::StringError)?;
-    let mut temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
+    let temperature_sensor = convert_from_localtime(&temperature_sensor_unmapped)?;
 
+    Ok(integrate_sensor_data(
+        connection,
+        store_id,
+        temperature_sensor,
+    )?)
+}
+
+fn integrate_sensor_data(
+    connection: &StorageConnection,
+    store_id: &str,
+    temperature_sensor: temperature_sensor::Sensor,
+) -> anyhow::Result<ReadSensor, ReadSensorError> {
     let new_sensor_id = sensor_add_if_new(connection, &store_id, &temperature_sensor)?;
 
     let result = get_matching_sensor_serial(connection, &temperature_sensor.serial)?;
 
-    let record = result
+    let sensor_row = result
         .clone()
         .pop()
-        .context("Sensor could not be inserted or found in database")?;
+        .context("Sensor could not be inserted or found in database")?
+        .sensor_row;
 
     // Filter sensor data by previous last connected time
-    let last_connected = record.sensor_row.last_connection_datetime;
-    temperature_sensor =
+    let last_connected = sensor_row.last_connection_datetime;
+    let temperature_sensor =
         temperature_sensor::filter_sensor(temperature_sensor, last_connected, None);
 
     let temperature_sensor_configs = temperature_sensor.configs.unwrap_or_default();
     for temperature_sensor_config in temperature_sensor_configs.iter() {
-        sensor_add_breach_config_if_new(
-            connection,
-            &record.sensor_row,
-            &temperature_sensor_config,
-        )?;
+        sensor_add_breach_config_if_new(connection, &sensor_row, &temperature_sensor_config)?;
     }
 
     let temperature_sensor_breaches = temperature_sensor.breaches.unwrap_or_default();
     let temperature_sensor_logs = temperature_sensor.logs.unwrap_or_default();
 
     let result = ReadSensor {
+        new_sensor_id,
         number_of_logs: temperature_sensor_logs.len() as u32,
         number_of_breaches: temperature_sensor_breaches.len() as u32,
-        new_sensor_id,
     };
 
-    for temperature_sensor_breach in temperature_sensor_breaches {
+    for temperature_sensor_log in temperature_sensor_logs {
+        sensor_add_log_if_new(connection, &sensor_row, &temperature_sensor_log)?;
+    }
+
+    // Add consecutive then cumulative breaches, order is important because breach and log association
+    // is priorities for consecutive breach i.e. if log is in both cumulative and consecutive breach
+    // the breach id would be from consecutive
+    for temperature_sensor_breach in sort_breaches_by_type(temperature_sensor_breaches) {
         // Look up matching config from the USB data and snapshot it as part of the breach
         if let Some(temperature_sensor_config) = temperature_sensor_configs
             .iter()
             .find(|&t| t.breach_type == temperature_sensor_breach.breach_type)
         {
-            sensor_add_breach_if_new(
+            let upserted_breach = sensor_add_breach_if_new(
                 connection,
-                &record.sensor_row,
+                &sensor_row,
                 &temperature_sensor_breach,
                 &temperature_sensor_config,
             )?;
+
+            if let Some(upserted_breach) = upserted_breach {
+                update_sensor_logs_for_breach(connection, &upserted_breach)?;
+            }
         }
     }
 
-    for temperature_sensor_log in temperature_sensor_logs {
-        sensor_add_log_if_new(connection, &record.sensor_row, &temperature_sensor_log)?;
-    }
-
     // Finally, update sensor's last connected time if it has changed
-    if record.sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
+    if sensor_row.last_connection_datetime != temperature_sensor.last_connected_timestamp {
         SensorRowRepository::new(connection).upsert_one(&SensorRow {
             last_connection_datetime: temperature_sensor.last_connected_timestamp,
-            ..record.sensor_row
+            ..sensor_row
         })?;
     }
 
     Ok(result)
 }
 
-// TODO tests
+// First of all consecutive and then cumulative
+fn breach_sort_weight(breach: &TemperatureBreachRowType) -> u8 {
+    use TemperatureBreachRowType::*;
+    match breach {
+        ColdConsecutive => 1,
+        HotConsecutive => 2,
+        ColdCumulative => 3,
+        HotCumulative => 4,
+        Excursion => 5,
+    }
+}
+
+fn sort_breaches_by_type(
+    mut breaches: Vec<temperature_sensor::TemperatureBreach>,
+) -> Vec<temperature_sensor::TemperatureBreach> {
+    breaches.sort_by(|a, b| {
+        breach_sort_weight(&get_breach_row_type(&a.breach_type))
+            .cmp(&breach_sort_weight(&get_breach_row_type(&b.breach_type)))
+    });
+
+    breaches
+}
+
+#[cfg(test)]
+mod test {
+
+    use super::integrate_sensor_data;
+    use crate::{
+        sensor::berlinger::breach_sort_weight,
+        test_helpers::{setup_all_and_service_provider, ServiceTestContext},
+    };
+    use chrono::{Duration, NaiveDate, NaiveDateTime};
+    use repository::{
+        mock::{mock_store_a, MockDataInserts},
+        Pagination, Sort, TemperatureBreachFilter, TemperatureBreachRepository,
+        TemperatureBreachRow, TemperatureBreachRowType, TemperatureLogRepository,
+        TemperatureLogSortField,
+    };
+    use temperature_sensor as ts;
+
+    #[actix_rt::test]
+    async fn data_from_fridge_tag() {
+        // util::init_logger(util::LogLevel::Warn);
+
+        let ServiceTestContext { connection, .. } = setup_all_and_service_provider(
+            "data_from_fridge_tag",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let base_date = NaiveDate::from_ymd_opt(2024, 01, 01).unwrap();
+        // This data is mapped to temperature log row insert and then to expected results
+        // of temperature logs with associated breaches
+
+        // MOCK DATA
+        let log_data = vec![
+            ((09, 01, 01), 3.0, "normal"),
+            ((09, 15, 01), 9.0, "not captured by breach"),
+            ((09, 30, 01), 3.0, "normal"),
+            ((09, 45, 01), 3.0, "normal"),
+            ((10, 01, 01), 3.0, "normal"),
+            ((10, 15, 01), 10.0, "hotcumulative"),
+            ((10, 30, 01), 8.1, "hotcumulative"),
+            ((10, 45, 01), 3.0, "normal"),
+            ((11, 01, 02), 8.5, "hotconsecutive"),
+            ((11, 15, 01), 8.6, "hotconsecutive"),
+            ((11, 30, 01), 8.2, "hotconsecutive"),
+            ((11, 45, 01), 8.9, "hotconsecutive"),
+            ((12, 01, 01), 8.1, "hotconsecutive"),
+            ((12, 15, 01), 8.9, "hotconsecutive"),
+            ((12, 30, 01), 10.0, "hotcumulative"),
+            ((12, 45, 01), 11.0, "hotcumulative"),
+            ((13, 01, 01), 9.0, "hotcumulative"),
+            ((13, 15, 01), 8.6, "hotcumulative"),
+            // s2 = step two
+            ((13, 30, 01), 10.1, "s2-hotcumulative"),
+            ((13, 45, 01), -1.0, "s2-coldcumulative"),
+            ((14, 01, 01), 9.0, "s2-hotcumulative"),
+        ];
+
+        let s2_log_data = vec![
+            ((14, 15, 01), 7.0, "normal"),
+            ((14, 30, 01), 9.0, "s2-hotcumulative"),
+            ((14, 45, 01), 1.5, "s2-coldcumulative"),
+            ((15, 01, 01), 1.1, "s2-coldconsecutive"),
+            ((15, 15, 01), 0.5, "s2-coldconsecutive"),
+            ((15, 30, 01), -3.0, "s2-coldconsecutive"),
+            ((15, 45, 01), 0.0, "s2-coldcumulative"),
+            ((16, 01, 01), -2.5, "s2-coldcumulative"),
+            ((16, 15, 01), 3.0, "normal"),
+        ];
+
+        let breach_data = vec![
+            (
+                ts::BreachType::HotCumulative,
+                base_date.and_hms_opt(10, 01, 01).unwrap(), // Start
+                base_date.and_hms_opt(13, 20, 01).unwrap(), // Finish
+            ),
+            (
+                ts::BreachType::HotConsecutive,
+                base_date.and_hms_opt(11, 01, 01).unwrap(), // Start
+                base_date.and_hms_opt(12, 20, 01).unwrap(), // Finish
+            ),
+        ];
+
+        let s2_breach_data = vec![
+            (
+                ts::BreachType::HotCumulative,
+                base_date.and_hms_opt(10, 01, 01).unwrap(), // Start
+                base_date.and_hms_opt(14, 30, 01).unwrap(), // Finish - Updated
+            ),
+            // Added
+            (
+                ts::BreachType::ColdConsecutive,
+                base_date.and_hms_opt(15, 01, 01).unwrap(), // Start
+                base_date.and_hms_opt(15, 30, 01).unwrap(), // Finish
+            ),
+            (
+                ts::BreachType::ColdCumulative,
+                base_date.and_hms_opt(13, 45, 01).unwrap(), // Start
+                base_date.and_hms_opt(16, 01, 01).unwrap(), // Finish
+            ),
+            // Previous
+            (
+                ts::BreachType::HotConsecutive,
+                base_date.and_hms_opt(11, 01, 01).unwrap(), // Start
+                base_date.and_hms_opt(12, 20, 01).unwrap(), // Finish
+            ),
+        ];
+
+        let configs = Some(vec![
+            ts::TemperatureBreachConfig {
+                breach_type: ts::BreachType::HotCumulative,
+                maximum_temperature: 8.0,
+                minimum_temperature: -273.0,
+                duration: Duration::minutes(60),
+            },
+            ts::TemperatureBreachConfig {
+                breach_type: ts::BreachType::HotConsecutive,
+                maximum_temperature: 8.0,
+                minimum_temperature: -273.0,
+                duration: Duration::minutes(5),
+            },
+            ts::TemperatureBreachConfig {
+                breach_type: ts::BreachType::ColdConsecutive,
+                maximum_temperature: 100.0,
+                minimum_temperature: 2.0,
+                duration: Duration::minutes(5),
+            },
+            ts::TemperatureBreachConfig {
+                breach_type: ts::BreachType::ColdCumulative,
+                maximum_temperature: 100.0,
+                minimum_temperature: 2.0,
+                duration: Duration::minutes(60),
+            },
+        ]);
+
+        // STEP 1
+        let data = ts::Sensor {
+            sensor_type: ts::SensorType::Berlinger,
+            breaches: Some(
+                breach_data
+                    .into_iter()
+                    .map(
+                        |(breach_type, start_timestamp, end_timestamp)| ts::TemperatureBreach {
+                            duration: end_timestamp - start_timestamp,
+                            breach_type,
+                            start_timestamp,
+                            end_timestamp,
+                            acknowledged: true,
+                        },
+                    )
+                    .collect(),
+            ),
+            configs,
+            logs: Some(
+                log_data
+                    .iter()
+                    .map(|((h, mi, s), t, _)| ts::TemperatureLog {
+                        temperature: *t,
+                        timestamp: base_date.and_hms_opt(*h, *mi, *s).unwrap(),
+                    })
+                    .collect(),
+            ),
+            // Required, but not used fields
+            serial: "sensor1_serial".to_string(),
+            name: "sensor1_name".to_string(),
+            last_connected_timestamp: None,
+            log_interval: None,
+        };
+
+        // INTERGRATE MOCK DATA
+        integrate_sensor_data(&connection, &mock_store_a().id, data.clone()).unwrap();
+
+        // CHECK BREACHES
+        let mut breaches = TemperatureBreachRepository::new(&connection)
+            .query_by_filter(TemperatureBreachFilter::new())
+            .unwrap();
+
+        // Sort them
+        breaches.sort_by(|a, b| {
+            breach_sort_weight(&a.temperature_breach_row.r#type)
+                .cmp(&breach_sort_weight(&b.temperature_breach_row.r#type))
+        });
+
+        assert_eq!(breaches.len(), 2);
+        let s1_breaches = breaches
+            .into_iter()
+            .map(|b| b.temperature_breach_row)
+            .collect::<Vec<TemperatureBreachRow>>();
+
+        assert_eq!(
+            s1_breaches,
+            vec![
+                TemperatureBreachRow {
+                    duration_milliseconds: ((1 * 60) + 19) * 60 * 1000,
+                    r#type: TemperatureBreachRowType::HotConsecutive,
+                    threshold_minimum: -273.0,
+                    threshold_maximum: 8.0,
+                    threshold_duration_milliseconds: 5 * 60 * 1000,
+                    start_datetime: base_date.and_hms_opt(11, 01, 01).unwrap(),
+                    end_datetime: base_date.and_hms_opt(12, 20, 01),
+                    ..s1_breaches[0].clone()
+                },
+                TemperatureBreachRow {
+                    duration_milliseconds: ((3 * 60) + 19) * 60 * 1000,
+                    r#type: TemperatureBreachRowType::HotCumulative,
+                    threshold_minimum: -273.0,
+                    threshold_maximum: 8.0,
+                    threshold_duration_milliseconds: 60 * 60 * 1000,
+                    start_datetime: base_date.and_hms_opt(10, 01, 01).unwrap(),
+                    end_datetime: base_date.and_hms_opt(13, 20, 01),
+                    ..s1_breaches[1].clone()
+                }
+            ]
+        );
+
+        // CHECK LOGS
+        type VecShape = Vec<(Option<NaiveDateTime>, f64, Option<String>)>;
+        let logs = TemperatureLogRepository::new(&connection)
+            .query(
+                Pagination::all(),
+                None,
+                Some(Sort {
+                    key: TemperatureLogSortField::Datetime,
+                    desc: Some(false),
+                }),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|l| {
+                // Map to (datetime, temperature, breach_id)
+                (
+                    Some(l.temperature_log_row.datetime),
+                    l.temperature_log_row.temperature,
+                    l.temperature_log_row.temperature_breach_id,
+                )
+            })
+            .collect::<VecShape>();
+
+        assert_eq!(
+            logs,
+            // Map to (datetime, temperature, breach_id)
+            log_data
+                .iter()
+                .map(|((h, mi, s), t, desc)| (
+                    base_date.and_hms_opt(*h, *mi, *s),
+                    *t,
+                    match *desc {
+                        "hotconsecutive" => Some(s1_breaches[0].id.clone()),
+                        "hotcumulative" => Some(s1_breaches[1].id.clone()),
+                        _ => None,
+                    }
+                ))
+                .collect::<VecShape>(),
+        );
+
+        // STEP 2
+        // Use s2 data and add cold configs
+        let s2_data = temperature_sensor::Sensor {
+            breaches: Some(
+                s2_breach_data
+                    .into_iter()
+                    .map(
+                        |(breach_type, start_timestamp, end_timestamp)| ts::TemperatureBreach {
+                            duration: end_timestamp - start_timestamp,
+                            breach_type,
+                            start_timestamp,
+                            end_timestamp,
+                            acknowledged: true,
+                        },
+                    )
+                    .collect(),
+            ),
+            logs: Some(
+                s2_log_data
+                    .iter()
+                    .map(|((h, mi, s), t, _)| ts::TemperatureLog {
+                        temperature: *t,
+                        timestamp: base_date.and_hms_opt(*h, *mi, *s).unwrap(),
+                    })
+                    .collect(),
+            ),
+            ..data.clone()
+        };
+
+        // INTERGRATE MOCK DATA
+        integrate_sensor_data(&connection, &mock_store_a().id, s2_data).unwrap();
+
+        // CHECK BREACHES
+        let mut breaches = TemperatureBreachRepository::new(&connection)
+            .query_by_filter(TemperatureBreachFilter::new())
+            .unwrap();
+
+        // Sort them
+        breaches.sort_by(|a, b| {
+            breach_sort_weight(&a.temperature_breach_row.r#type)
+                .cmp(&breach_sort_weight(&b.temperature_breach_row.r#type))
+        });
+
+        assert_eq!(breaches.len(), 4); // Now 4
+        let s2_breaches = breaches
+            .into_iter()
+            .map(|b| b.temperature_breach_row)
+            .collect::<Vec<TemperatureBreachRow>>();
+
+        assert_eq!(
+            s2_breaches,
+            vec![
+                TemperatureBreachRow {
+                    duration_milliseconds: (29) * 60 * 1000,
+                    r#type: TemperatureBreachRowType::ColdConsecutive,
+                    threshold_minimum: 2.0,
+                    threshold_maximum: 100.0,
+                    threshold_duration_milliseconds: 5 * 60 * 1000,
+                    start_datetime: base_date.and_hms_opt(15, 01, 01).unwrap(),
+                    end_datetime: base_date.and_hms_opt(15, 30, 01),
+                    ..s2_breaches[0].clone()
+                },
+                s1_breaches[0].clone(), // Hot consecutive didn't change
+                TemperatureBreachRow {
+                    duration_milliseconds: ((2 * 60) + 15 + 1) * 60 * 1000,
+                    r#type: TemperatureBreachRowType::ColdCumulative,
+                    threshold_minimum: 2.0,
+                    threshold_maximum: 100.0,
+                    threshold_duration_milliseconds: 60 * 60 * 1000,
+                    start_datetime: base_date.and_hms_opt(13, 45, 01).unwrap(),
+                    end_datetime: base_date.and_hms_opt(16, 01, 01),
+                    ..s2_breaches[2].clone()
+                },
+                TemperatureBreachRow {
+                    // Only duration and end_datetime changed for Hot cumulative
+                    duration_milliseconds: ((4 * 60) + 29) * 60 * 1000,
+                    end_datetime: base_date.and_hms_opt(14, 30, 01),
+                    ..s1_breaches[1].clone()
+                }
+            ]
+        );
+
+        // CHECK LOGS
+        let logs = TemperatureLogRepository::new(&connection)
+            .query(
+                Pagination::all(),
+                None,
+                Some(Sort {
+                    key: TemperatureLogSortField::Datetime,
+                    desc: Some(false),
+                }),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|l| {
+                // Map to (datetime, temperature, breach_id)
+                (
+                    Some(l.temperature_log_row.datetime),
+                    l.temperature_log_row.temperature,
+                    l.temperature_log_row.temperature_breach_id,
+                )
+            })
+            .collect::<VecShape>();
+
+        assert_eq!(
+            logs,
+            // Map to (datetime, temperature, breach_id)
+            log_data
+                .iter()
+                .chain(s2_log_data.iter())
+                .map(|((h, mi, s), t, desc)| (
+                    base_date.and_hms_opt(*h, *mi, *s),
+                    *t,
+                    match *desc {
+                        "hotconsecutive" => Some(s2_breaches[1].id.clone()),
+                        "hotcumulative" | "s2-hotcumulative" => Some(s2_breaches[3].id.clone()),
+                        "s2-coldconsecutive" => Some(s2_breaches[0].id.clone()),
+                        "s2-coldcumulative" => Some(s2_breaches[2].id.clone()),
+                        _ => None,
+                    }
+                ))
+                .collect::<VecShape>(),
+        );
+    }
+}
