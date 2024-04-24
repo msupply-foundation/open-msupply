@@ -13,8 +13,8 @@ use actix_web::web::Data;
 use actix_web::HttpRequest;
 use async_graphql::{Context, Request, Response};
 
+use actix_web::http::header::COOKIE;
 use repository::StorageConnectionManager;
-use reqwest::header::COOKIE;
 use service::auth_data::AuthData;
 use service::plugin::validation::ValidatedPluginBucket;
 use service::service_provider::ServiceProvider;

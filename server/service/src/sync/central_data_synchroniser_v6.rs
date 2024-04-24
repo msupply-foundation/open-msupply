@@ -3,7 +3,7 @@ use std::time::{Duration, SystemTime};
 use crate::{
     cursor_controller::CursorController,
     sync::{
-        api_v6::{SiteStatusCodeV6, SyncBatchV6, SyncRecordV6},
+        api_v6::{SyncBatchV6, SyncRecordV6},
         sync_status::logger::SyncStepProgress,
     },
 };
@@ -96,15 +96,13 @@ impl SynchroniserV6 {
                 end_cursor,
                 total_records,
                 records,
-                ..
+                is_last_batch,
             } = self
                 .sync_api_v6
                 .pull(cursor, batch_size, is_initialised)
                 .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
-
-            let is_empty = records.is_empty();
 
             for SyncRecordV6 { cursor, record } in records {
                 let buffer_row = record.to_buffer_row(None)?;
@@ -119,7 +117,7 @@ impl SynchroniserV6 {
 
             cursor_controller.update(&connection, end_cursor + 1)?;
 
-            if is_empty && total_records == 0 {
+            if is_last_batch {
                 break;
             }
         }
@@ -168,15 +166,6 @@ impl SynchroniserV6 {
             .map(SyncRecordV6::from)
             .collect();
 
-            if records.is_empty() {
-                // No v6 records to push, update cursor and continue to next batch
-                if let Some(last_pushed_cursor_id) = last_pushed_cursor {
-                    cursor_controller.update(connection, last_pushed_cursor_id as u64 + 1)?
-                };
-
-                continue;
-            }
-
             let is_last_batch = change_logs_total <= batch_size as u64;
 
             let batch = SyncBatchV6 {
@@ -213,7 +202,7 @@ impl SynchroniserV6 {
 
             let response = self.sync_api_v6.get_site_status().await?;
 
-            if response.code == SiteStatusCodeV6::Idle {
+            if !response.is_integrating {
                 log::info!("Central server operation finished");
                 break;
             }
