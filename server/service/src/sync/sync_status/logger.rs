@@ -304,7 +304,8 @@ impl SyncLogError {
     /// Map SyncError to SyncLogError, to be queried later and translated in front end
     fn from_sync_error(sync_error: &SyncError) -> Self {
         match &sync_error {
-            SyncError::SyncApiV6CreatingError(SyncApiV6CreatingError::CannotParseSyncUrl(_, _)) => {
+            SyncError::V6NotConfigured
+            | SyncError::SyncApiV6CreatingError(SyncApiV6CreatingError::CannotParseSyncUrl(_, _)) => {
                 Self::new(SyncLogRowErrorCode::CentralV6NotConfigured, sync_error)
             }
 
