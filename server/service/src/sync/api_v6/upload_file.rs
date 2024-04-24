@@ -18,7 +18,7 @@ impl SyncApiV6 {
         } = self;
 
         let route = "upload_file";
-        let url = url.join(route).unwrap(); // Unwrap should be safe here, because we know that sync_file.id is a UUID
+        let url = url.join(route).unwrap(); // Unwrap is safe here as the route is always `upload_file`
 
         let error_with_url = |source: SyncApiErrorVariantV6| -> SyncApiErrorV6 {
             SyncApiErrorV6 {
