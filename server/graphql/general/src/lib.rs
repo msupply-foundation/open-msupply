@@ -7,7 +7,7 @@ pub use self::queries::sync_status::*;
 use self::queries::*;
 
 use graphql_core::pagination::PaginationInput;
-use util::is_central_server;
+use service::sync::CentralServerConfig;
 
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
@@ -73,7 +73,7 @@ impl GeneralQueries {
     }
 
     pub async fn is_central_server(&self) -> bool {
-        is_central_server()
+        CentralServerConfig::is_central_server()
     }
 
     /// Query omSupply "name" entries

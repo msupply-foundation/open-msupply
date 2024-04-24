@@ -1,6 +1,5 @@
 use crate::sync::{
     api::SyncAction,
-    sync_status::logger::SyncLogger,
     synchroniser::integrate_and_translate_sync_buffer,
     test::{
         check_test_records_against_database, extract_sync_buffer_rows,
@@ -29,7 +28,7 @@ use super::{
 #[actix_rt::test]
 async fn test_sync_pull_and_push() {
     // Uncomment to see logs such as Foreign key constraint failed in test
-    // util::init_logger(util::LogLevel::Warn);
+    util::init_logger(util::LogLevel::Warn);
 
     let (_, connection, _, _) = test_db::setup_all_with_data(
         "test_sync_pull_and_push",
@@ -66,11 +65,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_records)
         .unwrap();
 
-    let mut logger = SyncLogger::start(&connection).unwrap();
-
-    integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-        .await
-        .unwrap();
+    integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
@@ -149,9 +144,7 @@ async fn test_sync_pull_and_push() {
         .upsert_many(&sync_records)
         .unwrap();
 
-    integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-        .await
-        .unwrap();
+    integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
     check_test_records_against_database(&connection, test_records).await;
 
