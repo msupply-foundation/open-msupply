@@ -187,16 +187,9 @@ impl Synchroniser {
         {
             let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
 
-            let result = v6_sync
+            v6_sync
                 .push(&ctx.connection, batch_size.remote_push, logger)
-                .await;
-
-            if let Err(error) = result {
-                // Log but ignore error for now, to allow omSupply to run without omSupply server
-                // TODO : Fix at some point!
-                log::info!("{}", format_error(&error));
-                let _ = logger.error(&error.into());
-            };
+                .await?;
 
             v6_sync
                 .wait_for_sync_operation(
@@ -243,15 +236,11 @@ impl Synchroniser {
             let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
 
             logger.start_step(SyncStep::PullCentralV6)?;
-            if let Err(error) = v6_sync
+
+            v6_sync
                 .pull(&ctx.connection, 20, is_initialised, logger)
-                .await
-            {
-                // Log but ignore error for now, to allow omSupply to run without omSupply server
-                // TODO : Fix at some point!
-                log::info!("{}", format_error(&error));
-                let _ = logger.error(&error.into());
-            }
+                .await?;
+
             logger.done_step(SyncStep::PullCentralV6)?;
         }
 
