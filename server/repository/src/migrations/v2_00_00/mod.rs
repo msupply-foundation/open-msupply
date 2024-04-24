@@ -12,7 +12,9 @@ mod inventory_adjustment_permissions;
 mod linked_shipment;
 mod pack_variant;
 mod report_views;
+mod requisition_line_add_item_name;
 mod returns;
+mod stock_on_hand_add_item_name;
 mod store_add_created_date;
 mod sync_file_reference;
 mod user_change_last_synced_to_optional;
@@ -38,6 +40,8 @@ impl Migration for V2_00_00 {
         user_change_last_synced_to_optional::migrate(connection)?;
         inventory_adjustment_logtype::migrate(connection)?;
         report_views::migrate(connection)?;
+        requisition_line_add_item_name::migrate(connection)?;
+        stock_on_hand_add_item_name::migrate(connection)?;
         currency_add_is_active::migrate(connection)?;
         Ok(())
     }

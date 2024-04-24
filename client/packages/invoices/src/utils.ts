@@ -252,7 +252,10 @@ export const inboundLinesToSummaryItems = (
   );
 };
 export const canDeleteInvoice = (
-  invoice: OutboundRowFragment | OutboundReturnRowFragment
+  invoice:
+    | OutboundRowFragment
+    | OutboundReturnRowFragment
+    | PrescriptionRowFragment
 ): boolean =>
   invoice.status === InvoiceNodeStatus.New ||
   invoice.status === InvoiceNodeStatus.Allocated ||
