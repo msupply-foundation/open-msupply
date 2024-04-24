@@ -41,6 +41,8 @@ pub struct Synchroniser {
 pub(crate) enum SyncError {
     #[error(transparent)]
     SyncApiError(#[from] SyncApiError),
+    #[error("V6 Not configured")]
+    V6NotConfigured,
     #[error("Failed to create Sync v6 Url")]
     SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
     #[error("Database error while syncing")]
@@ -180,13 +182,18 @@ impl Synchroniser {
 
         // We'll push records to open-mSupply first, then push to Legacy mSupply
 
+        let v6_sync = match CentralServerConfig::get() {
+            CentralServerConfig::NotConfigured => return Err(SyncError::V6NotConfigured),
+            CentralServerConfig::IsCentralServer => None,
+            CentralServerConfig::CentralServerUrl(url) => {
+                let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
+                Some(v6_sync)
+            }
+        };
+
         // PUSH V6
         logger.start_step(SyncStep::PushCentralV6)?;
-        if let (true, CentralServerConfig::CentralServerUrl(url)) =
-            (is_initialised, CentralServerConfig::get())
-        {
-            let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
-
+        if let (true, Some(v6_sync)) = (is_initialised, &v6_sync) {
             v6_sync
                 .push(&ctx.connection, batch_size.remote_push, logger)
                 .await?;
@@ -232,9 +239,7 @@ impl Synchroniser {
         logger.done_step(SyncStep::PullRemote)?;
 
         // PULL V6
-        if let CentralServerConfig::CentralServerUrl(url) = CentralServerConfig::get() {
-            let v6_sync = SynchroniserV6::new(&url, &self.sync_v5_settings)?;
-
+        if let Some(v6_sync) = &v6_sync {
             logger.start_step(SyncStep::PullCentralV6)?;
 
             v6_sync
