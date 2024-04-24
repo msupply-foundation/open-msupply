@@ -55,7 +55,7 @@ fn get_matching_sensor_breach_config(
     let filter = TemperatureBreachConfigFilter::new()
         .store_id(EqualFilter::equal_to(store_id))
         .duration_milliseconds(EqualFilter::equal_to_i32(
-            temperature_breach_config.duration.num_seconds() as i32,
+            temperature_breach_config.duration.num_milliseconds() as i32,
         ))
         .minimum_temperature(EqualFilter::equal_to_f64(
             temperature_breach_config.minimum_temperature,
@@ -151,7 +151,7 @@ fn sensor_add_breach_if_new(
                 threshold_duration_milliseconds: breach_config.duration.num_milliseconds() as i32,
                 threshold_minimum: breach_config.minimum_temperature,
                 threshold_maximum: breach_config.maximum_temperature,
-            comment: None,
+                comment: None,
             };
             log::info!("Added breach {:?} ", breach);
             breach
