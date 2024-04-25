@@ -3,7 +3,7 @@ use crate::{
     invoice::common::{calculate_total_after_tax, generate_invoice_user_id_update},
     invoice_line::{
         convert_invoice_line_to_single_pack, convert_stock_line_to_single_pack,
-        stock_in_line::StockInType,
+        stock_in_line::{generate_batch, StockInType, StockLineInput},
     },
     store_preference::get_store_preferences,
     u32_to_i32,
@@ -12,7 +12,6 @@ use repository::{
     InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
     StockLineRow, StorageConnection,
 };
-use util::uuid::uuid;
 
 use super::InsertStockInLine;
 
@@ -36,12 +35,17 @@ pub fn generate(
 
     let new_batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
         let new_batch = generate_batch(
-            &existing_invoice_row.store_id,
             new_line.clone(),
-            input.stock_on_hold,
-            barcode_id,
-            &existing_invoice_row.name_link_id,
+            StockLineInput {
+                // If a stock line id is included in the input, use it
+                keep_existing_batch: input.stock_line_id.is_some(),
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_link_id: existing_invoice_row.name_link_id.clone(),
+                on_hold: input.stock_on_hold,
+                barcode_id,
+            },
         );
+        // If a new stock line has been created, update the stock_line_id on the invoice line
         new_line.stock_line_id = Some(new_batch.id.clone());
 
         let new_batch = match store_preferences.pack_to_one {
@@ -123,51 +127,6 @@ fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &Invoi
     }
 }
 
-// tODO share for update
-pub fn generate_batch(
-    store_id: &str,
-    InvoiceLineRow {
-        stock_line_id,
-        item_link_id,
-        pack_size,
-        batch,
-        expiry_date,
-        sell_price_per_pack,
-        cost_price_per_pack,
-        number_of_packs,
-        location_id,
-        note,
-        ..
-    }: InvoiceLineRow,
-    on_hold: bool,
-    barcode_id: Option<String>,
-    supplier_link_id: &str,
-) -> StockLineRow {
-    // Generate new id if stock_line_id is not already set on line
-    let stock_line_id = match stock_line_id {
-        Some(stock_line_id) => stock_line_id,
-        _ => uuid(),
-    };
-
-    StockLineRow {
-        id: stock_line_id,
-        item_link_id,
-        store_id: store_id.to_string(),
-        location_id,
-        batch,
-        pack_size,
-        cost_price_per_pack,
-        sell_price_per_pack,
-        available_number_of_packs: number_of_packs,
-        total_number_of_packs: number_of_packs,
-        expiry_date,
-        note,
-        supplier_link_id: Some(supplier_link_id.to_string()),
-        on_hold,
-        barcode_id,
-    }
-}
-
 fn generate_barcode_id(
     input: &InsertStockInLine,
     connection: &StorageConnection,
@@ -176,7 +135,7 @@ fn generate_barcode_id(
 
     let barcode_id = match gtin {
         Some(gtin) => {
-            // explicit clearing of barcode
+            // don't create barcode if gtin is empty
             if gtin == "" {
                 return Ok(None);
             }
@@ -192,8 +151,6 @@ fn generate_barcode_id(
 
             Some(barcode_row.id)
         }
-        // if editing existing stock: .. no because insert stock?
-        // None => existing.barcode_id,
         None => None,
     };
 
