@@ -239,7 +239,7 @@ const Actions = () => {
     {
       id: 'action:logout',
       name: `${t('logout')}`,
-      shortcut: ['g', 'm'],
+      shortcut: ['l', 'o'],
       keywords: 'logout',
       perform: () => {
         logout();
