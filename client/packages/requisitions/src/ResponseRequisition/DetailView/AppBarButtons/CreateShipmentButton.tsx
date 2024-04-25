@@ -9,7 +9,7 @@ import {
   useNavigate,
 } from '@openmsupply-client/common';
 import { useResponse } from '../../api';
-import { AppRoute } from 'packages/config/src';
+import { AppRoute } from '@openmsupply-client/config/src';
 
 export const CreateShipmentButtonComponent = () => {
   const { lines, linesRemainingToSupply } = useResponse.document.fields([
