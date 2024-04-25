@@ -71,7 +71,7 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<I
     )
 }
 
-pub fn map_response(from: Result<StockLine, AddNewStockLineError>) -> Result<InsertResponse> {
+fn map_response(from: Result<StockLine, AddNewStockLineError>) -> Result<InsertResponse> {
     let result = match from {
         Ok(stock_line) => InsertResponse::Response(StockLineNode::from_domain(stock_line)),
         Err(error) => InsertResponse::Error(InsertError {
