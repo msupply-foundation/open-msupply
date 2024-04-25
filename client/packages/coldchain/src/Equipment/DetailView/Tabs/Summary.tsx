@@ -13,7 +13,7 @@ import {
   useIsCentralServerApi,
 } from '@openmsupply-client/common';
 import { Status } from '../../Components';
-import { translateReason } from '../../utils';
+import { formatPropertyValue } from '../../utils';
 import { StoreRowFragment, StoreSearchInput } from '@openmsupply-client/system';
 import { DraftAsset } from '../../types';
 interface SummaryProps {
@@ -236,12 +236,25 @@ export const Summary = ({ draft, onChange, locations }: SummaryProps) => {
           </Row>
           <Row label={t('label.reason')}>
             <BasicTextInput
-              value={translateReason(draft.statusLog?.reason, t)}
+              value={draft.statusLog?.reason?.reason ?? '-'}
               disabled
               fullWidth
             />
           </Row>
         </Section>
+        {draft.properties.length === 0 ? null : (
+          <Section heading={t('label.catalogue-properties')}>
+            {draft.properties.map(property => (
+              <Row key={property.id} label={property.name}>
+                <BasicTextInput
+                  value={formatPropertyValue(property, t)}
+                  disabled
+                  fullWidth
+                />
+              </Row>
+            ))}
+          </Section>
+        )}
         <Section heading={t('label.additional-info')}>
           <Row label={t('label.notes')}>
             <BasicTextInput

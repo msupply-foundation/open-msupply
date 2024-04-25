@@ -1,6 +1,8 @@
 mod core;
 pub mod download_file;
+pub mod upload_file;
 
+use actix_multipart::form::{json::Json, tempfile::TempFile, MultipartForm};
 use repository::RepositoryError;
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
@@ -35,6 +37,8 @@ pub enum SyncParsedErrorV6 {
     NotACentralServer,
     #[error("Could not parse record to sync buffer row: {0}")]
     ParsingSyncRecordError(String),
+    #[error("Sync File Not Found")]
+    SyncFileNotFound,
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
@@ -161,4 +165,11 @@ pub struct SyncDownloadFileRequestV6 {
     pub(crate) record_id: String,
     pub(crate) id: String,
     pub(crate) sync_v5_settings: SyncApiSettings,
+}
+
+#[derive(MultipartForm)]
+pub struct SyncUploadFileRequestV6 {
+    pub sync_v5_settings: Json<SyncApiSettings>,
+    #[multipart(rename = "file")]
+    pub files: Vec<TempFile>,
 }
