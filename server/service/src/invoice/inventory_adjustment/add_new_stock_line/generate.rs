@@ -12,6 +12,11 @@ use crate::number::next_number;
 
 use super::AddNewStockLine;
 
+pub struct UpdateInventoryAdjustmentReasonId {
+    pub reason_id: Option<String>,
+    pub invoice_line_id: String,
+}
+
 pub fn generate(
     connection: &StorageConnection,
     store_id: &str,
@@ -30,7 +35,14 @@ pub fn generate(
         expiry_date,
         barcode,
     }: AddNewStockLine,
-) -> Result<(InvoiceRow, InsertStockInLine), RepositoryError> {
+) -> Result<
+    (
+        InvoiceRow,
+        InsertStockInLine,
+        UpdateInventoryAdjustmentReasonId,
+    ),
+    RepositoryError,
+> {
     let current_datetime = Utc::now().naive_utc();
 
     let inventory_adjustment_name = NameRowRepository::new(connection)
@@ -71,8 +83,9 @@ pub fn generate(
         clinician_link_id: None,
     };
 
+    let invoice_line_id = uuid();
     let stock_in_line = InsertStockInLine {
-        id: uuid(),
+        id: invoice_line_id.clone(),
         invoice_id,
         item_id,
         stock_line_id: Some(stock_line_id),
@@ -84,7 +97,6 @@ pub fn generate(
         expiry_date,
         number_of_packs,
         stock_on_hold: on_hold,
-        inventory_adjustment_reason_id,
         r#type: StockInType::InventoryAddition,
         note: None,
         total_before_tax: None,
@@ -92,5 +104,14 @@ pub fn generate(
         barcode,
     };
 
-    Ok((invoice, stock_in_line))
+    let update_inventory_adjustment_reason_id = UpdateInventoryAdjustmentReasonId {
+        reason_id: inventory_adjustment_reason_id,
+        invoice_line_id,
+    };
+
+    Ok((
+        invoice,
+        stock_in_line,
+        update_inventory_adjustment_reason_id,
+    ))
 }

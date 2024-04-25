@@ -80,7 +80,6 @@ fn generate_line(
         total_before_tax,
         note,
         stock_line_id,
-        inventory_adjustment_reason_id,
         barcode: _,
         stock_on_hold: _,
         tax: _,
@@ -114,7 +113,7 @@ fn generate_line(
         total_after_tax,
         tax,
         note,
-        inventory_adjustment_reason_id,
+        inventory_adjustment_reason_id: None,
         return_reason_id: None,
         foreign_currency_price_before_tax: None,
     }
