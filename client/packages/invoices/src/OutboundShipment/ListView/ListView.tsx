@@ -37,7 +37,7 @@ const OutboundShipmentListViewComponent: FC = () => {
     filter,
     queryParams: { sortBy, page, first, offset },
   } = useUrlQueryParams({
-    initialSort: { key: 'createdDatetime', dir: 'desc' },
+    initialSort: { key: 'invoiceNumber', dir: 'desc' },
     filters: [
       { key: 'otherPartyName' },
       { key: 'status', condition: 'equalTo' },
