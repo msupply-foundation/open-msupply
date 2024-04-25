@@ -35,10 +35,10 @@ pub fn generate(
 
     let new_batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
         let new_batch = generate_batch(
+            // If a stock line id is included in the input, use it
+            input.stock_line_id.is_some(),
             new_line.clone(),
             StockLineInput {
-                // If a stock line id is included in the input, use it
-                keep_existing_batch: input.stock_line_id.is_some(),
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: input.stock_on_hold,
