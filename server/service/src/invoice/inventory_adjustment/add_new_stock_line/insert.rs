@@ -46,19 +46,22 @@ pub fn add_new_stock_line(
     let stock_line = ctx
         .connection
         .transaction_sync(|connection| {
-            // Needed for query, input is moved
+            // Needed for query below, input is moved
             let stock_line_id = input.stock_line_id.clone();
 
             validate(connection, &ctx.store_id, &input)?;
             let (new_invoice, stock_in_line) =
                 generate(connection, &ctx.store_id, &ctx.user_id, input)?;
 
+            // Create Inventory Adjustment invoice in NEW status
             let invoice_row_repo = InvoiceRowRepository::new(connection);
             invoice_row_repo.upsert_one(&new_invoice)?;
 
+            // Add invoice line (and introduce stock line)
             insert_stock_in_line(ctx, stock_in_line)
                 .map_err(|error| AddNewStockLineError::LineInsertError(error))?;
 
+            // Set invoice to verified
             let verified_datetime = Utc::now().naive_utc();
 
             let verified_invoice = InvoiceRow {
