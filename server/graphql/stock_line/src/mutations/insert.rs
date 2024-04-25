@@ -1,12 +1,18 @@
 use async_graphql::*;
 use chrono::NaiveDate;
 use graphql_core::{
-    generic_inputs::NullableUpdateInput, simple_generic_errors::RecordNotFound,
-    standard_graphql_error::validate_auth, ContextExt,
+    generic_inputs::NullableUpdateInput,
+    simple_generic_errors::RecordNotFound,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
 };
 use graphql_types::types::StockLineNode;
-use repository::{ItemRow, StockLine};
-use service::auth::{Resource, ResourceAccessRequest};
+use repository::StockLine;
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    invoice::inventory_adjustment::add_new_stock_line::{AddNewStockLine, AddNewStockLineError},
+    NullableUpdate,
+};
 
 #[derive(InputObject)]
 #[graphql(name = "InsertStockLineInput")]
@@ -46,7 +52,7 @@ pub enum InsertResponse {
     Response(StockLineNode),
 }
 
-pub fn insert(ctx: &Context<'_>, store_id: &str, _input: InsertInput) -> Result<InsertResponse> {
+pub fn insert(ctx: &Context<'_>, store_id: &str, input: InsertInput) -> Result<InsertResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -56,86 +62,78 @@ pub fn insert(ctx: &Context<'_>, store_id: &str, _input: InsertInput) -> Result<
     )?;
 
     let service_provider = ctx.service_provider();
-    let _service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    return Ok(InsertResponse::Response(StockLineNode::from_domain(
-        StockLine {
-            item_row: ItemRow {
-                id: _input.item_id,
-                ..Default::default()
-            },
-            ..Default::default()
-        },
-    )));
-
-    // map_response(
-    //     service_provider
-    //         .stock_line_service
-    //         .insert_stock_line(&service_context, input.to_domain()),
-    // )
+    map_response(
+        service_provider
+            .invoice_service
+            .add_new_stock_line(&service_context, input.to_domain()),
+    )
 }
 
-// pub fn map_response(from: Result<StockLine, ServiceError>) -> Result<InsertResponse> {
-//     let result = match from {
-//         Ok(requisition_line) => {
-//             InsertResponse::Response(StockLineNode::from_domain(requisition_line))
-//         }
-//         Err(error) => InsertResponse::Error(InsertError {
-//             error: map_error(error)?,
-//         }),
-//     };
+pub fn map_response(from: Result<StockLine, AddNewStockLineError>) -> Result<InsertResponse> {
+    let result = match from {
+        Ok(stock_line) => InsertResponse::Response(StockLineNode::from_domain(stock_line)),
+        Err(error) => InsertResponse::Error(InsertError {
+            error: map_error(error)?,
+        }),
+    };
 
-//     Ok(result)
-// }
+    Ok(result)
+}
 
-// impl InsertInput {
-//     pub fn to_domain(self) -> ServiceInput {
-//         let InsertInput {
-//             id,
-//             location,
-//             cost_price_per_pack,
-//             sell_price_per_pack,
-//             expiry_date,
-//             batch,
-//             on_hold,
-//             barcode,
-//         } = self;
+impl InsertInput {
+    pub fn to_domain(self) -> AddNewStockLine {
+        let InsertInput {
+            id,
+            location,
+            cost_price_per_pack,
+            sell_price_per_pack,
+            expiry_date,
+            batch,
+            on_hold,
+            barcode,
+            item_id,
+            number_of_packs,
+            pack_size,
+            inventory_adjustment_reason_id,
+        } = self;
 
-//         ServiceInput {
-//             id,
-//             location: location.map(|location| NullableUpdate {
-//                 value: location.value,
-//             }),
-//             cost_price_per_pack,
-//             sell_price_per_pack,
-//             expiry_date,
-//             batch,
-//             on_hold,
-//             barcode,
-//         }
-//     }
-// }
+        AddNewStockLine {
+            stock_line_id: id,
+            location: location.map(|location| NullableUpdate {
+                value: location.value,
+            }),
+            cost_price_per_pack,
+            sell_price_per_pack,
+            expiry_date,
+            batch,
+            on_hold,
+            barcode,
+            item_id,
+            number_of_packs,
+            pack_size,
+            inventory_adjustment_reason_id,
+        }
+    }
+}
 
-// fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
-//     use StandardGraphqlError::*;
-//     let formatted_error = format!("{:#?}", error);
+fn map_error(error: AddNewStockLineError) -> Result<InsertErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{:#?}", error);
 
-//     let graphql_error = match error {
-//         // Structured Errors
-//         ServiceError::StockDoesNotExist => {
-//             return Ok(InsertErrorInterface::RecordNotFound(RecordNotFound {}))
-//         }
-//         ServiceError::StockMovementNotFound => {
-//             return Ok(InsertErrorInterface::RecordNotFound(RecordNotFound {}))
-//         }
-//         // Standard Graphql Errors
-//         ServiceError::StockDoesNotBelongToStore => BadUserInput(formatted_error),
-//         ServiceError::LocationDoesNotExist => BadUserInput(formatted_error),
-//         ServiceError::InsertStockNotFound => InternalError(formatted_error),
-//         ServiceError::DatabaseError(_) => InternalError(formatted_error),
-//     };
+    let graphql_error = match error {
+        // Standard Graphql Errors
+        AddNewStockLineError::InvalidStore
+        | AddNewStockLineError::AdjustmentReasonNotValid
+        | AddNewStockLineError::AdjustmentReasonNotProvided
+        | AddNewStockLineError::StockLineAlreadyExists => BadUserInput(formatted_error),
+        AddNewStockLineError::NewlyCreatedStockLineDoesNotExist
+        | AddNewStockLineError::LineInsertError(_)
+        | AddNewStockLineError::DatabaseError(_) => InternalError(formatted_error),
+    };
 
-//     Err(graphql_error.extend())
-// }
+    Err(graphql_error.extend())
+}
 
 // TODO: tests
