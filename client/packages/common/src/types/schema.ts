@@ -1077,6 +1077,7 @@ export type CurrencyConnector = {
 
 export type CurrencyFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isHomeCurrency?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -6082,6 +6083,7 @@ export type StocktakeLineNode = {
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Int']['output']>;
