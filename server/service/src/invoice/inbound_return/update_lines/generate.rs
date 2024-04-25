@@ -66,7 +66,6 @@ pub fn generate(
                 sell_price_per_pack: 0.0,
                 tax: None,
                 total_before_tax: None,
-                inventory_adjustment_reason_id: None,
                 barcode: None,
                 stock_line_id: None,
                 stock_on_hold: false,

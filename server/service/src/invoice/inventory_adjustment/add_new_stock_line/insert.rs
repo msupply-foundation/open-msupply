@@ -1,5 +1,7 @@
 use chrono::{NaiveDate, Utc};
-use repository::{ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus};
+use repository::{
+    ActivityLogType, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus,
+};
 use repository::{RepositoryError, StockLine};
 
 use super::generate::generate;
@@ -50,7 +52,7 @@ pub fn add_new_stock_line(
             let stock_line_id = input.stock_line_id.clone();
 
             validate(connection, &ctx.store_id, &input)?;
-            let (new_invoice, stock_in_line) =
+            let (new_invoice, stock_in_line, update_reason) =
                 generate(connection, &ctx.store_id, &ctx.user_id, input)?;
 
             // Create Inventory Adjustment invoice in NEW status
@@ -60,6 +62,13 @@ pub fn add_new_stock_line(
             // Add invoice line (and introduce stock line)
             insert_stock_in_line(ctx, stock_in_line)
                 .map_err(|error| AddNewStockLineError::LineInsertError(error))?;
+
+            // Add inventory adjustment reason to the invoice line
+            let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
+            invoice_line_repo.update_inventory_adjustment_reason_id(
+                &update_reason.invoice_line_id,
+                update_reason.reason_id,
+            )?;
 
             // Set invoice to verified
             let verified_datetime = Utc::now().naive_utc();

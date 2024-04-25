@@ -110,7 +110,6 @@ pub fn generate(
                 tax: None,
                 stock_line_id: None,
                 barcode: None,
-                inventory_adjustment_reason_id: None,
                 stock_on_hold: false,
             },
         )
