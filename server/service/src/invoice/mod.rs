@@ -5,6 +5,7 @@ use repository::InvoiceRowType;
 use repository::InvoiceSort;
 use repository::PaginationOption;
 use repository::RepositoryError;
+use repository::StockLine;
 
 use crate::service_provider::ServiceContext;
 use crate::ListError;
@@ -298,7 +299,7 @@ pub trait InvoiceServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         input: AddNewStockLine,
-    ) -> Result<Invoice, AddNewStockLineError> {
+    ) -> Result<StockLine, AddNewStockLineError> {
         add_new_stock_line(ctx, input)
     }
 }

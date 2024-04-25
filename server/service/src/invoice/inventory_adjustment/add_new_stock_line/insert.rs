@@ -1,15 +1,15 @@
 use chrono::{NaiveDate, Utc};
-use repository::RepositoryError;
-use repository::{ActivityLogType, Invoice, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus};
+use repository::{ActivityLogType, InvoiceRow, InvoiceRowRepository, InvoiceRowStatus};
+use repository::{RepositoryError, StockLine};
 
 use super::generate::generate;
 use super::validate::validate;
 
 use crate::activity_log::activity_log_entry;
-use crate::invoice::query::get_invoice;
 use crate::invoice_line::stock_in_line::{insert_stock_in_line, InsertStockInLineError};
 use crate::service_provider::ServiceContext;
-use crate::NullableUpdate;
+use crate::stock_line::query::get_stock_line;
+use crate::{NullableUpdate, SingleRecordError};
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct AddNewStockLine {
@@ -33,9 +33,8 @@ pub enum AddNewStockLineError {
     StockLineAlreadyExists,
     AdjustmentReasonNotValid,
     AdjustmentReasonNotProvided,
-    NewlyCreatedInvoiceDoesNotExist,
+    NewlyCreatedStockLineDoesNotExist,
     DatabaseError(RepositoryError),
-    InternalError(String),
     // Line Errors
     LineInsertError(InsertStockInLineError),
 }
@@ -43,10 +42,13 @@ pub enum AddNewStockLineError {
 pub fn add_new_stock_line(
     ctx: &ServiceContext,
     input: AddNewStockLine,
-) -> Result<Invoice, AddNewStockLineError> {
-    let invoice = ctx
+) -> Result<StockLine, AddNewStockLineError> {
+    let stock_line = ctx
         .connection
         .transaction_sync(|connection| {
+            // Needed for query, input is moved
+            let stock_line_id = input.stock_line_id.clone();
+
             validate(connection, &ctx.store_id, &input)?;
             let (new_invoice, stock_in_line) =
                 generate(connection, &ctx.store_id, &ctx.user_id, input)?;
@@ -75,13 +77,19 @@ pub fn add_new_stock_line(
                 None,
             )?;
 
-            get_invoice(ctx, None, &verified_invoice.id)
-                .map_err(AddNewStockLineError::DatabaseError)?
-                .ok_or(AddNewStockLineError::NewlyCreatedInvoiceDoesNotExist)
+            match get_stock_line(ctx, stock_line_id) {
+                Ok(stock_line) => Ok(stock_line),
+                Err(SingleRecordError::NotFound(_)) => {
+                    Err(AddNewStockLineError::NewlyCreatedStockLineDoesNotExist)
+                }
+                Err(SingleRecordError::DatabaseError(error)) => {
+                    Err(AddNewStockLineError::DatabaseError(error))
+                }
+            }
         })
         .map_err(|error| error.to_inner_error())?;
 
-    Ok(invoice)
+    Ok(stock_line)
 }
 
 impl From<RepositoryError> for AddNewStockLineError {
@@ -98,8 +106,8 @@ mod test {
             MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
-        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceRowStatus,
+        EqualFilter, InventoryAdjustmentReasonRow, InventoryAdjustmentReasonType, InvoiceFilter,
+        InvoiceLineFilter, InvoiceLineRepository, InvoiceRepository, InvoiceRowStatus,
     };
     use util::inline_edit;
 
@@ -234,7 +242,7 @@ mod test {
             .unwrap();
         let service = service_provider.invoice_service;
 
-        let inv_adj = service
+        let new_stock_line = service
             .add_new_stock_line(
                 &context,
                 AddNewStockLine {
@@ -252,6 +260,25 @@ mod test {
             )
             .unwrap();
 
+        let stock_line_row = new_stock_line.stock_line_row;
+        assert_eq!(
+            stock_line_row,
+            inline_edit(&stock_line_row, |mut u| {
+                u.available_number_of_packs = 2.0;
+                u.total_number_of_packs = 2.0;
+                u.location_id = Some(mock_location_1().id);
+                u.on_hold = true;
+                u
+            })
+        );
+        let mut invoices = InvoiceRepository::new(&connection)
+            .query_by_filter(InvoiceFilter::new().stock_line_id(stock_line_row.id))
+            .unwrap();
+
+        // Should only be one invoice related to the new stock line - the inventory adjustment
+        assert_eq!(invoices.len(), 1);
+
+        let inv_adj = invoices.pop().unwrap();
         let invoice_row = inv_adj.invoice_row;
 
         let mut invoice_lines = InvoiceLineRepository::new(&connection)
@@ -264,8 +291,6 @@ mod test {
 
         let invoice_line = invoice_lines.pop().unwrap();
         let invoice_line_row = invoice_line.invoice_line_row;
-
-        let stock_line_row = invoice_line.stock_line_option.unwrap();
 
         assert_eq!(
             invoice_row,
@@ -280,16 +305,6 @@ mod test {
             inline_edit(&invoice_line_row, |mut u| {
                 u.number_of_packs = 2.0;
                 u.inventory_adjustment_reason_id = Some(addition_reason().id);
-                u
-            })
-        );
-        assert_eq!(
-            stock_line_row,
-            inline_edit(&stock_line_row, |mut u| {
-                u.available_number_of_packs = 2.0;
-                u.total_number_of_packs = 2.0;
-                u.location_id = Some(mock_location_1().id);
-                u.on_hold = true;
                 u
             })
         );
