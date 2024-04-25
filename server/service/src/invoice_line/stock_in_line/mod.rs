@@ -25,7 +25,6 @@ impl StockInType {
 }
 
 pub struct StockLineInput {
-    pub keep_existing_batch: bool,
     pub store_id: String,
     pub on_hold: bool,
     pub barcode_id: Option<String>,
@@ -33,6 +32,7 @@ pub struct StockLineInput {
 }
 
 pub fn generate_batch(
+    keep_existing_batch: bool,
     InvoiceLineRow {
         stock_line_id,
         item_link_id,
@@ -47,7 +47,6 @@ pub fn generate_batch(
         ..
     }: InvoiceLineRow,
     StockLineInput {
-        keep_existing_batch,
         store_id,
         on_hold,
         barcode_id,
