@@ -48,8 +48,8 @@ enum Action {
     ExportGraphqlSchema,
     /// Initialise empty database (existing database will be dropped, and new one created and migrated)
     InitialiseDatabase,
-    /// Initilise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existin database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
-    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli initalise-from-central -u "user1:user1password,user2:user2password" -p "sync_site_password"
+    /// Initialise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existing database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
+    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli initialise-from-central -u "user1:user1password,user2:user2password" -p "sync_site_password"
     InitialiseFromCentral {
         /// Users to sync, in format "username:password,username2:password2"
         #[clap(short, long)]
@@ -78,8 +78,13 @@ enum Action {
         #[clap(short, long, parse(from_flag))]
         refresh: bool,
     },
-    /// Make data current, base on latest date difference to now (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference), also disabling sync to avoid refreshed data syncing
-    RefreshDates,
+    /// Make data current, based on the difference between the latest date to the current date (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference)
+    /// This process also disables sync to avoid refreshed data syncing, unless you use the `--enable-sync` flag
+    RefreshDates {
+        /// Enable sync after refresh, by default the sync is disabled after refreshing
+        #[clap(short, long, parse(from_flag))]
+        enable_sync: bool,
+    },
 
     SignPlugin {
         /// Path to the plugin.
@@ -325,7 +330,7 @@ async fn main() -> anyhow::Result<()> {
                 fs::read_to_string(users_file)?
             );
         }
-        Action::RefreshDates => {
+        Action::RefreshDates { enable_sync } => {
             let connection_manager = get_storage_connection_manager(&settings.database);
             let connection = connection_manager.connection()?;
             let app_data_folder = settings
@@ -343,8 +348,11 @@ async fn main() -> anyhow::Result<()> {
             ));
             let ctx = service_provider.basic_context()?;
             let service = &service_provider.settings;
-            info!("Disabling sync");
-            service.disable_sync(&ctx)?;
+
+            if !enable_sync {
+                info!("Disabling sync");
+                service.disable_sync(&ctx)?;
+            }
 
             info!("Refresh data result: {:#?}", result);
         }
