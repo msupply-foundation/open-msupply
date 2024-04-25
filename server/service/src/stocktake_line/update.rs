@@ -157,6 +157,7 @@ fn generate(
         counted_number_of_packs: counted_number_of_packs.or(existing_line.counted_number_of_packs),
 
         item_link_id: existing.item.id,
+        item_name: existing_line.item_name,
         expiry_date: expiry_date.or(existing_line.expiry_date),
         batch: batch.or(existing_line.batch),
         pack_size: pack_size.map(u32_to_i32).or(existing_line.pack_size),
@@ -480,6 +481,7 @@ mod stocktake_line_test {
                 snapshot_number_of_packs: 10.0,
                 counted_number_of_packs: Some(14.0),
                 item_link_id: stocktake_line_a.item_link_id,
+                item_name: stocktake_line_a.item_name,
                 expiry_date: None,
                 pack_size: None,
                 note: None,
@@ -547,6 +549,7 @@ mod stocktake_line_test {
                 r.stocktake_id = result.line.stocktake_id.clone();
                 r.snapshot_number_of_packs = 10.0;
                 r.item_link_id = stocktake_line.item_link_id;
+                r.item_name = stocktake_line.item_name;
                 r.comment = Some("Some comment".to_string());
             })
         );
