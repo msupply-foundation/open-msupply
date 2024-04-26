@@ -185,7 +185,7 @@ impl<'a> RefreshDatesRepository<'a> {
 
         if days_difference < 0 {
             println!(
-                "Reference date {} - 1 day is lower then max data date {} for record: {:#?}",
+                "Reference date {} - 1 day is lower than the max date {} for record: {:#?}",
                 reference_date, max_timestamp, max_record
             );
             return None;
