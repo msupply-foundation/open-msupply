@@ -4,8 +4,8 @@ use crate::{
 };
 use chrono::NaiveDate;
 use repository::{
-    InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
-    StockLineRowRepository,
+    BarcodeRowRepository, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository,
+    RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -47,8 +47,12 @@ pub fn insert_stock_in_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
-            let (invoice_user_update_option, new_line, new_batch_option) =
+            let (invoice_user_update_option, new_line, new_batch_option, barcode_option) =
                 generate(&connection, &ctx.user_id, input, item, invoice)?;
+
+            if let Some(barcode_row) = barcode_option {
+                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
+            }
 
             if let Some(new_batch) = new_batch_option {
                 StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
@@ -103,12 +107,14 @@ where
 #[cfg(test)]
 mod test {
     use repository::{
+        barcode::{BarcodeFilter, BarcodeRepository},
         mock::{
             mock_inbound_return_a, mock_inbound_return_a_invoice_line_a, mock_item_a,
             mock_name_store_b, mock_outbound_shipment_e, mock_store_a, mock_store_b,
             mock_user_account_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
+        EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository,
         InvoiceLineRowRepository, InvoiceRow, InvoiceRowStatus, InvoiceRowType, StorePreferenceRow,
         StorePreferenceRowRepository,
     };
@@ -289,6 +295,8 @@ mod test {
             .context(mock_store_b().id, mock_user_account_a().id)
             .unwrap();
 
+        let gtin = "new-gtin-123".to_string();
+
         insert_stock_in_line(
             &context,
             inline_init(|r: &mut InsertStockInLine| {
@@ -297,12 +305,21 @@ mod test {
                 r.item_id = mock_item_a().id;
                 r.pack_size = 1;
                 r.number_of_packs = 1.0;
+                r.barcode = Some(gtin.clone());
             }),
         )
         .unwrap();
 
-        let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id("new_invoice_line_id")
+        let InvoiceLine {
+            invoice_line_row: inbound_line,
+            stock_line_option,
+            ..
+        } = InvoiceLineRepository::new(&connection)
+            .query_by_filter(
+                InvoiceLineFilter::new().id(EqualFilter::equal_to("new_invoice_line_id")),
+            )
+            .unwrap()
+            .pop()
             .unwrap();
 
         assert_eq!(
@@ -315,6 +332,15 @@ mod test {
                 u
             })
         );
+
+        let barcode = BarcodeRepository::new(&connection)
+            .query_by_filter(BarcodeFilter::new().gtin(EqualFilter::equal_to(&gtin)))
+            .unwrap()
+            .pop()
+            .unwrap();
+
+        let stock_line = stock_line_option.unwrap();
+        assert_eq!(stock_line.barcode_id, Some(barcode.barcode_row.id));
 
         // pack to one preference is set
         let pack_to_one = StorePreferenceRow {
