@@ -9,8 +9,8 @@ use crate::{
     u32_to_i32,
 };
 use repository::{
-    InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow, RepositoryError,
-    StockLineRow, StorageConnection,
+    BarcodeRow, InvoiceLineRow, InvoiceLineRowType, InvoiceRow, InvoiceRowStatus, ItemRow,
+    RepositoryError, StockLineRow, StorageConnection,
 };
 
 use super::InsertStockInLine;
@@ -21,7 +21,15 @@ pub fn generate(
     input: InsertStockInLine,
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
-) -> Result<(Option<InvoiceRow>, InvoiceLineRow, Option<StockLineRow>), RepositoryError> {
+) -> Result<
+    (
+        Option<InvoiceRow>,
+        InvoiceLineRow,
+        Option<StockLineRow>,
+        Option<BarcodeRow>,
+    ),
+    RepositoryError,
+> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
     let new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
@@ -31,7 +39,7 @@ pub fn generate(
         false => new_line,
     };
 
-    let barcode_id = generate_barcode_id(&input, connection)?;
+    let barcode_option = generate_barcode(&input, connection)?;
 
     let new_batch_option = if should_upsert_batch(&input.r#type, &existing_invoice_row) {
         let new_batch = generate_batch(
@@ -42,7 +50,7 @@ pub fn generate(
                 store_id: existing_invoice_row.store_id.clone(),
                 supplier_link_id: existing_invoice_row.name_link_id.clone(),
                 on_hold: input.stock_on_hold,
-                barcode_id,
+                barcode_id: barcode_option.clone().map(|b| b.id.clone()),
             },
         );
         // If a new stock line has been created, update the stock_line_id on the invoice line
@@ -62,6 +70,7 @@ pub fn generate(
         generate_invoice_user_id_update(user_id, existing_invoice_row),
         new_line,
         new_batch_option,
+        barcode_option,
     ))
 }
 
@@ -126,13 +135,13 @@ fn should_upsert_batch(stock_in_type: &StockInType, existing_invoice_row: &Invoi
     }
 }
 
-fn generate_barcode_id(
+fn generate_barcode(
     input: &InsertStockInLine,
     connection: &StorageConnection,
-) -> Result<Option<String>, RepositoryError> {
+) -> Result<Option<BarcodeRow>, RepositoryError> {
     let gtin = &input.barcode;
 
-    let barcode_id = match gtin {
+    let barcode = match gtin {
         Some(gtin) => {
             // don't create barcode if gtin is empty
             if gtin == "" {
@@ -148,10 +157,10 @@ fn generate_barcode_id(
                 },
             )?;
 
-            Some(barcode_row.id)
+            Some(barcode_row)
         }
         None => None,
     };
 
-    Ok(barcode_id)
+    Ok(barcode)
 }

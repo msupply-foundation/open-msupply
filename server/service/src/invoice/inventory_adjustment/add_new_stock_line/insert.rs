@@ -267,6 +267,7 @@ mod test {
                     location: Some(NullableUpdate {
                         value: Some(mock_location_1().id),
                     }),
+                    barcode: Some("barcode".to_string()),
                     ..Default::default()
                 },
             )
