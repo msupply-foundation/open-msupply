@@ -18,6 +18,7 @@ mod stock_on_hand_add_item_name;
 mod store_add_created_date;
 mod sync_file_reference;
 mod user_change_last_synced_to_optional;
+mod stocktake_line_add_item_name;
 
 pub(crate) struct V2_00_00;
 
@@ -43,6 +44,7 @@ impl Migration for V2_00_00 {
         requisition_line_add_item_name::migrate(connection)?;
         stock_on_hand_add_item_name::migrate(connection)?;
         currency_add_is_active::migrate(connection)?;
+        stocktake_line_add_item_name::migrate(connection)?;
         Ok(())
     }
 }
