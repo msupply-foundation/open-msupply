@@ -61,6 +61,7 @@ export const CreateShipmentButtonComponent = () => {
       label={t('button.create-shipment')}
       onClick={onCreateShipment}
       disabled={isDisabled}
+      color="secondary"
     />
   );
 };
