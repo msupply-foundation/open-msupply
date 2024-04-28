@@ -1,3 +1,4 @@
+#[cfg(not(target_os = "android"))]
 use std::env;
 
 use service::settings::{Level, LogMode, LoggingSettings};
