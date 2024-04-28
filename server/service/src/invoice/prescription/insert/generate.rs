@@ -35,7 +35,7 @@ pub fn generate(
         currency_id: Some(currency.currency_row.id),
         currency_rate: 1.0,
         colour: None,
-        tax: None,
+        tax_rate: None,
         on_hold: false,
         comment: None,
         their_reference: None,

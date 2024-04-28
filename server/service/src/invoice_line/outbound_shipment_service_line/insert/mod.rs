@@ -14,7 +14,7 @@ pub struct InsertOutboundShipmentServiceLine {
     pub item_id: Option<String>,
     pub name: Option<String>,
     pub total_before_tax: f64,
-    pub tax: Option<f64>,
+    pub tax_rate: Option<f64>,
     pub note: Option<String>,
 }
 
@@ -245,7 +245,7 @@ mod test {
                     item_id: Some(mock_item_service_item().id),
                     name: Some("modified name".to_string()),
                     total_before_tax: 0.3,
-                    tax: Some(0.1),
+                    tax_rate: Some(0.1),
                     note: Some("note".to_string()),
                 },
             )
@@ -264,7 +264,7 @@ mod test {
                 u.item_link_id = mock_item_service_item().id;
                 u.item_name = "modified name".to_string();
                 u.total_before_tax = 0.3;
-                u.tax = Some(0.1);
+                u.tax_rate = Some(0.1);
                 u.note = Some("note".to_string());
                 u
             })

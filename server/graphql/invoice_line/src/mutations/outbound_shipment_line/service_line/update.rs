@@ -23,7 +23,7 @@ pub struct UpdateInput {
     item_id: Option<String>,
     name: Option<String>,
     total_before_tax: Option<f64>,
-    tax: Option<TaxInput>,
+    tax_rate: Option<TaxInput>,
     note: Option<String>,
 }
 
@@ -86,7 +86,7 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            tax,
+            tax_rate,
             note,
         } = self;
 
@@ -95,7 +95,7 @@ impl UpdateInput {
             item_id,
             name,
             total_before_tax,
-            tax: tax.and_then(|tax| {
+            tax_rate: tax_rate.and_then(|tax| {
                 Some(ShipmentTaxUpdate {
                     percentage: tax.percentage,
                 })
@@ -353,7 +353,7 @@ mod test {
                     item_id: Some("item_id".to_string()),
                     name: Some("some name".to_string()),
                     total_before_tax: Some(0.1),
-                    tax: Some(ShipmentTaxUpdate {
+                    tax_rate: Some(ShipmentTaxUpdate {
                         percentage: Some(10.0),
                     }),
                     note: Some("note".to_string())
@@ -370,7 +370,7 @@ mod test {
             "itemId": "item_id",
             "name": "some name",
             "totalBeforeTax": 0.1,
-            "tax": {
+            "taxRate": {
                 "percentage": 10
             },
             "note": "note"
