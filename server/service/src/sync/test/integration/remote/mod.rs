@@ -116,7 +116,7 @@ fn replace_system_name_ids(
         .expect("Cannot find inventory adjustment name");
 
     for record in records {
-        let IntegrationOperation::Upsert(record) = record else {
+        let IntegrationOperation::Upsert(record, None) = record else {
             continue;
         };
 

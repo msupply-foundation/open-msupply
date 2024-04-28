@@ -1077,6 +1077,7 @@ export type CurrencyConnector = {
 
 export type CurrencyFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isHomeCurrency?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -5638,6 +5639,7 @@ export type RequisitionLineNode = {
   inboundShipmentLines: InvoiceLineConnector;
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   /**
    * For request requisition: snapshot stats (when requisition was created)
    * For response requisition current item stats
@@ -6082,6 +6084,7 @@ export type StocktakeLineNode = {
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Int']['output']>;
@@ -6276,9 +6279,11 @@ export type SyncErrorNode = {
 
 export enum SyncErrorVariant {
   ApiVersionIncompatible = 'API_VERSION_INCOMPATIBLE',
+  CentralV6NotConfigured = 'CENTRAL_V6_NOT_CONFIGURED',
   ConnectionError = 'CONNECTION_ERROR',
   HardwareIdMismatch = 'HARDWARE_ID_MISMATCH',
   IncorrectPassword = 'INCORRECT_PASSWORD',
+  IntegrationError = 'INTEGRATION_ERROR',
   IntegrationTimeoutReached = 'INTEGRATION_TIMEOUT_REACHED',
   InvalidUrl = 'INVALID_URL',
   SiteAuthTimeout = 'SITE_AUTH_TIMEOUT',

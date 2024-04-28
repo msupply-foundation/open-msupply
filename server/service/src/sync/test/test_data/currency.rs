@@ -1,6 +1,6 @@
 use crate::sync::test::TestSyncIncomingRecord;
 use chrono::NaiveDate;
-use repository::CurrencyRow;
+use repository::{CurrencyRow, CurrencyRowDelete};
 
 const TABLE_NAME: &str = "currency";
 
@@ -39,6 +39,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "NZD".to_string(),
                 is_home_currency: true,
                 date_updated: Some(NaiveDate::from_ymd_opt(2020, 1, 1).unwrap()),
+                is_active: true,
             },
         ),
         TestSyncIncomingRecord::new_pull_upsert(
@@ -50,7 +51,16 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
                 code: "AUD".to_string(),
                 is_home_currency: false,
                 date_updated: Some(NaiveDate::from_ymd_opt(2022, 1, 1).unwrap()),
+                is_active: true,
             },
         ),
     ]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        CURRENCY_1.0,
+        CurrencyRowDelete(CURRENCY_1.0.to_string()),
+    )]
 }

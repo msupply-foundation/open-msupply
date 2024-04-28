@@ -82,14 +82,13 @@ impl RemoteDataSynchroniser {
     /// If there is a connection problem while initialisation is happening, we don't want to restart initialisation on next sync
     /// thus polling and a check for initialisation status was introduced. When initialisation is in progress,
     /// api will return `initialisation_in_progress` and `get_site_info` will return `initialisationStatus` = `started`
-    pub(crate) async fn request_initialisation(&self) -> Result<(), PostInitialisationError> {
+    pub(crate) async fn request_initialisation(
+        &self,
+        site_info: &SiteInfoV5,
+    ) -> Result<(), PostInitialisationError> {
         // First check if already initialising
-        let initialisation_status = self
-            .sync_api_v5
-            .get_site_info()
-            .await?
-            .initialisation_status;
-        let should_post_initialise = initialisation_status != InitialisationStatus::Started;
+        let should_post_initialise =
+            site_info.initialisation_status != InitialisationStatus::Started;
 
         if should_post_initialise {
             let Err(error) = self.sync_api_v5.post_initialise().await else {
