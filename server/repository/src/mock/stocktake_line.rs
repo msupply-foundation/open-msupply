@@ -1,5 +1,7 @@
 use crate::StocktakeLineRow;
 
+use super::{mock_item_a, mock_item_b};
+
 pub fn mock_stocktake_line_a() -> StocktakeLineRow {
     StocktakeLineRow {
         id: "stocktake_line_a".to_string(),
@@ -10,6 +12,7 @@ pub fn mock_stocktake_line_a() -> StocktakeLineRow {
         snapshot_number_of_packs: 10.0,
         counted_number_of_packs: Some(8.0),
         item_link_id: "item_a".to_string(),
+        item_name: mock_item_a().name,
         expiry_date: None,
         batch: None,
         pack_size: None,
@@ -30,6 +33,7 @@ pub fn mock_stocktake_line_b() -> StocktakeLineRow {
         snapshot_number_of_packs: 10.0,
         counted_number_of_packs: None,
         item_link_id: "item_b".to_string(),
+        item_name: mock_item_b().name,
         expiry_date: None,
         batch: None,
         pack_size: None,

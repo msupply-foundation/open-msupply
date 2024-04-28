@@ -25,8 +25,11 @@ pub trait CurrencyServiceTrait: Sync + Send {
     ) -> Result<ListResult<Currency>, ListError> {
         let repository = CurrencyRepository::new(&ctx.connection);
 
+        // Always filter by active currencies
+        let filter = filter.unwrap_or_default().is_active(true);
+
         Ok(ListResult {
-            rows: repository.query(filter.clone(), sort)?,
+            rows: repository.query(Some(filter.clone()), sort)?,
             count: i64_to_u32(repository.count(None)?),
         })
     }

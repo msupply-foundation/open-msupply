@@ -7,6 +7,7 @@ pub fn currency_a() -> CurrencyRow {
         rate: 1.0,
         is_home_currency: true,
         date_updated: None,
+        is_active: true,
     }
 }
 
@@ -17,6 +18,7 @@ pub fn currency_b() -> CurrencyRow {
         rate: 0.9,
         is_home_currency: false,
         date_updated: None,
+        is_active: true,
     }
 }
 
@@ -27,6 +29,7 @@ pub fn currency_c() -> CurrencyRow {
         rate: 1.6,
         is_home_currency: false,
         date_updated: None,
+        is_active: true,
     }
 }
 
@@ -37,6 +40,7 @@ pub fn currency_d() -> CurrencyRow {
         rate: 1.4,
         is_home_currency: false,
         date_updated: None,
+        is_active: true,
     }
 }
 

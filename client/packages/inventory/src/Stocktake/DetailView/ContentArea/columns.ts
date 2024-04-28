@@ -83,12 +83,16 @@ export const useStocktakeColumns = ({
         'itemName',
         {
           Cell: TooltipTextCell,
-          getSortValue: row => {
-            return row.item?.name ?? '';
-          },
-          accessor: ({ rowData }) => {
-            return rowData.item?.name ?? '';
-          },
+          getSortValue: row =>
+            getColumnPropertyAsString(row, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
+          accessor: ({ rowData }) =>
+            getColumnProperty(rowData, [
+              { path: ['lines', 'itemName'] },
+              { path: ['itemName'], default: '' },
+            ]),
         },
       ],
       [

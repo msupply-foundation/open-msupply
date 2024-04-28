@@ -1,19 +1,30 @@
-use std::path::Path;
+use std::{
+    sync::{Arc, RwLock},
+    vec,
+};
 
-use repository::{ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRowRepository};
-use util::{format_error, is_central_server, move_file, sanitize_filename};
+use actix_multipart::form::tempfile::TempFile;
+use repository::{
+    ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
+    SyncFileReferenceRowRepository,
+};
+use util::format_error;
 
 use crate::{
     service_provider::ServiceProvider,
     settings::Settings,
     static_files::{StaticFile, StaticFileCategory, StaticFileService},
-    sync::{api::SyncApiV5, translations::ToSyncRecordTranslationType},
+    sync::{
+        api::SyncApiV5, api_v6::SiteStatusV6, synchroniser::integrate_and_translate_sync_buffer,
+        translations::ToSyncRecordTranslationType, CentralServerConfig,
+    },
 };
 
 use super::{
     api_v6::{
-        SyncBatchV6, SyncDownloadFileRequestV6, SyncParsedErrorV6, SyncPullRequestV6,
-        SyncPushRequestV6, SyncPushSuccessV6, SyncRecordV6, SyncUploadFileRequestV6,
+        SiteStatusRequestV6, SyncBatchV6, SyncDownloadFileRequestV6, SyncParsedErrorV6,
+        SyncPullRequestV6, SyncPushRequestV6, SyncPushSuccessV6, SyncRecordV6,
+        SyncUploadFileRequestV6,
     },
     translations::translate_changelogs_to_sync_records,
 };
@@ -30,7 +41,7 @@ pub async fn pull(
 ) -> Result<SyncBatchV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !is_central_server() {
+    if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -39,6 +50,11 @@ pub async fn pull(
         .get_site_info()
         .await
         .map_err(Error::from)?;
+
+    // Site should retry if we are currently integrating records for this site
+    if is_integrating(response.site_id) {
+        return Err(Error::IntegrationInProgress);
+    }
 
     let ctx = service_provider.basic_context()?;
     let changelog_repo = ChangelogRepository::new(&ctx.connection);
@@ -79,16 +95,19 @@ pub async fn pull(
     );
     log::debug!("Sending records as central server: {:#?}", records);
 
+    let is_last_batch = total_records <= batch_size as u64;
+
     Ok(SyncBatchV6 {
         total_records,
         end_cursor,
         records,
+        is_last_batch,
     })
 }
 
 /// Receive Records from a remote open-mSupply Server
 pub async fn push(
-    service_provider: &ServiceProvider,
+    service_provider: Arc<ServiceProvider>,
     SyncPushRequestV6 {
         batch,
         sync_v5_settings,
@@ -96,7 +115,7 @@ pub async fn push(
 ) -> Result<SyncPushSuccessV6, SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
-    if !is_central_server() {
+    if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -105,6 +124,11 @@ pub async fn push(
         .get_site_info()
         .await
         .map_err(Error::from)?;
+
+    // Site should retry if we are currently integrating records for this site
+    if is_integrating(response.site_id) {
+        return Err(Error::IntegrationInProgress);
+    }
 
     log::info!(
         "Receiving {}/{} records from site {}",
@@ -116,7 +140,7 @@ pub async fn push(
 
     let SyncBatchV6 {
         records,
-        total_records,
+        is_last_batch,
         ..
     } = batch;
 
@@ -130,15 +154,58 @@ pub async fn push(
         repo.upsert_one(&buffer_row)?;
     }
 
-    // TODO we need to trigger integrate records for just 1 site?
-    // See issue: https://github.com/msupply-foundation/open-msupply/issues/3294
-    if total_records <= records_in_this_batch {
-        service_provider.sync_trigger.trigger();
+    if is_last_batch {
+        spawn_integration(service_provider, response.site_id);
     }
 
     Ok(SyncPushSuccessV6 {
         records_pushed: records_in_this_batch,
     })
+}
+
+pub async fn get_site_status(
+    SiteStatusRequestV6 { sync_v5_settings }: SiteStatusRequestV6,
+) -> Result<SiteStatusV6, SyncParsedErrorV6> {
+    use SyncParsedErrorV6 as Error;
+
+    if !CentralServerConfig::is_central_server() {
+        return Err(Error::NotACentralServer);
+    }
+
+    let response = SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| Error::OtherServerError(format_error(&e)))?
+        .get_site_info()
+        .await
+        .map_err(Error::from)?;
+
+    let is_integrating = is_integrating(response.site_id);
+
+    Ok(SiteStatusV6 { is_integrating })
+}
+
+fn spawn_integration(service_provider: Arc<ServiceProvider>, site_id: i32) -> () {
+    tokio::spawn(async move {
+        let ctx = match service_provider.basic_context() {
+            Ok(ctx) => ctx,
+            Err(e) => {
+                log::error!("Error getting basic context: {}", e);
+                return;
+            }
+        };
+
+        set_integrating(site_id, true);
+
+        match integrate_and_translate_sync_buffer(&ctx.connection, true, None, Some(site_id)) {
+            Ok(_) => {
+                log::info!("Integration complete for site {}", site_id);
+            }
+            Err(e) => {
+                log::error!("Error integrating records for site {}: {}", site_id, e);
+            }
+        }
+
+        set_integrating(site_id, false);
+    });
 }
 
 /// Send a file to a remote open-mSupply Server
@@ -160,7 +227,7 @@ pub async fn download_file(
         id
     );
 
-    if !is_central_server() {
+    if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
@@ -188,90 +255,66 @@ pub async fn download_file(
 pub async fn upload_file(
     settings: &Settings,
     service_provider: &ServiceProvider,
-    file_id: String,
     SyncUploadFileRequestV6 {
-        files,
+        file_id,
         sync_v5_settings,
     }: SyncUploadFileRequestV6,
+    file_part: TempFile,
 ) -> Result<(), SyncParsedErrorV6> {
     use SyncParsedErrorV6 as Error;
 
     log::info!("Receiving a file via sync : {}", file_id);
 
-    if !is_central_server() {
+    if !CentralServerConfig::is_central_server() {
         return Err(Error::NotACentralServer);
     }
     // Check credentials again mSupply central server
-    let _ = SyncApiV5::new(sync_v5_settings.into_inner())
+    let _ = SyncApiV5::new(sync_v5_settings)
         .map_err(|e| Error::OtherServerError(format_error(&e)))?
         .get_site_info()
         .await
         .map_err(Error::from)?;
 
     let file_service = StaticFileService::new(&settings.server.base_dir)?;
-    let db_connection = service_provider
-        .connection()
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?;
+    let ctx = service_provider.basic_context()?;
 
-    let repo = SyncFileReferenceRowRepository::new(&db_connection);
-    let mut sync_file_reference = repo
-        .find_one_by_id(&file_id)
-        .map_err(|e| Error::OtherServerError(format_error(&e)))?
-        .ok_or({
-            log::error!(
-                "Sync File Reference not found, can't upload until this is synced: {}",
-                file_id
-            );
-            Error::SyncFileNotFound
-        })?;
+    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+    let sync_file_reference = repo
+        .find_one_by_id(&file_id)?
+        .ok_or(Error::SyncFileNotFound(file_id.clone()))?;
 
-    // for each uploaded file reserve a file in the static files directory, then copy the file from the temp file location
-    // Should only be 1 file, but we will loop through them all just in case we need to do some clean up..
-    for file in files {
-        let static_file_category = StaticFileCategory::SyncFile(
+    file_service.move_temp_file(
+        file_part,
+        &StaticFileCategory::SyncFile(
             sync_file_reference.table_name.clone(),
             sync_file_reference.record_id.clone(),
-        );
-        let sanitized_filename = file.file_name.map(sanitize_filename).unwrap_or_default();
+        ),
+        Some(file_id),
+    )?;
 
-        let static_file = file_service.reserve_file(
-            &sanitized_filename,
-            &static_file_category,
-            Some(file_id.clone()),
-        )?;
-        let destination = Path::new(&static_file.path);
-
-        // Copy the file from the temp location to the final location
-        // TODO: Ideally these fs operations should be done in a separate thread e.g. using web::block (see handle_upload in static_files.rs)
-        let result = move_file(file.file.path(), destination);
-        match result {
-            Ok(_) => {
-                sync_file_reference.uploaded_bytes = sync_file_reference.total_bytes;
-                let result = repo.upsert_one(&sync_file_reference);
-                match result {
-                    Ok(_) => {}
-                    Err(err) => {
-                        log::error!(
-                            "Error updating sync file reference: {} - DELETING UPLOADED FILE",
-                            err
-                        );
-                        // Delete uploaded file
-                        let _ = std::fs::remove_file(file.file.path());
-                    }
-                }
-            }
-            Err(err) => {
-                log::error!(
-                    "Error moving file {:?} to {:?} - {}",
-                    file.file.path(),
-                    destination,
-                    err
-                );
-                // Delete uploaded file
-                let _ = std::fs::remove_file(file.file.path());
-            }
-        }
-    }
+    repo.upsert_one(&SyncFileReferenceRow {
+        // Do we really need to store this ?
+        // I can see total bytes could be useful, but uploaded ?
+        uploaded_bytes: sync_file_reference.total_bytes,
+        ..sync_file_reference
+    })?;
 
     Ok(())
+}
+
+static SITES_BEING_INTEGRATED: RwLock<Vec<i32>> = RwLock::new(vec![]);
+
+fn is_integrating(site_id: i32) -> bool {
+    let sites_being_integrated = SITES_BEING_INTEGRATED.read().unwrap();
+    sites_being_integrated.contains(&site_id)
+}
+
+fn set_integrating(site_id: i32, is_integrating: bool) {
+    let mut sites_being_integrated = SITES_BEING_INTEGRATED.write().unwrap();
+
+    if is_integrating {
+        sites_being_integrated.push(site_id);
+    } else {
+        sites_being_integrated.retain(|id| *id != site_id);
+    }
 }

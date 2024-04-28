@@ -34,6 +34,7 @@ const createDraftInboundLine = ({
     location: undefined,
     type,
     item,
+    itemName: item.name,
     ...seed,
   };
 

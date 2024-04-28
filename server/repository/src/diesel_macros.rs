@@ -247,6 +247,16 @@ macro_rules! apply_date_time_filter {
     }};
 }
 
+macro_rules! apply_number_filter {
+    ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
+        if let Some(number_filter) = $filter_field {
+            if let Some(range) = number_filter.not_in_range {
+                $query = $query.filter($dsl_field.lt(range.start).or($dsl_field.gt(range.end)));
+            }
+        }
+    }};
+}
+
 macro_rules! apply_date_filter {
     ($query:ident, $filter_field:expr, $dsl_field:expr ) => {{
         if let Some(date_filter) = $filter_field {
@@ -363,6 +373,7 @@ macro_rules! apply_sort_asc_nulls_first {
 pub(crate) use apply_date_filter;
 pub(crate) use apply_date_time_filter;
 pub(crate) use apply_equal_filter;
+pub(crate) use apply_number_filter;
 pub(crate) use apply_sort;
 pub(crate) use apply_sort_asc_nulls_first;
 pub(crate) use apply_sort_asc_nulls_last;
