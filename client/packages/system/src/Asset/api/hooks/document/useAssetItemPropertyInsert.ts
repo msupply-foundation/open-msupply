@@ -4,24 +4,30 @@ import {
   useQueryClient,
 } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
-import { AssetCatalogueItemFragment } from '../../operations.generated';
+import { AssetProperty } from '../../api';
 
-export const useAssetItemInsert = () => {
+export const useAssetItemPropertyInsert = () => {
   const queryClient = useQueryClient();
   const api = useAssetApi();
   const storeId = useAuthContext().storeId;
 
   const invalidateQueries = () =>
     queryClient.invalidateQueries(api.keys.base());
-  const { mutateAsync: insertAssetCatalogueItem } = useMutation(
-    async (asset: AssetCatalogueItemFragment) => api.insert(asset, storeId),
+
+  const { mutateAsync: insertAssetCatalogueItemProperty } = useMutation(
+    async ({
+      catalogueItemId,
+      property,
+    }: {
+      catalogueItemId: string;
+      property: AssetProperty;
+    }) => api.insertProperty(catalogueItemId, property, storeId),
     {
-      onSettled: () => queryClient.invalidateQueries(api.keys.base()),
       onError: e => {
         console.error(e);
       },
     }
   );
 
-  return { insertAssetCatalogueItem, invalidateQueries };
+  return { invalidateQueries, insertAssetCatalogueItemProperty };
 };
