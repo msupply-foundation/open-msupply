@@ -11,7 +11,7 @@ pub fn generate(
         item_id: input_item_id,
         name: input_name,
         total_before_tax: input_total_before_tax,
-        tax: input_tax,
+        tax_rate: input_tax,
         note: input_note,
     }: UpdateInboundShipmentServiceLine,
     existing_line: InvoiceLine,
@@ -51,11 +51,11 @@ pub fn generate(
     }
 
     if let Some(tax) = input_tax {
-        update_line.tax = tax.percentage;
+        update_line.tax_rate = tax.percentage;
     }
 
     update_line.total_after_tax =
-        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax_rate);
 
     if let Some(note) = input_note {
         update_line.note = Some(note);
@@ -115,7 +115,7 @@ mod inbound_shipment_service_line_update_test {
                 item_id: None,
                 name: None,
                 total_before_tax: None,
-                tax: None,
+                tax_rate: None,
                 note: None,
             },
             line.clone(),
@@ -134,7 +134,7 @@ mod inbound_shipment_service_line_update_test {
                 item_id: None,
                 name: Some("input name".to_string()),
                 total_before_tax: None,
-                tax: None,
+                tax_rate: None,
                 note: None,
             },
             line.clone(),
@@ -153,7 +153,7 @@ mod inbound_shipment_service_line_update_test {
                 item_id: Some(item2.id.to_owned()),
                 name: Some("input name 2".to_string()),
                 total_before_tax: None,
-                tax: None,
+                tax_rate: None,
                 note: None,
             },
             line.clone(),
@@ -172,7 +172,7 @@ mod inbound_shipment_service_line_update_test {
                 item_id: Some(item2.id.to_owned()),
                 name: None,
                 total_before_tax: None,
-                tax: None,
+                tax_rate: None,
                 note: None,
             },
             line.clone(),

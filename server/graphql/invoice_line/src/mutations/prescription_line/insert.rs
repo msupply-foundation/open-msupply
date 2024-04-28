@@ -162,7 +162,7 @@ impl InsertInput {
             stock_line_id,
             number_of_packs,
             total_before_tax: None,
-            tax: None,
+            tax_rate: None,
             note,
         }
     }
@@ -530,7 +530,7 @@ mod test {
                     number_of_packs: 1.0,
                     total_before_tax: None,
                     note: None,
-                    tax: None,
+                    tax_rate: None,
                 }
             );
             Ok(InvoiceLine {

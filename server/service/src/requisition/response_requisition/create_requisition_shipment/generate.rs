@@ -54,7 +54,7 @@ pub fn generate(
         verified_datetime: None,
         colour: None,
         linked_invoice_id: None,
-        tax: None,
+        tax_rate: None,
         clinician_link_id: None,
         original_shipment_id: None,
     };
@@ -88,7 +88,7 @@ pub fn generate_invoice_lines(
             // Default
             total_before_tax: 0.0,
             total_after_tax: 0.0,
-            tax: None,
+            tax_rate: None,
             note: None,
             location_id: None,
             batch: None,

@@ -75,7 +75,7 @@ fn generate_line(
         number_of_packs,
         location,
         total_before_tax,
-        tax: _,
+        tax_rate: _,
     }: InsertInboundShipmentLine,
     ItemRow {
         name: item_name,
@@ -83,14 +83,14 @@ fn generate_line(
         ..
     }: ItemRow,
     InvoiceRow {
-        tax,
+        tax_rate,
         currency_id,
         currency_rate,
         ..
     }: InvoiceRow,
 ) -> Result<InvoiceLineRow, RepositoryError> {
     let total_before_tax = total_before_tax.unwrap_or(cost_price_per_pack * number_of_packs);
-    let total_after_tax = calculate_total_after_tax(total_before_tax, tax);
+    let total_after_tax = calculate_total_after_tax(total_before_tax, tax_rate);
     let foreign_currency_price_before_tax = calculate_foreign_currency_total(
         connection,
         total_before_tax,
@@ -115,7 +115,7 @@ fn generate_line(
         stock_line_id: None,
         total_before_tax,
         total_after_tax,
-        tax,
+        tax_rate,
         note: None,
         inventory_adjustment_reason_id: None,
         return_reason_id: None,

@@ -79,7 +79,7 @@ fn generate_line(
         number_of_packs,
         total_before_tax,
         total_after_tax,
-        tax,
+        tax_rate,
         r#type,
         foreign_currency_price_before_tax,
         ..
@@ -117,7 +117,7 @@ fn generate_line(
         stock_line_id: Some(stock_line_id),
         total_before_tax,
         total_after_tax,
-        tax,
+        tax_rate,
         r#type,
         note: input.note,
         inventory_adjustment_reason_id: None,
@@ -139,12 +139,12 @@ fn generate_line(
         update_line.total_before_tax
     };
 
-    if let Some(tax) = input.tax {
-        update_line.tax = tax.percentage;
+    if let Some(tax) = input.tax_rate {
+        update_line.tax_rate = tax.percentage;
     }
 
     update_line.total_after_tax =
-        calculate_total_after_tax(update_line.total_before_tax, update_line.tax);
+        calculate_total_after_tax(update_line.total_before_tax, update_line.tax_rate);
 
     update_line
 }
