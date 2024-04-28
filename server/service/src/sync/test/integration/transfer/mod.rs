@@ -1,4 +1,5 @@
 mod requisition;
+mod returns;
 mod shipments;
 use super::{
     central_server_configurations::{ConfigureCentralServer, SiteConfiguration},
