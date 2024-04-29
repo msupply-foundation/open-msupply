@@ -18,7 +18,9 @@ pub enum SyncApiErrorCode {
     SiteHasNoStore,
     SiteAuthTimeout,
     IntegrationTimeoutReached,
+    IntegrationError,
     ApiVersionIncompatible,
+    CentralV6NotConfigured,
 }
 
 table! {

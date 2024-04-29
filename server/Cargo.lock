@@ -5087,11 +5087,11 @@ dependencies = [
  "rust-embed",
  "rustls 0.20.9",
  "rustls-pemfile 1.0.4",
- "sanitize-filename",
  "serde 1.0.198",
  "serde_json",
  "service",
  "simple-log",
+ "thiserror",
  "tokio",
  "util",
  "winres",
@@ -5102,6 +5102,7 @@ name = "service"
 version = "0.1.0"
 dependencies = [
  "actix-files",
+ "actix-multipart",
  "actix-rt",
  "actix-web",
  "anyhow",
@@ -5131,6 +5132,7 @@ dependencies = [
  "simple-log",
  "telnet",
  "temperature-sensor",
+ "tempfile",
  "tera",
  "thiserror",
  "tokio",
@@ -5438,7 +5440,7 @@ checksum = "99f2cc260bea5219955ab4832c9600a41b87101d280939edae6dd10b3c68a4f3"
 [[package]]
 name = "temperature-sensor"
 version = "0.1.0"
-source = "git+https://github.com/openmsupply/temperature-sensor.git#5764b9b4d8f673060ec492d95f11bf13bbf19b46"
+source = "git+https://github.com/openmsupply/temperature-sensor.git?tag=v0.1.0-beta3#5764b9b4d8f673060ec492d95f11bf13bbf19b46"
 dependencies = [
  "chrono",
  "json",
@@ -5978,6 +5980,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "env_logger 0.8.4",
+ "sanitize-filename",
  "serde 1.0.198",
  "serde_json",
  "sha2",

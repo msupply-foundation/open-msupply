@@ -215,7 +215,7 @@ fn create_filtered_query(filter: Option<AssetFilter>) -> BoxedAssetQuery {
 
         apply_equal_filter!(query, category_id, asset_dsl::asset_category_id);
         apply_equal_filter!(query, class_id, asset_dsl::asset_class_id);
-        apply_equal_filter!(query, type_id, asset_dsl::asset_type_id);
+        apply_equal_filter!(query, type_id, asset_dsl::asset_catalogue_type_id);
 
         if let Some(value) = is_non_catalogue {
             apply_equal_filter!(

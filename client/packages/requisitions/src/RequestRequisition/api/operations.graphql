@@ -44,6 +44,7 @@ fragment RequestLine on RequisitionLineNode {
   requestedQuantity
   suggestedQuantity
   comment
+  itemName
 
   itemStats {
     __typename

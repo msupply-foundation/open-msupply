@@ -66,7 +66,7 @@ pub fn asset_types(
         },
     )?;
     let connection_manager = ctx.get_connection_manager().connection()?;
-    let categories = get_asset_types(
+    let types = get_asset_types(
         &connection_manager,
         page.map(PaginationOption::from),
         filter.map(|filter| filter.to_domain()),
@@ -76,7 +76,7 @@ pub fn asset_types(
     .map_err(StandardGraphqlError::from_list_error)?;
 
     Ok(AssetTypesResponse::Response(
-        AssetTypeConnector::from_domain(categories),
+        AssetTypeConnector::from_domain(types),
     ))
 }
 

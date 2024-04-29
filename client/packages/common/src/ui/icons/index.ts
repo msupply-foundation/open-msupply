@@ -4,6 +4,7 @@ export { ArrowRightIcon } from './ArrowRight';
 export { BarChartIcon } from './BarChart';
 export { BookIcon } from './Book';
 export { CartIcon } from './Cart';
+export { CentralIcon } from './Central';
 export { CheckIcon } from './Check';
 export { CheckboxCheckedIcon } from './CheckboxChecked';
 export { CheckboxEmptyIcon } from './CheckboxEmpty';

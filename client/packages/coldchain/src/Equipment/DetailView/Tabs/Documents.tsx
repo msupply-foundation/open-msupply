@@ -56,6 +56,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
   const deleteFile = (id: string) => {
     fetch(`${Environment.SYNC_FILES_URL}/asset/${draft.id}/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
     })
       .then(response => {
         if (response.ok) {
@@ -84,6 +85,7 @@ export const Documents = ({ draft }: { draft: DraftAsset }) => {
         headers: {
           Accept: 'application/json',
         },
+        credentials: 'include',
         body: formData,
       });
       if (response.ok) {

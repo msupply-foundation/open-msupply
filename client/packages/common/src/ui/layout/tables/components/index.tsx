@@ -18,17 +18,12 @@ export const BasicCellLayout: FC<
         isError ? `2px solid ${theme.palette.error.main}` : 'none',
       borderRadius: '8px',
       padding: '4px 8px',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      width,
     }}
   >
-    <div
-      style={{
-        width,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      }}
-    >
-      {children}
-    </div>
+    {children}
   </Box>
 );
 
@@ -37,14 +32,13 @@ export const BasicCell = <T extends RecordWithId>({
   rowData,
   localisedText,
   localisedDate,
-  isError,
 }: CellProps<T>): ReactElement => (
-  <BasicCellLayout isError={isError}>
+  <>
     {column.formatter(column.accessor({ rowData }), {
       t: localisedText,
       d: localisedDate,
     })}
-  </BasicCellLayout>
+  </>
 );
 
 export const BasicHeader = <T extends RecordWithId>({

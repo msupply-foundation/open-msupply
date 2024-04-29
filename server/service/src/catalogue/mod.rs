@@ -4,12 +4,22 @@ use self::delete::{delete_asset_catalogue_item, DeleteAssetCatalogueItemError};
 use self::insert::{
     insert_asset_catalogue_item, InsertAssetCatalogueItem, InsertAssetCatalogueItemError,
 };
+use self::insert_property::{
+    insert_asset_catalogue_item_property, InsertAssetCatalogueItemProperty,
+    InsertAssetCatalogueItemPropertyError,
+};
 use self::query_catalogue_item::{get_asset_catalogue_item, get_asset_catalogue_items};
+use self::query_catalogue_property::{
+    get_asset_catalogue_properties, get_asset_catalogue_property,
+};
 use self::query_category::{get_asset_categories, get_asset_category};
 use self::query_class::{get_asset_class, get_asset_classes};
 use self::query_type::{get_asset_type, get_asset_types};
 
 use super::{ListError, ListResult};
+use repository::asset_catalogue_item_property_row::AssetCatalogueItemPropertyRow;
+use repository::asset_catalogue_property::AssetCataloguePropertyFilter;
+use repository::asset_catalogue_property_row::AssetCataloguePropertyRow;
 use repository::RepositoryError;
 use repository::{
     assets::{
@@ -27,7 +37,9 @@ use repository::{
 
 pub mod delete;
 pub mod insert;
+pub mod insert_property;
 pub mod query_catalogue_item;
+pub mod query_catalogue_property;
 pub mod query_category;
 pub mod query_class;
 pub mod query_type;
@@ -118,6 +130,30 @@ pub trait AssetCatalogueServiceTrait: Sync + Send {
         id: String,
     ) -> Result<String, DeleteAssetCatalogueItemError> {
         delete_asset_catalogue_item(ctx, id)
+    }
+
+    fn get_asset_catalogue_properties(
+        &self,
+        connection: &StorageConnection,
+        filter: Option<AssetCataloguePropertyFilter>,
+    ) -> Result<ListResult<AssetCataloguePropertyRow>, ListError> {
+        get_asset_catalogue_properties(connection, filter)
+    }
+
+    fn get_asset_catalogue_property(
+        &self,
+        connection: &StorageConnection,
+        id: String,
+    ) -> Result<Option<AssetCataloguePropertyRow>, RepositoryError> {
+        get_asset_catalogue_property(connection, id)
+    }
+
+    fn insert_asset_catalogue_item_property(
+        &self,
+        ctx: &ServiceContext,
+        property: InsertAssetCatalogueItemProperty,
+    ) -> Result<AssetCatalogueItemPropertyRow, InsertAssetCatalogueItemPropertyError> {
+        insert_asset_catalogue_item_property(ctx, property)
     }
 }
 

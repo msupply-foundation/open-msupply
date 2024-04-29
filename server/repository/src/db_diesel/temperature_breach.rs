@@ -7,7 +7,6 @@ use super::{
     DBType, StorageConnection, TemperatureBreachRow, TemperatureBreachType,
 };
 use diesel::prelude::*;
-use util::inline_init;
 
 use crate::{
     diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
@@ -33,12 +32,6 @@ pub struct TemperatureBreachFilter {
     pub unacknowledged: Option<bool>,
     pub sensor: Option<SensorFilter>,
     pub location: Option<LocationFilter>,
-}
-
-impl EqualFilter<TemperatureBreachType> {
-    pub fn equal_to_breach_type(value: &TemperatureBreachType) -> Self {
-        inline_init(|r: &mut Self| r.equal_to = Some(value.to_owned()))
-    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -154,20 +147,6 @@ impl<'a> TemperatureBreachRepository<'a> {
 
 type BoxedTemperatureBreachQuery = temperature_breach::BoxedQuery<'static, DBType>;
 
-impl TemperatureBreachType {
-    pub fn equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_to = Some(self.clone()))
-    }
-
-    pub fn not_equal_to(&self) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.not_equal_to = Some(self.clone()))
-    }
-
-    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
-        inline_init(|r: &mut EqualFilter<Self>| r.equal_any = Some(value))
-    }
-}
-
 fn to_domain(temperature_breach_row: TemperatureBreachRow) -> TemperatureBreach {
     TemperatureBreach {
         temperature_breach_row,
@@ -217,5 +196,14 @@ impl TemperatureBreachFilter {
     pub fn location(mut self, filter: LocationFilter) -> Self {
         self.location = Some(filter);
         self
+    }
+}
+
+impl TemperatureBreachType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
     }
 }

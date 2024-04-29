@@ -23,6 +23,7 @@ table! {
 
         // stock line related fields:
         item_link_id -> Text,
+        item_name -> Text,
         batch -> Nullable<Text>,
         expiry_date -> Nullable<Date>,
         pack_size -> Nullable<Integer>,
@@ -56,6 +57,7 @@ pub struct StocktakeLineRow {
 
     // stock line related fields:
     pub item_link_id: String,
+    pub item_name: String,
     pub batch: Option<String>,
     pub expiry_date: Option<NaiveDate>,
     pub pack_size: Option<i32>,
