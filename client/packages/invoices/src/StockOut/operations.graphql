@@ -34,7 +34,7 @@ fragment StockOutLine on InvoiceLineNode {
   note
   totalBeforeTax
   totalAfterTax
-  taxPercentage
+  taxRate
   note
   itemName
 

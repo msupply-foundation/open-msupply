@@ -18,7 +18,7 @@ export const useOutboundUpdateInvoiceTax = () => {
     (tax: number) =>
       mutateAsync({
         id: data?.id ?? '',
-        taxPercentage: tax,
+        taxRate: tax,
       }),
     [mutateAsync]
   );
