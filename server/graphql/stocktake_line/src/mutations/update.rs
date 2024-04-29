@@ -270,6 +270,7 @@ mod test {
                     counted_number_of_packs: Some(20.0),
                     comment: Some("comment".to_string()),
                     item_link_id: "item id".to_string(),
+                    item_name: "item name".to_string(),
                     batch: Some("batch".to_string()),
                     expiry_date: Some(NaiveDate::from_ymd_opt(2023, 1, 22).unwrap()),
                     pack_size: Some(10),

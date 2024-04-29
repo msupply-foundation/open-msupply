@@ -1,10 +1,10 @@
 use chrono::{NaiveDate, Utc};
 use repository::{
-    ActivityLogType, EqualFilter, ItemRowType, MasterListFilter, MasterListLineFilter,
-    MasterListLineRepository, MasterListRepository, NumberRowType, RepositoryError,
-    StockLineFilter, StockLineRepository, StockLineRow, Stocktake, StocktakeFilter,
-    StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository, StocktakeRow,
-    StocktakeRowRepository, StocktakeStatus, StorageConnection,
+    ActivityLogType, EqualFilter, ItemRowRepository, ItemRowType, MasterListFilter,
+    MasterListLineFilter, MasterListLineRepository, MasterListRepository, NumberRowType,
+    RepositoryError, StockLineFilter, StockLineRepository, StockLineRow, Stocktake,
+    StocktakeFilter, StocktakeLineRow, StocktakeLineRowRepository, StocktakeRepository,
+    StocktakeRow, StocktakeRowRepository, StocktakeStatus, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -178,6 +178,11 @@ fn generate_lines_from_master_list(
                 Some(store_id.to_string()),
             )
             .unwrap();
+        let item_name = ItemRowRepository::new(&connection)
+            .find_active_by_id(item_id)
+            .unwrap()
+            .unwrap()
+            .name;
 
         if stock_lines.len() == 0 {
             result.push(StocktakeLineRow {
@@ -185,6 +190,7 @@ fn generate_lines_from_master_list(
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: 0.0,
                 item_link_id: item_id.to_string(),
+                item_name,
                 location_id: None,
                 batch: None,
                 expiry_date: None,
@@ -222,6 +228,7 @@ fn generate_lines_from_master_list(
                     stocktake_id: stocktake_id.to_string(),
                     snapshot_number_of_packs: total_number_of_packs,
                     item_link_id: line.item_row.id,
+                    item_name: line.item_row.name,
                     location_id,
                     batch,
                     expiry_date,
@@ -281,6 +288,7 @@ fn generate_lines_from_location(
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
                 item_link_id: line.item_row.id,
+                item_name: line.item_row.name,
                 location_id,
                 batch,
                 expiry_date,
@@ -336,6 +344,7 @@ pub fn generate_lines_with_stock(
                 stocktake_id: stocktake_id.to_string(),
                 snapshot_number_of_packs: total_number_of_packs,
                 item_link_id: line.item_row.id,
+                item_name: line.item_row.name,
                 location_id,
                 batch,
                 expiry_date,

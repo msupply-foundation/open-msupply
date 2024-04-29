@@ -16,6 +16,7 @@ mod report_views;
 mod requisition_line_add_item_name;
 mod returns;
 mod stock_on_hand_add_item_name;
+mod stocktake_line_add_item_name;
 mod store_add_created_date;
 mod sync_file_reference;
 mod user_change_last_synced_to_optional;
@@ -45,6 +46,7 @@ impl Migration for V2_00_00 {
         stock_on_hand_add_item_name::migrate(connection)?;
         currency_add_is_active::migrate(connection)?;
         invoice_rename_tax::migrate(connection)?;
+        stocktake_line_add_item_name::migrate(connection)?;
         Ok(())
     }
 }
