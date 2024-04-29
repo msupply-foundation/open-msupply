@@ -69,6 +69,13 @@ export const useRefreshPackVariant = () => {
   }, [data, setItems]);
 };
 
+export const usePackVariantsEnabled = () => {
+  // return Environment.FEATURE_PACK_VARIANTS;
+  const { items } = usePackVariantStore();
+  // If any pack variants are defined, then pack variants feature is enabled
+  return Object.keys(items).length > 0;
+};
+
 export const usePackVariant = (
   itemId: string,
   variantName: string | null
@@ -92,7 +99,9 @@ export const usePackVariant = (
   const UserSelectedPackVariantId = UserSelectedPackVariant?.[itemId];
   const item = usePackVariantStore(state => state.items[itemId], isEqual);
 
-  if (!item || item.packVariants.length == 0) {
+  const packVariantsEnabled = usePackVariantsEnabled();
+
+  if (!packVariantsEnabled || !item || item.packVariants.length == 0) {
     return {
       asPackVariant: (packSize, defaultPackVariant) =>
         commonAsPackVariant({ packSize, variantName, t, defaultPackVariant }),
