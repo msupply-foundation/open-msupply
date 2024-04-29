@@ -49,8 +49,8 @@ export const useDraftServiceLines = () => {
         if (line.id !== patch.id) {
           return line;
         }
-        const { totalBeforeTax, taxPercentage } = patch;
-        const taxAmount = ((totalBeforeTax ?? 0) * (taxPercentage ?? 0)) / 100;
+        const { totalBeforeTax, taxRate } = patch;
+        const taxAmount = ((totalBeforeTax ?? 0) * (taxRate ?? 0)) / 100;
         const totalAfterTax = (totalBeforeTax ?? 0) + taxAmount;
         return { ...line, ...patch, totalAfterTax, isUpdated: true };
       });

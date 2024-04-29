@@ -79,10 +79,7 @@ const inboundParsers = {
       otherPartyId: 'otherParty' in patch ? patch.otherParty?.id : undefined,
       theirReference:
         'theirReference' in patch ? patch.theirReference : undefined,
-      tax:
-        'taxPercentage' in patch
-          ? { percentage: patch.taxPercentage }
-          : undefined,
+      taxRate: 'taxRate' in patch ? { percentage: patch.taxRate } : undefined,
       currencyId: 'currency' in patch ? patch.currency?.id : undefined,
       currencyRate: 'currencyRate' in patch ? patch.currencyRate : undefined,
     };
@@ -124,14 +121,14 @@ const inboundParsers = {
     invoiceId: line.invoiceId,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    tax: line.taxPercentage,
+    tax: line.taxRate,
     note: line.note,
   }),
   toUpdateServiceCharge: (line: DraftInboundLine) => ({
     id: line.id,
     itemId: line.item.id,
     totalBeforeTax: line.totalBeforeTax,
-    tax: { percentage: line.taxPercentage },
+    tax: { percentage: line.taxRate },
     note: line.note,
   }),
   toDeleteServiceCharge: (line: DraftInboundLine) => ({
@@ -246,15 +243,15 @@ export const getInboundQueries = (sdk: Sdk, storeId: string) => ({
   },
   updateServiceTax: async ({
     lines,
-    taxPercentage,
+    taxRate,
     type,
   }: {
     lines: InboundLineFragment[];
-    taxPercentage: number;
+    taxRate: number;
     type: InvoiceLineNodeType.StockIn | InvoiceLineNodeType.Service;
   }) => {
     const toUpdateServiceLine = (line: InboundLineFragment) =>
-      inboundParsers.toUpdateServiceCharge({ ...line, taxPercentage });
+      inboundParsers.toUpdateServiceCharge({ ...line, taxRate });
 
     const result =
       (await sdk.upsertInboundShipment({

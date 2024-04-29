@@ -1077,6 +1077,7 @@ export type CurrencyConnector = {
 
 export type CurrencyFilterInput = {
   id?: InputMaybe<EqualFilterStringInput>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isHomeCurrency?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
@@ -2252,7 +2253,7 @@ export type InsertInboundShipmentLineInput = {
   numberOfPacks: Scalars['Float']['input'];
   packSize: Scalars['Int']['input'];
   sellPricePerPack: Scalars['Float']['input'];
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxRate?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -2287,7 +2288,7 @@ export type InsertInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxRate?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax: Scalars['Float']['input'];
 };
 
@@ -2362,7 +2363,7 @@ export type InsertOutboundShipmentLineInput = {
   invoiceId: Scalars['String']['input'];
   numberOfPacks: Scalars['Float']['input'];
   stockLineId: Scalars['String']['input'];
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxRate?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -2397,7 +2398,7 @@ export type InsertOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<Scalars['Float']['input']>;
+  taxRate?: InputMaybe<Scalars['Float']['input']>;
   totalBeforeTax: Scalars['Float']['input'];
 };
 
@@ -2870,7 +2871,7 @@ export type InvoiceLineNode = {
   returnReasonId?: Maybe<Scalars['String']['output']>;
   sellPricePerPack: Scalars['Float']['output'];
   stockLine?: Maybe<StockLineNode>;
-  taxPercentage?: Maybe<Scalars['Float']['output']>;
+  taxRate?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
   type: InvoiceLineNodeType;
@@ -2940,7 +2941,7 @@ export type InvoiceNode = {
   requisition?: Maybe<RequisitionNode>;
   shippedDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: InvoiceNodeStatus;
-  taxPercentage?: Maybe<Scalars['Float']['output']>;
+  taxRate?: Maybe<Scalars['Float']['output']>;
   theirReference?: Maybe<Scalars['String']['output']>;
   transportReference?: Maybe<Scalars['String']['output']>;
   type: InvoiceNodeType;
@@ -4555,7 +4556,7 @@ export type PricingNode = {
   serviceTotalBeforeTax: Scalars['Float']['output'];
   stockTotalAfterTax: Scalars['Float']['output'];
   stockTotalBeforeTax: Scalars['Float']['output'];
-  taxPercentage?: Maybe<Scalars['Float']['output']>;
+  taxRate?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
 };
@@ -6641,7 +6642,7 @@ export type UpdateInboundShipmentInput = {
   onHold?: InputMaybe<Scalars['Boolean']['input']>;
   otherPartyId?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<UpdateInboundShipmentStatusInput>;
-  tax?: InputMaybe<TaxInput>;
+  taxRate?: InputMaybe<TaxInput>;
   theirReference?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -6664,7 +6665,7 @@ export type UpdateInboundShipmentLineInput = {
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   packSize?: InputMaybe<Scalars['Int']['input']>;
   sellPricePerPack?: InputMaybe<Scalars['Float']['input']>;
-  tax?: InputMaybe<TaxInput>;
+  taxRate?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -6698,7 +6699,7 @@ export type UpdateInboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<TaxInput>;
+  taxRate?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -6786,7 +6787,7 @@ export type UpdateOutboundShipmentInput = {
    * existing invoice items gets updated.
    */
   status?: InputMaybe<UpdateOutboundShipmentStatusInput>;
-  tax?: InputMaybe<TaxInput>;
+  taxRate?: InputMaybe<TaxInput>;
   /** External invoice reference, e.g. purchase or shipment number */
   theirReference?: InputMaybe<Scalars['String']['input']>;
   transportReference?: InputMaybe<Scalars['String']['input']>;
@@ -6805,7 +6806,7 @@ export type UpdateOutboundShipmentLineInput = {
   id: Scalars['String']['input'];
   numberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<TaxInput>;
+  taxRate?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
@@ -6851,7 +6852,7 @@ export type UpdateOutboundShipmentServiceLineInput = {
   itemId?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['String']['input']>;
-  tax?: InputMaybe<TaxInput>;
+  taxRate?: InputMaybe<TaxInput>;
   totalBeforeTax?: InputMaybe<Scalars['Float']['input']>;
 };
 
