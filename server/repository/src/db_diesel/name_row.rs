@@ -42,6 +42,8 @@ table! {
         national_health_number -> Nullable<Text>,
         date_of_death -> Nullable<Date>,
         custom_data -> Nullable<Text>,
+
+        is_active -> Bool,
     }
 }
 
@@ -151,6 +153,9 @@ pub struct NameRow {
     pub date_of_death: Option<NaiveDate>,
     #[column_name = "custom_data"]
     pub custom_data_string: Option<String>,
+
+    // Flag for soft deletion
+    pub is_active: bool,
 }
 
 pub struct NameRowRepository<'a> {
@@ -212,8 +217,11 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
+    /// Soft delete a name record (set is_active to false)
     pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(name.filter(id.eq(name_id))).execute(&self.connection.connection)?;
+        diesel::update(name.filter(id.eq(name_id)))
+            .set(is_active.eq(false))
+            .execute(&self.connection.connection)?;
         Ok(())
     }
 
