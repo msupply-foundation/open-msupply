@@ -255,7 +255,7 @@ impl InvoiceNode {
         })
     }
 
-    pub async fn tax_percentage(&self) -> &Option<f64> {
+    pub async fn tax_rate(&self) -> &Option<f64> {
         &self.row().tax_rate
     }
 
@@ -418,7 +418,7 @@ impl PricingNode {
 
     // tax
 
-    pub async fn tax_percentage(&self) -> &Option<f64> {
+    pub async fn tax_rate(&self) -> &Option<f64> {
         &self.invoice_pricing.tax_percentage
     }
 }
@@ -586,13 +586,10 @@ mod test {
         }
         let total_before_tax = 50.0 + 100.0 + 100.0;
         let total_after_tax = 50.0 + 105.0 + 110.0;
-        let tax_percentage_dec = (total_after_tax / total_before_tax) - 1.0;
+        let tax_rate_dec = (total_after_tax / total_before_tax) - 1.0;
 
-        assert_eq!(
-            total_before_tax * (1.0 + tax_percentage_dec),
-            total_after_tax
-        );
-        let tax_percentage = tax_percentage_dec * 100.0;
+        assert_eq!(total_before_tax * (1.0 + tax_rate_dec), total_after_tax);
+        let tax_rate = tax_rate_dec * 100.0;
 
         let expected = json!({
             "testQuery": {
@@ -603,7 +600,7 @@ mod test {
                     "stockTotalAfterTax": 50.0 + 105.0,
                     "serviceTotalBeforeTax": 100.0,
                     "serviceTotalAfterTax": 110.0,
-                    "taxPercentage": tax_percentage
+                    "taxRate": tax_rate
                 },
             }
         }
@@ -619,7 +616,7 @@ mod test {
                     stockTotalAfterTax
                     serviceTotalBeforeTax
                     serviceTotalAfterTax
-                    taxPercentage  
+                    taxRate  
                 }
             }
         }
