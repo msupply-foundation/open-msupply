@@ -18,6 +18,7 @@ table! {
         manufacturer -> Nullable<Text>,
         model -> Text,
         asset_catalogue_type_id -> Text,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -38,6 +39,7 @@ pub struct AssetCatalogueItemRow {
     pub model: String,
     #[column_name = "asset_catalogue_type_id"]
     pub type_id: String,
+    pub deleted_datetime: Option<chrono::NaiveDateTime>,
 }
 
 pub struct AssetCatalogueItemRowRepository<'a> {
@@ -74,16 +76,6 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         Ok(())
     }
 
-    pub fn insert_one(
-        &self,
-        asset_catalogue_item_row: &AssetCatalogueItemRow,
-    ) -> Result<(), RepositoryError> {
-        diesel::insert_into(asset_catalogue_item)
-            .values(asset_catalogue_item_row)
-            .execute(&self.connection.connection)?;
-        Ok(())
-    }
-
     pub fn find_all(&self) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         let result = asset_catalogue_item.load(&self.connection.connection)?;
         Ok(result)
@@ -101,9 +93,10 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
     }
 
     pub fn delete(&self, asset_catalogue_item_id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(asset_catalogue_item)
-            .filter(id.eq(asset_catalogue_item_id))
+        diesel::update(asset_catalogue_item.filter(id.eq(asset_catalogue_item_id)))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
+        // Because we are updating the record here, we should automatically sync the state based on the db Trigger
         Ok(())
     }
 }
