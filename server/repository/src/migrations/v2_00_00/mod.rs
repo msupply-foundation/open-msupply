@@ -11,15 +11,14 @@ mod inventory_adjustment_logtype;
 mod inventory_adjustment_permissions;
 mod linked_shipment;
 mod pack_variant;
-mod pg_enums;
 mod report_views;
 mod requisition_line_add_item_name;
 mod returns;
 mod stock_on_hand_add_item_name;
+mod stocktake_line_add_item_name;
 mod store_add_created_date;
 mod sync_file_reference;
 mod user_change_last_synced_to_optional;
-mod stocktake_line_add_item_name;
 
 pub(crate) struct V2_00_00;
 
@@ -47,7 +46,6 @@ impl Migration for V2_00_00 {
         currency_add_is_active::migrate(connection)?;
         stocktake_line_add_item_name::migrate(connection)?;
 
-        pg_enums::migrate(connection)?;
         Ok(())
     }
 }
