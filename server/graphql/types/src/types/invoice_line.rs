@@ -131,7 +131,7 @@ impl InvoiceLineNode {
         self.row().sell_price_per_pack
     }
 
-    pub async fn tax_percentage(&self) -> &Option<f64> {
+    pub async fn tax_rate(&self) -> &Option<f64> {
         &self.row().tax_rate
     }
     pub async fn foreign_currency_price_before_tax(&self) -> &Option<f64> {
@@ -385,7 +385,7 @@ mod test {
                     "stockTotalAfterTax": 2.0,
                     "serviceTotalBeforeTax": 0.0,
                     "serviceTotalAfterTax": 0.0,
-                    "taxPercentage": 10.0
+                    "taxRate": 10.0
                 }
             },
             "testQueryStockOut": {
@@ -396,7 +396,7 @@ mod test {
                     "stockTotalAfterTax": 2.0,
                     "serviceTotalBeforeTax": 0.0,
                     "serviceTotalAfterTax": 0.0,
-                    "taxPercentage": 5.0
+                    "taxRate": 5.0
                 }
             },
             "testQueryService": {
@@ -407,7 +407,7 @@ mod test {
                     "stockTotalAfterTax": 0.0,
                     "serviceTotalBeforeTax": 1.0,
                     "serviceTotalAfterTax":2.0,
-                    "taxPercentage": null
+                    "taxRate": null
                 }
             }
         }
@@ -433,7 +433,7 @@ mod test {
                 stockTotalAfterTax
                 serviceTotalBeforeTax
                 serviceTotalAfterTax
-                taxPercentage
+                taxRate
             }
         }
         "#;
