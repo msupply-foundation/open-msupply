@@ -149,7 +149,7 @@ impl SyncTranslation for NameTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let LegacyNameRow {
@@ -193,6 +193,7 @@ impl SyncTranslation for NameTranslation {
             .transpose()
             .context("Error serialising custom data to string")?;
 
+        let existing_name = NameRowRepository::new(connection).find_one_by_id(&id)?;
         let result = NameRow {
             id,
             name,
@@ -230,12 +231,12 @@ impl SyncTranslation for NameTranslation {
                 .or(created_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
             date_of_death,
             custom_data_string,
+            is_active: existing_name.map_or(true, |name| name.is_active),
         };
 
         Ok(PullTranslateResult::upsert(result))
     }
 
-    // TODO soft delete
     fn try_translate_from_delete_sync_record(
         &self,
         _: &StorageConnection,
@@ -280,12 +281,18 @@ impl SyncTranslation for NameTranslation {
             national_health_number,
             // See comment in pull translation
             custom_data_string: _,
+            is_active,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Name row ({}) not found",
                 changelog.record_id
             )))?;
+        if !is_active {
+            return Ok(PushTranslateResult::Ignored(
+                "Ignore pushing soft deleted name".to_string(),
+            ));
+        }
 
         let patient_type = match r#type {
             NameType::Patient => LegacyNameType::Patient,
