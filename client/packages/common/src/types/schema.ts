@@ -6083,6 +6083,7 @@ export type StocktakeLineNode = {
   inventoryAdjustmentReasonId?: Maybe<Scalars['String']['output']>;
   item: ItemNode;
   itemId: Scalars['String']['output'];
+  itemName: Scalars['String']['output'];
   location?: Maybe<LocationNode>;
   note?: Maybe<Scalars['String']['output']>;
   packSize?: Maybe<Scalars['Int']['output']>;
