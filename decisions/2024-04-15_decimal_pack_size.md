@@ -1,8 +1,8 @@
 # Decimal Pack Sizes
 
-- _Date_: 2024-04-16
-- _Deciders_: @Chris-Petty, @roxy-dao, @clemens-msupply, @mark-prins, @andreievg, @craigdrown, @louisaw123, @Gwalior-84
-- _Status_: PROPOSED
+- _Date_: 2024-04-30
+- _Deciders_: @Chris-Petty, @roxy-dao, @clemens-msupply, @mark-prins, @andreievg, @craigdrown
+- _Status_: AGREED
 - _Outcome_: Option 1
 
 ## Context
