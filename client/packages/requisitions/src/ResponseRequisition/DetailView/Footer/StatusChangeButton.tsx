@@ -64,18 +64,12 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
+    [status, t]
   );
 
-  const requested = requisition.lines.nodes.reduce(
-    (acc, line) => acc + line.requestedQuantity,
-    0
-  );
-  const supplied = requisition.lines.nodes.reduce(
-    (acc, line) => acc + line.supplyQuantity,
-    0
-  );
-  const notFullySupplied = requested - supplied !== 0;
+  const notFullySuppliedLines = requisition.lines.nodes.filter(
+    line => line.remainingQuantityToSupply > 0
+  ).length;
 
   const [selectedOption, setSelectedOption] =
     useState<SplitButtonOption<RequisitionNodeStatus> | null>(() =>
@@ -92,15 +86,26 @@ const useStatusChangeButton = (requisition: ResponseFragment) => {
     }
   };
 
-  const getConfirmation = useConfirmationModal({
-    title: t('heading.are-you-sure'),
-    message: notFullySupplied
-      ? t('messages.confirm-not-fully-supplied')
+  const confirmationTitle =
+    selectedOption?.value === RequisitionNodeStatus.Finalised &&
+    notFullySuppliedLines > 0
+      ? t('heading.confirm-finalise')
+      : t('heading.are-you-sure');
+
+  const confirmationMessage =
+    notFullySuppliedLines > 0
+      ? t('messages.confirm-not-fully-supplied', {
+          count: notFullySuppliedLines,
+        })
       : t('messages.confirm-status-as', {
           status: selectedOption?.value
             ? getStatusTranslation(selectedOption?.value)
             : '',
-        }),
+        });
+
+  const getConfirmation = useConfirmationModal({
+    title: confirmationTitle,
+    message: confirmationMessage,
     onConfirm: onConfirmStatusChange,
   });
 

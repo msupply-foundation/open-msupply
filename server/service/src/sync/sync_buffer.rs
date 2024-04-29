@@ -45,6 +45,7 @@ impl<'a> SyncBuffer<'a> {
         &self,
         action: SyncAction,
         ordered_table_names: &[&str],
+        source_site_id: Option<i32>,
     ) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         let ordered_table_names = ordered_table_names.iter().map(|r| *r);
         // Get ordered table names, for  upsert we sort in referential constraint order
@@ -62,7 +63,11 @@ impl<'a> SyncBuffer<'a> {
                 SyncBufferFilter::new()
                     .table_name(EqualFilter::equal_to(legacy_table_name))
                     .action(action.equal_to())
-                    .integration_datetime(DatetimeFilter::is_null(true)),
+                    .integration_datetime(DatetimeFilter::is_null(true))
+                    .source_site_id(match source_site_id {
+                        Some(site_id) => EqualFilter::equal_to_i32(site_id),
+                        None => EqualFilter::i32_is_null(true),
+                    }),
             )?;
             result.append(&mut rows);
         }
@@ -133,6 +138,25 @@ mod test {
             r.action = SyncAction::Delete;
         })
     }
+    fn site_1_row_1() -> SyncBufferRow {
+        inline_init(|r: &mut SyncBufferRow| {
+            r.record_id = "1-1".to_string();
+            r.table_name = "list_master".to_string();
+            r.received_datetime = Defaults::naive_date_time();
+            r.action = SyncAction::Delete;
+            r.source_site_id = Some(1);
+        })
+    }
+
+    fn site_1_row_2() -> SyncBufferRow {
+        inline_init(|r: &mut SyncBufferRow| {
+            r.record_id = "1-2".to_string();
+            r.table_name = "list_master_line".to_string();
+            r.received_datetime = Defaults::naive_date_time();
+            r.action = SyncAction::Delete;
+            r.source_site_id = Some(1);
+        })
+    }
 
     #[actix_rt::test]
     async fn test_sync_buffer_service() {
@@ -143,7 +167,16 @@ mod test {
             "test_sync_buffer_service",
             MockDataInserts::none(),
             inline_init(|r: &mut MockData| {
-                r.sync_buffer_rows = vec![row_1(), row_2(), row_3(), row_4(), row_5(), row_6()];
+                r.sync_buffer_rows = vec![
+                    row_1(),
+                    row_2(),
+                    row_3(),
+                    row_4(),
+                    row_5(),
+                    row_6(),
+                    site_1_row_1(),
+                    site_1_row_2(),
+                ];
             }),
         )
         .await;
@@ -151,20 +184,20 @@ mod test {
         let buffer = SyncBuffer::new(&connection);
 
         // ORDER/ACTION
-        let in_referencial_order = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
+        let in_referential_order = buffer
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
             .unwrap();
 
         assert_eq!(
-            in_referencial_order,
+            in_referential_order,
             vec![row_4(), row_3(), row_1(), row_2()]
         );
 
-        let in_reverese_referencial_order = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Delete, &table_order)
+        let in_reverse_referential_order = buffer
+            .get_ordered_sync_buffer_records(repository::SyncAction::Delete, &table_order, None)
             .unwrap();
 
-        assert_eq!(in_reverese_referencial_order, vec![row_6(), row_5()]);
+        assert_eq!(in_reverse_referential_order, vec![row_6(), row_5()]);
 
         // ERROR
         buffer
@@ -175,7 +208,7 @@ mod test {
             .unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
             .unwrap();
 
         assert_eq!(result, vec![row_4(), row_3()]);
@@ -191,7 +224,7 @@ mod test {
         buffer.record_successful_integration(&row_3()).unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
             .unwrap();
 
         assert_eq!(result, vec![row_4()]);
@@ -199,9 +232,24 @@ mod test {
         buffer.record_successful_integration(&row_4()).unwrap();
 
         let result = buffer
-            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order)
+            .get_ordered_sync_buffer_records(repository::SyncAction::Upsert, &table_order, None)
             .unwrap();
 
         assert_eq!(result, vec![]);
+
+        // GETS BUFFER ROWS FOR REMOTE SITE
+        let remote_site_id = 1;
+        let in_reverse_referential_order = buffer
+            .get_ordered_sync_buffer_records(
+                repository::SyncAction::Delete,
+                &table_order,
+                Some(remote_site_id),
+            )
+            .unwrap();
+
+        assert_eq!(
+            in_reverse_referential_order,
+            vec![site_1_row_2(), site_1_row_1()]
+        );
     }
 }

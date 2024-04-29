@@ -71,6 +71,18 @@ impl<'a> TemperatureLogRowRepository<'a> {
         Ok(())
     }
 
+    pub fn update_breach_id(
+        &self,
+        breach_id: &str,
+        temperature_log_ids: &Vec<String>,
+    ) -> Result<(), RepositoryError> {
+        diesel::update(temperature_log_dsl::temperature_log)
+            .filter(temperature_log_dsl::id.eq_any(temperature_log_ids))
+            .set(temperature_log_dsl::temperature_breach_id.eq(breach_id))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<TemperatureLogRow>, RepositoryError> {
         let result = temperature_log_dsl::temperature_log
             .filter(temperature_log_dsl::id.eq(id))

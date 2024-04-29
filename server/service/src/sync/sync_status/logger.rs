@@ -7,7 +7,11 @@ use util::format_error;
 
 use crate::sync::{
     api::{SyncApiErrorVariantV5, SyncErrorCodeV5},
+    api_v6::{SyncApiErrorVariantV6, SyncApiV6CreatingError, SyncParsedErrorV6},
     central_data_synchroniser::CentralPullError,
+    central_data_synchroniser_v6::{
+        CentralPullErrorV6, RemotePushErrorV6, WaitForSyncOperationErrorV6,
+    },
     remote_data_synchroniser::{
         PostInitialisationError, RemotePullError, RemotePushError, WaitForSyncOperationError,
     },
@@ -35,6 +39,11 @@ pub(crate) enum SyncStepProgress {
     Push,
     PushCentralV6,
     Integrate,
+}
+
+enum SyncApiErrorVariant<'a> {
+    V5(&'a SyncApiErrorVariantV5),
+    V6(&'a SyncApiErrorVariantV6),
 }
 
 pub struct SyncLogger<'a> {
@@ -294,52 +303,73 @@ impl<'a> SyncLogger<'a> {
 impl SyncLogError {
     /// Map SyncError to SyncLogError, to be queried later and translated in front end
     fn from_sync_error(sync_error: &SyncError) -> Self {
-        let sync_api_error = match &sync_error {
+        match &sync_error {
+            SyncError::V6NotConfigured
+            | SyncError::SyncApiV6CreatingError(SyncApiV6CreatingError::CannotParseSyncUrl(_, _)) => {
+                Self::new(SyncApiErrorCode::CentralV6NotConfigured, sync_error)
+            }
+
             // Sync Api Error
-            SyncError::CentralPullError(CentralPullError::SyncApiError(error))
+            SyncError::SyncApiError(error)
+            | SyncError::CentralPullError(CentralPullError::SyncApiError(error))
             | SyncError::RemotePullError(RemotePullError::SyncApiError(error))
             | SyncError::PostInitialisationError(PostInitialisationError::SyncApiError(error))
+            | SyncError::RemotePushError(RemotePushError::SyncApiError(error))
+            | SyncError::WaitForIntegrationError(WaitForSyncOperationError::SyncApiError(error))
             | SyncError::PostInitialisationError(
                 PostInitialisationError::WaitForInitialisationError(
                     WaitForSyncOperationError::SyncApiError(error),
                 ),
-            )
-            | SyncError::RemotePushError(RemotePushError::SyncApiError(error))
-            | SyncError::WaitForIntegrationError(WaitForSyncOperationError::SyncApiError(error)) => {
-                error
+            ) => {
+                return Self::from_sync_api_error(
+                    SyncApiErrorVariant::V5(&error.source),
+                    sync_error,
+                );
             }
-            // Integration timeout reached
-            SyncError::WaitForIntegrationError(_) => {
-                return Self::new(SyncApiErrorCode::IntegrationTimeoutReached, sync_error)
-            }
-            // Internal errors
-            _ => return Self::message_only(sync_error),
-        };
 
-        let sync_v5_error_code = match &sync_api_error.source {
-            // Map SyncErrorCodeV5 to
-            SyncApiErrorVariantV5::ParsedError { source, .. } => &source.code,
-            // Important to map connection error
-            SyncApiErrorVariantV5::ConnectionError { .. } => {
+            // SyncApiErrorV6
+            SyncError::CentralPullErrorV6(CentralPullErrorV6::SyncApiError(error))
+            | SyncError::RemotePushErrorV6(RemotePushErrorV6::SyncApiError(error))
+            | SyncError::WaitForIntegrationErrorV6(WaitForSyncOperationErrorV6::SyncApiError(
+                error,
+            )) => Self::from_sync_api_error(SyncApiErrorVariant::V6(&error.source), sync_error),
+
+            // Integration timeout reached
+            SyncError::WaitForIntegrationError(_) | SyncError::WaitForIntegrationErrorV6(_) => {
+                Self::new(SyncApiErrorCode::IntegrationTimeoutReached, sync_error)
+            }
+
+            // Error during integration
+            SyncError::IntegrationError(_) => {
+                Self::new(SyncApiErrorCode::IntegrationError, sync_error)
+            }
+
+            // Internal errors
+            _ => Self::message_only(sync_error),
+        }
+    }
+
+    fn from_sync_api_error(variant: SyncApiErrorVariant, sync_error: &SyncError) -> Self {
+        let sync_v5_error_code = match &variant {
+            // V5 parsing error, pull out error code
+            SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ParsedError { source, .. })
+            | SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ParsedError(
+                SyncParsedErrorV6::LegacyServerError(source),
+            )) => &source.code,
+
+            // map connection errors
+            SyncApiErrorVariant::V6(SyncApiErrorVariantV6::ConnectionError(_))
+            | SyncApiErrorVariant::V5(SyncApiErrorVariantV5::ConnectionError { .. }) => {
                 return Self::new(SyncApiErrorCode::ConnectionError, sync_error)
             }
             // Internal errors
             _ => return Self::message_only(sync_error),
         };
 
-        use SyncApiErrorCode as to;
-        use SyncErrorCodeV5 as from;
-        let log_error_code = match sync_v5_error_code {
-            from::SiteNameNotFound => to::SiteNameNotFound,
-            from::SiteIncorrectPassword => to::IncorrectPassword,
-            from::SiteIncorrectHardwareId => to::HardwareIdMismatch,
-            from::SiteHasNoStore => to::SiteHasNoStore,
-            from::SiteAuthTimeout => to::SiteAuthTimeout,
-            from::ApiVersionIncompatible => to::ApiVersionIncompatible,
-            from::Other(_) => return Self::message_only(sync_error),
-        };
-
-        Self::new(log_error_code, &sync_error)
+        match v5_to_sync_log_error_code(sync_v5_error_code) {
+            Some(code) => Self::new(code, sync_error),
+            None => Self::message_only(sync_error),
+        }
     }
 
     fn message_only(sync_error: &SyncError) -> Self {
@@ -357,6 +387,22 @@ impl SyncLogError {
     }
 }
 
+fn v5_to_sync_log_error_code(code: &SyncErrorCodeV5) -> Option<SyncApiErrorCode> {
+    use SyncApiErrorCode as to;
+    use SyncErrorCodeV5 as from;
+
+    let log_error_code = match code {
+        from::SiteNameNotFound => to::SiteNameNotFound,
+        from::SiteIncorrectPassword => to::IncorrectPassword,
+        from::SiteIncorrectHardwareId => to::HardwareIdMismatch,
+        from::SiteHasNoStore => to::SiteHasNoStore,
+        from::SiteAuthTimeout => to::SiteAuthTimeout,
+        from::ApiVersionIncompatible => to::ApiVersionIncompatible,
+        from::Other(_) => return None,
+    };
+
+    Some(log_error_code)
+}
 #[cfg(test)]
 mod test {
     use crate::sync::{

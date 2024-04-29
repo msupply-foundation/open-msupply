@@ -259,7 +259,7 @@ impl SyncTranslation for InvoiceTranslation {
             .map(|store_row| store_row.id);
 
         let invoice_type = invoice_type(&data, &name).ok_or(anyhow::Error::msg(format!(
-            "Unsupported invoice type: {:?} for (mode: {:?})",
+            "Unsupported invoice type: {:?} (mode: {:?})",
             data._type, data.mode
         )))?;
         let invoice_status =

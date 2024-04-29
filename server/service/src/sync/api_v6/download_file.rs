@@ -44,6 +44,7 @@ impl SyncApiV6 {
     }
 }
 
+// This maps differently as we check for succesfull status and pass on response
 async fn download_response_or_err(
     result: Result<Response, reqwest::Error>,
 ) -> Result<Response, SyncApiErrorVariantV6> {

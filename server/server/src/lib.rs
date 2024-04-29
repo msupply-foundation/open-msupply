@@ -35,8 +35,8 @@ use service::{
 
 use actix_web::{web::Data, App, HttpServer};
 use std::sync::{Arc, Mutex, RwLock};
-use util::is_central_server;
 
+mod authentication;
 pub mod certs;
 pub mod cold_chain;
 pub mod configuration;
@@ -49,6 +49,7 @@ pub mod static_files;
 pub mod support;
 mod upload_fridge_tag;
 pub use self::logging::*;
+
 pub mod print;
 mod sync_on_central;
 
@@ -68,11 +69,7 @@ pub async fn start_server(
     mut off_switch: tokio::sync::mpsc::Receiver<()>,
 ) -> std::io::Result<()> {
     info!(
-        "{} server starting in {} mode on port {}",
-        match is_central_server() {
-            true => "Central",
-            false => "Remote",
-        },
+        "{} server starting on port {}",
         match is_develop() {
             true => "Development",
             false => "Production",
@@ -90,10 +87,6 @@ pub async fn start_server(
         .context("Failed to run DB migrations")
         .unwrap();
     info!("Run DB migrations...done");
-
-    if is_central_server() {
-        info!("Running as central");
-    }
 
     // INITIALISE CONTEXT
     info!("Initialising server context..");

@@ -35,6 +35,7 @@ const createDraftFromItem = (
     suggestedQuantity: suggested,
     isCreated: true,
     itemStats: item.stats,
+    itemName: item.name,
   };
 };
 

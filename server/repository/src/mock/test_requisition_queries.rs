@@ -96,6 +96,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 r.suggested_quantity = 3;
                 r.available_stock_on_hand = 1;
                 r.average_monthly_consumption = 10;
+                r.item_name = mock_item_a().name;
             }),
             inline_init(|r: &mut RequisitionLineRow| {
                 r.id = line2_id;
@@ -105,6 +106,7 @@ pub fn mock_request_draft_requisition_all_fields() -> FullMockRequisition {
                 r.suggested_quantity = 3;
                 r.available_stock_on_hand = 1;
                 r.average_monthly_consumption = 10;
+                r.item_name = mock_item_b().name;
             }),
         ],
     }

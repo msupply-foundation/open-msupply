@@ -2,13 +2,13 @@ import { Box, BoxProps, Portal } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { FC, ReactNode, useEffect, useRef } from 'react';
 import { useHostContext } from '@common/hooks';
+import { useIsCentralServerApi } from '@openmsupply-client/common';
 
-const Container = styled('div')(({ theme }) => ({
-  backgroundColor: theme.palette.background.menu,
+const Container = styled('div')(() => ({
   display: 'flex',
   flex: 1,
   maxHeight: 100,
-  justifyContent: 'flex-end',
+  justifyContent: 'center',
   flexDirection: 'column',
   paddingLeft: '20px',
   paddingRight: '20px',
@@ -18,6 +18,7 @@ export const AppFooter: FC = () => {
   const { setAppFooterRef, setAppSessionDetailsRef } = useHostContext();
   const appFooterRef = useRef(null);
   const appSessionDetailsRef = useRef(null);
+  const isCentralServer = useIsCentralServerApi();
 
   useEffect(() => {
     setAppFooterRef(appFooterRef);
@@ -26,8 +27,14 @@ export const AppFooter: FC = () => {
 
   return (
     <Box>
-      <Container ref={appFooterRef} />
-      <Container ref={appSessionDetailsRef} />
+      <Container ref={appFooterRef} style={{ flex: 0, padding: 0 }} />
+      <Container
+        ref={appSessionDetailsRef}
+        sx={{
+          backgroundColor: isCentralServer ? 'primary.main' : 'background.menu',
+          color: isCentralServer ? '#fff' : 'gray.main',
+        }}
+      />
     </Box>
   );
 };
@@ -52,9 +59,7 @@ export const AppFooterPortal: FC<AppFooterPortalProps> = ({
         <Box {...boxProps}>{Content}</Box>
       </Portal>
       <Portal container={appSessionDetailsRef.current}>
-        <Box {...boxProps} style={{ paddingBottom: 3, paddingTop: 5 }}>
-          {SessionDetails}
-        </Box>
+        <Box {...boxProps}>{SessionDetails}</Box>
       </Portal>
     </>
   );

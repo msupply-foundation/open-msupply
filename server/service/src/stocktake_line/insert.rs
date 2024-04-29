@@ -1,12 +1,11 @@
 use chrono::NaiveDate;
-use repository::EqualFilter;
+use repository::{EqualFilter, ItemFilter, ItemRepository};
 use repository::{
     RepositoryError, StockLine, StocktakeLine, StocktakeLineFilter, StocktakeLineRepository,
     StocktakeLineRow, StocktakeLineRowRepository, StorageConnection,
 };
 
 use crate::common_stock::{check_stock_line_exists, CommonStockLineError};
-use crate::item::check_item_exists;
 use crate::validate::check_store_id_matches;
 use crate::{check_location_exists, NullableUpdate};
 use crate::{
@@ -126,11 +125,33 @@ pub fn stocktake_reduction_amount(
     }
 }
 
+pub fn check_item_exists_and_get_item_name(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_id: &str,
+) -> Result<String, InsertStocktakeLineError> {
+    let item = ItemRepository::new(connection)
+        .query_by_filter(
+            ItemFilter::new().id(EqualFilter::equal_to(item_id)),
+            Some(store_id.to_string()),
+        )?
+        .pop()
+        .ok_or(InsertStocktakeLineError::ItemDoesNotExist)?;
+
+    Ok(item.item_row.name)
+}
+
+pub(crate) struct GenerateResult {
+    pub(crate) stock_line: Option<StockLine>,
+    pub(crate) item_id: String,
+    pub(crate) item_name: String,
+}
+
 fn validate(
     connection: &StorageConnection,
     store_id: &str,
     input: &InsertStocktakeLine,
-) -> Result<(Option<StockLine>, String), InsertStocktakeLineError> {
+) -> Result<GenerateResult, InsertStocktakeLineError> {
     use InsertStocktakeLineError::*;
 
     let stocktake = match check_stocktake_exist(connection, &input.stocktake_id)? {
@@ -178,11 +199,13 @@ fn validate(
 
     let item_id = check_stock_line_xor_item(&stock_line, input)
         .ok_or(InsertStocktakeLineError::StockLineXOrItem)?;
-    if let Some(item_id) = &input.item_id {
-        if !check_item_exists(connection, store_id.to_string(), &item_id)? {
-            return Err(ItemDoesNotExist);
-        }
-    }
+
+    let item_name = if input.item_id.is_some() {
+        check_item_exists_and_get_item_name(connection, store_id, &item_id)?
+    } else {
+        stock_line.as_ref().unwrap().item_row.name.clone()
+    };
+
     if !check_location_exists(connection, store_id, &input.location)? {
         return Err(LocationDoesNotExist);
     }
@@ -214,12 +237,18 @@ fn validate(
             return Err(StockLineReducedBelowZero(stock_line));
         }
     }
-    Ok((stock_line, item_id))
+
+    Ok(GenerateResult {
+        stock_line,
+        item_id,
+        item_name,
+    })
 }
 
 fn generate(
     stock_line: Option<StockLine>,
     item_id: String,
+    item_name: String,
     InsertStocktakeLine {
         id,
         stocktake_id,
@@ -251,6 +280,7 @@ fn generate(
         snapshot_number_of_packs,
         counted_number_of_packs,
         item_link_id: item_id.to_string(),
+        item_name,
         batch,
         expiry_date,
         pack_size: pack_size.map(u32_to_i32),
@@ -268,8 +298,12 @@ pub fn insert_stocktake_line(
     let result = ctx
         .connection
         .transaction_sync(|connection| {
-            let (stock_line, item_id) = validate(connection, &ctx.store_id, &input)?;
-            let new_stocktake_line = generate(stock_line, item_id, input);
+            let GenerateResult {
+                stock_line,
+                item_id,
+                item_name,
+            } = validate(connection, &ctx.store_id, &input)?;
+            let new_stocktake_line = generate(stock_line, item_id, item_name, input);
             StocktakeLineRowRepository::new(&connection).upsert_one(&new_stocktake_line)?;
 
             let line = get_stocktake_line(ctx, new_stocktake_line.id, &ctx.store_id)?;
@@ -644,6 +678,7 @@ mod stocktake_line_test {
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
                 r.item_link_id = stock_line.item_link_id;
+                r.item_name = "Item A".to_string();
                 r.inventory_adjustment_reason_id = Some(positive_reason().id);
             }),
         );
@@ -710,6 +745,7 @@ mod stocktake_line_test {
                 r.stock_line_id = Some(stock_line.id);
                 r.snapshot_number_of_packs = 30.0;
                 r.item_link_id = stock_line.item_link_id;
+                r.item_name = "Item A".to_string();
                 r.comment = Some("Some comment".to_string());
             })
         );

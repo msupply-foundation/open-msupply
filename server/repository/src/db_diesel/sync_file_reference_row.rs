@@ -158,7 +158,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         diesel::update(sync_file_reference.filter(id.eq(sync_file_reference_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(self.connection.lock().connection())?;
-        self.insert_changelog(sync_file_reference_id.to_owned(), RowActionType::Delete)?;
+        self.insert_changelog(sync_file_reference_id.to_owned(), RowActionType::Upsert)?;
         Ok(())
     }
 

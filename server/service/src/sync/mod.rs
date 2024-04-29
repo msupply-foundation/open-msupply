@@ -22,12 +22,17 @@ pub(crate) mod translation_and_integration;
 pub(crate) mod translations;
 
 use crate::service_provider::ServiceProvider;
+use std::sync::RwLock;
+
+use log::info;
 use repository::{
     ChangelogFilter, EqualFilter, KeyValueStoreRepository, RepositoryError, StorageConnection,
     Store, StoreFilter, StoreRepository,
 };
 
 use thiserror::Error;
+
+use self::api::SiteInfoV5;
 
 pub(crate) struct ActiveStoresOnSite {
     stores: Vec<Store>,
@@ -90,6 +95,60 @@ impl ActiveStoresOnSite {
     }
 }
 
+#[derive(PartialEq, Clone)]
+pub enum CentralServerConfig {
+    NotConfigured,
+    IsCentralServer,
+    CentralServerUrl(String),
+}
+
+static CENTRAL_SERVER_CONFIG: RwLock<CentralServerConfig> =
+    RwLock::new(CentralServerConfig::NotConfigured);
+
+impl CentralServerConfig {
+    fn inner_is_central_server(&self) -> bool {
+        match self {
+            Self::IsCentralServer => true,
+            _ => false,
+        }
+    }
+
+    fn new(site_info: &SiteInfoV5) -> Self {
+        match site_info.is_central_server {
+            true => Self::IsCentralServer,
+            false => Self::CentralServerUrl(site_info.central_server_url.clone()),
+        }
+    }
+
+    pub fn is_central_server() -> bool {
+        CENTRAL_SERVER_CONFIG
+            .read()
+            .unwrap()
+            .inner_is_central_server()
+    }
+
+    pub fn get() -> Self {
+        CENTRAL_SERVER_CONFIG.read().unwrap().clone()
+    }
+
+    fn set_central_server_config(site_info: &SiteInfoV5) {
+        let new_config = Self::new(site_info);
+        // Need to drop read before write
+        {
+            let current_config = CENTRAL_SERVER_CONFIG.read().unwrap();
+
+            if new_config == *current_config {
+                return;
+            }
+
+            if !current_config.inner_is_central_server() && new_config.inner_is_central_server() {
+                info!("Running as central");
+            }
+        }
+
+        *CENTRAL_SERVER_CONFIG.write().unwrap() = new_config;
+    }
+}
 pub(crate) fn is_initialised(service_provider: &ServiceProvider) -> bool {
     let ctx = service_provider.basic_context().unwrap();
     service_provider

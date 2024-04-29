@@ -21,7 +21,7 @@ table! {
         asset_number -> Nullable<Text>,
         asset_category_id -> Nullable<Text>,
         asset_class_id -> Nullable<Text>,
-        asset_type_id -> Nullable<Text>,
+        asset_catalogue_type_id -> Nullable<Text>,
         store_id -> Nullable<Text>,
         serial_number -> Nullable<Text>,
         asset_catalogue_item_id -> Nullable<Text>,
@@ -44,6 +44,7 @@ pub struct AssetRow {
     pub asset_number: Option<String>,
     pub asset_category_id: Option<String>,
     pub asset_class_id: Option<String>,
+    #[diesel(column_name = "asset_catalogue_type_id")]
     pub asset_type_id: Option<String>,
     pub store_id: Option<String>,
     pub serial_number: Option<String>,

@@ -67,6 +67,7 @@ pub enum ActivityLogType {
     AssetLogReasonDeleted,
     QuantityForLineHasBeenSetToZero,
     AssetCatalogueItemCreated,
+    AssetCatalogueItemPropertyCreated,
 }
 
 #[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]

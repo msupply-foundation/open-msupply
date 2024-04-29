@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use chrono::{NaiveDate, NaiveDateTime};
 use util::inline_init;
 
@@ -143,6 +145,9 @@ impl EqualFilter<i32> {
     pub fn not_equal_to_i32(value: i32) -> Self {
         inline_init(|r: &mut Self| r.not_equal_to = Some(value))
     }
+    pub fn i32_is_null(value: bool) -> Self {
+        inline_init(|r: &mut Self| r.is_null = Some(value))
+    }
 }
 
 impl EqualFilter<f64> {
@@ -178,6 +183,20 @@ impl EqualFilter<String> {
 
     pub fn is_null(value: bool) -> Self {
         inline_init(|r: &mut Self| r.is_null = Some(value))
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct NumberFilter<T> {
+    /// ( {field} < range.start or range.end < {field} )
+    pub not_in_range: Option<Range<T>>,
+}
+
+impl<T> NumberFilter<T> {
+    pub fn not_in_range(value: Range<T>) -> Self {
+        Self {
+            not_in_range: Some(value),
+        }
     }
 }
 

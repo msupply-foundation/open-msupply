@@ -36,6 +36,7 @@ export const DraftLine = {
       costPricePerPack: 0,
       packSize: defaultPackSize,
       location: null,
+      itemName: item.name,
       item: {
         __typename: 'ItemNode',
         id: item.id,
@@ -60,6 +61,7 @@ export const DraftLine = {
       snapshotNumberOfPacks: stockLine.totalNumberOfPacks,
       expiryDate: stockLine.expiryDate ? stockLine.expiryDate : null,
       id: FnUtils.generateUUID(),
+      itemName: stockLine.item.name,
       item: {
         __typename: 'ItemNode',
         id: stockLine.itemId,

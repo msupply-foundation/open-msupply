@@ -3,7 +3,7 @@ use serde_json::json;
 
 use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
 
-const TABLE_NAME: &str = "asset_type";
+const TABLE_NAME: &str = "asset_catalogue_type";
 
 const ASSET_TYPE1: (&str, &str) = (
     "a6625bba-052b-4cf8-9e0f-b96ebba0a31f",

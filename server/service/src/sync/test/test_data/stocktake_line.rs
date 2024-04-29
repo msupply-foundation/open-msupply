@@ -2,7 +2,7 @@ use super::TestSyncOutgoingRecord;
 use crate::sync::{
     test::TestSyncIncomingRecord, translations::stocktake_line::LegacyStocktakeLineRow,
 };
-use repository::StocktakeLineRow;
+use repository::{mock::mock_item_a, StocktakeLineRow};
 use serde_json::json;
 
 const TABLE_NAME: &str = "Stock_take_lines";
@@ -19,6 +19,7 @@ const STOCKTAKE_LINE_1: (&str, &str) = (
       "expiry": "0000-00-00",
       "is_edited": true,
       "item_ID": "item_a",
+      "item_name": "Item A",
       "item_line_ID": "item_c_line_a",
       "line_number": 1,
       "location_id": "",
@@ -45,6 +46,7 @@ fn stocktake_line_pull_record() -> TestSyncIncomingRecord {
             snapshot_number_of_packs: 10.0,
             counted_number_of_packs: Some(700.0),
             item_link_id: "item_a".to_string(),
+            item_name: mock_item_a().name,
             batch: Some("item_c_batch_a".to_string()),
             expiry_date: None,
             pack_size: Some(1),
@@ -70,6 +72,7 @@ fn stocktake_line_push_record() -> TestSyncOutgoingRecord {
             is_edited: true,
             item_line_ID: Some("item_c_line_a".to_string()),
             item_ID: "item_a".to_string(),
+            item_name: mock_item_a().name,
             Batch: Some("item_c_batch_a".to_string()),
             expiry: None,
             cost_price: 12.0,
@@ -92,6 +95,7 @@ const STOCKTAKE_LINE_OM_FIELDS: (&str, &str) = (
       "expiry": "0000-00-00",
       "is_edited": true,
       "item_ID": "item_a",
+      "item_name": "Item A",
       "item_line_ID": "item_c_line_a",
       "line_number": 1,
       "location_id": "",
@@ -119,6 +123,7 @@ fn stocktake_line_om_field_pull_record() -> TestSyncIncomingRecord {
             snapshot_number_of_packs: 10.0,
             counted_number_of_packs: Some(700.0),
             item_link_id: "item_a".to_string(),
+            item_name: mock_item_a().name,
             batch: Some("item_c_batch_a".to_string()),
             expiry_date: None,
             pack_size: Some(1),
@@ -144,6 +149,7 @@ fn stocktake_line_om_field_push_record() -> TestSyncOutgoingRecord {
             is_edited: true,
             item_line_ID: Some("item_c_line_a".to_string()),
             item_ID: "item_a".to_string(),
+            item_name: mock_item_a().name,
             Batch: Some("item_c_batch_a".to_string()),
             expiry: None,
             cost_price: 12.0,
