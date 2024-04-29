@@ -42,7 +42,7 @@ const PatientSearchComponent: FC<PatientSearchModalProps> = ({
       <Box padding={2}>
         <Box>
           <Typography variant="body1">
-            {isSuccess
+            {isSuccess && patients.length > 0
               ? t('messages.results-found', { totalCount })
               : t('placeholder.search-by-name-or-code')}
           </Typography>
