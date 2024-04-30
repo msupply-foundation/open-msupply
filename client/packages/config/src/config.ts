@@ -1,5 +1,4 @@
 declare const API_HOST: string;
-declare const FEATURE_INVENTORY_ADJUSTMENTS: boolean;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -34,11 +33,16 @@ export const Environment = {
   PRINT_LABEL_QR: `${apiHost}/print/label-qr`,
   PRINT_LABEL_TEST: `${apiHost}/print/label-test`,
 
-  // Feature flags
-  FEATURE_INVENTORY_ADJUSTMENTS:
-    typeof FEATURE_INVENTORY_ADJUSTMENTS === 'undefined'
-      ? false
-      : FEATURE_INVENTORY_ADJUSTMENTS,
+  // -- Feature Flags --
+  // To add a new feature flag:
+  // - Add a new env var via webpack plugin in webpack.config.js
+  // - Declare a const for it above
+  // - Follow the pattern below to add to `Environment` (otherwise you'll get compilation errors with tests/storybook)
+
+  // FEATURE_INVENTORY_ADJUSTMENTS:
+  //   typeof FEATURE_INVENTORY_ADJUSTMENTS === 'undefined'
+  //     ? false
+  //     : FEATURE_INVENTORY_ADJUSTMENTS,
 };
 
 export default Environment;

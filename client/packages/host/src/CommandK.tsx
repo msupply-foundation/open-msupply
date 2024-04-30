@@ -18,6 +18,7 @@ import {
   UserPermission,
   StoreModeNodeType,
   useRegisterActions,
+  useConfirmationModal,
 } from '@openmsupply-client/common';
 import { AppRoute } from '@openmsupply-client/config';
 import { Action } from 'kbar/lib/types';
@@ -88,6 +89,14 @@ const Actions = () => {
   const t = useTranslation('app');
   const { store, logout, user, userHasPermission } = useAuthContext();
   const showEasterEgg = useEasterEggModal();
+  const confirmLogout = useConfirmationModal({
+    onConfirm: () => {
+      logout();
+      navigate(RouteBuilder.create(AppRoute.Login).build());
+    },
+    message: t('messages.logout-confirm'),
+    title: t('heading.logout-confirm'),
+  });
 
   const actions = [
     {
@@ -239,12 +248,9 @@ const Actions = () => {
     {
       id: 'action:logout',
       name: `${t('logout')}`,
-      shortcut: ['g', 'm'],
+      shortcut: ['l', 'o'],
       keywords: 'logout',
-      perform: () => {
-        logout();
-        navigate(RouteBuilder.create(AppRoute.Login).build());
-      },
+      perform: () => confirmLogout({}),
     },
     {
       id: 'action:easter-egg',
