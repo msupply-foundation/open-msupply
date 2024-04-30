@@ -91,8 +91,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             JOIN name ON name_link.name_id = name.id
     )
     SELECT * FROM all_movements
-    WHERE datetime IS NOT NULL
-    AND stock_line_id IS NOT NULL;
+    WHERE datetime IS NOT NULL;
 
     CREATE VIEW consumption AS
             SELECT

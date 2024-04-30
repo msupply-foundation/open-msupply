@@ -12,7 +12,7 @@ table! {
     #[sql_name = "stock_movement"]
     ledger (id) {
         id -> Text,
-        stock_line_id -> Text,
+        stock_line_id -> Nullable<Text>,
         name -> Text,
         item_id -> Text,
         store_id -> Text,
@@ -27,7 +27,7 @@ table! {
 #[derive(Clone, Queryable, Debug, PartialEq)]
 pub struct LedgerRow {
     pub id: String,
-    pub stock_line_id: String,
+    pub stock_line_id: Option<String>,
     pub name: String,
     pub item_id: String,
     pub store_id: String,
