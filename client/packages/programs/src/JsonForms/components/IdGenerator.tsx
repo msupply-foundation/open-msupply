@@ -297,7 +297,7 @@ const useUniqueProgramPatientCodeValidation = () => {
 };
 
 const UIComponent = (props: ControlProps) => {
-  const { label, path, data, visible, handleChange, uischema } = props;
+  const { label, errors, path, data, visible, handleChange, uischema } = props;
   const config: JsonFormsConfig = props.config;
   const t = useTranslation('dispensary');
   const { core } = useJsonForms();
@@ -313,7 +313,7 @@ const UIComponent = (props: ControlProps) => {
     'UIGenerator'
   );
 
-  const { errors, options } = useZodOptionsValidation(
+  const { errors: zErrors, options } = useZodOptionsValidation(
     GeneratorOptions,
     uischema.options
   );
@@ -329,7 +329,7 @@ const UIComponent = (props: ControlProps) => {
     }
     return validateFields(options, core?.data);
   }, [options, core?.data]);
-  const error = !!validationError || !!errors;
+  const error = !!validationError || !!zErrors;
 
   const manualUpdate = useCallback(
     async (value: string | undefined) => {
@@ -417,9 +417,12 @@ const UIComponent = (props: ControlProps) => {
             disabled={!props.enabled || !options?.allowManualEntry}
             value={text}
             style={{ flex: 1 }}
-            helperText={errors ?? customError}
+            helperText={zErrors ?? customError ?? errors}
             onChange={e => onChange(e.target.value)}
-            error={!!errors || !!customError}
+            error={!!zErrors || !!customError || !!errors}
+            FormHelperTextProps={
+              errors ? { sx: { color: 'error.main' } } : undefined
+            }
           />
           <Box>
             <Button
