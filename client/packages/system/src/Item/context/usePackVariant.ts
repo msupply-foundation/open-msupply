@@ -70,7 +70,6 @@ export const useRefreshPackVariant = () => {
 };
 
 export const usePackVariantsEnabled = () => {
-  // return Environment.FEATURE_PACK_VARIANTS;
   const { items } = usePackVariantStore();
   // If any pack variants are defined, then pack variants feature is enabled
   return Object.keys(items).length > 0;

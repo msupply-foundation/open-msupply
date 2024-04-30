@@ -21,7 +21,11 @@ import {
 } from '@openmsupply-client/common';
 import { StockLineRowFragment } from '../api';
 import { LocationSearchInput } from '../../Location/Components/LocationSearchInput';
-import { PackVariantInput, usePackVariant } from '../..';
+import {
+  PackVariantInput,
+  usePackVariant,
+  usePackVariantsEnabled,
+} from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
 interface StockLineFormProps {
@@ -45,6 +49,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     : t('message.no-supplier');
   const location = draft?.location ?? null;
 
+  const packVariantsEnabled = usePackVariantsEnabled();
   const { asPackVariant } = usePackVariant(
     draft.itemId,
     draft.item.unitName ?? null
@@ -171,7 +176,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
       >
         {packEditable ? (
           <StyledInputRow
-            label={t('label.pack')}
+            label={packVariantsEnabled ? t('label.pack') : t('label.pack-size')}
             Input={
               <PackVariantInput
                 isDisabled={!packEditable}
@@ -184,8 +189,8 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         ) : (
           <TextWithLabelRow
-            label={t('label.pack')}
-            text={String(packUnit)}
+            label={packVariantsEnabled ? t('label.pack') : t('label.pack-size')}
+            text={String(packVariantsEnabled ? packUnit : draft.packSize)}
             textProps={{ textAlign: 'end' }}
           />
         )}
