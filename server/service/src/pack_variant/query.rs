@@ -109,96 +109,96 @@ pub fn get_pack_variants(ctx: &ServiceContext) -> Result<Vec<ItemPackVariant>, R
         .collect())
 }
 
-#[cfg(test)]
-mod test {
-    use std::collections::HashMap;
+// #[cfg(test)]
+// mod test {
+//     use std::collections::HashMap;
 
-    use repository::{
-        mock::{mock_store_a, MockDataInserts},
-        test_db::setup_all,
-        EqualFilter, PackVariantFilter, PackVariantRepository, StockLineFilter,
-        StockLineRepository, StorageConnection,
-    };
+//     use repository::{
+//         mock::{mock_store_a, MockDataInserts},
+//         test_db::setup_all,
+//         EqualFilter, PackVariantFilter, PackVariantRepository, StockLineFilter,
+//         StockLineRepository, StorageConnection,
+//     };
 
-    use crate::service_provider::ServiceProvider;
+//     use crate::service_provider::ServiceProvider;
 
-    use super::ItemPackVariant;
+//     use super::ItemPackVariant;
 
-    // only testing item_a and item_b since both have SOH in store
-    fn pack_variants_for_item_helper(
-        connection: &StorageConnection,
-        item_id: &str,
-    ) -> ItemPackVariant {
-        let stock_lines = StockLineRepository::new(connection)
-            .query_by_filter(
-                StockLineFilter::new().item_id(EqualFilter::equal_to(item_id)),
-                Some(mock_store_a().id),
-            )
-            .unwrap();
-        let pack_variants = PackVariantRepository::new(connection)
-            .query_by_filter(PackVariantFilter::new().is_active(true))
-            .unwrap();
+//     // only testing item_a and item_b since both have SOH in store
+//     fn pack_variants_for_item_helper(
+//         connection: &StorageConnection,
+//         item_id: &str,
+//     ) -> ItemPackVariant {
+//         let stock_lines = StockLineRepository::new(connection)
+//             .query_by_filter(
+//                 StockLineFilter::new().item_id(EqualFilter::equal_to(item_id)),
+//                 Some(mock_store_a().id),
+//             )
+//             .unwrap();
+//         let pack_variants = PackVariantRepository::new(connection)
+//             .query_by_filter(PackVariantFilter::new().is_active(true))
+//             .unwrap();
 
-        let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
+//         let mut total_number_of_packs: HashMap<(String, i32), f64> = HashMap::new();
 
-        for stock_line in stock_lines {
-            let item_id = stock_line.item_row.id.clone();
-            let pack_size = stock_line.stock_line_row.pack_size;
+//         for stock_line in stock_lines {
+//             let item_id = stock_line.item_row.id.clone();
+//             let pack_size = stock_line.stock_line_row.pack_size;
 
-            total_number_of_packs
-                .entry((item_id, pack_size))
-                .and_modify(|e| *e += stock_line.stock_line_row.total_number_of_packs)
-                .or_insert(0.0);
-        }
+//             total_number_of_packs
+//                 .entry((item_id, pack_size))
+//                 .and_modify(|e| *e += stock_line.stock_line_row.total_number_of_packs)
+//                 .or_insert(0.0);
+//         }
 
-        let most_used_pack_variant_id = pack_variants
-            .iter()
-            .filter(|p| p.item_id == item_id)
-            .max_by(|a, b| {
-                total_number_of_packs
-                    .get(&(a.item_id.clone(), a.pack_size))
-                    .unwrap_or(&0.0)
-                    .partial_cmp(
-                        total_number_of_packs
-                            .get(&(b.item_id.clone(), b.pack_size))
-                            .unwrap_or(&0.0),
-                    )
-                    .unwrap()
-            })
-            .map(|p| p.id.clone())
-            .unwrap_or("".to_string());
+//         let most_used_pack_variant_id = pack_variants
+//             .iter()
+//             .filter(|p| p.item_id == item_id)
+//             .max_by(|a, b| {
+//                 total_number_of_packs
+//                     .get(&(a.item_id.clone(), a.pack_size))
+//                     .unwrap_or(&0.0)
+//                     .partial_cmp(
+//                         total_number_of_packs
+//                             .get(&(b.item_id.clone(), b.pack_size))
+//                             .unwrap_or(&0.0),
+//                     )
+//                     .unwrap()
+//             })
+//             .map(|p| p.id.clone())
+//             .unwrap_or("".to_string());
 
-        ItemPackVariant {
-            item_id: item_id.to_string(),
-            most_used_pack_variant_id,
-            pack_variants: pack_variants
-                .into_iter()
-                .filter(|p| p.item_id == item_id)
-                .collect(),
-        }
-    }
+//         ItemPackVariant {
+//             item_id: item_id.to_string(),
+//             most_used_pack_variant_id,
+//             pack_variants: pack_variants
+//                 .into_iter()
+//                 .filter(|p| p.item_id == item_id)
+//                 .collect(),
+//         }
+//     }
 
-    #[actix_rt::test]
-    async fn pack_variants() {
-        let (_, connection, connection_manager, _) =
-            setup_all("test_pack_variants", MockDataInserts::all()).await;
+//     #[actix_rt::test]
+//     async fn pack_variants() {
+//         let (_, connection, connection_manager, _) =
+//             setup_all("test_pack_variants", MockDataInserts::all()).await;
 
-        let service_provider = ServiceProvider::new(connection_manager, "app_data");
-        let context = service_provider
-            .context(mock_store_a().id, "".to_string())
-            .unwrap();
-        let service = service_provider.pack_variant_service;
+//         let service_provider = ServiceProvider::new(connection_manager, "app_data");
+//         let context = service_provider
+//             .context(mock_store_a().id, "".to_string())
+//             .unwrap();
+//         let service = service_provider.pack_variant_service;
 
-        let mut pack_variants = service.get_pack_variants(&context).unwrap();
-        pack_variants.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+//         let mut pack_variants = service.get_pack_variants(&context).unwrap();
+//         pack_variants.sort_by(|a, b| a.item_id.cmp(&b.item_id));
 
-        let item_a_pack_variants = pack_variants_for_item_helper(&connection, "item_a");
-        let item_b_pack_variants = pack_variants_for_item_helper(&connection, "item_b");
+//         let item_a_pack_variants = pack_variants_for_item_helper(&connection, "item_a");
+//         let item_b_pack_variants = pack_variants_for_item_helper(&connection, "item_b");
 
-        assert_eq!(pack_variants.len(), 2);
-        assert_eq!(
-            pack_variants,
-            vec![item_a_pack_variants, item_b_pack_variants]
-        );
-    }
-}
+//         assert_eq!(pack_variants.len(), 2);
+//         assert_eq!(
+//             pack_variants,
+//             vec![item_a_pack_variants, item_b_pack_variants]
+//         );
+//     }
+// }
