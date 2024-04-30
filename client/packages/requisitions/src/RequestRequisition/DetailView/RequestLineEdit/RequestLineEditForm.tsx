@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Grid,
   InputWithLabelRow,
@@ -6,6 +6,9 @@ import {
   TextArea,
   Typography,
   BasicTextInput,
+  Box,
+  Switch,
+  NumUtils,
 } from '@openmsupply-client/common';
 import { useFormatNumber, useTranslation } from '@common/intl';
 import {
@@ -13,6 +16,7 @@ import {
   ItemRowWithStatsFragment,
   VariantControl,
   PackVariantSelect,
+  usePackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
@@ -119,6 +123,11 @@ export const RequestLineEditForm = ({
     ({ item }) => item.id === currentItem?.id
   )?.itemName;
 
+  const packVariantsEnabled = usePackVariantsEnabled();
+
+  const isPacksEnabled = !packVariantsEnabled && !!currentItem?.defaultPackSize;
+  const [isPacks, setIsPacks] = useState(isPacksEnabled);
+
   return (
     <RequestLineEditFormLayout
       Top={
@@ -191,10 +200,29 @@ export const RequestLineEditForm = ({
               )}
             />
           ) : null}
+          {isPacksEnabled ? (
+            <InfoRow
+              label={t('label.default-pack-size')}
+              value={String(currentItem.defaultPackSize)}
+            />
+          ) : null}
         </>
       }
       Middle={
         <>
+          {isPacksEnabled && (
+            <Box display="flex" justifyContent="flex-end" alignItems="center">
+              <Switch
+                label={t('label.units')}
+                checked={isPacks}
+                onChange={(_event, checked) => setIsPacks(checked)}
+                size="small"
+              />
+              <Box paddingLeft={2} paddingRight={2}>
+                {t('label.packs')}
+              </Box>
+            </Box>
+          )}
           <InputWithLabelRow
             Input={
               <NumericTextInput
@@ -213,6 +241,7 @@ export const RequestLineEditForm = ({
               <NumericTextInput
                 autoFocus
                 value={numberOfPacksFromQuantity(requestedQuantity)}
+                disabled={isPacks}
                 width={100}
                 onChange={q =>
                   update({
@@ -224,6 +253,29 @@ export const RequestLineEditForm = ({
             labelWidth="750px"
             label={t('label.order-quantity')}
           />
+          {isPacksEnabled && (
+            <InputWithLabelRow
+              Input={
+                <NumericTextInput
+                  autoFocus
+                  disabled={!isPacks}
+                  value={NumUtils.round(
+                    requestedQuantity / currentItem.defaultPackSize,
+                    2
+                  )}
+                  width={100}
+                  onChange={quantity => {
+                    if (quantity === undefined) return;
+                    update({
+                      requestedQuantity: quantity * currentItem.defaultPackSize,
+                    });
+                  }}
+                />
+              }
+              labelWidth="750px"
+              label={t('label.requested-packs')}
+            />
+          )}
         </>
       }
       Right={
