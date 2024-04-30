@@ -119,6 +119,7 @@ impl RemoteDataSynchroniser {
         let cursor = ChangelogRepository::new(connection).latest_cursor()?;
 
         CursorController::new(KeyValueType::RemoteSyncPushCursor).update(connection, cursor + 1)?;
+        CursorController::new(KeyValueType::SyncPushCursorV6).update(connection, cursor + 1)?;
         Ok(())
     }
 
