@@ -22,6 +22,7 @@ pub struct ItemStats {
     pub average_monthly_consumption: f64,
     pub available_stock_on_hand: u32,
     pub item_id: String,
+    pub item_name: String,
 }
 
 pub trait ItemStatsServiceTrait: Sync + Send {
@@ -114,6 +115,7 @@ impl ItemStats {
             .map(|stock_on_hand| ItemStats {
                 available_stock_on_hand: stock_on_hand.available_stock_on_hand as u32,
                 item_id: stock_on_hand.item_id.clone(),
+                item_name: stock_on_hand.item_name.clone(),
                 average_monthly_consumption: consumption_map
                     .get(&stock_on_hand.item_id)
                     .map(|consumption| *consumption as f64 / amc_lookback_months as f64)
@@ -128,6 +130,7 @@ impl ItemStats {
             average_monthly_consumption: row.average_monthly_consumption as f64,
             available_stock_on_hand: row.available_stock_on_hand as u32,
             item_id: requisition_line.item_row.id.clone(),
+            item_name: requisition_line.item_row.name.clone(),
         }
     }
 }

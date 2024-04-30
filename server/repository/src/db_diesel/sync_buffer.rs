@@ -126,6 +126,7 @@ pub struct SyncBufferFilter {
     pub integration_error: Option<EqualFilter<String>>,
     pub action: Option<EqualFilter<SyncBufferAction>>,
     pub table_name: Option<EqualFilter<String>>,
+    pub source_site_id: Option<EqualFilter<i32>>,
 }
 
 impl SyncBufferFilter {
@@ -155,6 +156,11 @@ impl SyncBufferFilter {
 
     pub fn action(mut self, filter: EqualFilter<SyncBufferAction>) -> Self {
         self.action = Some(filter);
+        self
+    }
+
+    pub fn source_site_id(mut self, filter: EqualFilter<i32>) -> Self {
+        self.source_site_id = Some(filter);
         self
     }
 }
@@ -207,6 +213,7 @@ fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQue
             action,
             table_name,
             record_id,
+            source_site_id,
         } = f;
 
         apply_equal_filter!(query, record_id, sync_buffer_dsl::record_id);
@@ -218,6 +225,7 @@ fn create_filtered_query(filter: Option<SyncBufferFilter>) -> BoxedSyncBufferQue
         apply_equal_filter!(query, integration_error, sync_buffer_dsl::integration_error);
         apply_equal_filter!(query, action, sync_buffer_dsl::action);
         apply_equal_filter!(query, table_name, sync_buffer_dsl::table_name);
+        apply_equal_filter!(query, source_site_id, sync_buffer_dsl::source_site_id);
     }
 
     query

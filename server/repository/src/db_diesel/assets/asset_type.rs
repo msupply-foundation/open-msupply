@@ -1,5 +1,5 @@
 use super::asset_type_row::{
-    asset_type::{self, dsl as asset_type_dsl},
+    asset_catalogue_type::{self, dsl as asset_type_dsl},
     AssetTypeRow,
 };
 
@@ -112,10 +112,10 @@ fn to_domain(asset_type_row: AssetTypeRow) -> AssetTypeRow {
     asset_type_row
 }
 
-type BoxedAssetTypeQuery = IntoBoxed<'static, asset_type::table, DBType>;
+type BoxedAssetTypeQuery = IntoBoxed<'static, asset_catalogue_type::table, DBType>;
 
 fn create_filtered_query(filter: Option<AssetTypeFilter>) -> BoxedAssetTypeQuery {
-    let mut query = asset_type_dsl::asset_type.into_boxed();
+    let mut query = asset_type_dsl::asset_catalogue_type.into_boxed();
 
     if let Some(f) = filter {
         let AssetTypeFilter {

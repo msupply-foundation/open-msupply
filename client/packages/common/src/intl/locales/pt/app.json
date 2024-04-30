@@ -32,7 +32,7 @@
   "error.login": "Nome de usuário ou senha inválidos",
   "error.account-blocked": "A conta está bloqueada até que o período de bloqueio tenha expirado",
   "error.server-failed-to-start": "Erro! O servidor falhou ao iniciar",
-  "error.site-auth-timeout": "O tempo de autenticação expirou, por favor tente novamente mais tarde",
+  "error.site-auth-timeout": "O tempo de autenticação do local expirou, por favor tente novamente mais tarde",
   "error.site-incorrect-hardware-id": "ID do equipamento incorreta",
   "error.site-incorrect-password": "Senha incorreta",
   "error.unable-to-initialise": "Não foi possível inicializar",
@@ -88,5 +88,7 @@
   "error.site-has-no-store": "O local não tem um armazém",
   "error.site-name-not-found": "O nome do local não foi encontrado",
   "error.site-mismatch": "Incompatibilidade de locais",
-  "label.site": "Local:"
+  "label.site": "Local:",
+  "cmdk.goto-patients": "Ir até: Pacientes",
+  "cmdk.goto-prescriptions": "Ir até: Prescrições"
 }

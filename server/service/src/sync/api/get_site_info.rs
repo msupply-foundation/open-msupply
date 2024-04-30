@@ -1,17 +1,21 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::*;
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SiteInfoV5 {
     pub(crate) id: String,
     pub(crate) site_id: i32,
     pub(crate) initialisation_status: InitialisationStatus,
+    #[serde(rename = "omSupplyCentralServerUrl")]
+    pub(crate) central_server_url: String,
+    #[serde(rename = "isOmSupplyCentralServer")]
+    pub(crate) is_central_server: bool,
 }
 
 // See SITE_INITIALISATION_STATUS mSupply method
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum InitialisationStatus {
     New,
@@ -51,7 +55,9 @@ mod test {
                     "siteId": 123,
                     "code": "s123",
                     "name": "Site 123",
-                    "initialisationStatus": "new"
+                    "initialisationStatus": "new",
+                    "isOmSupplyCentralServer": false,
+                    "omSupplyCentralServerUrl": "http://localhost:2000"
                 }"#,
             );
         });
@@ -68,6 +74,8 @@ mod test {
                 id: "abc123".to_string(),
                 site_id: 123,
                 initialisation_status: InitialisationStatus::New,
+                is_central_server: false,
+                central_server_url: "http://localhost:2000".to_string()
             }
         );
     }

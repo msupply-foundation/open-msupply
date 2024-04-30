@@ -7,6 +7,7 @@ table! {
     stock_on_hand (id) {
         id -> Text,
         item_id -> Text,
+        item_name -> Text,
         store_id -> Text,
         available_stock_on_hand -> BigInt,
     }
@@ -16,6 +17,7 @@ table! {
 pub struct StockOnHandRow {
     pub id: String,
     pub item_id: String,
+    pub item_name: String,
     pub store_id: String,
     pub available_stock_on_hand: i64,
 }
