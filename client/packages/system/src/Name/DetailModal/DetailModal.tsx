@@ -21,13 +21,8 @@ interface DetailModalProps {
 export const DetailModal: FC<DetailModalProps> = ({ nameId }) => {
   const { data, isLoading } = useName.document.get(nameId);
   const t = useTranslation();
-  // const { setSuffix } = useBreadcrumbs();
   const isDisabled = true;
   const { localisedDate } = useFormatDateTime();
-
-  // useEffect(() => {
-  //   setSuffix(data?.name ?? '');
-  // }, [data]);
 
   if (isLoading) return <BasicSpinner />;
 
