@@ -62,9 +62,7 @@ impl SyncTranslation for ItemMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use super::*;
     use repository::{
@@ -120,14 +118,10 @@ mod tests {
         )
         .await;
 
-        let mut logger = SyncLogger::start(&connection).unwrap();
-
         SyncBufferRowRepository::new(&connection)
             .upsert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-            .await
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
@@ -146,9 +140,7 @@ mod tests {
             .upsert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, true, &mut logger)
-            .await
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, true, None, None).unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();

@@ -6,16 +6,15 @@ import {
 } from '@common/components';
 import { LocaleKey, useTranslation } from '@common/intl';
 import {
-  AssetLogReasonInput,
   AssetLogStatusInput,
   Box,
   InsertAssetLogInput,
-  ReasonType,
   StatusType,
   useDebounceCallback,
 } from '@openmsupply-client/common';
 import { AssetLogPanel } from '../Components';
-import { parseLogReason, parseLogStatus, reasonsByStatus } from '../utils';
+import { parseLogStatus } from '../utils';
+import { useAssetData } from '@openmsupply-client/system';
 
 const Row = ({
   children,
@@ -47,7 +46,6 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
     [onChange],
     500
   );
-
   const getOption = (label: string, value?: string) => ({
     label,
     value: value ?? label,
@@ -64,16 +62,21 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
     });
 
   const statuses = getOptionsFromEnum(StatusType, parseLogStatus);
-  const reasons = getOptionsFromEnum(ReasonType, parseLogReason);
+  const { data } = useAssetData.log.listReasons(
+    draft.status
+      ? {
+          assetLogStatus: { equalTo: draft.status },
+        }
+      : undefined
+  );
 
-  const filteredReasons = !draft.status
-    ? reasons
-    : reasons.filter(
-        r =>
-          reasonsByStatus[
-            draft.status as keyof typeof reasonsByStatus
-          ]?.includes(r?.value as never)
-      );
+  const reasons =
+    data?.nodes?.map(value => {
+      return {
+        label: value.reason,
+        value: value.id,
+      };
+    }) ?? [];
 
   return (
     <AssetLogPanel value={value} draft={draft} onChange={onChange}>
@@ -84,7 +87,7 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
             onChange={(_e, selected) =>
               onChange({
                 status: selected?.value as AssetLogStatusInput,
-                reason: undefined,
+                reasonId: undefined,
               })
             }
             options={statuses}
@@ -93,14 +96,14 @@ export const StatusTab = ({ draft, onChange, value }: AssetLogPanel) => {
         </Row>
         <Row label={t('label.reason')}>
           <Autocomplete
-            disabled={filteredReasons.length === 0}
-            options={filteredReasons}
+            disabled={reasons.length === 0}
+            options={reasons}
             width="100%"
-            isOptionEqualToValue={option => option?.value === draft.reason}
-            onChange={(_, selected) =>
-              onChange({ reason: selected?.value as AssetLogReasonInput })
+            isOptionEqualToValue={option => option?.value === draft.reasonId}
+            onChange={(_e, selected) =>
+              onChange({ reasonId: selected?.value as string })
             }
-            value={filteredReasons.find(r => r?.value === draft.reason) ?? null}
+            value={reasons.find(r => r?.value === draft.reasonId) ?? null}
           />
         </Row>
         <Row label={t('label.observations')}>

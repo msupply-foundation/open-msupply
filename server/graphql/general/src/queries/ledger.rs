@@ -53,7 +53,7 @@ impl LedgerNode {
     pub async fn id(&self) -> &String {
         &self.ledger.id
     }
-    pub async fn stock_line_id(&self) -> &String {
+    pub async fn stock_line_id(&self) -> &Option<String> {
         &self.ledger.stock_line_id
     }
     pub async fn item_id(&self) -> &String {

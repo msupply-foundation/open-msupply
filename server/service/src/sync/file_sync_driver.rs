@@ -1,17 +1,18 @@
 use std::sync::Arc;
 
+use crate::sync::is_initialised;
 use crate::{
     service_provider::ServiceProvider, settings::Settings, static_files::StaticFileService,
     sync::file_synchroniser::FileSynchroniser,
 };
-use crate::sync::is_initialised;
 
 use super::settings::SyncSettings;
+use super::CentralServerConfig;
 use tokio::{
     sync::mpsc::{self, Receiver, Sender},
     time::Duration,
 };
-use util::is_central_server;
+use util::format_error;
 
 const FILE_SYNC_UPLOAD_DELAY: Duration = Duration::from_millis(100); // This just gives time for a PAUSE message to be received between uploading files
 const FILE_SYNC_NO_FILES_DELAY: Duration = Duration::from_millis(10000); // If there's nothing to upload or there was an error, wait a longer before checking again
@@ -120,31 +121,44 @@ impl FileSyncDriver {
                 }
             }
 
-            if !stopped && !paused && !is_central_server() {
+            // If not stopped or paused and we have central server URL
+            if let (false, false, CentralServerConfig::CentralServerUrl(url)) =
+                (stopped, paused, CentralServerConfig::get())
+            {
                 // for now we only sync if we're not the central server
-                files_to_upload = self.sync(service_provider.clone()).await;
+                files_to_upload = self.sync(&url, service_provider.clone()).await;
             }
         }
     }
 
-    pub async fn sync(&self, service_provider: Arc<ServiceProvider>) -> usize {
+    pub async fn sync(&self, sync_v6_url: &str, service_provider: Arc<ServiceProvider>) -> usize {
         // ...Try to upload a file
 
-        let result = FileSynchroniser::new(
+        let synchroniser = FileSynchroniser::new(
+            sync_v6_url,
             get_sync_settings(&service_provider),
             service_provider,
             self.static_file_service.clone(),
-        )
-        .sync()
-        .await;
+        );
+
+        let synchroniser = match synchroniser {
+            Ok(synchroniser) => synchroniser,
+            Err(error) => {
+                log::error!("Problem creating file synchroniser {:#?}", error);
+                return 0;
+            }
+        };
+
+        let result = synchroniser.sync().await;
 
         let files_to_upload = match result {
             Ok(num_of_files) => num_of_files,
             Err(error) => {
-                log::error!("Problem syncing files {:#?}", error);
+                log::error!("Problem syncing files {}", format_error(&error));
                 0 // Assume there's no files to upload...
             }
         };
+
         if files_to_upload > 0 {
             log::info!("Found {} files to upload", files_to_upload);
         }

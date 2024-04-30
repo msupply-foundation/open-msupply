@@ -1,10 +1,15 @@
-use super::{query::get_sensor, validate::check_sensor_exists};
+use super::{
+    query::{get_sensor, get_sensor_logs_filter_for_breach},
+    validate::check_sensor_exists,
+};
 use crate::{
     activity_log::activity_log_entry, service_provider::ServiceContext, NullableUpdate,
     SingleRecordError,
 };
+
 use repository::{
-    ActivityLogType, RepositoryError, Sensor, SensorRow, SensorRowRepository, StorageConnection,
+    ActivityLogType, EqualFilter, RepositoryError, Sensor, SensorRow, SensorRowRepository,
+    StorageConnection, TemperatureBreachRow, TemperatureLogRepository, TemperatureLogRowRepository,
 };
 
 #[derive(PartialEq, Debug)]
@@ -92,6 +97,27 @@ pub fn generate(
     sensor_row.log_interval = log_interval.or(sensor_row.log_interval);
     sensor_row.battery_level = battery_level.or(sensor_row.battery_level);
     sensor_row
+}
+
+pub fn update_sensor_logs_for_breach(
+    connection: &StorageConnection,
+    breach: &TemperatureBreachRow,
+) -> Result<(), RepositoryError> {
+    let Some(temperature_log_filter) = get_sensor_logs_filter_for_breach(&breach) else {
+        // End time is not set on breach
+        return Ok(());
+    };
+
+    // And temperature log is not associated with any breaches
+    let temperature_log_filter =
+        temperature_log_filter.temperature_breach_id(EqualFilter::is_null(true));
+
+    let logs =
+        TemperatureLogRepository::new(&connection).query_by_filter(temperature_log_filter)?;
+
+    let log_ids = logs.into_iter().map(|l| l.temperature_log_row.id).collect();
+
+    TemperatureLogRowRepository::new(&connection).update_breach_id(&breach.id, &log_ids)
 }
 
 impl From<RepositoryError> for UpdateSensorError {

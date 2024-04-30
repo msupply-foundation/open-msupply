@@ -13,12 +13,14 @@ util = { path = "../util" }
 
 anyhow.workspace = true
 async-trait = "0.1.57"
-thiserror = {workspace = true}
+thiserror = { workspace = true }
 topological-sort = "0.2.2"
 bcrypt = "0.12.0"
 chrono = { workspace = true }
 rand = { workspace = true }
+actix-web = { workspace = true }
 actix-files = { workspace = true }
+actix-multipart = { workspace = true }
 jsonschema = "0.16.0"
 jsonwebtoken = "8.0.1"
 log = "0.4.14"
@@ -30,13 +32,13 @@ serde_yaml = "0.8.24"
 schemafy = "0.6.0"
 schemafy_core = "0.6.0"
 tera = "1"
-tokio = { version = "1.17.0", features = ["macros", "sync", "time"] }
+tokio = { version = "1.17.0", features = ["macros", "sync", "time", "fs"] }
 headless_chrome = "1.0.5"
 pretty_assertions = "1.3.0"
 flate2 = "1.0.26"
 simple-log = { version = "1.6" }
 # dependencies for temperature_sensor
-temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.git" }
+temperature-sensor = { git = "https://github.com/openmsupply/temperature-sensor.git", tag = "v0.1.0-beta3" }
 # plugin:
 hex = "0.4"
 pem = "3"
@@ -45,12 +47,13 @@ sha2 = "0.10.8"
 walkdir = "2"
 x509-parser = { version = "0.15", features = ["verify"] }
 telnet = "0.2.1"
+tempfile = "3.10.1"
+
 
 [dev-dependencies]
 actix-rt = "2.6.0"
 assert-json-diff = "2.0.1"
 httpmock = "0.6.6"
-actix-web = { workspace = true }
 tokio = { version = "1.21.1", features = ["macros", "rt-multi-thread", "time"] }
 
 [features]

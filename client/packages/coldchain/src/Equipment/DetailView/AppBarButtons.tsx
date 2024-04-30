@@ -5,8 +5,8 @@ import {
   useTranslation,
   PrinterIcon,
   useNotification,
-  useDisabledNotification,
   LoadingButton,
+  useDisabledNotificationPopover,
 } from '@openmsupply-client/common';
 
 import { useAssets } from '../api';
@@ -19,7 +19,7 @@ export const AppBarButtonsComponent = () => {
   const { error, success } = useNotification();
   const { data: settings } = useAssets.utils.labelPrinterSettings();
   const [isPrinting, setIsPrinting] = React.useState(false);
-  const { show, DisabledNotification } = useDisabledNotification({
+  const { show, DisabledNotification } = useDisabledNotificationPopover({
     title: t('heading.unable-to-print'),
     message: t('error.label-printer-not-configured'),
   });

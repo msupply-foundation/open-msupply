@@ -9,6 +9,7 @@ import {
 import { responseStatuses, getRequisitionTranslator } from '../../../utils';
 import { ResponseFragment, useResponse } from '../../api';
 import { StatusChangeButton } from './StatusChangeButton';
+import { CreateShipmentButton } from './CreateShipmentButton';
 
 export const createStatusLog = (requisition: ResponseFragment) => {
   const statusLog: Record<RequisitionNodeStatus, null | undefined | string> = {
@@ -44,6 +45,7 @@ export const Footer: FC = () => {
             />
 
             <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+              <CreateShipmentButton />
               <StatusChangeButton requisition={data} />
             </Box>
           </Box>

@@ -11,7 +11,9 @@ export const useAssetItemInsert = () => {
   const api = useAssetApi();
   const storeId = useAuthContext().storeId;
 
-  return useMutation(
+  const invalidateQueries = () =>
+    queryClient.invalidateQueries(api.keys.base());
+  const { mutateAsync: insertAssetCatalogueItem } = useMutation(
     async (asset: AssetCatalogueItemFragment) => api.insert(asset, storeId),
     {
       onSettled: () => queryClient.invalidateQueries(api.keys.base()),
@@ -20,4 +22,6 @@ export const useAssetItemInsert = () => {
       },
     }
   );
+
+  return { insertAssetCatalogueItem, invalidateQueries };
 };
