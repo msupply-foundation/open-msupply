@@ -15,21 +15,20 @@ use repository::{
 
 use super::InsertStockInLine;
 
+pub struct GenerateResult {
+    pub invoice: Option<InvoiceRow>,
+    pub invoice_line: InvoiceLineRow,
+    pub stock_line: Option<StockLineRow>,
+    pub barcode: Option<BarcodeRow>,
+}
+
 pub fn generate(
     connection: &StorageConnection,
     user_id: &str,
     input: InsertStockInLine,
     item_row: ItemRow,
     existing_invoice_row: InvoiceRow,
-) -> Result<
-    (
-        Option<InvoiceRow>,
-        InvoiceLineRow,
-        Option<StockLineRow>,
-        Option<BarcodeRow>,
-    ),
-    RepositoryError,
-> {
+) -> Result<GenerateResult, RepositoryError> {
     let store_preferences = get_store_preferences(connection, &existing_invoice_row.store_id)?;
 
     let new_line = generate_line(input.clone(), item_row, existing_invoice_row.clone());
@@ -66,12 +65,12 @@ pub fn generate(
         None
     };
 
-    Ok((
-        generate_invoice_user_id_update(user_id, existing_invoice_row),
-        new_line,
-        new_batch_option,
-        barcode_option,
-    ))
+    Ok(GenerateResult {
+        invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
+        invoice_line: new_line,
+        stock_line: new_batch_option,
+        barcode: barcode_option,
+    })
 }
 
 fn generate_line(

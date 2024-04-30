@@ -4,7 +4,7 @@ use repository::{
 };
 use repository::{RepositoryError, StockLine};
 
-use super::generate::generate;
+use super::generate::{generate, GenerateResult};
 use super::validate::validate;
 
 use crate::activity_log::activity_log_entry;
@@ -52,12 +52,15 @@ pub fn add_new_stock_line(
             let stock_line_id = input.stock_line_id.clone();
 
             validate(connection, &ctx.store_id, &input)?;
-            let (new_invoice, stock_in_line, update_reason) =
-                generate(connection, &ctx.store_id, &ctx.user_id, input)?;
+            let GenerateResult {
+                invoice,
+                stock_in_line,
+                update_inventory_adjustment_reason,
+            } = generate(connection, &ctx.store_id, &ctx.user_id, input)?;
 
             // Create Inventory Adjustment invoice in NEW status
             let invoice_row_repo = InvoiceRowRepository::new(connection);
-            invoice_row_repo.upsert_one(&new_invoice)?;
+            invoice_row_repo.upsert_one(&invoice)?;
 
             // Add invoice line (and introduce stock line)
             insert_stock_in_line(ctx, stock_in_line)
@@ -66,8 +69,8 @@ pub fn add_new_stock_line(
             // Add inventory adjustment reason to the invoice line
             let invoice_line_repo = InvoiceLineRowRepository::new(&connection);
             invoice_line_repo.update_inventory_adjustment_reason_id(
-                &update_reason.invoice_line_id,
-                update_reason.reason_id,
+                &update_inventory_adjustment_reason.invoice_line_id,
+                update_inventory_adjustment_reason.reason_id,
             )?;
 
             // Set invoice to verified
@@ -76,7 +79,7 @@ pub fn add_new_stock_line(
             let verified_invoice = InvoiceRow {
                 status: InvoiceRowStatus::Verified,
                 verified_datetime: Some(verified_datetime),
-                ..new_invoice
+                ..invoice
             };
 
             invoice_row_repo.upsert_one(&verified_invoice)?;

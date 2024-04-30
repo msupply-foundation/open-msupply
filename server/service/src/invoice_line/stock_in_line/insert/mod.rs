@@ -14,6 +14,8 @@ mod validate;
 use generate::generate;
 use validate::validate;
 
+use self::generate::GenerateResult;
+
 use super::StockInType;
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -47,23 +49,27 @@ pub fn insert_stock_in_line(
         .connection
         .transaction_sync(|connection| {
             let (item, invoice) = validate(&input, &ctx.store_id, &connection)?;
-            let (invoice_user_update_option, new_line, new_batch_option, barcode_option) =
-                generate(&connection, &ctx.user_id, input, item, invoice)?;
+            let GenerateResult {
+                invoice: invoice_user_update,
+                invoice_line,
+                stock_line,
+                barcode,
+            } = generate(&connection, &ctx.user_id, input, item, invoice)?;
 
-            if let Some(barcode_row) = barcode_option {
+            if let Some(barcode_row) = barcode {
                 BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
             }
 
-            if let Some(new_batch) = new_batch_option {
-                StockLineRowRepository::new(&connection).upsert_one(&new_batch)?;
+            if let Some(stock_line_row) = stock_line {
+                StockLineRowRepository::new(&connection).upsert_one(&stock_line_row)?;
             }
-            InvoiceLineRowRepository::new(&connection).upsert_one(&new_line)?;
+            InvoiceLineRowRepository::new(&connection).upsert_one(&invoice_line)?;
 
-            if let Some(invoice_row) = invoice_user_update_option {
+            if let Some(invoice_row) = invoice_user_update {
                 InvoiceRowRepository::new(&connection).upsert_one(&invoice_row)?;
             }
 
-            get_invoice_line(ctx, &new_line.id)
+            get_invoice_line(ctx, &invoice_line.id)
                 .map_err(|error| OutError::DatabaseError(error))?
                 .ok_or(OutError::NewlyCreatedLineDoesNotExist)
         })

@@ -12,9 +12,15 @@ use crate::number::next_number;
 
 use super::AddNewStockLine;
 
-pub struct UpdateInventoryAdjustmentReasonId {
+pub struct UpdateInventoryAdjustmentReason {
     pub reason_id: Option<String>,
     pub invoice_line_id: String,
+}
+
+pub struct GenerateResult {
+    pub invoice: InvoiceRow,
+    pub stock_in_line: InsertStockInLine,
+    pub update_inventory_adjustment_reason: UpdateInventoryAdjustmentReason,
 }
 
 pub fn generate(
@@ -35,14 +41,7 @@ pub fn generate(
         expiry_date,
         barcode,
     }: AddNewStockLine,
-) -> Result<
-    (
-        InvoiceRow,
-        InsertStockInLine,
-        UpdateInventoryAdjustmentReasonId,
-    ),
-    RepositoryError,
-> {
+) -> Result<GenerateResult, RepositoryError> {
     let current_datetime = Utc::now().naive_utc();
 
     let inventory_adjustment_name = NameRowRepository::new(connection)
@@ -104,14 +103,14 @@ pub fn generate(
         barcode,
     };
 
-    let update_inventory_adjustment_reason_id = UpdateInventoryAdjustmentReasonId {
+    let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
         reason_id: inventory_adjustment_reason_id,
         invoice_line_id,
     };
 
-    Ok((
+    Ok(GenerateResult {
         invoice,
         stock_in_line,
-        update_inventory_adjustment_reason_id,
-    ))
+        update_inventory_adjustment_reason,
+    })
 }
