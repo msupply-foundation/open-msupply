@@ -92,7 +92,7 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn delete(&self, asset_catalogue_item_id: &str) -> Result<(), RepositoryError> {
+    pub fn mark_deleted(&self, asset_catalogue_item_id: &str) -> Result<(), RepositoryError> {
         diesel::update(asset_catalogue_item.filter(id.eq(asset_catalogue_item_id)))
             .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
