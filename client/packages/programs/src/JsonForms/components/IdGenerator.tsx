@@ -420,6 +420,9 @@ const UIComponent = (props: ControlProps) => {
             helperText={zErrors ?? customError ?? errors}
             onChange={e => onChange(e.target.value)}
             error={!!zErrors || !!customError || !!errors}
+            FormHelperTextProps={
+              errors ? { sx: { color: 'error.main' } } : undefined
+            }
           />
           <Box>
             <Button
