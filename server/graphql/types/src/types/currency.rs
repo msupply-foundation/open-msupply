@@ -28,6 +28,7 @@ pub struct CurrencySortInput {
 pub struct CurrencyFilterInput {
     pub id: Option<EqualFilterStringInput>,
     pub is_home_currency: Option<bool>,
+    pub is_active: Option<bool>,
 }
 
 impl CurrencyFilterInput {
@@ -35,11 +36,13 @@ impl CurrencyFilterInput {
         let CurrencyFilterInput {
             id,
             is_home_currency,
+            is_active,
         } = self;
 
         CurrencyFilter {
             id: id.map(EqualFilter::from),
             is_home_currency,
+            is_active,
         }
     }
 }

@@ -19,8 +19,8 @@ export interface TypedTFunction<Keys> {
 //
 // returned function can be used with optional ns, i.e. t('label.create-user', { ns: 'system' })
 export const useTranslation = (ns?: Namespace): TypedTFunction<LocaleKey> => {
-  const {i18n} = useIntl();
-  const { t } = useTranslationNext(ns, {i18n});
+  const { i18n } = useIntl();
+  const { t } = useTranslationNext(ns, { i18n });
 
   return useCallback(
     (key, opts) => {

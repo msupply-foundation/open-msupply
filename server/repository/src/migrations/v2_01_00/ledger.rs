@@ -26,7 +26,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     CREATE VIEW invoice_line_stock_movement AS 
             SELECT
-                invoice_line.id,
+                'n/a' as id,
                 invoice_line.invoice_id,
                 invoice_line.item_name,
                 invoice_line.item_code,
@@ -91,8 +91,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
             JOIN name ON name_link.name_id = name.id
     )
     SELECT * FROM all_movements
-    WHERE datetime IS NOT NULL
-    AND stock_line_id IS NOT NULL;
+    WHERE datetime IS NOT NULL;
 
     CREATE VIEW consumption AS
             SELECT

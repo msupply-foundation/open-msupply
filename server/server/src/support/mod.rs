@@ -34,6 +34,8 @@ fn validate_request(
     service_provider: &ServiceProvider,
     auth_data: &AuthData,
 ) -> Result<ValidatedUser, AuthError> {
+    // TODO: Refactor to use authentication::validate_cookie_auth
+
     let service_context = service_provider
         .basic_context()
         .map_err(|err| AuthError::Denied(AuthDeniedKind::NotAuthenticated(err.to_string())))?;

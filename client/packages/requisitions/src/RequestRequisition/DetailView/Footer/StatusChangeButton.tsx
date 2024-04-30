@@ -9,8 +9,8 @@ import {
   ButtonWithIcon,
   useAuthContext,
   UserPermission,
-  Tooltip,
   useIntlUtils,
+  useDisabledNotificationToast,
 } from '@openmsupply-client/common';
 import { getNextRequestStatus, getStatusTranslation } from '../../../utils';
 import { useRequest } from '../../api';
@@ -80,7 +80,7 @@ const useStatusChangeButton = () => {
 
   const options = useMemo(
     () => getStatusOptions(status, getButtonLabel(t)),
-    [status, getButtonLabel]
+    [status, t]
   );
 
   const [selectedOption, setSelectedOption] =
@@ -144,6 +144,11 @@ export const StatusChangeButton = () => {
   const t = useTranslation('app');
   const noLines = lines?.totalCount === 0;
 
+  const showPermissionDenied = useDisabledNotificationToast(
+    t('auth.permission-denied')
+  );
+  const showNoLines = useDisabledNotificationToast(t('messages.no-lines'));
+
   if (!selectedOption) return null;
   if (isDisabled) return null;
 
@@ -151,23 +156,23 @@ export const StatusChangeButton = () => {
     selectedOption.value === RequisitionNodeStatus.Sent
       ? userHasPermission(UserPermission.RequisitionSend)
       : true;
-  const permissionDenied = hasPermission ? '' : t('auth.permission-denied');
-  const disabledNoLines = noLines ? t('messages.no-lines') : '';
+
+  const onClick = () => {
+    if (!hasPermission) return showPermissionDenied();
+    if (noLines) return showNoLines();
+
+    getConfirmation();
+  };
 
   return (
-    <>
-      <Tooltip title={permissionDenied || disabledNoLines}>
-        <div>
-          <ButtonWithIcon
-            color="secondary"
-            variant="contained"
-            disabled={!hasPermission || noLines}
-            label={selectedOption.label}
-            Icon={<ArrowRightIcon />}
-            onClick={() => getConfirmation()}
-          />
-        </div>
-      </Tooltip>
-    </>
+    <div>
+      <ButtonWithIcon
+        color="secondary"
+        variant="contained"
+        label={selectedOption.label}
+        Icon={<ArrowRightIcon />}
+        onClick={onClick}
+      />
+    </div>
   );
 };

@@ -60,10 +60,11 @@ impl SyncRecordTester for InvoiceRecordTester {
             requisition_id: None,
             linked_invoice_id: None,
             clinician_link_id: None,
-            currency_id: currency_row.id.clone(),
+            currency_id: Some(currency_row.id.clone()),
             currency_rate: 1.0,
             // Tax on invoice/transact is not nullable in mSupply
             tax: Some(0.0),
+            original_shipment_id: None,
         };
         let base_invoice_line_row = InvoiceLineRow {
             id: uuid(),
@@ -86,6 +87,7 @@ impl SyncRecordTester for InvoiceRecordTester {
             note: None,
             inventory_adjustment_reason_id: Some(inventory_adjustment_reason_id.clone()),
             foreign_currency_price_before_tax: Some(0.0),
+            return_reason_id: None,
         };
         let invoice_row_1 = base_invoice_row.clone();
         let invoice_line_row_1 = base_invoice_line_row.clone();
