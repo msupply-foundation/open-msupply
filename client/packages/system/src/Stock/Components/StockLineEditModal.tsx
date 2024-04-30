@@ -96,14 +96,10 @@ export const StockLineEditModal: FC<StockLineEditModalProps> = ({
       Component: <ActivityLogList recordId={draft?.id ?? ''} />,
       value: 'label.log',
     },
-    ...(Environment.FEATURE_INVENTORY_ADJUSTMENTS
-      ? [
-          {
-            Component: <LedgerForm stockLine={draft} />,
-            value: 'label.ledger',
-          },
-        ]
-      : []),
+    {
+      Component: <LedgerForm stockLine={draft} />,
+      value: 'label.ledger',
+    },
   ];
 
   const onChange = () => setHasChanged(true);
