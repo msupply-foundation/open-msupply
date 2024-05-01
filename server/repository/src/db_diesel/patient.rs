@@ -252,7 +252,7 @@ impl<'a> PatientRepository<'a> {
         };
 
         // Only return active (not deleted) patients
-        query = query.filter(name_dsl::is_active.eq(true));
+        query = query.filter(name_dsl::deleted_datetime.is_null());
         apply_equal_filter!(
             query,
             Some(NameType::equal_to(&NameType::Patient)),

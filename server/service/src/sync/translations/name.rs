@@ -231,7 +231,7 @@ impl SyncTranslation for NameTranslation {
                 .or(created_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
             date_of_death,
             custom_data_string,
-            is_active: existing_name.map_or(true, |name| name.is_active),
+            deleted_datetime: existing_name.and_then(|name| name.deleted_datetime),
         };
 
         Ok(PullTranslateResult::upsert(result))
@@ -281,14 +281,14 @@ impl SyncTranslation for NameTranslation {
             national_health_number,
             // See comment in pull translation
             custom_data_string: _,
-            is_active,
+            deleted_datetime,
         } = NameRowRepository::new(connection)
             .find_one_by_id(&changelog.record_id)?
             .ok_or(anyhow::Error::msg(format!(
                 "Name row ({}) not found",
                 changelog.record_id
             )))?;
-        if !is_active {
+        if deleted_datetime.is_some() {
             return Ok(PushTranslateResult::Ignored(
                 "Ignore pushing soft deleted name".to_string(),
             ));
