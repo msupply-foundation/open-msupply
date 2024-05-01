@@ -36,7 +36,7 @@ pub fn delete_asset_catalogue_item(
                     Err(_) => (),
                 };
             });
-            match AssetCatalogueItemRowRepository::new(connection).delete(&id) {
+            match AssetCatalogueItemRowRepository::new(connection).mark_deleted(&id) {
                 Ok(_) => Ok(id),
                 Err(err) => Err(DeleteAssetCatalogueItemError::from(err)),
             }

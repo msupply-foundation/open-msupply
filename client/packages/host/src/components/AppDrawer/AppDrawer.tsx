@@ -208,7 +208,7 @@ export const AppDrawer: React.FC = () => {
               opacity: 0.75,
             }}
           >
-            {t('label.central-server')}
+            {t(drawer.isOpen ? 'label.central-server' : 'label.central')}
           </Box>
         ) : null}
         <IconButton
