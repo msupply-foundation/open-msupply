@@ -4,7 +4,7 @@ import {
   useConfirmationModal,
 } from '@openmsupply-client/common';
 
-interface DeleteConfirmationProps<T> {
+interface DeleteConfirmationProps<T, E> {
   selectedRows: T[];
   deleteAction: () => Promise<void>;
   canDelete?: boolean;
@@ -12,17 +12,21 @@ interface DeleteConfirmationProps<T> {
     confirmTitle?: string;
     confirmMessage?: string;
     deleteSuccess?: string;
-    cantDelete?: string;
+    /**
+     * Either the error message or a function that transforms an error thrown by the deleteAction to
+     * a string
+     */
+    cantDelete?: string | ((err: E) => string | undefined);
     selectRows?: string;
   };
 }
 
-export const useDeleteConfirmation = <T>({
+export const useDeleteConfirmation = <T, E = Error>({
   selectedRows,
   deleteAction,
   canDelete = true,
   messages = {},
-}: DeleteConfirmationProps<T>) => {
+}: DeleteConfirmationProps<T, E>) => {
   const {
     confirmTitle,
     confirmMessage,
@@ -32,9 +36,16 @@ export const useDeleteConfirmation = <T>({
   } = messages;
   const t = useTranslation();
   const { success, info } = useNotification();
-  const cannotDeleteSnack = info(
-    cantDelete || t('messages.cant-delete-generic')
-  );
+  const cannotDeleteSnack = (err: E | undefined) => {
+    if (typeof cantDelete === 'string') {
+      return info(cantDelete)();
+    }
+    if (!cantDelete || !err) {
+      return info(t('messages.cant-delete-generic'))();
+    }
+
+    return info(cantDelete(err) ?? t('messages.cant-delete-generic'))();
+  };
 
   const showConfirmation = useConfirmationModal({
     onConfirm: async () => {
@@ -49,7 +60,7 @@ export const useDeleteConfirmation = <T>({
           successSnack();
         })
         .catch(err => {
-          cannotDeleteSnack();
+          cannotDeleteSnack(err);
           console.error(err.message);
         });
     },
@@ -61,7 +72,7 @@ export const useDeleteConfirmation = <T>({
     const numberSelected = selectedRows.length || 0;
     if (selectedRows && numberSelected > 0) {
       if (!canDelete) {
-        cannotDeleteSnack();
+        cannotDeleteSnack(undefined);
       } else showConfirmation();
     } else {
       const selectRowsSnack = info(
