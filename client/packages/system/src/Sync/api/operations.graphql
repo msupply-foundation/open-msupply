@@ -117,6 +117,20 @@ mutation updateUser {
     ... on UpdateUserNode {
       ...UpdateUser
     }
+    ... on UpdateUserError {
+      __typename
+      error {
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on ConnectionError {
+          __typename
+          description
+        }
+        description
+      }
+    }
   }
 }
 
