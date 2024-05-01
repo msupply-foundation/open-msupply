@@ -21,7 +21,10 @@ import {
 import { RepackModal, StockLineEditModal } from '../Components';
 import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
-import { getPackVariantCell } from '@openmsupply-client/system';
+import {
+  getPackVariantCell,
+  useIsPackVariantsEnabled,
+} from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 
 const StockListComponent: FC = () => {
@@ -50,6 +53,7 @@ const StockListComponent: FC = () => {
     first,
   };
 
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list(queryParams);
@@ -81,6 +85,34 @@ const StockListComponent: FC = () => {
       }}
     />
   );
+
+  const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] =
+    isPackVariantsEnabled
+      ? [
+          {
+            key: 'packUnit',
+            label: 'label.pack',
+            sortable: false,
+            Cell: getPackVariantCell({
+              getItemId: r => r.itemId,
+              getPackSizes: r => [r.packSize],
+              getUnitName: r => r.item.unitName || null,
+            }),
+            width: 130,
+          },
+        ]
+      : [
+          [
+            'itemUnit',
+            {
+              accessor: ({ rowData }) => rowData.item.unitName,
+              sortable: false,
+              Cell: TooltipTextCell,
+              width: 75,
+            },
+          ],
+          ['packSize', { Cell: TooltipTextCell, width: 125 }],
+        ];
 
   const columnDefinitions: ColumnDescription<StockLineRowFragment>[] = [
     {
@@ -123,17 +155,7 @@ const StockListComponent: FC = () => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    {
-      key: 'packUnit',
-      label: 'label.pack',
-      sortable: false,
-      Cell: getPackVariantCell({
-        getItemId: r => r.itemId,
-        getPackSizes: r => [r.packSize],
-        getUnitName: r => r.item.unitName || null,
-      }),
-      width: 130,
-    },
+    ...packSizeAndUnitColumns,
     [
       'numberOfPacks',
       {
