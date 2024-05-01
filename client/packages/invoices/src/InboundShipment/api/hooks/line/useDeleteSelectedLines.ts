@@ -78,9 +78,7 @@ export const useDeleteSelectedLines = (): (() => void) => {
       deleteSuccess: t('messages.deleted-lines', {
         count: selectedRows.length,
       }),
-      cantDelete: isDisabled
-        ? t('label.inbound-shipment-cant-delete-lines')
-        : (err: Error) => err.message,
+      cantDelete: (err: Error) => err.message,
     },
   });
 
