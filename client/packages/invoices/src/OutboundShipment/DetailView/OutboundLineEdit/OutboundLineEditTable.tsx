@@ -108,7 +108,6 @@ export const OutboundLineEditTable: React.FC<OutboundLineEditTableProps> = ({
     }
   };
   const unit = item?.unitName ?? t('label.unit');
-  console.log(unit);
 
   const columns = useOutboundLineEditColumns({
     onChange: onEditStockLine,
