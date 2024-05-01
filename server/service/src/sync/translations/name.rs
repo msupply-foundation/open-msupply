@@ -193,7 +193,6 @@ impl SyncTranslation for NameTranslation {
             .transpose()
             .context("Error serialising custom data to string")?;
 
-        let existing_name = NameRowRepository::new(connection).find_one_by_id(&id)?;
         let result = NameRow {
             id,
             name,
@@ -231,7 +230,7 @@ impl SyncTranslation for NameTranslation {
                 .or(created_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap())),
             date_of_death,
             custom_data_string,
-            deleted_datetime: existing_name.and_then(|name| name.deleted_datetime),
+            deleted_datetime: None,
         };
 
         Ok(PullTranslateResult::upsert(result))
