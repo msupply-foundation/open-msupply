@@ -77,7 +77,7 @@ export const OutboundLineEdit: React.FC<ItemDetailsModalProps> = ({
   const { status, currency, otherParty } = useOutbound.document.fields([
     'status',
     'currency',
-    'otherParty'
+    'otherParty',
   ]);
   const { mutateAsync } = useOutbound.line.save(status);
   const isDisabled = useOutbound.utils.isDisabled();
@@ -299,7 +299,7 @@ const TableWrapper: React.FC<TableProps> = ({
   allocatedQuantity,
   batch,
   currency,
-  isExternalSupplier
+  isExternalSupplier,
 }) => {
   const t = useTranslation('distribution');
 
