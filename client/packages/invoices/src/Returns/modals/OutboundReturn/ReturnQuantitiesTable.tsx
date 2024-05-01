@@ -7,7 +7,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateOutboundReturnLineFragment } from '../../api';
@@ -23,7 +23,7 @@ export const QuantityToReturnTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columnDescriptions: ColumnDescription<GenerateOutboundReturnLineFragment>[] =
     [
@@ -34,7 +34,7 @@ export const QuantityToReturnTableComponent = ({
       'expiryDate',
     ];
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columnDescriptions.push({
       key: 'packUnit',
       label: 'label.pack',

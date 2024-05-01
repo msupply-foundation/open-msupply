@@ -70,7 +70,7 @@ export const useRefreshPackVariant = () => {
   }, [data, setItems]);
 };
 
-export const usePackVariantsEnabled = () => {
+export const useIsPackVariantsEnabled = () => {
   // For now, we are using a feature flag to enable pack variants
   return Environment.FEATURE_PACK_VARIANTS;
 
@@ -102,9 +102,9 @@ export const usePackVariant = (
   const UserSelectedPackVariantId = UserSelectedPackVariant?.[itemId];
   const item = usePackVariantStore(state => state.items[itemId], isEqual);
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
-  if (!packVariantsEnabled || !item || item.packVariants.length == 0) {
+  if (!isPackVariantsEnabled || !item || item.packVariants.length == 0) {
     return {
       asPackVariant: (packSize, defaultPackVariant) =>
         commonAsPackVariant({ packSize, variantName, t, defaultPackVariant }),

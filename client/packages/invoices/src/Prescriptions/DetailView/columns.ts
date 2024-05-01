@@ -15,7 +15,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { StockOutLineFragment } from '../../StockOut';
 import { StockOutItem } from '../../types';
@@ -38,7 +38,7 @@ export const usePrescriptionColumn = ({
   const t = useTranslation('dispensary');
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<StockOutLineFragment | StockOutItem>[] = [
     [
@@ -139,7 +139,7 @@ export const usePrescriptionColumn = ({
     ],
   ];
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columns.push({
       key: 'packUnit',
       label: 'label.pack',

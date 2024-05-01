@@ -13,7 +13,7 @@ import {
 import {
   PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,
   PackVariantEntryCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import React from 'react';
 import { GenerateInboundReturnLineFragment } from '../../api';
@@ -29,7 +29,7 @@ export const QuantityReturnedTableComponent = ({
   ) => void;
   isDisabled: boolean;
 }) => {
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const columns = useColumns<GenerateInboundReturnLineFragment>(
     [
       'itemCode',
@@ -64,7 +64,7 @@ export const QuantityReturnedTableComponent = ({
         Cell: PackUnitEntryCell,
         setter: updateLine,
         getIsDisabled: () => isDisabled,
-        ...(packVariantsEnabled
+        ...(isPackVariantsEnabled
           ? {
               label: 'label.unit-variant-and-pack-size',
               minWidth: PACK_VARIANT_ENTRY_CELL_MIN_WIDTH,

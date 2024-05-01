@@ -18,7 +18,7 @@ import {
   StockItemSearchInput,
   ItemRowFragment,
   usePackVariant,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
@@ -76,7 +76,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { items } = usePrescription.line.rows();
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const { activePackVariant } = usePackVariant(
     item?.id ?? '',
     item?.unitName ?? null
@@ -247,7 +247,7 @@ export const PrescriptionLineEditForm: React.FC<
 
             {packSizeController.options.length ? (
               <>
-                {!packVariantsEnabled && (
+                {!isPackVariantsEnabled && (
                   <Grid
                     item
                     alignItems="center"
@@ -275,7 +275,7 @@ export const PrescriptionLineEditForm: React.FC<
                     onChangePackSize(Number(value));
                   }}
                 />
-                {!packVariantsEnabled &&
+                {!isPackVariantsEnabled &&
                   packSizeController.selected?.value !== -1 && (
                     <Grid
                       item

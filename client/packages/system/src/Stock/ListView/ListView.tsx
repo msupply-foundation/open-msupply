@@ -23,7 +23,7 @@ import { StockLineRowFragment, useStock } from '../api';
 import { AppBarButtons } from './AppBarButtons';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { Toolbar } from './Toolbar';
 
@@ -53,7 +53,7 @@ const StockListComponent: FC = () => {
     first,
   };
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const pagination = { page, first, offset };
   const t = useTranslation('inventory');
   const { data, isLoading, isError } = useStock.line.list(queryParams);
@@ -87,7 +87,7 @@ const StockListComponent: FC = () => {
   );
 
   const packSizeAndUnitColumns: ColumnDescription<StockLineRowFragment>[] =
-    packVariantsEnabled
+    isPackVariantsEnabled
       ? [
           {
             key: 'packUnit',

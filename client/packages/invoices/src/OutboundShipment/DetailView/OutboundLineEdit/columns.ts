@@ -16,7 +16,7 @@ import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { CurrencyRowFragment } from '@openmsupply-client/system';
 
@@ -32,7 +32,7 @@ export const useOutboundLineEditColumns = ({
   isExternalSupplier: boolean;
 }) => {
   const { store } = useAuthContext();
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const ForeignCurrencyCell = useCurrencyCell<DraftStockOutLine>(
     currency?.code as Currencies
@@ -84,7 +84,7 @@ export const useOutboundLineEditColumns = ({
     });
   }
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columnDefinitions.push({
       key: 'packUnit',
       label: 'label.pack',
@@ -154,7 +154,7 @@ export const useOutboundLineEditColumns = ({
 };
 
 export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<StockOutLineFragment>[] = [
     'batch',
@@ -167,7 +167,7 @@ export const useExpansionColumns = (): Column<StockOutLineFragment>[] => {
     ],
   ];
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columns.push({
       key: 'packUnit',
       label: 'label.pack',

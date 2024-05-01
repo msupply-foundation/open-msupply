@@ -13,7 +13,7 @@ import { ResponseLineFragment, useResponse } from './../api';
 import {
   PackVariantQuantityCell,
   usePackVariant,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 
 export const useResponseColumns = () => {
@@ -22,7 +22,7 @@ export const useResponseColumns = () => {
     queryParams: { sortBy },
   } = useUrlQueryParams({ initialSort: { key: 'itemName', dir: 'asc' } });
   const { isRemoteAuthorisation } = useResponse.utils.isRemoteAuthorisation();
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columnDefinitions: ColumnDescription<ResponseLineFragment>[] = [
     getCommentPopoverColumn(),
@@ -44,7 +44,7 @@ export const useResponseColumns = () => {
     ],
     {
       key: 'packUnit',
-      label: packVariantsEnabled ? 'label.pack' : 'label.unit',
+      label: isPackVariantsEnabled ? 'label.pack' : 'label.unit',
       sortable: false,
       accessor: ({ rowData }) => {
         // eslint-disable-next-line react-hooks/rules-of-hooks
