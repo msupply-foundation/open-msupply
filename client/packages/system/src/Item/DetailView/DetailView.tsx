@@ -39,7 +39,7 @@ export const ItemDetailView: FC = () => {
       value: t('label.general'),
     },
     {
-      Component: <MasterListsTab />,
+      Component: <MasterListsTab itemId={data.id} />,
       value: t('label.master-lists'),
     },
     {
