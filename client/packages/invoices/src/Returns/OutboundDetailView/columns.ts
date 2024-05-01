@@ -16,7 +16,7 @@ import { OutboundReturnLineFragment } from '../api';
 import { OutboundReturnItem } from '../../types';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 
 interface UseOutboundColumnOptions {
@@ -43,7 +43,7 @@ export const useOutboundReturnColumns = ({
   const { c } = useCurrency();
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<
     OutboundReturnLineFragment | OutboundReturnItem
@@ -150,7 +150,7 @@ export const useOutboundReturnColumns = ({
     //   ],
   ];
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columns.push({
       key: 'packUnit',
       label: 'label.pack',

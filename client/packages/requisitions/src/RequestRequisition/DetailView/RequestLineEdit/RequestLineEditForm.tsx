@@ -16,7 +16,7 @@ import {
   ItemRowWithStatsFragment,
   VariantControl,
   PackVariantSelect,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { useRequest } from '../../api';
 import { DraftRequestLine } from './hooks';
@@ -123,9 +123,10 @@ export const RequestLineEditForm = ({
     ({ item }) => item.id === currentItem?.id
   )?.itemName;
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
-  const isPacksEnabled = !packVariantsEnabled && !!currentItem?.defaultPackSize;
+  const isPacksEnabled =
+    !isPackVariantsEnabled && !!currentItem?.defaultPackSize;
   const [isPacks, setIsPacks] = useState(isPacksEnabled);
 
   return (

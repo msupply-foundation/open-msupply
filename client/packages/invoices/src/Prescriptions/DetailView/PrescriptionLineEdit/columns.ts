@@ -12,7 +12,7 @@ import { DraftStockOutLine } from '../../../types';
 import { PackQuantityCell, StockOutLineFragment } from '../../../StockOut';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 
 export const usePrescriptionLineEditColumns = ({
@@ -22,7 +22,7 @@ export const usePrescriptionLineEditColumns = ({
   onChange: (key: string, value: number, packSize: number) => void;
   unit: string;
 }) => {
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<DraftStockOutLine>[] = [
     [
@@ -73,7 +73,7 @@ export const usePrescriptionLineEditColumns = ({
   ];
 
   columns.push(
-    packVariantsEnabled
+    isPackVariantsEnabled
       ? {
           key: 'packUnit',
           label: 'label.pack',

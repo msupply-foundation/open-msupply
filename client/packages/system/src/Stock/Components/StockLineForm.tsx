@@ -24,7 +24,7 @@ import { LocationSearchInput } from '../../Location/Components/LocationSearchInp
 import {
   PackVariantInput,
   usePackVariant,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '../..';
 import { StyledInputRow } from './StyledInputRow';
 
@@ -49,7 +49,7 @@ export const StockLineForm: FC<StockLineFormProps> = ({
     : t('message.no-supplier');
   const location = draft?.location ?? null;
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const { asPackVariant } = usePackVariant(
     draft.itemId,
     draft.item.unitName ?? null
@@ -176,7 +176,9 @@ export const StockLineForm: FC<StockLineFormProps> = ({
       >
         {packEditable ? (
           <StyledInputRow
-            label={packVariantsEnabled ? t('label.pack') : t('label.pack-size')}
+            label={
+              isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
+            }
             Input={
               <PackVariantInput
                 isDisabled={!packEditable}
@@ -189,8 +191,10 @@ export const StockLineForm: FC<StockLineFormProps> = ({
           />
         ) : (
           <TextWithLabelRow
-            label={packVariantsEnabled ? t('label.pack') : t('label.pack-size')}
-            text={String(packVariantsEnabled ? packUnit : draft.packSize)}
+            label={
+              isPackVariantsEnabled ? t('label.pack') : t('label.pack-size')
+            }
+            text={String(isPackVariantsEnabled ? packUnit : draft.packSize)}
             textProps={{ textAlign: 'end' }}
           />
         )}

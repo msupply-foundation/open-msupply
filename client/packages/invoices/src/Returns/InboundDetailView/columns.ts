@@ -15,7 +15,7 @@ import { InboundReturnLineFragment } from '../api';
 import { InboundReturnItem } from '../../types';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 
 interface UseInboundReturnColumnOptions {
@@ -42,7 +42,7 @@ export const useInboundReturnColumns = ({
 >[] => {
   const { getColumnProperty, getColumnPropertyAsString } = useColumnUtils();
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const columns: ColumnDescription<
     InboundReturnLineFragment | InboundReturnItem
   >[] = [
@@ -145,7 +145,7 @@ export const useInboundReturnColumns = ({
     ],
   ];
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columns.push({
       key: 'packUnit',
       label: 'label.pack',

@@ -18,7 +18,7 @@ import {
 import {
   InventoryAdjustmentReasonRowFragment,
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
@@ -68,7 +68,7 @@ export const useStocktakeColumns = ({
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns: ColumnDescription<
     StocktakeLineFragment | StocktakeSummaryItem
@@ -137,7 +137,7 @@ export const useStocktakeColumns = ({
     },
   ];
 
-  if (packVariantsEnabled) {
+  if (isPackVariantsEnabled) {
     columns.push({
       key: 'packUnit',
       label: 'label.pack',
@@ -283,7 +283,7 @@ export const useStocktakeColumns = ({
 
 export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   const { getError } = useStocktakeLineErrorContext();
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   return useColumns([
     'batch',
@@ -294,7 +294,7 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
         accessor: ({ rowData }) => rowData.location?.code,
       },
     ],
-    ...(packVariantsEnabled
+    ...(isPackVariantsEnabled
       ? [
           {
             key: 'packUnit',

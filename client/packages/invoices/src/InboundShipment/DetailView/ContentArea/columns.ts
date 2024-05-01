@@ -14,7 +14,7 @@ import {
 } from '@openmsupply-client/common';
 import {
   getPackVariantCell,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { InboundItem } from './../../../types';
 import { InboundLineFragment } from '../../api';
@@ -36,7 +36,7 @@ export const useInboundShipmentColumns = () => {
     isInboundPlaceholderRow(row) ? 0 : row.sellPricePerPack;
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
 
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const columns = useColumns<InboundLineFragment | InboundItem>(
     [
@@ -132,7 +132,7 @@ export const useInboundShipmentColumns = () => {
         },
       ],
 
-      ...((packVariantsEnabled
+      ...((isPackVariantsEnabled
         ? [
             {
               key: 'packUnit',
@@ -273,13 +273,13 @@ export const useInboundShipmentColumns = () => {
 };
 
 export const useExpansionColumns = (): Column<InboundLineFragment>[] => {
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   return useColumns<InboundLineFragment>([
     'batch',
     'expiryDate',
     'location',
-    ...(packVariantsEnabled
+    ...(isPackVariantsEnabled
       ? [
           {
             key: 'packUnit',

@@ -19,7 +19,7 @@ import {
   ItemStockOnHandFragment,
   StockItemSearchInput,
   usePackVariant,
-  usePackVariantsEnabled,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { useOutbound } from '../../api';
 import { DraftItem } from '../../..';
@@ -79,7 +79,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
     item?.id ?? '',
     item?.unitName ?? null
   );
-  const packVariantsEnabled = usePackVariantsEnabled();
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
   const onChangePackSize = (newPackSize: number) => {
     const packSize = newPackSize === -1 ? 1 : newPackSize;
@@ -229,7 +229,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
 
             {packSizeController.options.length ? (
               <>
-                {!packVariantsEnabled && (
+                {!isPackVariantsEnabled && (
                   <Grid
                     item
                     alignItems="center"
@@ -258,7 +258,7 @@ export const OutboundLineEditForm: React.FC<OutboundLineEditFormProps> = ({
                     onChangePackSize(Number(value));
                   }}
                 />
-                {!packVariantsEnabled &&
+                {!isPackVariantsEnabled &&
                   packSizeController.selected?.value !== -1 && (
                     <Grid
                       item
