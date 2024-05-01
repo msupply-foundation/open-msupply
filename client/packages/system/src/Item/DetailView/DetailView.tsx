@@ -13,7 +13,7 @@ import { useItem } from '../api';
 import { Toolbar } from './Toolbar';
 import { GeneralTab } from './Tabs/General';
 import { MasterListsTab } from './Tabs/MasterLists';
-import { AppRoute } from '@openmsupply-client/config';
+import { AppRoute, Environment } from '@openmsupply-client/config';
 import { usePackVariant } from '../context';
 import { PackVariantsTab } from './Tabs/PackVariants';
 
@@ -42,11 +42,13 @@ export const ItemDetailView: FC = () => {
       Component: <MasterListsTab itemId={data.id} />,
       value: t('label.master-lists'),
     },
-    {
+  ];
+
+  Environment.FEATURE_PACK_VARIANTS &&
+    tabs.push({
       Component: <PackVariantsTab itemId={data.id} />,
       value: t('label.pack-variants'),
-    },
-  ];
+    });
 
   return !!data ? (
     <Box style={{ width: '100%' }}>

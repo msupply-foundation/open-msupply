@@ -12,11 +12,13 @@ import {
   Typography,
   useFormatNumber,
   useDebounceCallback,
+  InputLabel,
 } from '@openmsupply-client/common';
 import {
   StockItemSearchInput,
   ItemRowFragment,
   usePackVariant,
+  useIsPackVariantsEnabled,
 } from '@openmsupply-client/system';
 import { usePrescription } from '../../api';
 import { DraftItem } from '../../..';
@@ -74,6 +76,7 @@ export const PrescriptionLineEditForm: React.FC<
   const { format } = useFormatNumber();
   const { items } = usePrescription.line.rows();
 
+  const isPackVariantsEnabled = useIsPackVariantsEnabled();
   const { activePackVariant } = usePackVariant(
     item?.id ?? '',
     item?.unitName ?? null
@@ -244,23 +247,50 @@ export const PrescriptionLineEditForm: React.FC<
 
             {packSizeController.options.length ? (
               <>
-                <Grid
-                  item
-                  alignItems="center"
-                  display="flex"
-                  justifyContent="flex-start"
-                  style={{ minWidth: 125 }}
-                >
-                  <Select
-                    sx={{ width: 110 }}
-                    options={packSizeController.options}
-                    value={packSizeController.selected?.value ?? ''}
-                    onChange={e => {
-                      const { value } = e.target;
-                      onChangePackSize(Number(value));
-                    }}
-                  />
-                </Grid>
+                {!isPackVariantsEnabled && (
+                  <Grid
+                    item
+                    alignItems="center"
+                    display="flex"
+                    justifyContent="flex-start"
+                    style={{ minWidth: 125 }}
+                  >
+                    <InputLabel sx={{ fontSize: '12px' }}>
+                      {packSizeController.selected?.value === -1
+                        ? `${t('label.unit-plural', {
+                            unit: activePackVariant,
+                            count: issueQuantity,
+                          })} ${t('label.in-packs-of')}`
+                        : t('label.in-packs-of')}
+                    </InputLabel>
+                  </Grid>
+                )}
+                <Box marginLeft={1} />
+                <Select
+                  sx={{ width: 110 }}
+                  options={packSizeController.options}
+                  value={packSizeController.selected?.value ?? ''}
+                  onChange={e => {
+                    const { value } = e.target;
+                    onChangePackSize(Number(value));
+                  }}
+                />
+                {!isPackVariantsEnabled &&
+                  packSizeController.selected?.value !== -1 && (
+                    <Grid
+                      item
+                      alignItems="center"
+                      display="flex"
+                      justifyContent="flex-start"
+                    >
+                      <InputLabel style={{ fontSize: 12, marginLeft: 8 }}>
+                        {t('label.unit-plural', {
+                          count: packSizeController.selected?.value,
+                          unit: activePackVariant,
+                        })}
+                      </InputLabel>
+                    </Grid>
+                  )}
                 <Box marginLeft="auto" />
               </>
             ) : null}
