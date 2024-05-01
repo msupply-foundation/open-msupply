@@ -144,7 +144,7 @@ fn name_1() -> TestSyncIncomingRecord {
             ),
             date_of_death: None,
             custom_data_string: None,
-            is_active: true,
+            deleted_datetime: None,
         },
     )
 }
@@ -279,7 +279,7 @@ fn name_2() -> TestSyncIncomingRecord {
             national_health_number: None,
             date_of_death: None,
             custom_data_string: None,
-            is_active: true,
+            deleted_datetime: None,
         },
     )
 }
@@ -414,7 +414,7 @@ fn name_3() -> TestSyncIncomingRecord {
             national_health_number: Some("NHN002".to_string()),
             date_of_death: None,
             custom_data_string: Some(r#"{"check":"check"}"#.to_string()),
-            is_active: true,
+            deleted_datetime: None,
         },
     )
 }
@@ -555,7 +555,7 @@ fn name_4() -> TestSyncIncomingRecord {
             national_health_number: Some("NHN003".to_string()),
             date_of_death: None,
             custom_data_string: None,
-            is_active: true,
+            deleted_datetime: None,
         },
     )
 }

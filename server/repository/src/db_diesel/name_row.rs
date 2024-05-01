@@ -43,7 +43,7 @@ table! {
         date_of_death -> Nullable<Date>,
         custom_data -> Nullable<Text>,
 
-        is_active -> Bool,
+        deleted_datetime -> Nullable<Timestamp>,
     }
 }
 
@@ -154,8 +154,8 @@ pub struct NameRow {
     #[column_name = "custom_data"]
     pub custom_data_string: Option<String>,
 
-    // Flag for soft deletion
-    pub is_active: bool,
+    // Acts as a flag for soft deletion
+    pub deleted_datetime: Option<NaiveDateTime>,
 }
 
 pub struct NameRowRepository<'a> {
@@ -217,10 +217,9 @@ impl<'a> NameRowRepository<'a> {
         Ok(())
     }
 
-    /// Soft delete a name record (set is_active to false)
-    pub fn delete(&self, name_id: &str) -> Result<(), RepositoryError> {
+    pub fn mark_deleted(&self, name_id: &str) -> Result<(), RepositoryError> {
         diesel::update(name.filter(id.eq(name_id)))
-            .set(is_active.eq(false))
+            .set(deleted_datetime.eq(Some(chrono::Utc::now().naive_utc())))
             .execute(&self.connection.connection)?;
         Ok(())
     }
@@ -280,7 +279,7 @@ pub struct NameRowDelete(pub String);
 // TODO soft delete
 impl Delete for NameRowDelete {
     fn delete(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
-        NameRowRepository::new(con).delete(&self.0)
+        NameRowRepository::new(con).mark_deleted(&self.0)
     }
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
