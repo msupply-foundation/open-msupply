@@ -53,7 +53,7 @@ export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulS
 export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'ConnectionError' } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
+export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError', error: { __typename: 'ConnectionError', description: string } | { __typename: 'InvalidCredentials', description: string } } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
 
 export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
 
@@ -195,6 +195,20 @@ export const UpdateUserDocument = gql`
     __typename
     ... on UpdateUserNode {
       ...UpdateUser
+    }
+    ... on UpdateUserError {
+      __typename
+      error {
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on ConnectionError {
+          __typename
+          description
+        }
+        description
+      }
     }
   }
 }

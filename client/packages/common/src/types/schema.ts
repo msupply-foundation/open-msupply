@@ -941,7 +941,7 @@ export type ClinicianSortInput = {
 
 export type CliniciansResponse = ClinicianConnector;
 
-export type ConnectionError = CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface & {
+export type ConnectionError = CentralPatientSearchErrorInterface & LinkPatientPatientToStoreErrorInterface & UpdateUserErrorInterface & {
   __typename: 'ConnectionError';
   description: Scalars['String']['output'];
 };
@@ -2728,7 +2728,7 @@ export type InternalError = InsertAssetCatalogueItemErrorInterface & InsertAsset
   fullError: Scalars['String']['output'];
 };
 
-export type InvalidCredentials = AuthTokenErrorInterface & {
+export type InvalidCredentials = AuthTokenErrorInterface & UpdateUserErrorInterface & {
   __typename: 'InvalidCredentials';
   description: Scalars['String']['output'];
 };
@@ -7234,12 +7234,21 @@ export type UpdateTemperatureBreachInput = {
 
 export type UpdateTemperatureBreachResponse = TemperatureBreachNode;
 
+export type UpdateUserError = {
+  __typename: 'UpdateUserError';
+  error: UpdateUserErrorInterface;
+};
+
+export type UpdateUserErrorInterface = {
+  description: Scalars['String']['output'];
+};
+
 export type UpdateUserNode = {
   __typename: 'UpdateUserNode';
   lastSuccessfulSync?: Maybe<Scalars['DateTime']['output']>;
 };
 
-export type UpdateUserResponse = ConnectionError | UpdateUserNode;
+export type UpdateUserResponse = UpdateUserError | UpdateUserNode;
 
 export type UpsertLogLevelInput = {
   level: LogLevelEnum;
