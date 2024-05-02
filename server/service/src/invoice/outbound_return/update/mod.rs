@@ -289,7 +289,9 @@ mod test {
             .stock_line_id
             .unwrap();
 
-        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let original_stock_line = stock_line_row_repo
+            .find_one_by_id_old(&stock_line_id)
+            .unwrap();
 
         let result = service_provider
             .invoice_service
@@ -307,7 +309,9 @@ mod test {
         assert!(result.invoice_row.picked_datetime.is_some());
         assert!(result.invoice_row.shipped_datetime.is_some());
 
-        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let updated_stock_line = stock_line_row_repo
+            .find_one_by_id_old(&stock_line_id)
+            .unwrap();
 
         assert_eq!(
             updated_stock_line.total_number_of_packs,
@@ -333,7 +337,9 @@ mod test {
             .stock_line_id
             .unwrap();
 
-        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let original_stock_line = stock_line_row_repo
+            .find_one_by_id_old(&stock_line_id)
+            .unwrap();
 
         let result = service_provider
             .invoice_service
@@ -350,7 +356,9 @@ mod test {
         assert_eq!(result.invoice_row.status, InvoiceRowStatus::Shipped);
         assert!(result.invoice_row.shipped_datetime.is_some());
 
-        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let updated_stock_line = stock_line_row_repo
+            .find_one_by_id_old(&stock_line_id)
+            .unwrap();
 
         assert_eq!(
             updated_stock_line.total_number_of_packs,

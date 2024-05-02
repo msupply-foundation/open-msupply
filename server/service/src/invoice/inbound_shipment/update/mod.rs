@@ -409,7 +409,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .find_one_by_id_old(&mock_inbound_shipment_a().id)
             .unwrap();
 
         assert_eq!(
@@ -435,7 +435,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice_test().id)
+            .find_one_by_id_old(&invoice_test().id)
             .unwrap();
 
         assert_eq!(
@@ -487,7 +487,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice_test().id)
+            .find_one_by_id_old(&invoice_test().id)
             .unwrap();
 
         assert_eq!(
@@ -516,7 +516,7 @@ mod test {
         for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id_old(&stock_line_id)
                 .unwrap();
             stock_lines_delivered.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
@@ -537,7 +537,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice_test().id)
+            .find_one_by_id_old(&invoice_test().id)
             .unwrap();
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
@@ -555,7 +555,7 @@ mod test {
         for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id_old(&stock_line_id)
                 .unwrap();
             stock_lines_verified.push(stock_line.clone());
         }
@@ -593,7 +593,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice_test().id)
+            .find_one_by_id_old(&invoice_test().id)
             .unwrap();
 
         assert_eq!(
@@ -648,7 +648,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice_test().id)
+            .find_one_by_id_old(&invoice_test().id)
             .unwrap();
 
         assert_eq!(
@@ -678,7 +678,7 @@ mod test {
         for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id_old(&stock_line_id)
                 .unwrap();
             stock_lines_delivered.push(stock_line.clone());
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
@@ -698,7 +698,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice_test().id)
+            .find_one_by_id_old(&invoice_test().id)
             .unwrap();
         let filter =
             InvoiceLineFilter::new().invoice_id(EqualFilter::equal_any(vec![invoice.clone().id]));
@@ -717,7 +717,7 @@ mod test {
         for lines in invoice_lines.rows {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id_old(&stock_line_id)
                 .unwrap();
             stock_lines_verified.push(stock_line.clone());
         }
@@ -737,7 +737,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_c().id)
+            .find_one_by_id_old(&mock_inbound_shipment_c().id)
             .unwrap();
         let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_c().id)
@@ -766,7 +766,7 @@ mod test {
         for lines in invoice_lines.rows.clone() {
             let stock_line_id = lines.invoice_line_row.stock_line_id.clone().unwrap();
             let stock_line = StockLineRowRepository::new(&connection)
-                .find_one_by_id(&stock_line_id)
+                .find_one_by_id_old(&stock_line_id)
                 .unwrap();
             assert_eq!(lines.invoice_line_row.stock_line_id, Some(stock_line.id));
         }
@@ -802,7 +802,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .find_one_by_id_old(&mock_inbound_shipment_a().id)
             .unwrap();
 
         assert_eq!(
@@ -826,7 +826,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .find_one_by_id_old(&mock_inbound_shipment_a().id)
             .unwrap();
 
         assert_eq!(invoice.name_store_id, None);
@@ -849,7 +849,7 @@ mod test {
             .stock_line_id
             .unwrap();
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_a().id)
+            .find_one_by_id_old(&mock_inbound_shipment_a().id)
             .unwrap();
         let log = ActivityLogRowRepository::new(&connection)
             .find_many_by_record_id(&mock_inbound_shipment_a().id)
@@ -858,7 +858,7 @@ mod test {
             .find(|l| l.r#type == ActivityLogType::InvoiceStatusVerified)
             .unwrap();
         let stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&stock_line_id)
+            .find_one_by_id_old(&stock_line_id)
             .unwrap();
 
         assert!(invoice.verified_datetime.unwrap() > now);

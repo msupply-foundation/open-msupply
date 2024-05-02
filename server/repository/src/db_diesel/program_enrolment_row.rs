@@ -27,7 +27,18 @@ allow_tables_to_appear_in_same_query!(program_enrolment, store);
 allow_tables_to_appear_in_same_query!(program_enrolment, program);
 allow_tables_to_appear_in_same_query!(program_enrolment, name_link);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "program_enrolment"]
 pub struct ProgramEnrolmentRow {
     /// The row id

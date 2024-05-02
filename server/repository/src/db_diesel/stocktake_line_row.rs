@@ -41,7 +41,17 @@ joinable!(stocktake_line -> stock_line (stock_line_id));
 joinable!(stocktake_line -> inventory_adjustment_reason (inventory_adjustment_reason_id));
 allow_tables_to_appear_in_same_query!(stocktake_line, item_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stocktake_line"]
 pub struct StocktakeLineRow {

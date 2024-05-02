@@ -33,10 +33,10 @@ pub fn delete_stock_out_line(
                 let invoice_repository = InvoiceRowRepository::new(connection);
                 let stock_line_repository = StockLineRowRepository::new(connection);
 
-                let mut stock_line = stock_line_repository.find_one_by_id(&stock_line_id)?;
+                let mut stock_line = stock_line_repository.find_one_by_id_old(&stock_line_id)?;
                 stock_line.available_number_of_packs += line.number_of_packs;
 
-                let invoice = invoice_repository.find_one_by_id(&line.invoice_id)?;
+                let invoice = invoice_repository.find_one_by_id_old(&line.invoice_id)?;
                 if invoice.status == InvoiceRowStatus::Picked {
                     stock_line.total_number_of_packs += line.number_of_packs;
                 }
@@ -213,13 +213,13 @@ mod test {
         let stock_line_for_invoice_line = |invoice_line: &InvoiceLineRow| {
             let stock_line_id = invoice_line.stock_line_id.as_ref().unwrap();
             StockLineRowRepository::new(&connection)
-                .find_one_by_id(stock_line_id)
+                .find_one_by_id_old(stock_line_id)
                 .unwrap()
         };
 
         // Test delete Picked invoice line
         let invoice_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_outbound_shipment_a_invoice_lines()[0].id)
+            .find_one_by_id_old(&mock_outbound_shipment_a_invoice_lines()[0].id)
             .unwrap();
         let stock_line = stock_line_for_invoice_line(&invoice_line);
         let expected_stock_line_total =
@@ -238,13 +238,13 @@ mod test {
             .unwrap();
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id_option(&invoice_line_id)
+                .find_one_by_id(&invoice_line_id)
                 .unwrap(),
             None
         );
 
         let stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&invoice_line.stock_line_id.unwrap())
+            .find_one_by_id_old(&invoice_line.stock_line_id.unwrap())
             .unwrap();
         assert_eq!(expected_stock_line_total, stock_line.total_number_of_packs);
         assert_eq!(
@@ -254,7 +254,7 @@ mod test {
 
         // Test delete New invoice line
         let invoice_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_outbound_shipment_c_invoice_lines()[0].id)
+            .find_one_by_id_old(&mock_outbound_shipment_c_invoice_lines()[0].id)
             .unwrap();
         let stock_line = stock_line_for_invoice_line(&invoice_line);
         let expected_stock_line_total = stock_line.total_number_of_packs;
@@ -273,7 +273,7 @@ mod test {
             .unwrap();
 
         let stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&invoice_line.stock_line_id.unwrap())
+            .find_one_by_id_old(&invoice_line.stock_line_id.unwrap())
             .unwrap();
         assert_eq!(expected_stock_line_total, stock_line.total_number_of_packs);
         assert_eq!(
@@ -283,7 +283,7 @@ mod test {
 
         // Test delete Allocated invoice line
         let invoice_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&outbound_shipment_lines().id)
+            .find_one_by_id_old(&outbound_shipment_lines().id)
             .unwrap();
         let stock_line = stock_line_for_invoice_line(&invoice_line);
         let expected_stock_line_total = stock_line.total_number_of_packs;
@@ -301,7 +301,7 @@ mod test {
             .unwrap();
 
         let stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&invoice_line.stock_line_id.unwrap())
+            .find_one_by_id_old(&invoice_line.stock_line_id.unwrap())
             .unwrap();
         assert_eq!(expected_stock_line_total, stock_line.total_number_of_packs);
         assert_eq!(

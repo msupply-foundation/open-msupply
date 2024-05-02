@@ -8,6 +8,7 @@ use repository::{
     ChangelogRepository, SyncBufferRowRepository, SyncFileReferenceRow,
     SyncFileReferenceRowRepository,
 };
+
 use util::format_error;
 
 use crate::{

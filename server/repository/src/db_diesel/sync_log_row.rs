@@ -7,7 +7,7 @@ use crate::RepositoryError;
 
 use super::{sync_log_row::sync_log::dsl as sync_log_dsl, StorageConnection};
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum SyncLogRowErrorCode {
@@ -59,7 +59,16 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "sync_log"]
 pub struct SyncLogRow {

@@ -239,7 +239,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("new_id")
+            .find_one_by_id_old("new_id")
             .unwrap();
 
         assert_eq!(
@@ -265,7 +265,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("test_on_hold")
+            .find_one_by_id_old("test_on_hold")
             .unwrap();
 
         assert_eq!(
@@ -289,7 +289,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("test_name_store_id_linked")
+            .find_one_by_id_old("test_name_store_id_linked")
             .unwrap();
 
         assert_eq!(
@@ -312,7 +312,7 @@ mod test {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("test_name_store_id_not_linked")
+            .find_one_by_id_old("test_name_store_id_not_linked")
             .unwrap();
 
         assert_eq!(invoice.name_store_id, None)

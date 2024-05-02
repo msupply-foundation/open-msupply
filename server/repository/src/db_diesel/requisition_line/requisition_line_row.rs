@@ -39,7 +39,17 @@ joinable!(requisition_line -> item_link (item_link_id));
 joinable!(requisition_line -> requisition (requisition_id));
 allow_tables_to_appear_in_same_query!(requisition_line, item_link);
 
-#[derive(Clone, Queryable, AsChangeset, Insertable, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    AsChangeset,
+    Insertable,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "requisition_line"]
 pub struct RequisitionLineRow {
     pub id: String,

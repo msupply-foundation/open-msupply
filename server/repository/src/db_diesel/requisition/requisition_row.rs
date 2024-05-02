@@ -57,7 +57,7 @@ joinable!(requisition -> program (program_id));
 allow_tables_to_appear_in_same_query!(requisition, name_link);
 allow_tables_to_appear_in_same_query!(requisition, item_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionRowType {
     Request,
@@ -72,7 +72,7 @@ pub enum RequisitionRowStatus {
     Sent,
     Finalised,
 }
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum RequisitionRowApprovalStatus {
@@ -85,7 +85,16 @@ pub enum RequisitionRowApprovalStatus {
     DeniedByAnother,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "requisition"]
 pub struct RequisitionRow {

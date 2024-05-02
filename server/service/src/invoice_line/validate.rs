@@ -8,7 +8,7 @@ pub fn check_line_does_not_exist(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<bool, RepositoryError> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id_old(id);
 
     match result {
         Err(RepositoryError::NotFound) => Ok(true),
@@ -37,7 +37,7 @@ pub fn check_line_row_exists_option(
     connection: &StorageConnection,
     id: &str,
 ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
-    let result = InvoiceLineRowRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceLineRowRepository::new(connection).find_one_by_id_old(id);
 
     match result {
         Ok(line) => Ok(Some(line)),

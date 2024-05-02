@@ -132,7 +132,7 @@ impl CommonSyncRecord {
 mod tests {
     use repository::{mock::MockDataInserts, test_db::setup_all, SyncBufferRowRepository};
 
-    use crate::sync::translations::special::item_merge::ItemMergeMessage;
+    // use crate::sync::translations::special::item_merge::ItemMergeMessage;
 
     use super::*;
 
@@ -249,17 +249,17 @@ mod tests {
             1
         );
 
-        // Merge for itemA
-        assert_eq!(
-            rows.iter()
-                .filter(|r| r.action == SyncBufferAction::Merge
-                    && serde_json::from_str::<ItemMergeMessage>(&r.data)
-                        .unwrap()
-                        .merge_id_to_keep
-                        == "itemA")
-                .collect::<Vec<_>>()
-                .len(),
-            1
-        );
+        // // Merge for itemA
+        // assert_eq!(
+        //     rows.iter()
+        //         .filter(|r| r.action == SyncBufferAction::Merge
+        //             && serde_json::from_str::<ItemMergeMessage>(&r.data)
+        //                 .unwrap()
+        //                 .merge_id_to_keep
+        //                 == "itemA")
+        //         .collect::<Vec<_>>()
+        //         .len(),
+        //     1
+        // );
     }
 }

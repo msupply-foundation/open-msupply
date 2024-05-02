@@ -312,7 +312,7 @@ mod test {
         .unwrap();
 
         let inbound_line_update = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&return_line_id)
+            .find_one_by_id_old(&return_line_id)
             .unwrap();
 
         assert_eq!(
@@ -348,7 +348,7 @@ mod test {
         .unwrap();
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&return_line_id)
+            .find_one_by_id_old(&return_line_id)
             .unwrap();
 
         assert_eq!(

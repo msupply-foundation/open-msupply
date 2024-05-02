@@ -1130,7 +1130,7 @@ mod test {
             .pop()
             .unwrap();
         let stock_line = StockLineRowRepository::new(&context.connection)
-            .find_one_by_id(&shipment_line.stock_line_id.unwrap())
+            .find_one_by_id_old(&shipment_line.stock_line_id.unwrap())
             .unwrap();
         let stocktake_line = mock_stocktake_line_new_stock_line();
         assert_eq!(stock_line.expiry_date, stocktake_line.expiry_date);

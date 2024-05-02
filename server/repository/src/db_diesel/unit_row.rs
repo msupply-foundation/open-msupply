@@ -1,6 +1,7 @@
 use super::{unit_row::unit::dsl::*, StorageConnection};
 use crate::{repository_error::RepositoryError, Delete, Upsert};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     unit (id) {
@@ -12,7 +13,9 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[table_name = "unit"]
 pub struct UnitRow {
     pub id: String,
@@ -57,7 +60,7 @@ impl<'a> UnitRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_id_option(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, unit_id: &str) -> Result<Option<UnitRow>, RepositoryError> {
         let result = unit
             .filter(id.eq(unit_id))
             .first(&self.connection.connection)
@@ -90,7 +93,7 @@ impl Delete for UnitRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert!(matches!(
-            UnitRowRepository::new(con).find_one_by_id_option(&self.0),
+            UnitRowRepository::new(con).find_one_by_id(&self.0),
             Ok(Some(UnitRow {
                 is_active: false,
                 ..
@@ -107,7 +110,7 @@ impl Upsert for UnitRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            UnitRowRepository::new(con).find_one_by_id_option(&self.id),
+            UnitRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

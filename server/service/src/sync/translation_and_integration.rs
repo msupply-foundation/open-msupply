@@ -279,7 +279,7 @@ mod test {
 
         // Record should exist
         assert_matches!(
-            UnitRowRepository::new(&connection).find_one_by_id_option("unit"),
+            UnitRowRepository::new(&connection).find_one_by_id("unit"),
             Ok(Some(_))
         );
 

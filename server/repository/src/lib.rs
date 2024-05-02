@@ -67,6 +67,96 @@ pub trait Upsert: DebugTrait {
     }
 }
 
+macro_rules! upsert_with_store_id {
+    ($row_type:ident, $repository_type:ident, $change_log_type:path) => {
+        impl Upsert for $row_type {
+            fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+                $repository_type::new(con).insert_one(self)
+            }
+
+            fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+                $repository_type::new(con).insert_one(self)?;
+                let row = ChangeLogInsertRow {
+                    table_name: $change_log_type,
+                    record_id: self.id.clone(),
+                    row_action: ChangelogAction::Upsert,
+                    store_id: self.store_id.clone(),
+                    ..Default::default()
+                };
+                Ok(Some(ChangelogRepository::new(con).insert(&row)?))
+            }
+
+            // Test only
+            fn assert_upserted(&self, con: &StorageConnection) {
+                assert_eq!(
+                    $repository_type::new(con).find_one_by_id(&self.id),
+                    Ok(Some(self.clone()))
+                )
+            }
+        }
+    };
+}
+
+macro_rules! upsert {
+    ($row_type:ident, $repository_type:ident, $change_log_type:path) => {
+        impl Upsert for $row_type {
+            fn upsert_sync(&self, con: &StorageConnection) -> Result<(), RepositoryError> {
+                $repository_type::new(con).insert_one(self)
+            }
+
+            fn upsert(&self, con: &StorageConnection) -> Result<Option<i64>, RepositoryError> {
+                $repository_type::new(con).insert_one(self)?;
+                let row = ChangeLogInsertRow {
+                    table_name: $change_log_type,
+                    record_id: self.id.clone(),
+                    row_action: ChangelogAction::Upsert,
+                    ..Default::default()
+                };
+                Ok(Some(ChangelogRepository::new(con).insert(&row)?))
+            }
+
+            // Test only
+            fn assert_upserted(&self, con: &StorageConnection) {
+                assert_eq!(
+                    $repository_type::new(con).find_one_by_id(&self.id),
+                    Ok(Some(self.clone()))
+                )
+            }
+        }
+    };
+}
+
+// macro_rules! upsert {
+//     ($row_type:ident, $repository_type:ident, $change_log_type:path) => {
+//         impl Upsert for $row_type {
+//             fn upsert(&self, con: &StorageConnection) -> Result<i64, RepositoryError> {
+//                 $repository_type::new(con).insert_one(self)?;
+//                 let row = ChangeLogInsertRow {
+//                     table_name: $change_log_type,
+//                     record_id: self.id.clone(),
+//                     row_action: ChangelogAction::Upsert,
+//                     ..Default::default()
+//                 };
+//                 ChangelogRepository::new(con).insert(&row)
+//             }
+
+//             // Test only
+//             fn assert_upserted(&self, con: &StorageConnection) {
+//                 assert_eq!(
+//                     $repository_type::new(con).find_one_by_id(&self.id),
+//                     Ok(Some(self.clone()))
+//                 )
+//             }
+//         }
+//     };
+// }
+
+// upsert_with_store_id!(
+//     UserAccountRow,
+//     UserAccountRowRepository,
+//     ChangelogTableName::UserAccount
+// );
+
 #[test]
 fn downcast_example() {
     let mut boxed: Vec<Box<dyn Upsert>> = vec![

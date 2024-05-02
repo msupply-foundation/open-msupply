@@ -21,7 +21,7 @@ table! {
     }
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 #[cfg_attr(test, derive(strum::EnumIter))]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum StoreMode {
@@ -33,7 +33,18 @@ joinable!(store -> name (name_id));
 allow_tables_to_appear_in_same_query!(store, name_link);
 allow_tables_to_appear_in_same_query!(store, item_link);
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "store"]
 pub struct StoreRow {
     pub id: String,

@@ -23,7 +23,17 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "contact_trace"]
 struct ContactTraceRawRow {

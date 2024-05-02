@@ -23,7 +23,17 @@ joinable!(location_movement -> store (store_id));
 joinable!(location_movement -> stock_line (stock_line_id));
 joinable!(location_movement -> location (location_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "location_movement"]
 pub struct LocationMovementRow {
     pub id: String,

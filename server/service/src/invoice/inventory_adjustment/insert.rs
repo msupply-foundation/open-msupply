@@ -249,8 +249,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_inventory_adjustment_success() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_inventory_adjustment_success", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_inventory_adjustment_success",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager, "app_data");
         let context = service_provider
@@ -283,11 +286,11 @@ mod test {
             .unwrap();
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&created_invoice.invoice_row.id)
+            .find_one_by_id_old(&created_invoice.invoice_row.id)
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_stock_line_a().id)
+            .find_one_by_id_old(&mock_stock_line_a().id)
             .unwrap();
 
         assert_eq!(
@@ -323,11 +326,11 @@ mod test {
             .unwrap();
 
         let retrieved_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&created_invoice.invoice_row.id)
+            .find_one_by_id_old(&created_invoice.invoice_row.id)
             .unwrap();
 
         let updated_stockline = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_stock_line_b().id)
+            .find_one_by_id_old(&mock_stock_line_b().id)
             .unwrap();
 
         assert_eq!(

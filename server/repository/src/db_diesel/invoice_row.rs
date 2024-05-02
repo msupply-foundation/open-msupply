@@ -83,7 +83,16 @@ pub enum InvoiceRowStatus {
     Verified,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice"]
 pub struct InvoiceRow {
@@ -183,7 +192,7 @@ impl<'a> InvoiceRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
+    pub fn find_one_by_id_old(&self, invoice_id: &str) -> Result<InvoiceRow, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(&self.connection.connection);
@@ -191,10 +200,7 @@ impl<'a> InvoiceRowRepository<'a> {
     }
 
     // TODO replace find_one_by_id with this one
-    pub fn find_one_by_id_option(
-        &self,
-        invoice_id: &str,
-    ) -> Result<Option<InvoiceRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, invoice_id: &str) -> Result<Option<InvoiceRow>, RepositoryError> {
         let result = invoice
             .filter(id.eq(invoice_id))
             .first(&self.connection.connection)
@@ -231,7 +237,7 @@ impl Delete for InvoiceRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceRowRepository::new(con).find_one_by_id_option(&self.0),
+            InvoiceRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
@@ -245,7 +251,7 @@ impl Upsert for InvoiceRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceRowRepository::new(con).find_one_by_id_option(&self.id),
+            InvoiceRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

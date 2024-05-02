@@ -37,7 +37,17 @@ joinable!(stock_line -> barcode (barcode_id));
 allow_tables_to_appear_in_same_query!(stock_line, item_link);
 allow_tables_to_appear_in_same_query!(stock_line, name_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "stock_line"]
 pub struct StockLineRow {
@@ -92,7 +102,7 @@ impl<'a> StockLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
+    pub fn find_one_by_id_old(&self, stock_line_id: &str) -> Result<StockLineRow, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(stock_line_id))
             .first(&self.connection.connection)?;
@@ -106,7 +116,7 @@ impl<'a> StockLineRowRepository<'a> {
             .map_err(RepositoryError::from)
     }
 
-    pub fn find_one_by_id_option(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
         let result = stock_line_dsl::stock_line
             .filter(stock_line_dsl::id.eq(id))
             .first(&self.connection.connection)
@@ -132,7 +142,7 @@ impl Delete for StockLineRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            StockLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
@@ -146,7 +156,7 @@ impl Upsert for StockLineRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            StockLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            StockLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

@@ -7,7 +7,7 @@ use crate::{db_diesel::form_schema_row::form_schema, RepositoryError, Upsert};
 use diesel::prelude::*;
 use diesel_derive_enum::DbEnum;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum DocumentRegistryCategory {
     Patient,
@@ -29,7 +29,16 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "document_registry"]
 pub struct DocumentRegistryRow {
     pub id: String,

@@ -21,7 +21,17 @@ use crate::{Delete, Upsert};
 
 joinable!(program_requisition_order_type -> program_requisition_settings (program_requisition_settings_id));
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "program_requisition_order_type"]
 pub struct ProgramRequisitionOrderTypeRow {
     pub id: String,

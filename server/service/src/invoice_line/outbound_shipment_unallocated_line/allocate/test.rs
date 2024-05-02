@@ -135,12 +135,12 @@ mod test {
         let repo = InvoiceLineRowRepository::new(&connection);
 
         assert_eq!(
-            repo.find_one_by_id(&result.deletes[0]),
+            repo.find_one_by_id_old(&result.deletes[0]),
             Err(RepositoryError::NotFound)
         );
 
         let new_line = repo
-            .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .find_one_by_id_old(&result.inserts[0].invoice_line_row.id)
             .unwrap();
 
         assert_eq!(
@@ -242,7 +242,7 @@ mod test {
         let repo = InvoiceLineRowRepository::new(&connection);
 
         let new_line1 = repo
-            .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .find_one_by_id_old(&result.inserts[0].invoice_line_row.id)
             .unwrap();
 
         assert_eq!(
@@ -255,7 +255,7 @@ mod test {
         );
 
         let new_line2 = repo
-            .find_one_by_id(&result.inserts[1].invoice_line_row.id)
+            .find_one_by_id_old(&result.inserts[1].invoice_line_row.id)
             .unwrap();
 
         assert_eq!(
@@ -268,7 +268,7 @@ mod test {
         );
 
         let new_line3 = repo
-            .find_one_by_id(&result.inserts[2].invoice_line_row.id)
+            .find_one_by_id_old(&result.inserts[2].invoice_line_row.id)
             .unwrap();
 
         assert_eq!(
@@ -281,7 +281,7 @@ mod test {
         );
 
         let updated_uallocated_line = repo
-            .find_one_by_id(&result.updates[0].invoice_line_row.id)
+            .find_one_by_id_old(&result.updates[0].invoice_line_row.id)
             .unwrap();
 
         assert_eq!(
@@ -648,12 +648,12 @@ mod test {
         let repo = InvoiceLineRowRepository::new(&connection);
 
         assert_eq!(
-            repo.find_one_by_id(&result.deletes[0]),
+            repo.find_one_by_id_old(&result.deletes[0]),
             Err(RepositoryError::NotFound)
         );
 
         let new_line = repo
-            .find_one_by_id(&result.inserts[0].invoice_line_row.id)
+            .find_one_by_id_old(&result.inserts[0].invoice_line_row.id)
             .unwrap();
 
         assert_eq!(

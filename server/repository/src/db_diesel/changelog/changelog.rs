@@ -50,7 +50,7 @@ no_arg_sql_function!(
     "Represents the SQL last_insert_row() function"
 );
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ChangelogAction {
     #[default]
@@ -61,6 +61,16 @@ pub enum ChangelogAction {
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, EnumIter)]
 #[DbValueStyle = "snake_case"]
 pub enum ChangelogTableName {
+    UserPermission,
+    MasterList,
+    MasterListLine,
+    MasterListNameJoin,
+    NameTag,
+    NameTagJoin,
+    Unit,
+    Item,
+    Store,
+    User,
     Number,
     Location,
     LocationMovement,
@@ -98,7 +108,8 @@ pub enum ChangelogTableName {
     AssetLogReason,
 }
 
-pub(crate) enum ChangeLogSyncStyle {
+#[derive(PartialEq)]
+pub enum ChangeLogSyncStyle {
     Legacy,
     Central,
     Remote,
@@ -109,7 +120,7 @@ pub(crate) enum ChangeLogSyncStyle {
 // When adding a new change log record type, specify how it should be synced
 // If new requirements are needed a different ChangeLogSyncStyle can be added
 impl ChangelogTableName {
-    pub(crate) fn sync_style(&self) -> ChangeLogSyncStyle {
+    pub fn sync_style(&self) -> ChangeLogSyncStyle {
         match self {
             ChangelogTableName::Number => ChangeLogSyncStyle::Legacy,
             ChangelogTableName::Location => ChangeLogSyncStyle::Legacy,
@@ -145,6 +156,16 @@ impl ChangelogTableName {
             ChangelogTableName::AssetCatalogueItemProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetCatalogueProperty => ChangeLogSyncStyle::Central,
             ChangelogTableName::AssetLogReason => ChangeLogSyncStyle::Central,
+            ChangelogTableName::User => ChangeLogSyncStyle::Central,
+            ChangelogTableName::NameTag => ChangeLogSyncStyle::Central,
+            ChangelogTableName::NameTagJoin => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Unit => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Item => ChangeLogSyncStyle::Central,
+            ChangelogTableName::Store => ChangeLogSyncStyle::Central,
+            ChangelogTableName::MasterList => ChangeLogSyncStyle::Central,
+            ChangelogTableName::MasterListLine => ChangeLogSyncStyle::Central,
+            ChangelogTableName::MasterListNameJoin => ChangeLogSyncStyle::Central,
+            ChangelogTableName::UserPermission => ChangeLogSyncStyle::Central,
         }
     }
 }

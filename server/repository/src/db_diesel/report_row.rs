@@ -8,13 +8,13 @@ use diesel::prelude::*;
 
 use diesel_derive_enum::DbEnum;
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportType {
     OmSupply,
 }
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ReportContext {
     Asset,
@@ -49,7 +49,17 @@ joinable!(report -> form_schema (argument_schema_id));
 
 allow_tables_to_appear_in_same_query!(report, form_schema);
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "report"]
 pub struct ReportRow {
     pub id: String,

@@ -297,7 +297,7 @@ mod test {
             .unwrap();
 
         let inbound_line_update = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_c_invoice_lines()[0].id.clone())
+            .find_one_by_id_old(&mock_inbound_shipment_c_invoice_lines()[0].id.clone())
             .unwrap();
 
         assert_eq!(
@@ -335,7 +335,7 @@ mod test {
             .unwrap();
 
         let inbound_line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_inbound_shipment_c_invoice_lines()[0].id.clone())
+            .find_one_by_id_old(&mock_inbound_shipment_c_invoice_lines()[0].id.clone())
             .unwrap();
 
         assert_eq!(

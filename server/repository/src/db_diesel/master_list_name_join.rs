@@ -15,7 +15,17 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "master_list_name_join"]
 pub struct MasterListNameJoinRow {
     pub id: String,
@@ -56,7 +66,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(())
     }
 
-    pub async fn find_one_by_id(
+    pub async fn find_one_by_id_old(
         &self,
         record_id: &str,
     ) -> Result<MasterListNameJoinRow, RepositoryError> {
@@ -66,7 +76,7 @@ impl<'a> MasterListNameJoinRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         record_id: &str,
     ) -> Result<Option<MasterListNameJoinRow>, RepositoryError> {
@@ -93,7 +103,7 @@ impl Delete for MasterListNameJoinRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.0),
+            MasterListNameJoinRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
@@ -107,7 +117,7 @@ impl Upsert for MasterListNameJoinRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            MasterListNameJoinRepository::new(con).find_one_by_id_option(&self.id),
+            MasterListNameJoinRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

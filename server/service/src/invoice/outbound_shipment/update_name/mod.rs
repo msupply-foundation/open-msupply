@@ -304,9 +304,7 @@ mod test {
             .unwrap();
 
         assert_eq!(
-            invoice_row_repo
-                .find_one_by_id_option(&invoice().id)
-                .unwrap(),
+            invoice_row_repo.find_one_by_id(&invoice().id).unwrap(),
             None
         );
         assert_eq!(
@@ -317,7 +315,7 @@ mod test {
         );
         assert_eq!(
             invoice_row_repo
-                .find_one_by_id_option(&updated_invoice.invoice_row.id)
+                .find_one_by_id(&updated_invoice.invoice_row.id)
                 .unwrap()
                 .unwrap(),
             updated_invoice.invoice_row

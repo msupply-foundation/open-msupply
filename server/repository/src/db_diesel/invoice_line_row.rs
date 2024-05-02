@@ -48,7 +48,7 @@ joinable!(invoice_line -> return_reason (return_reason_id));
 allow_tables_to_appear_in_same_query!(invoice_line, item_link);
 allow_tables_to_appear_in_same_query!(invoice_line, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceLineRowType {
     StockIn,
@@ -63,7 +63,17 @@ impl Default for InvoiceLineRowType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "invoice_line"]
 pub struct InvoiceLineRow {
@@ -169,7 +179,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
+    pub fn find_one_by_id_old(&self, record_id: &str) -> Result<InvoiceLineRow, RepositoryError> {
         let result = invoice_line
             .filter(id.eq(record_id))
             .first(&self.connection.connection);
@@ -184,7 +194,7 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     // TODO replace find_one_by_id with this one
-    pub fn find_one_by_id_option(
+    pub fn find_one_by_id(
         &self,
         invoice_line_id: &str,
     ) -> Result<Option<InvoiceLineRow>, RepositoryError> {
@@ -226,7 +236,7 @@ impl Delete for InvoiceLineRowDelete {
     // Test only
     fn assert_deleted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.0),
+            InvoiceLineRowRepository::new(con).find_one_by_id(&self.0),
             Ok(None)
         )
     }
@@ -240,7 +250,7 @@ impl Upsert for InvoiceLineRow {
     // Test only
     fn assert_upserted(&self, con: &StorageConnection) {
         assert_eq!(
-            InvoiceLineRowRepository::new(con).find_one_by_id_option(&self.id),
+            InvoiceLineRowRepository::new(con).find_one_by_id(&self.id),
             Ok(Some(self.clone()))
         )
     }

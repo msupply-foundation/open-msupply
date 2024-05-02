@@ -35,7 +35,17 @@ pub enum StorePreferenceType {
     StorePreferences,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "store_preference"]
 pub struct StorePreferenceRow {
     pub id: String, // store_id

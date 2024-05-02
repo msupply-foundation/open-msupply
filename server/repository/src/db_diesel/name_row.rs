@@ -108,7 +108,9 @@ impl NameType {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[changeset_options(treat_none_as_null = "true")]
 #[table_name = "name"]
 pub struct NameRow {

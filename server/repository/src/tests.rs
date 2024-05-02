@@ -369,7 +369,7 @@ mod repository_test {
         let stock_line_repo = StockLineRowRepository::new(&connection);
         stock_line_repo.upsert_one(&stock_line).unwrap();
         let loaded_item = stock_line_repo
-            .find_one_by_id(stock_line.id.as_str())
+            .find_one_by_id_old(stock_line.id.as_str())
             .unwrap();
         assert_eq!(stock_line, loaded_item);
     }
@@ -554,7 +554,7 @@ mod repository_test {
         let master_list_line_1 = data::master_list_line_1();
         repo.upsert_one(&master_list_line_1).unwrap();
         let loaded_item = repo
-            .find_one_by_id(master_list_line_1.id.as_str())
+            .find_one_by_id_old(master_list_line_1.id.as_str())
             .await
             .unwrap();
         assert_eq!(master_list_line_1, loaded_item);
@@ -562,7 +562,7 @@ mod repository_test {
         let master_list_line_upsert_1 = data::master_list_line_upsert_1();
         repo.upsert_one(&master_list_line_upsert_1).unwrap();
         let loaded_item = repo
-            .find_one_by_id(master_list_line_upsert_1.id.as_str())
+            .find_one_by_id_old(master_list_line_upsert_1.id.as_str())
             .await
             .unwrap();
         assert_eq!(master_list_line_upsert_1, loaded_item);
@@ -588,7 +588,7 @@ mod repository_test {
             .upsert_one(&master_list_name_join_1)
             .unwrap();
         let loaded_item = repo
-            .find_one_by_id(master_list_name_join_1.id.as_str())
+            .find_one_by_id_old(master_list_name_join_1.id.as_str())
             .await
             .unwrap();
         assert_eq!(master_list_name_join_1, loaded_item);
@@ -616,7 +616,7 @@ mod repository_test {
 
         let item1 = data::invoice_1();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id_old(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // outbound shipment
@@ -670,13 +670,13 @@ mod repository_test {
         let repo = InvoiceLineRowRepository::new(&connection);
         let item1 = data::invoice_line_1();
         repo.upsert_one(&item1).unwrap();
-        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id_old(item1.id.as_str()).unwrap();
         assert_eq!(item1, loaded_item);
 
         // row with optional field
         let item2_optional = data::invoice_line_2();
         repo.upsert_one(&item2_optional).unwrap();
-        let loaded_item = repo.find_one_by_id(item2_optional.id.as_str()).unwrap();
+        let loaded_item = repo.find_one_by_id_old(item2_optional.id.as_str()).unwrap();
         assert_eq!(item2_optional, loaded_item);
 
         // find_many_by_invoice_id:

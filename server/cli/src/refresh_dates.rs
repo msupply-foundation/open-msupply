@@ -322,7 +322,17 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Eq)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "serialize_helper"]
 pub struct SerializeHelper {
     pub id: String,
@@ -604,7 +614,7 @@ mod tests {
         .unwrap();
 
         let invoice1_result = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice1().id)
+            .find_one_by_id_old(&invoice1().id)
             .unwrap();
 
         assert_eq!(
@@ -619,7 +629,7 @@ mod tests {
         );
 
         let invoice2_result = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice2().id)
+            .find_one_by_id_old(&invoice2().id)
             .unwrap();
 
         assert_eq!(
@@ -640,7 +650,7 @@ mod tests {
         );
 
         let stock_line1_result = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&stock_line1().id)
+            .find_one_by_id_old(&stock_line1().id)
             .unwrap();
 
         assert_eq!(

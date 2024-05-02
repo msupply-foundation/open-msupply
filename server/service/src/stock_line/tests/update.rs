@@ -88,7 +88,7 @@ mod test {
             .unwrap();
 
         let stock_line = StockLineRowRepository::new(&connection)
-            .find_one_by_id(&mock_stock_line_a().id)
+            .find_one_by_id_old(&mock_stock_line_a().id)
             .unwrap();
 
         assert_eq!(

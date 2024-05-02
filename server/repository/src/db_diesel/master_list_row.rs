@@ -17,7 +17,18 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "master_list"]
 pub struct MasterListRow {
     pub id: String,

@@ -102,7 +102,7 @@ mod test_update {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice.invoice_row.id)
+            .find_one_by_id_old(&invoice.invoice_row.id)
             .unwrap();
 
         assert_eq!(
@@ -160,7 +160,7 @@ mod test_update {
             .unwrap();
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice.invoice_row.id)
+            .find_one_by_id_old(&invoice.invoice_row.id)
             .unwrap();
 
         assert_eq!(

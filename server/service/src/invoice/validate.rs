@@ -99,7 +99,7 @@ pub fn check_invoice_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<Option<InvoiceRow>, RepositoryError> {
-    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceRowRepository::new(connection).find_one_by_id_old(id);
 
     match result {
         Ok(invoice_row) => Ok(Some(invoice_row)),
@@ -112,7 +112,7 @@ pub fn check_invoice_does_not_exists(
     id: &str,
     connection: &StorageConnection,
 ) -> Result<(), InvoiceAlreadyExistsError> {
-    let result = InvoiceRowRepository::new(connection).find_one_by_id(id);
+    let result = InvoiceRowRepository::new(connection).find_one_by_id_old(id);
 
     if let Err(RepositoryError::NotFound) = &result {
         Ok(())

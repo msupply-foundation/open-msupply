@@ -214,7 +214,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option(&mock_draft_inbound_service_line().id)
+            .find_one_by_id(&mock_draft_inbound_service_line().id)
             .unwrap()
             .unwrap();
 
@@ -233,7 +233,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option(&mock_draft_inbound_service_line().id)
+            .find_one_by_id(&mock_draft_inbound_service_line().id)
             .unwrap()
             .unwrap();
 
@@ -258,7 +258,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option(&mock_draft_inbound_service_line().id)
+            .find_one_by_id(&mock_draft_inbound_service_line().id)
             .unwrap()
             .unwrap();
 

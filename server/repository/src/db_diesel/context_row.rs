@@ -11,7 +11,17 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "context"]
 pub struct ContextRow {
     pub id: String,

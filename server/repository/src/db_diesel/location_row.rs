@@ -19,7 +19,17 @@ joinable!(location -> store (store_id));
 allow_tables_to_appear_in_same_query!(location, item_link);
 allow_tables_to_appear_in_same_query!(location, name_link);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "location"]
 pub struct LocationRow {
     pub id: String,

@@ -356,7 +356,7 @@ mod test {
         .await;
 
         assert_eq!(
-            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&invoice_line().id),
             Ok(Some(invoice_line()))
         );
 
@@ -375,7 +375,7 @@ mod test {
         assert!(result.is_ok(), "Not Ok(_) {:#?}", result);
 
         assert_eq!(
-            InvoiceLineRowRepository::new(&connection).find_one_by_id_option(&invoice_line().id),
+            InvoiceLineRowRepository::new(&connection).find_one_by_id(&invoice_line().id),
             Ok(None)
         );
     }
@@ -446,7 +446,7 @@ mod test {
         assert_matches!(result, Ok(_));
 
         let updated_record = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&invoice().id)
+            .find_one_by_id_old(&invoice().id)
             .unwrap();
 
         assert_eq!(
@@ -510,7 +510,7 @@ mod test {
             };
 
         let invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&mock_outbound_shipment_c().id)
+            .find_one_by_id_old(&mock_outbound_shipment_c().id)
             .unwrap();
         let invoice_lines = InvoiceLineRowRepository::new(&connection)
             .find_many_by_invoice_id(&invoice.id)
@@ -612,7 +612,9 @@ mod test {
             u
         });
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id_old(&new_stock_line.id)
+                .unwrap(),
             new_stock_line
         );
 
@@ -631,7 +633,9 @@ mod test {
 
         // Stock line should not have changed
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id_old(&new_stock_line.id)
+                .unwrap(),
             new_stock_line
         );
 
@@ -649,7 +653,9 @@ mod test {
         let stock_line_repo = StockLineRowRepository::new(&connection);
         // Stock line should not have changed
         assert_eq!(
-            stock_line_repo.find_one_by_id(&new_stock_line.id).unwrap(),
+            stock_line_repo
+                .find_one_by_id_old(&new_stock_line.id)
+                .unwrap(),
             new_stock_line
         );
 
@@ -692,7 +698,9 @@ mod test {
 
         // Stock line total_number_of_packs should have been reduced
         assert_eq!(
-            stock_line_repo.find_one_by_id(&stock_line().id).unwrap(),
+            stock_line_repo
+                .find_one_by_id_old(&stock_line().id)
+                .unwrap(),
             inline_edit(&stock_line(), |mut u| {
                 u.total_number_of_packs = 8.0;
                 u

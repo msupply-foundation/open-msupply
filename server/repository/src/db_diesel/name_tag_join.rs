@@ -2,6 +2,7 @@ use super::{name_tag_join::name_tag_join::dsl as name_tag_join_dsl, StorageConne
 use crate::repository_error::RepositoryError;
 use crate::{name_link, Delete, Upsert};
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     name_tag_join (id) {
@@ -11,7 +12,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[table_name = "name_tag_join"]
 pub struct NameTagJoinRow {
     pub id: String,

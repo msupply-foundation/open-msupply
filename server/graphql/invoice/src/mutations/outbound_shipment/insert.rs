@@ -242,7 +242,7 @@ mod graphql {
         assert_graphql_query!(&settings, query, &variables, &expected, None);
         // make sure item has been inserted
         InvoiceRowRepository::new(&connection)
-            .find_one_by_id("ci_insert_1")
+            .find_one_by_id_old("ci_insert_1")
             .unwrap();
 
         // Test succeeding insert on_hold and their_reference
@@ -308,7 +308,7 @@ mod graphql {
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         let new_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&id)
+            .find_one_by_id_old(&id)
             .unwrap();
 
         assert_eq!(
@@ -335,7 +335,7 @@ mod graphql {
         assert_graphql_query!(&settings, query, &variables, &expected, None);
 
         let new_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id(&id)
+            .find_one_by_id_old(&id)
             .unwrap();
 
         assert_eq!(new_invoice.name_store_id, None);

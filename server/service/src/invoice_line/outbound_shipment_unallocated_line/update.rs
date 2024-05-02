@@ -178,7 +178,7 @@ mod test_update {
         line_to_update.number_of_packs = 20.0;
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id(&result.invoice_line_row.id)
+                .find_one_by_id_old(&result.invoice_line_row.id)
                 .unwrap(),
             line_to_update
         )

@@ -17,7 +17,7 @@ pub fn check_batch(
     connection: &StorageConnection,
 ) -> Result<bool, RepositoryError> {
     if let Some(batch_id) = &line.stock_line_id {
-        match StockLineRowRepository::new(connection).find_one_by_id(batch_id) {
+        match StockLineRowRepository::new(connection).find_one_by_id_old(batch_id) {
             Ok(batch) => return check_batch_stock_reserved(line, batch),
             Err(error) => return Err(error),
         };

@@ -256,7 +256,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&increased_pack_size.invoice_row.id)
+            .find_one_by_id_old(&increased_pack_size.invoice_row.id)
             .unwrap();
 
         let SortedInvoiceAndStock {
@@ -350,7 +350,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&increased_pack_size.invoice_row.id)
+            .find_one_by_id_old(&increased_pack_size.invoice_row.id)
             .unwrap();
 
         let SortedInvoiceAndStock {
@@ -396,7 +396,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&repack_all.invoice_row.id)
+            .find_one_by_id_old(&repack_all.invoice_row.id)
             .unwrap();
 
         let SortedInvoiceAndStock {
@@ -442,7 +442,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&decreased_pack_size_to_one.invoice_row.id)
+            .find_one_by_id_old(&decreased_pack_size_to_one.invoice_row.id)
             .unwrap();
 
         let SortedInvoiceAndStock {
@@ -491,7 +491,7 @@ mod test {
             .unwrap();
 
         let invoice = invoice_repo
-            .find_one_by_id(&decreased_pack_size.invoice_row.id)
+            .find_one_by_id_old(&decreased_pack_size.invoice_row.id)
             .unwrap();
 
         let SortedInvoiceAndStock {

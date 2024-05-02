@@ -177,7 +177,9 @@ mod test {
         let stock_line_id = mock_outbound_return_a_invoice_line_a()
             .stock_line_id
             .unwrap();
-        let original_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let original_stock_line = stock_line_row_repo
+            .find_one_by_id_old(&stock_line_id)
+            .unwrap();
 
         service
             .delete_outbound_return(&context, mock_outbound_return_a().id)
@@ -186,12 +188,14 @@ mod test {
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id_option(&mock_outbound_return_a().id)
+                .find_one_by_id(&mock_outbound_return_a().id)
                 .unwrap(),
             None
         );
 
-        let updated_stock_line = stock_line_row_repo.find_one_by_id(&stock_line_id).unwrap();
+        let updated_stock_line = stock_line_row_repo
+            .find_one_by_id_old(&stock_line_id)
+            .unwrap();
 
         // test stock has been increased by the num of packs in the outbound return line
         assert_eq!(

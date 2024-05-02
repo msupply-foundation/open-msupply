@@ -3,6 +3,7 @@ use super::{name_tag_row::name_tag::dsl as name_tag_dsl, StorageConnection};
 use crate::{repository_error::RepositoryError, Upsert};
 
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 table! {
     name_tag (id) {
@@ -11,7 +12,9 @@ table! {
     }
 }
 
-#[derive(Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default)]
+#[derive(
+    Clone, Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Default, Serialize, Deserialize,
+)]
 #[table_name = "name_tag"]
 pub struct NameTagRow {
     pub id: String,

@@ -331,7 +331,7 @@ mod test_insert {
         assert_eq!(result.invoice_line_row.id, "new_line");
         assert_eq!(
             InvoiceLineRowRepository::new(&connection)
-                .find_one_by_id(&result.invoice_line_row.id)
+                .find_one_by_id_old(&result.invoice_line_row.id)
                 .unwrap(),
             InvoiceLineRow {
                 id: "new_line".to_owned(),

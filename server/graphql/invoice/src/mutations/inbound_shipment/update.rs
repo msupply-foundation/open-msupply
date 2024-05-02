@@ -563,7 +563,7 @@ mod test {
         assert_graphql_query!(&settings, mutation, &Some(variables), &expected, None);
 
         let new_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("inbound_shipment_c")
+            .find_one_by_id_old("inbound_shipment_c")
             .unwrap();
 
         assert_eq!(
@@ -591,7 +591,7 @@ mod test {
         assert_graphql_query!(&settings, mutation, &Some(variables), &expected, None);
 
         let new_invoice = InvoiceRowRepository::new(&connection)
-            .find_one_by_id("inbound_shipment_c")
+            .find_one_by_id_old("inbound_shipment_c")
             .unwrap();
 
         assert_eq!(new_invoice.name_store_id, None);

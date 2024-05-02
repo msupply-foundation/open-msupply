@@ -34,7 +34,7 @@ joinable!(item_is_visible -> item (id));
 allow_tables_to_appear_in_same_query!(item, item_link);
 allow_tables_to_appear_in_same_query!(item, name_link);
 
-#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum ItemRowType {
     Stock,
@@ -42,7 +42,17 @@ pub enum ItemRowType {
     NonStock,
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "item"]
 pub struct ItemRow {
     pub id: String,
@@ -137,7 +147,7 @@ impl<'a> ItemRowRepository<'a> {
         Ok(result)
     }
 
-    fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+    pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
         let result = item
             .filter(id.eq(item_id))
             .first(&self.connection.connection)

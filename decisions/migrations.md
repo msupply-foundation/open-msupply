@@ -176,14 +176,14 @@ table! {
     }
 }
 // Since this won't exist in code base anymore, have to copy paste from deleted, similar if table definitions were changed
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[table_name = "remote_buffer"]
 pub struct RemoteBuffer {
     pub id: String,
     pub thing: Option<String>,
 }
 // Since this won't exist in code base anymore, have to copy paste from deleted, similar if table definitions were changed
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq)]
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[table_name = "central_buffer"]
 pub struct RemoteBuffer {
     pub id: String,

@@ -231,7 +231,7 @@ mod graphql {
         // test entry has been deleted
         assert_eq!(
             InvoiceRowRepository::new(&connection)
-                .find_one_by_id(&outbound_shipment_no_lines().id)
+                .find_one_by_id_old(&outbound_shipment_no_lines().id)
                 .expect_err("Invoice not deleted"),
             RepositoryError::NotFound
         );

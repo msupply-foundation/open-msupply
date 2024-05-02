@@ -34,7 +34,18 @@ table! {
     }
 }
 
-#[derive(Queryable, Insertable, Debug, PartialEq, Eq, AsChangeset, Clone, Default)]
+#[derive(
+    Queryable,
+    Insertable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    Clone,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[table_name = "name_store_join"]
 pub struct NameStoreJoinRow {
     pub id: String,

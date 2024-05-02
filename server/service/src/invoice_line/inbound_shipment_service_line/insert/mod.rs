@@ -223,7 +223,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option("new_line_id")
+            .find_one_by_id("new_line_id")
             .unwrap()
             .unwrap();
 
@@ -262,7 +262,7 @@ mod test {
             .unwrap();
 
         let line = InvoiceLineRowRepository::new(&connection)
-            .find_one_by_id_option("new_line2_id")
+            .find_one_by_id("new_line2_id")
             .unwrap()
             .unwrap();
 
