@@ -106,37 +106,3 @@ query syncStatus {
 mutation manualSync {
   manualSync
 }
-
-fragment UpdateUser on UpdateUserNode {
-  lastSuccessfulSync
-}
-
-mutation updateUser {
-  updateUser {
-    __typename
-    ... on UpdateUserNode {
-      ...UpdateUser
-    }
-    ... on UpdateUserError {
-      __typename
-      error {
-        ... on InvalidCredentials {
-          __typename
-          description
-        }
-        ... on ConnectionError {
-          __typename
-          description
-        }
-        description
-      }
-    }
-  }
-}
-
-query lastSuccessfulUserSync {
-  lastSuccessfulUserSync {
-    __typename
-    ...UpdateUser
-  }
-}

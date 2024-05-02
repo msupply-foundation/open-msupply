@@ -43,6 +43,18 @@ export type StorePreferencesQueryVariables = Types.Exact<{
 
 export type StorePreferencesQuery = { __typename: 'Queries', storePreferences: { __typename: 'StorePreferenceNode', responseRequisitionRequiresAuthorisation: boolean, requestRequisitionRequiresAuthorisation: boolean, packToOne: boolean, id: string } };
 
+export type UpdateUserFragment = { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null };
+
+export type UpdateUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type UpdateUserMutation = { __typename: 'Mutations', updateUser: { __typename: 'UpdateUserError', error: { __typename: 'ConnectionError', description: string } | { __typename: 'InvalidCredentials', description: string } } | { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
+
+export type LastSuccessfulUserSyncQueryVariables = Types.Exact<{ [key: string]: never; }>;
+
+
+export type LastSuccessfulUserSyncQuery = { __typename: 'Queries', lastSuccessfulUserSync: { __typename: 'UpdateUserNode', lastSuccessfulSync?: string | null } };
+
 export const UserStoreNodeFragmentDoc = gql`
     fragment UserStoreNode on UserStoreNode {
   code
@@ -60,6 +72,11 @@ export const UserStoreNodeFragmentDoc = gql`
   }
   createdDate
   homeCurrencyCode
+}
+    `;
+export const UpdateUserFragmentDoc = gql`
+    fragment UpdateUser on UpdateUserNode {
+  lastSuccessfulSync
 }
     `;
 export const AuthTokenDocument = gql`
@@ -188,6 +205,38 @@ export const StorePreferencesDocument = gql`
   }
 }
     `;
+export const UpdateUserDocument = gql`
+    mutation updateUser {
+  updateUser {
+    __typename
+    ... on UpdateUserNode {
+      ...UpdateUser
+    }
+    ... on UpdateUserError {
+      __typename
+      error {
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on ConnectionError {
+          __typename
+          description
+        }
+        description
+      }
+    }
+  }
+}
+    ${UpdateUserFragmentDoc}`;
+export const LastSuccessfulUserSyncDocument = gql`
+    query lastSuccessfulUserSync {
+  lastSuccessfulUserSync {
+    __typename
+    ...UpdateUser
+  }
+}
+    ${UpdateUserFragmentDoc}`;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string) => Promise<T>;
 
@@ -213,6 +262,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     storePreferences(variables: StorePreferencesQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<StorePreferencesQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<StorePreferencesQuery>(StorePreferencesDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'storePreferences', 'query');
+    },
+    updateUser(variables?: UpdateUserMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateUserMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateUserMutation>(UpdateUserDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateUser', 'mutation');
+    },
+    lastSuccessfulUserSync(variables?: LastSuccessfulUserSyncQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<LastSuccessfulUserSyncQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<LastSuccessfulUserSyncQuery>(LastSuccessfulUserSyncDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'lastSuccessfulUserSync', 'query');
     }
   };
 }
@@ -314,5 +369,37 @@ export const mockPermissionsQuery = (resolver: ResponseResolver<GraphQLRequest<P
 export const mockStorePreferencesQuery = (resolver: ResponseResolver<GraphQLRequest<StorePreferencesQueryVariables>, GraphQLContext<StorePreferencesQuery>, any>) =>
   graphql.query<StorePreferencesQuery, StorePreferencesQueryVariables>(
     'storePreferences',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockUpdateUserMutation((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ updateUser })
+ *   )
+ * })
+ */
+export const mockUpdateUserMutation = (resolver: ResponseResolver<GraphQLRequest<UpdateUserMutationVariables>, GraphQLContext<UpdateUserMutation>, any>) =>
+  graphql.mutation<UpdateUserMutation, UpdateUserMutationVariables>(
+    'updateUser',
+    resolver
+  )
+
+/**
+ * @param resolver a function that accepts a captured request and may return a mocked response.
+ * @see https://mswjs.io/docs/basics/response-resolver
+ * @example
+ * mockLastSuccessfulUserSyncQuery((req, res, ctx) => {
+ *   return res(
+ *     ctx.data({ lastSuccessfulUserSync })
+ *   )
+ * })
+ */
+export const mockLastSuccessfulUserSyncQuery = (resolver: ResponseResolver<GraphQLRequest<LastSuccessfulUserSyncQueryVariables>, GraphQLContext<LastSuccessfulUserSyncQuery>, any>) =>
+  graphql.query<LastSuccessfulUserSyncQuery, LastSuccessfulUserSyncQueryVariables>(
+    'lastSuccessfulUserSync',
     resolver
   )
