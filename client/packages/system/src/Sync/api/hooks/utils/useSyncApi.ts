@@ -8,7 +8,6 @@ export const useSyncApi = () => {
     syncSettings: () => [...keys.base(), 'syncSettings'] as const,
     syncStatus: () => [...keys.base(), 'syncStatus'] as const,
     syncInfo: () => [...keys.base(), 'syncStatus'] as const,
-    userSync: () => [...keys.base(), 'userSync'] as const,
   };
 
   const { client } = useGql();
