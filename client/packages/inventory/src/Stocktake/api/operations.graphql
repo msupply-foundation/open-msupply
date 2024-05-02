@@ -37,6 +37,7 @@ fragment StocktakeLine on StocktakeLineNode {
   stockLine {
     __typename
     id
+    totalNumberOfPacks
   }
 
   item {

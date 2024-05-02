@@ -23,6 +23,7 @@ import {
 import { StocktakeSummaryItem } from '../../../types';
 import { StocktakeLineFragment } from '../../api';
 import { useStocktakeLineErrorContext } from '../../context';
+import { useCallback } from 'react';
 
 interface UseStocktakeColumnOptions {
   sortBy: SortBy<StocktakeLineFragment | StocktakeSummaryItem>;
@@ -58,6 +59,44 @@ const getStocktakeReasons = (
   }
 };
 
+const useSnapshotCountCurrentCountMismatchError = () => {
+  const { getError } = useStocktakeLineErrorContext();
+  const t = useTranslation('inventory');
+  const getSnapshotCountCurrentCountMismatchError = useCallback(
+    (lines: StocktakeLineFragment[]): string | undefined => {
+      const { hasMismatchError, totalNumberOfPacks, snapshotNumberOfPacks } =
+        lines.reduce(
+          (prev, line) => {
+            const error = getError(line);
+            return {
+              hasMismatchError:
+                prev.hasMismatchError ||
+                error?.__typename === 'SnapshotCountCurrentCountMismatch',
+              totalNumberOfPacks:
+                prev.totalNumberOfPacks +
+                (line.stockLine?.totalNumberOfPacks ?? 0),
+              snapshotNumberOfPacks:
+                prev.snapshotNumberOfPacks + line.snapshotNumberOfPacks,
+            };
+          },
+          {
+            hasMismatchError: false,
+            totalNumberOfPacks: 0,
+            snapshotNumberOfPacks: 0,
+          }
+        );
+      // Make sure backend reported an error. However, we could also check it ourself...
+      if (!hasMismatchError) return undefined;
+      return t('error.snapshot-total-mismatch-line', {
+        totalNumberOfPacks,
+        snapshotNumberOfPacks,
+      });
+    },
+    [getError, t]
+  );
+  return getSnapshotCountCurrentCountMismatchError;
+};
+
 export const useStocktakeColumns = ({
   sortBy,
   onChangeSortBy,
@@ -67,6 +106,8 @@ export const useStocktakeColumns = ({
   const { getError } = useStocktakeLineErrorContext();
   const t = useTranslation();
   const { getColumnPropertyAsString, getColumnProperty } = useColumnUtils();
+  const getSnapshotCountCurrentCountMismatchError =
+    useSnapshotCountCurrentCountMismatchError();
 
   const isPackVariantsEnabled = useIsPackVariantsEnabled();
 
@@ -186,10 +227,8 @@ export const useStocktakeColumns = ({
       description: 'description.snapshot-num-of-packs',
       align: ColumnAlign.Right,
       Cell: NumberCell,
-      getIsError: row =>
-        getLinesFromRow(row).some(
-          r => getError(r)?.__typename === 'SnapshotCountCurrentCountMismatch'
-        ),
+      getError: row =>
+        getSnapshotCountCurrentCountMismatchError(getLinesFromRow(row)),
       sortable: false,
       accessor: ({ rowData }) => {
         if ('lines' in rowData) {
@@ -284,8 +323,9 @@ export const useStocktakeColumns = ({
 export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
   const { getError } = useStocktakeLineErrorContext();
   const isPackVariantsEnabled = useIsPackVariantsEnabled();
-
-  return useColumns([
+  const getSnapshotCountCurrentCountMismatchError =
+    useSnapshotCountCurrentCountMismatchError();
+  return useColumns<StocktakeLineFragment>([
     'batch',
     'expiryDate',
     [
@@ -316,8 +356,8 @@ export const useExpansionColumns = (): Column<StocktakeLineFragment>[] => {
       width: 150,
       label: 'label.snapshot-num-of-packs',
       align: ColumnAlign.Right,
-      getIsError: rowData =>
-        getError(rowData)?.__typename === 'SnapshotCountCurrentCountMismatch',
+      Cell: NumberCell,
+      getError: row => getSnapshotCountCurrentCountMismatchError([row]),
       accessor: ({ rowData }) => rowData.snapshotNumberOfPacks,
     },
     {

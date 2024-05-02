@@ -11,6 +11,7 @@
   "error.not-editable": "Stocktake is not editable.",
   "error.is-locked": "Stocktake is locked.",
   "error.snapshot-total-mismatch": "Error: One or more lines have a discrepancy between the current stock level and snapshot count.",
+  "error.snapshot-total-mismatch-line": "Discrepancy between the current stock level ({{totalNumberOfPacks}}) and snapshot count ({{snapshotNumberOfPacks}})",
   "error.provide-reason": "A reason must be provided for any rows which have a difference in the counted number of packs.",
   "error.provide-valid-reason": "Adjustment reason does not match adjustment direction",
   "error.reduced-below-zero": "Stock reserved for new outbound shipments. The quantity cannot be reduced below zero.",
