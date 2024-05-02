@@ -26,7 +26,7 @@ pub(crate) fn migrate(connection: &StorageConnection) -> anyhow::Result<()> {
 
     CREATE VIEW invoice_line_stock_movement AS 
             SELECT
-                'n/a' as id,
+                invoice_line.id,
                 invoice_line.invoice_id,
                 invoice_line.item_name,
                 invoice_line.item_code,
