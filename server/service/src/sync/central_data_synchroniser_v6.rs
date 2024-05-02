@@ -80,6 +80,18 @@ impl SynchroniserV6 {
         })
     }
 
+    /// Update push cursor after initial sync, i.e. set it to the end of the just received data
+    /// so we only push new data to the central server
+    pub(crate) fn advance_push_cursor(
+        &self,
+        connection: &StorageConnection,
+    ) -> Result<(), RepositoryError> {
+        let cursor = ChangelogRepository::new(connection).latest_cursor()?;
+
+        CursorController::new(KeyValueType::SyncPushCursorV6).update(connection, cursor + 1)?;
+        Ok(())
+    }
+
     pub(crate) async fn pull<'a>(
         &self,
         connection: &StorageConnection,
